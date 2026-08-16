@@ -5,10 +5,7 @@ import { notFound } from 'next/navigation';
 import type { ZodTypeAny } from 'zod';
 import { z } from 'zod';
 
-/**
- * Parse route params using the provided schema.
- * Falls back to Next's not-found boundary when validation fails.
- */
+/** Parses route params, falling back to Next's not-found boundary. */
 export function parseParamsOrNotFound<TSchema extends ZodTypeAny>(
   schema: TSchema,
   rawParams: unknown
@@ -22,10 +19,7 @@ export function parseParamsOrNotFound<TSchema extends ZodTypeAny>(
   return result.data;
 }
 
-/**
- * Execute an oRPC call and surface Next's not-found boundary
- * whenever the procedure throws a NOT_FOUND error.
- */
+/** Runs an oRPC call, turning NOT_FOUND into Next's not-found boundary. */
 export async function fetchOrpcOrNotFound<T>(
   resolver: () => Promise<T>
 ): Promise<T> {
@@ -40,10 +34,7 @@ export async function fetchOrpcOrNotFound<T>(
   }
 }
 
-/**
- * Execute an oRPC call and return undefined when the response is NOT_FOUND.
- * Useful for metadata and other optional data lookups.
- */
+/** Runs an oRPC call, returning undefined on NOT_FOUND. */
 export async function fetchOrpcOptional<T>(
   resolver: () => Promise<T>
 ): Promise<T | undefined> {

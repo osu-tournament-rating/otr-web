@@ -18,7 +18,7 @@ export const BeatmapListSortSchema = z.enum([
 export const BeatmapListRequestSchema = z.object({
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(1).max(100).default(50),
-  searchQuery: z.string().trim().min(1).optional(),
+  searchQuery: z.string().trim().min(1).max(200).optional(),
   ruleset: RulesetSchema.optional(),
   minSr: z.number().min(0).max(15).optional(),
   maxSr: z.number().min(0).max(15).optional(),
@@ -26,10 +26,10 @@ export const BeatmapListRequestSchema = z.object({
   maxBpm: z.number().min(0).optional(),
   minCs: z.number().min(0).max(10).optional(),
   maxCs: z.number().min(0).max(10).optional(),
-  minAr: z.number().min(0).max(11).optional(),
-  maxAr: z.number().min(0).max(11).optional(),
-  minOd: z.number().min(0).max(11).optional(),
-  maxOd: z.number().min(0).max(11).optional(),
+  minAr: z.number().min(0).max(10).optional(),
+  maxAr: z.number().min(0).max(10).optional(),
+  minOd: z.number().min(0).max(10).optional(),
+  maxOd: z.number().min(0).max(10).optional(),
   minHp: z.number().min(0).max(10).optional(),
   maxHp: z.number().min(0).max(10).optional(),
   minLength: z.number().int().min(0).optional(),
@@ -40,6 +40,12 @@ export const BeatmapListRequestSchema = z.object({
   maxTournamentCount: z.number().int().min(0).optional(),
   sort: BeatmapListSortSchema.default('gameCount'),
   descending: z.boolean().default(true),
+});
+
+export const BeatmapListTopModSchema = z.object({
+  mod: z.string().min(1),
+  mods: z.number().int().nonnegative(),
+  percentage: z.number().min(0).max(100),
 });
 
 export const BeatmapListItemSchema = z.object({
@@ -60,6 +66,7 @@ export const BeatmapListItemSchema = z.object({
   creator: z.string().nullable(),
   verifiedTournamentCount: z.number().int().nonnegative(),
   verifiedGameCount: z.number().int().nonnegative(),
+  topMods: z.array(BeatmapListTopModSchema).optional(),
 });
 
 export const BeatmapListResponseSchema = z.object({
@@ -70,6 +77,7 @@ export const BeatmapListResponseSchema = z.object({
   totalPages: z.number().int().min(0),
 });
 
+export type BeatmapListTopMod = z.infer<typeof BeatmapListTopModSchema>;
 export type BeatmapListSort = z.infer<typeof BeatmapListSortSchema>;
 export type BeatmapListRequest = z.infer<typeof BeatmapListRequestSchema>;
 export type BeatmapListItem = z.infer<typeof BeatmapListItemSchema>;

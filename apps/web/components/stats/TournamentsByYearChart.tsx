@@ -67,7 +67,6 @@ export default function TournamentsByYearChart({
     const totalCount = processedData.reduce((sum, item) => sum + item.count, 0);
     const maxValue = Math.max(...processedData.map((item) => item.count), 0);
 
-    // Round up to a nice number (nearest 50 or 100)
     const roundToNice = (val: number): number => {
       if (val <= 100) return Math.ceil(val / 10) * 10;
       if (val <= 500) return Math.ceil(val / 50) * 50;

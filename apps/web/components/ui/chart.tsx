@@ -65,7 +65,17 @@ function ChartContainer({
         data-slot="chart"
         data-chart={chartId}
         className={cn(
-          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
+          // `[&_g[tabindex='-1']]` covers recharts' zIndex portal groups
+          // (`recharts-zIndex-layer_N`), which the `.recharts-layer` rule misses:
+          // clicking a chart focuses one and Chromium paints `outline: auto`
+          // around the plot area. They are never keyboard-reachable, so
+          // suppressing the ring costs nothing.
+          //
+          // recharts v3 renders tick text as `.recharts-cartesian-axis-tick-value`;
+          // upstream shadcn still targets `.recharts-cartesian-axis-tick text`, a
+          // v2 node that no longer wraps any text, so its ticks kept recharts'
+          // `#666` default fill.
+          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick-value]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden [&_g[tabindex='-1']]:outline-hidden",
           className
         )}
         {...props}
@@ -268,7 +278,7 @@ function ChartTooltipContent(
                       </span>
                     </div>
                     {item.value && (
-                      <span className="font-mono font-medium text-foreground tabular-nums">
+                      <span className="font-medium text-foreground">
                         {item.value.toLocaleString()}
                       </span>
                     )}

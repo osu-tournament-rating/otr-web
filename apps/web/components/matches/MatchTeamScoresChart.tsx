@@ -164,7 +164,7 @@ function TeamScoreTooltip({ active, payload }: TooltipProps) {
         [{point.beatmapDifficulty}]
       </p>
 
-      <div className="mt-3 space-y-1.5 border-t pt-2.5 tabular-nums">
+      <div className="mt-3 space-y-1.5 border-t pt-2.5">
         <div className="flex items-center justify-between gap-6">
           <span className="flex items-center gap-1.5">
             <span

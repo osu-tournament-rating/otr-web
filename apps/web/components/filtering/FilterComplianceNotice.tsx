@@ -49,9 +49,7 @@ export default function FilterComplianceNotice({
                   <Calendar className="h-4 w-4" />
                   <span>Performed at</span>
                 </div>
-                <p className="font-mono text-sm font-medium">
-                  {dateTimeString}
-                </p>
+                <p className="text-sm font-medium">{dateTimeString}</p>
               </div>
 
               <div className="space-y-1">
@@ -59,16 +57,14 @@ export default function FilterComplianceNotice({
                   <Info className="h-4 w-4" />
                   <span>Report ID</span>
                 </div>
-                <p className="font-mono text-sm font-medium">
-                  #{filterReportId}
-                </p>
+                <p className="text-sm font-medium">#{filterReportId}</p>
               </div>
             </div>
 
             <div className="space-y-2 border-t border-blue-200 pt-3 dark:border-blue-800">
               <p className="text-sm font-medium">Forum post text</p>
               <div className="flex items-center gap-2 rounded-md bg-blue-100/50 p-3 dark:bg-blue-900/20">
-                <code className="flex-1 text-xs break-all">
+                <code className="flex-1 font-sans text-xs break-all">
                   {forumPostString}
                 </code>
                 <Button

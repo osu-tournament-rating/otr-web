@@ -15,7 +15,6 @@ export const CreatedUpdatedOmit = {
   updated: true,
 } as const;
 
-// Provide clear descriptions for numeric enums so OpenAPI renders meaningful docs.
 export const RulesetSchema = z
   .enum(Ruleset)
   .describe(

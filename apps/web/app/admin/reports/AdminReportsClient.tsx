@@ -323,9 +323,7 @@ export default function AdminReportsClient() {
                       data-testid="admin-reports-row"
                       data-report-id={report.id}
                     >
-                      <TableCell className="font-mono text-xs">
-                        {report.id}
-                      </TableCell>
+                      <TableCell className="text-xs">{report.id}</TableCell>
                       <TableCell>
                         {
                           ReportEntityTypeEnumHelper.getMetadata(
@@ -413,7 +411,7 @@ export default function AdminReportsClient() {
                   <section aria-labelledby="reported-item-heading">
                     <Label
                       id="reported-item-heading"
-                      className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                      className="text-xs font-medium text-muted-foreground"
                     >
                       Reported item
                     </Label>
@@ -454,7 +452,7 @@ export default function AdminReportsClient() {
                   <section aria-labelledby="reporter-note-heading">
                     <Label
                       id="reporter-note-heading"
-                      className="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                      className="text-xs font-medium text-muted-foreground"
                     >
                       Reporter&apos;s note
                     </Label>
@@ -544,7 +542,7 @@ export default function AdminReportsClient() {
                   <div className="border-t bg-muted/30 px-6 py-5">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                       <div>
-                        <Label className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                        <Label className="text-xs font-medium text-muted-foreground">
                           Comment
                         </Label>
                         <p className="mt-1 text-sm">

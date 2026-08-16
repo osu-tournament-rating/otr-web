@@ -36,16 +36,14 @@ export function LeaderboardDataTable<TData, TValue>({
   });
 
   const getRowClassName = (row: Row<TData>, index: number) => {
-    // Check if this row is the current user's row
     const rowData = row.original as LeaderboardEntry;
     const isCurrentUser =
       currentUserPlayerId && rowData.player?.id === currentUserPlayerId;
 
     if (isCurrentUser) {
-      return 'bg-primary/20'; // Blue highlight with 0.2 opacity
+      return 'bg-primary/20';
     }
 
-    // Simple alternating row colors for all other ranks
     return `${index % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'}`;
   };
 

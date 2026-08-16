@@ -25,7 +25,6 @@ export default function AuditLogsPage() {
   return (
     <div data-testid="audit-logs-page" className="container mx-auto py-6">
       <Card className="p-6">
-        {/* Section Header */}
         <div className="mb-3 flex items-center gap-3">
           <ClipboardList className="h-6 w-6 text-primary" />
           <div>

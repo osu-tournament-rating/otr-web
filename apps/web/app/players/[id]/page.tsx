@@ -27,7 +27,7 @@ import {
 const INITIAL_BEATMAPS_LIMIT = 3;
 
 type PageProps = {
-  params: Promise<{ id: string }>; // Player search key from path
+  params: Promise<{ id: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
@@ -176,27 +176,23 @@ export default async function PlayerPage(props: PageProps) {
   const decodedId = decodeURIComponent(id);
   const playerData = await getPlayerData(decodedId, searchParams);
 
-  // Handle case where player data might not be found
   if (!playerData) {
     return notFound();
   }
 
   const canonicalPlayerId = playerData.playerInfo.id;
 
-  // Get the current ruleset from search params or default to Osu
   const currentRuleset = searchParams.ruleset
     ? (Number(searchParams.ruleset) as Ruleset)
     : Ruleset.Osu;
 
-  // Get the list of tournaments that the player has participated in
   const playerTournaments = await getTournaments(canonicalPlayerId, {
     ...searchParams,
     ruleset: currentRuleset.toString(),
   });
 
-  // Redirect to o!TR ID if the current URL uses a different search key
+  // Canonicalize the URL onto the o!TR ID
   if (canonicalPlayerId && canonicalPlayerId.toString() !== decodedId) {
-    // Build query string from search params
     const queryString = new URLSearchParams(
       Object.entries(searchParams).reduce(
         (acc, [key, value]) => {
@@ -216,7 +212,6 @@ export default async function PlayerPage(props: PageProps) {
     redirect(redirectUrl);
   }
 
-  // Get the list of tournament beatmaps the player has mapped
   const playerBeatmapsResponse = await getBeatmaps(
     canonicalPlayerId,
     currentRuleset
@@ -231,7 +226,6 @@ export default async function PlayerPage(props: PageProps) {
 
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
-      {/* Render the PlayerRatingCard with the fetched rating data or placeholder */}
       {!playerData.rating && (
         <Card className="p-6 font-sans">
           <PlayerCard
@@ -247,7 +241,6 @@ export default async function PlayerPage(props: PageProps) {
         </Card>
       )}
 
-      {/* Show rating data and charts if available */}
       {playerData.rating && playerData.rating.adjustments && (
         <>
           <PlayerRatingStatsCard
@@ -258,7 +251,6 @@ export default async function PlayerPage(props: PageProps) {
             adjustments={playerData.rating.adjustments}
             highestRating={chartHighestRating ?? undefined}
           />
-          {/* Display all statistics charts in a responsive grid */}
           {(playerData.modStats ||
             playerData.frequentTeammates ||
             playerData.frequentOpponents) && (
@@ -292,13 +284,11 @@ export default async function PlayerPage(props: PageProps) {
         </>
       )}
 
-      {/* Tournament history */}
       <PlayerTournamentsList
         tournaments={playerTournaments}
         adjustments={playerData.rating?.adjustments ?? []}
       />
 
-      {/* Pooled beatmaps */}
       <PlayerBeatmapsList
         playerId={canonicalPlayerId}
         ruleset={currentRuleset}

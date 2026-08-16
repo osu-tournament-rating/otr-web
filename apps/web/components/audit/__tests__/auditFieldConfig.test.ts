@@ -5,7 +5,13 @@ import { AuditEntityType } from '@otr/core/osu';
 
 import { auditFieldConfig } from '../auditFieldConfig';
 
-const EXCLUDED_AUDIT_FIELDS = new Set(['id', 'updated', 'searchVector']);
+// Generated columns are recorded through the fields they derive from.
+const EXCLUDED_AUDIT_FIELDS = new Set([
+  'id',
+  'updated',
+  'searchVector',
+  'matchRankVector',
+]);
 
 const sourceTables = {
   [AuditEntityType.Tournament]: schema.tournaments,

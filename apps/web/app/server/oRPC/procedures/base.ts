@@ -707,9 +707,7 @@ export const protectedProcedure = base
   .use(withRequestLogging)
   .use(withErrorBoundary);
 
-// Blocks data mutations during the weekly maintenance window
-// so the public archives stay consistent with the data the processor runs
-// against. See issue #763.
+// Keeps the public archives consistent with what the processor runs against (#763)
 const withMaintenanceWindowGuard = base.middleware(
   async ({ context, next }) => {
     await assertOutsideMaintenanceWindow(context.headers);

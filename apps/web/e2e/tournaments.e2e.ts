@@ -5,7 +5,8 @@ import {
   Ruleset,
 } from './fixtures/test-config';
 
-const SEARCH_DEBOUNCE_SETTLE_MS = 600;
+/** FILTER_APPLY_DELAY plus room for the navigation it schedules. */
+const SEARCH_DEBOUNCE_SETTLE_MS = 800;
 
 test.describe('Tournaments', () => {
   test.describe('Listing and Search', () => {
@@ -201,7 +202,7 @@ test.describe('Tournaments', () => {
         });
         await minimumRank.press('ArrowRight');
 
-        await expect(page.locator('#tournament-min-rank')).toHaveValue(
+        await expect(page.locator('#tournament-rank-min')).toHaveValue(
           String(next)
         );
         await expect
@@ -252,12 +253,11 @@ test.describe('Tournaments', () => {
       await page.waitForLoadState('networkidle');
 
       await page.locator('[data-testid="tournament-filters-button"]').click();
-      await page.locator('[data-testid="tournament-status-filter"]').click();
+      await page.locator('[data-testid="tournament-status-trigger"]').click();
       await page
         .getByRole('menuitemcheckbox', { name: 'Verified', exact: true })
         .click();
       await page.waitForURL(/verificationStatus=4/);
-      await page.getByRole('button', { name: 'Done', exact: true }).click();
 
       const activeFilter = page.getByRole('button', {
         name: 'Remove Status: Verified filter',
@@ -278,7 +278,7 @@ test.describe('Tournaments', () => {
       await page.waitForLoadState('networkidle');
       await page.locator('[data-testid="tournament-filters-button"]').click();
 
-      const maximumRank = page.locator('#tournament-max-rank');
+      const maximumRank = page.locator('#tournament-rank-max');
       await expect(maximumRank).toHaveValue('200000');
       await maximumRank.fill('250000');
       await maximumRank.blur();
@@ -295,7 +295,7 @@ test.describe('Tournaments', () => {
       await page.waitForLoadState('networkidle');
       await page.locator('[data-testid="tournament-filters-button"]').click();
       await page
-        .locator('[data-testid="tournament-rejection-reason-filter"]')
+        .locator('[data-testid="tournament-rejection-reason-trigger"]')
         .click();
 
       await page
@@ -444,9 +444,52 @@ test.describe('Tournaments', () => {
 
       const content = page.locator('[data-testid="tab-content-beatmaps"]');
       await expect(content).toBeVisible({ timeout: 10000 });
-      await expect(content.getByText('Pooled Beatmaps').first()).toBeVisible({
+      await expect(content.getByText('Pooled beatmaps').first()).toBeVisible({
         timeout: 10000,
       });
+    });
+
+    test('a sortable header reorders the pooled beatmaps', async ({ page }) => {
+      await page.goto(
+        `${ROUTES.tournament(TEST_PUBLIC_TOURNAMENT_ID)}?tab=beatmaps`
+      );
+      // The rows render on the server; the sort only answers once hydrated
+      await page.waitForLoadState('networkidle');
+
+      const table = page
+        .locator('[data-testid="tab-content-beatmaps"]')
+        .locator('table');
+      await expect(table.locator('tbody tr').first()).toBeVisible({
+        timeout: 15000,
+      });
+
+      const starRatings = () =>
+        table
+          .locator('tbody tr [data-testid="beatmap-star-rating-value"]')
+          .allInnerTexts();
+      const pool = () =>
+        table.locator('tbody tr td:nth-child(1)').allInnerTexts();
+
+      const before = await pool();
+      const header = table.getByRole('columnheader', { name: /^SR/ });
+      await expect(header).toHaveAttribute('aria-sort', 'none');
+
+      await header.getByRole('button').click();
+      await expect(header).toHaveAttribute('aria-sort', 'descending');
+      expect(await pool()).not.toEqual(before);
+      const descending = (await starRatings()).map(Number);
+      expect(descending.length).toBeGreaterThan(1);
+      expect(descending.every(Number.isFinite)).toBe(true);
+      expect(descending).toEqual([...descending].sort((a, b) => b - a));
+
+      await header.getByRole('button').click();
+      await expect(header).toHaveAttribute('aria-sort', 'ascending');
+      const ascending = (await starRatings()).map(Number);
+      expect(ascending).toEqual([...ascending].sort((a, b) => a - b));
+
+      await expect(
+        table.locator('thead th[aria-sort]:not([aria-sort="none"])')
+      ).toHaveCount(1);
     });
 
     test('ratings tab shows player ratings', async ({ page }) => {
@@ -479,9 +522,6 @@ test.describe('Tournaments', () => {
 
       const content = page.locator('[data-testid="tab-content-stats"]');
       await expect(content).toBeVisible({ timeout: 15000 });
-      // The stats tab renders the Tournament Statistics summary
-      // (StatCards) plus Top Performers; assert the real statistics
-      // content rather than a chart, which this view does not render.
       await expect(
         content.getByText('Tournament Statistics').first()
       ).toBeVisible({ timeout: 15000 });
@@ -512,9 +552,7 @@ test.describe('Tournaments', () => {
     test('submission is auth-gated for unauthenticated users', async ({
       page,
     }) => {
-      // The submit procedure is a protectedProcedure, so the underlying
-      // POST endpoint must reject an unauthenticated request. Assert the
-      // gate at the API boundary rather than performing a real submission.
+      // Assert the gate at the API boundary rather than submitting for real
       const response = await page.request.post('/api/tournaments:submit', {
         data: {
           name: 'E2E Gate Check',

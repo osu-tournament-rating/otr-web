@@ -155,7 +155,6 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
             Editing <strong>{match.name}</strong>
           </DialogDescription>
         </DialogHeader>
-        {/* Edit form */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
             <FormField
@@ -259,10 +258,8 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
               />
             </div>
 
-            {/* Form action buttons */}
             <div className="flex justify-between">
               <div className="flex gap-2">
-                {/* Reset changes */}
                 <Button
                   type="reset"
                   variant={'secondary'}
@@ -275,10 +272,8 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
                   Reset
                 </Button>
 
-                {/* Merge match */}
                 <MergeMatchButton match={{ id: match.id, name: match.name }} />
 
-                {/* Delete match */}
                 <DeleteButton
                   entityType="match"
                   entityId={match.id}
@@ -294,7 +289,6 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
                 />
               </div>
 
-              {/* Save changes */}
               <Button
                 type="submit"
                 size="sm"

@@ -11,6 +11,7 @@
   @tailwindcss /animate;
   body {
     letter-spacing: var(--tracking-normal);
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -24,7 +25,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: Inter, sans-serif;
-  --font-mono: Geist Mono, monospace;
+  --font-mono: monospace;
+  --default-font-family: Inter, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -87,8 +89,6 @@
   --shadow-blur: var(--shadow-blur);
   --shadow-opacity: var(--shadow-opacity);
   --color-shadow-color: var(--shadow-color);
-
-  --font-inter: 'Inter', sans-serif;
 }
 
 @theme {
@@ -141,6 +141,16 @@
   --team-red: var(--destructive);
   --team-blue: var(--primary);
 
+  /* Tournament rank-range ramp (ordinal: Open -> 100k+). Each color has to
+     clear 3:1 against its own card (WCAG 1.4.11), which the light and dark
+     cards need different lightnesses for. Pairwise separation is not a
+     requirement: symbol and dash carry the category redundantly. */
+  --rank-range-open: hsl(217, 80%, 60%);
+  --rank-range-lt1k: hsl(190, 70%, 40%);
+  --rank-range-1k: hsl(151, 55%, 40%);
+  --rank-range-10k: hsl(40, 90%, 38%);
+  --rank-range-100k: hsl(5, 80%, 63%);
+
   /* Tier text colors */
   --text-elite-grandmaster: var(--primary);
   --text-grandmaster: hsl(0, 80%, 55%);
@@ -173,8 +183,6 @@
   --font-sans: Inter, sans-serif;
 
   --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-
-  --font-mono: Geist Mono, monospace;
 
   --shadow-color: hsl(0 0% 0%);
 
@@ -254,6 +262,17 @@
   --mod-mania-key: hsl(207, 78%, 73%);
 
   --mod-touch-device: hsl(27, 100%, 61%);
+
+  /* Grade bar colors. SS/S/A match the canonical osu! grade badges
+     (public/icons/grades/*.svg) so the bar agrees with the Scores tab;
+     B-D are a monotonic muted ramp, flipped per theme so worse grades
+     always recede toward the card background. */
+  --grade-ss: #de31ae;
+  --grade-s: #02b5c3;
+  --grade-a: #88da20;
+  --grade-b: oklch(0.45 0 0);
+  --grade-c: oklch(0.6 0 0);
+  --grade-d: oklch(0.75 0 0);
 }
 
 .dark {
@@ -269,6 +288,17 @@
 
   /* Dark mode tier text colors */
   --text-silver: hsl(0, 0%, 70%);
+
+  /* Brighter rank ranges: the light card's darker values drop under 3:1 here. */
+  --rank-range-lt1k: hsl(190, 70%, 47%);
+  --rank-range-1k: hsl(151, 55%, 45%);
+  --rank-range-10k: hsl(40, 85%, 52%);
+
+  /* B-D flip on the dark card so the ramp stays monotonic away from the
+     surface: B stays brightest, D recedes toward the card background. */
+  --grade-b: oklch(0.85 0 0);
+  --grade-c: oklch(0.7 0 0);
+  --grade-d: oklch(0.55 0 0);
 
   --card-foreground: oklch(1 0 0);
   --popover: oklch(0.23 0 264.49);
@@ -293,7 +323,6 @@
   --sidebar-ring: oklch(0.72 0 0);
   --font-sans: Inter, sans-serif;
   --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-  --font-mono: Geist Mono, monospace;
   --shadow-color: hsl(0 0% 0%);
   --shadow-opacity: 0.18;
   --shadow-blur: 2px;
@@ -324,6 +353,17 @@
   body {
     @apply bg-background text-foreground;
     background-color: var(--background) !important;
+  }
+
+  /* One typeface site-wide. The `--font-mono` alias already covers preflight's
+     code/kbd/samp/pre; this also catches the obsolete UA-monospace elements and
+     states the intent where a reviewer looks. */
+  code,
+  kbd,
+  samp,
+  pre,
+  tt {
+    font-family: var(--font-sans);
   }
 
   input[type='number']::-webkit-outer-spin-button,

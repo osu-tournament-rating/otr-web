@@ -34,8 +34,6 @@ import AuditNoteItem from './AuditNoteItem';
 import CascadeContextBanner from './CascadeContextBanner';
 import RelativeTime from './RelativeTime';
 
-// --- Constants ---
-
 type TimelineResponse = {
   page: number;
   pageSize: number;
@@ -64,8 +62,6 @@ const ACTION_BADGE_COLORS: Record<AuditActionType, string> = {
   [AuditActionType.Deleted]:
     'bg-red-500/5 text-red-600 dark:text-red-400 border-red-500/15',
 };
-
-// --- Sub-components ---
 
 function LoadingSkeleton(): React.JSX.Element {
   return (
@@ -130,7 +126,6 @@ function TimelineAuditEntry({
           isOpen ? 'bg-muted/30' : 'hover:bg-accent/50'
         )}
       >
-        {/* Cascade context banner */}
         {cascadeContext && (
           <div className="px-3 pt-2">
             <CascadeContextBanner context={cascadeContext} />
@@ -144,7 +139,6 @@ function TimelineAuditEntry({
               changeCount === 0 && 'cursor-default'
             )}
           >
-            {/* Action Icon */}
             <ActionIcon
               className={cn(
                 'h-4 w-4 shrink-0',
@@ -152,7 +146,6 @@ function TimelineAuditEntry({
               )}
             />
 
-            {/* Action Badge */}
             <Badge
               data-testid="timeline-action-badge"
               variant="outline"
@@ -164,7 +157,6 @@ function TimelineAuditEntry({
               {actionMeta.text}
             </Badge>
 
-            {/* User */}
             <span className="flex items-center gap-1.5 text-sm">
               {entry.actionUser ? (
                 <>
@@ -176,7 +168,7 @@ function TimelineAuditEntry({
                     />
                   ) : (
                     <Avatar className="h-5 w-5">
-                      <AvatarFallback className="text-[10px]">
+                      <AvatarFallback className="text-xs">
                         {entry.actionUser.username?.[0]?.toUpperCase() ?? '?'}
                       </AvatarFallback>
                     </Avatar>
@@ -202,10 +194,8 @@ function TimelineAuditEntry({
               )}
             </span>
 
-            {/* Spacer */}
             <span className="flex-1" />
 
-            {/* Change count indicator */}
             {changeCount > 0 && (
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <ChevronRight
@@ -218,7 +208,6 @@ function TimelineAuditEntry({
               </span>
             )}
 
-            {/* Timestamp */}
             <RelativeTime
               dateString={entry.created}
               className="shrink-0 text-xs text-muted-foreground"
@@ -226,7 +215,6 @@ function TimelineAuditEntry({
           </button>
         </CollapsibleTrigger>
 
-        {/* Expanded diffs */}
         <CollapsibleContent data-testid="timeline-entry-diff">
           {changes && changeCount > 0 && (
             <div className="border-t border-border bg-muted/20 px-3 py-2">
@@ -248,8 +236,6 @@ function TimelineAuditEntry({
     </Collapsible>
   );
 }
-
-// --- Main component ---
 
 type AuditEntityTimelineProps = {
   entityType: AuditEntityType;
@@ -300,7 +286,6 @@ export default function AuditEntityTimeline({
   const isEmpty = !isLoading && allItems.length === 0;
   const totalCount = responsePages[0]?.total ?? allItems.length;
 
-  // Find the most recent change timestamp
   const firstItem = allItems[0] ?? null;
   const latestChange = firstItem
     ? firstItem.type === 'audit'
@@ -308,7 +293,6 @@ export default function AuditEntityTimeline({
       : firstItem.data.created
     : null;
 
-  // Scroll to hash target on initial load
   useEffect(() => {
     if (
       typeof window === 'undefined' ||
@@ -342,7 +326,6 @@ export default function AuditEntityTimeline({
 
   return (
     <div data-testid="audit-timeline" className="space-y-4">
-      {/* Summary header */}
       <div
         data-testid="timeline-summary"
         className="flex items-center gap-2 text-sm text-muted-foreground"
@@ -361,7 +344,6 @@ export default function AuditEntityTimeline({
         )}
       </div>
 
-      {/* Timeline entries */}
       <div
         data-testid="timeline-entry-list"
         className="divide-y divide-border rounded-lg border border-border"
@@ -379,7 +361,6 @@ export default function AuditEntityTimeline({
         })}
       </div>
 
-      {/* Load more */}
       {hasMore && (
         <div className="flex justify-center pt-2">
           <Button

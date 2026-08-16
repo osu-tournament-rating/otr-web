@@ -5,7 +5,7 @@ import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 
 interface PlayerRatingChartSummaryStatsProps {
   data: PlayerRatingAdjustment[];
-  /** Optional suffix shown when a time filter narrows the change window */
+  /** Suffix shown when a time filter narrows the window */
   rangeLabel?: string;
 }
 

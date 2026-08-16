@@ -105,7 +105,6 @@ export default function FilteringResultsTable({
     []
   );
 
-  // Ensure data is an array
   const safeData =
     results && Array.isArray(results.filteringResults)
       ? results.filteringResults
@@ -120,7 +119,6 @@ export default function FilteringResultsTable({
     state: { sorting },
   });
 
-  // Early return if no results
   if (!results || !results.filteringResults) {
     const noResultsContent = (
       <div className="p-8 text-center text-muted-foreground">

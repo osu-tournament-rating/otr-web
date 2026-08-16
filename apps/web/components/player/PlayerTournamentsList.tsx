@@ -17,11 +17,9 @@ export default function PlayerTournamentsList({
   tournaments,
   adjustments,
 }: PlayerTournamentsListProps) {
-  const NUM_INITIAL_DISPLAY = 5;
-  const NUM_LOAD_MORE = 25;
-  const [displayCount, setDisplayCount] = useState(NUM_INITIAL_DISPLAY);
+  const LOAD_MORE_COUNT = 25;
+  const [displayCount, setDisplayCount] = useState(5);
 
-  // Get tournaments up to the current display count
   const displayedTournaments = tournaments.slice(0, displayCount);
 
   if (tournaments.length === 0) {
@@ -55,7 +53,7 @@ export default function PlayerTournamentsList({
             className="w-full justify-center"
             onClick={() =>
               setDisplayCount(
-                Math.min(displayCount + NUM_LOAD_MORE, tournaments.length)
+                Math.min(displayCount + LOAD_MORE_COUNT, tournaments.length)
               )
             }
           >

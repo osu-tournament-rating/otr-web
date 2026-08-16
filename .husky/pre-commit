@@ -5,7 +5,7 @@ set -e
 # Ensure the hook runs from the repository root
 cd "$(dirname "$0")/.."
 
-staged_files="$(git diff --cached --name-only --diff-filter=ACMR)"
+staged_files="$(git diff --cached --name-only --diff-filter=ACMR | while IFS= read -r f; do [ -L "$f" ] || printf '%s\n' "$f"; done)"
 
 if [ -n "$staged_files" ]; then
   echo "Formatting staged files..."

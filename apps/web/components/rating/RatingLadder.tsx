@@ -9,7 +9,6 @@ export default function RatingLadder() {
         'grid grid-cols-2 gap-2 rounded-2xl border bg-card p-4 sm:grid-cols-3 xl:auto-cols-fr xl:grid-flow-col'
       }
     >
-      {/* All tiers in a responsive grid layout */}
       {tierData.map((item) => (
         <TierCard
           key={item.tier}
@@ -17,7 +16,7 @@ export default function RatingLadder() {
           displayName={item.displayName}
           rating={item.baseRating}
           iconSize={40}
-          className="last:col-[1/-1] last:sm:col-auto"
+          className="last:col-span-full last:sm:col-auto"
         />
       ))}
     </div>

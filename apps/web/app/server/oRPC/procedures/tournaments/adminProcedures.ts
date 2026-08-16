@@ -433,7 +433,7 @@ async function alignTournamentChildRulesets(
 
   const gameIds = gameRows.map((row) => row.id);
 
-  // Propogate variants to games/scores
+  // Propagate variants to games/scores
   await tx
     .update(schema.games)
     .set({

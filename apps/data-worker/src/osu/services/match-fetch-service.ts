@@ -358,7 +358,6 @@ export class MatchFetchService {
 
     const initialMatch = initialResult.data;
 
-    // Aggregate all events and users across pages without wasting calls
     const allEventsById = new Map<
       number,
       NonNullable<Match['events']>[number]

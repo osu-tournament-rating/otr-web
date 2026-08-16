@@ -29,7 +29,6 @@ function formatValue(
   if (value === null || value === undefined || value === 'null' || value === '')
     return '\u2014';
 
-  // Handle user reference fields
   if (
     isFieldUserReference(entityType, fieldName) &&
     typeof value === 'number'

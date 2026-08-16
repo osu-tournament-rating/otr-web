@@ -44,7 +44,6 @@ export type MatchRow = {
 
 const columnHelper = createColumnHelper<MatchRow>();
 
-// Helper function to get verification status priority for sorting
 const getVerificationStatusPriority = (status: VerificationStatus): number => {
   switch (status) {
     case VerificationStatus.Verified:
@@ -191,7 +190,6 @@ export const columns = [
               </SimpleTooltip>
             )}
           </div>
-          {/* Mobile-only additional info */}
           <div className="mt-1 flex flex-col gap-1 text-xs text-muted-foreground md:hidden">
             <div className="flex items-center gap-2">
               <span>
@@ -227,7 +225,6 @@ export const columns = [
     },
     cell: ({ getValue }) => {
       const games = getValue();
-      // Sort games by start time before rendering pips
       const sortedGames = [...games].sort((a, b) => {
         const startA = a.startTime ? new Date(a.startTime).getTime() : 0;
         const startB = b.startTime ? new Date(b.startTime).getTime() : 0;

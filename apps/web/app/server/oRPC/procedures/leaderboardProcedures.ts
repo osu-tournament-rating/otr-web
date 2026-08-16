@@ -16,8 +16,6 @@ import type { DatabaseClient } from '@/lib/db';
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 100;
 
-// Internal shared implementation used by both public and protected procedures.
-// `friendUserId` scopes the leaderboard to the signed-in user's friends when provided.
 async function runLeaderboard({
   input,
   context,
@@ -37,7 +35,6 @@ async function runLeaderboard({
     let scopedPlayerIds: number[] | undefined;
 
     if (friendUserId != null) {
-      // Scope friend leaderboard to the signed-in user plus their friends.
       const friendRows = await context.db
         .select({ friendId: schema.playerFriends.friendId })
         .from(schema.playerFriends)
@@ -332,7 +329,6 @@ async function runLeaderboard({
   }
 }
 
-// Public: global leaderboard only. Does NOT expose friends scope.
 export const getLeaderboard = publicProcedure
   .input(LeaderboardRequestSchema.omit({ friend: true, userId: true }))
   .output(LeaderboardResponseSchema)
@@ -346,7 +342,6 @@ export const getLeaderboard = publicProcedure
     runLeaderboard({ input, context, friendUserId: undefined })
   );
 
-// Protected: leaderboard scoped to the signed-in user's friends.
 export const getLeaderboardFriends = protectedProcedure
   .input(LeaderboardRequestSchema.omit({ friend: true, userId: true }))
   .output(LeaderboardResponseSchema)
@@ -357,7 +352,6 @@ export const getLeaderboardFriends = protectedProcedure
     path: '/leaderboard/friends',
   })
   .handler(async ({ input, context }) => {
-    // The protected procedure ensures session is present.
     const session = context.session as
       | { dbPlayer?: { id?: number | null } | null }
       | undefined;

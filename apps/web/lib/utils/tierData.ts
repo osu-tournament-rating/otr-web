@@ -1,7 +1,4 @@
-/**
- * String representation of each tier and subtier. There are three subtiers per major tier,
- * except for Elite Grandmaster.
- */
+/** Three subtiers per major tier, except Elite Grandmaster. */
 export const tierNames = [
   'Bronze',
   'Silver',
@@ -14,9 +11,6 @@ export const tierNames = [
   'Elite Grandmaster',
 ] as const;
 
-/**
- * Typed representation of each possible tier name
- */
 export type TierName = (typeof tierNames)[number];
 
 export function getTierString(tier: TierName, subTier: number | undefined) {
@@ -44,34 +38,26 @@ export function getTierString(tier: TierName, subTier: number | undefined) {
   return `${tier} ${romanNumeral}`;
 }
 
-// Helper function to safely access tier colors
 export function getTierColor(tier: TierName) {
   if (tier in tierColors) {
     return tierColors[tier];
   }
 
-  // Return a default tier color if the tier doesn't exist in tierColors
   return tierColors['Silver'];
 }
 
-/**
- * Colors and gradients for a tier
- */
 export type TierColor = {
-  /** Gradient coloring, displays as a glow around the tier icon. Format is from-color-000 to-color-000 */
+  /** Glow around the tier icon, as `from-color-000 to-color-000`. */
   gradient: {
-    /** Dark mode gradient */
     dark: string;
 
-    /** Light mode gradient */
     light: string;
   };
 
-  /** Class name for the primary color of the icon */
   textClass: string;
 };
 
-/** Tier colors for glows and accents */
+/** Tier colors for glows and accents. */
 export const tierColors: Partial<{ [key in TierName]: TierColor }> = {
   'Elite Grandmaster': {
     gradient: {
@@ -138,19 +124,16 @@ export const tierColors: Partial<{ [key in TierName]: TierColor }> = {
   },
 };
 
-/** Basic information about a tier */
 export type TierDataType = {
-  /** Tier name */
   tier: TierName;
 
-  /** Minimum rating required to achieve the tier */
+  /** Minimum rating required to reach the tier. */
   baseRating: number;
 
-  /** How the tier text is displayed visually */
   displayName: string;
 };
 
-/** Tier data for the ladder with simplified names */
+/** Tier data for the ladder, with simplified names. */
 export const tierData: TierDataType[] = [
   {
     tier: 'Bronze',

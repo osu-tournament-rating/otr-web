@@ -156,7 +156,6 @@ export default function TournamentAdminView({
           <DialogTitle>Edit Tournament</DialogTitle>
           <DialogDescription>Editing {tournament.name}</DialogDescription>
         </DialogHeader>
-        {/* Edit form */}
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
@@ -337,21 +336,17 @@ export default function TournamentAdminView({
               />
             </div>
 
-            {/* Admin operation buttons */}
             <div className="flex items-center gap-6 border-t border-b border-border py-3">
-              {/* Verification & Safe Operations */}
               <div className="flex gap-2">
                 <AcceptPreVerificationStatusesButton tournament={tournament} />
                 <ResetAutomatedChecksButton tournament={tournament} />
               </div>
 
-              {/* Data Synchronization */}
               <div className="flex gap-2 border-l border-border pl-6">
                 <RefetchMatchDataButton tournament={tournament} />
                 <RefetchBeatmapDataButton tournament={tournament} />
               </div>
 
-              {/* Destructive Operations */}
               <div className="flex gap-2 border-l border-border pl-6">
                 <DeleteTournamentBeatmapsButton tournament={tournament} />
                 <DeleteButton
@@ -363,9 +358,7 @@ export default function TournamentAdminView({
               </div>
             </div>
 
-            {/* Form action buttons */}
             <div className="flex justify-between">
-              {/* Clear changes */}
               <Button
                 type="reset"
                 variant={'secondary'}
@@ -378,7 +371,6 @@ export default function TournamentAdminView({
                 Clear
               </Button>
 
-              {/* Save changes */}
               <Button
                 type="submit"
                 size="sm"

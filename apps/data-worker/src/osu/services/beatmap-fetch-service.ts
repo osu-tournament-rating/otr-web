@@ -180,7 +180,6 @@ export class BeatmapFetchService {
         ? apiBeatmapset.beatmaps
         : [apiBeatmap];
 
-      // Collect unique user IDs from all beatmaps
       const userIds = new Set<number>();
       for (const beatmap of beatmapRows) {
         if (beatmap.user_id) {
@@ -188,8 +187,6 @@ export class BeatmapFetchService {
         }
       }
 
-      // Enqueue player fetch messages for background processing
-      // Skip if player is already being fetched (status === Fetching)
       for (const userId of userIds) {
         try {
           const status = await getPlayerFetchStatus(tx, userId);
@@ -257,14 +254,12 @@ export class BeatmapFetchService {
         if (row) {
           affectedBeatmapIds.push(row.id);
 
-          // Create or update player record for beatmap creator
           if (beatmap.user_id) {
             const beatmapCreatorId = await getOrCreatePlayerId(
               tx,
               beatmap.user_id
             );
 
-            // Link beatmap to its creator in join table
             await tx
               .insert(schema.joinBeatmapCreators)
               .values({

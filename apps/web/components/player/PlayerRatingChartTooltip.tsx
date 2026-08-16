@@ -23,7 +23,6 @@ export default function PlayerRatingChartTooltip({
   const data = payload[0].payload;
   const isRatingTab = activeTab.toLowerCase() === 'rating';
 
-  // Get the appropriate values based on active tab
   const value = isRatingTab
     ? data.ratingAfter.toFixed(0)
     : data.volatilityAfter.toFixed(2);
@@ -44,7 +43,9 @@ export default function PlayerRatingChartTooltip({
 
   return (
     <div className="rounded-md border bg-popover/90 p-3 font-sans shadow-md">
-      <p className="mb-1 font-medium">{formattedDate(data.timestamp)}</p>
+      <p className="mb-1 text-sm font-semibold">
+        {formattedDate(data.timestamp)}
+      </p>
       <p className="text-sm text-muted-foreground">
         Type:{' '}
         {RatingAdjustmentTypeEnumhelper.getMetadata(data.adjustmentType).text}
@@ -53,7 +54,7 @@ export default function PlayerRatingChartTooltip({
         {label}:{' '}
         <span className="inline-flex items-baseline gap-1 font-medium">
           {value}
-          {isRatingTab && <TRText />}
+          {isRatingTab && <TRText className="font-medium" />}
         </span>
       </p>
       <p className="text-sm">
@@ -61,7 +62,7 @@ export default function PlayerRatingChartTooltip({
         <span className={`inline-flex items-baseline gap-1 ${deltaClassName}`}>
           {delta > 0 ? '+' : ''}
           {delta.toFixed(2)}
-          {isRatingTab && <TRText />}
+          {isRatingTab && <TRText className="font-medium" />}
         </span>
       </p>
       {data.match?.name && (

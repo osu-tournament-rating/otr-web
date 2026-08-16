@@ -147,7 +147,7 @@ export default function TournamentListRow({
           </h2>
           <span
             data-testid="tournament-abbreviation"
-            className="shrink-0 font-mono text-xs text-muted-foreground"
+            className="shrink-0 text-xs font-medium text-muted-foreground"
           >
             {tournament.abbreviation}
           </span>

@@ -37,7 +37,6 @@ export class GameAutomationChecks {
   ): GameRejectionReason {
     let rejection = GameRejectionReason.None;
 
-    // Reset warning flags before processing
     game.warningFlags = GameWarningFlags.None;
 
     rejection = addGameRejection(

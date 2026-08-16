@@ -39,8 +39,7 @@ async function getData(params: z.infer<typeof leaderboardFilterSchema>) {
     tiers: params.tiers && params.tiers.length > 0 ? params.tiers : undefined,
   };
 
-  // Strip friend-specific fields from the RPC input; protected route derives
-  // the user scope from session.
+  // The protected route derives the user scope from the session
   const baseFilter = {
     ...filter,
     friend: undefined,
@@ -59,25 +58,21 @@ export default async function Page(props: {
 }) {
   const filter = leaderboardFilterSchema.parse(await props.searchParams);
 
-  // Redirect to main leaderboard if user tries to access friends tab while logged out
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
   if (filter.friend && !session) {
     redirect('/leaderboard');
   }
 
-  // Check if user has friends synced
   const playerId = session?.dbPlayer?.id;
   const userHasFriends = playerId ? await hasFriends(playerId) : false;
 
-  // Redirect to main leaderboard if user tries to access friends tab with no friends
   if (filter.friend && !userHasFriends) {
     redirect('/leaderboard');
   }
 
   const data = await getData(filter);
 
-  // Get current user's player ID for row highlighting
   let currentUserPlayerId: number | null = null;
   if (session && 'dbPlayer' in session && session.dbPlayer) {
     currentUserPlayerId = (session.dbPlayer as { id: number }).id;
@@ -86,7 +81,6 @@ export default async function Page(props: {
   const totalPages = data.pages;
   const page = data.page ?? filter.page ?? 1;
 
-  // Helper to create query string with existing params
   const createUri = (navPage: number): string => {
     const navParams = createSearchParamsFromSchema({
       ...filter,
@@ -96,12 +90,11 @@ export default async function Page(props: {
     return '/leaderboard' + (navParams.size > 0 ? `?${navParams}` : '');
   };
 
-  // Helper to create URLs for tab navigation
   const createTabUri = (isFriend: boolean): string => {
     const tabParams = createSearchParamsFromSchema({
       ...filter,
       friend: isFriend || undefined,
-      page: 1, // Reset to first page when switching tabs
+      page: 1,
     });
 
     return '/leaderboard' + (tabParams.size > 0 ? `?${tabParams}` : '');
@@ -178,7 +171,6 @@ export default async function Page(props: {
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
       <LeaderboardFirstVisitDialog />
-      {/* Leaderboard Table */}
       {data && (
         <Card data-testid="leaderboard-card">
           <CardHeader className="pb-3">
@@ -216,7 +208,6 @@ export default async function Page(props: {
         </Card>
       )}
 
-      {/* Pagination */}
       <Pagination data-testid="leaderboard-pagination" className="mt-4">
         <PaginationContent>
           <PaginationItem>

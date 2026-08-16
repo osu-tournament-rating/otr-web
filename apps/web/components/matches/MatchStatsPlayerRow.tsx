@@ -39,10 +39,8 @@ function TeamBadge({
 function MobileMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <div className="truncate text-[11px] text-muted-foreground">{label}</div>
-      <div className="mt-0.5 truncate text-sm font-medium tabular-nums">
-        {value}
-      </div>
+      <div className="truncate text-xs text-muted-foreground">{label}</div>
+      <div className="mt-0.5 truncate text-sm font-medium">{value}</div>
     </div>
   );
 }
@@ -54,7 +52,7 @@ function RatingRange({ player }: { player: ProcessedPlayerStats }) {
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 tabular-nums"
+      className="inline-flex items-center gap-1.5"
       aria-label={`Rating changed from ${player.ratingBefore.toFixed(0)} to ${player.ratingAfter.toFixed(0)}`}
     >
       <span className="text-muted-foreground">
@@ -118,7 +116,7 @@ const MatchStatsPlayerRow = function MatchStatsPlayerRow({
             )}
             <div className="flex items-center gap-1 text-xs">
               <RatingRange player={player} />
-              <TRText className="text-[10px]" />
+              <TRText className="text-xs" />
             </div>
           </div>
         </div>
@@ -155,7 +153,7 @@ const MatchStatsPlayerRow = function MatchStatsPlayerRow({
         </div>
       </TableCell>
 
-      <TableCell className="hidden py-3 text-center tabular-nums lg:table-cell">
+      <TableCell className="hidden py-3 text-center lg:table-cell">
         {showRecord ? (
           <span
             aria-label={`${player.gamesWon} wins and ${player.gamesLost} losses`}
@@ -166,7 +164,7 @@ const MatchStatsPlayerRow = function MatchStatsPlayerRow({
           player.gamesPlayed.toLocaleString()
         )}
       </TableCell>
-      <TableCell className="hidden py-3 text-center font-medium tabular-nums lg:table-cell">
+      <TableCell className="hidden py-3 text-center font-medium lg:table-cell">
         {player.matchCost.toFixed(2)}
       </TableCell>
       <TableCell className="hidden py-3 text-center text-sm lg:table-cell">
@@ -179,16 +177,16 @@ const MatchStatsPlayerRow = function MatchStatsPlayerRow({
           <span className="text-muted-foreground">—</span>
         )}
       </TableCell>
-      <TableCell className="hidden py-3 text-center tabular-nums lg:table-cell">
+      <TableCell className="hidden py-3 text-center lg:table-cell">
         {formatScore(player.averageScore)}
       </TableCell>
-      <TableCell className="hidden py-3 text-center tabular-nums lg:table-cell">
+      <TableCell className="hidden py-3 text-center lg:table-cell">
         {formatAccuracy(player.averageAccuracy)}
       </TableCell>
-      <TableCell className="hidden py-3 text-center tabular-nums lg:table-cell">
+      <TableCell className="hidden py-3 text-center lg:table-cell">
         {player.averageMisses.toFixed(1)}
       </TableCell>
-      <TableCell className="hidden py-3 text-center tabular-nums lg:table-cell lg:pr-4">
+      <TableCell className="hidden py-3 text-center lg:table-cell lg:pr-4">
         {player.averagePlacement.toFixed(1)}
       </TableCell>
     </TableRow>

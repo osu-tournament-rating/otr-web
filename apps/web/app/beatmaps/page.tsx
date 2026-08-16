@@ -1,75 +1,50 @@
 import { Metadata } from 'next';
 import { Music } from 'lucide-react';
-import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
-import { orpc } from '@/lib/orpc/orpc';
-import { beatmapListFilterSchema } from '@/lib/validation-schema';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import BeatmapListContent from '@/components/beatmaps/list/BeatmapListContent';
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
+  PaginationLink,
   PaginationNext,
   PaginationPrevious,
-  PaginationEllipsis,
 } from '@/components/ui/pagination';
-import BeatmapListFilter from '@/components/beatmaps/list/BeatmapListFilter';
-import BeatmapListTable from '@/components/beatmaps/list/BeatmapListTable';
+import {
+  buildBeatmapListPath,
+  normalizeBeatmapSearchQuery,
+} from '@/lib/beatmaps/list-params';
+import { orpc } from '@/lib/orpc/orpc';
+import { beatmapListFilterSchema } from '@/lib/validation-schema';
 
 export const metadata: Metadata = {
   title: 'Beatmaps',
-  description: 'Browse and search tournament beatmaps.',
+  description: 'Browse tournament beatmaps and observed play data.',
 };
 
-function createUri(
-  filter: ReturnType<typeof beatmapListFilterSchema.parse>,
-  navPage: number
-): string {
-  const params = new URLSearchParams();
+type FilterData = ReturnType<typeof beatmapListFilterSchema.parse>;
 
-  if (navPage > 1) params.set('page', String(navPage));
-  if (filter.q) params.set('q', filter.q);
-  if (filter.ruleset !== undefined)
-    params.set('ruleset', String(filter.ruleset));
-  if (filter.minSr !== undefined) params.set('minSr', String(filter.minSr));
-  if (filter.maxSr !== undefined) params.set('maxSr', String(filter.maxSr));
-  if (filter.minBpm !== undefined) params.set('minBpm', String(filter.minBpm));
-  if (filter.maxBpm !== undefined) params.set('maxBpm', String(filter.maxBpm));
-  if (filter.minCs !== undefined) params.set('minCs', String(filter.minCs));
-  if (filter.maxCs !== undefined) params.set('maxCs', String(filter.maxCs));
-  if (filter.minAr !== undefined) params.set('minAr', String(filter.minAr));
-  if (filter.maxAr !== undefined) params.set('maxAr', String(filter.maxAr));
-  if (filter.minOd !== undefined) params.set('minOd', String(filter.minOd));
-  if (filter.maxOd !== undefined) params.set('maxOd', String(filter.maxOd));
-  if (filter.minHp !== undefined) params.set('minHp', String(filter.minHp));
-  if (filter.maxHp !== undefined) params.set('maxHp', String(filter.maxHp));
-  if (filter.minLength !== undefined)
-    params.set('minLength', String(filter.minLength));
-  if (filter.maxLength !== undefined)
-    params.set('maxLength', String(filter.maxLength));
-  if (filter.minGameCount !== undefined)
-    params.set('minGameCount', String(filter.minGameCount));
-  if (filter.maxGameCount !== undefined)
-    params.set('maxGameCount', String(filter.maxGameCount));
-  if (filter.minTournamentCount !== undefined)
-    params.set('minTournamentCount', String(filter.minTournamentCount));
-  if (filter.maxTournamentCount !== undefined)
-    params.set('maxTournamentCount', String(filter.maxTournamentCount));
-  if (filter.sort !== 'gameCount') params.set('sort', filter.sort);
-  if (!filter.descending) params.set('descending', 'false');
-
-  return '/beatmaps' + (params.size > 0 ? `?${params}` : '');
+function hasFilters(filter: FilterData): boolean {
+  return Boolean(
+    normalizeBeatmapSearchQuery(filter.q) ||
+    filter.ruleset !== undefined ||
+    Object.entries(filter).some(
+      ([key, value]) =>
+        (key.startsWith('min') || key.startsWith('max')) && value !== undefined
+    )
+  );
 }
 
 export default async function Page(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const filter = beatmapListFilterSchema.parse(await props.searchParams);
-
   const data = await orpc.beatmaps.list({
     page: filter.page ?? 1,
-    pageSize: 50,
-    searchQuery: filter.q || undefined,
+    pageSize: 30,
+    searchQuery: normalizeBeatmapSearchQuery(filter.q),
     ruleset: filter.ruleset,
     minSr: filter.minSr,
     maxSr: filter.maxSr,
@@ -93,119 +68,136 @@ export default async function Page(props: {
     descending: filter.descending,
   });
 
-  const { totalPages, page: currentPage } = data;
-
-  const renderPageNumbers = () => {
-    const pages = [];
-    const startPage = Math.max(1, currentPage - 2);
-    const endPage = Math.min(totalPages, currentPage + 2);
-
-    if (startPage > 1) {
-      pages.push(
-        <PaginationItem key={1}>
-          <Link href={createUri(filter, 1)} className="px-4">
-            1
-          </Link>
-        </PaginationItem>
-      );
-    }
-
-    if (startPage > 2) {
-      pages.push(
-        <PaginationItem key="firstEllipsis">
-          <PaginationEllipsis />
-        </PaginationItem>
-      );
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <PaginationItem key={i}>
-          <Link
-            href={createUri(filter, i)}
-            className={`px-2 sm:px-4 ${i === currentPage ? 'font-bold' : ''}`}
-          >
-            {i}
-          </Link>
-        </PaginationItem>
-      );
-    }
-
-    if (endPage < totalPages - 1) {
-      pages.push(
-        <PaginationItem key="secondEllipsis">
-          <PaginationEllipsis />
-        </PaginationItem>
-      );
-    }
-
-    if (endPage < totalPages) {
-      pages.push(
-        <PaginationItem key={totalPages}>
-          <Link href={createUri(filter, totalPages)} className="px-4">
-            {totalPages}
-          </Link>
-        </PaginationItem>
-      );
-    }
-
-    return pages;
-  };
+  const lastPage = Math.max(1, data.totalPages);
+  if (data.page > lastPage) redirect(buildBeatmapListPath(filter, lastPage));
 
   return (
-    <div className="container mx-auto flex flex-col gap-4 md:gap-2">
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex flex-row items-center justify-between">
-            <div className="flex flex-row items-center gap-2">
-              <Music className="h-6 w-6 text-primary" />
-              <CardTitle className="text-xl font-bold">Beatmaps</CardTitle>
-            </div>
-            <BeatmapListFilter filter={filter} />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <BeatmapListTable beatmaps={data.items} filter={filter} />
-        </CardContent>
-      </Card>
+    <div className="container mx-auto px-4 py-6 sm:px-0 sm:py-0">
+      <header className="mb-6 border-b pb-6">
+        <div className="flex items-center gap-3">
+          <Music className="size-7 text-primary" aria-hidden="true" />
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Beatmaps
+          </h1>
+        </div>
+        <p className="mt-3 text-sm text-muted-foreground sm:text-base">
+          Tournament maps and observed play data.
+        </p>
+      </header>
 
-      {totalPages > 1 && (
-        <Pagination data-testid="beatmap-pagination" className="mt-4">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                data-testid="beatmap-pagination-prev"
-                href={
-                  currentPage > 1
-                    ? createUri(filter, currentPage - 1)
-                    : createUri(filter, 1)
-                }
-                aria-disabled={currentPage <= 1}
-                className={
-                  currentPage <= 1 ? 'cursor-not-allowed opacity-50' : ''
-                }
-              />
-            </PaginationItem>
-            {renderPageNumbers()}
-            <PaginationItem>
-              <PaginationNext
-                data-testid="beatmap-pagination-next"
-                href={
-                  currentPage < totalPages
-                    ? createUri(filter, currentPage + 1)
-                    : createUri(filter, totalPages)
-                }
-                aria-disabled={currentPage >= totalPages}
-                className={
-                  currentPage >= totalPages
-                    ? 'cursor-not-allowed opacity-50'
-                    : ''
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      )}
+      <section
+        aria-label="Beatmap listing"
+        data-testid="beatmap-results"
+        className="overflow-hidden rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none"
+      >
+        <BeatmapListContent
+          beatmaps={data.items}
+          filter={filter}
+          isFiltered={hasFilters(filter)}
+          totalCount={data.totalCount}
+        />
+
+        {data.totalPages > 1 && (
+          <BeatmapPagination
+            filter={filter}
+            currentPage={data.page}
+            totalPages={data.totalPages}
+          />
+        )}
+      </section>
     </div>
+  );
+}
+
+function BeatmapPagination({
+  filter,
+  currentPage,
+  totalPages,
+}: {
+  filter: FilterData;
+  currentPage: number;
+  totalPages: number;
+}) {
+  const startPage = Math.max(1, currentPage - 2);
+  const endPage = Math.min(totalPages, currentPage + 2);
+  const pages = Array.from(
+    { length: endPage - startPage + 1 },
+    (_, index) => startPage + index
+  );
+
+  return (
+    <Pagination
+      data-testid="beatmap-pagination"
+      className="border-t bg-muted/20 px-3 py-4 dark:bg-muted"
+    >
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            data-testid="beatmap-pagination-prev"
+            href={buildBeatmapListPath(filter, Math.max(1, currentPage - 1))}
+            aria-disabled={currentPage <= 1}
+            className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''}
+          />
+        </PaginationItem>
+
+        {startPage > 1 && (
+          <PaginationItem className="hidden sm:block">
+            <PaginationLink href={buildBeatmapListPath(filter, 1)}>
+              1
+            </PaginationLink>
+          </PaginationItem>
+        )}
+        {startPage > 2 && (
+          <PaginationItem className="hidden sm:block">
+            <PaginationEllipsis />
+          </PaginationItem>
+        )}
+
+        {pages.map((page) => (
+          <PaginationItem key={page} className="hidden sm:block">
+            <PaginationLink
+              href={buildBeatmapListPath(filter, page)}
+              isActive={page === currentPage}
+            >
+              {page}
+            </PaginationLink>
+          </PaginationItem>
+        ))}
+
+        <PaginationItem
+          data-testid="beatmap-pagination-status"
+          className="px-2 text-sm sm:hidden"
+        >
+          {currentPage} / {totalPages}
+        </PaginationItem>
+
+        {endPage < totalPages - 1 && (
+          <PaginationItem className="hidden sm:block">
+            <PaginationEllipsis />
+          </PaginationItem>
+        )}
+        {endPage < totalPages && (
+          <PaginationItem className="hidden sm:block">
+            <PaginationLink href={buildBeatmapListPath(filter, totalPages)}>
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        )}
+
+        <PaginationItem>
+          <PaginationNext
+            data-testid="beatmap-pagination-next"
+            href={buildBeatmapListPath(
+              filter,
+              Math.min(totalPages, currentPage + 1)
+            )}
+            aria-disabled={currentPage >= totalPages}
+            className={
+              currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''
+            }
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
   );
 }

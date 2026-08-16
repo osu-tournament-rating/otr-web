@@ -1,4 +1,3 @@
-// Chart constants and utilities
 export const CHART_CONSTANTS = {
   DEFAULT_HEIGHT: 250,
   DEFAULT_MARGIN: { top: 20, right: 20, left: 0, bottom: 25 },
@@ -55,7 +54,6 @@ export function processChartData<T extends Record<string, number>>(
   }));
 }
 
-// Common chart tick formatters
 export const TICK_FORMATTERS = {
   number: formatChartNumber,
   percentage: (value: number) => `${value}%`,

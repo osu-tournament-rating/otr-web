@@ -16,7 +16,6 @@ import {
 } from '@/lib/audit-entity-types';
 import type { DatabaseClient } from '@/lib/db';
 
-/** Maps AuditEntityType to the corresponding Drizzle audit table */
 export function getAuditTable(entityType: AuditEntityType) {
   switch (entityType) {
     case AuditEntityType.Tournament:
@@ -30,7 +29,6 @@ export function getAuditTable(entityType: AuditEntityType) {
   }
 }
 
-/** Maps AuditEntityType to the corresponding Drizzle admin notes table */
 export function getAdminNotesTable(entityType: AuditEntityType) {
   switch (entityType) {
     case AuditEntityType.Tournament:
@@ -44,7 +42,6 @@ export function getAdminNotesTable(entityType: AuditEntityType) {
   }
 }
 
-/** Maps AuditEntityType to the raw SQL table name string */
 export function getTableNameString(entityType: AuditEntityType): string {
   switch (entityType) {
     case AuditEntityType.Tournament:
@@ -58,7 +55,6 @@ export function getTableNameString(entityType: AuditEntityType): string {
   }
 }
 
-/** Maps AuditEntityType to the raw SQL admin notes table name string */
 export function getAdminNotesTableNameString(
   entityType: AuditEntityType
 ): string {
@@ -74,7 +70,7 @@ export function getAdminNotesTableNameString(
   }
 }
 
-/** All audit tables in order matching AuditEntityType values */
+/** Ordered to match AuditEntityType values. */
 export const ALL_AUDIT_TABLES = [
   { table: schema.tournamentAudits, entityType: AuditEntityType.Tournament },
   { table: schema.matchAudits, entityType: AuditEntityType.Match },
@@ -82,21 +78,13 @@ export const ALL_AUDIT_TABLES = [
   { table: schema.gameScoreAudits, entityType: AuditEntityType.Score },
 ] as const;
 
-/** Lightweight subset for the default activity view (skips large game/score tables) */
+/** Subset for the default activity view; skips the large game/score tables. */
 export const LIGHT_AUDIT_TABLES = [
   { table: schema.tournamentAudits, entityType: AuditEntityType.Tournament },
   { table: schema.matchAudits, entityType: AuditEntityType.Match },
 ] as const;
 
-/**
- * Get the SQL FROM clause (with JOINs) and parent entity ID expression
- * for resolving the parent tournament of each entity type.
- *
- * Tournament audits: reference_id_lock IS the tournament ID
- * Match audits: JOIN matches to get tournament_id
- * Game audits: JOIN games → matches to get tournament_id
- * Score audits: JOIN game_scores → games → matches to get tournament_id
- */
+/** FROM clause and parent tournament ID expression for an entity type's audit table. */
 export function getParentEntityJoinInfo(entityType: AuditEntityType): {
   fromClause: string;
   parentIdExpr: string;
@@ -128,7 +116,7 @@ export function getParentEntityJoinInfo(entityType: AuditEntityType): {
   }
 }
 
-/** Build the stable event key used by both the feed and legacy detail lookup. */
+/** Stable event key shared by the feed and the legacy detail lookup. */
 export function buildAuditEventKeyExpression(parentIdExpr: string): SQL {
   return sql`
     CASE
@@ -145,9 +133,6 @@ export function buildAuditEventKeyExpression(parentIdExpr: string): SQL {
   `;
 }
 
-/**
- * Compare two values for equality, handling objects/arrays via JSON serialization.
- */
 function valuesAreEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (a === null || b === null) return false;
@@ -158,10 +143,6 @@ function valuesAreEqual(a: unknown, b: unknown): boolean {
   return false;
 }
 
-/**
- * Normalizes inner change value keys (originalValue/newValue) to camelCase.
- * Handles PascalCase, camelCase, and snake_case inputs.
- */
 function normalizeChangeValue(value: unknown): unknown {
   if (typeof value !== 'object' || value === null) return value;
 
@@ -182,13 +163,7 @@ function normalizeChangeValue(value: unknown): unknown {
   return result;
 }
 
-/**
- * Normalizes JSONB change keys from snake_case to camelCase.
- * The audit triggers store keys in snake_case, but historical data
- * was already camelized by a migration. This handles both cases.
- * Also normalizes inner value keys (originalValue/newValue) to camelCase.
- * Filters out fields where originalValue equals newValue (no actual change).
- */
+/** Camelizes JSONB change keys and drops no-op fields; triggers write snake_case, migrated rows camelCase. */
 export function camelizeChangesKeys(
   changes: Record<string, unknown> | null
 ): Record<string, unknown> | null {
@@ -203,7 +178,6 @@ export function camelizeChangesKeys(
       snakeCamelKey.charAt(0).toLowerCase() + snakeCamelKey.slice(1);
     const normalizedValue = normalizeChangeValue(value);
 
-    // Skip fields where originalValue equals newValue (no actual change)
     if (normalizedValue && typeof normalizedValue === 'object') {
       const { originalValue, newValue } = normalizedValue as {
         originalValue?: unknown;
@@ -217,14 +191,10 @@ export function camelizeChangesKeys(
     result[camelKey] = normalizedValue;
   }
 
-  // Return null if all fields were filtered out
   return Object.keys(result).length > 0 ? result : null;
 }
 
-/**
- * Merge-sort timeline items by created date descending.
- * Used to interleave audit entries and admin notes.
- */
+/** Interleaves audit entries and admin notes, newest first. */
 export function mergeTimelineItems(
   ...arrays: EntityTimelineItem[][]
 ): EntityTimelineItem[] {
@@ -241,9 +211,7 @@ function getTimelineItemCreated(item: EntityTimelineItem): string {
   return item.type === 'audit' ? item.data.entry.created : item.data.created;
 }
 
-/**
- * Merge-sort audit entries from multiple tables by created date descending.
- */
+/** Merges audit entries from multiple tables, newest first. */
 export function mergeAuditEntries(...arrays: AuditEntry[][]): AuditEntry[] {
   const merged = arrays.flat();
   merged.sort((a, b) => {
@@ -254,19 +222,15 @@ export function mergeAuditEntries(...arrays: AuditEntry[][]): AuditEntry[] {
   return merged;
 }
 
-/** Convert camelCase to snake_case */
 export function camelToSnake(s: string): string {
   return s.replace(/[A-Z]/g, (c) => '_' + c.toLowerCase());
 }
-
-// --- Event Assembly ---
 
 export type EventFeedCursor = {
   created: string;
   eventKey: string | null;
 };
 
-/** Encode a stable event cursor while keeping the public wire type a string. */
 export function encodeEventFeedCursor(cursor: {
   created: string;
   eventKey: string;
@@ -274,10 +238,7 @@ export function encodeEventFeedCursor(cursor: {
   return JSON.stringify(cursor);
 }
 
-/**
- * Decode the current composite cursor or the legacy raw timestamp cursor.
- * Legacy cursors intentionally have no tie-break key.
- */
+/** Accepts the composite cursor or a legacy raw timestamp, which has no tie-break key. */
 export function decodeEventFeedCursor(cursor: string): EventFeedCursor {
   try {
     const parsed = JSON.parse(cursor) as Partial<EventFeedCursor>;
@@ -299,9 +260,7 @@ export function decodeEventFeedCursor(cursor: string): EventFeedCursor {
   throw new Error('Invalid audit event cursor');
 }
 
-/**
- * A raw grouped row from the per-table SQL query, before cross-table merging.
- */
+/** A grouped row from the per-table SQL query, before cross-table merging. */
 export type GroupedAuditRow = {
   eventKey: string;
   eventId: number | null;
@@ -310,25 +269,16 @@ export type GroupedAuditRow = {
   actionTypes: AuditActionType[];
   entityType: AuditEntityType;
   parentEntityId: number | null;
-  /** Number of distinct entities represented by this SQL group. */
   entryCount: number;
-  /** Number of audit rows represented by this SQL group. */
   auditEntryCount: number;
-  /** Distinct verificationStatus.newValue values; "null" means an explicit clear. */
+  /** "null" means a cleared verification status. */
   verificationStatusValues: string[];
   changedFields: string[];
   sampleChanges: Record<string, unknown> | null;
   sampleEntityId: number;
 };
 
-/**
- * Classify the semantic action from the top-level entity's sample changes.
- *
- * Uses the `verificationStatus.newValue` field exclusively to determine
- * whether this is a verification or rejection. This fixes the old bug where
- * `rejectionReason.newValue !== 0` was used as a fallback, which could
- * misidentify verifications as rejections.
- */
+/** Classifies the semantic action from the top-level entity's sample changes. */
 export function classifyAction(
   actionType: AuditActionType,
   sampleChanges: Record<string, unknown> | null,
@@ -344,7 +294,6 @@ export function classifyAction(
     { originalValue: unknown; newValue: unknown }
   >;
 
-  // Check verificationStatus change (handles both camelCase and snake_case keys)
   const vsChange = changes.verificationStatus ?? changes.verification_status;
 
   if (vsChange?.newValue !== undefined) {
@@ -365,10 +314,7 @@ export function classifyAction(
   return 'update';
 }
 
-/**
- * Returns the immediate child entity type in the hierarchy.
- * Tournament → Match → Game → Score → null
- */
+/** Tournament → Match → Game → Score → null. */
 export function getImmediateChildType(
   entityType: AuditEntityType
 ): AuditEntityType | null {
@@ -384,9 +330,6 @@ export function getImmediateChildType(
   }
 }
 
-/**
- * Extract changed field names from sample changes.
- */
 export function extractChangedFields(
   sampleChanges: Record<string, unknown> | null
 ): string[] {
@@ -394,7 +337,6 @@ export function extractChangedFields(
   return Object.keys(sampleChanges).sort();
 }
 
-/** Assembled event type returned by assembleEvents() */
 export type AssembledEvent = {
   eventKey: string;
   eventId: number | null;
@@ -444,18 +386,7 @@ function classifyGroupedAuditRow(row: GroupedAuditRow): AuditEventAction {
   );
 }
 
-/**
- * Assemble grouped rows from multiple audit tables into audit events.
- *
- * Groups rows by the event key selected by the database query. New rows use the
- * durable audit event ID; legacy rows use a deterministic compatibility key.
- *
- * For each group:
- * 1. Identifies the top-level entity by hierarchy (lowest enum = highest in hierarchy)
- * 2. Classifies the action from the top-level entity's changes
- * 3. Computes one-sublevel child count
- *
- */
+/** Groups rows from multiple audit tables into events keyed by the database's event key. */
 export function assembleEvents(rows: GroupedAuditRow[]): AssembledEvent[] {
   const eventMap = new Map<string, GroupedAuditRow[]>();
   for (const row of rows) {
@@ -470,7 +401,7 @@ export function assembleEvents(rows: GroupedAuditRow[]): AssembledEvent[] {
   const events: AssembledEvent[] = [];
 
   for (const [eventKey, groupRows] of eventMap) {
-    // Sort by entity hierarchy: Tournament(0) < Match(1) < Game(2) < Score(3)
+    // Lowest entity type enum is highest in the hierarchy
     groupRows.sort(
       (a, b) =>
         a.entityType - b.entityType || b.sampleEntityId - a.sampleEntityId
@@ -490,7 +421,6 @@ export function assembleEvents(rows: GroupedAuditRow[]): AssembledEvent[] {
         ? classifiedActions.values().next().value!
         : ('update' as const);
 
-    // Determine if this is a cascade (multiple entity types)
     const entityTypes = new Set(groupRows.map((r) => r.entityType));
     const isCascade = entityTypes.size > 1;
 
@@ -519,7 +449,6 @@ export function assembleEvents(rows: GroupedAuditRow[]): AssembledEvent[] {
       ? topRow.parentEntityId
       : null;
 
-    // Compute one-sublevel child count
     const childType = getImmediateChildType(topRow.entityType);
     let childAffectedCount = 0;
     if (childType !== null) {
@@ -555,10 +484,7 @@ export function assembleEvents(rows: GroupedAuditRow[]): AssembledEvent[] {
   );
 }
 
-/**
- * Build cascade child summary string for entity timeline display.
- * e.g., "also affected 85 of 118 matches"
- */
+/** Cascade summary for the entity timeline, e.g. "also affected 85 of 118 matches". */
 export function buildChildSummary(
   childType: AuditEntityType,
   affected: number,
@@ -575,11 +501,7 @@ export function buildChildSummary(
   return `also affected ${affected} ${label}`;
 }
 
-// ---------------------------------------------------------------------------
-// Shared types & utilities for referenced users
-// ---------------------------------------------------------------------------
-
-/** Fields in changes that contain user IDs requiring resolution */
+/** Change fields holding user IDs that need resolution. */
 export const USER_ID_FIELDS = ['verifiedByUserId', 'submittedByUserId'];
 
 export type ReferencedUser = {
@@ -589,7 +511,6 @@ export type ReferencedUser = {
   username: string | null;
 };
 
-/** Extract all user IDs from changes that need resolution */
 export function extractUserIdsFromChanges(
   changes: Record<
     string,
@@ -609,10 +530,6 @@ export function extractUserIdsFromChanges(
   return ids;
 }
 
-/**
- * Build referencedUsers record from changes and a pre-resolved user map.
- * Returns undefined if no user references found.
- */
 export function buildReferencedUsers(
   changes: Record<string, unknown> | null,
   userMap: Map<number, ReferencedUser>
@@ -634,15 +551,7 @@ export function buildReferencedUsers(
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
-// ---------------------------------------------------------------------------
-// SQL field-change condition builder
-// ---------------------------------------------------------------------------
-
-/**
- * Build SQL conditions that check whether specific fields in a JSONB changes
- * column actually changed (key exists AND newValue IS DISTINCT FROM originalValue).
- * Handles both camelCase and snake_case key formats.
- */
+/** Conditions asserting a JSONB changes field is present and its newValue differs. */
 export function buildFieldChangeConditions(
   changesExpr: SQL,
   fieldNames: string[]
@@ -678,11 +587,7 @@ export function buildFieldChangeConditions(
   });
 }
 
-// ---------------------------------------------------------------------------
-// Entity name resolution
-// ---------------------------------------------------------------------------
-
-/** Resolve entity IDs to names (tournaments and matches have name fields) */
+/** Only tournaments and matches have name fields. */
 export async function resolveEntityNames(
   db: DatabaseClient,
   entityType: AuditEntityType,
@@ -702,11 +607,9 @@ export async function resolveEntityNames(
     return new Map(rows.map((r) => [r.id, r.name]));
   }
 
-  // Games and scores don't have name fields
   return new Map();
 }
 
-/** Resolve tournament IDs to tournament names */
 export async function resolveTournamentNames(
   db: DatabaseClient,
   tournamentIds: number[]
@@ -726,10 +629,6 @@ export async function resolveTournamentNames(
   return map;
 }
 
-/**
- * Batch-resolve entity names grouped by type.
- * Collects unique IDs per entity type, queries in parallel.
- */
 export async function resolveEntityNamesBatched(
   db: DatabaseClient,
   entries: { entityType: AuditEntityType; entityId: number }[]
@@ -751,7 +650,6 @@ export async function resolveEntityNamesBatched(
   return entityNameMaps;
 }
 
-/** Resolve user IDs to user info */
 export async function resolveUserIds(
   db: DatabaseClient,
   userIds: number[]

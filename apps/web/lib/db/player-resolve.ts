@@ -14,7 +14,6 @@ export async function resolvePlayerIdFromKey(
   if (isStrictNumeric(trimmed)) {
     const numericKey = Number(trimmed);
 
-    // Try internal id first
     const byId = await db
       .select({ id: schema.players.id })
       .from(schema.players)
@@ -22,7 +21,6 @@ export async function resolvePlayerIdFromKey(
       .limit(1);
     if (byId[0]?.id) return byId[0].id;
 
-    // Then osu! id
     const byOsuId = await db
       .select({ id: schema.players.id })
       .from(schema.players)
@@ -31,7 +29,6 @@ export async function resolvePlayerIdFromKey(
     if (byOsuId[0]?.id) return byOsuId[0].id;
   }
 
-  // Fallback to username (case-insensitive)
   const byUsername = await db
     .select({ id: schema.players.id })
     .from(schema.players)

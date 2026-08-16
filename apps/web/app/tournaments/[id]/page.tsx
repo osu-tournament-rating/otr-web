@@ -12,6 +12,11 @@ import {
 import type { Metadata } from 'next';
 import { z } from 'zod';
 import { MatchRow } from './columns';
+import {
+  SectionCard,
+  SectionHeader,
+} from '@/components/beatmap/BeatmapSection';
+import { isDeletedTournamentBeatmap } from '@/lib/beatmaps/presentation';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
@@ -85,7 +90,6 @@ export async function generateMetadata({
 }
 
 function generateTableData(matches: TournamentMatch[]): MatchRow[] {
-  // Sort matches by start time descending
   const sortedMatches = [...matches].sort((a, b) => {
     const timeA = a.startTime ? new Date(a.startTime).getTime() : 0;
     const timeB = b.startTime ? new Date(b.startTime).getTime() : 0;
@@ -151,9 +155,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
   return (
     <Card className="p-4 font-sans sm:p-6">
       <div className="flex flex-col gap-4">
-        {/* Top row - verification badge, abbreviation, and admin actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* Verification badge - will be on its own line on mobile */}
           <VerificationBadge
             verificationStatus={tournament.verificationStatus}
             rejectionReason={tournament.rejectionReason}
@@ -162,9 +164,8 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
             verifierUsername={tournament.verifiedByUsername ?? undefined}
           />
 
-          {/* Abbreviation and admin actions */}
           <div className="flex w-full items-center justify-between sm:w-auto sm:justify-start sm:gap-3">
-            <span className="font-mono text-sm text-muted-foreground">
+            <span className="text-sm font-medium text-muted-foreground">
               {tournament.abbreviation}
             </span>
             <div className="flex gap-2">
@@ -189,7 +190,6 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
         </div>
 
         <div className="flex flex-row items-center gap-2">
-          {/* Tournament name */}
           <h1 className="text-xl leading-tight font-bold sm:text-2xl md:text-3xl">
             {tournament.name}
           </h1>
@@ -212,7 +212,6 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
           </SimpleTooltip>
         </div>
 
-        {/* Tournament metadata */}
         <div className="flex flex-col gap-2 text-sm text-muted-foreground">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-4">
@@ -290,7 +289,6 @@ function TournamentStatsCard({ tournament }: { tournament: TournamentDetail }) {
     (sum: number, match: TournamentMatch) => sum + (match.games?.length ?? 0),
     0
   );
-  // Use tournament player stats to get the total number of players
   const totalPlayers = tournament.playerTournamentStats?.length ?? 0;
 
   const startDate = tournament.startTime
@@ -299,7 +297,6 @@ function TournamentStatsCard({ tournament }: { tournament: TournamentDetail }) {
   const endDate = tournament.endTime ? new Date(tournament.endTime) : null;
   const duration = calculateDuration(startDate, endDate);
 
-  // Calculate verification stats
   const verifiedMatches = matches.filter(
     (match) => match.verificationStatus === VerificationStatus.Verified
   ).length;
@@ -308,7 +305,6 @@ function TournamentStatsCard({ tournament }: { tournament: TournamentDetail }) {
       ? ((verifiedMatches / matches.length) * 100).toFixed(1)
       : '0';
 
-  // Calculate most active day
   const matchDates = matches
     .filter((match) => match.startTime)
     .map((match) => new Date(match.startTime!).toDateString());
@@ -390,18 +386,17 @@ export default async function Page({ params, searchParams }: PageProps) {
   const tableData = generateTableData(tournament.matches ?? []);
   const beatmaps = tournament.pooledBeatmaps ?? [];
 
-  // Extract all games from all matches for beatmap analysis
   const tournamentGames =
     tournament.matches?.flatMap((match) => match.games ?? []) ?? [];
 
-  // Calculate hidden beatmaps count
-  const hiddenBeatmapsCount = beatmaps.filter((beatmap) => {
-    const artist = beatmap.beatmapset?.artist || 'Unknown Artist';
-    const title = beatmap.beatmapset?.title || 'Unknown Title';
-    return artist === 'Unknown Artist' && title === 'Unknown Title';
-  }).length;
+  const hiddenBeatmapsCount = beatmaps.filter(
+    isDeletedTournamentBeatmap
+  ).length;
 
   const visibleBeatmapsCount = beatmaps.length - hiddenBeatmapsCount;
+  const pooledBeatmapsMeta = `${visibleBeatmapsCount} beatmap${
+    visibleBeatmapsCount === 1 ? '' : 's'
+  }${hiddenBeatmapsCount > 0 ? ` · ${hiddenBeatmapsCount} deleted` : ''}`;
 
   return (
     <div className="container mx-auto flex flex-col gap-4 md:gap-2">
@@ -458,24 +453,21 @@ export default async function Page({ params, searchParams }: PageProps) {
           data-testid="tab-content-beatmaps"
           className="mt-4"
         >
-          <Card className="p-6 font-sans">
-            <div className="flex items-center gap-2">
-              <Music className="h-6 w-6 text-primary" />
-              <h3 className="font-sans text-lg font-semibold">
-                Pooled Beatmaps
-              </h3>
-              <span className="text-sm text-muted-foreground">
-                ({visibleBeatmapsCount}
-                {hiddenBeatmapsCount > 0 && `, ${hiddenBeatmapsCount} deleted`})
-              </span>
-            </div>
-            <TournamentBeatmapsAdminView
-              tournamentId={tournament.id}
-              tournamentName={tournament.name}
-              beatmaps={beatmaps}
-              tournamentGames={tournamentGames}
+          <SectionCard>
+            <SectionHeader
+              icon={Music}
+              title="Pooled beatmaps"
+              meta={pooledBeatmapsMeta}
             />
-          </Card>
+            <div className="p-3 sm:p-4">
+              <TournamentBeatmapsAdminView
+                tournamentId={tournament.id}
+                tournamentName={tournament.name}
+                beatmaps={beatmaps}
+                tournamentGames={tournamentGames}
+              />
+            </div>
+          </SectionCard>
         </TabsContent>
 
         <TabsContent

@@ -134,7 +134,6 @@ export function FilterReportView() {
       data-testid="filter-report-view"
       className="flex flex-col gap-4 md:gap-2"
     >
-      {/* Search Card — hero style when empty, compact when loaded */}
       {!hasReport ? (
         <Card>
           <CardContent className="py-8 sm:py-12">
@@ -198,9 +197,7 @@ export function FilterReportView() {
         </Card>
       ) : (
         <>
-          {/* Report Header Card — hero card with identity + stats */}
           <Card className="p-6">
-            {/* Identity section */}
             <div className="flex flex-col gap-4 rounded-lg bg-popover p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-muted/50">
@@ -242,7 +239,6 @@ export function FilterReportView() {
               </div>
             </div>
 
-            {/* Stats grid */}
             <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
               <StatCard
                 icon={
@@ -282,7 +278,6 @@ export function FilterReportView() {
             </div>
           </Card>
 
-          {/* Filter Criteria Card */}
           {report.request && (
             <Card>
               <CardHeader>
@@ -332,7 +327,6 @@ export function FilterReportView() {
             </Card>
           )}
 
-          {/* Results Table Card */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">

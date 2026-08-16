@@ -48,10 +48,7 @@ function resolveTimestamp(value?: TimestampValue): TimestampValue {
   return value ?? DEFAULT_TIMESTAMP;
 }
 
-/**
- * Cascade verification to scores under verified games.
- * Updates scores that are not already Verified or Rejected.
- */
+/** Cascades to scores that are not already Verified or Rejected. */
 async function cascadeScoresVerification(
   db: MutationClient,
   gameIds: number[],
@@ -80,11 +77,7 @@ async function cascadeScoresVerification(
   return updatedScores.length;
 }
 
-/**
- * Cascade verification to games under verified matches.
- * Updates games that are not already Verified or Rejected.
- * Clears warning flags on updated games.
- */
+/** Cascades to games that are not already Verified or Rejected, clearing their warning flags. */
 async function cascadeGamesVerification(
   db: MutationClient,
   matchIds: number[],
@@ -116,11 +109,7 @@ async function cascadeGamesVerification(
   return { gameIds, gameCount: updatedGames.length };
 }
 
-/**
- * Cascade verification to matches under a verified tournament.
- * Updates matches that are not already Verified or Rejected.
- * Clears warning flags on updated matches.
- */
+/** Cascades to matches that are not already Verified or Rejected, clearing their warning flags. */
 async function cascadeMatchesVerification(
   db: MutationClient,
   tournamentIds: number[],
@@ -152,10 +141,7 @@ async function cascadeMatchesVerification(
   return { matchIds, matchCount: updatedMatches.length };
 }
 
-/**
- * Cascade verification from a game to its scores.
- * Updates scores that are not already Verified or Rejected.
- */
+/** Cascades verification from a game to its scores. */
 export async function cascadeGameVerification(
   db: MutationClient,
   gameIdsInput: readonly number[],
@@ -177,10 +163,7 @@ export async function cascadeGameVerification(
   };
 }
 
-/**
- * Cascade verification from a match to its games and scores.
- * Updates games and scores that are not already Verified or Rejected.
- */
+/** Cascades verification from a match to its games and scores. */
 export async function cascadeMatchVerification(
   db: MutationClient,
   matchIdsInput: readonly number[],
@@ -208,10 +191,7 @@ export async function cascadeMatchVerification(
   };
 }
 
-/**
- * Cascade verification from a tournament to its matches, games, and scores.
- * Updates matches, games, and scores that are not already Verified or Rejected.
- */
+/** Cascades verification from a tournament to its matches, games and scores. */
 export async function cascadeTournamentVerification(
   db: MutationClient,
   tournamentIdsInput: readonly number[],

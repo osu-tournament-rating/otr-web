@@ -33,7 +33,6 @@ export default function AuditPageHeader({
 
   return (
     <div data-testid="audit-page-header" className="flex flex-col gap-3">
-      {/* Breadcrumb */}
       <nav
         data-testid="audit-breadcrumb"
         className="flex items-center gap-1 text-sm text-muted-foreground"
@@ -51,7 +50,6 @@ export default function AuditPageHeader({
         <span className="font-medium text-foreground">#{entityId}</span>
       </nav>
 
-      {/* Title row */}
       <div className="flex items-center gap-3">
         <h1
           data-testid="audit-entity-title"
@@ -71,7 +69,6 @@ export default function AuditPageHeader({
         )}
       </div>
 
-      {/* Entity name subtitle */}
       {entityName && (
         <p className="text-sm text-muted-foreground">{entityName}</p>
       )}

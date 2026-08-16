@@ -2,11 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 
-/**
- * A client component hook for reading
- * the current page's absolute URL path
- * @returns Current page's absolute URL path
- */
+/** The current page's absolute URL. */
 export function useAbsolutePath() {
   const path = usePathname();
 
@@ -17,14 +13,7 @@ export function useAbsolutePath() {
   return origin + path;
 }
 
-/**
- * A client component hook for reading
- * the current page's absolute URL path,
- * but does not allow /unauthorized in the path.
- *
- * Useful for specifying log in and log out redirect URLs.
- * @returns Current page's absolute URL path, unless on /unauthorized
- */
+/** The current page's absolute URL for a login or logout redirect, never `/unauthorized`. */
 export function useAuthRedirectPath() {
   let path = usePathname();
 

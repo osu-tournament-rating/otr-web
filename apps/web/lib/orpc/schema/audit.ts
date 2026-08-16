@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 
-// --- Audit Entry ---
-
 export const AuditActionUserSchema = z.object({
   id: z.number().int(),
   playerId: z.number().int().nullable(),
@@ -22,15 +20,13 @@ export const AuditEntrySchema = z.object({
   changes: z.record(z.string(), z.unknown()).nullable(),
   created: z.string(),
   actionUser: AuditActionUserSchema.nullable(),
-  /** Map of user IDs to user info for IDs referenced in changes (e.g. verifiedByUserId) */
+  /** Users referenced inside `changes`, keyed by id. */
   referencedUsers: z.record(z.string(), AuditActionUserSchema).optional(),
-  /** Resolved entity name (for tournaments and matches) */
+  /** Resolved entity name, for tournaments and matches. */
   entityName: z.string().nullable().optional(),
 });
 
 export type AuditEntry = z.infer<typeof AuditEntrySchema>;
-
-// --- Admin Note in Timeline ---
 
 export const AuditAdminNoteSchema = z.object({
   id: z.number().int(),
@@ -42,8 +38,6 @@ export const AuditAdminNoteSchema = z.object({
 
 export type AuditAdminNote = z.infer<typeof AuditAdminNoteSchema>;
 
-// --- Per-Entity Input ---
-
 export const EntityAuditInputSchema = z.object({
   entityType: z.nativeEnum(AuditEntityType),
   entityId: z.number().int().positive(),
@@ -51,16 +45,12 @@ export const EntityAuditInputSchema = z.object({
   pageSize: z.number().int().min(1).max(100).optional(),
 });
 
-// --- Field Filter ---
-
 export const FieldFilterSchema = z.object({
   entityType: z.nativeEnum(AuditEntityType),
   fieldName: z.string(),
 });
 
 export type FieldFilter = z.infer<typeof FieldFilterSchema>;
-
-// --- Audit Event Action (semantic classification) ---
 
 export const AuditEventActionSchema = z.enum([
   'verification',
@@ -74,12 +64,10 @@ export const AuditEventActionSchema = z.enum([
 
 export type AuditEventAction = z.infer<typeof AuditEventActionSchema>;
 
-// --- Audit Event (assembled from grouped audit entries) ---
-
 export const AuditEventChildLevelSchema = z.object({
   entityType: z.nativeEnum(AuditEntityType),
   affectedCount: z.number().int(),
-  /** Total children in parent entity (for "85 of 118" display). Null if not computed. */
+  /** Children in the parent entity, for the "85 of 118" display; null when not computed. */
   totalCount: z.number().int().nullable(),
 });
 
@@ -88,47 +76,40 @@ export const AuditEventSchema = z.object({
   eventKey: z.string().min(1),
   /** Stable database event ID for new audit rows; null for legacy history. */
   eventId: z.number().int().positive().nullable(),
-  /** Semantic action derived from top-level entity's verificationStatus change */
+  /** Derived from the top-level entity's `verificationStatus` change. */
   action: AuditEventActionSchema,
-  /** Who performed the action (null = system) */
+  /** Null for system actions. */
   actionUserId: z.number().int().nullable(),
   actionUser: AuditActionUserSchema.nullable(),
-  /** Exact transaction timestamp (shared across all entries in this event) */
   created: z.string(),
-  /** Whether this was a system action (no actionUserId) */
   isSystem: z.boolean(),
-  /** The top-level entity in the hierarchy */
   topEntity: z.object({
     entityType: z.nativeEnum(AuditEntityType),
     entityId: z.number().int(),
     entityName: z.string().nullable(),
-    /** How many entities of this type were affected (usually 1 for cascades) */
+    /** Entities of this type affected; usually 1 outside cascades. */
     count: z.number().int(),
     /** How many audit rows were written for those entities in this event. */
     entryCount: z.number().int(),
   }),
-  /** One sublevel child count (immediate children affected by cascade) */
+  /** Immediate children affected by a cascade. */
   childLevel: AuditEventChildLevelSchema.nullable(),
-  /** Whether this event spans multiple entity types (cascade) */
   isCascade: z.boolean(),
-  /** Parent tournament context (null when topEntity is a tournament) */
+  /** Null when `topEntity` is itself a tournament. */
   parentTournament: z
     .object({
       id: z.number().int(),
       name: z.string().nullable(),
     })
     .nullable(),
-  /** Fields changed on the top-level entity */
   changedFields: z.array(z.string()),
-  /** Sample changes from the top-level entity for expandable diff */
+  /** Sample of the top-level entity's changes, for the expandable diff. */
   sampleChanges: z.record(z.string(), z.unknown()).nullable(),
-  /** Resolved user info for user IDs referenced in changes */
+  /** Users referenced inside `sampleChanges`, keyed by id. */
   referencedUsers: z.record(z.string(), AuditActionUserSchema).optional(),
 });
 
 export type AuditEvent = z.infer<typeof AuditEventSchema>;
-
-// --- Event Feed Input/Response ---
 
 export const EventFeedInputSchema = z.object({
   cursor: z.string().optional(),
@@ -140,7 +121,7 @@ export const EventFeedInputSchema = z.object({
   adminUserId: z.number().int().optional(),
   fieldsChanged: z.array(FieldFilterSchema).optional(),
   entityId: z.number().int().optional(),
-  /** Whether to include system (non-admin) events. Default: false */
+  /** Defaults to false. */
   showSystem: z.boolean().optional(),
 });
 
@@ -149,8 +130,6 @@ export const EventFeedResponseSchema = z.object({
   nextCursor: z.string().nullable(),
   hasMore: z.boolean(),
 });
-
-// --- Event Details Input/Response (expandable view of a single event) ---
 
 export const EventDetailsInputSchema = z.object({
   /** Exact feed identity for legacy events without an eventId. */
@@ -170,20 +149,18 @@ export const EventDetailsResponseSchema = z.object({
   hasMore: z.boolean(),
 });
 
-// --- Entity Timeline (enhanced with cascade context) ---
-
 export const CascadeContextSchema = z.object({
   topEntityType: z.nativeEnum(AuditEntityType),
   topEntityId: z.number().int(),
   topEntityName: z.string().nullable(),
   action: AuditEventActionSchema,
-  /** e.g., "also affected 85 of 118 matches" */
+  /** e.g. "also affected 85 of 118 matches". */
   childSummary: z.string().nullable(),
 });
 
 export const EntityTimelineEventSchema = z.object({
   entry: AuditEntrySchema,
-  /** Populated when this entry was part of a cascade operation */
+  /** Populated when the entry was part of a cascade. */
   cascadeContext: CascadeContextSchema.nullable(),
 });
 

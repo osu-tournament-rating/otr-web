@@ -35,7 +35,6 @@ export function CountrySearchSelect({
       country.code.toLowerCase().includes(searchValue.toLowerCase())
   );
 
-  // Sort countries: selected first, then alphabetically
   const sortedCountries = [...filteredCountries].sort((a, b) => {
     if (a.code === value) return -1;
     if (b.code === value) return 1;
@@ -80,7 +79,6 @@ export function CountrySearchSelect({
                 key={country.code}
                 value={`${country.name} ${country.code}`}
                 onSelect={() => {
-                  // If clicking the selected country, deselect it
                   onValueChange(value === country.code ? '' : country.code);
                   setOpen(false);
                   setSearchValue('');

@@ -13,7 +13,6 @@ import {
 } from '../ui/card';
 import Image from 'next/image';
 
-// Constants for chart configuration
 const CHART_CONSTANTS = {
   DESKTOP_DISPLAY_LIMIT: 10,
   MOBILE_DISPLAY_LIMIT: 7,
@@ -52,7 +51,6 @@ interface PlayerFrequencyChartProps {
   chartColor?: string;
 }
 
-// Type guard for PlayerFrequency
 function isValidPlayerFrequency(item: unknown): item is PlayerFrequency {
   return (
     item !== null &&
@@ -66,7 +64,6 @@ function isValidPlayerFrequency(item: unknown): item is PlayerFrequency {
   );
 }
 
-// Type guard for ChartDataEntry
 function isChartDataEntry(data: unknown): data is ChartDataEntry {
   return (
     data !== null &&
@@ -78,7 +75,6 @@ function isChartDataEntry(data: unknown): data is ChartDataEntry {
   );
 }
 
-// Custom tooltip component with error handling
 function CustomTooltip({
   active,
   payload,
@@ -132,8 +128,8 @@ function CustomTooltip({
           />
         )}
         <div>
-          <p className="font-semibold">{data.username}</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm font-semibold">{data.username}</p>
+          <p className="text-xs text-muted-foreground">
             Matches played: {data.frequency}
           </p>
         </div>
@@ -158,7 +154,6 @@ export default function PlayerFrequencyChart({
     new Set()
   );
 
-  // Default values based on type
   const defaultTitle =
     type === 'teammates' ? 'Frequent Teammates' : 'Frequent Opponents';
   const defaultDescription =
@@ -179,7 +174,6 @@ export default function PlayerFrequencyChart({
     },
   };
 
-  // Process frequency data with error handling
   const chartData = useMemo(() => {
     if (!data || !Array.isArray(data) || data.length === 0) {
       return { desktop: [], mobile: [] };
@@ -206,17 +200,14 @@ export default function PlayerFrequencyChart({
     }
   }, [data]);
 
-  // Handle image loading errors
   const handleImageError = useCallback((osuId: number) => {
     setImageErrors((prev) => new Set(prev).add(osuId));
   }, []);
 
-  // Handle transparent avatar detection
   const handleImageLoad = useCallback(
     (event: React.SyntheticEvent<HTMLImageElement>, osuId: number) => {
       const img = event.currentTarget;
 
-      // Create a canvas to check if image is transparent
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
@@ -225,15 +216,12 @@ export default function PlayerFrequencyChart({
       canvas.height = img.naturalHeight;
       ctx.drawImage(img, 0, 0);
 
-      // Sample multiple points to check for transparency
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
       let isTransparent = true;
 
-      // Check if the image has any non-transparent pixels
       for (let i = 3; i < data.length; i += 4) {
         if (data[i] > 10) {
-          // Alpha channel threshold
           isTransparent = false;
           break;
         }
@@ -246,7 +234,6 @@ export default function PlayerFrequencyChart({
     []
   );
 
-  // Memoized function to create custom X axis tick with accessibility improvements
   const createCustomXAxisTick = useCallback(
     (tickData: ChartDataEntry[]) => {
       const TickComponent = (props: {
@@ -358,7 +345,6 @@ export default function PlayerFrequencyChart({
         <CardDescription>{description || defaultDescription}</CardDescription>
       </CardHeader>
       <CardContent className="overflow-hidden pb-0 font-sans">
-        {/* Desktop version */}
         <div className="hidden md:block">
           <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
             <BarChart
@@ -378,6 +364,7 @@ export default function PlayerFrequencyChart({
               <YAxis
                 allowDecimals={false}
                 domain={[0, 'dataMax']}
+                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                 tickFormatter={(value: number) => value.toString()}
               />
               <ChartTooltip
@@ -399,7 +386,6 @@ export default function PlayerFrequencyChart({
             </BarChart>
           </ChartContainer>
         </div>
-        {/* Mobile version */}
         <div className="block md:hidden">
           <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
             <BarChart
@@ -419,6 +405,7 @@ export default function PlayerFrequencyChart({
               <YAxis
                 allowDecimals={false}
                 domain={[0, 'dataMax']}
+                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                 tickFormatter={(value: number) => value.toString()}
               />
               <ChartTooltip

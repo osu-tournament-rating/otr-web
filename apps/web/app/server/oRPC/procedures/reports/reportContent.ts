@@ -21,8 +21,7 @@ export const normalizeReportCreateContent = (
 
     return {
       reasonKey: input.reasonKey,
-      // Keep the reason readable to the previous admin UI during rollout or
-      // rollback. New readers recognize and hide this compatibility field.
+      // Compatibility field for the previous admin UI; new readers hide it
       suggestedChanges: { reason: reason?.label ?? input.reasonKey },
       justification: input.additionalInformation ?? '',
     };

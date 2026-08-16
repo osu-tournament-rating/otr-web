@@ -1,0 +1,15 @@
+ALTER TABLE "beatmaps" drop column "search_vector";--> statement-breakpoint
+ALTER TABLE "beatmaps" ADD COLUMN "search_vector" "tsvector" GENERATED ALWAYS AS (setweight(to_tsvector('simple', regexp_replace(coalesce("beatmaps"."diff_name", ''), '[^[:alnum:]]+', ' ', 'g')), 'A')) STORED NOT NULL;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "ix_beatmaps_search_vector" ON "beatmaps" USING gin ("search_vector");--> statement-breakpoint
+ALTER TABLE "beatmapsets" drop column "search_vector";--> statement-breakpoint
+ALTER TABLE "beatmapsets" ADD COLUMN "search_vector" "tsvector" GENERATED ALWAYS AS (setweight(to_tsvector('simple', regexp_replace(coalesce("beatmapsets"."artist", ''), '[^[:alnum:]]+', ' ', 'g')), 'A') || setweight(to_tsvector('simple', regexp_replace(coalesce("beatmapsets"."title", ''), '[^[:alnum:]]+', ' ', 'g')), 'A')) STORED NOT NULL;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "ix_beatmapsets_search_vector" ON "beatmapsets" USING gin ("search_vector");--> statement-breakpoint
+ALTER TABLE "matches" drop column "search_vector";--> statement-breakpoint
+ALTER TABLE "matches" ADD COLUMN "search_vector" "tsvector" GENERATED ALWAYS AS (setweight(to_tsvector('simple', regexp_replace(coalesce("matches"."name", ''), '[^[:alnum:]]+', ' ', 'g')), 'A') || setweight(to_tsvector('simple', regexp_replace(regexp_replace(regexp_replace(coalesce("matches"."name", ''), '[^[:alnum:]]+', ' ', 'g'), '([A-Za-z]+)([0-9]+)', '\1 \2', 'g'), '([0-9]+)([A-Za-z]+)', '\1 \2', 'g')), 'B')) STORED NOT NULL;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "ix_matches_search_vector" ON "matches" USING gin ("search_vector");--> statement-breakpoint
+ALTER TABLE "players" drop column "search_vector";--> statement-breakpoint
+ALTER TABLE "players" ADD COLUMN "search_vector" "tsvector" GENERATED ALWAYS AS (setweight(to_tsvector('simple', regexp_replace(coalesce("players"."username", ''), '[^[:alnum:]]+', ' ', 'g')), 'A')) STORED NOT NULL;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "ix_players_search_vector" ON "players" USING gin ("search_vector");--> statement-breakpoint
+ALTER TABLE "tournaments" drop column "search_vector";--> statement-breakpoint
+ALTER TABLE "tournaments" ADD COLUMN "search_vector" "tsvector" GENERATED ALWAYS AS (setweight(to_tsvector('simple', regexp_replace(coalesce("tournaments"."name", ''), '[^[:alnum:]]+', ' ', 'g')), 'A') || setweight(to_tsvector('simple', regexp_replace(regexp_replace(regexp_replace(coalesce("tournaments"."name", ''), '[^[:alnum:]]+', ' ', 'g'), '([A-Za-z]+)([0-9]+)', '\1 \2', 'g'), '([0-9]+)([A-Za-z]+)', '\1 \2', 'g')), 'B') || setweight(to_tsvector('simple', regexp_replace(coalesce("tournaments"."abbreviation", ''), '[^[:alnum:]]+', ' ', 'g')), 'A') || setweight(to_tsvector('simple', regexp_replace(regexp_replace(regexp_replace(coalesce("tournaments"."abbreviation", ''), '[^[:alnum:]]+', ' ', 'g'), '([A-Za-z]+)([0-9]+)', '\1 \2', 'g'), '([0-9]+)([A-Za-z]+)', '\1 \2', 'g')), 'B')) STORED NOT NULL;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "ix_tournaments_search_vector" ON "tournaments" USING gin ("search_vector");

@@ -12,28 +12,13 @@ const getDecorationSrc = (decoration: DecorationVariant) => {
 };
 
 interface FeatureCardProps {
-  /** Decoration identifier */
   decoration: DecorationVariant;
-
-  /** Position of the background image */
   imagePosition?: ImagePosition;
-
-  /** Tailwind classes for image dimensions */
   imageSize?: string;
-
-  /** CSS object-fit property for image */
   imageFit?: ObjectFit;
-
-  /** Additional classes for image container */
   imageClassName?: string;
-
-  /** Additional classes for content container */
   contentClassName?: string;
-
-  /** Additional classes for root element */
   className?: string;
-
-  /** Optional child elements */
   children?: ReactNode;
 }
 

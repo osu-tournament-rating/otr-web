@@ -10,16 +10,9 @@ import {
 import { STORAGE_STATE } from './fixtures/auth';
 
 /**
- * Global website search (issue #700).
- *
- * The command-style search dialog is gated behind an authenticated session:
- * `SearchCommandDialog` renders `null` without a session and the `/search`
- * endpoint is a `protectedProcedure`. We split coverage accordingly:
- *   - "Trigger and Gating" runs signed-out and asserts the gate (trigger absent,
- *     Cmd/Ctrl+K is a no-op, limited-features banner shown).
- *   - "Open via Header Affordances" and "Query Results and Navigation" run with a
- *     baked regular-user session (see fixtures/auth.ts) and exercise every
- *     checklist query→navigation scenario for real: open → type → click → assert.
+ * Global website search (issue #700). The dialog and the `/search` endpoint are
+ * both gated behind a session, so the gating specs run signed out and the rest
+ * with a baked regular-user session.
  */
 
 const SEARCH_TRIGGER = '[data-testid="search-trigger-button"]';
@@ -57,13 +50,11 @@ test.describe('Global Website Search', () => {
       await expect(header).toBeVisible({ timeout: 10000 });
 
       if (await searchTriggerVisible(page)) {
-        // Authenticated render: the trigger opens the dialog.
         await openSearchViaButton(page);
         await expect(page.locator(SEARCH_INPUT)).toBeVisible({
           timeout: 10000,
         });
       } else {
-        // Unauthenticated render: the trigger and dialog are absent.
         await expect(page.locator(SEARCH_TRIGGER)).toHaveCount(0);
         await expect(page.locator(SEARCH_DIALOG)).toHaveCount(0);
       }
@@ -144,9 +135,7 @@ test.describe('Global Website Search', () => {
       await expect(result).toBeVisible({ timeout: 10000 });
       await result.click();
 
-      // The dialog always appends the player's ruleset (the rating ruleset,
-      // falling back to the non-null default_ruleset), so the destination is
-      // always /players/:id?ruleset=:int — never the bare profile path.
+      // The dialog always appends a ruleset, never the bare profile path
       await page.waitForURL(
         new RegExp('/players/' + TEST_PLAYER_ID + '\\?ruleset=\\d+'),
         { timeout: 10000 }
@@ -173,8 +162,7 @@ test.describe('Global Website Search', () => {
       await expect(result).toBeVisible({ timeout: 10000 });
       await result.click();
 
-      // Stage's rating/default ruleset is osu!, so the result routes there
-      // explicitly via the ruleset query param.
+      // Stage's rating ruleset is osu!
       await page.waitForURL(
         new RegExp('/players/' + TEST_PLAYER_ID + '\\?ruleset=' + Ruleset.Osu),
         { timeout: 10000 }
@@ -268,7 +256,6 @@ test.describe('Global Website Search', () => {
       const beatmaps = page.locator('[data-testid="search-group-beatmaps"]');
       await expect(beatmaps).toBeVisible({ timeout: 10000 });
 
-      // The dialog routes beatmaps by their osu! id.
       const result = beatmaps.locator(
         '[data-value="beatmap-' + TEST_BEATMAP_OSU_ID + '"]'
       );

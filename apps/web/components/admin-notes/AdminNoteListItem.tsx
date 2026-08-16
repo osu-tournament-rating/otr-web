@@ -38,9 +38,7 @@ export default function AdminNoteListItem({
   const noteMutations = getAdminNoteMutations(entity);
   const isNoteCreator = note.adminUser.id === (session?.userId ?? -1);
 
-  // Restrict edit/delete functionality to admin users working on their own notes
-  const showModificationButtons =
-    noteMutations != null && isAdmin && isNoteCreator;
+  const canModify = noteMutations != null && isAdmin && isNoteCreator;
   const [editedNote, setEditedNote] = useState(note.note);
 
   const handleDelete = async () => {
@@ -77,9 +75,8 @@ export default function AdminNoteListItem({
     <AdminNoteContent
       note={note}
       footerActions={
-        showModificationButtons ? (
+        canModify ? (
           <>
-            {/* Edit Dialog */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <PencilLineIcon
@@ -106,7 +103,6 @@ export default function AdminNoteListItem({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            {/* Delete Confirmation Dialog */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Trash className={iconButtonStyle('text-destructive')} />

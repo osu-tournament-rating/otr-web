@@ -65,7 +65,6 @@ type InternalAuditEntry = AuditEntry & {
   eventId: number | null;
 };
 
-/** Validate that a field name is a safe SQL identifier (alphanumeric + underscore) */
 const SAFE_FIELD_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
 function validateFieldNames(fieldNames: string[]): string[] {
@@ -151,7 +150,7 @@ async function queryAuditEntries(
     actionTypes?: AuditActionType[];
     dateFrom?: string;
     dateTo?: string;
-    /** Array of field names to filter by (OR logic - match any) */
+    /** Matches any of these fields. */
     fieldNames?: string[];
     entityId?: number;
     changeValue?: string;
@@ -195,7 +194,6 @@ async function queryAuditEntries(
   }
 
   if (options.fieldNames && options.fieldNames.length > 0) {
-    // Validate field names to prevent injection
     const safeFieldNames = validateFieldNames(options.fieldNames);
     if (safeFieldNames.length === 0) {
       return [];
@@ -207,7 +205,6 @@ async function queryAuditEntries(
     conditions.push(or(...fieldConditions)!);
 
     if (options.changeValue && safeFieldNames.length === 1) {
-      // changeValue only works when filtering by a single field
       conditions.push(
         sql`${table.changes} @> ${JSON.stringify({
           [safeFieldNames[0]]: {
@@ -257,7 +254,6 @@ async function queryAuditEntries(
 
   const rows = await query;
 
-  // Pre-compute camelized changes and collect user IDs in one pass
   const allUserIds: number[] = [];
   const camelizedChanges: (Record<string, unknown> | null)[] = [];
   for (const row of rows) {
@@ -274,7 +270,6 @@ async function queryAuditEntries(
     allUserIds.push(...ids);
   }
 
-  // Resolve all user IDs in a single batch query
   const userMap = await resolveUserIds(db, allUserIds);
 
   return (rows as AuditRow[]).map((row, i) =>
@@ -283,13 +278,10 @@ async function queryAuditEntries(
 }
 
 function tryParseJsonValue(value: string): unknown {
-  // Try to parse as number
   const num = Number(value);
   if (!Number.isNaN(num) && value.trim() !== '') return num;
-  // Try to parse as boolean
   if (value === 'true') return true;
   if (value === 'false') return false;
-  // Return as string
   return value;
 }
 
@@ -363,7 +355,6 @@ export const getEntityAuditTimeline = publicProcedure
     const auditTableName = getTableNameString(entityType);
     const notesTableName = getAdminNotesTableNameString(entityType);
 
-    // Count total timeline items (audit entries + admin notes)
     const countResult = await context.db.execute(sql`
       SELECT
         (SELECT COUNT(*)::int FROM ${sql.raw(auditTableName)} WHERE reference_id_lock = ${entityId}) AS audit_count,
@@ -377,7 +368,6 @@ export const getEntityAuditTimeline = publicProcedure
     const currentPage = Math.min(page, pages);
     const offset = Math.max(0, (currentPage - 1) * pageSize);
 
-    // Get the IDs and types for the current page via UNION ALL
     const pageItemResult = await context.db.execute(sql`
       SELECT item_id, item_type FROM (
         SELECT id AS item_id, 'audit'::text AS item_type, created
@@ -402,7 +392,6 @@ export const getEntityAuditTimeline = publicProcedure
       .filter((r) => r.item_type === 'note')
       .map((r) => r.item_id);
 
-    // Fetch full audit entries and notes for this page in parallel
     const [trimmedEntries, noteRows] = await Promise.all([
       auditIds.length > 0
         ? queryAuditEntries(context.db, entityType, {
@@ -438,7 +427,6 @@ export const getEntityAuditTimeline = publicProcedure
         : Promise.resolve([] as AdminNoteRow[]),
     ]);
 
-    // Detect cascade context for entries that changed verificationStatus
     const cascadePairs = new Map<
       string,
       {
@@ -467,7 +455,6 @@ export const getEntityAuditTimeline = publicProcedure
       }
     }
 
-    // For each cascade pair, query sibling entries across other audit tables
     const cascadeContextMap = new Map<
       string,
       {
@@ -480,10 +467,8 @@ export const getEntityAuditTimeline = publicProcedure
     >();
 
     if (cascadePairs.size > 0) {
-      // Get the parent tournament ID for the current entity
       const { fromClause, parentIdExpr } = getParentEntityJoinInfo(entityType);
 
-      // Resolve parent tournament ID for this entity
       const parentResult = await context.db.execute(sql`
         SELECT ${sql.raw(parentIdExpr)} AS parent_id
         FROM ${sql.raw(fromClause)}
@@ -495,7 +480,6 @@ export const getEntityAuditTimeline = publicProcedure
           ?.parent_id ?? null;
 
       if (parentTournamentId !== null) {
-        // Batch all sibling queries in parallel
         const pairEntries = Array.from(cascadePairs.entries());
         const siblingResults = await Promise.all(
           pairEntries.map(
@@ -534,7 +518,6 @@ export const getEntityAuditTimeline = publicProcedure
           )
         );
 
-        // Process results and collect IDs for batched resolution
         type CascadeInfo = {
           key: string;
           topEntityType: AuditEntityType;
@@ -585,7 +568,6 @@ export const getEntityAuditTimeline = publicProcedure
           });
         }
 
-        // Batch child count queries by entity type
         const childCountQueries: {
           cacheKey: string;
           query: Promise<{ cnt: number }[]>;
@@ -641,7 +623,6 @@ export const getEntityAuditTimeline = publicProcedure
           }
         }
 
-        // Batch entity name resolution
         const entityNameMaps = await resolveEntityNamesBatched(
           context.db,
           cascadeInfos.map((info) => ({
@@ -650,7 +631,6 @@ export const getEntityAuditTimeline = publicProcedure
           }))
         );
 
-        // Build cascade context map
         for (const info of cascadeInfos) {
           const topEntityName =
             entityNameMaps.get(info.topEntityType)?.get(info.topEntityId) ??
@@ -678,7 +658,6 @@ export const getEntityAuditTimeline = publicProcedure
       }
     }
 
-    // Map entries to EntityTimelineEvent (with cascadeContext or null)
     const auditItems: EntityTimelineItem[] = trimmedEntries.map((entry) => {
       const key =
         entry.eventId !== null
@@ -741,7 +720,6 @@ export const getAuditEventFeed = publicProcedure
       }
     }
 
-    // Group field filters by entity type for per-table application
     const fieldsByEntityType = new Map<AuditEntityType, string[]>();
     if (fieldsChanged && fieldsChanged.length > 0) {
       for (const { entityType, fieldName } of fieldsChanged) {
@@ -750,7 +728,6 @@ export const getAuditEventFeed = publicProcedure
       }
     }
 
-    // Determine which tables to query
     let tablesToQuery: { entityType: AuditEntityType }[];
     if (fieldsByEntityType.size > 0) {
       let targetTypes = Array.from(fieldsByEntityType.keys());
@@ -761,8 +738,7 @@ export const getAuditEventFeed = publicProcedure
     } else if (entityTypes && entityTypes.length > 0) {
       tablesToQuery = entityTypes.map((entityType) => ({ entityType }));
     } else {
-      // Default: only tournament + match tables for performance.
-      // Game/score events appear when explicitly filtered by entity type.
+      // Game/score tables are too large to scan unfiltered
       tablesToQuery = [...LIGHT_AUDIT_TABLES];
     }
 
@@ -770,16 +746,13 @@ export const getAuditEventFeed = publicProcedure
       return { events: [], nextCursor: null, hasMore: false };
     }
 
-    // First find only the newest matching timestamps per table. The expensive
-    // JSON aggregation then runs over that bounded window rather than an entire
-    // audit table (game_score_audits is especially large).
+    // Bound each table to its newest matching timestamps before the JSON aggregation
     const tableQueryParts = tablesToQuery.map(({ entityType }) => {
       const { fromClause, parentIdExpr } = getParentEntityJoinInfo(entityType);
       const eventKeyExpr = buildAuditEventKeyExpression(parentIdExpr);
 
       const conditions: ReturnType<typeof sql>[] = [];
 
-      // Default: only admin-initiated, unless showSystem is true
       if (!showSystem) {
         conditions.push(sql`a.action_user_id IS NOT NULL`);
       }
@@ -827,7 +800,6 @@ export const getAuditEventFeed = publicProcedure
         conditions.push(sql`a.reference_id_lock = ${entityId}`);
       }
 
-      // Field name filters (OR logic within entity type)
       const rawFieldNames = fieldsByEntityType.get(entityType);
       const entityFieldNames = rawFieldNames
         ? validateFieldNames(rawFieldNames)
@@ -974,7 +946,6 @@ export const getAuditEventFeed = publicProcedure
       selectedEventKeySet.has(row.event_key)
     );
 
-    // Convert raw rows to GroupedAuditRow for assembleEvents
     const groupedRows: GroupedAuditRow[] = trimmedRows.map((row) => ({
       eventKey: row.event_key,
       eventId: row.event_id === null ? null : Number(row.event_id),
@@ -991,12 +962,9 @@ export const getAuditEventFeed = publicProcedure
       sampleEntityId: row.sample_entity_id,
     }));
 
-    // Assemble only after every row belonging to the selected events is loaded.
+    // Only safe once every row belonging to the selected events is loaded
     const assembledEvents = assembleEvents(groupedRows);
 
-    // --- Enrich events ---
-
-    // 1. Resolve action users (batch)
     const actionUserIds = [
       ...new Set(
         assembledEvents
@@ -1009,7 +977,6 @@ export const getAuditEventFeed = publicProcedure
         ? await resolveUserIds(context.db, actionUserIds)
         : new Map<number, ReferencedUser>();
 
-    // 2. Resolve tournament names (batch) from parentEntityIds
     const parentTournamentIds = [
       ...new Set(
         assembledEvents
@@ -1022,7 +989,6 @@ export const getAuditEventFeed = publicProcedure
         ? await resolveTournamentNames(context.db, parentTournamentIds)
         : new Map<number, string>();
 
-    // 3. Resolve entity names for top-level entities (batch per type)
     const entityNameMaps = await resolveEntityNamesBatched(
       context.db,
       assembledEvents.map((e) => ({
@@ -1031,7 +997,6 @@ export const getAuditEventFeed = publicProcedure
       }))
     );
 
-    // 4. For verification cascades, batch total child counts by entity type
     const totalChildCounts = new Map<string, number>();
     const tournamentIdsForMatchCount: number[] = [];
     const matchIdsForGameCount: number[] = [];
@@ -1121,7 +1086,6 @@ export const getAuditEventFeed = publicProcedure
         : Promise.resolve(),
     ]);
 
-    // 5. Build referenced users from sample changes
     const allRefUserIds: number[] = [];
     for (const event of assembledEvents) {
       if (event.sampleChanges) {
@@ -1136,7 +1100,6 @@ export const getAuditEventFeed = publicProcedure
     }
     const refUserMap = await resolveUserIds(context.db, allRefUserIds);
 
-    // Map to AuditEvent[]
     const events: AuditEvent[] = assembledEvents.map((event) => {
       const actionUser = event.actionUserId
         ? (userMap.get(event.actionUserId) ?? null)
@@ -1145,7 +1108,6 @@ export const getAuditEventFeed = publicProcedure
       const topEntityNameMap = entityNameMaps.get(event.topEntityType);
       const topEntityName = topEntityNameMap?.get(event.topEntityId) ?? null;
 
-      // Parent tournament: null when top entity IS a tournament
       let parentTournament: AuditEvent['parentTournament'] = null;
       if (
         event.topEntityType !== AuditEntityType.Tournament &&
@@ -1157,7 +1119,6 @@ export const getAuditEventFeed = publicProcedure
         };
       }
 
-      // Child level
       let childLevel: AuditEvent['childLevel'] = null;
       if (event.childEntityType !== null && event.childAffectedCount > 0) {
         const cacheKey = `${event.topEntityType}:${event.topEntityId}`;
@@ -1240,7 +1201,6 @@ export const getEventDetails = publicProcedure
       limit,
     } = input;
 
-    // Determine which tables to query
     const tablesToQuery =
       entityType !== undefined ? [{ entityType }] : [...ALL_AUDIT_TABLES];
 
@@ -1319,7 +1279,6 @@ export const getEventDetails = publicProcedure
     const hasMore = rows.length > limit;
     const trimmedRows = hasMore ? rows.slice(0, limit) : rows;
 
-    // Collect referenced user IDs from changes for resolution
     const allRefUserIds: number[] = [];
     const normalizedChangesList: (Record<string, unknown> | null)[] = [];
     for (const row of trimmedRows) {
@@ -1337,7 +1296,6 @@ export const getEventDetails = publicProcedure
     }
     const refUserMap = await resolveUserIds(context.db, allRefUserIds);
 
-    // Resolve entity names for tournaments and matches
     const entityNameMaps = await resolveEntityNamesBatched(
       context.db,
       trimmedRows.map((row) => ({

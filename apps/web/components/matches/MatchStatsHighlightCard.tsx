@@ -67,7 +67,7 @@ export default function MatchStatsHighlightCard({
           </div>
 
           <div className="mt-0.5 flex items-baseline gap-1.5">
-            <span className="text-lg font-semibold tracking-tight tabular-nums">
+            <span className="text-lg font-semibold tracking-tight">
               {stat.value}
             </span>
             {stat.metric &&

@@ -2,9 +2,7 @@ import { test, expect } from '@playwright/test';
 import { ROUTES, Ruleset } from './fixtures/test-config';
 
 test.describe('Leaderboard Page', () => {
-  // The leaderboard shows a blocking first-visit dialog (with a 5s countdown)
-  // until a localStorage flag is set. Pre-set the flag so the dialog never
-  // opens and never intercepts pointer events during the tests.
+  // Pre-set the flag so the blocking first-visit dialog never opens
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem(
@@ -78,8 +76,7 @@ test.describe('Leaderboard Page', () => {
   });
 
   test.describe('Filters', () => {
-    // The filter popover is tall; use a taller viewport so the clear button at
-    // the bottom of the popover stays within the clickable viewport area.
+    // A taller viewport keeps the popover's clear button clickable
     test.use({ viewport: { width: 1280, height: 1080 } });
 
     test('opens the filter popover from the trigger button', async ({
@@ -150,9 +147,7 @@ test.describe('Leaderboard Page', () => {
       await expect(countrySearch).toBeVisible({ timeout: 10000 });
       await countrySearch.fill('United States');
 
-      // The accessible name of each option ends with the country code, so
-      // anchoring on "United States US" avoids matching the alphabetically
-      // earlier "United States Minor Outlying Islands" (UM) option.
+      // Anchor on the country code so "United States Minor Outlying Islands" can't match
       const option = page.getByRole('option', {
         name: /United States of America US$/,
       });
@@ -200,7 +195,6 @@ test.describe('Leaderboard Page', () => {
       await page.goto(ROUTES.leaderboard);
       await page.waitForLoadState('networkidle');
 
-      // Apply ruleset filter
       await page.locator('[data-testid="leaderboard-filter-button"]').click();
       await expect(
         page.locator('[data-testid="leaderboard-filter-popover"]')
@@ -211,9 +205,7 @@ test.describe('Leaderboard Page', () => {
       await page.waitForURL(/ruleset=1/, { timeout: 10000 });
       await page.waitForLoadState('networkidle');
 
-      // Applying the ruleset filter does not close the popover, and it persists
-      // across the soft navigation. Only re-open it if it has actually closed,
-      // otherwise clicking the trigger again would toggle it shut.
+      // Clicking the trigger while the popover is still open would toggle it shut
       const popover = page.locator(
         '[data-testid="leaderboard-filter-popover"]'
       );
@@ -365,6 +357,10 @@ test.describe('Leaderboard Page', () => {
       await expect(prevButton).toBeVisible({ timeout: 10000 });
       await prevButton.click();
 
+      // Page 1 drops the parameter entirely
+      await page.waitForURL((url) => url.searchParams.get('page') === null, {
+        timeout: 10000,
+      });
       await page.waitForLoadState('networkidle');
       await expect(
         page.locator('[data-testid="leaderboard-table"]')
@@ -441,8 +437,6 @@ test.describe('Leaderboard Page', () => {
       await page.goto(ROUTES.leaderboard);
       await page.waitForLoadState('networkidle');
 
-      // Tabs (including the Friends tab) only render for an authenticated
-      // session, so an unauthenticated visitor should not see them.
       const tabs = page.locator('[data-testid="leaderboard-tabs"]');
       await expect(tabs).toHaveCount(0);
     });

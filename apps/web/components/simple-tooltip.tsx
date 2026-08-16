@@ -12,6 +12,8 @@ interface SimpleTooltipProps {
   children: ReactNode;
   side?: 'top' | 'right' | 'bottom' | 'left';
   align?: 'start' | 'center' | 'end';
+  sideOffset?: number;
+  collisionPadding?: number;
 }
 
 export default function SimpleTooltip({
@@ -19,11 +21,19 @@ export default function SimpleTooltip({
   children,
   side = 'top',
   align = 'center',
+  sideOffset = 6,
+  collisionPadding = 8,
 }: SimpleTooltipProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side={side} align={align}>
+      {/* Defaults match TapTooltip */}
+      <TooltipContent
+        side={side}
+        align={align}
+        sideOffset={sideOffset}
+        collisionPadding={collisionPadding}
+      >
         {content}
       </TooltipContent>
     </Tooltip>

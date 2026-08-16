@@ -2,12 +2,7 @@ import { test, expect } from '@playwright/test';
 import { STORAGE_STATE } from './fixtures/auth';
 import { ROUTES } from './fixtures/test-config';
 
-/**
- * Deeper coverage for the admin dashboard and admin reports pages. The minimal
- * "admin can open the dashboard" / "regular user is redirected" smoke tests live
- * in auth.e2e.ts; these specs exercise the dashboard tool cards, navigation, and
- * the reports list/table with read-only interactions only (no mutations).
- */
+/** Admin dashboard and reports pages; read-only interactions only. */
 test.describe('Admin pages', () => {
   test.describe('Admin role', () => {
     test.use({ storageState: STORAGE_STATE.admin });
@@ -40,7 +35,6 @@ test.describe('Admin pages', () => {
         const form = page.locator('[data-testid="admin-user-lookup-form"]');
         await expect(form).toBeVisible({ timeout: 10000 });
 
-        // Read-only: type a query without submitting it.
         const input = form.locator('#admin-player-search');
         await expect(input).toBeVisible();
         await input.fill('Stage');
@@ -79,7 +73,6 @@ test.describe('Admin pages', () => {
         const list = page.locator('[data-testid="admin-reports-list"]');
         const empty = page.locator('[data-testid="admin-reports-empty"]');
 
-        // Data may be sparse: tolerate either the populated table or empty state.
         const hasList = await list
           .isVisible({ timeout: 15000 })
           .catch(() => false);
@@ -118,7 +111,6 @@ test.describe('Admin pages', () => {
           page.getByRole('option', { name: 'Rejected' })
         ).toBeVisible();
 
-        // Apply a filter and confirm it sticks (read-only, no mutation).
         await page.getByRole('option', { name: 'Pending' }).click();
         await expect(filter).toContainText('Pending', { timeout: 10000 });
       });

@@ -118,8 +118,7 @@ test.describe('Homepage and Global Navigation', () => {
       await page.goto(ROUTES.leaderboard);
       await page.waitForLoadState('networkidle');
 
-      // The leaderboard shows a first-visit welcome modal whose overlay
-      // intercepts pointer events. Dismiss it before interacting with the header.
+      // The first-visit modal intercepts pointer events until dismissed
       const welcomeAck = page.getByRole('button', { name: 'I understand' });
       if (await welcomeAck.isVisible().catch(() => false)) {
         await welcomeAck.click();
@@ -251,9 +250,7 @@ test.describe('Homepage and Global Navigation', () => {
     });
 
     test('shows mobile nav trigger at tablet width', async ({ page }) => {
-      // The header switches to desktop nav at the Tailwind `md` breakpoint
-      // (>= 768px). Below that — narrow tablet / large phone — the mobile
-      // hamburger trigger is shown.
+      // Desktop nav starts at the `md` breakpoint (768px)
       await page.setViewportSize({ width: 767, height: 1024 });
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
@@ -274,8 +271,7 @@ test.describe('Homepage and Global Navigation', () => {
       await expect(trigger).toBeVisible({ timeout: 10000 });
       await trigger.click();
 
-      // The nav link also exists in the (hidden) desktop nav, so scope the
-      // assertion to the mobile sheet that the trigger reveals.
+      // The link also exists in the hidden desktop nav, so scope to the sheet
       const mobileSheet = page.locator('[data-slot="sheet-content"]');
       await expect(mobileSheet).toBeVisible({ timeout: 10000 });
       await expect(

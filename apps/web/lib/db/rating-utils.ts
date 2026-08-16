@@ -8,9 +8,7 @@ import type { RatingTimestamps } from '@/lib/maintenance-window';
 /** Accepts both the database client and a transaction handle. */
 export type DbReader = Pick<DatabaseClient, 'select'>;
 
-/**
- * Reads the database clock and the most recent `player_ratings.created` timestamp.
- */
+/** The database clock and the most recent `player_ratings.created`. */
 export async function readRatingTimestamps(
   db: DbReader
 ): Promise<RatingTimestamps> {

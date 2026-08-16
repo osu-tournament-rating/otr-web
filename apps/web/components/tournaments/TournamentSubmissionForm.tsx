@@ -67,7 +67,6 @@ const getTextareaFieldClassName = (hasError: boolean): string => {
   } focus-visible:ring-1`;
 };
 
-// Form section component for better organization
 type FormSectionProps = {
   icon: React.ReactNode;
   title: string;

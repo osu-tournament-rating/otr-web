@@ -1,19 +1,23 @@
+import { Inbox } from 'lucide-react';
 import { Metadata } from 'next';
 import { z } from 'zod';
+
+import BeatmapDistributionsCard from '@/components/beatmap/BeatmapDistributionsCard';
+import BeatmapHeader from '@/components/beatmap/BeatmapHeader';
+import BeatmapLeaderboardCard from '@/components/beatmap/BeatmapLeaderboardCard';
+import BeatmapMarginCard from '@/components/beatmap/BeatmapMarginCard';
+import BeatmapOverviewCard from '@/components/beatmap/BeatmapOverviewCard';
+import BeatmapPerformanceCard from '@/components/beatmap/BeatmapPerformanceCard';
+import BeatmapScoreDistributionCard from '@/components/beatmap/BeatmapScoreDistributionCard';
+import BeatmapScoreScatterCard from '@/components/beatmap/BeatmapScoreScatterCard';
+import { SectionCard } from '@/components/beatmap/BeatmapSection';
+import BeatmapTierBreakdownCard from '@/components/beatmap/BeatmapTierBreakdownCard';
+import { getBeatmapStatsCached } from '@/lib/orpc/queries/beatmapStats';
 import {
   fetchOrpcOptional,
   fetchOrpcOrNotFound,
   parseParamsOrNotFound,
 } from '@/lib/orpc/server-helpers';
-import { getBeatmapStatsCached } from '@/lib/orpc/queries/beatmapStats';
-import { Card, CardContent } from '@/components/ui/card';
-import BeatmapHeader from '@/components/beatmap/BeatmapHeader';
-import BeatmapStatsCard from '@/components/beatmap/BeatmapStatsCard';
-import BeatmapUsageChart from '@/components/beatmap/BeatmapUsageChart';
-import BeatmapModDistributionChart from '@/components/beatmap/BeatmapModDistributionChart';
-import BeatmapScoreRatingChart from '@/components/beatmap/BeatmapScoreRatingChart';
-import BeatmapTournamentsList from '@/components/beatmap/BeatmapTournamentsList';
-import BeatmapTopPerformersTable from '@/components/beatmap/BeatmapTopPerformersTable';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -28,37 +32,20 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const parsedParams = beatmapPageParamsSchema.safeParse(await params);
 
-  if (!parsedParams.success) {
-    return {
-      title: 'Beatmap Not Found',
-    };
-  }
+  if (!parsedParams.success) return { title: 'Beatmap Not Found' };
 
-  const beatmapStats = await fetchOrpcOptional(() =>
+  const stats = await fetchOrpcOptional(() =>
     getBeatmapStatsCached(parsedParams.data.id)
   );
+  if (!stats) return { title: 'Beatmap Not Found' };
 
-  if (!beatmapStats) {
-    return {
-      title: 'Beatmap Not Found',
-    };
-  }
-
-  const artist = beatmapStats.beatmap.beatmapset?.artist ?? 'Unknown';
-  const title = beatmapStats.beatmap.beatmapset?.title ?? 'Unknown';
-  const diffName = beatmapStats.beatmap.diffName;
-  const sr = beatmapStats.beatmap.sr;
-  const bpm = beatmapStats.beatmap.bpm;
-  const mapper =
-    beatmapStats.beatmap.creators?.[0]?.username ??
-    beatmapStats.beatmap.beatmapset?.creator?.username;
-  const beatmapsetOsuId = beatmapStats.beatmap.beatmapset?.osuId;
-
-  const pageTitle = `${artist} - ${title} [${diffName}]`;
-  const description = mapper
-    ? `${sr.toFixed(2)}★ | ${bpm.toFixed(0)} BPM | Mapped by ${mapper}`
-    : `${sr.toFixed(2)}★ | ${bpm.toFixed(0)} BPM`;
-
+  const artist = stats.beatmap.beatmapset?.artist ?? 'Unknown artist';
+  const title = stats.beatmap.beatmapset?.title ?? 'Unknown title';
+  const pageTitle = `${artist} - ${title} [${stats.beatmap.diffName}]`;
+  const description = `${stats.beatmap.sr.toFixed(2)} SR · ${Math.round(
+    stats.beatmap.bpm
+  )} BPM`;
+  const beatmapsetOsuId = stats.beatmap.beatmapset?.osuId;
   const coverImage = beatmapsetOsuId
     ? `https://assets.ppy.sh/beatmaps/${beatmapsetOsuId}/covers/cover.jpg`
     : undefined;
@@ -72,70 +59,105 @@ export async function generateMetadata({
       description,
       type: 'website',
       ...(coverImage && {
-        images: [
-          {
-            url: coverImage,
-            width: 800,
-            height: 200,
-            alt: `${artist} - ${title}`,
-          },
-        ],
+        images: [{ url: coverImage, width: 800, height: 200, alt: pageTitle }],
       }),
     },
     twitter: {
       card: 'summary_large_image',
       title: pageTitle,
       description,
-      ...(coverImage && {
-        images: [coverImage],
-      }),
+      ...(coverImage && { images: [coverImage] }),
     },
   };
 }
 
 export default async function BeatmapPage({ params }: PageProps) {
   const { id } = parseParamsOrNotFound(beatmapPageParamsSchema, await params);
-  const beatmapStats = await fetchOrpcOrNotFound(() =>
-    getBeatmapStatsCached(id)
+  const stats = await fetchOrpcOrNotFound(() => getBeatmapStatsCached(id));
+  const totalVerifiedScoreCount = stats.modDistribution.reduce(
+    (total, distribution) => total + distribution.scoreCount,
+    0
   );
+  const hasNoVerifiedData =
+    stats.tournaments.length === 0 && totalVerifiedScoreCount === 0;
 
-  const hasData = beatmapStats.tournaments.length > 0;
+  // BeatmapHeader and BeatmapOverviewCard render in both branches; keep their props in sync
+  if (hasNoVerifiedData) {
+    return (
+      <div className="container mx-auto space-y-4 px-4 py-6 sm:px-0 sm:py-0">
+        <BeatmapHeader
+          beatmap={stats.beatmap}
+          relatedDifficulties={stats.relatedDifficulties}
+        />
+        <div className="grid gap-4 lg:grid-cols-3">
+          <BeatmapOverviewCard
+            beatmap={stats.beatmap}
+            usage={stats.usageOverTime}
+            summary={stats.summary}
+            pools={stats.tournaments}
+          />
+          <SectionCard
+            data-testid="beatmap-empty-band"
+            className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center lg:col-span-2"
+          >
+            <Inbox className="size-8 text-muted-foreground" aria-hidden />
+            <p className="font-medium">
+              No verified tournament data recorded yet
+            </p>
+            <p className="max-w-md text-sm text-muted-foreground">
+              Statistics will appear once a verified tournament uses this
+              beatmap.
+            </p>
+          </SectionCard>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto flex flex-col gap-4 md:gap-2">
-      <BeatmapHeader beatmap={beatmapStats.beatmap} />
-      {hasData ? (
-        <>
-          <BeatmapStatsCard summary={beatmapStats.summary} />
-          {beatmapStats.usageOverTime.length >= 2 && (
-            <BeatmapUsageChart data={beatmapStats.usageOverTime} />
-          )}
-          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-2">
-            <BeatmapModDistributionChart
-              modStats={beatmapStats.modDistribution}
-            />
-            <BeatmapScoreRatingChart data={beatmapStats.scoreRatingData} />
-          </div>
-          <BeatmapTournamentsList
-            tournaments={beatmapStats.tournaments}
-            beatmapOsuId={beatmapStats.beatmap.osuId}
-          />
-          {beatmapStats.topPerformers.length > 0 && (
-            <BeatmapTopPerformersTable
-              performers={beatmapStats.topPerformers}
-            />
-          )}
-        </>
-      ) : (
-        <Card className="py-12">
-          <CardContent className="flex flex-col items-center justify-center text-center">
-            <h2 className="text-lg font-semibold">No Tournament Data</h2>
-            <p className="mt-2 max-w-md text-sm text-muted-foreground">
-              This beatmap has not been used in any verified tournaments yet.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+    <div className="container mx-auto space-y-4 px-4 py-6 sm:px-0 sm:py-0">
+      <BeatmapHeader
+        beatmap={stats.beatmap}
+        relatedDifficulties={stats.relatedDifficulties}
+      />
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <BeatmapOverviewCard
+          beatmap={stats.beatmap}
+          usage={stats.usageOverTime}
+          summary={stats.summary}
+          pools={stats.tournaments}
+        />
+
+        <BeatmapDistributionsCard
+          className="lg:col-span-2"
+          modStats={stats.modDistribution}
+          pools={stats.tournaments}
+          freemodPicks={stats.freemodPicks}
+          rankRangeMods={stats.rankRangeModDistribution}
+          gradeDistribution={stats.performance.gradeDistribution}
+        />
+      </div>
+
+      <BeatmapScoreDistributionCard
+        distribution={stats.scoreDistribution}
+        percentiles={stats.scorePercentiles}
+        totalScoreCount={stats.chartedScoreCount}
+      />
+
+      <BeatmapTierBreakdownCard tierBreakdown={stats.tierBreakdown} />
+
+      <BeatmapScoreScatterCard sample={stats.scoreSample} />
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <BeatmapMarginCard closeness={stats.closeness} />
+        <BeatmapPerformanceCard performance={stats.performance} />
+      </div>
+
+      <BeatmapLeaderboardCard
+        performers={stats.topPerformers}
+        totalScoreCount={totalVerifiedScoreCount}
+      />
     </div>
   );
 }

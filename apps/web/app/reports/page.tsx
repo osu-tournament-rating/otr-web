@@ -14,7 +14,6 @@ export default async function ReportsPage() {
     redirect('/unauthorized');
   }
 
-  // Admins manage every report from the dedicated admin view.
   if (hasAdminScope(session.dbUser?.scopes ?? [])) {
     redirect('/admin/reports');
   }

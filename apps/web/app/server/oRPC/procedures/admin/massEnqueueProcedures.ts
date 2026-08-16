@@ -56,14 +56,7 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Handles mass enqueueing of beatmaps and matches for refetch.
- * Updates database records and publishes messages to the queue in batches.
- * Yields progress events during processing and a completion event at the end.
- *
- * @yields {AdminMassEnqueueProgressEvent} Progress or completion events
- * @throws {ORPCError} If user lacks admin privileges
- */
+/** Mass-enqueues beatmaps and matches for refetch, yielding progress events. */
 export async function* massEnqueueHandler({ input, context }: MassEnqueueArgs) {
   const { adminUserId } = ensureAdminSession(context.session);
   ensureAdminDataMutationAllowed(context);

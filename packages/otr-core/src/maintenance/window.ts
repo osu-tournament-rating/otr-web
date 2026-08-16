@@ -1,12 +1,5 @@
-/**
- * Weekly maintenance window during which tournament data must not change.
- *
- * The osu! rating processor runs at 12:00 UTC. We freeze data mutations and
- * external fetches for fifteen minutes either side of that run so the public
- * data archives stay consistent with the data the processor operates on.
- *
- * See https://github.com/osu-tournament-rating/otr-web/issues/763.
- */
+// Weekly freeze on data mutations and external fetches around the 12:00 UTC
+// rating processor run. https://github.com/osu-tournament-rating/otr-web/issues/763
 
 /** Start of the window, in minutes past midnight UTC (11:45 UTC). */
 export const MAINTENANCE_WINDOW_START_UTC_MINUTES = 11 * 60 + 45;
@@ -20,13 +13,7 @@ export const MAINTENANCE_WINDOW_UTC_DAY = 2;
 /** Human-readable label for messages and logs. */
 export const MAINTENANCE_WINDOW_LABEL = 'Tuesdays 11:45-12:15 UTC';
 
-/**
- * Returns whether the supplied instant falls within the weekly maintenance
- * window. The day and time are evaluated in UTC. The start boundary is
- * inclusive and the end boundary is exclusive.
- *
- * @param now Instant to evaluate.
- */
+/** Whether `now` is inside the window; start inclusive, end exclusive, all UTC. */
 export function isWithinMaintenanceWindow(now: Date): boolean {
   if (now.getUTCDay() !== MAINTENANCE_WINDOW_UTC_DAY) {
     return false;
@@ -40,10 +27,7 @@ export function isWithinMaintenanceWindow(now: Date): boolean {
   );
 }
 
-/**
- * Returns the start of the most recent maintenance window at or before the
- * supplied instant (the moment the public replica is snapshotted).
- */
+/** Start of the most recent window at or before `now`, when the replica is snapshotted. */
 export function latestMaintenanceWindowStart(now: Date): Date {
   const start = new Date(
     Date.UTC(
@@ -63,11 +47,7 @@ export function latestMaintenanceWindowStart(now: Date): Date {
   return start;
 }
 
-/**
- * Returns whether live ratings are stale relative to the most recent replica
- * snapshot, i.e. the processor has not rebuilt `player_ratings` since the
- * window start. `null` means no ratings exist, so nothing can be stale.
- */
+/** Whether the processor has not rebuilt `player_ratings` since the last window start. */
 export function isRatingRecalculationPending(
   now: Date,
   latestRatingCreated: Date | null

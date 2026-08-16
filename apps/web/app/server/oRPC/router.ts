@@ -28,10 +28,7 @@ import {
   getPlayerTournaments,
 } from './procedures/playerProcedures';
 import { getPlayerRatings } from './procedures/playerRatingsProcedures';
-import {
-  getBeatmapStats,
-  getBeatmapTournamentMatches,
-} from './procedures/beatmapProcedures';
+import { getBeatmapStats } from './procedures/beatmapProcedures';
 import { listBeatmaps } from './procedures/beatmapListProcedures';
 import { searchEntities } from './procedures/searchProcedures';
 import {
@@ -198,7 +195,6 @@ export const router = base.router({
   beatmaps: {
     list: listBeatmaps,
     stats: getBeatmapStats,
-    tournamentMatches: getBeatmapTournamentMatches,
   },
   stats: {
     platform: getPlatformStats,

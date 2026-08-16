@@ -47,7 +47,6 @@ export default function PlayerTierProgress({ rating }: TierProgressProps) {
           </SimpleTooltip>
         </div>
 
-        {/* Tier progress bars */}
         <div className="flex flex-1 items-center gap-2">
           {[3, 2, 1].map((subtier) => (
             <div key={subtier} className="flex flex-1 flex-col">

@@ -2,11 +2,254 @@ import { describe, expect, it } from 'bun:test';
 
 import { Mods } from '@otr/core/osu';
 import {
+  BEATMAP_MOD_OTHER_LABEL,
+  calculateBeatmapListModDistribution,
+  calculateBeatmapModDistribution,
+  collapseBeatmapModDistribution,
   deriveGameIsFreeMod,
-  mostCommonDisplayMods,
+  filterBeatmapModDistribution,
+  getBeatmapModLabel,
+  getModColor,
+  getModForegroundColor,
+  normalizeBeatmapDisplayMods,
   resolveGameDisplayMods,
-  resolveGameModsFromScores,
+  selectBeatmapListModGroups,
 } from '../mods';
+
+describe('beatmap mod display helpers', () => {
+  it('removes incidental score mods and formats the remaining combination', () => {
+    expect(normalizeBeatmapDisplayMods(Mods.NoFail | Mods.SpunOut)).toBe(
+      Mods.None
+    );
+    expect(getBeatmapModLabel(Mods.NoFail)).toBe('NM');
+    expect(getBeatmapModLabel(Mods.NoFail | Mods.Hidden | Mods.HardRock)).toBe(
+      'HDHR'
+    );
+  });
+
+  it('folds Nightcore into DoubleTime everywhere it is displayed', () => {
+    expect(normalizeBeatmapDisplayMods(Mods.DoubleTime | Mods.Nightcore)).toBe(
+      Mods.DoubleTime
+    );
+    expect(normalizeBeatmapDisplayMods(Mods.Nightcore)).toBe(Mods.DoubleTime);
+    expect(getBeatmapModLabel(Mods.DoubleTime | Mods.Nightcore)).toBe('DT');
+    expect(getBeatmapModLabel(Mods.Hidden | Mods.Nightcore)).toBe('HDDT');
+
+    const distribution = calculateBeatmapModDistribution([
+      { mods: Mods.DoubleTime, scoreCount: 10 },
+      { mods: Mods.DoubleTime | Mods.Nightcore, scoreCount: 5 },
+    ]);
+    expect(
+      distribution.map(({ mods, label, scoreCount }) => ({
+        mods,
+        label,
+        scoreCount,
+      }))
+    ).toEqual([{ mods: Mods.DoubleTime, label: 'DT', scoreCount: 15 }]);
+  });
+
+  it('colors Nightcore combinations like their DoubleTime equivalents', () => {
+    expect(getModColor(Mods.DoubleTime | Mods.Nightcore)).toBe(
+      'var(--mod-double-time)'
+    );
+    expect(getModColor(Mods.Nightcore)).toBe('var(--mod-double-time)');
+    expect(getModColor(Mods.Hidden | Mods.Nightcore)).toBe(
+      'var(--mod-hidden-double-time)'
+    );
+    expect(getModColor(Mods.Relax)).toBe('var(--mod-relax)');
+    expect(getModColor(Mods.Key7)).toBe('var(--mod-mania-key)');
+  });
+
+  it('aggregates score-derived combinations using the detail chart rules', () => {
+    const distribution = calculateBeatmapModDistribution([
+      { mods: Mods.NoFail, scoreCount: 950 },
+      { mods: Mods.None, scoreCount: 9 },
+      { mods: Mods.NoFail | Mods.HardRock, scoreCount: 20 },
+      { mods: Mods.Hidden, scoreCount: 11 },
+      { mods: Mods.DoubleTime, scoreCount: 10 },
+    ]);
+
+    expect(
+      distribution.map(({ mods, label, scoreCount }) => ({
+        mods,
+        label,
+        scoreCount,
+      }))
+    ).toEqual([
+      { mods: Mods.None, label: 'NM', scoreCount: 959 },
+      { mods: Mods.HardRock, label: 'HR', scoreCount: 20 },
+      { mods: Mods.Hidden, label: 'HD', scoreCount: 11 },
+      { mods: Mods.DoubleTime, label: 'DT', scoreCount: 10 },
+    ]);
+    expect(distribution[0].percentage).toBeCloseTo(95.9);
+    expect(distribution[1].percentage).toBeCloseTo(2);
+    expect(distribution[2].percentage).toBeCloseTo(1.1);
+    expect(distribution[3].percentage).toBeCloseTo(1);
+  });
+
+  it('filters chart entries against their share of all scores', () => {
+    expect(
+      filterBeatmapModDistribution(
+        calculateBeatmapModDistribution([
+          { mods: Mods.None, scoreCount: 991 },
+          { mods: Mods.Hidden, scoreCount: 9 },
+        ])
+      ).map(({ label }) => label)
+    ).toEqual(['NM']);
+  });
+
+  it('collapses combinations below the threshold into a trailing Other slice', () => {
+    const distribution = collapseBeatmapModDistribution(
+      calculateBeatmapModDistribution([
+        { mods: Mods.None, scoreCount: 940 },
+        { mods: Mods.Hidden, scoreCount: 50 },
+        { mods: Mods.Hidden | Mods.DoubleTime | Mods.HardRock, scoreCount: 5 },
+        { mods: Mods.Flashlight, scoreCount: 4 },
+        { mods: Mods.Easy, scoreCount: 1 },
+      ])
+    );
+
+    expect(
+      distribution.map(({ label, scoreCount }) => ({ label, scoreCount }))
+    ).toEqual([
+      { label: 'NM', scoreCount: 940 },
+      { label: 'HD', scoreCount: 50 },
+      { label: BEATMAP_MOD_OTHER_LABEL, scoreCount: 10 },
+    ]);
+    expect(distribution[2].percentage).toBeCloseTo(1);
+  });
+
+  it('omits the Other slice when every combination meets the threshold', () => {
+    expect(
+      collapseBeatmapModDistribution(
+        calculateBeatmapModDistribution([
+          { mods: Mods.None, scoreCount: 90 },
+          { mods: Mods.Hidden, scoreCount: 10 },
+        ])
+      ).map(({ label }) => label)
+    ).toEqual(['NM', 'HD']);
+  });
+
+  it('returns no usage for empty or invalid counts', () => {
+    expect(calculateBeatmapModDistribution([])).toEqual([]);
+    expect(
+      calculateBeatmapModDistribution([
+        { mods: Mods.Hidden, scoreCount: 0 },
+        { mods: Mods.HardRock, scoreCount: Number.NaN },
+      ])
+    ).toEqual([]);
+  });
+});
+
+describe('beatmap list mod display helpers', () => {
+  it('groups layered score mods by their dominant gameplay mod', () => {
+    const distribution = calculateBeatmapListModDistribution([
+      { mods: Mods.DoubleTime, scoreCount: 10 },
+      { mods: Mods.Hidden | Mods.DoubleTime, scoreCount: 20 },
+      { mods: Mods.Nightcore, scoreCount: 30 },
+      { mods: Mods.Hidden, scoreCount: 5 },
+      { mods: Mods.HardRock, scoreCount: 10 },
+      { mods: Mods.Hidden | Mods.HardRock, scoreCount: 15 },
+      { mods: Mods.Easy, scoreCount: 10 },
+      { mods: Mods.Hidden | Mods.Easy, scoreCount: 15 },
+      { mods: Mods.DoubleTime | Mods.Easy, scoreCount: 25 },
+      { mods: Mods.HalfTime, scoreCount: 10 },
+      { mods: Mods.Hidden | Mods.HalfTime, scoreCount: 10 },
+      { mods: Mods.HardRock | Mods.HalfTime, scoreCount: 10 },
+      { mods: Mods.Flashlight, scoreCount: 10 },
+      { mods: Mods.Hidden | Mods.Flashlight, scoreCount: 15 },
+    ]);
+
+    expect(
+      distribution.map(({ label, scoreCount }) => ({ label, scoreCount }))
+    ).toEqual([
+      { label: 'DT', scoreCount: 60 },
+      { label: 'HT', scoreCount: 30 },
+      { label: 'DTEZ', scoreCount: 25 },
+      { label: 'EZ', scoreCount: 25 },
+      { label: 'FL', scoreCount: 25 },
+      { label: 'HR', scoreCount: 25 },
+      { label: 'HD', scoreCount: 5 },
+    ]);
+  });
+
+  it('keeps NM distinct and groups unsupported combinations as Other', () => {
+    const distribution = calculateBeatmapListModDistribution([
+      { mods: Mods.None, scoreCount: 20 },
+      { mods: Mods.Hidden | Mods.HardRock | Mods.Flashlight, scoreCount: 10 },
+      { mods: Mods.Easy | Mods.HardRock, scoreCount: 10 },
+      { mods: Mods.Easy | Mods.HalfTime, scoreCount: 10 },
+      { mods: Mods.SuddenDeath, scoreCount: 10 },
+    ]);
+
+    expect(
+      distribution.map(({ label, scoreCount }) => ({ label, scoreCount }))
+    ).toEqual([
+      { label: 'Other', scoreCount: 40 },
+      { label: 'NM', scoreCount: 20 },
+    ]);
+  });
+
+  it('shows the second-ranked group at the inclusive 20% boundary', () => {
+    const displayedGroups = selectBeatmapListModGroups(
+      calculateBeatmapListModDistribution([
+        { mods: Mods.None, scoreCount: 80 },
+        { mods: Mods.Hidden, scoreCount: 20 },
+      ])
+    );
+
+    expect(
+      displayedGroups.map(({ label, percentage }) => ({ label, percentage }))
+    ).toEqual([
+      { label: 'NM', percentage: 80 },
+      { label: 'HD', percentage: 20 },
+    ]);
+  });
+
+  it('hides the second-ranked group below 20%', () => {
+    const displayedGroups = selectBeatmapListModGroups(
+      calculateBeatmapListModDistribution([
+        { mods: Mods.None, scoreCount: 801 },
+        { mods: Mods.Hidden, scoreCount: 199 },
+      ])
+    );
+
+    expect(displayedGroups.map(({ label }) => label)).toEqual(['NM']);
+  });
+
+  it('never shows more than two groups', () => {
+    const displayedGroups = selectBeatmapListModGroups(
+      calculateBeatmapListModDistribution([
+        { mods: Mods.None, scoreCount: 40 },
+        { mods: Mods.Hidden, scoreCount: 30 },
+        { mods: Mods.HardRock, scoreCount: 20 },
+        { mods: Mods.DoubleTime, scoreCount: 10 },
+      ])
+    );
+
+    expect(displayedGroups.map(({ label }) => label)).toEqual(['NM', 'HD']);
+  });
+
+  it('keeps the primary group when every group is below 20%', () => {
+    const groups = [
+      { label: 'NM', percentage: 19 },
+      { label: 'HD', percentage: 18 },
+      { label: 'HR', percentage: 17 },
+    ];
+
+    expect(selectBeatmapListModGroups(groups)).toEqual([groups[0]]);
+    expect(selectBeatmapListModGroups([])).toEqual([]);
+  });
+
+  it('uses a light foreground only for dark flashlight backgrounds', () => {
+    expect(getModForegroundColor(Mods.Flashlight)).toBe('#FFFFFF');
+    expect(getModForegroundColor(Mods.Hidden | Mods.Flashlight)).toBe(
+      '#FFFFFF'
+    );
+    expect(getModForegroundColor(Mods.None)).toBe('#000000');
+    expect(getModForegroundColor(Mods.HardRock)).toBe('#000000');
+  });
+});
 
 describe('resolveGameDisplayMods', () => {
   it('uses the game mods when the game is not freemod', () => {
@@ -65,55 +308,5 @@ describe('deriveGameIsFreeMod', () => {
     expect(deriveGameIsFreeMod(Mods.HardRock, [{ mods: Mods.HardRock }])).toBe(
       false
     );
-  });
-});
-
-describe('resolveGameModsFromScores', () => {
-  it('resolves HD for a NoMod freemod game where everyone played HD', () => {
-    expect(
-      resolveGameModsFromScores(Mods.None, [
-        Mods.Hidden,
-        Mods.Hidden | Mods.NoFail,
-      ])
-    ).toEqual({ mods: Mods.Hidden, freemod: false });
-  });
-
-  it('trusts forced game mods even with empty scores', () => {
-    expect(resolveGameModsFromScores(Mods.HardRock, [])).toEqual({
-      mods: Mods.HardRock,
-      freemod: false,
-    });
-  });
-});
-
-describe('mostCommonDisplayMods', () => {
-  it('returns NoMod for no games', () => {
-    expect(mostCommonDisplayMods([])).toEqual({
-      mods: Mods.None,
-      freemod: false,
-    });
-  });
-
-  it('reports HD across freemod games that all played HD', () => {
-    expect(
-      mostCommonDisplayMods([
-        { mods: Mods.None, scoreMods: [Mods.Hidden, Mods.Hidden] },
-        { mods: Mods.None, scoreMods: [Mods.Hidden] },
-        {
-          mods: Mods.None,
-          scoreMods: [Mods.Hidden, Mods.Hidden | Mods.NoFail],
-        },
-      ])
-    ).toEqual({ mods: Mods.Hidden, freemod: false });
-  });
-
-  it('picks the most frequent effective mod across games', () => {
-    expect(
-      mostCommonDisplayMods([
-        { mods: Mods.HardRock, scoreMods: [] },
-        { mods: Mods.HardRock, scoreMods: [] },
-        { mods: Mods.None, scoreMods: [Mods.Hidden] },
-      ])
-    ).toEqual({ mods: Mods.HardRock, freemod: false });
   });
 });

@@ -169,7 +169,6 @@ export default function GameAdminView({ game }: { game: Game }) {
           <DialogTitle>Edit Game</DialogTitle>
           <DialogDescription>Editing Game {game.id}</DialogDescription>
         </DialogHeader>
-        {/* Edit form */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
             <div className="flex gap-5">
@@ -247,8 +246,7 @@ export default function GameAdminView({ game }: { game: Game }) {
               render={({ field: { value, onChange }, fieldState }) => (
                 <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                   <FormControl>
-                    {/* Disabled because this is a property set on the
-                     DTO but isn't configurable or in the database */}
+                    {/* DTO-only property, not stored or configurable */}
                     <Checkbox
                       disabled
                       className={inputChangedStyle(fieldState)}
@@ -377,10 +375,8 @@ export default function GameAdminView({ game }: { game: Game }) {
               />
             </div>
 
-            {/* Form action buttons */}
             <div className="flex justify-between">
               <div className="flex gap-2">
-                {/* Reset changes */}
                 <Button
                   type="reset"
                   variant={'secondary'}
@@ -393,10 +389,8 @@ export default function GameAdminView({ game }: { game: Game }) {
                   Reset
                 </Button>
 
-                {/* Merge game */}
                 <MergeGameButton game={game} />
 
-                {/* Delete game */}
                 <DeleteButton
                   entityType="game"
                   entityId={game.id}
@@ -405,7 +399,6 @@ export default function GameAdminView({ game }: { game: Game }) {
                 />
               </div>
 
-              {/* Save changes */}
               <Button
                 type="submit"
                 size="sm"

@@ -1,6 +1,4 @@
-/**
- * Represents RabbitMQ-compatible priority values shared between applications.
- */
+/** RabbitMQ priority values, shared between applications. */
 export enum MessagePriority {
   Low = 0,
   Normal = 5,
@@ -27,9 +25,7 @@ function generateCorrelationId(): string {
   });
 }
 
-/**
- * Creates metadata for a message envelope, filling defaults for optional fields.
- */
+/** Message envelope metadata, with defaults for the optional fields. */
 export function createMessageMetadata(
   metadata: Partial<MessageMetadata> = {}
 ): MessageMetadata {

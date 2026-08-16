@@ -15,9 +15,7 @@ import {
   type AdminDataMutationClockContext,
 } from '../shared/adminGuard';
 
-// Pure match-admin handlers, intentionally kept free of the oRPC `../base`
-// import (auth, db pool, metrics). This keeps unit tests for the handlers fast
-// and free of the heavy transport/auth module graph.
+// No `../base` import here, so handler unit tests skip the auth/db module graph
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 

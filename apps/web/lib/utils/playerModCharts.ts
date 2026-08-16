@@ -1,3 +1,2 @@
-// Used to determine if a mod should be displayed in the mod stats chart
-// This is a percentage of the total number of games played by the player
+/** Minimum share of a player's games before a mod earns a slice. */
 export const MOD_CHART_DISPLAY_THRESHOLD = 1.0;

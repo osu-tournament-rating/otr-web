@@ -17,12 +17,12 @@ import {
 import { z } from 'zod';
 import { leaderboardTierFilterValues } from './utils/leaderboard';
 import { TournamentListFilter } from './types';
-import { RANK_RANGE_DEFAULT_MAX } from '@/components/tournaments/list/tournamentRankSlider';
+import { RANK_RANGE_DEFAULT_MAX } from '@/lib/filters/tournament-rank';
 
-/** Enum-like object shape (replaces zod v3's removed `EnumLike` type) */
+// Replaces zod v3's removed `EnumLike`.
 type EnumLike = Record<string, string | number>;
 
-/** Schema that ensures a numeric input is assignable to a given BITWISE enumeration */
+/** Numeric input assignable to a bitwise enumeration. */
 const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
   z.coerce.number().refine((val) => {
     const validFlags = Object.values(enumType).filter(
@@ -33,13 +33,13 @@ const bitwiseEnumValueSchema = <T extends EnumLike>(enumType: T) =>
     return validFlags.includes(val) || (val & ~allFlags) === 0;
   });
 
-/** Schema that ensures a numeric input is assignable to a given enumeration */
+/** Numeric input assignable to an enumeration. */
 const numericEnumValueSchema = <T extends EnumLike>(enumType: T) =>
   z.coerce
     .number({ error: 'Required' })
     .refine((val) => Object.values(enumType).includes(val));
 
-/** Schema that will convert string input of 'true' or 'false' to a boolean */
+/** Converts `'true'`/`'false'` to a boolean. */
 const booleanStringSchema = z
   .string()
   .toLowerCase()
@@ -74,7 +74,6 @@ export const defaultTournamentListFilter: Partial<TournamentListFilter> = {
   verified: false,
   sort: TournamentQuerySortType.EndTime,
   descending: true,
-  // Arrays are used for multi-select
   verificationStatus: [],
   lobbySize: [],
   minRankRange: 1,
@@ -207,28 +206,40 @@ export const defaultBeatmapListFilter = {
   descending: true,
 };
 
+// Every field carries .catch so junk URL params degrade to their defaults.
 export const beatmapListFilterSchema = z.object({
-  page: z.coerce.number().int().min(1).optional(),
-  q: z.string().catch(''),
-  ruleset: z.coerce.number().int().min(0).max(5).optional(),
-  minSr: z.coerce.number().min(0).max(15).optional(),
-  maxSr: z.coerce.number().min(0).max(15).optional(),
-  minBpm: z.coerce.number().min(0).optional(),
-  maxBpm: z.coerce.number().min(0).optional(),
-  minCs: z.coerce.number().min(0).max(10).optional(),
-  maxCs: z.coerce.number().min(0).max(10).optional(),
-  minAr: z.coerce.number().min(0).max(11).optional(),
-  maxAr: z.coerce.number().min(0).max(11).optional(),
-  minOd: z.coerce.number().min(0).max(11).optional(),
-  maxOd: z.coerce.number().min(0).max(11).optional(),
-  minHp: z.coerce.number().min(0).max(10).optional(),
-  maxHp: z.coerce.number().min(0).max(10).optional(),
-  minLength: z.coerce.number().int().min(0).optional(),
-  maxLength: z.coerce.number().int().min(0).optional(),
-  minGameCount: z.coerce.number().int().min(0).optional(),
-  maxGameCount: z.coerce.number().int().min(0).optional(),
-  minTournamentCount: z.coerce.number().int().min(0).optional(),
-  maxTournamentCount: z.coerce.number().int().min(0).optional(),
+  page: z.coerce.number().int().min(1).optional().catch(undefined),
+  // Mirrors BeatmapListRequestSchema.searchQuery's max.
+  q: z.string().max(200).catch(''),
+  ruleset: z.coerce.number().int().min(0).max(5).optional().catch(undefined),
+  minSr: z.coerce.number().min(0).max(15).optional().catch(undefined),
+  maxSr: z.coerce.number().min(0).max(15).optional().catch(undefined),
+  minBpm: z.coerce.number().min(0).optional().catch(undefined),
+  maxBpm: z.coerce.number().min(0).optional().catch(undefined),
+  minCs: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  maxCs: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  minAr: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  maxAr: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  minOd: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  maxOd: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  minHp: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  maxHp: z.coerce.number().min(0).max(10).optional().catch(undefined),
+  minLength: z.coerce.number().int().min(0).optional().catch(undefined),
+  maxLength: z.coerce.number().int().min(0).optional().catch(undefined),
+  minGameCount: z.coerce.number().int().min(0).optional().catch(undefined),
+  maxGameCount: z.coerce.number().int().min(0).optional().catch(undefined),
+  minTournamentCount: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .catch(undefined),
+  maxTournamentCount: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .catch(undefined),
   sort: z.enum(beatmapListSortValues).catch('gameCount'),
   descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
 });

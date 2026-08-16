@@ -85,7 +85,7 @@ function EntityTypeSelect({
           Entity Type
           <ChevronsUpDown className="h-3 w-3 opacity-50" />
           {selected.length > 0 && (
-            <Badge variant="secondary" className="ml-1 h-5 px-1 text-[10px]">
+            <Badge variant="secondary" className="ml-1 h-5 px-1 text-xs">
               {selected.length}
             </Badge>
           )}
@@ -179,7 +179,7 @@ function FieldSelect({
           Field Updated
           <ChevronsUpDown className="h-3 w-3 opacity-50" />
           {selected.length > 0 && (
-            <Badge variant="secondary" className="ml-1 h-5 px-1 text-[10px]">
+            <Badge variant="secondary" className="ml-1 h-5 px-1 text-xs">
               {selected.length}
             </Badge>
           )}
@@ -200,7 +200,7 @@ function FieldSelect({
                     )}
                   />
                   <span className="flex-1">{opt.label}</span>
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     {opt.entityLabel}
                   </span>
                 </CommandItem>
@@ -240,7 +240,7 @@ function ActionTypeSelect({
           Action Type
           <ChevronsUpDown className="h-3 w-3 opacity-50" />
           {selected.length > 0 && (
-            <Badge variant="secondary" className="ml-1 h-5 px-1 text-[10px]">
+            <Badge variant="secondary" className="ml-1 h-5 px-1 text-xs">
               {selected.length}
             </Badge>
           )}
@@ -282,7 +282,6 @@ export default function AuditFilterBar({
     filters.actionTypes.length > 0;
 
   const handleEntityTypesChange = (entityTypes: AuditEntityType[]) => {
-    // Prune field selections that no longer match selected entity types
     const prunedFields =
       entityTypes.length > 0
         ? filters.fieldsChanged.filter((f) =>

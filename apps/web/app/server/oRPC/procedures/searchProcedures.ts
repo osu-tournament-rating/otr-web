@@ -13,9 +13,11 @@ import {
 } from '@/lib/orpc/schema/search';
 import {
   buildBeatmapSearchExpressions,
+  buildMatchSearchExpressions,
   buildSimilarity,
+  buildTrigramMatch,
+  buildTrigramPrecision,
   parseSearchTerm,
-  SIMILARITY_THRESHOLD,
 } from '@/lib/orpc/queries/search';
 import { buildTierProgress } from '@/lib/utils/tierProgress';
 import { Ruleset, VerificationStatus } from '@otr/core/osu';
@@ -46,28 +48,24 @@ export const searchEntities = protectedProcedure
       return emptyResponse;
     }
 
-    const {
-      normalizedTerm,
-      tsQuery,
-      prefixTsQuery,
-      primaryToken,
-      hasDistinctPrimaryToken,
-    } = parsed;
+    const { tsQuery, prefixTsQuery } = parsed;
 
     const similarity = (column: AnyColumn | SQL) =>
-      buildSimilarity(
-        column,
-        normalizedTerm,
-        primaryToken,
-        hasDistinctPrimaryToken
-      );
+      buildSimilarity(column, parsed);
+    const trigramMatch = (column: AnyColumn) =>
+      buildTrigramMatch(column, parsed);
 
     try {
       const playerVector = schema.players.searchVector;
       const playerSimilarity = similarity(schema.players.username);
+      // `%>` nominates candidates from the index; the precision half filters them
+      const playerTrigram = sql`(${trigramMatch(schema.players.username)} AND ${buildTrigramPrecision(
+        [schema.players.username],
+        parsed
+      )})`;
       const playerCondition = prefixTsQuery
-        ? sql`(${playerVector} @@ ${tsQuery} OR ${playerVector} @@ ${prefixTsQuery} OR ${playerSimilarity} >= ${SIMILARITY_THRESHOLD})`
-        : sql`(${playerVector} @@ ${tsQuery} OR ${playerSimilarity} >= ${SIMILARITY_THRESHOLD})`;
+        ? sql`(${playerVector} @@ ${tsQuery} OR ${playerVector} @@ ${prefixTsQuery} OR ${playerTrigram})`
+        : sql`(${playerVector} @@ ${tsQuery} OR ${playerTrigram})`;
       const playerRank = prefixTsQuery
         ? sql`greatest(ts_rank_cd(${playerVector}, ${tsQuery}), ts_rank_cd(${playerVector}, ${prefixTsQuery}), ${playerSimilarity})`
         : sql`greatest(ts_rank_cd(${playerVector}, ${tsQuery}), ${playerSimilarity})`;
@@ -78,39 +76,19 @@ export const searchEntities = protectedProcedure
         schema.tournaments.abbreviation
       );
       const tournamentSimilarity = sql`greatest(${tournamentNameSimilarity}, ${tournamentAbbreviationSimilarity})`;
+      const tournamentTrigram = sql`((${trigramMatch(schema.tournaments.name)} OR ${trigramMatch(schema.tournaments.abbreviation)}) AND ${buildTrigramPrecision(
+        [schema.tournaments.name, schema.tournaments.abbreviation],
+        parsed
+      )})`;
       const tournamentCondition = prefixTsQuery
-        ? sql`(${tournamentVector} @@ ${tsQuery} OR ${tournamentVector} @@ ${prefixTsQuery} OR ${tournamentSimilarity} >= ${SIMILARITY_THRESHOLD})`
-        : sql`(${tournamentVector} @@ ${tsQuery} OR ${tournamentSimilarity} >= ${SIMILARITY_THRESHOLD})`;
+        ? sql`(${tournamentVector} @@ ${tsQuery} OR ${tournamentVector} @@ ${prefixTsQuery} OR ${tournamentTrigram})`
+        : sql`(${tournamentVector} @@ ${tsQuery} OR ${tournamentTrigram})`;
       const tournamentRank = prefixTsQuery
         ? sql`greatest(ts_rank_cd(${tournamentVector}, ${tsQuery}), ts_rank_cd(${tournamentVector}, ${prefixTsQuery}), ${tournamentSimilarity})`
         : sql`greatest(ts_rank_cd(${tournamentVector}, ${tsQuery}), ${tournamentSimilarity})`;
 
-      const matchVector = sql`
-        ${schema.matches.searchVector}
-        || setweight(to_tsvector('simple', coalesce(${schema.tournaments.name}, '')), 'B')
-        || setweight(
-          to_tsvector(
-            'simple',
-            regexp_replace(coalesce(${schema.tournaments.name}, ''), '([A-Za-z]+)([0-9]+)', '\\1 \\2', 'g')
-          ),
-          'C'
-        )
-        || setweight(to_tsvector('simple', coalesce(${schema.tournaments.abbreviation}, '')), 'D')
-      `;
-      const matchNameSimilarity = similarity(schema.matches.name);
-      const matchTournamentNameSimilarity = similarity(
-        sql`coalesce(${schema.tournaments.name}, '')`
-      );
-      const matchTournamentAbbreviationSimilarity = similarity(
-        sql`coalesce(${schema.tournaments.abbreviation}, '')`
-      );
-      const matchSimilarity = sql`greatest(${matchNameSimilarity}, ${matchTournamentNameSimilarity}, ${matchTournamentAbbreviationSimilarity})`;
-      const matchCondition = prefixTsQuery
-        ? sql`(${matchVector} @@ ${tsQuery} OR ${matchVector} @@ ${prefixTsQuery})`
-        : sql`(${matchVector} @@ ${tsQuery})`;
-      const matchRank = prefixTsQuery
-        ? sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ts_rank_cd(${matchVector}, ${prefixTsQuery}), ${matchSimilarity})`
-        : sql`greatest(ts_rank_cd(${matchVector}, ${tsQuery}), ${matchSimilarity})`;
+      const { condition: matchCondition, rank: matchRank } =
+        buildMatchSearchExpressions(parsed);
 
       const beatmapSearch = buildBeatmapSearchExpressions(input.searchKey)!;
       const { condition: beatmapCondition, rank: beatmapCombinedScore } =

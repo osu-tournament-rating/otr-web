@@ -98,7 +98,6 @@ export default function AuditEventFeed(): React.JSX.Element {
     <div data-testid="audit-event-feed" className="flex flex-col gap-4">
       <AuditFilterBar filters={filters} onChange={setFilters} />
 
-      {/* Event list */}
       {isLoading ? (
         <LoadingSkeleton />
       ) : isEmpty ? (

@@ -1,4 +1,19 @@
-<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M20 38C29.9411 38 38 29.9411 38 20C38 10.0589 29.9411 2 20 2C10.0589 2 2 10.0589 2 20C2 29.9411 10.0589 38 20 38ZM20 40C31.0457 40 40 31.0457 40 20C40 8.9543 31.0457 0 20 0C8.9543 0 0 8.9543 0 20C0 31.0457 8.9543 40 20 40Z" fill="#101010"/>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M20 31C26.0751 31 31 26.0751 31 20C31 13.9249 26.0751 9 20 9C13.9249 9 9 13.9249 9 20C9 26.0751 13.9249 31 20 31ZM20 33C27.1797 33 33 27.1797 33 20C33 12.8203 27.1797 7 20 7C12.8203 7 7 12.8203 7 20C7 27.1797 12.8203 33 20 33Z" fill="#101010"/>
+<!--
+  Derived from the mode-osu glyph in ppy/osu-web's FontAwesomeExtra font.
+  Source: https://github.com/ppy/osu-web/blob/26e09bbabab8f63bfa45127ceeba199d65746291/resources/fonts/extra/extra.svg
+  Copyright (c) ppy Pty Ltd and osu-web contributors.
+  Licensed under AGPL-3.0-or-later:
+  https://github.com/ppy/osu-web/blob/26e09bbabab8f63bfa45127ceeba199d65746291/LICENCE
+-->
+<svg
+  width="40"
+  height="40"
+  viewBox="0 0 1000 1000"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <g transform="translate(0 850) scale(1 -1)">
+    <path
+      d="M500 740q106 0 197-53 88-52 140-140 53-91 53-197t-53-197q-52-88-140-140-91-53-197-53t-197 53q-88 52-140 140-53 91-53 197t53 197q52 88 140 140 91 53 197 53z m0 80q-97 0-182-36t-150-102q-64-62-101-148t-37-184 37-182 101-150q62-64 149-101t183-37 182 36 150 102q64 62 101 149t37 183-36 182-102 150q-62 64-148 101t-184 37v0z m0-232q-64 0-119-32t-87-87-32-119 32-119 87-87 119-32 119 32 87 87 32 119-32 119-87 87-119 32z"
+    />
+  </g>
 </svg>

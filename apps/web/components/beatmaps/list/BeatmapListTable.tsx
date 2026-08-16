@@ -1,396 +1,294 @@
 'use client';
 
-import {
-  Star,
-  Clock,
-  Activity,
-  ChevronUp,
-  ChevronDown,
-  Trophy,
-  Gamepad2,
-  Music,
-} from 'lucide-react';
-import AudioPlayButton from '@/components/audio/AudioPlayButton';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
 
-import { formatDuration } from '@/lib/utils/date';
+import BeatmapCoverPreview from '@/components/beatmaps/BeatmapCoverPreview';
+import BeatmapIdentity from '@/components/beatmaps/BeatmapIdentity';
+import BeatmapTopMods from '@/components/beatmaps/BeatmapTopMods';
+import StarRatingPill from '@/components/beatmaps/StarRatingPill';
+import BeatmapSortableHead from '@/components/beatmaps/list/BeatmapSortableHead';
+import { Eyebrow } from '@/components/beatmap/BeatmapSection';
+import RulesetIcon from '@/components/icons/RulesetIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
-import BeatmapBackground from '@/components/games/BeatmapBackground';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import type {
-  BeatmapListItem,
-  BeatmapListSort,
-} from '@/lib/orpc/schema/beatmapList';
-import type { beatmapListFilterSchema } from '@/lib/validation-schema';
-import type { z } from 'zod';
+  BeatmapListSortChange,
+  BeatmapListSortKey,
+} from '@/lib/beatmaps/list-params';
+import {
+  getBeatmapDisplayRuleset,
+  getBeatmapRulesetLabel,
+  isManiaRuleset,
+} from '@/lib/beatmaps/presentation';
+import type { BeatmapTableRow } from '@/lib/beatmaps/table-row';
+import { cn } from '@/lib/utils';
+import { formatDuration } from '@/lib/utils/date';
+
+/** Row selection, for the surfaces that let an admin act on a set of rows. */
+export interface BeatmapTableSelection {
+  isSelected: (row: BeatmapTableRow) => boolean;
+  onSelect: (row: BeatmapTableRow, checked: boolean) => void;
+  allSelected: boolean;
+  onSelectAll: (checked: boolean) => void;
+  /** Names a row inside its checkbox's accessible label. */
+  getRowLabel: (row: BeatmapTableRow) => string;
+}
 
 interface BeatmapListTableProps {
-  beatmaps: BeatmapListItem[];
-  filter: z.infer<typeof beatmapListFilterSchema>;
+  beatmaps: BeatmapTableRow[];
+  sort: BeatmapListSortKey;
+  descending: boolean;
+  onSortChange: BeatmapListSortChange;
+  /** A single tournament's pool has nothing to count here. */
+  showTournamentCount?: boolean;
+  selection?: BeatmapTableSelection;
+  /** A width floor for callers that render this fixed layout below `sm`. */
+  minWidthClassName?: string;
+  className?: string;
 }
 
-type SortField = BeatmapListSort;
+// One class per column, shared by its header and its cells.
+const COLUMN = {
+  select: 'w-11 pl-4',
+  beatmap: 'pl-4',
+  mode: 'w-13',
+  sr: 'w-22 text-right',
+  bpm: 'w-17 text-right tabular-nums',
+  length: 'w-20 text-right tabular-nums',
+  cs: 'hidden w-15 text-right tabular-nums xl:table-cell',
+  ar: 'hidden w-15 text-right tabular-nums xl:table-cell',
+  games: 'w-20 text-right tabular-nums',
+  tournaments: 'hidden w-29 text-right tabular-nums md:table-cell',
+  mods: 'hidden w-34 pr-3 lg:table-cell',
+} as const;
 
-function SortButton({
-  field,
-  children,
-  currentSort,
-  isDescending,
-  onSort,
-}: {
-  field: SortField;
-  children: React.ReactNode;
-  currentSort: SortField;
-  isDescending: boolean;
-  onSort: (field: SortField) => void;
-}) {
-  return (
-    <button
-      onClick={() => onSort(field)}
-      className="flex items-center gap-1 whitespace-nowrap transition-colors hover:text-foreground"
-    >
-      {children}
-      {currentSort === field &&
-        (isDescending ? (
-          <ChevronDown className="h-3 w-3" />
-        ) : (
-          <ChevronUp className="h-3 w-3" />
-        ))}
-    </button>
-  );
-}
-
+/**
+ * The dense layout, shared by the beatmap list and a tournament's pool. Sorting
+ * is the caller's: the list writes it to the URL and reloads server-sorted rows,
+ * while a pool the caller already holds in full sorts in place.
+ */
 export default function BeatmapListTable({
   beatmaps,
-  filter,
+  sort,
+  descending,
+  onSortChange,
+  showTournamentCount = true,
+  selection,
+  minWidthClassName,
+  className,
 }: BeatmapListTableProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const currentSort = filter.sort;
-  const isDescending = filter.descending;
-
-  const handleSort = (field: SortField) => {
-    const params = new URLSearchParams();
-
-    if (filter.q) params.set('q', filter.q);
-    if (filter.minSr !== undefined) params.set('minSr', String(filter.minSr));
-    if (filter.maxSr !== undefined) params.set('maxSr', String(filter.maxSr));
-    if (filter.minBpm !== undefined)
-      params.set('minBpm', String(filter.minBpm));
-    if (filter.maxBpm !== undefined)
-      params.set('maxBpm', String(filter.maxBpm));
-    if (filter.minCs !== undefined) params.set('minCs', String(filter.minCs));
-    if (filter.maxCs !== undefined) params.set('maxCs', String(filter.maxCs));
-    if (filter.minAr !== undefined) params.set('minAr', String(filter.minAr));
-    if (filter.maxAr !== undefined) params.set('maxAr', String(filter.maxAr));
-    if (filter.minOd !== undefined) params.set('minOd', String(filter.minOd));
-    if (filter.maxOd !== undefined) params.set('maxOd', String(filter.maxOd));
-    if (filter.minHp !== undefined) params.set('minHp', String(filter.minHp));
-    if (filter.maxHp !== undefined) params.set('maxHp', String(filter.maxHp));
-    if (filter.minLength !== undefined)
-      params.set('minLength', String(filter.minLength));
-    if (filter.maxLength !== undefined)
-      params.set('maxLength', String(filter.maxLength));
-    if (filter.minGameCount !== undefined)
-      params.set('minGameCount', String(filter.minGameCount));
-    if (filter.maxGameCount !== undefined)
-      params.set('maxGameCount', String(filter.maxGameCount));
-    if (filter.minTournamentCount !== undefined)
-      params.set('minTournamentCount', String(filter.minTournamentCount));
-    if (filter.maxTournamentCount !== undefined)
-      params.set('maxTournamentCount', String(filter.maxTournamentCount));
-
-    params.set('sort', field);
-
-    if (currentSort === field) {
-      params.set('descending', String(!isDescending));
-    } else {
-      params.set('descending', 'true');
-    }
-
-    router.push(pathname + (params.size > 0 ? `?${params}` : ''));
-  };
-
-  if (beatmaps.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Music className="mb-4 h-12 w-12 text-muted-foreground" />
-        <h3 className="text-lg font-semibold text-muted-foreground">
-          No Beatmaps Found
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Try adjusting your search filters.
-        </p>
-      </div>
-    );
-  }
+  const sortProps = { activeSort: sort, descending, onSortChange };
 
   return (
-    <div className="space-y-3">
-      <div className="overflow-hidden rounded-lg border">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/50">
-              <tr>
-                <th className="w-[6%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  ID
-                </th>
-                <th className="w-[20%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
-                  Difficulty
-                </th>
-                <th className="w-[10%] px-2 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground">
-                  <SortButton
-                    field="creator"
-                    currentSort={currentSort}
-                    isDescending={isDescending}
-                    onSort={handleSort}
-                  >
-                    Creator
-                  </SortButton>
-                </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Star Rating">
-                    <div className="flex justify-center">
-                      <SortButton
-                        field="sr"
-                        currentSort={currentSort}
-                        isDescending={isDescending}
-                        onSort={handleSort}
-                      >
-                        <Star className="h-3 w-3" />
-                      </SortButton>
-                    </div>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="BPM">
-                    <div className="flex justify-center">
-                      <SortButton
-                        field="bpm"
-                        currentSort={currentSort}
-                        isDescending={isDescending}
-                        onSort={handleSort}
-                      >
-                        <Activity className="h-3 w-3" />
-                      </SortButton>
-                    </div>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Circle Size">
-                    <SortButton
-                      field="cs"
-                      currentSort={currentSort}
-                      isDescending={isDescending}
-                      onSort={handleSort}
-                    >
-                      CS
-                    </SortButton>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Approach Rate">
-                    <SortButton
-                      field="ar"
-                      currentSort={currentSort}
-                      isDescending={isDescending}
-                      onSort={handleSort}
-                    >
-                      AR
-                    </SortButton>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Overall Difficulty">
-                    <SortButton
-                      field="od"
-                      currentSort={currentSort}
-                      isDescending={isDescending}
-                      onSort={handleSort}
-                    >
-                      OD
-                    </SortButton>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[5%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="HP Drain Rate">
-                    <SortButton
-                      field="hp"
-                      currentSort={currentSort}
-                      isDescending={isDescending}
-                      onSort={handleSort}
-                    >
-                      HP
-                    </SortButton>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Length">
-                    <div className="flex justify-center">
-                      <SortButton
-                        field="length"
-                        currentSort={currentSort}
-                        isDescending={isDescending}
-                        onSort={handleSort}
-                      >
-                        <Clock className="h-3 w-3" />
-                      </SortButton>
-                    </div>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Verified Tournaments">
-                    <div className="flex justify-center">
-                      <SortButton
-                        field="tournamentCount"
-                        currentSort={currentSort}
-                        isDescending={isDescending}
-                        onSort={handleSort}
-                      >
-                        <Trophy className="h-3 w-3" />
-                      </SortButton>
-                    </div>
-                  </SimpleTooltip>
-                </th>
-                <th className="w-[7%] px-2 py-2 text-center text-xs font-medium tracking-wider text-muted-foreground">
-                  <SimpleTooltip content="Verified Games">
-                    <div className="flex justify-center">
-                      <SortButton
-                        field="gameCount"
-                        currentSort={currentSort}
-                        isDescending={isDescending}
-                        onSort={handleSort}
-                      >
-                        <Gamepad2 className="h-3 w-3" />
-                      </SortButton>
-                    </div>
-                  </SimpleTooltip>
-                </th>
-              </tr>
-            </thead>
+    <div className={className}>
+      <Table className={cn('table-fixed', minWidthClassName)}>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            {selection ? (
+              <TableHead className={cn('h-8', COLUMN.select)}>
+                <Checkbox
+                  data-testid="beatmap-table-select-all"
+                  checked={selection.allSelected}
+                  onCheckedChange={(checked) =>
+                    selection.onSelectAll(checked === true)
+                  }
+                  aria-label="Select all beatmaps"
+                />
+              </TableHead>
+            ) : null}
+            {/* Not sortable: the server has no title sort. */}
+            <TableHead
+              className={cn('h-8', selection ? 'pl-1' : COLUMN.beatmap)}
+            >
+              <Eyebrow>Beatmap</Eyebrow>
+            </TableHead>
+            <TableHead className={cn('h-8', COLUMN.mode)}>
+              <Eyebrow>Mode</Eyebrow>
+            </TableHead>
+            <BeatmapSortableHead
+              {...sortProps}
+              sort="sr"
+              label="SR"
+              className={COLUMN.sr}
+            />
+            <BeatmapSortableHead
+              {...sortProps}
+              sort="bpm"
+              label="BPM"
+              className={COLUMN.bpm}
+            />
+            <BeatmapSortableHead
+              {...sortProps}
+              sort="length"
+              label="Length"
+              className={COLUMN.length}
+            />
+            <BeatmapSortableHead
+              {...sortProps}
+              sort="cs"
+              label="CS"
+              className={COLUMN.cs}
+            />
+            <BeatmapSortableHead
+              {...sortProps}
+              sort="ar"
+              label="AR"
+              className={COLUMN.ar}
+            />
+            <BeatmapSortableHead
+              {...sortProps}
+              sort="gameCount"
+              label="Games"
+              className={COLUMN.games}
+            />
+            {showTournamentCount ? (
+              <BeatmapSortableHead
+                {...sortProps}
+                sort="tournamentCount"
+                label="Tournaments"
+                className={COLUMN.tournaments}
+              />
+            ) : null}
+            <TableHead className={cn('h-8', COLUMN.mods)}>
+              <Eyebrow>Mods</Eyebrow>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
 
-            <tbody className="divide-y divide-border">
-              {beatmaps.map((beatmap, index) => (
-                <tr
-                  key={beatmap.id}
-                  data-testid={`beatmap-list-row-${beatmap.osuId}`}
-                  className={`group cursor-pointer transition-colors hover:bg-muted/30 ${
-                    index % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'
-                  }`}
-                  onClick={() => router.push(`/beatmaps/${beatmap.osuId}`)}
+        <TableBody>
+          {beatmaps.map((beatmap) => {
+            const ruleset = getBeatmapDisplayRuleset(
+              beatmap.ruleset,
+              beatmap.diffName
+            );
+            const rulesetLabel = getBeatmapRulesetLabel(
+              beatmap.ruleset,
+              beatmap.diffName
+            );
+
+            return (
+              <TableRow
+                key={beatmap.id}
+                data-testid={`beatmap-list-row-${beatmap.osuId}`}
+                data-state={
+                  selection?.isSelected(beatmap) ? 'selected' : undefined
+                }
+                className="group hover:bg-muted/25"
+              >
+                {selection ? (
+                  <TableCell className={COLUMN.select}>
+                    <Checkbox
+                      checked={selection.isSelected(beatmap)}
+                      onCheckedChange={(checked) =>
+                        selection.onSelect(beatmap, checked === true)
+                      }
+                      aria-label={`Select ${selection.getRowLabel(beatmap)}`}
+                    />
+                  </TableCell>
+                ) : null}
+
+                {/* Overlay link, so the cover's preview button is a sibling and not nested */}
+                <TableCell
+                  className={cn(
+                    selection ? 'pl-1' : COLUMN.beatmap,
+                    'relative group-hover:[&_[data-testid=beatmap-title]]:underline',
+                    beatmap.isDeleted &&
+                      '[&_[data-testid=beatmap-title]]:text-muted-foreground [&_[data-testid=beatmap-title]]:line-through'
+                  )}
                 >
-                  <td className="px-2 py-2 text-center">
-                    <Link
-                      href={`/beatmaps/${beatmap.osuId}`}
-                      className="text-xs text-muted-foreground transition-colors hover:text-primary"
-                      onClick={(e) => e.stopPropagation()}
+                  <Link
+                    href={`/beatmaps/${beatmap.osuId}`}
+                    prefetch={false}
+                    aria-label={`View ${beatmap.artist} - ${beatmap.title} [${beatmap.diffName}]`}
+                    className="absolute inset-0 z-10 rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none focus-visible:ring-inset"
+                  />
+                  <div className="flex min-w-0 items-center gap-2">
+                    <BeatmapIdentity
+                      osuId={beatmap.osuId}
+                      beatmapsetOsuId={beatmap.beatmapsetOsuId}
+                      artist={beatmap.artist}
+                      title={beatmap.title}
+                      diffName={beatmap.diffName}
+                      creator={beatmap.creator}
+                      size="table"
+                      coverSizes="72px"
+                      className="min-w-0 flex-1"
                     >
-                      {beatmap.osuId}
-                    </Link>
-                  </td>
-
-                  <td className="px-2 py-2">
-                    <div className="flex items-center gap-2">
-                      <div className="group/thumbnail relative h-10 w-16 flex-shrink-0 overflow-hidden rounded">
-                        {beatmap.beatmapsetOsuId ? (
-                          <>
-                            <BeatmapBackground
-                              beatmapsetId={beatmap.beatmapsetOsuId}
-                              alt={`${beatmap.title} cover`}
-                            />
-                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover/thumbnail:opacity-100">
-                              <AudioPlayButton
-                                beatmapsetOsuId={beatmap.beatmapsetOsuId}
-                                size="sm"
-                                variant="ghost"
-                                className="text-white hover:bg-white/20 hover:text-white"
-                                showTooltip={false}
-                              />
-                            </div>
-                          </>
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-muted">
-                            <Music className="h-3 w-3 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <Link
-                          href={`/beatmaps/${beatmap.osuId}`}
-                          className="block transition-colors hover:text-primary"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <p className="max-w-[280px] truncate text-xs font-medium">
-                            {beatmap.artist} - {beatmap.title}
-                          </p>
-                          <p className="max-w-[240px] truncate text-xs text-muted-foreground">
-                            [{beatmap.diffName}]
-                          </p>
-                        </Link>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="px-2 py-2">
-                    <span className="max-w-[100px] truncate text-xs text-muted-foreground">
-                      {beatmap.creator ?? 'Unknown'}
-                    </span>
-                  </td>
-
-                  <td className="px-2 py-2 text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                      <span className="text-xs font-medium">
-                        {beatmap.sr.toFixed(2)}
+                      <BeatmapCoverPreview
+                        beatmapsetOsuId={beatmap.beatmapsetOsuId}
+                        artist={beatmap.artist}
+                        title={beatmap.title}
+                        difficulty={beatmap.diffName}
+                        size="sm"
+                        className="rounded-md"
+                      />
+                    </BeatmapIdentity>
+                    {beatmap.isDeleted ? (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        Deleted
                       </span>
-                    </div>
-                  </td>
+                    ) : null}
+                  </div>
+                </TableCell>
 
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs">{Math.round(beatmap.bpm)}</span>
-                  </td>
-
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs">{beatmap.cs.toFixed(1)}</span>
-                  </td>
-
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs">{beatmap.ar.toFixed(1)}</span>
-                  </td>
-
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs">{beatmap.od.toFixed(1)}</span>
-                  </td>
-
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs">{beatmap.hp.toFixed(1)}</span>
-                  </td>
-
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs">
-                      {formatDuration(Number(beatmap.totalLength))}
+                <TableCell className={COLUMN.mode}>
+                  <SimpleTooltip content={rulesetLabel}>
+                    <span className="inline-flex text-muted-foreground">
+                      <RulesetIcon
+                        ruleset={ruleset}
+                        className="size-4 fill-current"
+                        aria-hidden="true"
+                      />
+                      <span className="sr-only">{rulesetLabel}</span>
                     </span>
-                  </td>
+                  </SimpleTooltip>
+                </TableCell>
 
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs font-medium">
-                      {beatmap.verifiedTournamentCount}
-                    </span>
-                  </td>
-
-                  <td className="px-2 py-2 text-center">
-                    <span className="text-xs font-medium">
-                      {beatmap.verifiedGameCount}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                <TableCell className={COLUMN.sr}>
+                  <StarRatingPill starRating={beatmap.sr} />
+                </TableCell>
+                <TableCell className={COLUMN.bpm}>
+                  {Math.round(beatmap.bpm)}
+                </TableCell>
+                <TableCell className={COLUMN.length}>
+                  {formatDuration(Number(beatmap.totalLength))}
+                </TableCell>
+                <TableCell className={COLUMN.cs}>
+                  {beatmap.cs.toFixed(1)}
+                </TableCell>
+                <TableCell className={COLUMN.ar}>
+                  {beatmap.ar.toFixed(1)}
+                </TableCell>
+                <TableCell className={COLUMN.games}>
+                  {beatmap.gameCount.toLocaleString()}
+                </TableCell>
+                {showTournamentCount ? (
+                  <TableCell className={COLUMN.tournaments}>
+                    {beatmap.tournamentCount.toLocaleString()}
+                  </TableCell>
+                ) : null}
+                <TableCell className={COLUMN.mods}>
+                  {isManiaRuleset(ruleset) ? null : (
+                    // Only the dominant group; a second pill costs the beatmap column 72px.
+                    <BeatmapTopMods
+                      mods={beatmap.topMods.slice(0, 1)}
+                      showIcon={false}
+                    />
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 }

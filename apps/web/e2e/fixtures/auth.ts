@@ -1,12 +1,7 @@
 import path from 'node:path';
 import { type APIRequestContext, type Page } from '@playwright/test';
 
-/**
- * Players used for e2e sessions. The sign-in endpoint provisions their
- * `users`/`auth_users` rows on first use, so only the `players` rows need to exist:
- *   - 3616 ("Cytusine") -> admin session
- *   - 1068 ("D I O")    -> regular signed-in session
- */
+/** Sessions are minted from these players; the endpoint provisions their user rows. */
 export const TEST_ADMIN_PLAYER_ID = 3616;
 export const TEST_NONADMIN_PLAYER_ID = 1068;
 
@@ -27,10 +22,7 @@ export const ROLE_PLAYER_ID: Record<TestRole, number> = {
 /** Test-only endpoint exposed by {@link e2eTestAuthPlugin}. */
 export const E2E_SIGN_IN_PATH = '/api/auth/e2e/sign-in';
 
-/**
- * Mints a signed session for the given player on an {@link APIRequestContext}'s
- * cookie jar. Used by the setup project to produce reusable storage states.
- */
+/** Mints a signed session for the player on the request context's cookie jar. */
 export async function signInPlayer(
   request: APIRequestContext,
   playerId: number,
@@ -40,9 +32,6 @@ export async function signInPlayer(
     data: { playerId, admin: options.admin ?? false },
   });
 
-  // Only read the body / build the message on failure — passing them to
-  // expect() eagerly would run an extra request and surface a misleading
-  // "sign-in failed" line in the trace even on success.
   if (!response.ok()) {
     const body = await response.text().catch(() => '');
     throw new Error(
@@ -51,11 +40,7 @@ export async function signInPlayer(
   }
 }
 
-/**
- * Logs the given page's browser context in as a role mid-test (for cases where a
- * pre-baked storage state is not used). Navigates to the app first so the cookie
- * is scoped to the right origin, then reloads to pick up the session.
- */
+/** Signs the page's context in as a role mid-test, without a baked storage state. */
 export async function loginAs(page: Page, role: TestRole): Promise<void> {
   await signInPlayer(page.request, ROLE_PLAYER_ID[role], {
     admin: role === 'admin',

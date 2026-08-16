@@ -81,7 +81,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
       return (
         <div className="flex justify-center rounded-lg">
           <SimpleTooltip content={getTierString(tier, subTier)}>
-            {/* We actually have to use a div here, else we encounter a 'Maximum update depth exceeded' error */}
+            {/* Tooltipping TierIcon directly triggers 'Maximum update depth exceeded' */}
             <div>
               <TierIcon
                 tier={tier || 'Bronze'}

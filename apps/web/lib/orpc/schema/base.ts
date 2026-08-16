@@ -51,6 +51,7 @@ export const filterReportPlayerSelectSchema = createSelectSchema(
 const rawTournamentSelectSchema = createSelectSchema(schema.tournaments);
 export const tournamentSelectSchema = rawTournamentSelectSchema.omit({
   searchVector: true,
+  matchRankVector: true,
 });
 
 export const tournamentAdminNoteSelectSchema = createSelectSchema(

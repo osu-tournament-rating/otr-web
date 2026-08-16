@@ -20,7 +20,6 @@ export default async function Page() {
 
   return (
     <div className="container m-4 mx-auto flex min-h-screen flex-col gap-2 bg-background py-4 text-foreground">
-      {/* Hero section */}
       <FeatureCard
         data-testid="hero-section"
         decoration={2}
@@ -37,12 +36,9 @@ export default async function Page() {
         </FeatureCardDescription>
       </FeatureCard>
 
-      {/* Link cards */}
       <HomeActionCards isLoggedIn={isLoggedIn} playerId={playerId} />
 
-      {/* Feature sections */}
       <div className="space-y-6">
-        {/* Verified tournaments */}
         <FeatureCard
           data-testid="verified-tournaments-card"
           decoration={3}
@@ -58,7 +54,6 @@ export default async function Page() {
           </FeatureCardDescription>
         </FeatureCard>
 
-        {/* Use ratings to filter registrants */}
         <Card
           data-testid="rating-ladder-section"
           className="border-none bg-card p-6 md:p-8"
@@ -76,7 +71,6 @@ export default async function Page() {
           <RatingLadder />
         </Card>
 
-        {/* Detailed beatmap histories */}
         <FeatureCard
           data-testid="beatmap-histories-card"
           decoration={1}
@@ -89,7 +83,6 @@ export default async function Page() {
           </FeatureCardDescription>
         </FeatureCard>
 
-        {/* New updates every Tuesday */}
         <FeatureCard
           data-testid="updates-tuesday-card"
           decoration={1}
@@ -102,7 +95,6 @@ export default async function Page() {
           </FeatureCardDescription>
         </FeatureCard>
 
-        {/* All modes supported */}
         <FeatureCard
           data-testid="all-modes-card"
           decoration={4}
@@ -128,7 +120,6 @@ export default async function Page() {
           </div>
         </FeatureCard>
 
-        {/* Open source, open data */}
         <FeatureCard
           data-testid="open-source-card"
           decoration={2}

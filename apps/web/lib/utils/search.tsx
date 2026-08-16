@@ -24,12 +24,26 @@ export const highlightMatch = (
   const escapedTokens = tokens.map((token) =>
     token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   );
-  const pattern = escapedTokens.join('|');
+
+  // Tokens arrive punctuation-free, so adjacent runs are matched first, along
+  // with whatever separated them, and only then each token on its own.
+  const alternatives: string[] = [];
+  for (let length = escapedTokens.length; length > 1; length -= 1) {
+    for (let start = 0; start + length <= escapedTokens.length; start += 1) {
+      alternatives.push(
+        escapedTokens.slice(start, start + length).join('[^\\p{L}\\p{N}]+')
+      );
+    }
+  }
+  // Longest first, so `www` wins over `w` where both could match.
+  alternatives.push(
+    ...[...escapedTokens].sort((left, right) => right.length - left.length)
+  );
+  const pattern = alternatives.map((entry) => `(?:${entry})`).join('|');
 
   try {
-    const regex = new RegExp(`(${pattern})`, 'gi');
+    const regex = new RegExp(`(${pattern})`, 'giu');
     const parts = text.split(regex);
-    const lowerTokens = tokens.map((token) => token.toLowerCase());
 
     return (
       <>
@@ -38,7 +52,9 @@ export const highlightMatch = (
             return <React.Fragment key={index} />;
           }
 
-          const shouldHighlight = lowerTokens.includes(part.toLowerCase());
+          // `split` with a single capture group alternates unmatched text and
+          // captures, so every odd index is a match.
+          const shouldHighlight = index % 2 === 1;
 
           return shouldHighlight ? (
             <span key={index} className="font-semibold text-primary">
@@ -51,7 +67,6 @@ export const highlightMatch = (
       </>
     );
   } catch (error) {
-    // If regex fails, return the original text
     console.error('Error in highlightMatch:', error);
     return text;
   }

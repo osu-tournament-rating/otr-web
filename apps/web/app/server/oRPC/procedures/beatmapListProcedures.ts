@@ -7,12 +7,12 @@ import {
   desc,
   eq,
   gte,
-  ilike,
+  inArray,
   lte,
   sql,
 } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
-import { Ruleset } from '@otr/core/osu';
+import { Ruleset, VerificationStatus } from '@otr/core/osu';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 import {
@@ -21,10 +21,12 @@ import {
   BeatmapListItemSchema,
 } from '@/lib/orpc/schema/beatmapList';
 import { buildBeatmapSearchExpressions } from '@/lib/orpc/queries/search';
+import {
+  calculateBeatmapListModDistribution,
+  filterBeatmapModDistribution,
+} from '@/lib/utils/mods';
 import { publicProcedure } from './base';
 
-const DEFAULT_PAGE_SIZE = 50;
-const MAX_PAGE_SIZE = 100;
 const DEFAULT_MAX_SR = 200;
 
 export const listBeatmaps = publicProcedure
@@ -38,11 +40,7 @@ export const listBeatmaps = publicProcedure
   })
   .handler(async ({ input, context }) => {
     try {
-      const page = Math.max(input.page ?? 1, 1);
-      const pageSize = Math.max(
-        1,
-        Math.min(input.pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
-      );
+      const { page, pageSize } = input;
       const offset = (page - 1) * pageSize;
 
       const filters: SQL<unknown>[] = [];
@@ -86,10 +84,15 @@ export const listBeatmaps = publicProcedure
         filters.push(gte(schema.beatmaps.totalLength, input.minLength));
       if (input.maxLength !== undefined)
         filters.push(lte(schema.beatmaps.totalLength, input.maxLength));
-      if (input.ruleset === Ruleset.Mania4k) {
-        filters.push(ilike(schema.beatmaps.diffName, '%[4K]%'));
-      } else if (input.ruleset === Ruleset.Mania7k) {
-        filters.push(ilike(schema.beatmaps.diffName, '%[7K]%'));
+      if (
+        input.ruleset === Ruleset.Mania4k ||
+        input.ruleset === Ruleset.Mania7k
+      ) {
+        // Mirrors getBeatmapDisplayRuleset; \y is Postgres's word boundary
+        const keyPattern = input.ruleset === Ruleset.Mania4k ? '4k' : '7k';
+        filters.push(
+          sql`(${schema.beatmaps.ruleset} = ${input.ruleset} OR (${schema.beatmaps.ruleset} = ${Ruleset.ManiaOther} AND ${schema.beatmaps.diffName} ~* ${`\\y${keyPattern}\\y`}))`
+        );
       } else if (input.ruleset !== undefined) {
         filters.push(eq(schema.beatmaps.ruleset, input.ruleset));
       }
@@ -127,17 +130,15 @@ export const listBeatmaps = publicProcedure
         );
       }
 
+      // NotFound is the one exclusion shared with buildBeatmapSearchExpressions
       filters.push(
         sql`${schema.beatmaps.dataFetchStatus} != ${DataFetchStatus.NotFound}`
       );
 
-      filters.push(eq(schema.beatmapStats.hasVerifiedAppearance, true));
-
       const whereClause = filters.length > 0 ? and(...filters) : undefined;
 
-      const sortValue = input.sort ?? 'sr';
-      const isDescending = input.descending ?? true;
-      const direction = isDescending ? desc : asc;
+      const sortValue = input.sort;
+      const direction = input.descending ? desc : asc;
 
       const getSortColumn = () => {
         switch (sortValue) {
@@ -155,10 +156,11 @@ export const listBeatmaps = publicProcedure
             return schema.beatmaps.hp;
           case 'length':
             return schema.beatmaps.totalLength;
+          // Outer join, so a missing stats row must sort as 0 rather than NULL
           case 'tournamentCount':
-            return schema.beatmapStats.verifiedTournamentCount;
+            return sql`COALESCE(${schema.beatmapStats.verifiedTournamentCount}, 0)`;
           case 'gameCount':
-            return schema.beatmapStats.verifiedGameCount;
+            return sql`COALESCE(${schema.beatmapStats.verifiedGameCount}, 0)`;
           case 'creator':
             return schema.players.username;
           default:
@@ -205,7 +207,7 @@ export const listBeatmaps = publicProcedure
             ),
         })
         .from(schema.beatmaps)
-        .innerJoin(
+        .leftJoin(
           schema.beatmapStats,
           eq(schema.beatmaps.id, schema.beatmapStats.beatmapId)
         )
@@ -228,31 +230,24 @@ export const listBeatmaps = publicProcedure
 
       const rows = await conditionedQuery
         .orderBy(
-          ...(searchRank
-            ? [desc(searchRank), asc(schema.beatmaps.diffName)]
-            : [direction(getSortColumn()), direction(schema.beatmaps.id)])
+          direction(getSortColumn()),
+          ...(searchRank ? [desc(searchRank)] : []),
+          direction(schema.beatmaps.id)
         )
         .limit(pageSize)
         .offset(offset);
 
+      // No filter references the creator, so this skips the list query's creator joins
       const countQuery = context.db
         .select({ count: count() })
         .from(schema.beatmaps)
-        .innerJoin(
+        .leftJoin(
           schema.beatmapStats,
           eq(schema.beatmaps.id, schema.beatmapStats.beatmapId)
         )
         .leftJoin(
           schema.beatmapsets,
           eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
-        )
-        .leftJoin(
-          creatorSubquery,
-          eq(schema.beatmaps.id, creatorSubquery.beatmapId)
-        )
-        .leftJoin(
-          schema.players,
-          sql`"beatmap_creator"."creator_id" = ${schema.players.id}`
         );
 
       const countResult = whereClause
@@ -261,6 +256,68 @@ export const listBeatmaps = publicProcedure
 
       const totalCount = countResult[0]?.count ?? 0;
       const totalPages = Math.ceil(totalCount / pageSize);
+
+      const pageBeatmapIds = rows.map((row) => row.id);
+      const groupedModRows =
+        pageBeatmapIds.length === 0
+          ? []
+          : await context.db
+              .select({
+                beatmapId: schema.games.beatmapId,
+                mods: schema.gameScores.mods,
+                scoreCount: sql<number>`COUNT(*)`,
+              })
+              .from(schema.gameScores)
+              .innerJoin(
+                schema.games,
+                eq(schema.games.id, schema.gameScores.gameId)
+              )
+              .innerJoin(
+                schema.matches,
+                eq(schema.matches.id, schema.games.matchId)
+              )
+              .innerJoin(
+                schema.tournaments,
+                eq(schema.tournaments.id, schema.matches.tournamentId)
+              )
+              .where(
+                and(
+                  inArray(schema.games.beatmapId, pageBeatmapIds),
+                  eq(
+                    schema.tournaments.verificationStatus,
+                    VerificationStatus.Verified
+                  ),
+                  eq(
+                    schema.matches.verificationStatus,
+                    VerificationStatus.Verified
+                  ),
+                  eq(
+                    schema.games.verificationStatus,
+                    VerificationStatus.Verified
+                  ),
+                  eq(
+                    schema.gameScores.verificationStatus,
+                    VerificationStatus.Verified
+                  )
+                )
+              )
+              .groupBy(schema.games.beatmapId, schema.gameScores.mods);
+
+      const groupedModsByBeatmap = new Map<
+        number,
+        Array<{ mods: number; scoreCount: number }>
+      >();
+
+      for (const row of groupedModRows) {
+        if (row.beatmapId === null) continue;
+
+        const groupedMods = groupedModsByBeatmap.get(row.beatmapId) ?? [];
+        groupedMods.push({
+          mods: row.mods,
+          scoreCount: Number(row.scoreCount),
+        });
+        groupedModsByBeatmap.set(row.beatmapId, groupedMods);
+      }
 
       const items = rows.map((row) =>
         BeatmapListItemSchema.parse({
@@ -281,6 +338,15 @@ export const listBeatmaps = publicProcedure
           creator: row.creator ?? null,
           verifiedTournamentCount: Number(row.verifiedTournamentCount) || 0,
           verifiedGameCount: Number(row.verifiedGameCount) || 0,
+          topMods: filterBeatmapModDistribution(
+            calculateBeatmapListModDistribution(
+              groupedModsByBeatmap.get(row.id) ?? []
+            )
+          ).map(({ label, mods, percentage }) => ({
+            mod: label,
+            mods,
+            percentage,
+          })),
         })
       );
 
@@ -292,11 +358,14 @@ export const listBeatmaps = publicProcedure
         totalPages,
       };
     } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
+
       console.error('[orpc] beatmaps.list failed', error);
 
       throw new ORPCError('INTERNAL_SERVER_ERROR', {
-        message:
-          error instanceof Error ? error.message : 'Failed to load beatmaps',
+        message: 'Failed to load beatmaps',
       });
     }
   });

@@ -76,12 +76,7 @@ async function getReportTarget(
   };
 }
 
-/**
- * Report creation and the read-only "Your Reports" view for regular users.
- * Covers access control, profile-menu visibility, entity-specific report forms,
- * and the unread admin-update indicator. Mutating specs identify their own rows
- * so they remain reliable when the suite runs in parallel.
- */
+/** Report creation and the read-only "Your Reports" view for regular users. */
 test.describe('Your Reports', () => {
   test.describe('Unauthenticated access', () => {
     test('redirects an unauthenticated visitor to /unauthorized', async ({
@@ -326,8 +321,6 @@ test.describe('Your Reports', () => {
     test('an unread admin update shows a dot that clears when the report is opened', async ({
       page,
     }) => {
-      // Arrange: create a report as the user, then resolve it as an admin. A
-      // resolved report the reporter has not yet viewed is "unread".
       const userClient = createOrpcClientForRole('user');
       const adminClient = createOrpcClientForRole('admin');
 
@@ -353,8 +346,7 @@ test.describe('Your Reports', () => {
         adminNote: 'E2E admin comment',
       });
 
-      // Act: view the reports list and target the exact seeded report. Other
-      // report tests run in parallel and may create newer rows.
+      // Other report specs run in parallel, so target the seeded report by id
       await page.goto(ROUTES.reports);
       await page.waitForLoadState('networkidle');
 
@@ -366,7 +358,6 @@ test.describe('Your Reports', () => {
       ).toBeVisible({ timeout: 10000 });
       await reportRow.click();
 
-      // Assert: the detail view is read-only and surfaces the admin comment.
       const dialog = page.locator('[data-testid="my-report-detail"]');
       await expect(dialog).toBeVisible({ timeout: 10000 });
       await expect(dialog.getByText('Comment', { exact: true })).toBeVisible();
@@ -375,8 +366,6 @@ test.describe('Your Reports', () => {
         dialog.getByRole('button', { name: /confirm|dismiss|reopen/i })
       ).toHaveCount(0);
 
-      // Closing the report acknowledges the update, and it stays cleared after
-      // a reload because the view timestamp is persisted server-side.
       await page.keyboard.press('Escape');
       await expect(dialog).toBeHidden({ timeout: 10000 });
       await expect(

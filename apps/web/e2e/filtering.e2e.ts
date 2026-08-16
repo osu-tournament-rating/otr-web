@@ -8,14 +8,9 @@ import { STORAGE_STATE } from './fixtures/auth';
 import { ROUTES } from './fixtures/test-config';
 
 /**
- * Coverage for the Tournament Registrant Filtering tool (`/tools/filter`) and the
- * public Filter Reports lookup page (`/tools/filter-reports`).
- *
- * The filter tool is gated for signed-out users (its page redirects to
- * `/unauthorized`) and its submit endpoint is a protectedProcedure that *writes*
- * a filter report + publishes queue messages. We therefore never actually submit
- * the filter form in e2e — we assert the form renders and exercise a non-writing
- * field interaction (ruleset selection) instead.
+ * Coverage for `/tools/filter` and the public `/tools/filter-reports` lookup.
+ * Submitting the filter form writes a report and publishes queue messages, so
+ * these specs never submit it.
  */
 
 test.describe('Tournament Registrant Filtering', () => {
@@ -70,9 +65,6 @@ test.describe('Tournament Registrant Filtering', () => {
     });
 
     test('selecting a ruleset updates the trigger label', async ({ page }) => {
-      // A read-only field interaction: opening the ruleset select and choosing
-      // an option updates local form state without hitting the (writing) submit
-      // procedure.
       await page.goto(ROUTES.filter);
       await page.waitForLoadState('networkidle');
 
@@ -184,7 +176,6 @@ test.describe('Filter Reports', () => {
       await page.goto(ROUTES.filterReports);
       await page.waitForLoadState('networkidle');
 
-      // No redirect to /unauthorized — the page is public.
       expect(page.url()).toContain('/tools/filter-reports');
 
       await expect(
@@ -215,14 +206,10 @@ test.describe('Filter Reports', () => {
 
       const input = page.locator('[data-testid="filter-report-id-input"]');
       await expect(input).toBeVisible({ timeout: 10000 });
-      // A numeric but almost-certainly-nonexistent report id. The lookup
-      // procedure returns NOT_FOUND, which the client surfaces via a toast.
+      // A valid but almost-certainly-nonexistent report id
       await input.fill('2147483647');
       await page.locator('[data-testid="filter-report-submit"]').click();
 
-      // The page must not crash: the lookup view remains rendered with its
-      // input still present (empty-state is preserved when the report is
-      // missing). The error toast copy is asserted best-effort.
       await expect(
         page.locator('[data-testid="filter-report-view"]')
       ).toBeVisible({ timeout: 10000 });
@@ -247,7 +234,6 @@ test.describe('Filter Reports', () => {
       await input.fill('not-a-number');
       await page.locator('[data-testid="filter-report-submit"]').click();
 
-      // The form remains on the empty-state lookup view and does not crash.
       await expect(
         page.locator('[data-testid="filter-report-view"]')
       ).toBeVisible({ timeout: 10000 });

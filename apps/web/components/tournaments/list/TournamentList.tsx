@@ -16,7 +16,10 @@ import {
   type TournamentListRequest,
 } from '@/lib/orpc/schema/tournament';
 import { type TournamentListFilter } from '@/lib/types';
-import { RANK_RANGE_DEFAULT_MAX, RANK_RANGE_MIN } from './tournamentRankSlider';
+import {
+  RANK_RANGE_DEFAULT_MAX,
+  RANK_RANGE_MIN,
+} from '@/lib/filters/tournament-rank';
 
 const pageSize = 30;
 

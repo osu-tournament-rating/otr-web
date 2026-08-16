@@ -22,6 +22,14 @@ const tsVector = customType<{ data: string }>({
   },
 });
 
+/** Punctuation-stripped text for `to_tsvector`; the query side normalizes the same way. */
+const searchableText = (column: SQL | unknown): SQL =>
+  sql`regexp_replace(coalesce(${column}, ''), '[^[:alnum:]]+', ' ', 'g')`;
+
+/** `searchableText` with letter/digit runs split, so `OWC2024` indexes as `owc` + `2024`. */
+const searchableTextSplitDigits = (column: SQL | unknown): SQL =>
+  sql`regexp_replace(regexp_replace(${searchableText(column)}, '([A-Za-z]+)([0-9]+)', '\\1 \\2', 'g'), '([0-9]+)([A-Za-z]+)', '\\1 \\2', 'g')`;
+
 export const efMigrationsHistory = pgTable('__EFMigrationsHistory', {
   migrationId: varchar('migration_id', { length: 150 }).primaryKey().notNull(),
   productVersion: varchar('product_version', { length: 32 }).notNull(),
@@ -107,20 +115,16 @@ export const apiKeys = pgTable(
     start: text('start'),
     prefix: text('prefix'),
     key: text('key').notNull(),
-    // Legacy owner column. Better Auth's api-key plugin (v1.6+) replaced `userId`
-    // with `referenceId`, so the plugin no longer reads or writes this column.
-    // Kept nullable to preserve historical rows; safe to drop in a follow-up once
-    // the `reference_id` backfill is confirmed in production.
+    // Legacy owner column, unread since Better Auth 1.6 replaced it with
+    // `referenceId`; droppable once the `reference_id` backfill is confirmed in prod.
     userId: text('user_id').references(() => auth_users.id, {
       onDelete: 'cascade',
     }),
-    // Owner of the key (the auth_users id). Replaces `userId` as of better-auth
-    // v1.6 — the plugin reads/writes this field and returns it from verifyApiKey.
+    // Owner of the key, as the Better Auth 1.6 api-key plugin expects it.
     referenceId: text('reference_id')
       .notNull()
       .references(() => auth_users.id, { onDelete: 'cascade' }),
-    // Identifies which api-key plugin configuration a key belongs to. Always
-    // 'default' for this app; required by better-auth v1.6 for hashing/verify.
+    // Always 'default' here; Better Auth 1.6 keys hashing and verification off it.
     configId: text('config_id').default('default').notNull(),
     refillInterval: integer('refill_interval'),
     refillAmount: integer('refill_amount'),
@@ -199,7 +203,7 @@ export const beatmapsets = pgTable(
       .notNull()
       .generatedAlwaysAs(
         (): SQL =>
-          sql`setweight(to_tsvector('simple', coalesce(${beatmapsets.artist}, '')), 'A') || setweight(to_tsvector('simple', coalesce(${beatmapsets.title}, '')), 'A')`
+          sql`setweight(to_tsvector('simple', ${searchableText(beatmapsets.artist)}), 'A') || setweight(to_tsvector('simple', ${searchableText(beatmapsets.title)}), 'A')`
       ),
   },
   (table) => [
@@ -576,7 +580,7 @@ export const beatmaps = pgTable(
       .notNull()
       .generatedAlwaysAs(
         (): SQL =>
-          sql`setweight(to_tsvector('simple', coalesce(${beatmaps.diffName}, '')), 'A')`
+          sql`setweight(to_tsvector('simple', ${searchableText(beatmaps.diffName)}), 'A')`
       ),
   },
   (table) => [
@@ -1000,7 +1004,7 @@ export const matches = pgTable(
       .notNull()
       .generatedAlwaysAs(
         (): SQL =>
-          sql`setweight(to_tsvector('simple', ${matches.name}), 'A') || setweight(to_tsvector('simple', regexp_replace(${matches.name}, '([A-Za-z]+)([0-9]+)', '\\1 \\2', 'g')), 'B')`
+          sql`setweight(to_tsvector('simple', ${searchableText(matches.name)}), 'A') || setweight(to_tsvector('simple', ${searchableTextSplitDigits(matches.name)}), 'B')`
       ),
     startTime: timestamp('start_time', { withTimezone: true, mode: 'string' }),
     endTime: timestamp('end_time', { withTimezone: true, mode: 'string' }),
@@ -1273,7 +1277,7 @@ export const players = pgTable(
       .notNull()
       .generatedAlwaysAs(
         (): SQL =>
-          sql`setweight(to_tsvector('simple', ${players.username}), 'A')`
+          sql`setweight(to_tsvector('simple', ${searchableText(players.username)}), 'A')`
       ),
     country: varchar({ length: 4 }).default('').notNull(),
     defaultRuleset: integer('default_ruleset').default(0).notNull(),
@@ -1652,7 +1656,14 @@ export const tournaments = pgTable(
       .notNull()
       .generatedAlwaysAs(
         (): SQL =>
-          sql`setweight(to_tsvector('simple', ${tournaments.name}), 'A') || setweight(to_tsvector('simple', regexp_replace(${tournaments.name}, '([A-Za-z]+)([0-9]+)', '\\1 \\2', 'g')), 'B') || setweight(to_tsvector('simple', ${tournaments.abbreviation}), 'A')`
+          sql`setweight(to_tsvector('simple', ${searchableText(tournaments.name)}), 'A') || setweight(to_tsvector('simple', ${searchableTextSplitDigits(tournaments.name)}), 'B') || setweight(to_tsvector('simple', ${searchableText(tournaments.abbreviation)}), 'A') || setweight(to_tsvector('simple', ${searchableTextSplitDigits(tournaments.abbreviation)}), 'B')`
+      ),
+    /** `search_vector`'s text, reweighted below a match's own words for match search. */
+    matchRankVector: tsVector('match_rank_vector')
+      .notNull()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`setweight(to_tsvector('simple', ${searchableText(tournaments.name)}), 'B') || setweight(to_tsvector('simple', ${searchableTextSplitDigits(tournaments.name)}), 'C') || setweight(to_tsvector('simple', ${searchableText(tournaments.abbreviation)}), 'D') || setweight(to_tsvector('simple', ${searchableTextSplitDigits(tournaments.abbreviation)}), 'D')`
       ),
     forumUrl: varchar('forum_url', { length: 255 }).notNull(),
     rankRangeLowerBound: integer('rank_range_lower_bound').notNull(),
