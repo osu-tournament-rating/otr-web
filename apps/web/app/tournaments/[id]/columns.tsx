@@ -6,7 +6,7 @@ import {
   VerificationStatus,
   MatchRejectionReason,
 } from '@otr/core/osu';
-import { createColumnHelper } from '@tanstack/react-table';
+import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown, ArrowUp, ArrowDown, StickyNote } from 'lucide-react';
@@ -283,4 +283,4 @@ export const columns = [
       return dateA - dateB;
     },
   }),
-];
+] as ColumnDef<MatchRow>[];

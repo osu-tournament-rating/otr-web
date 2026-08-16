@@ -233,10 +233,7 @@ export default function TournamentMatchesAdminView({
   }, [matchIdsToAdd, tournamentId, addAsLazer, router]);
 
   if (!isAdmin) {
-    return (
-      // @ts-expect-error Column def type doesnt work :/
-      <TournamentDataTable columns={columns} data={matches} />
-    );
+    return <TournamentDataTable columns={columns} data={matches} />;
   }
 
   return (
@@ -437,7 +434,6 @@ export default function TournamentMatchesAdminView({
 
       <div className="relative">
         <TournamentMatchesDataTableWithCheckboxes
-          // @ts-expect-error Column def type doesnt work :/
           columns={columns}
           data={matchesWithSelection}
           onSelectMatch={handleSelectMatch}
