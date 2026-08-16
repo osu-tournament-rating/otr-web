@@ -19,17 +19,12 @@
         "name": "next"
       }
     ],
-    // `baseUrl` is required for Bun's test runner to resolve the tsconfig
-    // `paths` aliases. TypeScript 6 deprecates `baseUrl`, so we silence that
-    // deprecation here rather than dropping the option.
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["apps/web/*"],
-      "@otr/core": ["packages/otr-core/src/index.ts"],
-      "@otr/core/*": ["packages/otr-core/src/*"],
-      "@otr/core/osu": ["packages/otr-core/src/osu/enums.ts"],
-      "@otr/core/queues": ["packages/otr-core/src/queues/index.ts"]
+      "@/*": ["./apps/web/*"],
+      "@otr/core": ["./packages/otr-core/src/index.ts"],
+      "@otr/core/*": ["./packages/otr-core/src/*"],
+      "@otr/core/osu": ["./packages/otr-core/src/osu/enums.ts"],
+      "@otr/core/queues": ["./packages/otr-core/src/queues/index.ts"]
     }
   },
   "include": [
