@@ -22,8 +22,7 @@ import {
 } from '@/lib/enum-helpers';
 
 type AnyEnumHelper =
-  | IEnumHelper<number, EnumMetadata>
-  | IBitwiseEnumHelper<number, EnumMetadata>;
+  IEnumHelper<number, EnumMetadata> | IBitwiseEnumHelper<number, EnumMetadata>;
 
 type FieldConfig = {
   label: string;

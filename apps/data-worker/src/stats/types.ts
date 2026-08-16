@@ -131,5 +131,4 @@ export interface StatsCalculationSuccess {
 }
 
 export type StatsCalculationResult =
-  | StatsCalculationFailure
-  | StatsCalculationSuccess;
+  StatsCalculationFailure | StatsCalculationSuccess;

@@ -355,30 +355,28 @@ export default function BeatmapListFilter({
           })),
         ],
       },
-      ...rangeFields.map(
-        (field): FilterField => ({
-          kind: 'range',
-          id: field.id,
-          label: field.label,
-          span: field.span,
-          min: field.min,
-          max: field.max,
-          step: field.step,
-          scale: field.scale,
-          valueLabel: field.valueLabel,
-          format: field.format,
-          value: {
-            min: currentFilter[field.minKey],
-            max: currentFilter[field.maxKey],
-          },
-          onChange: (next) => {
-            const patch: FilterPatch = {};
-            patch[field.minKey] = next.min;
-            patch[field.maxKey] = next.max;
-            applyPatch(patch);
-          },
-        })
-      ),
+      ...rangeFields.map((field): FilterField => ({
+        kind: 'range',
+        id: field.id,
+        label: field.label,
+        span: field.span,
+        min: field.min,
+        max: field.max,
+        step: field.step,
+        scale: field.scale,
+        valueLabel: field.valueLabel,
+        format: field.format,
+        value: {
+          min: currentFilter[field.minKey],
+          max: currentFilter[field.maxKey],
+        },
+        onChange: (next) => {
+          const patch: FilterPatch = {};
+          patch[field.minKey] = next.min;
+          patch[field.maxKey] = next.max;
+          applyPatch(patch);
+        },
+      })),
     ],
     [applyPatch, currentFilter, rulesets]
   );

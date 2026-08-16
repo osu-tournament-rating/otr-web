@@ -20,12 +20,7 @@ export interface HighlightTierIcon {
 }
 
 export type HighlightIcon =
-  | 'Swords'
-  | 'Users'
-  | 'Gamepad2'
-  | 'TrendingUp'
-  | 'Medal'
-  | 'Crosshair';
+  'Swords' | 'Users' | 'Gamepad2' | 'TrendingUp' | 'Medal' | 'Crosshair';
 
 export interface HighlightStat {
   id: string;

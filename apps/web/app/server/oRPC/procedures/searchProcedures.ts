@@ -95,8 +95,7 @@ export const searchEntities = protectedProcedure
         beatmapSearch;
 
       const session = context.session as
-        | { dbPlayer?: { id?: number | null } | null }
-        | undefined;
+        { dbPlayer?: { id?: number | null } | null } | undefined;
       const currentPlayerId = session?.dbPlayer?.id;
 
       let friendIds: Set<number> = new Set();
