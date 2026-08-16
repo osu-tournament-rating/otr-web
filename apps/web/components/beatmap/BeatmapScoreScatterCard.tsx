@@ -276,14 +276,6 @@ export default function BeatmapScoreScatterCard({
     });
   }, []);
 
-  /**
-   * The score axis and the points are built together because each needs the
-   * other: the axis floors on a low quantile (see `getScatterAxis`) and every
-   * score below that floor is plotted on it, so one quit run cannot flatten the
-   * whole field against the ceiling. Both read the full rated sample rather
-   * than the visible one, so toggling a rank range filters points without
-   * rescaling the axis under the reader.
-   */
   const { ratedPoints, scoreAxis, clampedCount } = React.useMemo(() => {
     const rated = sample.points.filter((point) => point.rating != null);
     const axis = getScatterAxis(rated.map((point) => point.score));
@@ -351,12 +343,6 @@ export default function BeatmapScoreScatterCard({
     return [Math.floor(min / step) * step, Math.ceil(max / step) * step];
   }, [ratedPoints]);
 
-  /**
-   * One fit per rank range, never a pooled fit: the rank ranges are exactly the
-   * confound, so a line through all of them is a Simpson's-paradox artifact
-   * that belongs to nobody. Fitted from the full sample rather than the visible
-   * one so a range's line does not move when a different range is toggled.
-   */
   const trends = React.useMemo(() => {
     const fits = new Map<RankRangeBucketKey, RangeTrend>();
 
@@ -395,11 +381,6 @@ export default function BeatmapScoreScatterCard({
     [series, trends]
   );
 
-  /**
-   * The chart's `<desc>`, and the same string in an `sr-only` paragraph:
-   * `role="application"` (which keyboard point-stepping needs) makes some
-   * screen readers announce `<desc>` on demand only.
-   */
   const chartDescription = React.useMemo(() => {
     if (series.length === 0) return '';
 
@@ -419,7 +400,7 @@ export default function BeatmapScoreScatterCard({
 
   const meta =
     sample.points.length < sample.totalScoreCount
-      ? `${sample.points.length} of ${formatChartNumber(sample.totalScoreCount)} scores`
+      ? `${formatChartNumber(sample.points.length)} of ${formatChartNumber(sample.totalScoreCount)} scores`
       : `${formatChartNumber(sample.points.length)} scores`;
 
   const footnote: string[] = [];
