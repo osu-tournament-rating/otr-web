@@ -53,6 +53,21 @@ describe('beatmapListFilterSchema', () => {
     expect(filter.maxCs).toBeUndefined();
   });
 
+  test('discards an over-long search term without dropping sibling filters', () => {
+    // The oRPC request schema caps searchQuery at 200 characters; a longer ?q=
+    // must degrade to no query instead of throwing inside the page.
+    const filter = beatmapListFilterSchema.parse({
+      q: 'a'.repeat(201),
+      minSr: '5',
+    });
+
+    expect(filter.q).toBe('');
+    expect(filter.minSr).toBe(5);
+    expect(beatmapListFilterSchema.parse({ q: 'a'.repeat(200) }).q).toBe(
+      'a'.repeat(200)
+    );
+  });
+
   test('discards repeated params that arrive as arrays', () => {
     const filter = beatmapListFilterSchema.parse({
       minSr: ['1', '2'],

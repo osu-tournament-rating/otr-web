@@ -5,7 +5,7 @@ import {
   getRankRangeBucketKey,
   type RankRangeBucketKey,
 } from '@/lib/beatmaps/rankRange';
-import { deriveGameIsFreeMod } from '@/lib/utils/mods';
+import { deriveGameIsFreeMod, resolveGameDisplayMods } from '@/lib/utils/mods';
 import { tierData, tierNames, type TierName } from '@/lib/utils/tierData';
 import type {
   BeatmapFreemodPickSummary,
@@ -112,6 +112,77 @@ export function summarizeFreemodPicks(
   );
 
   return { freemodGameCount, freemodScoreCount, distribution };
+}
+
+export interface PoolDisplayModsRow extends FreemodPickRow {
+  /** Tournament whose pool the game belongs to. */
+  tournamentId: number;
+}
+
+/**
+ * Resolves the mods each tournament's pool slot displays from the mods players
+ * actually used, so freemod lobbies — whose games record no mods of their own —
+ * don't report NM. Every game resolves through the shared
+ * `deriveGameIsFreeMod`/`resolveGameDisplayMods` pair, then each tournament
+ * takes the mode over those resolved values; the first game seen wins a tie.
+ * Tournaments with no rows are absent, leaving the caller's fallback in charge.
+ */
+export function summarizePoolDisplayMods(
+  rows: ReadonlyArray<PoolDisplayModsRow>
+): Map<number, { mods: number; freemod: boolean }> {
+  const rowsByGame = new Map<number, PoolDisplayModsRow[]>();
+  for (const row of rows) {
+    const gameRows = rowsByGame.get(row.gameId) ?? [];
+    gameRows.push(row);
+    rowsByGame.set(row.gameId, gameRows);
+  }
+
+  const talliesByTournament = new Map<
+    number,
+    Map<string, { mods: number; freemod: boolean; gameCount: number }>
+  >();
+
+  for (const gameRows of rowsByGame.values()) {
+    const { tournamentId, gameMods } = gameRows[0];
+    const scores = gameRows.map((row) => ({ mods: row.scoreMods }));
+    const resolved = resolveGameDisplayMods(
+      { isFreeMod: deriveGameIsFreeMod(gameMods, scores), mods: gameMods },
+      scores
+    );
+
+    const tally = talliesByTournament.get(tournamentId) ?? new Map();
+    const key = resolved.freemod ? 'fm' : String(resolved.mods);
+    const entry = tally.get(key);
+
+    if (entry) {
+      entry.gameCount += 1;
+    } else {
+      tally.set(key, {
+        mods: resolved.mods,
+        freemod: resolved.freemod,
+        gameCount: 1,
+      });
+    }
+
+    talliesByTournament.set(tournamentId, tally);
+  }
+
+  const displayMods = new Map<number, { mods: number; freemod: boolean }>();
+
+  for (const [tournamentId, tally] of talliesByTournament) {
+    let best: { mods: number; freemod: boolean; gameCount: number } | null =
+      null;
+
+    for (const entry of tally.values()) {
+      if (best == null || entry.gameCount > best.gameCount) best = entry;
+    }
+
+    if (best) {
+      displayMods.set(tournamentId, { mods: best.mods, freemod: best.freemod });
+    }
+  }
+
+  return displayMods;
 }
 
 export interface RankRangeModRow {

@@ -44,19 +44,10 @@ export interface ModSegment {
   fill: string;
 }
 
-export interface RankRangeModSummary {
-  /** Segments per bucket, keyed for lookup beside the rank-range pie. */
-  byBucket: Map<
-    RankRangeBucketKey,
-    { scoreCount: number; segments: ModSegment[] }
-  >;
-  /**
-   * One legend for all buckets: colors are globally consistent via
-   * `getModColor`, so per-bucket legends would only multiply the noise.
-   * Deduped by label, ordered by total score count desc.
-   */
-  legend: Array<{ label: string; fill: string; scoreCount: number }>;
-}
+export type RankRangeModsByBucket = Map<
+  RankRangeBucketKey,
+  { scoreCount: number; segments: ModSegment[] }
+>;
 
 /**
  * Every mod bar on the page runs through this pipeline so they read as the
@@ -80,17 +71,13 @@ function toModSegments(
 }
 
 /**
- * Folds the backend's per-bucket mod rows into display segments plus the single
- * shared legend. Exported for tests.
+ * Folds the backend's per-bucket mod rows into display segments, keyed by
+ * bucket for lookup beside the rank-range pie. Exported for tests.
  */
-export function summarizeRankRangeMods(
+export function toRankRangeModSegments(
   rankRangeMods: ReadonlyArray<BeatmapRankRangeModDistribution>
-): RankRangeModSummary {
-  const byBucket: RankRangeModSummary['byBucket'] = new Map();
-  const totalsByLabel = new Map<
-    string,
-    { label: string; fill: string; scoreCount: number }
-  >();
+): RankRangeModsByBucket {
+  const byBucket: RankRangeModsByBucket = new Map();
 
   for (const bucket of rankRangeMods) {
     const segments = toModSegments(bucket.distribution);
@@ -100,25 +87,9 @@ export function summarizeRankRangeMods(
       scoreCount: bucket.scoreCount,
       segments,
     });
-
-    for (const segment of segments) {
-      const existing = totalsByLabel.get(segment.label);
-
-      totalsByLabel.set(segment.label, {
-        label: segment.label,
-        fill: existing?.fill ?? segment.fill,
-        scoreCount: (existing?.scoreCount ?? 0) + segment.scoreCount,
-      });
-    }
   }
 
-  const legend = Array.from(totalsByLabel.values()).sort(
-    (left, right) =>
-      right.scoreCount - left.scoreCount ||
-      left.label.localeCompare(right.label)
-  );
-
-  return { byBucket, legend };
+  return byBucket;
 }
 
 /**
@@ -386,7 +357,7 @@ function RankRangePie({
 }: {
   slices: RankRangeSlice[];
   totalPools: number;
-  modsByBucket: RankRangeModSummary['byBucket'];
+  modsByBucket: RankRangeModsByBucket;
 }) {
   const renderCenterLabel = React.useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -524,8 +495,8 @@ export default function BeatmapDistributionsCard({
     [freemodPicks.distribution]
   );
 
-  const { byBucket: modsByBucket } = React.useMemo(
-    () => summarizeRankRangeMods(rankRangeMods),
+  const modsByBucket = React.useMemo(
+    () => toRankRangeModSegments(rankRangeMods),
     [rankRangeMods]
   );
 

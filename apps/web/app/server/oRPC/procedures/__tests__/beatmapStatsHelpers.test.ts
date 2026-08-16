@@ -7,10 +7,12 @@ import {
   TIER_BREAKDOWN_MAX_TIER_INDEX,
   TIER_RATING_BOUNDARIES,
   summarizeFreemodPicks,
+  summarizePoolDisplayMods,
   summarizeRankRangeMods,
   tierBreakdownTierFromRating,
   tierNameFromRatingArithmetic,
   type FreemodPickRow,
+  type PoolDisplayModsRow,
   type RankRangeModRow,
 } from '../beatmapStatsHelpers';
 
@@ -108,6 +110,60 @@ describe('summarizeFreemodPicks', () => {
     expect(
       summary.distribution.reduce((total, entry) => total + entry.percentage, 0)
     ).toBeCloseTo(100);
+  });
+});
+
+describe('summarizePoolDisplayMods', () => {
+  const poolRow = (
+    tournamentId: number,
+    gameId: number,
+    gameMods: number,
+    scoreMods: number,
+    scoreCount = 1
+  ): PoolDisplayModsRow => ({
+    tournamentId,
+    gameId,
+    gameMods,
+    scoreMods,
+    scoreCount,
+  });
+
+  test('returns no entry for an empty input, leaving the fallback in charge', () => {
+    expect(summarizePoolDisplayMods([]).size).toBe(0);
+  });
+
+  test('resolves a pool whose games record no mods but whose players varied as freemod', () => {
+    const resolved = summarizePoolDisplayMods([
+      poolRow(1699, 1, Mods.None, Mods.Hidden | Mods.NoFail, 4),
+      poolRow(1699, 1, Mods.None, Mods.HardRock | Mods.NoFail, 3),
+      poolRow(1699, 2, Mods.None, Mods.Hidden | Mods.NoFail, 5),
+      poolRow(1699, 2, Mods.None, Mods.None, 2),
+    ]);
+
+    expect(resolved.get(1699)).toEqual({ mods: Mods.None, freemod: true });
+  });
+
+  test('keeps a forced-mod pool on its game mods', () => {
+    const resolved = summarizePoolDisplayMods([
+      poolRow(2189, 1, Mods.HardRock, Mods.HardRock | Mods.NoFail, 6),
+    ]);
+
+    expect(resolved.get(2189)).toEqual({
+      mods: Mods.HardRock,
+      freemod: false,
+    });
+  });
+
+  test('takes the majority game across a mixed pool', () => {
+    const resolved = summarizePoolDisplayMods([
+      // Two forced-HR games outvote the single freemod one.
+      poolRow(42, 1, Mods.HardRock, Mods.HardRock, 4),
+      poolRow(42, 2, Mods.HardRock, Mods.HardRock, 4),
+      poolRow(42, 3, Mods.None, Mods.Hidden, 2),
+      poolRow(42, 3, Mods.None, Mods.HardRock, 2),
+    ]);
+
+    expect(resolved.get(42)).toEqual({ mods: Mods.HardRock, freemod: false });
   });
 });
 

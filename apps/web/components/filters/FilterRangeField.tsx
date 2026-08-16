@@ -41,8 +41,6 @@ export interface FilterRangeFieldDescriptor extends FilterFieldBase {
   step?: number;
   /** Defaults to a linear scale over [min, max]. */
   scale?: NumericScale;
-  /** Set false for boxes without a track (tight, rarely-dragged fields). */
-  slider?: boolean;
   /** Noun used in the thumb and box accessible names. Defaults to `label`. */
   valueLabel?: string;
   /** Screen-reader value text only; the boxes always show the plain number. */
@@ -152,7 +150,6 @@ export default function FilterRangeField({
   const valueLabel = field.valueLabel ?? field.label;
   const format = field.format ?? String;
   const isHalf = field.span === 'half';
-  const showSlider = field.slider !== false;
   // Six-plus digit bounds (rank tops out at 1,000,000) clip inside w-16.
   const boxWidth = isHalf
     ? 'w-12'
@@ -270,95 +267,89 @@ export default function FilterRangeField({
         </p>
       ) : null}
 
-      {showSlider ? (
-        <Slider
-          data-testid={`${idPrefix}-${field.id}-slider`}
-          min={SLIDER_MIN}
-          max={SLIDER_MAX}
-          step={SLIDER_STEP}
-          minStepsBetweenThumbs={0}
-          value={positions}
-          onValueChange={(next) => {
-            // Only a pointer drag reaches here: the thumb's own key handler
-            // preventDefaults, which stops Radix from emitting for the keyboard.
-            setFilterSliderDragging(true);
+      <Slider
+        data-testid={`${idPrefix}-${field.id}-slider`}
+        min={SLIDER_MIN}
+        max={SLIDER_MAX}
+        step={SLIDER_STEP}
+        minStepsBetweenThumbs={0}
+        value={positions}
+        onValueChange={(next) => {
+          // Only a pointer drag reaches here: the thumb's own key handler
+          // preventDefaults, which stops Radix from emitting for the keyboard.
+          setFilterSliderDragging(true);
 
-            const minDifference = Math.abs(next[0] - positions[0]);
-            const maxDifference = Math.abs(next[1] - positions[1]);
-            const moved =
-              minDifference === maxDifference
-                ? activeThumb.current
-                : minDifference > maxDifference
-                  ? 0
-                  : 1;
-            activeThumb.current = moved;
+          const minDifference = Math.abs(next[0] - positions[0]);
+          const maxDifference = Math.abs(next[1] - positions[1]);
+          const moved =
+            minDifference === maxDifference
+              ? activeThumb.current
+              : minDifference > maxDifference
+                ? 0
+                : 1;
+          activeThumb.current = moved;
 
-            const bound: Bound = moved === 0 ? 'min' : 'max';
-            const dragged = clampToBound(
-              bound,
-              scale.fromPosition(next[moved])
-            );
+          const bound: Bound = moved === 0 ? 'min' : 'max';
+          const dragged = clampToBound(bound, scale.fromPosition(next[moved]));
 
-            // Pending only - one history entry per drag, written on release.
-            setDraft((current) => ({
-              ...current,
-              [bound]: { text: String(dragged), value: dragged },
-            }));
-          }}
-          onValueCommit={(next) => {
-            setFilterSliderDragging(false);
+          // Pending only - one history entry per drag, written on release.
+          setDraft((current) => ({
+            ...current,
+            [bound]: { text: String(dragged), value: dragged },
+          }));
+        }}
+        onValueCommit={(next) => {
+          setFilterSliderDragging(false);
 
-            const moved = activeThumb.current;
-            const bound: Bound = moved === 0 ? 'min' : 'max';
-            commit(bound, scale.fromPosition(next[moved]));
-          }}
-          getThumbProps={(index) => {
-            const isMin = index === 0;
-            const bound: Bound = isMin ? 'min' : 'max';
-            const current =
-              (isMin ? minValue : maxValue) ?? (isMin ? min : max);
+          const moved = activeThumb.current;
+          const bound: Bound = moved === 0 ? 'min' : 'max';
+          commit(bound, scale.fromPosition(next[moved]));
+        }}
+        getThumbProps={(index) => {
+          const isMin = index === 0;
+          const bound: Bound = isMin ? 'min' : 'max';
+          const current = (isMin ? minValue : maxValue) ?? (isMin ? min : max);
 
-            return {
-              'aria-label': `${isMin ? 'Minimum' : 'Maximum'} ${valueLabel}`,
-              'aria-valuemin': isMin ? min : (minValue ?? min),
-              'aria-valuemax': isMin ? (maxValue ?? max) : max,
-              'aria-valuenow': current,
-              'aria-valuetext': format(current),
-              onFocus: () => {
-                activeThumb.current = isMin ? 0 : 1;
-              },
-              onPointerDown: () => {
-                activeThumb.current = isMin ? 0 : 1;
-              },
-              onKeyDown: (event) => {
-                const stops = event.shiftKey ? 10 : 1;
-                let next: number | undefined;
+          return {
+            'aria-label': `${isMin ? 'Minimum' : 'Maximum'} ${valueLabel}`,
+            'aria-valuemin': isMin ? min : (minValue ?? min),
+            'aria-valuemax': isMin ? (maxValue ?? max) : max,
+            'aria-valuenow': current,
+            'aria-valuetext': format(current),
+            onFocus: () => {
+              activeThumb.current = isMin ? 0 : 1;
+            },
+            onPointerDown: () => {
+              activeThumb.current = isMin ? 0 : 1;
+            },
+            onKeyDown: (event) => {
+              const stops = event.shiftKey ? 10 : 1;
+              let next: number | undefined;
 
-                if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
-                  next = scale.step(current, stops);
-                } else if (
-                  event.key === 'ArrowLeft' ||
-                  event.key === 'ArrowDown'
-                ) {
-                  next = scale.step(current, -stops);
-                } else if (event.key === 'PageUp') {
-                  next = scale.step(current, 10);
-                } else if (event.key === 'PageDown') {
-                  next = scale.step(current, -10);
-                } else if (event.key === 'Home') {
-                  next = isMin ? min : (minValue ?? min);
-                } else if (event.key === 'End') {
-                  next = isMin ? (maxValue ?? max) : max;
-                }
+              if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+                next = scale.step(current, stops);
+              } else if (
+                event.key === 'ArrowLeft' ||
+                event.key === 'ArrowDown'
+              ) {
+                next = scale.step(current, -stops);
+              } else if (event.key === 'PageUp') {
+                next = scale.step(current, 10);
+              } else if (event.key === 'PageDown') {
+                next = scale.step(current, -10);
+              } else if (event.key === 'Home') {
+                next = isMin ? min : (minValue ?? min);
+              } else if (event.key === 'End') {
+                next = isMin ? (maxValue ?? max) : max;
+              }
 
-                if (next === undefined) return;
-                event.preventDefault();
-                commit(bound, next);
-              },
-            };
-          }}
-        />
-      ) : null}
+              if (next === undefined) return;
+              event.preventDefault();
+              commit(bound, next);
+            },
+          };
+        }}
+      />
     </>
   );
 }

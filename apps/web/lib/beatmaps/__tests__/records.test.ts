@@ -34,6 +34,7 @@ function pool(
     verificationStatus: VerificationStatus.Verified,
     rejectionReason: 0,
     mostCommonMods: null,
+    mostCommonModsFreemod: false,
     ...rest,
   };
 }

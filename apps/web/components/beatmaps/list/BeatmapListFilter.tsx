@@ -440,6 +440,7 @@ export default function BeatmapListFilter({
             onKeyDown={submitSearch}
             placeholder="Search title, artist, difficulty, mapper, or ID"
             aria-label="Search beatmaps"
+            maxLength={200}
             aria-describedby={
               belowMinimumQuery ? 'beatmap-search-minimum-hint' : undefined
             }

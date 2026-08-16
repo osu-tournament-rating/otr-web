@@ -211,7 +211,9 @@ export const defaultBeatmapListFilter = {
 // their defaults instead of crashing the page with a ZodError.
 export const beatmapListFilterSchema = z.object({
   page: z.coerce.number().int().min(1).optional().catch(undefined),
-  q: z.string().catch(''),
+  // Mirrors BeatmapListRequestSchema.searchQuery's max, so an over-long term
+  // degrades to no query instead of failing oRPC input validation.
+  q: z.string().max(200).catch(''),
   ruleset: z.coerce.number().int().min(0).max(5).optional().catch(undefined),
   minSr: z.coerce.number().min(0).max(15).optional().catch(undefined),
   maxSr: z.coerce.number().min(0).max(15).optional().catch(undefined),

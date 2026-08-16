@@ -31,6 +31,7 @@ import {
   TIER_BREAKDOWN_MAX_TIER_INDEX,
   TIER_RATING_BOUNDARIES,
   summarizeFreemodPicks,
+  summarizePoolDisplayMods,
   summarizeRankRangeMods,
 } from './beatmapStatsHelpers';
 import { KeyTypeSchema, resolveBeatmapId } from './shared/keyType';
@@ -707,6 +708,7 @@ export const getBeatmapStats = publicProcedure
         // in TS via deriveGameIsFreeMod so the convention matches everywhere.
         context.db
           .select({
+            tournamentId: schema.tournaments.id,
             gameId: schema.games.id,
             gameMods: schema.games.mods,
             scoreMods: schema.gameScores.mods,
@@ -726,7 +728,12 @@ export const getBeatmapStats = publicProcedure
             eq(schema.tournaments.id, schema.matches.tournamentId)
           )
           .where(verifiedScoreFilter)
-          .groupBy(schema.games.id, schema.games.mods, schema.gameScores.mods)
+          .groupBy(
+            schema.tournaments.id,
+            schema.games.id,
+            schema.games.mods,
+            schema.gameScores.mods
+          )
           .orderBy(asc(schema.games.id), asc(schema.gameScores.mods)),
         // Verified scores per (raw rank-range lower bound, normalized mods).
         // Bucketing stays in TS (summarizeRankRangeMods) so the bracket
@@ -964,24 +971,46 @@ export const getBeatmapStats = publicProcedure
         avgRows.map((row) => [row.tournamentId, Number(row.scoreCount)])
       );
 
+      // Pool mods come from the mods players actually used
+      const poolModsByTournament = summarizePoolDisplayMods(
+        freemodPickRows.map((row) => ({
+          tournamentId: row.tournamentId,
+          gameId: row.gameId,
+          gameMods: row.gameMods,
+          scoreMods: row.scoreMods,
+          scoreCount: Number(row.scoreCount),
+        }))
+      );
+
       const tournaments: BeatmapTournamentUsage[] = tournamentRows.map(
-        (row) => ({
-          tournament: {
-            id: row.tournamentId,
-            name: row.tournamentName,
-          },
-          gameCount: Number(row.gameCount),
-          scoreCount: scoreCountByTournament.get(row.tournamentId) ?? 0,
-          rankRangeLowerBound: row.tournamentRankRangeLowerBound,
-          lobbySize: row.tournamentLobbySize,
-          startTime: row.tournamentStartTime,
-          endTime: row.tournamentEndTime,
-          verificationStatus:
-            row.tournamentVerificationStatus as VerificationStatus,
-          rejectionReason: row.tournamentRejectionReason,
-          mostCommonMods:
-            row.mostCommonMods == null ? null : Number(row.mostCommonMods),
-        })
+        (row) => {
+          const poolMods = poolModsByTournament.get(row.tournamentId);
+
+          return {
+            tournament: {
+              id: row.tournamentId,
+              name: row.tournamentName,
+            },
+            gameCount: Number(row.gameCount),
+            scoreCount: scoreCountByTournament.get(row.tournamentId) ?? 0,
+            rankRangeLowerBound: row.tournamentRankRangeLowerBound,
+            lobbySize: row.tournamentLobbySize,
+            startTime: row.tournamentStartTime,
+            endTime: row.tournamentEndTime,
+            verificationStatus:
+              row.tournamentVerificationStatus as VerificationStatus,
+            rejectionReason: row.tournamentRejectionReason,
+            // Falls back to the games' mode only when no verified scores
+            // resolved the pool, so the "null exactly when gameCount is 0"
+            // invariant survives.
+            mostCommonMods: poolMods
+              ? poolMods.mods
+              : row.mostCommonMods == null
+                ? null
+                : Number(row.mostCommonMods),
+            mostCommonModsFreemod: poolMods?.freemod ?? false,
+          };
+        }
       );
 
       const totalModScores = modRows.reduce(

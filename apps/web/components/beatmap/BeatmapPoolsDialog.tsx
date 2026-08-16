@@ -189,7 +189,11 @@ export default function BeatmapPoolsDialog({
                       {`${row.lobbySize}v${row.lobbySize}`}
                     </TableCell>
                     <TableCell>
-                      <PoolMods mods={row.mostCommonMods} iconClassName="h-5" />
+                      <PoolMods
+                        mods={row.mostCommonMods}
+                        freemod={row.mostCommonModsFreemod}
+                        iconClassName="h-5"
+                      />
                     </TableCell>
                     <TableCell className="pr-4 text-right text-xs text-muted-foreground">
                       {row.gameCount > 0
@@ -228,7 +232,11 @@ export default function BeatmapPoolsDialog({
                 </div>
 
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted-foreground">
-                  <PoolMods mods={row.mostCommonMods} iconClassName="h-4" />
+                  <PoolMods
+                    mods={row.mostCommonMods}
+                    freemod={row.mostCommonModsFreemod}
+                    iconClassName="h-4"
+                  />
                   <span>{formatRankRangeBound(row.rankRangeLowerBound)}</span>
                   <span>{`${row.lobbySize}v${row.lobbySize}`}</span>
                   <span>{formatDateRange(row.startTime, row.endTime)}</span>
@@ -245,9 +253,11 @@ export default function BeatmapPoolsDialog({
 /** Null mods means the pool was never played, so there is nothing to show. */
 function PoolMods({
   mods,
+  freemod,
   iconClassName,
 }: {
   mods: number | null;
+  freemod: boolean;
   iconClassName: string;
 }) {
   if (mods === null)
@@ -257,6 +267,7 @@ function PoolMods({
     <ModIconset
       // Normalised the same way as every other mod surface on this page.
       mods={normalizeBeatmapDisplayMods(mods)}
+      freemod={freemod}
       className="flex h-5 shrink-0 items-center"
       iconClassName={iconClassName}
       alwaysExpanded

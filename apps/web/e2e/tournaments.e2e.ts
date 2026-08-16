@@ -467,7 +467,9 @@ test.describe('Tournaments', () => {
       });
 
       const starRatings = () =>
-        table.locator('tbody tr td:nth-child(2)').allInnerTexts();
+        table
+          .locator('tbody tr [data-testid="beatmap-star-rating-value"]')
+          .allInnerTexts();
       const pool = () =>
         table.locator('tbody tr td:nth-child(1)').allInnerTexts();
 
@@ -483,6 +485,7 @@ test.describe('Tournaments', () => {
       expect(await pool()).not.toEqual(before);
       const descending = (await starRatings()).map(Number);
       expect(descending.length).toBeGreaterThan(1);
+      expect(descending.every(Number.isFinite)).toBe(true);
       expect(descending).toEqual([...descending].sort((a, b) => b - a));
 
       await header.getByRole('button').click();

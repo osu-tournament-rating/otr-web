@@ -6,14 +6,10 @@ import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import { cn } from '@/lib/utils';
 
 /**
- * `row` is the compact list row, `card` the card grid, `table` a single table
- * cell. Each picks a cover derivative, a cover geometry, and whether long text
- * truncates or wraps.
- *
- * `table-lead` is `table` with a thumbnail big enough to read the artwork,
- * for a table's leading column.
+ * `row` is the compact list row, `table` a table's leading cell. Each picks a
+ * cover geometry and density, and whether long text truncates or wraps.
  */
-type BeatmapIdentitySize = 'row' | 'card' | 'table' | 'table-lead';
+type BeatmapIdentitySize = 'row' | 'table';
 
 /**
  * A bare username with no id (the beatmap list) cannot link anywhere; a player
@@ -21,66 +17,40 @@ type BeatmapIdentitySize = 'row' | 'card' | 'table' | 'table-lead';
  */
 type BeatmapCreator = { id: number; username: string } | string | null;
 
-const COVER_VARIANT = {
-  row: 'card',
-  card: 'cover',
-  table: 'list',
-  // `list` is square, and cropping a square to a wide thumbnail throws away
-  // most of the artwork; `card` at 1x is wide, sharp enough at this size, and
-  // smaller over the wire than the square 2x it replaces.
-  'table-lead': 'card',
-} as const;
-
 const COVER_DENSITY = {
   row: 2,
-  card: 2,
-  table: 2,
-  'table-lead': 1,
+  table: 1,
 } as const;
 
 const ROOT_CLASS: Record<BeatmapIdentitySize, string> = {
   row: 'grid min-w-0 gap-2.5 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-stretch sm:gap-4 lg:grid-cols-[11rem_minmax(0,1fr)] xl:grid-cols-[12rem_minmax(0,1fr)]',
-  card: 'flex min-w-0 flex-col',
   table: 'flex min-w-0 items-center gap-3',
-  'table-lead': 'flex min-w-0 items-center gap-3',
 };
 
 const COVER_CELL_CLASS: Record<BeatmapIdentitySize, string> = {
   row: 'relative min-w-0 sm:min-h-20',
-  card: 'relative min-w-0',
   table: 'relative shrink-0',
-  'table-lead': 'relative shrink-0',
 };
 
 const COVER_CLASS: Record<BeatmapIdentitySize, string> = {
   row: 'h-24 w-full rounded-lg shadow-sm sm:absolute sm:inset-0 sm:h-full',
-  card: 'aspect-[16/7] w-full rounded-none shadow-sm',
-  table: 'h-[22px] w-10 rounded-sm',
-  'table-lead': 'h-10 w-18 rounded-md shadow-sm',
+  table: 'h-10 w-18 rounded-md shadow-sm',
 };
 
 const TEXT_CLASS: Record<BeatmapIdentitySize, string> = {
   row: 'min-w-0 sm:flex sm:flex-col sm:justify-center',
-  card: 'min-w-0 px-3.5 pt-3.5 sm:px-4 sm:pt-4',
   table: 'min-w-0',
-  'table-lead': 'min-w-0',
 };
 
 const HEADING_CLASS: Record<BeatmapIdentitySize, string> = {
-  // One line per field so every card's text block is the same height and the
-  // footer never shifts.
-  card: 'min-w-0',
   row: 'flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-0',
   table: 'flex min-w-0 items-baseline gap-x-2',
-  'table-lead': 'flex min-w-0 items-baseline gap-x-2',
 };
 
 /** Long text truncates wherever the surface has a fixed height. */
 const CLIP_CLASS: Record<BeatmapIdentitySize, string> = {
   row: 'break-words',
-  card: 'truncate',
   table: 'truncate',
-  'table-lead': 'truncate',
 };
 
 /**
@@ -119,7 +89,7 @@ export default function BeatmapIdentity({
   children?: ReactNode;
 }) {
   const clip = CLIP_CLASS[size];
-  const isTable = size === 'table' || size === 'table-lead';
+  const isTable = size === 'table';
   const mapperName =
     typeof creator === 'string'
       ? creator
@@ -143,7 +113,10 @@ export default function BeatmapIdentity({
         <BeatmapCover
           beatmapsetOsuId={beatmapsetOsuId}
           alt={`${artist} - ${title} cover`}
-          variant={COVER_VARIANT[size]}
+          // Remote covers are `unoptimized`, so the derivative is the only size
+          // control: `card` is wide at both geometries here, and sharp enough
+          // for the table thumbnail even at 1x.
+          variant="card"
           density={COVER_DENSITY[size]}
           sizes={coverSizes}
           priority={priority}

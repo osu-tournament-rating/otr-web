@@ -13,7 +13,6 @@ import {
   getModForegroundColor,
   normalizeBeatmapDisplayMods,
   resolveGameDisplayMods,
-  resolveGameModsFromScores,
   selectBeatmapListModGroups,
 } from '../mods';
 
@@ -309,23 +308,5 @@ describe('deriveGameIsFreeMod', () => {
     expect(deriveGameIsFreeMod(Mods.HardRock, [{ mods: Mods.HardRock }])).toBe(
       false
     );
-  });
-});
-
-describe('resolveGameModsFromScores', () => {
-  it('resolves HD for a NoMod freemod game where everyone played HD', () => {
-    expect(
-      resolveGameModsFromScores(Mods.None, [
-        Mods.Hidden,
-        Mods.Hidden | Mods.NoFail,
-      ])
-    ).toEqual({ mods: Mods.Hidden, freemod: false });
-  });
-
-  it('trusts forced game mods even with empty scores', () => {
-    expect(resolveGameModsFromScores(Mods.HardRock, [])).toEqual({
-      mods: Mods.HardRock,
-      freemod: false,
-    });
   });
 });

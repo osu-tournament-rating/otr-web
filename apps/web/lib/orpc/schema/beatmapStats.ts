@@ -36,6 +36,8 @@ export const BeatmapTournamentUsageSchema = z.object({
   rejectionReason: z.number().int().nonnegative(),
   /** Raw mods bitmask of the most common game, null exactly when gameCount is 0. */
   mostCommonMods: z.number().int().nonnegative().nullable(),
+  /** True when per-player mods varied in that game, so the row renders FM. */
+  mostCommonModsFreemod: z.boolean(),
 });
 
 export const BeatmapUsagePointSchema = z.object({

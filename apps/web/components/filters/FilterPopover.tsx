@@ -23,13 +23,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 export type {
@@ -52,14 +45,6 @@ export interface FilterMultiSelectField extends FilterFieldBase {
   onChange: (value: number, checked: boolean) => void;
 }
 
-export interface FilterSingleSelectField extends FilterFieldBase {
-  kind: 'single-select';
-  options: readonly FilterOption[];
-  value?: number;
-  placeholder?: string;
-  onChange: (value: number) => void;
-}
-
 export interface FilterChipOption {
   /** Stable key because `value` is undefined for the "any" chip. */
   key: string;
@@ -79,14 +64,11 @@ export interface FilterDateRangeField extends FilterFieldBase {
   kind: 'date-range';
   value: { from?: string; to?: string };
   onChange: (next: { from?: string; to?: string }) => void;
-  fromLabel?: string;
-  toLabel?: string;
 }
 
 export type FilterField =
   | FilterRangeFieldDescriptor
   | FilterMultiSelectField
-  | FilterSingleSelectField
   | FilterChipGroupField
   | FilterDateRangeField;
 
@@ -96,7 +78,6 @@ export interface FilterPopoverProps {
   testIdPrefix: string;
   activeCount: number;
   onClearAll: () => void;
-  align?: 'start' | 'end';
   /** The trigger, kept caller-owned so each page keeps its own affordance. */
   children: ReactNode;
 }
@@ -107,7 +88,6 @@ export default function FilterPopover({
   testIdPrefix,
   activeCount,
   onClearAll,
-  align,
   children,
 }: FilterPopoverProps) {
   const titleId = useId();
@@ -129,7 +109,7 @@ export default function FilterPopover({
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent
         data-testid={`${testIdPrefix}-filter-popover`}
-        align={align ?? 'end'}
+        align="end"
         side="bottom"
         sideOffset={8}
         collisionPadding={12}
@@ -242,29 +222,6 @@ function FilterFieldControl({
     case 'multi-select':
       return <MultiSelectDropdown field={field} testId={`${prefix}-trigger`} />;
 
-    case 'single-select':
-      return (
-        <Select
-          value={field.value === undefined ? undefined : String(field.value)}
-          onValueChange={(next) => field.onChange(Number(next))}
-        >
-          <SelectTrigger
-            data-testid={`${prefix}-trigger`}
-            aria-label={field.label}
-            className="w-full bg-background dark:bg-input/50 dark:shadow-none"
-          >
-            <SelectValue placeholder={field.placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            {field.options.map((option) => (
-              <SelectItem key={option.value} value={String(option.value)}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      );
-
     case 'chip-group':
       return (
         <div className="flex flex-wrap gap-1.5">
@@ -282,9 +239,6 @@ function FilterFieldControl({
       );
 
     case 'date-range': {
-      const fromLabel = field.fromLabel ?? 'From';
-      const toLabel = field.toLabel ?? 'Through';
-
       // No caption rows: they cost 40px and the group label plus the native
       // date placeholder already read clearly.
       return (
@@ -292,7 +246,7 @@ function FilterFieldControl({
           <Input
             id={`${prefix}-from`}
             type="date"
-            aria-label={`${field.label}, ${fromLabel}`}
+            aria-label={`${field.label}, From`}
             value={field.value.from ?? ''}
             max={field.value.to}
             onChange={(event) =>
@@ -306,7 +260,7 @@ function FilterFieldControl({
           <Input
             id={`${prefix}-to`}
             type="date"
-            aria-label={`${field.label}, ${toLabel}`}
+            aria-label={`${field.label}, Through`}
             value={field.value.to ?? ''}
             min={field.value.from}
             onChange={(event) =>

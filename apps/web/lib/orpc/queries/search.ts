@@ -3,8 +3,6 @@ import { alias, QueryBuilder } from 'drizzle-orm/pg-core';
 import * as schema from '@otr/core/db/schema';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
-export const SIMILARITY_THRESHOLD = 0.3;
-
 /**
  * Threshold for `word_similarity`, which scores the term against the best
  * matching extent of the target rather than against the whole string. Plain
@@ -261,8 +259,6 @@ export type SearchExpressions = {
   rank: SQL<number>;
 };
 
-export type BeatmapSearchExpressions = SearchExpressions;
-
 type CandidateBranch = { getSQL: () => SQL };
 
 /**
@@ -368,7 +364,7 @@ function buildBeatmapCandidateIds(
 
 export function buildBeatmapSearchExpressions(
   searchTerm: string
-): BeatmapSearchExpressions | null {
+): SearchExpressions | null {
   const parsed = parseSearchTerm(searchTerm);
   const osuIdCandidate = parseOsuIdCandidate(searchTerm);
 

@@ -231,7 +231,7 @@ export default function BeatmapListTable({
                       title={beatmap.title}
                       diffName={beatmap.diffName}
                       creator={beatmap.creator}
-                      size="table-lead"
+                      size="table"
                       coverSizes="72px"
                       className="min-w-0 flex-1"
                     >

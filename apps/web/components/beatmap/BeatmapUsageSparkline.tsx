@@ -97,16 +97,8 @@ export default function BeatmapUsageSparkline({
         </BarChart>
       </ChartContainer>
       <div className="mt-1 flex justify-between border-t pt-1 text-xs text-muted-foreground">
-        <span>
-          {activity.firstActive
-            ? formatQuarterLong(activity.firstActive.quarter)
-            : '—'}
-        </span>
-        <span>
-          {activity.lastActive
-            ? formatQuarterLong(activity.lastActive.quarter)
-            : '—'}
-        </span>
+        <span>{formatQuarterLong(usage[0].quarter)}</span>
+        <span>{formatQuarterLong(usage[usage.length - 1].quarter)}</span>
       </div>
     </div>
   );
