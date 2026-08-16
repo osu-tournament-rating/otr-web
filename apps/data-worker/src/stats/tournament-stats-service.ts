@@ -163,53 +163,50 @@ export class TournamentStatsService {
       verificationStatus:
         tournamentRow.verificationStatus as VerificationStatus,
       matches:
-        tournamentRow.matches?.map(
-          (match): StatsMatch => ({
-            id: match.id,
-            verificationStatus: match.verificationStatus as VerificationStatus,
-            games:
-              match.games?.map((game): StatsMatch['games'][number] => ({
-                id: game.id,
-                matchId: game.matchId,
-                verificationStatus:
-                  game.verificationStatus as VerificationStatus,
-                scores:
-                  game.gameScores?.map((score) => ({
-                    id: score.id,
-                    gameId: score.gameId,
-                    playerId: score.playerId,
-                    score: score.score,
-                    placement: score.placement,
-                    accuracy: score.accuracy,
-                    statGreat: score.statGreat,
-                    statOk: score.statOk,
-                    statMeh: score.statMeh,
-                    statMiss: score.statMiss,
-                    statGood: score.statGood,
-                    statPerfect: score.statPerfect,
-                    team: score.team as Team,
-                    ruleset: score.ruleset as Ruleset,
-                    verificationStatus:
-                      score.verificationStatus as VerificationStatus,
-                  })) ?? [],
-                rosters:
-                  game.gameRosters?.map((roster) => ({
-                    id: roster.id,
-                    team: roster.team as Team,
-                    roster: roster.roster ?? [],
-                    score: roster.score,
-                    gameId: roster.gameId,
-                  })) ?? [],
-              })) ?? [],
-            playerRatingAdjustments:
-              match.ratingAdjustments?.map((adjustment) => ({
-                id: adjustment.id,
-                playerId: adjustment.playerId,
-                ratingBefore: adjustment.ratingBefore,
-                ratingAfter: adjustment.ratingAfter,
-              })) ?? [],
-          })
-        ) ?? [],
+        tournamentRow.matches?.map((match): StatsMatch => ({
+          id: match.id,
+          verificationStatus: match.verificationStatus as VerificationStatus,
+          games:
+            match.games?.map((game): StatsMatch['games'][number] => ({
+              id: game.id,
+              matchId: game.matchId,
+              verificationStatus: game.verificationStatus as VerificationStatus,
+              scores:
+                game.gameScores?.map((score) => ({
+                  id: score.id,
+                  gameId: score.gameId,
+                  playerId: score.playerId,
+                  score: score.score,
+                  placement: score.placement,
+                  accuracy: score.accuracy,
+                  statGreat: score.statGreat,
+                  statOk: score.statOk,
+                  statMeh: score.statMeh,
+                  statMiss: score.statMiss,
+                  statGood: score.statGood,
+                  statPerfect: score.statPerfect,
+                  team: score.team as Team,
+                  ruleset: score.ruleset as Ruleset,
+                  verificationStatus:
+                    score.verificationStatus as VerificationStatus,
+                })) ?? [],
+              rosters:
+                game.gameRosters?.map((roster) => ({
+                  id: roster.id,
+                  team: roster.team as Team,
+                  roster: roster.roster ?? [],
+                  score: roster.score,
+                  gameId: roster.gameId,
+                })) ?? [],
+            })) ?? [],
+          playerRatingAdjustments:
+            match.ratingAdjustments?.map((adjustment) => ({
+              id: adjustment.id,
+              playerId: adjustment.playerId,
+              ratingBefore: adjustment.ratingBefore,
+              ratingAfter: adjustment.ratingAfter,
+            })) ?? [],
+        })) ?? [],
     };
   }
 

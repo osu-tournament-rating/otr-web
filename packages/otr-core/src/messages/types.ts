@@ -22,9 +22,7 @@ export type FetchPlayerPayload = {
 };
 
 export type OsuApiPayload =
-  | FetchBeatmapPayload
-  | FetchMatchPayload
-  | FetchPlayerPayload;
+  FetchBeatmapPayload | FetchMatchPayload | FetchPlayerPayload;
 
 /** Message type for the `data.osu` queue. */
 export type FetchOsuMessage = MessageEnvelope<OsuApiPayload>;

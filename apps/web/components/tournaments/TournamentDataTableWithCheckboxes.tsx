@@ -82,8 +82,7 @@ export default function TournamentDataTableWithCheckboxes<TData>({
               {isSelectable && <TableHead className="w-[40px]" />}
               {headerGroup.headers.map((header) => {
                 const meta = header.column.columnDef.meta as
-                  | TournamentColumnMeta
-                  | undefined;
+                  TournamentColumnMeta | undefined;
                 const sorted = header.column.getIsSorted();
 
                 return (
@@ -136,8 +135,7 @@ export default function TournamentDataTableWithCheckboxes<TData>({
                 )}
                 {row.getVisibleCells().map((cell) => {
                   const meta = cell.column.columnDef.meta as
-                    | TournamentColumnMeta
-                    | undefined;
+                    TournamentColumnMeta | undefined;
 
                   return (
                     <TableCell

@@ -35,8 +35,7 @@ type AuthAccount = {
 type AuthUserRecord = typeof schema.auth_users.$inferSelect;
 
 type OsuProfileLike =
-  | User.Extended.WithStatisticsrulesets
-  | User.Relation['target'];
+  User.Extended.WithStatisticsrulesets | User.Relation['target'];
 
 const parseOsuId = (value?: string | null) => {
   if (!value) {

@@ -19,11 +19,7 @@ export function useAudioPlayerTime(): number {
 }
 
 export type PreviewButtonStatus =
-  | 'loading'
-  | 'playing'
-  | 'error'
-  | 'paused'
-  | 'idle';
+  'loading' | 'playing' | 'error' | 'paused' | 'idle';
 
 export const PREVIEW_STATUS_ICONS: Record<PreviewButtonStatus, LucideIcon> = {
   loading: Loader2,

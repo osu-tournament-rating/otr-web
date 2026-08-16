@@ -469,8 +469,7 @@ export default function BeatmapScoreScatterCard({
                     <ChartTooltipContent
                       labelFormatter={(_, payload) => {
                         const point = payload?.[0]?.payload as
-                          | ScatterPoint
-                          | undefined;
+                          ScatterPoint | undefined;
                         if (!point) return null;
                         return (
                           <span className="flex items-center gap-1.5">

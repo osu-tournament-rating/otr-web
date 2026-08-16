@@ -353,8 +353,7 @@ export const getLeaderboardFriends = protectedProcedure
   })
   .handler(async ({ input, context }) => {
     const session = context.session as
-      | { dbPlayer?: { id?: number | null } | null }
-      | undefined;
+      { dbPlayer?: { id?: number | null } | null } | undefined;
     const friendUserId = session?.dbPlayer?.id;
 
     if (!friendUserId) {

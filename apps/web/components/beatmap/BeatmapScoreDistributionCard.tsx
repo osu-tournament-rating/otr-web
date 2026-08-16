@@ -147,8 +147,7 @@ function PercentileCurve({
               hideIndicator
               formatter={(value, _name, item) => {
                 const point = item?.payload as
-                  | BeatmapScorePercentilePoint
-                  | undefined;
+                  BeatmapScorePercentilePoint | undefined;
                 if (point == null || typeof value !== 'number') return null;
 
                 return (

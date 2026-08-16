@@ -210,8 +210,7 @@ describe('TournamentAutomationCheckService', () => {
 
     const matchUpdate = updates.find((entry) => entry.table === 'matches');
     const matchWarnings = matchUpdate?.values.warningFlags as
-      | number
-      | undefined;
+      number | undefined;
     expect(matchWarnings).not.toBeUndefined();
     expect(matchWarnings! & MatchWarningFlags.LowGameCount).not.toBe(0);
 

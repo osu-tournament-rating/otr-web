@@ -154,9 +154,7 @@ export class BeatmapFetchService {
         title: apiBeatmapset.title ?? '',
         rankedStatus: convertBeatmapRankStatus(
           (apiBeatmapset.status ?? apiBeatmapset.ranked) as
-            | string
-            | number
-            | undefined
+            string | number | undefined
         ),
         rankedDate: normalizeDate(apiBeatmapset.ranked_date),
         submittedDate: normalizeDate(apiBeatmapset.submitted_date),
