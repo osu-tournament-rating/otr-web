@@ -42,3 +42,33 @@ loki.write "default" {
 		url = "http://otr-loki:3100/loki/api/v1/push"
 	}
 }
+
+otelcol.receiver.otlp "otlp" {
+	grpc {
+		endpoint = "0.0.0.0:4317"
+	}
+
+	http {
+		endpoint = "0.0.0.0:4318"
+	}
+
+	output {
+		traces = [otelcol.processor.batch.default.input]
+	}
+}
+
+otelcol.processor.batch "default" {
+	output {
+		traces = [otelcol.exporter.otlp.tempo.input]
+	}
+}
+
+otelcol.exporter.otlp "tempo" {
+	client {
+		endpoint = "otr-tempo:4317"
+
+		tls {
+			insecure = true
+		}
+	}
+}

@@ -1,3 +1,6 @@
+// Must be first so the tracer provider is live before anything else loads.
+import './tracing';
+
 import {
   QueueConstants,
   type FetchOsuMessage,

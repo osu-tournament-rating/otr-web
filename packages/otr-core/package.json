@@ -16,12 +16,21 @@
     "./queues/*": "./src/queues/*",
     "./messages/*": "./src/messages/*",
     "./logging": "./src/logging/index.ts",
-    "./logging/*": "./src/logging/*"
+    "./logging/*": "./src/logging/*",
+    "./tracing": "./src/tracing/index.ts",
+    "./tracing/*": "./src/tracing/*"
   },
   "peerDependencies": {
     "drizzle-orm": "^0.45.2"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/core": "^2.10.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.221.0",
+    "@opentelemetry/resources": "^2.10.0",
+    "@opentelemetry/sdk-trace-base": "^2.10.0",
+    "@opentelemetry/sdk-trace-node": "^2.10.0",
+    "@opentelemetry/semantic-conventions": "^1.43.0",
     "pino": "^10.3.1"
   }
 }

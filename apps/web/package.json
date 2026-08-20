@@ -17,6 +17,7 @@
     "@alduino/humanizer": "^1.1.0",
     "@better-auth/api-key": "^1.6.12",
     "@hookform/resolvers": "^5.4.0",
+    "@opentelemetry/api": "^1.9.1",
     "@orpc/client": "^1.14.4",
     "@orpc/openapi": "^1.14.4",
     "@orpc/server": "^1.14.4",

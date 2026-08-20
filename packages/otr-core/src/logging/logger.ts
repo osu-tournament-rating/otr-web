@@ -1,4 +1,5 @@
 import pino from 'pino';
+import { trace } from '@opentelemetry/api';
 import type { Logger, LogContext, LogLevel } from './types';
 
 const IGNORED_KEYS = new Set(['level', 'time', 'msg', 'pid', 'hostname']);
@@ -96,6 +97,17 @@ const keyValueDestination = (): pino.DestinationStream => ({
   },
 });
 
+// Grafana links logs to traces off these fields; keep the names in step with
+// the Loki datasource's derived fields.
+const traceBindings = () => {
+  const span = trace.getActiveSpan()?.spanContext();
+  if (!span || !trace.isSpanContextValid(span)) {
+    return {};
+  }
+
+  return { traceId: span.traceId, spanId: span.spanId };
+};
+
 function createPinoLogger(serviceName: string): pino.Logger {
   const level = (process.env.LOG_LEVEL as LogLevel) ?? 'info';
 
@@ -103,6 +115,7 @@ function createPinoLogger(serviceName: string): pino.Logger {
     {
       level,
       base: { service: serviceName },
+      mixin: traceBindings,
       timestamp: pino.stdTimeFunctions.isoTime,
       serializers: {
         error: (err: unknown) => {
