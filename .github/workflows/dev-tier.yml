@@ -1,0 +1,123 @@
+name: Dev tier
+
+# The shared database and queue that PR previews read from. Deliberately kept
+# out of deploy.yml: this tier has no application images and no migrate
+# service, so it does not fit that workflow's build-and-migrate shape.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Operation to run'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - restore
+          - check
+  schedule:
+    # Nightly replica refresh, after the processor run at 12:00 UTC.
+    - cron: '0 14 * * *'
+
+concurrency:
+  group: dev-tier
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: ${{ github.event.inputs.action || 'restore' }}
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            docker-compose-dev.yml
+            scripts/preview
+            apps/web/drizzle/meta
+
+      - name: Resolve expected migration count
+        id: migrations
+        run: |
+          set -euo pipefail
+          count=$(jq '.entries | length' apps/web/drizzle/meta/_journal.json)
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+
+      - name: Connect to tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: ${{ secrets.SSH_HOST }}
+
+      - name: Upload dev tier assets
+        if: ${{ (github.event.inputs.action || 'restore') == 'deploy' }}
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          DEV_REMOTE_PATH: ${{ secrets.DEV_REMOTE_PATH }}
+          ENV_CONTENT: ${{ secrets.DEV_ENV }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' "$ENV_CONTENT" > .env
+          cp docker-compose-dev.yml docker-compose.yml
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
+            mkdir -p "$DEV_REMOTE_PATH/scripts"
+          scp -o StrictHostKeyChecking=no -r .env docker-compose.yml \
+            "$SSH_USER@$SSH_HOST:$DEV_REMOTE_PATH/"
+          scp -o StrictHostKeyChecking=no -r scripts/preview \
+            "$SSH_USER@$SSH_HOST:$DEV_REMOTE_PATH/scripts/"
+
+      - name: Bring up dev tier
+        if: ${{ (github.event.inputs.action || 'restore') == 'deploy' }}
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          DEV_REMOTE_PATH: ${{ secrets.DEV_REMOTE_PATH }}
+        run: |
+          set -euo pipefail
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
+            bash -s -- "$DEV_REMOTE_PATH" <<'EOF'
+            set -euo pipefail
+            cd "$1"
+            chmod +x scripts/preview/dev-db.sh
+            docker compose pull
+            docker compose up -d --remove-orphans
+            # Nothing consumes these queues without a data worker, so let idle
+            # ones delete themselves after a day.
+            until docker exec otr-dev-rabbitmq rabbitmq-diagnostics -q ping; do sleep 3; done
+            docker exec otr-dev-rabbitmq rabbitmqctl set_policy preview-expiry \
+              '.*' '{"expires":86400000}' --apply-to queues
+          EOF
+
+      - name: Run database operation
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          DEV_REMOTE_PATH: ${{ secrets.DEV_REMOTE_PATH }}
+          OTR_SCRIPTS_DIR: ${{ secrets.OTR_SCRIPTS_DIR }}
+          ACTION: ${{ github.event.inputs.action || 'restore' }}
+          EXPECTED_MIGRATIONS: ${{ steps.migrations.outputs.count }}
+        run: |
+          set -euo pipefail
+          operation="$ACTION"
+          if [[ "$operation" == "deploy" ]]; then
+            operation="check"
+          fi
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
+            bash -s -- "$DEV_REMOTE_PATH" "$operation" "$OTR_SCRIPTS_DIR" "$EXPECTED_MIGRATIONS" <<'EOF'
+            set -euo pipefail
+            cd "$1"
+            export OTR_SCRIPTS_DIR="$3"
+            export EXPECTED_MIGRATIONS="$4"
+            # A first deploy has no database yet, so a failing check restores.
+            if [[ "$2" == "check" ]]; then
+              ./scripts/preview/dev-db.sh check || ./scripts/preview/dev-db.sh restore
+            else
+              ./scripts/preview/dev-db.sh "$2"
+            fi
+          EOF

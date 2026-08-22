@@ -1,0 +1,229 @@
+name: PR preview
+
+# Publishes a labelled PR to a private tailnet URL. Runs the website only:
+# the database and queue come from the shared dev tier, and no data worker
+# means previews never call the osu! API.
+#
+# Uses `pull_request`, not `pull_request_target`, so forks get no secrets and
+# no preview. Previews run PR code on the deployment host, so they are limited
+# to branches in this repository.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, closed]
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  deploy:
+    name: Deploy preview
+    if: >-
+      github.event.action != 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      contains(github.event.pull_request.labels.*.name, 'preview')
+    runs-on: ubuntu-latest
+    environment: dev
+
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve preview context
+        id: context
+        env:
+          TS_TAILNET: ${{ vars.TS_TAILNET }}
+          DEV_LIVE_DB: ${{ vars.DEV_LIVE_DB || 'otr_dev' }}
+        run: |
+          set -euo pipefail
+          hostname="otr-pr-${PR_NUMBER}"
+          echo "hostname=$hostname" >> "$GITHUB_OUTPUT"
+          echo "url=https://${hostname}.${TS_TAILNET}" >> "$GITHUB_OUTPUT"
+          echo "project=otr-pr-${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+
+          # The shared database tracks the base branch, so its expected
+          # migration count comes from there rather than from this PR.
+          base_count=$(git show "$BASE_SHA:apps/web/drizzle/meta/_journal.json" | jq '.entries | length')
+          echo "migrations=$base_count" >> "$GITHUB_OUTPUT"
+
+          # A PR that adds migrations gets its own database, so it never
+          # migrates the schema the other previews are sharing.
+          if git diff --name-only "$BASE_SHA" HEAD -- apps/web/drizzle | grep -q .; then
+            echo "database=otr_pr_${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+            echo "migration=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "database=${DEV_LIVE_DB}" >> "$GITHUB_OUTPUT"
+            echo "migration=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: stagecodes/otr-web:pr-${{ env.PR_NUMBER }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web-pr-${{ env.PR_NUMBER }},mode=max
+
+      - name: Connect to tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: ${{ secrets.SSH_HOST }}
+
+      - name: Verify dev database, restoring if unhealthy
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          DEV_REMOTE_PATH: ${{ secrets.DEV_REMOTE_PATH }}
+          OTR_SCRIPTS_DIR: ${{ secrets.OTR_SCRIPTS_DIR }}
+          EXPECTED_MIGRATIONS: ${{ steps.context.outputs.migrations }}
+          NEEDS_CLONE: ${{ steps.context.outputs.migration }}
+          PREVIEW_DB: ${{ steps.context.outputs.database }}
+        run: |
+          set -euo pipefail
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
+            bash -s -- "$DEV_REMOTE_PATH" "$OTR_SCRIPTS_DIR" "$EXPECTED_MIGRATIONS" "$NEEDS_CLONE" "$PREVIEW_DB" <<'EOF'
+            set -euo pipefail
+            cd "$1"
+            export OTR_SCRIPTS_DIR="$2"
+            export EXPECTED_MIGRATIONS="$3"
+            ./scripts/preview/dev-db.sh check || ./scripts/preview/dev-db.sh restore
+            if [[ "$4" == "true" ]]; then
+              ./scripts/preview/dev-db.sh clone "$5"
+            fi
+          EOF
+
+      - name: Upload preview assets
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          PREVIEW_REMOTE_PATH: ${{ secrets.PREVIEW_REMOTE_PATH }}
+          APP_ENV_CONTENT: ${{ secrets.PREVIEW_ENV }}
+          DB_URL_PREFIX: ${{ secrets.PREVIEW_DB_URL_PREFIX }}
+          PREVIEW_RABBITMQ_URL: ${{ secrets.PREVIEW_RABBITMQ_URL }}
+          TS_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          TS_CLIENT_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+          PREVIEW_URL: ${{ steps.context.outputs.url }}
+          PREVIEW_HOSTNAME: ${{ steps.context.outputs.hostname }}
+          PREVIEW_DB: ${{ steps.context.outputs.database }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' "$APP_ENV_CONTENT" > app.env
+          cat > .env <<ENVFILE
+          IMAGE_TAG=pr-${PR_NUMBER}
+          PREVIEW_URL=${PREVIEW_URL}
+          PREVIEW_HOSTNAME=${PREVIEW_HOSTNAME}
+          PREVIEW_DATABASE_URL=${DB_URL_PREFIX}${PREVIEW_DB}
+          PREVIEW_RABBITMQ_URL=${PREVIEW_RABBITMQ_URL}
+          TS_CLIENT_ID=${TS_CLIENT_ID}
+          TS_CLIENT_SECRET=${TS_CLIENT_SECRET}
+          ENVFILE
+          cp docker-compose-preview.yml docker-compose.yml
+          remote="$PREVIEW_REMOTE_PATH/pr-${PR_NUMBER}"
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" mkdir -p "$remote"
+          scp -o StrictHostKeyChecking=no -r \
+            .env app.env docker-compose.yml preview/ts-config \
+            "$SSH_USER@$SSH_HOST:$remote/"
+
+      - name: Start preview stack
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          PREVIEW_REMOTE_PATH: ${{ secrets.PREVIEW_REMOTE_PATH }}
+          PROJECT: ${{ steps.context.outputs.project }}
+          NEEDS_MIGRATE: ${{ steps.context.outputs.migration }}
+        run: |
+          set -euo pipefail
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
+            bash -s -- "$PREVIEW_REMOTE_PATH/pr-${PR_NUMBER}" "$PROJECT" "$NEEDS_MIGRATE" <<'EOF'
+            set -euo pipefail
+            cd "$1"
+            docker compose -p "$2" pull
+            if [[ "$3" == "true" ]]; then
+              docker compose -p "$2" --profile migrate run --rm migrate
+            fi
+            docker compose -p "$2" up -d --remove-orphans
+          EOF
+
+      - name: Comment preview URL
+        if: ${{ github.event.action != 'synchronize' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PREVIEW_URL: ${{ steps.context.outputs.url }}
+          PREVIEW_DB: ${{ steps.context.outputs.database }}
+          IS_MIGRATION: ${{ steps.context.outputs.migration }}
+        run: |
+          set -euo pipefail
+          if [[ "$IS_MIGRATION" == "true" ]]; then
+            note="Migrations ran against a dedicated clone (\`${PREVIEW_DB}\`)."
+          else
+            note="Using the shared dev database (\`${PREVIEW_DB}\`)."
+          fi
+          body=$(printf 'Preview: %s\n\n%s Sign in with the test-auth endpoint; osu! login is not wired up on previews.' \
+            "$PREVIEW_URL" "$note")
+          gh pr comment "$PR_NUMBER" --body "$body"
+
+  teardown:
+    name: Tear down preview
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    environment: dev
+
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+
+    steps:
+      - name: Connect to tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: ${{ secrets.SSH_HOST }}
+
+      - name: Remove preview stack and database
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          PREVIEW_REMOTE_PATH: ${{ secrets.PREVIEW_REMOTE_PATH }}
+          DEV_REMOTE_PATH: ${{ secrets.DEV_REMOTE_PATH }}
+        run: |
+          set -euo pipefail
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
+            bash -s -- "$PREVIEW_REMOTE_PATH" "$DEV_REMOTE_PATH" "$PR_NUMBER" <<'EOF'
+            set -euo pipefail
+            directory="$1/pr-$3"
+            if [[ -d "$directory" ]]; then
+              cd "$directory"
+              docker compose -p "otr-pr-$3" down -v --remove-orphans
+              cd /
+              rm -rf "$directory"
+            fi
+            # The tailnet node is ephemeral and removes itself with the stack.
+            cd "$2"
+            ./scripts/preview/dev-db.sh drop "otr_pr_$3"
+          EOF
