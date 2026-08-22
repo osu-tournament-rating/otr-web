@@ -1,4 +1,5 @@
 import { type MessageEnvelope, QueuePriorityArguments } from '@otr/core';
+import { traceConsume } from '@otr/core/tracing';
 import { connect, type ConsumeMessage } from 'amqplib';
 import { consoleLogger, type Logger } from '../logging/logger';
 import {
@@ -126,7 +127,9 @@ export class RabbitMqConsumer<TPayload> implements QueueConsumer<TPayload> {
     const startTime = Date.now();
 
     try {
-      await handler(queueMessage);
+      await traceConsume(this.options.queue, message.properties.headers, () =>
+        handler(queueMessage)
+      );
       queueMessagesProcessed.labels({ ...labels, status: 'success' }).inc();
     } catch (error) {
       this.logger.error('Queue handler threw an error', { error });

@@ -18,6 +18,18 @@ Run commands from the repository root unless noted.
 - Prefer running the site and screenshotting it to check your own work before
   reporting a finished result.
 
+## Tracing
+
+- Spans go to Alloy over OTLP, then to Tempo; read them in Grafana under
+  Drilldown > Traces. Nothing is exported unless
+  `OTEL_EXPORTER_OTLP_ENDPOINT` is set, so local runs and tests stay quiet.
+- `@otr/core/tracing` owns the setup. A procedure span wraps every oRPC call and
+  each statement drizzle issues becomes a child span, so a slow query is visible
+  under the procedure that ran it. Queue messages carry the trace across to the
+  data worker.
+- Logs carry `traceId`, which is how Grafana links a log line to its trace.
+  Never put query parameters or user input on a span.
+
 ## Typography
 
 - Use the UI sans font (`--font-sans`, Inter) for all user-facing text, including

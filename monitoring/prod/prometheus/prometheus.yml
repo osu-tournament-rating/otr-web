@@ -33,3 +33,7 @@ scrape_configs:
   - job_name: 'data-worker'
     static_configs:
       - targets: ['otr-data-worker:9091']
+
+  - job_name: 'tempo'
+    static_configs:
+      - targets: ['otr-tempo:3200']

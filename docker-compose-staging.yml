@@ -82,6 +82,8 @@ services:
       DATABASE_URL: ${DOCKER_DATABASE_URL}
       RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
       METRICS_AUTH_TOKEN: ${METRICS_AUTH_TOKEN:-}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otr-staging-alloy:4318
+      OTEL_SERVICE_NAME: otr-web
     healthcheck:
       test:
         [
@@ -111,6 +113,8 @@ services:
       DATABASE_URL: ${DOCKER_DATABASE_URL}
       RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
       METRICS_PORT: '9091'
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otr-staging-alloy:4318
+      OTEL_SERVICE_NAME: otr-data-worker
     healthcheck:
       test:
         [
@@ -136,7 +140,10 @@ services:
           --config.file=/etc/prometheus/prometheus.yml \
           --storage.tsdb.path=/prometheus \
           --storage.tsdb.retention.time=30d \
-          --web.enable-lifecycle
+          --web.enable-lifecycle \
+          --web.enable-remote-write-receiver \
+          --enable-feature=exemplar-storage \
+          --enable-feature=native-histograms
     environment:
       METRICS_AUTH_TOKEN: ${METRICS_AUTH_TOKEN:-}
     volumes:
@@ -156,10 +163,25 @@ services:
       - loki-data:/loki
       - ./monitoring/staging/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
 
+  tempo:
+    image: grafana/tempo:3.0.3
+    container_name: otr-staging-tempo
+    restart: unless-stopped
+    command: ['-target=all', '-config.file=/etc/tempo/tempo.yaml']
+    volumes:
+      - ./monitoring/staging/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    depends_on:
+      - prometheus
+
   alloy:
     image: grafana/alloy:v1.17.1
     container_name: otr-staging-alloy
     restart: unless-stopped
+    ports:
+      # Loopback only so traces from a locally running app can reach the collector
+      - '127.0.0.1:4417:4317'
+      - '127.0.0.1:4418:4318'
     command:
       - run
       - '--storage.path=/var/lib/alloy/data'
@@ -170,6 +192,8 @@ services:
       - alloy-data:/var/lib/alloy/data
     depends_on:
       loki:
+        condition: service_started
+      tempo:
         condition: service_started
 
   grafana:
@@ -191,6 +215,7 @@ services:
     depends_on:
       - prometheus
       - loki
+      - tempo
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.20.1
@@ -211,3 +236,4 @@ volumes:
   grafana-data:
   alloy-data:
   loki-data:
+  tempo-data:

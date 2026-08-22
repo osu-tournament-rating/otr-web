@@ -1,5 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
 import { dbSchema } from '@otr/core/db';
+import { instrumentPgPool } from '@otr/core/tracing';
 
 import { loadRootEnv } from '../../../../lib/env/load-root-env';
 
@@ -11,8 +13,9 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL is not configured');
 }
 
-export const db = drizzle(databaseUrl, {
-  schema: dbSchema,
-});
+export const db = drizzle(
+  instrumentPgPool(new Pool({ connectionString: databaseUrl })),
+  { schema: dbSchema }
+);
 
 export type DatabaseClient = typeof db;

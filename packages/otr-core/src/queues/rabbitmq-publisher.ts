@@ -1,6 +1,7 @@
 import { connect, type Options } from 'amqplib';
 import type { MessageEnvelope } from '@otr/core';
 import { QueuePriorityArguments, createMessageMetadata } from '@otr/core';
+import { injectTraceHeaders, tracePublish } from '../tracing';
 
 import type {
   QueueMessagePayload,
@@ -44,27 +45,30 @@ export class RabbitMqPublisher<
     payload: QueueMessagePayload<TMessage>,
     options: QueuePublishOptions = {}
   ): Promise<TMessage> {
-    const channel = await this.ensureChannel();
-    const metadata = createMessageMetadata(options.metadata);
-    const message = { ...metadata, ...(payload ?? {}) } as TMessage;
+    return tracePublish(this.queue, async () => {
+      const channel = await this.ensureChannel();
+      const metadata = createMessageMetadata(options.metadata);
+      const message = { ...metadata, ...(payload ?? {}) } as TMessage;
 
-    const publishOptions: Options.Publish = {
-      persistent: true,
-      ...this.basePublishOptions,
-    };
+      const publishOptions: Options.Publish = {
+        persistent: true,
+        ...this.basePublishOptions,
+        headers: injectTraceHeaders({ ...this.basePublishOptions?.headers }),
+      };
 
-    if (publishOptions.priority === undefined) {
-      publishOptions.priority = metadata.priority;
-    }
+      if (publishOptions.priority === undefined) {
+        publishOptions.priority = metadata.priority;
+      }
 
-    channel.sendToQueue(
-      this.queue,
-      Buffer.from(JSON.stringify(message), 'utf-8'),
-      publishOptions
-    );
+      channel.sendToQueue(
+        this.queue,
+        Buffer.from(JSON.stringify(message), 'utf-8'),
+        publishOptions
+      );
 
-    await channel.waitForConfirms();
-    return message;
+      await channel.waitForConfirms();
+      return message;
+    });
   }
 
   async close(): Promise<void> {

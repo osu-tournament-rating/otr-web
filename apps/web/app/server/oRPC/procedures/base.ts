@@ -7,6 +7,8 @@ import {
   generateCorrelationId,
   extractCorrelationId,
 } from '@otr/core/logging';
+import { setActiveSpanAttributes, withSpan } from '@otr/core/tracing';
+import { SpanKind } from '@opentelemetry/api';
 
 import { auth } from '@/lib/auth/auth';
 import { db } from '@/lib/db';
@@ -548,12 +550,34 @@ const extractRequestPath = (requestUrl?: string): string | null => {
   }
 };
 
+// Runs ahead of the rest of the chain so session lookups and database work all
+// land inside the procedure span.
+const withTracing = base.middleware(async ({ path, next }) => {
+  const procedurePath = formatProcedurePath(path);
+
+  return withSpan(
+    procedurePath,
+    {
+      kind: SpanKind.SERVER,
+      attributes: { 'rpc.system': 'orpc', 'rpc.method': procedurePath },
+    },
+    async () => next()
+  );
+});
+
 const withLoggingContext = base.middleware(async ({ context, path, next }) => {
   const correlationId =
     extractCorrelationId(context.headers) ?? generateCorrelationId();
   const procedurePath = formatProcedurePath(path);
   const actor = resolveActor(context);
   const requestPath = extractRequestPath(context.requestUrl);
+
+  setActiveSpanAttributes({
+    'otr.correlation_id': correlationId,
+    'otr.access_method': actor.accessMethod,
+    'otr.player_id': actor.playerId ?? undefined,
+    'otr.request_path': requestPath ?? undefined,
+  });
 
   const logger = rootLogger.child({
     correlationId,
@@ -691,6 +715,7 @@ const withErrorBoundary = base.middleware(async ({ path, next }) => {
 });
 
 export const publicProcedure = base
+  .use(withTracing)
   .use(withDatabase)
   .use(withOptionalApiKey)
   .use(withOptionalSession)
@@ -700,6 +725,7 @@ export const publicProcedure = base
   .use(withErrorBoundary);
 
 export const protectedProcedure = base
+  .use(withTracing)
   .use(withDatabase)
   .use(withAuth)
   .use(withLoggingContext)
