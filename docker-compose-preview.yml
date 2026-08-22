@@ -1,0 +1,73 @@
+# Per-PR preview stack: website and its tailnet endpoint only.
+# The database and queue come from the shared dev tier (docker-compose-dev.yml);
+# the data worker deliberately does not run here, so previews make no osu! API
+# calls. Deploy with a per-PR project name: `docker compose -p otr-pr-<n> up -d`.
+# No service may declare container_name or previews would collide.
+
+services:
+  web:
+    image: stagecodes/otr-web:${IMAGE_TAG}
+    restart: unless-stopped
+    # app.env holds application config; .env holds the values Compose
+    # interpolates below, including the Tailscale credentials.
+    env_file:
+      - ./app.env
+    environment:
+      DATABASE_URL: ${PREVIEW_DATABASE_URL}
+      RABBITMQ_AMQP_URL: ${PREVIEW_RABBITMQ_URL}
+      BETTER_AUTH_URL: ${PREVIEW_URL}
+      NEXT_PUBLIC_APP_BASE_URL: ${PREVIEW_URL}
+      E2E_TEST_AUTH: 'true'
+      MAINTENANCE_WINDOW_ENABLED: 'false'
+    networks:
+      - default
+      - otr-dev
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'bun -e "fetch(\"http://localhost:3000/api/health\").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Only for PRs that add migrations, which run against their own cloned
+  # database. Never run this against the shared dev database.
+  migrate:
+    image: stagecodes/otr-web:${IMAGE_TAG}
+    profiles:
+      - migrate
+    restart: 'no'
+    env_file:
+      - ./app.env
+    environment:
+      DATABASE_URL: ${PREVIEW_DATABASE_URL}
+    command: ['./scripts/run-migrations.sh']
+    networks:
+      - otr-dev
+
+  tailscale:
+    image: tailscale/tailscale:latest
+    restart: unless-stopped
+    environment:
+      # OAuth client credentials mint an ephemeral node, so the tailnet entry
+      # removes itself when the stack comes down.
+      TS_CLIENT_ID: ${TS_CLIENT_ID}
+      TS_CLIENT_SECRET: ${TS_CLIENT_SECRET}
+      TS_HOSTNAME: ${PREVIEW_HOSTNAME}
+      TS_EXTRA_ARGS: --advertise-tags=tag:preview
+      TS_SERVE_CONFIG: /config/serve.json
+      TS_STATE_DIR: /tmp/tailscale
+    volumes:
+      # Must be a directory; Tailscale watches it for changes.
+      - ./ts-config:/config
+    depends_on:
+      - web
+    networks:
+      - default
+
+networks:
+  otr-dev:
+    external: true
