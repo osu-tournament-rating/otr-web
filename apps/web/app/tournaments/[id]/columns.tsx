@@ -140,8 +140,10 @@ export const columns = [
               </div>
               {matchNotes.map((note, idx) => (
                 <div key={idx} className="mb-1 last:mb-0">
-                  <div className="text-neutral-200">{note.note}</div>
-                  <div className="text-neutral-400">— {note.adminUsername}</div>
+                  <div>{note.note}</div>
+                  <div className="text-muted-foreground">
+                    — {note.adminUsername}
+                  </div>
                 </div>
               ))}
             </div>
@@ -154,8 +156,8 @@ export const columns = [
               {gamesWithNotes.map((game) =>
                 game.adminNotes.map((note, idx) => (
                   <div key={`${game.id}-${idx}`} className="mb-1 last:mb-0">
-                    <div className="text-neutral-200">{note.note}</div>
-                    <div className="text-neutral-400">
+                    <div>{note.note}</div>
+                    <div className="text-muted-foreground">
                       — {note.adminUsername}
                     </div>
                   </div>
