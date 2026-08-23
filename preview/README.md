@@ -66,20 +66,30 @@ The policy file needs:
 
 ```hujson
 "tagOwners": {
-  "tag:ci":      ["autogroup:owner"],
-  "tag:preview": ["autogroup:owner"],
-  "tag:deploy":  ["autogroup:owner"],
+  "tag:ci":      [],
+  "tag:deploy":  [],
+  "tag:preview": [],
 },
-"acls": [
-  {"action": "accept", "src": ["autogroup:member"], "dst": ["*:*"]},
-  {"action": "accept", "src": ["tag:ci"], "dst": ["tag:deploy:22"]},
+"grants": [
+  {"src": ["autogroup:member"], "dst": ["*"], "ip": ["*"]},
+  {"src": ["tag:ci"], "dst": ["tag:deploy"], "ip": ["tcp:22"]},
+],
+"ssh": [
+  {"src": ["tag:ci"], "dst": ["tag:deploy"], "users": ["<deploy account>"],
+   "action": "accept"},
 ],
 ```
+
+The owner lists stay empty. An OAuth client may advertise the exact tag set it
+was issued, so CI still authenticates, while no tagged device can tag another
+one — never let `tag:ci` own `tag:ci` or `tag:preview`.
 
 `tag:preview` gets no `src` rule at all: a preview answers connections you open
 to it and can open none of its own. Tag the deployment host `tag:deploy` rather
 than `tag:ci`; the runner holds `tag:ci`, and sharing one tag leaves the policy
-unable to tell them apart.
+unable to tell them apart. Deploys run over Tailscale SSH — the workflow carries
+no key material — so the `ssh` rule is required, and a tagged source cannot use
+check mode.
 
 ### `dev` GitHub environment
 
