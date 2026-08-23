@@ -43,22 +43,45 @@ grant the CI OAuth client permission to that tag.
 
 `dev` GitHub environment:
 
-| Secret                  | Purpose                                                |
-| ----------------------- | ------------------------------------------------------ |
-| `DEV_ENV`               | Compose variables for the dev tier                     |
-| `PREVIEW_ENV`           | Application config for preview web containers          |
-| `PREVIEW_DB_URL_PREFIX` | e.g. `postgresql://postgres:password@otr-dev-db:5432/` |
-| `PREVIEW_RABBITMQ_URL`  | e.g. `amqp://admin:admin@otr-dev-rabbitmq:5672/`       |
-| `DEV_REMOTE_PATH`       | Dev tier directory on the host                         |
-| `PREVIEW_REMOTE_PATH`   | Parent directory for preview stacks                    |
-| `OTR_SCRIPTS_DIR`       | otr-scripts checkout on the host                       |
+| Secret                | Purpose                             |
+| --------------------- | ----------------------------------- |
+| `DEV_ENV`             | `.env` for the dev tier             |
+| `PREVIEW_ENV`         | `.env` for every preview stack      |
+| `DEV_REMOTE_PATH`     | Dev tier directory on the host      |
+| `PREVIEW_REMOTE_PATH` | Parent directory for preview stacks |
+| `OTR_SCRIPTS_DIR`     | otr-scripts checkout on the host    |
 
 `TS_TAILNET` is a repository variable (`example-tailnet.ts.net`). `SSH_USER`,
 `SSH_HOST`, `TS_OAUTH_*`, and `DOCKERHUB_*` are already configured for deploys.
 
-`PREVIEW_ENV` must set `E2E_TEST_AUTH=true` and `MAINTENANCE_WINDOW_ENABLED=false`,
-carry a fresh `BETTER_AUTH_SECRET`, and use placeholder osu! credentials — the
-real ones are never needed here.
+Both secrets follow the `.env.example` convention: one file per deployment
+holding application variables alongside the `DOCKER_`-prefixed overrides Compose
+reads. `DEV_ENV` only needs the tier's own credentials, since that stack runs no
+application containers:
+
+```
+DOCKER_POSTGRES_USER=postgres
+DOCKER_POSTGRES_PASSWORD=...
+DOCKER_POSTGRES_DB=postgres
+DOCKER_RABBITMQ_USER=admin
+DOCKER_RABBITMQ_PASSWORD=...
+```
+
+`PREVIEW_ENV` is the website's `.env`, pointed at the dev tier:
+
+```
+DOCKER_DATABASE_URL=postgresql://postgres:...@otr-dev-db:5432/otr_dev
+DOCKER_RABBITMQ_AMQP_URL=amqp://admin:...@otr-dev-rabbitmq:5672/
+BETTER_AUTH_SECRET=...
+WEB_OSU_CLIENT_ID=placeholder
+WEB_OSU_CLIENT_SECRET=placeholder
+```
+
+Use placeholder osu! credentials; the real ones are never needed. The workflow
+appends the per-PR values (`IMAGE_TAG`, `PREVIEW_URL`, `TS_CLIENT_*`, and a
+migration PR's own database) to this file, where the later key wins.
+`E2E_TEST_AUTH` and `MAINTENANCE_WINDOW_ENABLED` are pinned in
+`docker-compose-preview.yml` and do not belong here.
 
 The dev tier needs its own otr-scripts `.env` on the host with `OTR_WEB_DIR`
 pointing at the dev tier directory, `DB_CONTAINER=otr-dev-db`, `DB_PORT=5632`,

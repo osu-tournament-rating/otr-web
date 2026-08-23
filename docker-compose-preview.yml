@@ -8,15 +8,15 @@ services:
   web:
     image: stagecodes/otr-web:${IMAGE_TAG}
     restart: unless-stopped
-    # app.env holds application config; .env holds the values Compose
-    # interpolates below, including the Tailscale credentials.
     env_file:
-      - ./app.env
+      - ./.env
     environment:
-      DATABASE_URL: ${PREVIEW_DATABASE_URL}
-      RABBITMQ_AMQP_URL: ${PREVIEW_RABBITMQ_URL}
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
+      RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
       BETTER_AUTH_URL: ${PREVIEW_URL}
       NEXT_PUBLIC_APP_BASE_URL: ${PREVIEW_URL}
+      # Pinned here rather than in .env so a preview cannot come up without
+      # a login path or with admin mutations frozen by the maintenance window.
       E2E_TEST_AUTH: 'true'
       MAINTENANCE_WINDOW_ENABLED: 'false'
     networks:
@@ -41,9 +41,9 @@ services:
       - migrate
     restart: 'no'
     env_file:
-      - ./app.env
+      - ./.env
     environment:
-      DATABASE_URL: ${PREVIEW_DATABASE_URL}
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
     command: ['./scripts/run-migrations.sh']
     networks:
       - otr-dev
