@@ -56,32 +56,49 @@ grant the CI OAuth client permission to that tag.
 
 Both secrets follow the `.env.example` convention: one file per deployment
 holding application variables alongside the `DOCKER_`-prefixed overrides Compose
-reads. `DEV_ENV` only needs the tier's own credentials, since that stack runs no
-application containers:
+reads. Each template below is complete. Every line is required, and nothing
+else is read.
+
+`DEV_ENV` is the dev tier's `.env`. That stack runs no application containers,
+so these five values only fill in `docker-compose-dev.yml`:
 
 ```
 DOCKER_POSTGRES_USER=postgres
-DOCKER_POSTGRES_PASSWORD=...
+DOCKER_POSTGRES_PASSWORD=replace-me
 DOCKER_POSTGRES_DB=postgres
 DOCKER_RABBITMQ_USER=admin
-DOCKER_RABBITMQ_PASSWORD=...
+DOCKER_RABBITMQ_PASSWORD=replace-me
 ```
 
-`PREVIEW_ENV` is the website's `.env`, pointed at the dev tier:
+`PREVIEW_ENV` is the website's `.env`. The first two point at the dev tier and
+their credentials must match `DEV_ENV`; the rest are what the app itself needs:
 
 ```
-DOCKER_DATABASE_URL=postgresql://postgres:...@otr-dev-db:5432/otr_dev
-DOCKER_RABBITMQ_AMQP_URL=amqp://admin:...@otr-dev-rabbitmq:5672/
-BETTER_AUTH_SECRET=...
+DOCKER_DATABASE_URL=postgresql://postgres:replace-me@otr-dev-db:5432/otr_dev
+DOCKER_RABBITMQ_AMQP_URL=amqp://admin:replace-me@otr-dev-rabbitmq:5672/
+BETTER_AUTH_SECRET=replace-me
 WEB_OSU_CLIENT_ID=placeholder
 WEB_OSU_CLIENT_SECRET=placeholder
 ```
 
-Use placeholder osu! credentials; the real ones are never needed. The workflow
-appends the per-PR values (`IMAGE_TAG`, `PREVIEW_URL`, `TS_CLIENT_*`, and a
-migration PR's own database) to this file, where the later key wins.
-`E2E_TEST_AUTH` and `MAINTENANCE_WINDOW_ENABLED` are pinned in
-`docker-compose-preview.yml` and do not belong here.
+Generate a fresh `BETTER_AUTH_SECRET`. The osu! credentials are never used, so
+leave them as placeholders — previews sign in through the test-auth endpoint and
+never reach osu! OAuth.
+
+Deliberately absent from both files:
+
+- `IMAGE_TAG`, `PREVIEW_URL`, `PREVIEW_HOSTNAME`, `TS_CLIENT_ID`,
+  `TS_CLIENT_SECRET`, and a migration PR's own `DOCKER_DATABASE_URL` are
+  appended per PR by the workflow, where the later key wins.
+- `DATABASE_URL`, `RABBITMQ_AMQP_URL`, `BETTER_AUTH_URL`,
+  `NEXT_PUBLIC_APP_BASE_URL`, `E2E_TEST_AUTH`, and `MAINTENANCE_WINDOW_ENABLED`
+  are set in `docker-compose-preview.yml`, which overrides `env_file`.
+- `NEXT_PUBLIC_IS_STAGING` is inlined at build time, so setting it at runtime
+  does nothing.
+- `METRICS_AUTH_TOKEN` only guards `/api/metrics`, and nothing scrapes a
+  preview.
+- `DATA_WORKER_*`, `OSU_API_RATE_LIMIT_*`, and `PLAYER_*_REFETCH_*` belong to
+  the data worker, which previews do not run.
 
 The dev tier needs its own otr-scripts `.env` on the host with `OTR_WEB_DIR`
 pointing at the dev tier directory, `DB_CONTAINER=otr-dev-db`, `DB_PORT=5632`,
