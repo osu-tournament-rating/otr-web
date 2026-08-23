@@ -216,7 +216,9 @@ function createTooltipContent(
 
       {warningMetadata.length > 0 && (
         <div className="mt-2">
-          <strong className="text-orange-500">Warnings:</strong>
+          <strong className="text-amber-700 dark:text-amber-400">
+            Warnings:
+          </strong>
           <ul className="mt-1 list-disc pl-3.5">
             {warningMetadata.map(({ text }, index) => (
               <li key={`warning-${index}`}>{text}</li>
