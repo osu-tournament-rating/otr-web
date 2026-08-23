@@ -45,18 +45,53 @@ and the nightly refresh discards all of it.
 
 ## One-time setup
 
-Tailnet: enable HTTPS certificates, add a `tag:preview` entry to `tagOwners`, and
-grant the CI OAuth client permission to that tag.
+### Tailnet
 
-`dev` GitHub environment:
+Enable HTTPS certificates. Previews serve themselves with `tailscale serve`, and
+`ts-config/serve.json` sets `AllowFunnel` false, so they stay off the public
+internet.
 
-| Secret                | Purpose                             |
-| --------------------- | ----------------------------------- |
-| `DEV_ENV`             | `.env` for the dev tier             |
-| `PREVIEW_ENV`         | `.env` for every preview stack      |
-| `DEV_REMOTE_PATH`     | Dev tier directory on the host      |
-| `PREVIEW_REMOTE_PATH` | Parent directory for preview stacks |
-| `OTR_SCRIPTS_DIR`     | otr-scripts checkout on the host    |
+Use two OAuth clients, each scoped to a single tag:
+
+| Client         | Tag           | Stored in                      |
+| -------------- | ------------- | ------------------------------ |
+| `TS_OAUTH_*`   | `tag:ci`      | GitHub secrets, runner only    |
+| `TS_PREVIEW_*` | `tag:preview` | the preview `.env` on the host |
+
+These must be different clients. The preview `.env` lands on the deployment host
+and is passed to a container running unreviewed PR code, so a client reachable
+from there can only ever mint `tag:preview` nodes.
+
+The policy file needs:
+
+```hujson
+"tagOwners": {
+  "tag:ci":      ["autogroup:owner"],
+  "tag:preview": ["autogroup:owner"],
+  "tag:deploy":  ["autogroup:owner"],
+},
+"acls": [
+  {"action": "accept", "src": ["autogroup:member"], "dst": ["*:*"]},
+  {"action": "accept", "src": ["tag:ci"], "dst": ["tag:deploy:22"]},
+],
+```
+
+`tag:preview` gets no `src` rule at all: a preview answers connections you open
+to it and can open none of its own. Tag the deployment host `tag:deploy` rather
+than `tag:ci`; the runner holds `tag:ci`, and sharing one tag leaves the policy
+unable to tell them apart.
+
+### `dev` GitHub environment
+
+| Secret                 | Purpose                             |
+| ---------------------- | ----------------------------------- |
+| `DEV_ENV`              | `.env` for the dev tier             |
+| `PREVIEW_ENV`          | `.env` for every preview stack      |
+| `DEV_REMOTE_PATH`      | Dev tier directory on the host      |
+| `PREVIEW_REMOTE_PATH`  | Parent directory for preview stacks |
+| `OTR_SCRIPTS_DIR`      | otr-scripts checkout on the host    |
+| `TS_PREVIEW_CLIENT_ID` | `tag:preview` OAuth client id       |
+| `TS_PREVIEW_SECRET`    | `tag:preview` OAuth client secret   |
 
 The three paths are absolute, and previews sit beside the dev tier rather than
 inside it so teardown's `rm -rf` can never reach it. For a host account at
@@ -85,7 +120,8 @@ that host or account differs from production, and give the account docker
 access.
 
 `TS_TAILNET` is a repository variable (`example-tailnet.ts.net`). `SSH_USER`,
-`SSH_HOST`, `TS_OAUTH_*`, and `DOCKERHUB_*` are already configured for deploys.
+`SSH_HOST`, `TS_OAUTH_*`, and `DOCKERHUB_*` are already configured for deploys;
+`TS_PREVIEW_*` is new and has to be created.
 
 Both secrets follow the `.env.example` convention: one file per deployment
 holding application variables alongside the `DOCKER_`-prefixed overrides Compose
