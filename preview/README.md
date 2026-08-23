@@ -24,10 +24,17 @@ internet.
 
 ## Databases
 
-`otr_dev_seed` is restored from the otr-scripts dev replica, migrated up to the
-default branch, and left idle; `otr_dev` is rebuilt from it and shared by every
-preview. PRs that touch `apps/web/drizzle` get their own clone so they never
-migrate the shared schema. Every deploy health-checks `otr_dev` first and
+The dev tier holds two databases. Which one a setting names is never
+interchangeable:
+
+- `otr_dev_seed` is the restore target. otr-scripts restores the dev replica
+  into it, it is migrated up to the default branch, and it then sits idle so
+  nothing holds a connection and it can act as a template.
+- `otr_dev` is the live database, recreated from the seed and shared by every
+  preview.
+
+PRs that touch `apps/web/drizzle` clone the seed into `otr_pr_<number>` so they
+never migrate the shared schema. Every deploy health-checks `otr_dev` first and
 restores it if the check fails.
 
 The seed migration uses `stagecodes/otr-web:staging-latest`, which tracks the
@@ -97,7 +104,8 @@ DOCKER_RABBITMQ_PASSWORD=replace-me
 ```
 
 `PREVIEW_ENV` is the website's `.env`. The first two point at the dev tier and
-their credentials must match `DEV_ENV`; the rest are what the app itself needs:
+their credentials must match `DEV_ENV`; the rest are what the app itself needs.
+The database here is the live `otr_dev`, never the seed:
 
 ```
 DOCKER_DATABASE_URL=postgresql://postgres:replace-me@otr-dev-db:5432/otr_dev
@@ -151,6 +159,8 @@ GCS_SA_JSON_PATH=/home/otr-dev/.gcs/sa.json
 RABBITMQ_URL=amqp://admin:replace-me@localhost:5872
 ```
 
+`DB_NAME` is the seed, never the live database: recovery drops and recreates
+whatever it names, and `dev-db.sh` rebuilds `otr_dev` from it afterwards.
 `DB_PASSWORD` and the `RABBITMQ_URL` credentials match `DEV_ENV`. Only
 `GCS_DEV_BUCKET` is read during a restore; the other buckets just have to be
 present. `RABBITMQ_URL` is likewise unused by `recovery` but required, and
