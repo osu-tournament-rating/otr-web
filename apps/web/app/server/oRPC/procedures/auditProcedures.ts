@@ -13,6 +13,7 @@ import {
   type AuditEntry,
   type AuditAdminNote,
   type AuditEvent,
+  type CascadeContext,
   type EntityTimelineItem,
   type EntityTimelineEvent,
 } from '@/lib/orpc/schema/audit';
@@ -342,7 +343,7 @@ export const getEntityAuditTimeline = publicProcedure
     path: '/audit/timeline',
   })
   .handler(async ({ input, context }) => {
-    const { entityType, entityId } = input;
+    const { entityType, entityId, showSystem } = input;
     const DEFAULT_PAGE_SIZE = 50;
     const MAX_PAGE_SIZE = 100;
 
@@ -355,9 +356,14 @@ export const getEntityAuditTimeline = publicProcedure
     const auditTableName = getTableNameString(entityType);
     const notesTableName = getAdminNotesTableNameString(entityType);
 
+    // System rows carry no action user; they are noise unless explicitly requested.
+    const auditScope = showSystem
+      ? sql`reference_id_lock = ${entityId}`
+      : sql`reference_id_lock = ${entityId} AND action_user_id IS NOT NULL`;
+
     const countResult = await context.db.execute(sql`
       SELECT
-        (SELECT COUNT(*)::int FROM ${sql.raw(auditTableName)} WHERE reference_id_lock = ${entityId}) AS audit_count,
+        (SELECT COUNT(*)::int FROM ${sql.raw(auditTableName)} WHERE ${auditScope}) AS audit_count,
         (SELECT COUNT(*)::int FROM ${sql.raw(notesTableName)} WHERE reference_id = ${entityId}) AS note_count
     `);
     const { audit_count: auditCount, note_count: noteCount } = countResult
@@ -372,7 +378,7 @@ export const getEntityAuditTimeline = publicProcedure
       SELECT item_id, item_type FROM (
         SELECT id AS item_id, 'audit'::text AS item_type, created
         FROM ${sql.raw(auditTableName)}
-        WHERE reference_id_lock = ${entityId}
+        WHERE ${auditScope}
         UNION ALL
         SELECT id AS item_id, 'note'::text AS item_type, created
         FROM ${sql.raw(notesTableName)}
@@ -455,16 +461,7 @@ export const getEntityAuditTimeline = publicProcedure
       }
     }
 
-    const cascadeContextMap = new Map<
-      string,
-      {
-        topEntityType: AuditEntityType;
-        topEntityId: number;
-        topEntityName: string | null;
-        action: ReturnType<typeof classifyAction>;
-        childSummary: string | null;
-      }
-    >();
+    const cascadeContextMap = new Map<string, CascadeContext>();
 
     if (cascadePairs.size > 0) {
       const { fromClause, parentIdExpr } = getParentEntityJoinInfo(entityType);
@@ -520,16 +517,21 @@ export const getEntityAuditTimeline = publicProcedure
 
         type CascadeInfo = {
           key: string;
+          eventId: number | null;
+          actionUserId: number | null;
+          created: string;
           topEntityType: AuditEntityType;
           topEntityId: number;
           action: ReturnType<typeof classifyAction>;
           childType: AuditEntityType | null;
           childAffectedCount: number;
+          descendantCounts: { entityType: AuditEntityType; count: number }[];
         };
         const cascadeInfos: CascadeInfo[] = [];
 
         for (let i = 0; i < pairEntries.length; i++) {
-          const [key, { actionUserId }] = pairEntries[i];
+          const [key, { eventId, actionUserId, actionType, created }] =
+            pairEntries[i];
           const siblingRows = siblingResults[i].rows as CascadeSiblingRow[];
 
           if (siblingRows.length <= 1) continue;
@@ -542,29 +544,31 @@ export const getEntityAuditTimeline = publicProcedure
           const topChanges = camelizeChangesKeys(
             topRow.sample_changes as Record<string, unknown> | null
           );
-          const action = classifyAction(
-            AuditActionType.Updated,
-            topChanges,
-            isSystem
-          );
+          const action = classifyAction(actionType, topChanges, isSystem);
+
+          const descendantCounts = siblingRows
+            .filter((row) => row.entity_type > topEntityType && row.cnt > 0)
+            .map((row) => ({
+              entityType: row.entity_type as AuditEntityType,
+              count: row.cnt,
+            }));
 
           const childType = getImmediateChildType(topEntityType);
-          let childAffectedCount = 0;
-          if (childType !== null) {
-            for (const sr of siblingRows) {
-              if (sr.entity_type === childType) {
-                childAffectedCount = sr.cnt;
-              }
-            }
-          }
+          const childAffectedCount =
+            descendantCounts.find((d) => d.entityType === childType)?.count ??
+            0;
 
           cascadeInfos.push({
             key,
+            eventId,
+            actionUserId,
+            created,
             topEntityType,
             topEntityId,
             action,
             childType,
             childAffectedCount,
+            descendantCounts,
           });
         }
 
@@ -653,6 +657,15 @@ export const getEntityAuditTimeline = publicProcedure
             topEntityName,
             action: info.action,
             childSummary,
+            descendants: info.descendantCounts.map(({ entityType, count }) => ({
+              entityType,
+              affectedCount: count,
+              totalCount:
+                entityType === info.childType ? totalChildCount : null,
+            })),
+            eventId: info.eventId,
+            actionUserId: info.actionUserId,
+            created: info.created,
           });
         }
       }

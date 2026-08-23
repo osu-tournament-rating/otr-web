@@ -1,37 +1,15 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import { useCallback, useEffect, useRef } from 'react';
 import useSWRInfinite from 'swr/infinite';
-import {
-  ChevronRight,
-  ClipboardList,
-  Loader2,
-  PlusCircle,
-  Pencil,
-  Trash2,
-} from 'lucide-react';
-import { AuditActionType, AuditEntityType } from '@otr/core/osu';
-import type {
-  EntityTimelineEvent,
-  EntityTimelineItem,
-} from '@/lib/orpc/schema/audit';
-import { AuditActionTypeEnumHelper } from '@/lib/enum-helpers';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { ClipboardList, Loader2 } from 'lucide-react';
+import { AuditEntityType } from '@otr/core/osu';
+import type { EntityTimelineItem } from '@/lib/orpc/schema/audit';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { OsuAvatar } from '@/components/ui/osu-avatar';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { orpc } from '@/lib/orpc/orpc';
-import AuditDiffDisplay from './AuditDiffDisplay';
+import AuditEntryRow from './AuditEntryRow';
 import AuditNoteItem from './AuditNoteItem';
-import CascadeContextBanner from './CascadeContextBanner';
 import RelativeTime from './RelativeTime';
 
 type TimelineResponse = {
@@ -42,28 +20,7 @@ type TimelineResponse = {
   items: EntityTimelineItem[];
 };
 
-const ACTION_ICONS: Record<AuditActionType, typeof PlusCircle> = {
-  [AuditActionType.Created]: PlusCircle,
-  [AuditActionType.Updated]: Pencil,
-  [AuditActionType.Deleted]: Trash2,
-};
-
-const ACTION_ICON_COLORS: Record<AuditActionType, string> = {
-  [AuditActionType.Created]: 'text-green-500',
-  [AuditActionType.Updated]: 'text-blue-500',
-  [AuditActionType.Deleted]: 'text-red-500',
-};
-
-const ACTION_BADGE_COLORS: Record<AuditActionType, string> = {
-  [AuditActionType.Created]:
-    'bg-green-500/5 text-green-600 dark:text-green-400 border-green-500/15',
-  [AuditActionType.Updated]:
-    'bg-blue-500/5 text-blue-600 dark:text-blue-400 border-blue-500/15',
-  [AuditActionType.Deleted]:
-    'bg-red-500/5 text-red-600 dark:text-red-400 border-red-500/15',
-};
-
-function LoadingSkeleton(): React.JSX.Element {
+export function TimelineSkeleton(): React.JSX.Element {
   return (
     <div
       data-testid="audit-timeline-loading"
@@ -82,169 +39,90 @@ function LoadingSkeleton(): React.JSX.Element {
   );
 }
 
-function EmptyState(): React.JSX.Element {
+export function TimelineEmptyState({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}): React.JSX.Element {
   return (
     <div
       data-testid="audit-timeline-empty"
       className="flex flex-col items-center justify-center py-16"
     >
       <ClipboardList className="mb-4 h-12 w-12 text-muted-foreground/50" />
-      <h3 className="text-lg font-medium">No audit history found</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        No changes have been recorded for this entity yet.
-      </p>
+      <h3 className="text-lg font-medium">{title}</h3>
+      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
     </div>
   );
 }
 
-function TimelineAuditEntry({
-  timelineEvent,
+export function TimelineSummary({
+  total,
+  hasMore,
+  latestChange,
+  capped,
 }: {
-  timelineEvent: EntityTimelineEvent;
+  total: number;
+  hasMore: boolean;
+  latestChange: string | null;
+  capped?: boolean;
 }): React.JSX.Element {
-  const { entry, cascadeContext } = timelineEvent;
-  const actionMeta = AuditActionTypeEnumHelper.getMetadata(entry.actionType);
-  const changes = entry.changes as Record<
-    string,
-    { originalValue: unknown; newValue: unknown }
-  > | null;
-  const changeCount = changes ? Object.keys(changes).length : 0;
-  const [isOpen, setIsOpen] = useState(changeCount > 0 && changeCount < 10);
-
-  const ActionIcon = ACTION_ICONS[entry.actionType];
-
   return (
-    <Collapsible
-      data-testid="timeline-entry"
-      open={isOpen}
-      onOpenChange={setIsOpen}
+    <div
+      data-testid="timeline-summary"
+      className="flex items-center gap-2 text-sm text-muted-foreground"
     >
-      <div
-        id={`audit-${entry.id}`}
-        className={cn(
-          'group border-b border-border transition-colors',
-          isOpen ? 'bg-muted/30' : 'hover:bg-accent/50'
-        )}
+      <span>
+        {total} change{total !== 1 ? 's' : ''}
+        {(hasMore || capped) && '+'}
+      </span>
+      {latestChange && (
+        <>
+          <span>&middot;</span>
+          <span>
+            Last modified <RelativeTime dateString={latestChange} />
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function LoadMoreButton({
+  onClick,
+  disabled,
+}: {
+  onClick: () => void;
+  disabled: boolean;
+}): React.JSX.Element {
+  return (
+    <div className="flex justify-center pt-2">
+      <Button
+        data-testid="timeline-load-more"
+        variant="outline"
+        size="sm"
+        onClick={onClick}
+        disabled={disabled}
       >
-        {cascadeContext && (
-          <div className="px-3 pt-2">
-            <CascadeContextBanner context={cascadeContext} />
-          </div>
-        )}
-
-        <CollapsibleTrigger asChild disabled={changeCount === 0}>
-          <button
-            className={cn(
-              'flex w-full items-center gap-3 px-3 py-2.5 text-left',
-              changeCount === 0 && 'cursor-default'
-            )}
-          >
-            <ActionIcon
-              className={cn(
-                'h-4 w-4 shrink-0',
-                ACTION_ICON_COLORS[entry.actionType]
-              )}
-            />
-
-            <Badge
-              data-testid="timeline-action-badge"
-              variant="outline"
-              className={cn(
-                'shrink-0 text-xs',
-                ACTION_BADGE_COLORS[entry.actionType]
-              )}
-            >
-              {actionMeta.text}
-            </Badge>
-
-            <span className="flex items-center gap-1.5 text-sm">
-              {entry.actionUser ? (
-                <>
-                  {entry.actionUser.osuId ? (
-                    <OsuAvatar
-                      osuId={entry.actionUser.osuId}
-                      username={entry.actionUser.username}
-                      size={20}
-                    />
-                  ) : (
-                    <Avatar className="h-5 w-5">
-                      <AvatarFallback className="text-xs">
-                        {entry.actionUser.username?.[0]?.toUpperCase() ?? '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  {entry.actionUser.playerId ? (
-                    <Link
-                      href={`/players/${entry.actionUser.playerId}`}
-                      className="text-primary hover:underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {entry.actionUser.username ??
-                        `User ${entry.actionUser.id}`}
-                    </Link>
-                  ) : (
-                    <span className="text-foreground">
-                      {entry.actionUser.username ??
-                        `User ${entry.actionUser.id}`}
-                    </span>
-                  )}
-                </>
-              ) : (
-                <span className="text-muted-foreground italic">System</span>
-              )}
-            </span>
-
-            <span className="flex-1" />
-
-            {changeCount > 0 && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <ChevronRight
-                  className={cn(
-                    'h-3.5 w-3.5 transition-transform',
-                    isOpen && 'rotate-90'
-                  )}
-                />
-                {changeCount} field{changeCount !== 1 ? 's' : ''} changed
-              </span>
-            )}
-
-            <RelativeTime
-              dateString={entry.created}
-              className="shrink-0 text-xs text-muted-foreground"
-            />
-          </button>
-        </CollapsibleTrigger>
-
-        <CollapsibleContent data-testid="timeline-entry-diff">
-          {changes && changeCount > 0 && (
-            <div className="border-t border-border bg-muted/20 px-3 py-2">
-              <div className="flex flex-col gap-1 pl-7">
-                {Object.entries(changes).map(([fieldName, change]) => (
-                  <AuditDiffDisplay
-                    key={fieldName}
-                    fieldName={fieldName}
-                    change={change}
-                    entityType={entry.entityType}
-                    referencedUsers={entry.referencedUsers}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
+        {disabled && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Load more
+      </Button>
+    </div>
   );
 }
 
 type AuditEntityTimelineProps = {
   entityType: AuditEntityType;
   entityId: number;
+  showSystem?: boolean;
 };
 
 export default function AuditEntityTimeline({
   entityType,
   entityId,
+  showSystem = false,
 }: AuditEntityTimelineProps): React.JSX.Element {
   const scrollTargetRef = useRef(false);
 
@@ -255,18 +133,20 @@ export default function AuditEntityTimeline({
         'audit-entity-timeline',
         entityType,
         entityId,
+        showSystem,
         pageIndex + 1,
       ] as const;
     },
-    [entityType, entityId]
+    [entityType, entityId, showSystem]
   );
 
   const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(
     getKey,
-    async ([, eType, eId, page]) =>
+    async ([, eType, eId, withSystem, page]) =>
       orpc.audit.timeline({
         entityType: eType,
         entityId: eId,
+        showSystem: withSystem,
         pageSize: 50,
         page,
       }),
@@ -317,32 +197,29 @@ export default function AuditEntityTimeline({
   }, [allItems.length]);
 
   if (isLoading) {
-    return <LoadingSkeleton />;
+    return <TimelineSkeleton />;
   }
 
   if (isEmpty) {
-    return <EmptyState />;
+    return (
+      <TimelineEmptyState
+        title="No audit history found"
+        description={
+          showSystem
+            ? 'No changes have been recorded for this entity yet.'
+            : 'No manual changes have been recorded. Enable system events to see automated processing.'
+        }
+      />
+    );
   }
 
   return (
     <div data-testid="audit-timeline" className="space-y-4">
-      <div
-        data-testid="timeline-summary"
-        className="flex items-center gap-2 text-sm text-muted-foreground"
-      >
-        <span>
-          {totalCount} change{totalCount !== 1 ? 's' : ''}
-          {hasMore && '+'}
-        </span>
-        {latestChange && (
-          <>
-            <span>&middot;</span>
-            <span>
-              Last modified <RelativeTime dateString={latestChange} />
-            </span>
-          </>
-        )}
-      </div>
+      <TimelineSummary
+        total={totalCount}
+        hasMore={hasMore}
+        latestChange={latestChange}
+      />
 
       <div
         data-testid="timeline-entry-list"
@@ -351,9 +228,11 @@ export default function AuditEntityTimeline({
         {allItems.map((item) => {
           if (item.type === 'audit') {
             return (
-              <TimelineAuditEntry
+              <AuditEntryRow
                 key={`a-${item.data.entry.id}`}
-                timelineEvent={item.data}
+                entry={item.data.entry}
+                cascadeContext={item.data.cascadeContext}
+                viewedEntity={{ entityType, entityId }}
               />
             );
           }
@@ -362,18 +241,10 @@ export default function AuditEntityTimeline({
       </div>
 
       {hasMore && (
-        <div className="flex justify-center pt-2">
-          <Button
-            data-testid="timeline-load-more"
-            variant="outline"
-            size="sm"
-            onClick={() => setSize(size + 1)}
-            disabled={isValidating}
-          >
-            {isValidating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Load more
-          </Button>
-        </div>
+        <LoadMoreButton
+          onClick={() => setSize(size + 1)}
+          disabled={isValidating}
+        />
       )}
     </div>
   );

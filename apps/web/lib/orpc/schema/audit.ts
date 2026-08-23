@@ -43,6 +43,8 @@ export const EntityAuditInputSchema = z.object({
   entityId: z.number().int().positive(),
   page: z.number().int().min(1).optional(),
   pageSize: z.number().int().min(1).max(100).optional(),
+  /** Include changes made by automated processing. Defaults to false. */
+  showSystem: z.boolean().optional(),
 });
 
 export const FieldFilterSchema = z.object({
@@ -149,6 +151,15 @@ export const EventDetailsResponseSchema = z.object({
   hasMore: z.boolean(),
 });
 
+export const CascadeDescendantSchema = z.object({
+  entityType: z.nativeEnum(AuditEntityType),
+  affectedCount: z.number().int(),
+  /** Children in the top entity, for the "85 of 118" display; null when not computed. */
+  totalCount: z.number().int().nullable(),
+});
+
+export type CascadeDescendant = z.infer<typeof CascadeDescendantSchema>;
+
 export const CascadeContextSchema = z.object({
   topEntityType: z.nativeEnum(AuditEntityType),
   topEntityId: z.number().int(),
@@ -156,7 +167,15 @@ export const CascadeContextSchema = z.object({
   action: AuditEventActionSchema,
   /** e.g. "also affected 85 of 118 matches". */
   childSummary: z.string().nullable(),
+  /** Every level below the top entity that the event touched, nearest first. */
+  descendants: z.array(CascadeDescendantSchema),
+  /** Identifies the event so the affected entities can be listed. */
+  eventId: z.number().int().positive().nullable(),
+  actionUserId: z.number().int().nullable(),
+  created: z.string(),
 });
+
+export type CascadeContext = z.infer<typeof CascadeContextSchema>;
 
 export const EntityTimelineEventSchema = z.object({
   entry: AuditEntrySchema,
@@ -190,3 +209,64 @@ export const EntityTimelineResponseSchema = z.object({
   total: z.number().int().nonnegative(),
   items: z.array(EntityTimelineItemSchema),
 });
+
+export const DescendantAuditInputSchema = z.object({
+  entityType: z.nativeEnum(AuditEntityType),
+  entityId: z.number().int().positive(),
+  descendantType: z.nativeEnum(AuditEntityType),
+  page: z.number().int().min(1).optional(),
+  pageSize: z.number().int().min(1).max(100).optional(),
+  /** Include changes made by automated processing. Defaults to false. */
+  showSystem: z.boolean().optional(),
+});
+
+export const DescendantAuditItemSchema = z.object({
+  entry: AuditEntrySchema,
+  entity: z.object({
+    entityType: z.nativeEnum(AuditEntityType),
+    entityId: z.number().int(),
+    entityName: z.string().nullable(),
+    /** Ancestors between the descendant and the requested entity, outermost first. */
+    path: z.array(
+      z.object({
+        entityType: z.nativeEnum(AuditEntityType),
+        entityId: z.number().int(),
+        entityName: z.string().nullable(),
+      })
+    ),
+  }),
+});
+
+export type DescendantAuditItem = z.infer<typeof DescendantAuditItemSchema>;
+
+export const DescendantAuditResponseSchema = z.object({
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1),
+  pages: z.number().int().min(0),
+  total: z.number().int().nonnegative(),
+  /** True when `total` hit the counting cap and is a lower bound. */
+  totalCapped: z.boolean(),
+  items: z.array(DescendantAuditItemSchema),
+});
+
+export const DescendantAuditCountsInputSchema = z.object({
+  entityType: z.nativeEnum(AuditEntityType),
+  entityId: z.number().int().positive(),
+  /** Include changes made by automated processing. Defaults to false. */
+  showSystem: z.boolean().optional(),
+});
+
+export const DescendantAuditCountsResponseSchema = z.object({
+  counts: z.array(
+    z.object({
+      entityType: z.nativeEnum(AuditEntityType),
+      count: z.number().int().nonnegative(),
+      /** True when `count` hit the counting cap and is a lower bound. */
+      capped: z.boolean(),
+    })
+  ),
+});
+
+export type DescendantAuditCounts = z.infer<
+  typeof DescendantAuditCountsResponseSchema
+>;
