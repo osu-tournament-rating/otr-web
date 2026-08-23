@@ -126,11 +126,43 @@ Deliberately absent from both files:
 - `DATA_WORKER_*`, `OSU_API_RATE_LIMIT_*`, and `PLAYER_*_REFETCH_*` belong to
   the data worker, which previews do not run.
 
-The dev tier needs its own otr-scripts `.env` on the host with `OTR_WEB_DIR`
-pointing at the dev tier directory, `DB_CONTAINER=otr-dev-db`, `DB_PORT=5632`,
-`DB_NAME=otr_dev_seed`, and `ENVIRONMENT=dev`. Recovery runs
-`docker compose stop db` in `OTR_WEB_DIR`; pointing it at the production
-directory would stop production.
+## otr-scripts
+
+The dev tier needs a checkout of otr-scripts of its own. `lib.config` loads the
+`.env` beside the code and requires every field, so one checkout cannot hold
+both a production and a dev configuration:
+
+```
+ENVIRONMENT=dev
+TAG=latest
+DUMP_DIR=/home/otr-dev/db-dumps
+PUBLIC_HTML_DIR=/home/otr-dev/html
+OTR_WEB_DIR=/home/otr-dev/dev-tier
+DB_PORT=5632
+DB_CONTAINER=otr-dev-db
+DB_USER=postgres
+DB_NAME=otr_dev_seed
+DB_PASSWORD=replace-me
+GCS_TEST_BUCKET=otr-test
+GCS_DEV_BUCKET=otr-dev-replica
+GCS_PUBLIC_BUCKET=otr-public-replica
+GCS_PROD_BUCKET=otr-prod-dumps
+GCS_SA_JSON_PATH=/home/otr-dev/.gcs/sa.json
+RABBITMQ_URL=amqp://admin:replace-me@localhost:5872
+```
+
+`DB_PASSWORD` and the `RABBITMQ_URL` credentials match `DEV_ENV`. Only
+`GCS_DEV_BUCKET` is read during a restore; the other buckets just have to be
+present. `RABBITMQ_URL` is likewise unused by `recovery` but required, and
+addresses the host's published port because `processor` runs with
+`--network host`.
+
+Two settings are destructive if they point at production:
+
+- `OTR_WEB_DIR` is where recovery runs `docker compose stop db`. It must be the
+  dev tier directory.
+- `DUMP_DIR` is emptied with `rm` after a successful restore. Give the dev tier
+  its own, or a dev restore deletes production's downloaded archives.
 
 Deploy the tier with the `Dev tier` workflow (`deploy`), which also refreshes the
 replica nightly.
