@@ -51,6 +51,32 @@ grant the CI OAuth client permission to that tag.
 | `PREVIEW_REMOTE_PATH` | Parent directory for preview stacks |
 | `OTR_SCRIPTS_DIR`     | otr-scripts checkout on the host    |
 
+The three paths are absolute, and previews sit beside the dev tier rather than
+inside it so teardown's `rm -rf` can never reach it. For a host account at
+`/home/otr-dev`:
+
+```
+/home/otr-dev/
+├── dev-tier/              DEV_REMOTE_PATH
+│   ├── .env               DEV_ENV
+│   ├── docker-compose.yml copied from docker-compose-dev.yml
+│   └── scripts/preview/dev-db.sh
+├── previews/              PREVIEW_REMOTE_PATH
+│   └── pr-796/
+│       ├── .env           PREVIEW_ENV plus the per-PR lines
+│       ├── docker-compose.yml
+│       └── ts-config/serve.json
+└── otr-scripts/           OTR_SCRIPTS_DIR
+```
+
+Database files are not in any of these. Postgres writes to the named volume
+`otr-dev_postgres-data`, so size the docker volume filesystem for the seed, the
+live copy, and one clone per open migration PR.
+
+`SSH_USER` and `SSH_HOST` are read from the `dev` environment. Set them there if
+that host or account differs from production, and give the account docker
+access.
+
 `TS_TAILNET` is a repository variable (`example-tailnet.ts.net`). `SSH_USER`,
 `SSH_HOST`, `TS_OAUTH_*`, and `DOCKERHUB_*` are already configured for deploys.
 
