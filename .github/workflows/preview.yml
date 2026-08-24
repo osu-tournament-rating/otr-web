@@ -1,0 +1,362 @@
+name: PR preview
+
+# Publishes a labelled PR to a private tailnet URL. Runs the website only:
+# the database and queue come from the shared dev tier, and no data worker
+# means previews never call the osu! API.
+#
+# A preview runs pull-request code on the deployment host, which also hosts
+# personal services, so trust is settled in `authorize` before anything is
+# built. Forks never deploy under any path: `pull_request` withholds secrets
+# from them, and the comment override re-checks that the branch lives here.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, closed]
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  authorize:
+    name: Authorize preview
+    if: >-
+      (github.event_name == 'pull_request' && github.event.action != 'closed') ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request != null &&
+       startsWith(github.event.comment.body, '!deploy'))
+    runs-on: ubuntu-latest
+
+    outputs:
+      deploy: ${{ steps.decide.outputs.deploy }}
+      pr: ${{ steps.decide.outputs.pr }}
+      head_sha: ${{ steps.decide.outputs.head_sha }}
+      base_sha: ${{ steps.decide.outputs.base_sha }}
+      notify: ${{ steps.decide.outputs.notify }}
+      reason: ${{ steps.decide.outputs.reason }}
+      guarded: ${{ steps.decide.outputs.guarded }}
+
+    steps:
+      - name: Decide whether this pull request may run on the deployment host
+        id: decide
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
+          # Authors whose pull requests may change what runs on the host, and
+          # who may authorize someone else's with a `!deploy` comment.
+          TRUSTED: ${{ vars.PREVIEW_TRUSTED_AUTHORS || 'hburn7' }}
+        run: |
+          set -euo pipefail
+
+          trusted() {
+            local name
+            for name in $TRUSTED; do
+              [[ "$1" == "$name" ]] && return 0
+            done
+            return 1
+          }
+
+          # $1 comments the reason on the PR, $2 is the reason.
+          skip() {
+            {
+              echo "deploy=false"
+              echo "notify=$1"
+              echo "reason=$2"
+            } >> "$GITHUB_OUTPUT"
+            echo "Not deploying: $2"
+            exit 0
+          }
+
+          pull=$(gh api "repos/$REPO/pulls/$PR_NUMBER")
+          head_sha=$(jq -r .head.sha <<<"$pull")
+          {
+            echo "pr=$PR_NUMBER"
+            echo "head_sha=$head_sha"
+            echo "base_sha=$(jq -r .base.sha <<<"$pull")"
+          } >> "$GITHUB_OUTPUT"
+
+          [[ "$(jq -r .head.repo.full_name <<<"$pull")" == "$REPO" ]] ||
+            skip false "the branch is not in this repository"
+          [[ "$(jq -r .state <<<"$pull")" == "open" ]] ||
+            skip false "the pull request is closed"
+
+          # `!deploy` vouches for whatever is at the head of the branch right
+          # now. The SHA goes in the deployment comment so it is auditable, and
+          # the next push has to be authorized again.
+          if [[ "$EVENT" == "issue_comment" ]]; then
+            trusted "$COMMENT_AUTHOR" ||
+              skip true "@$COMMENT_AUTHOR cannot authorize a deployment"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            echo "Authorized by @$COMMENT_AUTHOR at $head_sha."
+            exit 0
+          fi
+
+          jq -e '[.labels[].name] | index("preview")' <<<"$pull" >/dev/null ||
+            skip false "the preview label is not applied"
+
+          author=$(jq -r .user.login <<<"$pull")
+          if trusted "$author"; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Everyone else may change application code and nothing else. These
+          # paths choose what runs on the host or reach postgres as superuser,
+          # so touching one needs a `!deploy` comment after review.
+          guarded='^\.github/|^docker-compose[^/]*\.ya?ml$|(^|/)Dockerfile|^\.dockerignore$|^scripts/|^preview/|^monitoring/|^apps/web/drizzle/|^drizzle\.config\.ts$|(^|/)package\.json$|(^|/)bun\.lock$|^\.husky/|\.sh$'
+          hits=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate \
+            --jq '.[].filename' | grep -E "$guarded" || true)
+
+          if [[ -n "$hits" ]]; then
+            {
+              echo "guarded<<FILES"
+              echo "$hits"
+              echo "FILES"
+            } >> "$GITHUB_OUTPUT"
+            skip true "@$author changed files that decide what runs on the deployment host"
+          fi
+
+          echo "deploy=true" >> "$GITHUB_OUTPUT"
+
+      - name: Say why no preview was deployed
+        if: steps.decide.outputs.notify == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.decide.outputs.pr }}
+          REASON: ${{ steps.decide.outputs.reason }}
+          GUARDED: ${{ steps.decide.outputs.guarded }}
+        run: |
+          set -euo pipefail
+          body="No preview: ${REASON}."
+          if [[ -n "${GUARDED:-}" ]]; then
+            body=$(printf '%s\n\n```\n%s\n```\n\n%s' "$body" "$GUARDED" \
+              'A maintainer can review these changes and comment `!deploy` to deploy this commit.')
+          fi
+          gh pr comment "$PR_NUMBER" --body "$body"
+
+  deploy:
+    name: Deploy preview
+    needs: authorize
+    if: needs.authorize.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    environment: dev
+
+    env:
+      PR_NUMBER: ${{ needs.authorize.outputs.pr }}
+      BASE_SHA: ${{ needs.authorize.outputs.base_sha }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # The exact commit authorize approved, never a moving ref.
+          ref: ${{ needs.authorize.outputs.head_sha }}
+          fetch-depth: 0
+
+      - name: Resolve preview context
+        id: context
+        env:
+          TS_TAILNET: ${{ vars.TS_TAILNET }}
+          DEV_LIVE_DB: ${{ vars.DEV_LIVE_DB || 'otr_dev' }}
+        run: |
+          set -euo pipefail
+          hostname="otr-pr-${PR_NUMBER}"
+          echo "hostname=$hostname" >> "$GITHUB_OUTPUT"
+          echo "url=https://${hostname}.${TS_TAILNET}" >> "$GITHUB_OUTPUT"
+          echo "project=otr-pr-${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+
+          # The shared database tracks the base branch, so its expected
+          # migration count comes from there rather than from this PR.
+          base_count=$(git show "$BASE_SHA:apps/web/drizzle/meta/_journal.json" | jq '.entries | length')
+          echo "migrations=$base_count" >> "$GITHUB_OUTPUT"
+
+          # A PR that adds migrations gets its own database, so it never
+          # migrates the schema the other previews are sharing.
+          if git diff --name-only "$BASE_SHA" HEAD -- apps/web/drizzle | grep -q .; then
+            echo "database=otr_pr_${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+            echo "migration=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "database=${DEV_LIVE_DB}" >> "$GITHUB_OUTPUT"
+            echo "migration=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: stagecodes/otr-web:pr-${{ env.PR_NUMBER }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web-pr-${{ env.PR_NUMBER }},mode=max
+
+      - name: Connect to tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: ${{ secrets.SSH_HOST }}
+
+      - name: Verify dev database, restoring if unhealthy
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          DEV_REMOTE_PATH: ${{ secrets.DEV_REMOTE_PATH }}
+          OTR_SCRIPTS_DIR: ${{ secrets.OTR_SCRIPTS_DIR }}
+          EXPECTED_MIGRATIONS: ${{ steps.context.outputs.migrations }}
+          NEEDS_CLONE: ${{ steps.context.outputs.migration }}
+          PREVIEW_DB: ${{ steps.context.outputs.database }}
+        run: |
+          set -euo pipefail
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
+            bash -s -- "$DEV_REMOTE_PATH" "$OTR_SCRIPTS_DIR" "$EXPECTED_MIGRATIONS" "$NEEDS_CLONE" "$PREVIEW_DB" <<'EOF'
+            set -euo pipefail
+            cd "$1"
+            export OTR_SCRIPTS_DIR="$2"
+            export EXPECTED_MIGRATIONS="$3"
+            ./scripts/preview/dev-db.sh check || ./scripts/preview/dev-db.sh restore
+            if [[ "$4" == "true" ]]; then
+              ./scripts/preview/dev-db.sh clone "$5"
+            fi
+          EOF
+
+      - name: Upload preview assets
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          PREVIEW_REMOTE_PATH: ${{ secrets.PREVIEW_REMOTE_PATH }}
+          ENV_CONTENT: ${{ secrets.PREVIEW_ENV }}
+          # Scoped to tag:preview alone, not the tag:ci client used above.
+          TS_CLIENT_ID: ${{ secrets.TS_PREVIEW_CLIENT_ID }}
+          TS_CLIENT_SECRET: ${{ secrets.TS_PREVIEW_SECRET }}
+          PREVIEW_URL: ${{ steps.context.outputs.url }}
+          PREVIEW_HOSTNAME: ${{ steps.context.outputs.hostname }}
+          PREVIEW_DB: ${{ steps.context.outputs.database }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' "$ENV_CONTENT" > .env
+
+          # Per-PR values, appended so the later key wins.
+          cat >> .env <<ENVFILE
+          IMAGE_TAG=pr-${PR_NUMBER}
+          PREVIEW_URL=${PREVIEW_URL}
+          PREVIEW_HOSTNAME=${PREVIEW_HOSTNAME}
+          TS_CLIENT_ID=${TS_CLIENT_ID}
+          TS_CLIENT_SECRET=${TS_CLIENT_SECRET}
+          ENVFILE
+
+          # Migration PRs point at their own clone, reusing the credentials
+          # already in DOCKER_DATABASE_URL rather than repeating them.
+          base=$(grep '^DOCKER_DATABASE_URL=' .env | tail -1 | cut -d= -f2-)
+          echo "DOCKER_DATABASE_URL=${base%/*}/${PREVIEW_DB}" >> .env
+
+          cp docker-compose-preview.yml docker-compose.yml
+          remote="$PREVIEW_REMOTE_PATH/pr-${PR_NUMBER}"
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" mkdir -p "$remote"
+          scp -o StrictHostKeyChecking=no -r \
+            .env docker-compose.yml preview/ts-config \
+            "$SSH_USER@$SSH_HOST:$remote/"
+
+      - name: Start preview stack
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          PREVIEW_REMOTE_PATH: ${{ secrets.PREVIEW_REMOTE_PATH }}
+          PROJECT: ${{ steps.context.outputs.project }}
+          NEEDS_MIGRATE: ${{ steps.context.outputs.migration }}
+        run: |
+          set -euo pipefail
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
+            bash -s -- "$PREVIEW_REMOTE_PATH/pr-${PR_NUMBER}" "$PROJECT" "$NEEDS_MIGRATE" <<'EOF'
+            set -euo pipefail
+            cd "$1"
+            docker compose -p "$2" pull
+            if [[ "$3" == "true" ]]; then
+              docker compose -p "$2" --profile migrate run --rm migrate
+            fi
+            docker compose -p "$2" up -d --remove-orphans
+          EOF
+
+      - name: Comment preview URL
+        if: ${{ github.event.action != 'synchronize' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PREVIEW_URL: ${{ steps.context.outputs.url }}
+          PREVIEW_DB: ${{ steps.context.outputs.database }}
+          IS_MIGRATION: ${{ steps.context.outputs.migration }}
+          HEAD_SHA: ${{ needs.authorize.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ "$IS_MIGRATION" == "true" ]]; then
+            note="Migrations ran against a dedicated clone (\`${PREVIEW_DB}\`)."
+          else
+            note="Using the shared dev database (\`${PREVIEW_DB}\`)."
+          fi
+          body=$(printf 'Preview: %s\n\nDeployed `%s`. %s Sign in with the test-auth endpoint; osu! login is not wired up on previews.' \
+            "$PREVIEW_URL" "${HEAD_SHA:0:7}" "$note")
+          gh pr comment "$PR_NUMBER" --body "$body"
+
+  teardown:
+    name: Tear down preview
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: dev
+
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+
+    steps:
+      - name: Connect to tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: ${{ secrets.SSH_HOST }}
+
+      - name: Remove preview stack and database
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          PREVIEW_REMOTE_PATH: ${{ secrets.PREVIEW_REMOTE_PATH }}
+          DEV_REMOTE_PATH: ${{ secrets.DEV_REMOTE_PATH }}
+        run: |
+          set -euo pipefail
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
+            bash -s -- "$PREVIEW_REMOTE_PATH" "$DEV_REMOTE_PATH" "$PR_NUMBER" <<'EOF'
+            set -euo pipefail
+            directory="$1/pr-$3"
+            if [[ -d "$directory" ]]; then
+              cd "$directory"
+              # No -v: the compose file names the volumes, so a preview could
+              # otherwise nominate one belonging to something else on the host.
+              docker compose -p "otr-pr-$3" down --remove-orphans
+              cd /
+              rm -rf "$directory"
+            fi
+            # The tailnet node is ephemeral and removes itself with the stack.
+            cd "$2"
+            ./scripts/preview/dev-db.sh drop "otr_pr_$3"
+          EOF
