@@ -4,16 +4,19 @@ name: PR preview
 # the database and queue come from the shared dev tier, and no data worker
 # means previews never call the osu! API.
 #
-# Uses `pull_request`, not `pull_request_target`, so forks get no secrets and
-# no preview. Previews run PR code on the deployment host, so they are limited
-# to branches in this repository.
+# A preview runs pull-request code on the deployment host, which also hosts
+# personal services, so trust is settled in `authorize` before anything is
+# built. Forks never deploy under any path: `pull_request` withholds secrets
+# from them, and the comment override re-checks that the branch lives here.
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, closed]
+  issue_comment:
+    types: [created]
 
 concurrency:
-  group: preview-${{ github.event.pull_request.number }}
+  group: preview-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: true
 
 permissions:
@@ -21,23 +24,142 @@ permissions:
   pull-requests: write
 
 jobs:
+  authorize:
+    name: Authorize preview
+    if: >-
+      (github.event_name == 'pull_request' && github.event.action != 'closed') ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request != null &&
+       startsWith(github.event.comment.body, '!deploy'))
+    runs-on: ubuntu-latest
+
+    outputs:
+      deploy: ${{ steps.decide.outputs.deploy }}
+      pr: ${{ steps.decide.outputs.pr }}
+      head_sha: ${{ steps.decide.outputs.head_sha }}
+      base_sha: ${{ steps.decide.outputs.base_sha }}
+      notify: ${{ steps.decide.outputs.notify }}
+      reason: ${{ steps.decide.outputs.reason }}
+      guarded: ${{ steps.decide.outputs.guarded }}
+
+    steps:
+      - name: Decide whether this pull request may run on the deployment host
+        id: decide
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
+          # Authors whose pull requests may change what runs on the host, and
+          # who may authorize someone else's with a `!deploy` comment.
+          TRUSTED: ${{ vars.PREVIEW_TRUSTED_AUTHORS || 'hburn7' }}
+        run: |
+          set -euo pipefail
+
+          trusted() {
+            local name
+            for name in $TRUSTED; do
+              [[ "$1" == "$name" ]] && return 0
+            done
+            return 1
+          }
+
+          # $1 comments the reason on the PR, $2 is the reason.
+          skip() {
+            {
+              echo "deploy=false"
+              echo "notify=$1"
+              echo "reason=$2"
+            } >> "$GITHUB_OUTPUT"
+            echo "Not deploying: $2"
+            exit 0
+          }
+
+          pull=$(gh api "repos/$REPO/pulls/$PR_NUMBER")
+          head_sha=$(jq -r .head.sha <<<"$pull")
+          {
+            echo "pr=$PR_NUMBER"
+            echo "head_sha=$head_sha"
+            echo "base_sha=$(jq -r .base.sha <<<"$pull")"
+          } >> "$GITHUB_OUTPUT"
+
+          [[ "$(jq -r .head.repo.full_name <<<"$pull")" == "$REPO" ]] ||
+            skip false "the branch is not in this repository"
+          [[ "$(jq -r .state <<<"$pull")" == "open" ]] ||
+            skip false "the pull request is closed"
+
+          # `!deploy` vouches for whatever is at the head of the branch right
+          # now. The SHA goes in the deployment comment so it is auditable, and
+          # the next push has to be authorized again.
+          if [[ "$EVENT" == "issue_comment" ]]; then
+            trusted "$COMMENT_AUTHOR" ||
+              skip true "@$COMMENT_AUTHOR cannot authorize a deployment"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            echo "Authorized by @$COMMENT_AUTHOR at $head_sha."
+            exit 0
+          fi
+
+          jq -e '[.labels[].name] | index("preview")' <<<"$pull" >/dev/null ||
+            skip false "the preview label is not applied"
+
+          author=$(jq -r .user.login <<<"$pull")
+          if trusted "$author"; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Everyone else may change application code and nothing else. These
+          # paths choose what runs on the host or reach postgres as superuser,
+          # so touching one needs a `!deploy` comment after review.
+          guarded='^\.github/|^docker-compose[^/]*\.ya?ml$|(^|/)Dockerfile|^\.dockerignore$|^scripts/|^preview/|^monitoring/|^apps/web/drizzle/|^drizzle\.config\.ts$|(^|/)package\.json$|(^|/)bun\.lock$|^\.husky/|\.sh$'
+          hits=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate \
+            --jq '.[].filename' | grep -E "$guarded" || true)
+
+          if [[ -n "$hits" ]]; then
+            {
+              echo "guarded<<FILES"
+              echo "$hits"
+              echo "FILES"
+            } >> "$GITHUB_OUTPUT"
+            skip true "@$author changed files that decide what runs on the deployment host"
+          fi
+
+          echo "deploy=true" >> "$GITHUB_OUTPUT"
+
+      - name: Say why no preview was deployed
+        if: steps.decide.outputs.notify == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.decide.outputs.pr }}
+          REASON: ${{ steps.decide.outputs.reason }}
+          GUARDED: ${{ steps.decide.outputs.guarded }}
+        run: |
+          set -euo pipefail
+          body="No preview: ${REASON}."
+          if [[ -n "${GUARDED:-}" ]]; then
+            body=$(printf '%s\n\n```\n%s\n```\n\n%s' "$body" "$GUARDED" \
+              'A maintainer can review these changes and comment `!deploy` to deploy this commit.')
+          fi
+          gh pr comment "$PR_NUMBER" --body "$body"
+
   deploy:
     name: Deploy preview
-    if: >-
-      github.event.action != 'closed' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      contains(github.event.pull_request.labels.*.name, 'preview')
+    needs: authorize
+    if: needs.authorize.outputs.deploy == 'true'
     runs-on: ubuntu-latest
     environment: dev
 
     env:
-      PR_NUMBER: ${{ github.event.pull_request.number }}
-      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      PR_NUMBER: ${{ needs.authorize.outputs.pr }}
+      BASE_SHA: ${{ needs.authorize.outputs.base_sha }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          # The exact commit authorize approved, never a moving ref.
+          ref: ${{ needs.authorize.outputs.head_sha }}
           fetch-depth: 0
 
       - name: Resolve preview context
@@ -181,6 +303,7 @@ jobs:
           PREVIEW_URL: ${{ steps.context.outputs.url }}
           PREVIEW_DB: ${{ steps.context.outputs.database }}
           IS_MIGRATION: ${{ steps.context.outputs.migration }}
+          HEAD_SHA: ${{ needs.authorize.outputs.head_sha }}
         run: |
           set -euo pipefail
           if [[ "$IS_MIGRATION" == "true" ]]; then
@@ -188,13 +311,16 @@ jobs:
           else
             note="Using the shared dev database (\`${PREVIEW_DB}\`)."
           fi
-          body=$(printf 'Preview: %s\n\n%s Sign in with the test-auth endpoint; osu! login is not wired up on previews.' \
-            "$PREVIEW_URL" "$note")
+          body=$(printf 'Preview: %s\n\nDeployed `%s`. %s Sign in with the test-auth endpoint; osu! login is not wired up on previews.' \
+            "$PREVIEW_URL" "${HEAD_SHA:0:7}" "$note")
           gh pr comment "$PR_NUMBER" --body "$body"
 
   teardown:
     name: Tear down preview
-    if: github.event.action == 'closed'
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     environment: dev
 
@@ -224,7 +350,9 @@ jobs:
             directory="$1/pr-$3"
             if [[ -d "$directory" ]]; then
               cd "$directory"
-              docker compose -p "otr-pr-$3" down -v --remove-orphans
+              # No -v: the compose file names the volumes, so a preview could
+              # otherwise nominate one belonging to something else on the host.
+              docker compose -p "otr-pr-$3" down --remove-orphans
               cd /
               rm -rf "$directory"
             fi

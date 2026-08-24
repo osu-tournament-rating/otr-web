@@ -34,6 +34,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          # workflow_dispatch accepts any branch, and this job runs
+          # scripts/preview on the deployment host. Take them from the default
+          # branch whatever branch the run was started from.
+          ref: ${{ github.event.repository.default_branch || github.ref_name }}
           sparse-checkout: |
             docker-compose-dev.yml
             scripts/preview
