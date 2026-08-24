@@ -281,8 +281,7 @@ export type GroupedAuditRow = {
 /** Classifies the semantic action from the top-level entity's sample changes. */
 export function classifyAction(
   actionType: AuditActionType,
-  sampleChanges: Record<string, unknown> | null,
-  isSystem: boolean
+  sampleChanges: Record<string, unknown> | null
 ): AuditEventAction {
   if (actionType === AuditActionType.Created) return 'submission';
   if (actionType === AuditActionType.Deleted) return 'deletion';
@@ -301,9 +300,9 @@ export function classifyAction(
 
     switch (newStatus) {
       case VerificationStatus.Verified:
-        return isSystem ? 'pre_verification' : 'verification';
+        return 'verification';
       case VerificationStatus.Rejected:
-        return isSystem ? 'pre_rejection' : 'rejection';
+        return 'rejection';
       case VerificationStatus.PreVerified:
         return 'pre_verification';
       case VerificationStatus.PreRejected:
@@ -365,7 +364,7 @@ function classifyGroupedAuditRow(row: GroupedAuditRow): AuditEventAction {
     actionType === AuditActionType.Created ||
     actionType === AuditActionType.Deleted
   ) {
-    return classifyAction(actionType, null, row.actionUserId === null);
+    return classifyAction(actionType, null);
   }
 
   const verificationStatusValues = new Set(row.verificationStatusValues);
@@ -374,16 +373,12 @@ function classifyGroupedAuditRow(row: GroupedAuditRow): AuditEventAction {
   const rawStatus = verificationStatusValues.values().next().value!;
   if (rawStatus === 'null' || rawStatus === 'unchanged') return 'update';
 
-  return classifyAction(
-    actionType,
-    {
-      verificationStatus: {
-        originalValue: null,
-        newValue: Number(rawStatus),
-      },
+  return classifyAction(actionType, {
+    verificationStatus: {
+      originalValue: null,
+      newValue: Number(rawStatus),
     },
-    row.actionUserId === null
-  );
+  });
 }
 
 /** Groups rows from multiple audit tables into events keyed by the database's event key. */
