@@ -578,6 +578,11 @@ export const beatmaps = pgTable(
     dataFetchStatus: integer('data_fetch_status').default(0).notNull(),
     // Once set, the osu! API never overwrites this row again.
     manualOverride: boolean('manual_override').default(false).notNull(),
+    // Set metadata for a deleted beatmap, which has no beatmapset to carry it.
+    // Null everywhere else; readers fall back to the beatmapset.
+    title: varchar({ length: 512 }),
+    artist: varchar({ length: 512 }),
+    setOwnerId: integer('set_owner_id'),
     searchVector: tsVector('search_vector')
       .notNull()
       .generatedAlwaysAs(
@@ -604,6 +609,15 @@ export const beatmaps = pgTable(
       foreignColumns: [beatmapsets.id],
       name: 'fk_beatmaps_beatmapsets_beatmapset_id',
     }).onDelete('cascade'),
+    index('ix_beatmaps_set_owner_id').using(
+      'btree',
+      table.setOwnerId.asc().nullsLast().op('int4_ops')
+    ),
+    foreignKey({
+      columns: [table.setOwnerId],
+      foreignColumns: [players.id],
+      name: 'fk_beatmaps_players_set_owner_id',
+    }).onDelete('set null'),
   ]
 );
 

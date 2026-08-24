@@ -388,6 +388,9 @@ export const getTournament = publicProcedure
           beatmapsetId: schema.beatmaps.beatmapsetId,
           dataFetchStatus: schema.beatmaps.dataFetchStatus,
           manualOverride: schema.beatmaps.manualOverride,
+          title: schema.beatmaps.title,
+          artist: schema.beatmaps.artist,
+          setOwnerId: schema.beatmaps.setOwnerId,
           beatmapsetDbId: schema.beatmapsets.id,
           beatmapsetOsuId: schema.beatmapsets.osuId,
           beatmapsetArtist: schema.beatmapsets.artist,
@@ -553,6 +556,9 @@ export const getTournament = publicProcedure
               beatmapBeatmapsetId: schema.beatmaps.beatmapsetId,
               beatmapDataFetchStatus: schema.beatmaps.dataFetchStatus,
               beatmapManualOverride: schema.beatmaps.manualOverride,
+              beatmapTitle: schema.beatmaps.title,
+              beatmapArtist: schema.beatmaps.artist,
+              beatmapSetOwnerId: schema.beatmaps.setOwnerId,
             })
             .from(schema.games)
             .leftJoin(
@@ -680,6 +686,9 @@ export const getTournament = publicProcedure
                   beatmapsetId: game.beatmapBeatmapsetId ?? null,
                   dataFetchStatus: game.beatmapDataFetchStatus ?? 0,
                   manualOverride: game.beatmapManualOverride ?? false,
+                  title: game.beatmapTitle ?? null,
+                  artist: game.beatmapArtist ?? null,
+                  setOwnerId: game.beatmapSetOwnerId ?? null,
                 }
               : null,
         })),
@@ -872,6 +881,9 @@ export const getTournament = publicProcedure
           beatmapsetId: beatmap.beatmapsetId ?? null,
           dataFetchStatus: beatmap.dataFetchStatus ?? 0,
           manualOverride: beatmap.manualOverride ?? false,
+          title: beatmap.title ?? null,
+          artist: beatmap.artist ?? null,
+          setOwnerId: beatmap.setOwnerId ?? null,
           beatmapset,
           attributes: [],
           creators,

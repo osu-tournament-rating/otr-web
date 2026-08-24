@@ -193,8 +193,14 @@ export const listBeatmaps = publicProcedure
           od: schema.beatmaps.od,
           hp: schema.beatmaps.hp,
           totalLength: schema.beatmaps.totalLength,
-          artist: schema.beatmapsets.artist,
-          title: schema.beatmapsets.title,
+          artist:
+            sql`coalesce(${schema.beatmaps.artist}, ${schema.beatmapsets.artist})`.as(
+              'artist'
+            ),
+          title:
+            sql`coalesce(${schema.beatmaps.title}, ${schema.beatmapsets.title})`.as(
+              'title'
+            ),
           beatmapsetOsuId: schema.beatmapsets.osuId,
           creator: schema.players.username,
           verifiedTournamentCount:

@@ -58,6 +58,14 @@ export const updateBeatmapAdmin = adminMutationProcedure
 
     await context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, async () => {
+        const [setOwnerId] = input.setOwnerOsuId
+          ? await resolveCreatorPlayerIds(
+              tx,
+              [input.setOwnerOsuId],
+              queuedPlayerOsuIds
+            )
+          : [];
+
         await tx
           .update(schema.beatmaps)
           .set({
@@ -76,6 +84,9 @@ export const updateBeatmapAdmin = adminMutationProcedure
             ar: input.ar,
             sr: input.sr,
             maxCombo: input.maxCombo,
+            title: input.title || null,
+            artist: input.artist || null,
+            setOwnerId: setOwnerId ?? null,
             manualOverride: true,
             updated: NOW,
           })

@@ -15,6 +15,7 @@ import { Card } from '@/components/ui/card';
 import { Game } from '@/lib/orpc/schema/match';
 import { ModsEnumHelper } from '@/lib/enum-helpers';
 import { Mods, Team, VerificationStatus } from '@otr/core/osu';
+import { getBeatmapArtist, getBeatmapTitle } from '@/lib/beatmaps/presentation';
 
 interface TeamScoresChartProps {
   games: Game[] | undefined;
@@ -91,8 +92,12 @@ export function buildTeamScoreChartData(
         blueScore,
         winner:
           scoreDifference > 0 ? 'red' : scoreDifference < 0 ? 'blue' : 'tie',
-        beatmapTitle: game.beatmap?.beatmapset?.title ?? 'Unknown title',
-        beatmapArtist: game.beatmap?.beatmapset?.artist ?? 'Unknown artist',
+        beatmapTitle: game.beatmap
+          ? (getBeatmapTitle(game.beatmap) ?? 'Unknown title')
+          : 'Unknown title',
+        beatmapArtist: game.beatmap
+          ? (getBeatmapArtist(game.beatmap) ?? 'Unknown artist')
+          : 'Unknown artist',
         beatmapDifficulty: game.beatmap?.diffName ?? 'Unknown difficulty',
         mods: formatMods(game.mods ?? 0),
         scoreDifference,

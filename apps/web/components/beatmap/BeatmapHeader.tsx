@@ -16,7 +16,11 @@ import StarRatingPill from '@/components/beatmaps/StarRatingPill';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { Separator } from '@/components/ui/separator';
-import { getBeatmapDisplayRuleset } from '@/lib/beatmaps/presentation';
+import {
+  getBeatmapArtist,
+  getBeatmapDisplayRuleset,
+  getBeatmapTitle,
+} from '@/lib/beatmaps/presentation';
 import { getStarRatingIconColor } from '@/lib/beatmaps/star-rating-color';
 import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import type {
@@ -41,8 +45,8 @@ export default function BeatmapHeader({
       ].map((creator) => [creator.id, creator] as const)
     ).values()
   );
-  const artist = beatmap.beatmapset?.artist ?? 'Unknown artist';
-  const title = beatmap.beatmapset?.title ?? 'Unknown title';
+  const artist = getBeatmapArtist(beatmap) ?? 'Unknown artist';
+  const title = getBeatmapTitle(beatmap) ?? 'Unknown title';
 
   return (
     <SectionCard as="header" data-testid="beatmap-header">

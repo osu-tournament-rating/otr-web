@@ -12,6 +12,7 @@ import BeatmapScoreDistributionCard from '@/components/beatmap/BeatmapScoreDistr
 import BeatmapScoreScatterCard from '@/components/beatmap/BeatmapScoreScatterCard';
 import { SectionCard } from '@/components/beatmap/BeatmapSection';
 import BeatmapTierBreakdownCard from '@/components/beatmap/BeatmapTierBreakdownCard';
+import { getBeatmapArtist, getBeatmapTitle } from '@/lib/beatmaps/presentation';
 import { getBeatmapStatsCached } from '@/lib/orpc/queries/beatmapStats';
 import {
   fetchOrpcOptional,
@@ -39,8 +40,8 @@ export async function generateMetadata({
   );
   if (!stats) return { title: 'Beatmap Not Found' };
 
-  const artist = stats.beatmap.beatmapset?.artist ?? 'Unknown artist';
-  const title = stats.beatmap.beatmapset?.title ?? 'Unknown title';
+  const artist = getBeatmapArtist(stats.beatmap) ?? 'Unknown artist';
+  const title = getBeatmapTitle(stats.beatmap) ?? 'Unknown title';
   const pageTitle = `${artist} - ${title} [${stats.beatmap.diffName}]`;
   const description = `${stats.beatmap.sr.toFixed(2)} SR · ${Math.round(
     stats.beatmap.bpm

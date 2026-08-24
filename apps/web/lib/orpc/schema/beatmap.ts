@@ -52,7 +52,10 @@ export const BeatmapAdminUpdateInputSchema = z.object({
   ar: z.number().min(0).max(20),
   sr: z.number().min(0).max(100),
   maxCombo: z.number().int().min(0).nullable(),
+  title: z.string().trim().max(512).nullable(),
+  artist: z.string().trim().max(512).nullable(),
   /** osu! user ids; a missing player is created and queued for a fetch. */
+  setOwnerOsuId: z.number().int().positive().nullable(),
   creatorOsuIds: z.array(z.number().int().positive()).max(16),
 });
 

@@ -375,3 +375,26 @@ export function buildMatchSearchExpressions(
 
   return { condition: buildMatchCandidateIds(parsed), rank };
 }
+
+/** The site-wide player criteria, shared with the admin player lookup. */
+export function buildPlayerSearchExpressions(
+  parsed: ParsedSearchTerm
+): SearchExpressions {
+  const vector = schema.players.searchVector;
+  const similarity = buildSimilarity(schema.players.username, parsed);
+  // `%>` nominates candidates from the index; the precision half filters them
+  const trigram = sql`(${buildTrigramMatch(
+    schema.players.username,
+    parsed
+  )} AND ${buildTrigramPrecision([schema.players.username], parsed)})`;
+  const { tsQuery, prefixTsQuery } = parsed;
+
+  return {
+    condition: prefixTsQuery
+      ? sql`(${vector} @@ ${tsQuery} OR ${vector} @@ ${prefixTsQuery} OR ${trigram})`
+      : sql`(${vector} @@ ${tsQuery} OR ${trigram})`,
+    rank: prefixTsQuery
+      ? sql`greatest(ts_rank_cd(${vector}, ${tsQuery}), ts_rank_cd(${vector}, ${prefixTsQuery}), ${similarity})`
+      : sql`greatest(ts_rank_cd(${vector}, ${tsQuery}), ${similarity})`,
+  };
+}

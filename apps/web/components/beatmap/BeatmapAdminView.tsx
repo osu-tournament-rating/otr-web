@@ -11,6 +11,7 @@ import { AuditEntityType, Ruleset } from '@otr/core/osu';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 import AuditButton from '@/components/audit/AuditButton';
+import PlayerPicker from '@/components/beatmap/PlayerPicker';
 import RulesetSelectContent from '@/components/select/RulesetSelectContent';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ import { hasAdminScope } from '@/lib/auth/roles';
 import { useSession } from '@/lib/hooks/useSession';
 import { orpc } from '@/lib/orpc/orpc';
 import type { BeatmapWithDetails } from '@/lib/orpc/schema/beatmapStats';
+import type { PlayerLookupResult } from '@/lib/orpc/schema/player';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 
 const numeric = (max: number) => z.coerce.number().min(0).max(max);
@@ -56,17 +58,11 @@ const formSchema = z.object({
   countSlider: z.coerce.number().int().min(0),
   countSpinner: z.coerce.number().int().min(0),
   maxCombo: z.coerce.number().int().min(0).nullable(),
-  creatorOsuIds: z.string(),
+  title: z.string().trim().max(512),
+  artist: z.string().trim().max(512),
 });
 
 type FormValues = z.input<typeof formSchema>;
-
-const parseCreatorOsuIds = (value: string): number[] =>
-  value
-    .split(/[\s,]+/)
-    .filter(Boolean)
-    .map(Number)
-    .filter((id) => Number.isInteger(id) && id > 0);
 
 export default function BeatmapAdminView({
   beatmap,
@@ -94,11 +90,30 @@ export default function BeatmapAdminView({
       countSlider: beatmap.countSlider,
       countSpinner: beatmap.countSpinner,
       maxCombo: beatmap.maxCombo,
-      creatorOsuIds: beatmap.creators
-        .map((creator) => creator.osuId)
-        .join(', '),
+      title: beatmap.title ?? beatmap.beatmapset?.title ?? '',
+      artist: beatmap.artist ?? beatmap.beatmapset?.artist ?? '',
     },
   });
+
+  const [setOwner, setSetOwner] = useState<PlayerLookupResult[]>(
+    beatmap.beatmapset?.creator
+      ? [
+          {
+            osuId: beatmap.beatmapset.creator.osuId,
+            username: beatmap.beatmapset.creator.username,
+            playerId: beatmap.beatmapset.creator.id,
+          },
+        ]
+      : []
+  );
+
+  const [mappers, setMappers] = useState<PlayerLookupResult[]>(
+    beatmap.creators.map((creator) => ({
+      osuId: creator.osuId,
+      username: creator.username,
+      playerId: creator.id,
+    }))
+  );
 
   if (!hasAdminScope(session?.scopes ?? [])) {
     return null;
@@ -127,7 +142,10 @@ export default function BeatmapAdminView({
         ar: parsed.ar,
         sr: parsed.sr,
         maxCombo: parsed.maxCombo,
-        creatorOsuIds: parseCreatorOsuIds(parsed.creatorOsuIds),
+        title: parsed.title || null,
+        artist: parsed.artist || null,
+        setOwnerOsuId: setOwner[0]?.osuId ?? null,
+        creatorOsuIds: mappers.map((mapper) => mapper.osuId),
       });
 
       saveToast();
@@ -191,19 +209,48 @@ export default function BeatmapAdminView({
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="creatorOsuIds"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Creator osu! ids</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="4001304, 2903265" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="artist"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Artist</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormItem>
+                    <FormLabel>Set owner</FormLabel>
+                    <PlayerPicker value={setOwner} onChange={setSetOwner} />
+                  </FormItem>
+
+                  <FormItem>
+                    <FormLabel>Mappers</FormLabel>
+                    <PlayerPicker
+                      value={mappers}
+                      onChange={setMappers}
+                      multiple
+                    />
+                  </FormItem>
 
                   <FormField
                     control={form.control}
