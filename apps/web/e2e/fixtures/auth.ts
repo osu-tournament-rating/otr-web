@@ -1,9 +1,14 @@
 import path from 'node:path';
 import { type APIRequestContext, type Page } from '@playwright/test';
 
-/** Sessions are minted from these players; the endpoint provisions their user rows. */
-export const TEST_ADMIN_PLAYER_ID = 3616;
-export const TEST_NONADMIN_PLAYER_ID = 1068;
+import {
+  E2E_ADMIN_PLAYER_ID,
+  E2E_NONADMIN_PLAYER_ID,
+  E2E_SIGN_IN_PATH,
+} from '../../lib/auth/e2e-auth';
+
+export const TEST_ADMIN_PLAYER_ID = E2E_ADMIN_PLAYER_ID;
+export const TEST_NONADMIN_PLAYER_ID = E2E_NONADMIN_PLAYER_ID;
 
 /** Where the Playwright setup project writes each role's storage state. */
 const AUTH_DIR = path.join(__dirname, '..', '.auth');
@@ -19,8 +24,7 @@ export const ROLE_PLAYER_ID: Record<TestRole, number> = {
   user: TEST_NONADMIN_PLAYER_ID,
 };
 
-/** Test-only endpoint exposed by {@link e2eTestAuthPlugin}. */
-export const E2E_SIGN_IN_PATH = '/api/auth/e2e/sign-in';
+export { E2E_SIGN_IN_PATH };
 
 /** Mints a signed session for the player on the request context's cookie jar. */
 export async function signInPlayer(
