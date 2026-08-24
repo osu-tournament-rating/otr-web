@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { z } from 'zod';
 import { AuditEntityType } from '@otr/core/osu';
 import AuditPageHeader from '@/components/audit/AuditPageHeader';
-import AuditEntityTimeline from '@/components/audit/AuditEntityTimeline';
+import AuditEntityView from '@/components/audit/AuditEntityView';
 import { parseParamsOrNotFound } from '@/lib/orpc/server-helpers';
 
 type PageProps = {
@@ -28,7 +28,7 @@ export default async function ScoreAuditPage({ params }: PageProps) {
   return (
     <>
       <AuditPageHeader entityType={AuditEntityType.Score} entityId={id} />
-      <AuditEntityTimeline entityType={AuditEntityType.Score} entityId={id} />
+      <AuditEntityView entityType={AuditEntityType.Score} entityId={id} />
     </>
   );
 }

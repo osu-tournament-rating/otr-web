@@ -102,6 +102,10 @@ import {
   getAuditEventFeed,
   getEventDetails,
 } from './procedures/auditProcedures';
+import {
+  getDescendantAuditCounts,
+  getDescendantAuditTimeline,
+} from './procedures/audit/descendantProcedures';
 
 export interface InitialContext {
   headers: Headers;
@@ -212,6 +216,8 @@ export const router = base.router({
     timeline: getEntityAuditTimeline,
     events: getAuditEventFeed,
     eventDetails: getEventDetails,
+    descendants: getDescendantAuditTimeline,
+    descendantCounts: getDescendantAuditCounts,
   },
   tournaments: {
     list: listTournaments,
