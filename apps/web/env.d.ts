@@ -5,6 +5,8 @@ declare namespace NodeJS {
     /** Deprecated */
     NEXT_PUBLIC_APP_BASE_URL: string;
     NEXT_PUBLIC_IS_STAGING?: string;
+    /** Origin for server-side rpc calls, when the public URL is unreachable */
+    INTERNAL_APP_BASE_URL?: string;
     DATABASE_URL: string;
     API_KEY?: string;
     BETTER_AUTH_SECRET: string;
