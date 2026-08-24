@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   AlertTriangle,
@@ -55,6 +55,7 @@ type UserAvatarProps = {
 export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const [isOpen, toggleIsOpen] = useToggle();
   const router = useRouter();
+  const pathname = usePathname();
   const path = useAuthRedirectPath();
   const isMobile = useMediaQuery('only screen and (max-width : 768px)');
   const sessionResult = useAuthSession();
@@ -73,19 +74,32 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   useEffect(() => {
     if (!userId) return;
 
+    let active = true;
+
     if (isAdmin) {
       orpc.reports
         .unseenCount({})
-        .then((result) => setUnseenReportCount(result.count))
-        .catch(() => setUnseenReportCount(0));
-      return;
+        .then((result) => {
+          if (active) setUnseenReportCount(result.count);
+        })
+        .catch(() => {
+          if (active) setUnseenReportCount(0);
+        });
+    } else {
+      orpc.reports
+        .myUnreadCount({})
+        .then((result) => {
+          if (active) setMyUnreadReportCount(result.count);
+        })
+        .catch(() => {
+          if (active) setMyUnreadReportCount(0);
+        });
     }
 
-    orpc.reports
-      .myUnreadCount({})
-      .then((result) => setMyUnreadReportCount(result.count))
-      .catch(() => setMyUnreadReportCount(0));
-  }, [isAdmin, userId]);
+    return () => {
+      active = false;
+    };
+  }, [isAdmin, pathname, userId]);
 
   const handleLogout = async () => {
     await signOut({
