@@ -540,11 +540,10 @@ export const getEntityAuditTimeline = publicProcedure
           const topRow = siblingRows[0]!;
           const topEntityType = topRow.entity_type as AuditEntityType;
           const topEntityId = topRow.sample_id;
-          const isSystem = actionUserId === null;
           const topChanges = camelizeChangesKeys(
             topRow.sample_changes as Record<string, unknown> | null
           );
-          const action = classifyAction(actionType, topChanges, isSystem);
+          const action = classifyAction(actionType, topChanges);
 
           const descendantCounts = siblingRows
             .filter((row) => row.entity_type > topEntityType && row.cnt > 0)

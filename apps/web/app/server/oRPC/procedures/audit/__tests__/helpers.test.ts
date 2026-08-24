@@ -143,6 +143,21 @@ describe('assembleEvents', () => {
     expect(events).toHaveLength(2);
   });
 
+  it('labels a system rejection cascade as a rejection', () => {
+    const [event] = assembleEvents([
+      groupedRow({ actionUserId: null, verificationStatusValues: ['3'] }),
+      groupedRow({
+        actionUserId: null,
+        entityType: AuditEntityType.Match,
+        verificationStatusValues: ['3'],
+        sampleEntityId: 11,
+      }),
+    ]);
+
+    expect(event.action).toBe('rejection');
+    expect(event.isSystem).toBe(true);
+  });
+
   it('uses a generic action and exposes repeated writes for mixed actions', () => {
     const [event] = assembleEvents([
       groupedRow({
