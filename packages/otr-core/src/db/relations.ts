@@ -11,6 +11,8 @@ import {
   filterReports,
   auditEvents,
   games,
+  beatmapAudits,
+  beatmapAdminNotes,
   gameAudits,
   gameRosters,
   gameScores,
@@ -139,11 +141,37 @@ export const auditEventsRelations = relations(auditEvents, ({ one, many }) => ({
     fields: [auditEvents.actionUserId],
     references: [users.id],
   }),
+  beatmapAudits: many(beatmapAudits),
   gameAudits: many(gameAudits),
   gameScoreAudits: many(gameScoreAudits),
   matchAudits: many(matchAudits),
   tournamentAudits: many(tournamentAudits),
 }));
+
+export const beatmapAuditsRelations = relations(beatmapAudits, ({ one }) => ({
+  event: one(auditEvents, {
+    fields: [beatmapAudits.eventId],
+    references: [auditEvents.id],
+  }),
+  beatmap: one(beatmaps, {
+    fields: [beatmapAudits.referenceId],
+    references: [beatmaps.id],
+  }),
+}));
+
+export const beatmapAdminNotesRelations = relations(
+  beatmapAdminNotes,
+  ({ one }) => ({
+    beatmap: one(beatmaps, {
+      fields: [beatmapAdminNotes.referenceId],
+      references: [beatmaps.id],
+    }),
+    user: one(users, {
+      fields: [beatmapAdminNotes.adminUserId],
+      references: [users.id],
+    }),
+  })
+);
 
 export const gameAuditsRelations = relations(gameAudits, ({ one }) => ({
   event: one(auditEvents, {
@@ -212,6 +240,8 @@ export const beatmapsRelations = relations(beatmaps, ({ one, many }) => ({
   }),
   games: many(games),
   beatmapAttributes: many(beatmapAttributes),
+  beatmapAudits: many(beatmapAudits),
+  beatmapAdminNotes: many(beatmapAdminNotes),
   joinBeatmapCreators: many(joinBeatmapCreators),
   joinPooledBeatmaps: many(joinPooledBeatmaps),
 }));

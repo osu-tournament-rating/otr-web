@@ -30,6 +30,7 @@ import {
 import { getPlayerRatings } from './procedures/playerRatingsProcedures';
 import { getBeatmapStats } from './procedures/beatmapProcedures';
 import { listBeatmaps } from './procedures/beatmapListProcedures';
+import { updateBeatmapAdmin } from './procedures/beatmaps/adminProcedures';
 import { searchEntities } from './procedures/searchProcedures';
 import {
   deleteMyAccount,
@@ -60,14 +61,17 @@ import {
 import { manageTournamentBeatmapsAdmin } from './procedures/tournaments/beatmapAdminProcedures';
 import { manageTournamentMatchesAdmin } from './procedures/tournaments/matchAdminProcedures';
 import {
+  createBeatmapAdminNote,
   createGameAdminNote,
   createMatchAdminNote,
   createScoreAdminNote,
   createTournamentAdminNote,
+  deleteBeatmapAdminNote,
   deleteGameAdminNote,
   deleteMatchAdminNote,
   deleteScoreAdminNote,
   deleteTournamentAdminNote,
+  updateBeatmapAdminNote,
   updateGameAdminNote,
   updateMatchAdminNote,
   updateScoreAdminNote,
@@ -199,6 +203,14 @@ export const router = base.router({
   beatmaps: {
     list: listBeatmaps,
     stats: getBeatmapStats,
+    admin: {
+      update: updateBeatmapAdmin,
+    },
+    adminNotes: {
+      create: createBeatmapAdminNote,
+      update: updateBeatmapAdminNote,
+      delete: deleteBeatmapAdminNote,
+    },
   },
   stats: {
     platform: getPlatformStats,

@@ -576,6 +576,8 @@ export const beatmaps = pgTable(
       .notNull(),
     updated: timestamp({ withTimezone: true, mode: 'string' }),
     dataFetchStatus: integer('data_fetch_status').default(0).notNull(),
+    // Once set, the osu! API never overwrites this row again.
+    manualOverride: boolean('manual_override').default(false).notNull(),
     searchVector: tsVector('search_vector')
       .notNull()
       .generatedAlwaysAs(
@@ -602,6 +604,107 @@ export const beatmaps = pgTable(
       foreignColumns: [beatmapsets.id],
       name: 'fk_beatmaps_beatmapsets_beatmapset_id',
     }).onDelete('cascade'),
+  ]
+);
+
+export const beatmapAudits = pgTable(
+  'beatmap_audits',
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'beatmap_audits_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
+    eventId: bigint('event_id', { mode: 'number' }),
+    created: timestamp({ withTimezone: true, mode: 'string' })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    referenceIdLock: integer('reference_id_lock').notNull(),
+    referenceId: integer('reference_id'),
+    actionUserId: integer('action_user_id'),
+    actionType: integer('action_type').notNull(),
+    changes: jsonb(),
+  },
+  (table) => [
+    index('ix_beatmap_audits_action_user_id').using(
+      'btree',
+      table.actionUserId.asc().nullsLast().op('int4_ops')
+    ),
+    index('ix_beatmap_audits_action_user_id_created').using(
+      'btree',
+      table.actionUserId.asc().nullsLast().op('int4_ops'),
+      table.created.asc().nullsLast().op('timestamptz_ops')
+    ),
+    index('ix_beatmap_audits_created').using(
+      'btree',
+      table.created.asc().nullsLast().op('timestamptz_ops')
+    ),
+    index('ix_beatmap_audits_reference_id').using(
+      'btree',
+      table.referenceId.asc().nullsLast().op('int4_ops')
+    ),
+    index('ix_beatmap_audits_reference_id_lock').using(
+      'btree',
+      table.referenceIdLock.asc().nullsLast().op('int4_ops')
+    ),
+    foreignKey({
+      columns: [table.eventId],
+      foreignColumns: [auditEvents.id],
+      name: 'fk_beatmap_audits_audit_events_event_id',
+    }),
+    foreignKey({
+      columns: [table.referenceId],
+      foreignColumns: [beatmaps.id],
+      name: 'fk_beatmap_audits_beatmaps_reference_id',
+    }).onDelete('set null'),
+    index('ix_beatmap_audits_changes_gin').using(
+      'gin',
+      table.changes.op('jsonb_path_ops')
+    ),
+  ]
+);
+
+export const beatmapAdminNotes = pgTable(
+  'beatmap_admin_notes',
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity({
+      name: 'beatmap_admin_notes_id_seq',
+      startWith: 1,
+      increment: 1,
+      minValue: 1,
+      maxValue: 2147483647,
+      cache: 1,
+    }),
+    created: timestamp({ withTimezone: true, mode: 'string' })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updated: timestamp({ withTimezone: true, mode: 'string' }),
+    note: text().notNull(),
+    referenceId: integer('reference_id').notNull(),
+    adminUserId: integer('admin_user_id'),
+  },
+  (table) => [
+    index('ix_beatmap_admin_notes_admin_user_id').using(
+      'btree',
+      table.adminUserId.asc().nullsLast().op('int4_ops')
+    ),
+    index('ix_beatmap_admin_notes_reference_id').using(
+      'btree',
+      table.referenceId.asc().nullsLast().op('int4_ops')
+    ),
+    foreignKey({
+      columns: [table.referenceId],
+      foreignColumns: [beatmaps.id],
+      name: 'fk_beatmap_admin_notes_beatmaps_reference_id',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [table.adminUserId],
+      foreignColumns: [users.id],
+      name: 'fk_beatmap_admin_notes_users_admin_user_id',
+    }).onDelete('set null'),
   ]
 );
 

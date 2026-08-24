@@ -1,0 +1,294 @@
+'use client';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { EditIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+
+import { AuditEntityType, Ruleset } from '@otr/core/osu';
+import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
+
+import AuditButton from '@/components/audit/AuditButton';
+import RulesetSelectContent from '@/components/select/RulesetSelectContent';
+import SimpleTooltip from '@/components/simple-tooltip';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { hasAdminScope } from '@/lib/auth/roles';
+import { useSession } from '@/lib/hooks/useSession';
+import { orpc } from '@/lib/orpc/orpc';
+import type { BeatmapWithDetails } from '@/lib/orpc/schema/beatmapStats';
+import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
+
+const numeric = (max: number) => z.coerce.number().min(0).max(max);
+
+const formSchema = z.object({
+  diffName: z.string().trim().min(1),
+  ruleset: z.coerce.number().int(),
+  sr: numeric(100),
+  bpm: numeric(10_000),
+  totalLength: z.coerce.number().int().min(0).max(86_400),
+  drainLength: z.coerce.number().int().min(0).max(86_400),
+  cs: numeric(20),
+  hp: numeric(20),
+  od: numeric(20),
+  ar: numeric(20),
+  countCircle: z.coerce.number().int().min(0),
+  countSlider: z.coerce.number().int().min(0),
+  countSpinner: z.coerce.number().int().min(0),
+  maxCombo: z.coerce.number().int().min(0).nullable(),
+  creatorOsuIds: z.string(),
+});
+
+type FormValues = z.input<typeof formSchema>;
+
+const parseCreatorOsuIds = (value: string): number[] =>
+  value
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .map(Number)
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+export default function BeatmapAdminView({
+  beatmap,
+}: {
+  beatmap: BeatmapWithDetails;
+}) {
+  const session = useSession();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      diffName: beatmap.diffName,
+      ruleset: beatmap.ruleset,
+      sr: beatmap.sr,
+      bpm: beatmap.bpm,
+      totalLength: beatmap.totalLength,
+      drainLength: beatmap.drainLength,
+      cs: beatmap.cs,
+      hp: beatmap.hp,
+      od: beatmap.od,
+      ar: beatmap.ar,
+      countCircle: beatmap.countCircle,
+      countSlider: beatmap.countSlider,
+      countSpinner: beatmap.countSpinner,
+      maxCombo: beatmap.maxCombo,
+      creatorOsuIds: beatmap.creators
+        .map((creator) => creator.osuId)
+        .join(', '),
+    },
+  });
+
+  if (!hasAdminScope(session?.scopes ?? [])) {
+    return null;
+  }
+
+  const isDeleted = beatmap.dataFetchStatus === DataFetchStatus.NotFound;
+
+  async function onSubmit(values: FormValues) {
+    const parsed = formSchema.parse(values);
+
+    try {
+      await orpc.beatmaps.admin.update({
+        id: beatmap.id,
+        diffName: parsed.diffName,
+        ruleset: parsed.ruleset as Ruleset,
+        rankedStatus: beatmap.rankedStatus,
+        totalLength: parsed.totalLength,
+        drainLength: parsed.drainLength,
+        bpm: parsed.bpm,
+        countCircle: parsed.countCircle,
+        countSlider: parsed.countSlider,
+        countSpinner: parsed.countSpinner,
+        cs: parsed.cs,
+        hp: parsed.hp,
+        od: parsed.od,
+        ar: parsed.ar,
+        sr: parsed.sr,
+        maxCombo: parsed.maxCombo,
+        creatorOsuIds: parseCreatorOsuIds(parsed.creatorOsuIds),
+      });
+
+      saveToast();
+      setOpen(false);
+      router.refresh();
+    } catch {
+      errorSaveToast();
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <AuditButton
+        entityType={AuditEntityType.Beatmap}
+        entityId={beatmap.id}
+        darkMode
+      />
+      <SimpleTooltip
+        content={
+          isDeleted
+            ? 'Edit beatmap data'
+            : 'Only beatmaps the osu! API no longer serves can be edited by hand'
+        }
+      >
+        <span>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={!isDeleted}
+                className="h-6 w-6 hover:bg-white/20 hover:text-white"
+              >
+                <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[85vh] overflow-y-auto p-4 sm:max-w-lg">
+              <DialogHeader className="space-y-1">
+                <DialogTitle>Edit beatmap</DialogTitle>
+                <DialogDescription>
+                  Saving pins this beatmap permanently. Refetches will no longer
+                  update it.
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-3"
+                >
+                  <FormField
+                    control={form.control}
+                    name="diffName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Difficulty</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="creatorOsuIds"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Creator osu! ids</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="4001304, 2903265" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="ruleset"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ruleset</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={String(field.value)}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <RulesetSelectContent />
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {NUMERIC_FIELDS.map(({ name, label, step }) => (
+                      <FormField
+                        key={name}
+                        control={form.control}
+                        name={name}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{label}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step={step}
+                                {...field}
+                                value={
+                                  field.value === null ||
+                                  field.value === undefined
+                                    ? ''
+                                    : String(field.value)
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ))}
+                  </div>
+
+                  <DialogFooter>
+                    <Button
+                      type="submit"
+                      disabled={form.formState.isSubmitting}
+                    >
+                      Save
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </span>
+      </SimpleTooltip>
+    </div>
+  );
+}
+
+const NUMERIC_FIELDS = [
+  { name: 'sr', label: 'Star rating', step: '0.01' },
+  { name: 'bpm', label: 'BPM', step: '0.01' },
+  { name: 'totalLength', label: 'Length (s)', step: '1' },
+  { name: 'drainLength', label: 'Drain (s)', step: '1' },
+  { name: 'cs', label: 'CS', step: '0.1' },
+  { name: 'hp', label: 'HP', step: '0.1' },
+  { name: 'od', label: 'OD', step: '0.1' },
+  { name: 'ar', label: 'AR', step: '0.1' },
+  { name: 'countCircle', label: 'Circles', step: '1' },
+  { name: 'countSlider', label: 'Sliders', step: '1' },
+  { name: 'countSpinner', label: 'Spinners', step: '1' },
+  { name: 'maxCombo', label: 'Max combo', step: '1' },
+] as const satisfies ReadonlyArray<{
+  name: keyof FormValues;
+  label: string;
+  step: string;
+}>;
