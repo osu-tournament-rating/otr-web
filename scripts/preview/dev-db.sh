@@ -53,8 +53,10 @@ ROW_FLOORS=(
   "rating_adjustments:2000000"
 )
 
+# The workflows pipe this script into `ssh host bash -s`, so stdin carries the
+# rest of the script. Anything that reads stdin eats the lines after it.
 query() { # query <database> <sql>
-  docker exec -i "$CONTAINER" psql -U "$DB_USER" -d "$1" -tAc "$2"
+  docker exec "$CONTAINER" psql -U "$DB_USER" -d "$1" -tAc "$2" </dev/null
 }
 
 # Only the migration container needs a URL, and it dials over the otr-dev
@@ -126,7 +128,7 @@ restore() {
   # keeps it off production lives in the otr-scripts .env: OTR_WEB_DIR must
   # point at the dev tier directory and DB_NAME at the seed.
   (cd "$OTR_SCRIPTS_DIR" && uv run python src/main.py \
-    --script recovery --recovery-bucket dev --db-only)
+    --script recovery --recovery-bucket dev --db-only </dev/null)
 
   database_exists "$SEED_DB" || fail "restore did not produce $SEED_DB"
 
@@ -136,7 +138,7 @@ restore() {
   echo "migrating $SEED_DB"
   docker run --rm --network "$NETWORK" \
     -e DATABASE_URL="$(db_url "$SEED_DB")" \
-    "$MIGRATION_IMAGE" ./scripts/run-migrations.sh
+    "$MIGRATION_IMAGE" ./scripts/run-migrations.sh </dev/null
 
   echo "rebuilding $LIVE_DB from $SEED_DB"
   disconnect "$LIVE_DB"
