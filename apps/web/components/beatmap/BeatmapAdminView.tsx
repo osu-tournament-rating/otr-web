@@ -8,7 +8,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { AuditEntityType, Ruleset } from '@otr/core/osu';
-import { isManiaRuleset } from '@/lib/beatmaps/presentation';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 import AuditButton from '@/components/audit/AuditButton';
@@ -28,6 +27,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -63,12 +63,6 @@ const formSchema = z.object({
   artistOverride: z.string().trim().max(512),
 });
 
-const maniaKeyCount = (values: { ruleset: unknown; cs: unknown }) =>
-  !isManiaRuleset(Number(values.ruleset) as Ruleset) ||
-  (Number.isInteger(Number(values.cs)) &&
-    Number(values.cs) >= 1 &&
-    Number(values.cs) <= 9);
-
 type FormValues = z.input<typeof formSchema>;
 
 export default function BeatmapAdminView({
@@ -81,12 +75,7 @@ export default function BeatmapAdminView({
   const [open, setOpen] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(
-      formSchema.refine(maniaKeyCount, {
-        path: ['cs'],
-        message: 'Key count must be a whole number from 1 to 9',
-      })
-    ),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       diffName: beatmap.diffName,
       ruleset: beatmap.ruleset,
@@ -291,13 +280,11 @@ export default function BeatmapAdminView({
                   />
 
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {numericFields(
-                      Number(form.watch('ruleset')) as Ruleset
-                    ).map(({ name, label, step, min, max }) => (
+                    {NUMERIC_FIELDS.map(({ name, label, step, hint }) => (
                       <FormField
                         key={name}
                         control={form.control}
-                        name={name as keyof FormValues}
+                        name={name}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{label}</FormLabel>
@@ -305,8 +292,6 @@ export default function BeatmapAdminView({
                               <Input
                                 type="number"
                                 step={step}
-                                min={min}
-                                max={max}
                                 {...field}
                                 value={
                                   field.value === null ||
@@ -316,6 +301,7 @@ export default function BeatmapAdminView({
                                 }
                               />
                             </FormControl>
+                            {hint && <FormDescription>{hint}</FormDescription>}
                             <FormMessage />
                           </FormItem>
                         )}
@@ -341,14 +327,17 @@ export default function BeatmapAdminView({
   );
 }
 
-const numericFields = (ruleset: Ruleset) => [
+const NUMERIC_FIELDS: ReadonlyArray<{
+  name: keyof FormValues;
+  label: string;
+  step: string;
+  hint?: string;
+}> = [
   { name: 'sr', label: 'Star rating', step: '0.01' },
   { name: 'bpm', label: 'BPM', step: '0.01' },
   { name: 'totalLength', label: 'Length (s)', step: '1' },
   { name: 'drainLength', label: 'Drain (s)', step: '1' },
-  isManiaRuleset(ruleset)
-    ? { name: 'cs', label: 'Keys', step: '1', min: 1, max: 9 }
-    : { name: 'cs', label: 'CS', step: '0.1' },
+  { name: 'cs', label: 'CS', step: '0.1', hint: 'Key count in osu!mania' },
   { name: 'hp', label: 'HP', step: '0.1' },
   { name: 'od', label: 'OD', step: '0.1' },
   { name: 'ar', label: 'AR', step: '0.1' },
