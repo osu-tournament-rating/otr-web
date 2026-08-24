@@ -293,7 +293,9 @@ jobs:
             cd "$1"
             docker compose -p "$2" pull
             if [[ "$3" == "true" ]]; then
-              docker compose -p "$2" --profile migrate run --rm migrate
+              # -T and /dev/null: this script arrives on stdin, and `run`
+              # attaches stdin by default, which eats the lines below it.
+              docker compose -p "$2" --profile migrate run --rm -T migrate </dev/null
             fi
             docker compose -p "$2" up -d --remove-orphans
           EOF
