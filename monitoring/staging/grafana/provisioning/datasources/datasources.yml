@@ -1,4 +1,14 @@
 apiVersion: 1
+
+# Grafana updates matched datasources by uid and aborts startup when it differs.
+deleteDatasources:
+  - name: Prometheus
+    orgId: 1
+  - name: Loki
+    orgId: 1
+  - name: Tempo
+    orgId: 1
+
 datasources:
   - name: Prometheus
     type: prometheus
