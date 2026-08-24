@@ -22,6 +22,9 @@ services:
       RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
       BETTER_AUTH_URL: ${PREVIEW_URL}
       NEXT_PUBLIC_APP_BASE_URL: ${PREVIEW_URL}
+      # The tailnet URL is served by the sidecar and is unreachable from this
+      # container, so server-side rpc calls go to the app's own port.
+      INTERNAL_APP_BASE_URL: http://localhost:3000
       # Pinned here rather than in .env so a preview cannot come up without
       # a login path or with admin mutations frozen by the maintenance window.
       E2E_TEST_AUTH: 'true'
