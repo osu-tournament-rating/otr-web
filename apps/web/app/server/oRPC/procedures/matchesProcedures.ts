@@ -251,6 +251,7 @@ export const getMatch = publicProcedure
         beatmapMaxCombo: schema.beatmaps.maxCombo,
         beatmapBeatmapsetId: schema.beatmaps.beatmapsetId,
         beatmapDataFetchStatus: schema.beatmaps.dataFetchStatus,
+        beatmapManualOverride: schema.beatmaps.manualOverride,
         beatmapsetId: schema.beatmapsets.id,
         beatmapsetOsuId: schema.beatmapsets.osuId,
         beatmapsetTitle: schema.beatmapsets.title,
@@ -648,6 +649,7 @@ export const getMatch = publicProcedure
               maxCombo: game.beatmapMaxCombo ?? null,
               beatmapsetId: game.beatmapBeatmapsetId ?? null,
               dataFetchStatus: game.beatmapDataFetchStatus ?? 0,
+              manualOverride: game.beatmapManualOverride ?? false,
               beatmapset:
                 game.beatmapsetId != null
                   ? {
