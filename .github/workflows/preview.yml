@@ -297,7 +297,6 @@ jobs:
           EOF
 
       - name: Comment preview URL
-        if: ${{ github.event.action != 'synchronize' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PREVIEW_URL: ${{ steps.context.outputs.url }}
@@ -311,9 +310,22 @@ jobs:
           else
             note="Using the shared dev database (\`${PREVIEW_DB}\`)."
           fi
-          body=$(printf 'Preview: %s\n\nDeployed `%s`. %s Sign in with the test-auth endpoint; osu! login is not wired up on previews.' \
-            "$PREVIEW_URL" "${HEAD_SHA:0:7}" "$note")
-          gh pr comment "$PR_NUMBER" --body "$body"
+          body=$(printf '%s\nPreview: %s\n\nDeployed `%s`. %s Sign in with the test-auth endpoint; osu! login is not wired up on previews.' \
+            '<!-- otr-preview -->' "$PREVIEW_URL" "${HEAD_SHA:0:7}" "$note")
+
+          # Edited in place rather than appended, so every deploy reports the
+          # commit it published without leaving a trail of stale URLs. The
+          # marker is how the comment is found again; it does not render.
+          found=$(gh api "repos/$GITHUB_REPOSITORY/issues/${PR_NUMBER}/comments" --paginate \
+            --jq '.[] | select(.body | startswith("<!-- otr-preview -->")) | .id')
+          id=${found%%$'\n'*}
+
+          if [[ -n "$id" ]]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/${id}" -f body="$body" >/dev/null
+            echo "updated comment $id"
+          else
+            gh pr comment "$PR_NUMBER" --body "$body"
+          fi
 
   teardown:
     name: Tear down preview
@@ -360,3 +372,45 @@ jobs:
             cd "$2"
             ./scripts/preview/dev-db.sh drop "otr_pr_$3"
           EOF
+
+      # Nothing else reaps these, and the registry is public, so a closed PR
+      # would otherwise leave its image published forever. Runs even when the
+      # host cleanup above failed, since the tag is unrelated to it.
+      - name: Delete the preview image tag
+        if: always()
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          # A delete-scoped token when one exists. Falling back to the push
+          # token only works if that token also carries the delete scope.
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_DELETE_TOKEN || secrets.DOCKERHUB_TOKEN }}
+          IMAGE: ${{ vars.WEB_IMAGE || 'stagecodes/otr-web' }}
+        run: |
+          set -euo pipefail
+          # Parsed separately so a non-JSON body -- an error page, a proxy 502 --
+          # reaches the check below instead of killing the step on jq's exit.
+          response=$(curl -sS -X POST https://hub.docker.com/v2/auth/token \
+            -H 'content-type: application/json' \
+            -d "$(jq -nc --arg u "$DOCKERHUB_USERNAME" --arg s "$DOCKERHUB_TOKEN" \
+              '{identifier: $u, secret: $s}')")
+          token=$(jq -r '.access_token // empty' <<<"$response" 2>/dev/null || true)
+          [[ -n "$token" ]] || {
+            echo "::error::could not exchange the Docker Hub credentials for a token"
+            exit 1
+          }
+
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -X DELETE \
+            "https://hub.docker.com/v2/repositories/${IMAGE}/tags/pr-${PR_NUMBER}/" \
+            -H "Authorization: Bearer $token")
+
+          case "$code" in
+            204) echo "deleted ${IMAGE}:pr-${PR_NUMBER}" ;;
+            404) echo "${IMAGE}:pr-${PR_NUMBER} was already gone" ;;
+            401|403)
+              echo "::error::the Docker Hub token cannot delete tags; it needs the delete scope"
+              exit 1
+              ;;
+            *)
+              echo "::error::unexpected $code deleting ${IMAGE}:pr-${PR_NUMBER}"
+              exit 1
+              ;;
+          esac
