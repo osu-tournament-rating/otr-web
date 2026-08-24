@@ -1,5 +1,5 @@
 {
-  "id": "21e59dd0-863a-46c3-855e-098696b8f8ab",
+  "id": "3f017878-1d8f-4958-adaa-61c91fd741bd",
   "prevId": "a9107b9e-ed84-4249-bb53-1960e575950b",
   "version": "7",
   "dialect": "postgresql",
@@ -1269,20 +1269,20 @@
           "notNull": true,
           "default": false
         },
-        "title": {
-          "name": "title",
+        "title_override": {
+          "name": "title_override",
           "type": "varchar(512)",
           "primaryKey": false,
           "notNull": false
         },
-        "artist": {
-          "name": "artist",
+        "artist_override": {
+          "name": "artist_override",
           "type": "varchar(512)",
           "primaryKey": false,
           "notNull": false
         },
-        "set_owner_id": {
-          "name": "set_owner_id",
+        "set_owner_id_override": {
+          "name": "set_owner_id_override",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -1362,11 +1362,11 @@
           "method": "gin",
           "with": {}
         },
-        "ix_beatmaps_set_owner_id": {
-          "name": "ix_beatmaps_set_owner_id",
+        "ix_beatmaps_set_owner_id_override": {
+          "name": "ix_beatmaps_set_owner_id_override",
           "columns": [
             {
-              "expression": "set_owner_id",
+              "expression": "set_owner_id_override",
               "isExpression": false,
               "asc": true,
               "nulls": "last",
@@ -1389,11 +1389,11 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "fk_beatmaps_players_set_owner_id": {
-          "name": "fk_beatmaps_players_set_owner_id",
+        "fk_beatmaps_players_set_owner_id_override": {
+          "name": "fk_beatmaps_players_set_owner_id_override",
           "tableFrom": "beatmaps",
           "tableTo": "players",
-          "columnsFrom": ["set_owner_id"],
+          "columnsFrom": ["set_owner_id_override"],
           "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"

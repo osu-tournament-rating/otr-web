@@ -37,12 +37,12 @@ export default function BeatmapHeader({
   beatmap,
   relatedDifficulties,
 }: BeatmapHeaderProps) {
+  const setOwner = beatmap.setOwnerOverride ?? beatmap.beatmapset?.creator;
   const creators = Array.from(
     new Map(
-      [
-        ...(beatmap.beatmapset?.creator ? [beatmap.beatmapset.creator] : []),
-        ...beatmap.creators,
-      ].map((creator) => [creator.id, creator] as const)
+      [...(setOwner ? [setOwner] : []), ...beatmap.creators].map(
+        (creator) => [creator.id, creator] as const
+      )
     ).values()
   );
   const artist = getBeatmapArtist(beatmap) ?? 'Unknown artist';

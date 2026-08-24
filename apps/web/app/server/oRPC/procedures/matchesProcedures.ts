@@ -252,9 +252,9 @@ export const getMatch = publicProcedure
         beatmapBeatmapsetId: schema.beatmaps.beatmapsetId,
         beatmapDataFetchStatus: schema.beatmaps.dataFetchStatus,
         beatmapManualOverride: schema.beatmaps.manualOverride,
-        beatmapTitle: schema.beatmaps.title,
-        beatmapArtist: schema.beatmaps.artist,
-        beatmapSetOwnerId: schema.beatmaps.setOwnerId,
+        beatmapTitleOverride: schema.beatmaps.titleOverride,
+        beatmapArtistOverride: schema.beatmaps.artistOverride,
+        beatmapSetOwnerIdOverride: schema.beatmaps.setOwnerIdOverride,
         beatmapsetId: schema.beatmapsets.id,
         beatmapsetOsuId: schema.beatmapsets.osuId,
         beatmapsetTitle: schema.beatmapsets.title,
@@ -653,9 +653,9 @@ export const getMatch = publicProcedure
               beatmapsetId: game.beatmapBeatmapsetId ?? null,
               dataFetchStatus: game.beatmapDataFetchStatus ?? 0,
               manualOverride: game.beatmapManualOverride ?? false,
-              title: game.beatmapTitle ?? null,
-              artist: game.beatmapArtist ?? null,
-              setOwnerId: game.beatmapSetOwnerId ?? null,
+              title: game.beatmapTitleOverride ?? null,
+              artist: game.beatmapArtistOverride ?? null,
+              setOwnerIdOverride: game.beatmapSetOwnerIdOverride ?? null,
               beatmapset:
                 game.beatmapsetId != null
                   ? {

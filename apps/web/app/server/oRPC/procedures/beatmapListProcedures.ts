@@ -194,11 +194,11 @@ export const listBeatmaps = publicProcedure
           hp: schema.beatmaps.hp,
           totalLength: schema.beatmaps.totalLength,
           artist:
-            sql`coalesce(${schema.beatmaps.artist}, ${schema.beatmapsets.artist})`.as(
+            sql`coalesce(${schema.beatmaps.artistOverride}, ${schema.beatmapsets.artist})`.as(
               'artist'
             ),
           title:
-            sql`coalesce(${schema.beatmaps.title}, ${schema.beatmapsets.title})`.as(
+            sql`coalesce(${schema.beatmaps.titleOverride}, ${schema.beatmapsets.title})`.as(
               'title'
             ),
           beatmapsetOsuId: schema.beatmapsets.osuId,

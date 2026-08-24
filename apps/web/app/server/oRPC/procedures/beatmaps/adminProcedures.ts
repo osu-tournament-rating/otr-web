@@ -58,10 +58,10 @@ export const updateBeatmapAdmin = adminMutationProcedure
 
     await context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, async () => {
-        const [setOwnerId] = input.setOwnerOsuId
+        const [setOwnerIdOverride] = input.setOwnerOsuIdOverride
           ? await resolveCreatorPlayerIds(
               tx,
-              [input.setOwnerOsuId],
+              [input.setOwnerOsuIdOverride],
               queuedPlayerOsuIds
             )
           : [];
@@ -84,9 +84,9 @@ export const updateBeatmapAdmin = adminMutationProcedure
             ar: input.ar,
             sr: input.sr,
             maxCombo: input.maxCombo,
-            title: input.title || null,
-            artist: input.artist || null,
-            setOwnerId: setOwnerId ?? null,
+            titleOverride: input.titleOverride || null,
+            artistOverride: input.artistOverride || null,
+            setOwnerIdOverride: setOwnerIdOverride ?? null,
             manualOverride: true,
             updated: NOW,
           })

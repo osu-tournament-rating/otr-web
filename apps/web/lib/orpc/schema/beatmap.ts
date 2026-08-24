@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { Ruleset } from '@otr/core/osu';
+
 import {
   beatmapAttributeSelectSchema,
   beatmapSelectSchema,
@@ -35,29 +37,46 @@ export type BeatmapAttribute = z.infer<typeof BeatmapAttributeSchema>;
 export type Beatmap = z.infer<typeof BeatmapSchema>;
 
 /** Editable fields for a beatmap the osu! API no longer serves. */
-export const BeatmapAdminUpdateInputSchema = z.object({
-  id: z.number().int().positive(),
-  diffName: z.string().trim().min(1).max(512),
-  ruleset: RulesetSchema,
-  rankedStatus: z.number().int().min(-2).max(4),
-  totalLength: z.number().int().min(0).max(86_400),
-  drainLength: z.number().int().min(0).max(86_400),
-  bpm: z.number().min(0).max(10_000),
-  countCircle: z.number().int().min(0),
-  countSlider: z.number().int().min(0),
-  countSpinner: z.number().int().min(0),
-  cs: z.number().min(0).max(20),
-  hp: z.number().min(0).max(20),
-  od: z.number().min(0).max(20),
-  ar: z.number().min(0).max(20),
-  sr: z.number().min(0).max(100),
-  maxCombo: z.number().int().min(0).nullable(),
-  title: z.string().trim().max(512).nullable(),
-  artist: z.string().trim().max(512).nullable(),
-  /** osu! user ids; a missing player is created and queued for a fetch. */
-  setOwnerOsuId: z.number().int().positive().nullable(),
-  creatorOsuIds: z.array(z.number().int().positive()).max(16),
-});
+export const BeatmapAdminUpdateInputSchema = z
+  .object({
+    id: z.number().int().positive(),
+    diffName: z.string().trim().min(1).max(512),
+    ruleset: RulesetSchema,
+    rankedStatus: z.number().int().min(-2).max(4),
+    totalLength: z.number().int().min(0).max(86_400),
+    drainLength: z.number().int().min(0).max(86_400),
+    bpm: z.number().min(0).max(10_000),
+    countCircle: z.number().int().min(0),
+    countSlider: z.number().int().min(0),
+    countSpinner: z.number().int().min(0),
+    cs: z.number().min(0).max(20),
+    hp: z.number().min(0).max(20),
+    od: z.number().min(0).max(20),
+    ar: z.number().min(0).max(20),
+    sr: z.number().min(0).max(100),
+    maxCombo: z.number().int().min(0).nullable(),
+    titleOverride: z.string().trim().max(512).nullable(),
+    artistOverride: z.string().trim().max(512).nullable(),
+    /** osu! user ids; a missing player is created and queued for a fetch. */
+    setOwnerOsuIdOverride: z.number().int().positive().nullable(),
+    creatorOsuIds: z.array(z.number().int().positive()).max(16),
+  })
+  // osu!mania stores the key count in `cs`.
+  .refine(
+    (input) =>
+      !MANIA_RULESETS.has(input.ruleset) ||
+      (Number.isInteger(input.cs) && input.cs >= 1 && input.cs <= 9),
+    {
+      path: ['cs'],
+      message: 'osu!mania key count must be a whole number from 1 to 9',
+    }
+  );
+
+const MANIA_RULESETS = new Set<number>([
+  Ruleset.ManiaOther,
+  Ruleset.Mania4k,
+  Ruleset.Mania7k,
+]);
 
 export const BeatmapAdminUpdateResponseSchema = z.object({
   success: z.boolean(),

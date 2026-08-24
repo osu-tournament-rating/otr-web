@@ -94,17 +94,17 @@ export function getBeatmapAttributeRows(
 
 /** Metadata an admin filled in by hand, else the beatmapset's. */
 type BeatmapMetadata = {
-  artist?: string | null;
-  title?: string | null;
+  artistOverride?: string | null;
+  titleOverride?: string | null;
   beatmapset?: { artist?: string; title?: string } | null;
 };
 
 export function getBeatmapArtist(beatmap: BeatmapMetadata): string | null {
-  return beatmap.artist || beatmap.beatmapset?.artist || null;
+  return beatmap.artistOverride || beatmap.beatmapset?.artist || null;
 }
 
 export function getBeatmapTitle(beatmap: BeatmapMetadata): string | null {
-  return beatmap.title || beatmap.beatmapset?.title || null;
+  return beatmap.titleOverride || beatmap.beatmapset?.title || null;
 }
 
 /** A pooled beatmap whose set osu! no longer serves, detected by absent metadata. */

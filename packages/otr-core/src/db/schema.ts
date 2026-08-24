@@ -580,9 +580,9 @@ export const beatmaps = pgTable(
     manualOverride: boolean('manual_override').default(false).notNull(),
     // Set metadata for a deleted beatmap, which has no beatmapset to carry it.
     // Null everywhere else; readers fall back to the beatmapset.
-    title: varchar({ length: 512 }),
-    artist: varchar({ length: 512 }),
-    setOwnerId: integer('set_owner_id'),
+    titleOverride: varchar('title_override', { length: 512 }),
+    artistOverride: varchar('artist_override', { length: 512 }),
+    setOwnerIdOverride: integer('set_owner_id_override'),
     searchVector: tsVector('search_vector')
       .notNull()
       .generatedAlwaysAs(
@@ -609,14 +609,14 @@ export const beatmaps = pgTable(
       foreignColumns: [beatmapsets.id],
       name: 'fk_beatmaps_beatmapsets_beatmapset_id',
     }).onDelete('cascade'),
-    index('ix_beatmaps_set_owner_id').using(
+    index('ix_beatmaps_set_owner_id_override').using(
       'btree',
-      table.setOwnerId.asc().nullsLast().op('int4_ops')
+      table.setOwnerIdOverride.asc().nullsLast().op('int4_ops')
     ),
     foreignKey({
-      columns: [table.setOwnerId],
+      columns: [table.setOwnerIdOverride],
       foreignColumns: [players.id],
-      name: 'fk_beatmaps_players_set_owner_id',
+      name: 'fk_beatmaps_players_set_owner_id_override',
     }).onDelete('set null'),
   ]
 );

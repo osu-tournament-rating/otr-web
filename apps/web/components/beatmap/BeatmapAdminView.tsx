@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { AuditEntityType, Ruleset } from '@otr/core/osu';
+import { isManiaRuleset } from '@/lib/beatmaps/presentation';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 import AuditButton from '@/components/audit/AuditButton';
@@ -58,9 +59,15 @@ const formSchema = z.object({
   countSlider: z.coerce.number().int().min(0),
   countSpinner: z.coerce.number().int().min(0),
   maxCombo: z.coerce.number().int().min(0).nullable(),
-  title: z.string().trim().max(512),
-  artist: z.string().trim().max(512),
+  titleOverride: z.string().trim().max(512),
+  artistOverride: z.string().trim().max(512),
 });
+
+const maniaKeyCount = (values: { ruleset: unknown; cs: unknown }) =>
+  !isManiaRuleset(Number(values.ruleset) as Ruleset) ||
+  (Number.isInteger(Number(values.cs)) &&
+    Number(values.cs) >= 1 &&
+    Number(values.cs) <= 9);
 
 type FormValues = z.input<typeof formSchema>;
 
@@ -74,7 +81,12 @@ export default function BeatmapAdminView({
   const [open, setOpen] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(
+      formSchema.refine(maniaKeyCount, {
+        path: ['cs'],
+        message: 'Key count must be a whole number from 1 to 9',
+      })
+    ),
     defaultValues: {
       diffName: beatmap.diffName,
       ruleset: beatmap.ruleset,
@@ -90,21 +102,25 @@ export default function BeatmapAdminView({
       countSlider: beatmap.countSlider,
       countSpinner: beatmap.countSpinner,
       maxCombo: beatmap.maxCombo,
-      title: beatmap.title ?? beatmap.beatmapset?.title ?? '',
-      artist: beatmap.artist ?? beatmap.beatmapset?.artist ?? '',
+      titleOverride: beatmap.titleOverride ?? beatmap.beatmapset?.title ?? '',
+      artistOverride:
+        beatmap.artistOverride ?? beatmap.beatmapset?.artist ?? '',
     },
   });
 
   const [setOwner, setSetOwner] = useState<PlayerLookupResult[]>(
-    beatmap.beatmapset?.creator
-      ? [
-          {
-            osuId: beatmap.beatmapset.creator.osuId,
-            username: beatmap.beatmapset.creator.username,
-            playerId: beatmap.beatmapset.creator.id,
-          },
-        ]
-      : []
+    (() => {
+      const owner = beatmap.setOwnerOverride ?? beatmap.beatmapset?.creator;
+      return owner
+        ? [
+            {
+              osuId: owner.osuId,
+              username: owner.username,
+              playerId: owner.id,
+            },
+          ]
+        : [];
+    })()
   );
 
   const [mappers, setMappers] = useState<PlayerLookupResult[]>(
@@ -142,9 +158,9 @@ export default function BeatmapAdminView({
         ar: parsed.ar,
         sr: parsed.sr,
         maxCombo: parsed.maxCombo,
-        title: parsed.title || null,
-        artist: parsed.artist || null,
-        setOwnerOsuId: setOwner[0]?.osuId ?? null,
+        titleOverride: parsed.titleOverride || null,
+        artistOverride: parsed.artistOverride || null,
+        setOwnerOsuIdOverride: setOwner[0]?.osuId ?? null,
         creatorOsuIds: mappers.map((mapper) => mapper.osuId),
       });
 
@@ -212,7 +228,7 @@ export default function BeatmapAdminView({
                   <div className="grid gap-3 sm:grid-cols-2">
                     <FormField
                       control={form.control}
-                      name="artist"
+                      name="artistOverride"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Artist</FormLabel>
@@ -225,7 +241,7 @@ export default function BeatmapAdminView({
                     />
                     <FormField
                       control={form.control}
-                      name="title"
+                      name="titleOverride"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Title</FormLabel>
@@ -275,11 +291,13 @@ export default function BeatmapAdminView({
                   />
 
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {NUMERIC_FIELDS.map(({ name, label, step }) => (
+                    {numericFields(
+                      Number(form.watch('ruleset')) as Ruleset
+                    ).map(({ name, label, step, min, max }) => (
                       <FormField
                         key={name}
                         control={form.control}
-                        name={name}
+                        name={name as keyof FormValues}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{label}</FormLabel>
@@ -287,6 +305,8 @@ export default function BeatmapAdminView({
                               <Input
                                 type="number"
                                 step={step}
+                                min={min}
+                                max={max}
                                 {...field}
                                 value={
                                   field.value === null ||
@@ -321,12 +341,14 @@ export default function BeatmapAdminView({
   );
 }
 
-const NUMERIC_FIELDS = [
+const numericFields = (ruleset: Ruleset) => [
   { name: 'sr', label: 'Star rating', step: '0.01' },
   { name: 'bpm', label: 'BPM', step: '0.01' },
   { name: 'totalLength', label: 'Length (s)', step: '1' },
   { name: 'drainLength', label: 'Drain (s)', step: '1' },
-  { name: 'cs', label: 'CS', step: '0.1' },
+  isManiaRuleset(ruleset)
+    ? { name: 'cs', label: 'Keys', step: '1', min: 1, max: 9 }
+    : { name: 'cs', label: 'CS', step: '0.1' },
   { name: 'hp', label: 'HP', step: '0.1' },
   { name: 'od', label: 'OD', step: '0.1' },
   { name: 'ar', label: 'AR', step: '0.1' },
@@ -334,8 +356,4 @@ const NUMERIC_FIELDS = [
   { name: 'countSlider', label: 'Sliders', step: '1' },
   { name: 'countSpinner', label: 'Spinners', step: '1' },
   { name: 'maxCombo', label: 'Max combo', step: '1' },
-] as const satisfies ReadonlyArray<{
-  name: keyof FormValues;
-  label: string;
-  step: string;
-}>;
+];

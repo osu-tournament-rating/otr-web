@@ -238,8 +238,8 @@ export const beatmapsRelations = relations(beatmaps, ({ one, many }) => ({
     fields: [beatmaps.beatmapsetId],
     references: [beatmapsets.id],
   }),
-  setOwner: one(players, {
-    fields: [beatmaps.setOwnerId],
+  setOwnerOverride: one(players, {
+    fields: [beatmaps.setOwnerIdOverride],
     references: [players.id],
   }),
   games: many(games),
