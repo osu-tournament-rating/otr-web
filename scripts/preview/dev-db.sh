@@ -25,6 +25,12 @@ if [[ -r .env ]]; then
   set +a
 fi
 
+# The workflows reach this over `ssh host bash -s`, a non-interactive shell,
+# which reads neither ~/.profile nor the interactive half of ~/.bashrc. uv
+# installs to ~/.local/bin and is on PATH only for a login shell, so restore
+# cannot find it without this.
+PATH="$HOME/.local/bin:$PATH"
+
 CONTAINER="${DEV_DB_CONTAINER:-otr-dev-db}"
 DB_USER="${DEV_DB_USER:-postgres}"
 SEED_DB="${DEV_SEED_DB:-otr_dev_seed}"
