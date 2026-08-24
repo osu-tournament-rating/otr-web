@@ -300,13 +300,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PREVIEW_URL: ${{ steps.context.outputs.url }}
+          HEAD_SHA: ${{ needs.authorize.outputs.head_sha }}
         run: |
           set -euo pipefail
-          body=$(printf '%s\nPreview: %s\n' '<!-- otr-preview -->' "$PREVIEW_URL")
+          body=$(printf '%s\nDeployed `%s`: %s\n' '<!-- otr-preview -->' "${HEAD_SHA:0:7}" "$PREVIEW_URL")
 
-          # Edited in place rather than appended, so a redeploy does not leave
-          # a trail of stale URLs. The marker is how the comment is found
-          # again; it does not render.
+          # Edited in place rather than appended, so every deploy reports the
+          # commit it published without leaving a trail of stale URLs. The
+          # marker is how the comment is found again; it does not render.
           found=$(gh api "repos/$GITHUB_REPOSITORY/issues/${PR_NUMBER}/comments" --paginate \
             --jq '.[] | select(.body | startswith("<!-- otr-preview -->")) | .id')
           id=${found%%$'\n'*}
