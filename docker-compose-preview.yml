@@ -3,6 +3,13 @@
 # the data worker deliberately does not run here, so previews make no osu! API
 # calls. Deploy with a per-PR project name: `docker compose -p otr-pr-<n> up -d`.
 # No service may declare container_name or previews would collide.
+#
+# Every variable below comes from the .env the workflow assembles: the
+# PREVIEW_ENV secret, plus the per-PR lines it appends. The only keys that
+# secret needs beyond the ones interpolated here are BETTER_AUTH_SECRET and the
+# unused WEB_OSU_CLIENT_ID / WEB_OSU_CLIENT_SECRET placeholders, which reach the
+# app through env_file. Previews sign in through the test-auth endpoint, so
+# osu! OAuth is never called.
 
 services:
   web:

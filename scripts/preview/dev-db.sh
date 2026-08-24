@@ -8,7 +8,22 @@ set -euo pipefail
 #   clone <db>     create <db> from the seed, for PRs that add migrations
 #   drop <db>      remove a cloned database
 #
-# Configuration comes from the environment; see preview/README.md.
+# Run from the dev tier directory, the one holding docker-compose.yml. Both
+# workflows cd here first. Everything below can be overridden from the
+# environment; the defaults describe the tier the workflows build.
+#
+# Two databases, never interchangeable: the seed is the restore target and
+# stays idle so it can act as a template, and the live database is recreated
+# from it and shared by every preview.
+
+# The .env compose reads sits beside it and carries the postgres credentials.
+# Sourcing it keeps them in one place rather than a second secret that has to
+# be kept in step. Its keys are DOCKER_-prefixed, so nothing here collides.
+if [[ -r .env ]]; then
+  set -a
+  . ./.env
+  set +a
+fi
 
 CONTAINER="${DEV_DB_CONTAINER:-otr-dev-db}"
 DB_USER="${DEV_DB_USER:-postgres}"
@@ -17,7 +32,6 @@ LIVE_DB="${DEV_LIVE_DB:-otr_dev}"
 OTR_SCRIPTS_DIR="${OTR_SCRIPTS_DIR:-/srv/otr-scripts}"
 MAX_STALE_DAYS="${DEV_DB_MAX_STALE_DAYS:-14}"
 EXPECTED_MIGRATIONS="${EXPECTED_MIGRATIONS:-}"
-DB_URL_PREFIX="${DEV_DB_URL_PREFIX:-postgresql://postgres:password@otr-dev-db:5432/}"
 # staging-latest is rebuilt on every push to the default branch.
 MIGRATION_IMAGE="${DEV_MIGRATION_IMAGE:-stagecodes/otr-web:staging-latest}"
 NETWORK="${DEV_NETWORK:-otr-dev}"
@@ -35,6 +49,18 @@ ROW_FLOORS=(
 
 query() { # query <database> <sql>
   docker exec -i "$CONTAINER" psql -U "$DB_USER" -d "$1" -tAc "$2"
+}
+
+# Only the migration container needs a URL, and it dials over the otr-dev
+# network, so the host is the container alias rather than localhost. Built on
+# demand: drop and clone must still work when the password is not readable.
+db_url() { # db_url <database>
+  if [[ -n "${DEV_DB_URL_PREFIX:-}" ]]; then
+    echo "${DEV_DB_URL_PREFIX}$1"
+    return
+  fi
+  : "${DOCKER_POSTGRES_PASSWORD:?not set, and no .env beside the compose file to read it from}"
+  echo "postgresql://${DB_USER}:${DOCKER_POSTGRES_PASSWORD}@${CONTAINER}:5432/$1"
 }
 
 fail() {
@@ -103,7 +129,7 @@ restore() {
   # anything clones from it.
   echo "migrating $SEED_DB"
   docker run --rm --network "$NETWORK" \
-    -e DATABASE_URL="${DB_URL_PREFIX}${SEED_DB}" \
+    -e DATABASE_URL="$(db_url "$SEED_DB")" \
     "$MIGRATION_IMAGE" ./scripts/run-migrations.sh
 
   echo "rebuilding $LIVE_DB from $SEED_DB"
