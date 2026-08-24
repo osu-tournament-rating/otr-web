@@ -380,9 +380,8 @@ jobs:
         if: always()
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          # A delete-scoped token when one exists. Falling back to the push
-          # token only works if that token also carries the delete scope.
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_DELETE_TOKEN || secrets.DOCKERHUB_TOKEN }}
+          # Needs the delete scope, which the push steps do not.
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
           IMAGE: ${{ vars.WEB_IMAGE || 'stagecodes/otr-web' }}
         run: |
           set -euo pipefail
