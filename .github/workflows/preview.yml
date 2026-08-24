@@ -205,8 +205,10 @@ jobs:
           file: apps/web/Dockerfile
           push: true
           tags: stagecodes/otr-web:pr-${{ env.PR_NUMBER }}
+          # Read the cache the default branch builds. Previews deliberately
+          # write none: nothing reads a per-PR scope, so exporting one only
+          # spends build time and the repository's 10GB cache quota.
           cache-from: type=gha,scope=web
-          cache-to: type=gha,scope=web-pr-${{ env.PR_NUMBER }},mode=max
 
       - name: Connect to tailscale
         uses: tailscale/github-action@v4
