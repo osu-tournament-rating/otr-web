@@ -10,8 +10,11 @@ services:
     container_name: otr-dev-db
     restart: unless-stopped
     shm_size: '256m'
+    # Loopback only: previews reach postgres over the otr-dev network and
+    # dev-db.sh goes through docker exec, so otr-scripts is the only consumer
+    # of the published port and it connects on localhost.
     ports:
-      - '5632:5432'
+      - '127.0.0.1:5632:5432'
     environment:
       POSTGRES_USER: ${DOCKER_POSTGRES_USER}
       POSTGRES_PASSWORD: ${DOCKER_POSTGRES_PASSWORD}
@@ -38,8 +41,8 @@ services:
     container_name: otr-dev-rabbitmq
     restart: unless-stopped
     ports:
-      - '5872:5672'
-      - '15872:15672'
+      - '127.0.0.1:5872:5672'
+      - '127.0.0.1:15872:15672'
     environment:
       RABBITMQ_DEFAULT_USER: ${DOCKER_RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${DOCKER_RABBITMQ_PASSWORD}
