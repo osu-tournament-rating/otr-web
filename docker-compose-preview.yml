@@ -1,0 +1,80 @@
+# Per-PR preview stack: website and its tailnet endpoint only.
+# The database and queue come from the shared dev tier (docker-compose-dev.yml);
+# the data worker deliberately does not run here, so previews make no osu! API
+# calls. Deploy with a per-PR project name: `docker compose -p otr-pr-<n> up -d`.
+# No service may declare container_name or previews would collide.
+#
+# Every variable below comes from the .env the workflow assembles: the
+# PREVIEW_ENV secret, plus the per-PR lines it appends. The only keys that
+# secret needs beyond the ones interpolated here are BETTER_AUTH_SECRET and the
+# unused WEB_OSU_CLIENT_ID / WEB_OSU_CLIENT_SECRET placeholders, which reach the
+# app through env_file. Previews sign in through the test-auth endpoint, so
+# osu! OAuth is never called.
+
+services:
+  web:
+    image: stagecodes/otr-web:${IMAGE_TAG}
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
+      RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
+      BETTER_AUTH_URL: ${PREVIEW_URL}
+      NEXT_PUBLIC_APP_BASE_URL: ${PREVIEW_URL}
+      # Pinned here rather than in .env so a preview cannot come up without
+      # a login path or with admin mutations frozen by the maintenance window.
+      E2E_TEST_AUTH: 'true'
+      MAINTENANCE_WINDOW_ENABLED: 'false'
+    networks:
+      - default
+      - otr-dev
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'bun -e "fetch(\"http://localhost:3000/api/health\").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Only for PRs that add migrations, which run against their own cloned
+  # database. Never run this against the shared dev database.
+  migrate:
+    image: stagecodes/otr-web:${IMAGE_TAG}
+    profiles:
+      - migrate
+    restart: 'no'
+    env_file:
+      - ./.env
+    environment:
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
+    command: ['./scripts/run-migrations.sh']
+    networks:
+      - otr-dev
+
+  tailscale:
+    image: tailscale/tailscale:latest
+    restart: unless-stopped
+    environment:
+      # OAuth client credentials mint an ephemeral node, so the tailnet entry
+      # removes itself when the stack comes down.
+      TS_CLIENT_ID: ${TS_CLIENT_ID}
+      TS_CLIENT_SECRET: ${TS_CLIENT_SECRET}
+      TS_HOSTNAME: ${PREVIEW_HOSTNAME}
+      TS_EXTRA_ARGS: --advertise-tags=tag:preview
+      TS_SERVE_CONFIG: /config/serve.json
+      TS_STATE_DIR: /tmp/tailscale
+    volumes:
+      # Must be a directory; Tailscale watches it for changes.
+      - ./ts-config:/config
+    depends_on:
+      - web
+    networks:
+      - default
+
+networks:
+  otr-dev:
+    external: true
