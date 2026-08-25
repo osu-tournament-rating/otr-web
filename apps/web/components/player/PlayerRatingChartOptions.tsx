@@ -53,7 +53,7 @@ export default function PlayerRatingChartOptions({
           <span className="hidden sm:inline">Options</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="z-1 w-64 p-4 font-sans" align="end">
+      <PopoverContent className="w-64 p-4 font-sans" align="end">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}

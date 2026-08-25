@@ -88,7 +88,7 @@ export default async function Page(props: {
       <section
         aria-label="Beatmap listing"
         data-testid="beatmap-results"
-        className="overflow-hidden rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none"
+        className="overflow-clip rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none"
       >
         <BeatmapListContent
           beatmaps={data.items}

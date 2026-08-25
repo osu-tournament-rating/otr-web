@@ -118,7 +118,7 @@ export default function LeaderboardFilter({
       </PopoverTrigger>
       <PopoverContent
         data-testid="leaderboard-filter-popover"
-        className="z-1 w-80 p-4"
+        className="w-80 p-4"
         align="end"
       >
         <Form {...form}>
