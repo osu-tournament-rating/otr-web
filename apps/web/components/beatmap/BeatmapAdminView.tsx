@@ -261,15 +261,15 @@ export default function BeatmapAdminView({
         entityId={beatmap.id}
         darkMode
       />
-      <SimpleTooltip
-        content={
-          isDeleted
-            ? 'Edit beatmap data'
-            : 'Only beatmaps the osu! API no longer serves can be edited by hand'
-        }
-      >
-        <span>
-          <Dialog open={open} onOpenChange={requestClose}>
+      <Dialog open={open} onOpenChange={requestClose}>
+        <SimpleTooltip
+          content={
+            isDeleted
+              ? 'Edit beatmap data'
+              : 'Only beatmaps the osu! API no longer serves can be edited by hand'
+          }
+        >
+          <span>
             <DialogTrigger asChild>
               <Button
                 variant="ghost"
@@ -281,206 +281,206 @@ export default function BeatmapAdminView({
                 <PencilLine className="size-3" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="flex flex-col gap-0 overflow-y-hidden p-0 sm:max-w-2xl">
-              <DialogHeader className="border-b px-5 py-4 pr-12">
-                <DialogTitle>Edit beatmap</DialogTitle>
-                <DialogDescription>
-                  The osu! API no longer serves this beatmap. What you enter
-                  here is what the site will show.
-                </DialogDescription>
-              </DialogHeader>
+          </span>
+        </SimpleTooltip>
+        <DialogContent className="flex flex-col gap-0 overflow-y-hidden p-0 sm:max-w-2xl">
+          <DialogHeader className="border-b px-5 py-4 pr-12">
+            <DialogTitle>Edit beatmap</DialogTitle>
+            <DialogDescription>
+              The osu! API no longer serves this beatmap. What you enter here is
+              what the site will show.
+            </DialogDescription>
+          </DialogHeader>
 
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(() => setMode('confirm'))}
-                  className="flex min-h-0 flex-col"
-                >
-                  <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
-                    <FieldGroup icon={Music2} title="Identity">
-                      <FormField
-                        control={form.control}
-                        name="diffName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FieldLabel>Difficulty</FieldLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <FormField
-                          control={form.control}
-                          name="artistOverride"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FieldLabel>Artist</FieldLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="titleOverride"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FieldLabel>Title</FieldLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </FieldGroup>
-
-                    <FieldGroup icon={UserRound} title="Attribution">
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(() => setMode('confirm'))}
+              className="flex min-h-0 flex-col"
+            >
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
+                <FieldGroup icon={Music2} title="Identity">
+                  <FormField
+                    control={form.control}
+                    name="diffName"
+                    render={({ field }) => (
                       <FormItem>
-                        <FieldLabel>Set owner</FieldLabel>
-                        <PlayerPicker
-                          value={setOwner}
-                          onChange={setSetOwner}
-                          label="set owner"
-                        />
+                        <FieldLabel>Difficulty</FieldLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
                       </FormItem>
-                      <FormItem>
-                        <FieldLabel>Mappers</FieldLabel>
-                        <PlayerPicker
-                          value={mappers}
-                          onChange={setMappers}
-                          multiple
-                          label="mappers"
-                        />
-                      </FormItem>
-                    </FieldGroup>
-
-                    <FieldGroup
-                      icon={Gauge}
-                      title="Difficulty and timing"
-                      info="CS carries the key count in osu!mania."
-                    >
-                      <FormField
-                        control={form.control}
-                        name="ruleset"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FieldLabel>Ruleset</FieldLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="w-full">
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <RulesetSelectContent />
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        {DIFFICULTY_FIELDS.map((field) => (
-                          <NumberField
-                            key={field.name}
-                            control={form.control}
-                            {...field}
-                          />
-                        ))}
-                      </div>
-                    </FieldGroup>
-
-                    <FieldGroup icon={Shapes} title="Objects">
-                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        {OBJECT_FIELDS.map((field) => (
-                          <NumberField
-                            key={field.name}
-                            control={form.control}
-                            {...field}
-                          />
-                        ))}
-                      </div>
-                    </FieldGroup>
-                  </div>
-
-                  <div className="space-y-3 border-t bg-muted/30 px-5 py-4">
-                    <Alert
-                      variant="destructive"
-                      className="border-destructive/40 bg-destructive/5"
-                    >
-                      <TriangleAlert />
-                      <AlertTitle>Saving is permanent</AlertTitle>
-                      <AlertDescription>
-                        This beatmap stops receiving osu! API updates for good.
-                        Nothing can undo it.
-                      </AlertDescription>
-                    </Alert>
-
-                    {saveError ? (
-                      <p className="text-sm text-destructive-foreground">
-                        {saveError}
-                      </p>
-                    ) : null}
-
-                    {mode === 'edit' ? (
-                      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => requestClose(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button type="submit" variant="destructive">
-                          Save changes
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-                        <p className="text-sm sm:mr-auto">
-                          Pin this beatmap permanently?
-                        </p>
-                        <div className="flex flex-col-reverse gap-2 sm:flex-row">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            disabled={saving}
-                            onClick={() => setMode('edit')}
-                          >
-                            Back
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            disabled={saving}
-                            onClick={save}
-                          >
-                            {saving ? (
-                              <>
-                                <Loader2 className="animate-spin" />
-                                Saving
-                              </>
-                            ) : (
-                              'Save permanently'
-                            )}
-                          </Button>
-                        </div>
-                      </div>
                     )}
+                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="artistOverride"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FieldLabel>Artist</FieldLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="titleOverride"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FieldLabel>Title</FieldLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
-        </span>
-      </SimpleTooltip>
+                </FieldGroup>
+
+                <FieldGroup icon={UserRound} title="Attribution">
+                  <FormItem>
+                    <FieldLabel>Set owner</FieldLabel>
+                    <PlayerPicker
+                      value={setOwner}
+                      onChange={setSetOwner}
+                      label="set owner"
+                    />
+                  </FormItem>
+                  <FormItem>
+                    <FieldLabel>Mappers</FieldLabel>
+                    <PlayerPicker
+                      value={mappers}
+                      onChange={setMappers}
+                      multiple
+                      label="mappers"
+                    />
+                  </FormItem>
+                </FieldGroup>
+
+                <FieldGroup
+                  icon={Gauge}
+                  title="Difficulty and timing"
+                  info="CS carries the key count in osu!mania."
+                >
+                  <FormField
+                    control={form.control}
+                    name="ruleset"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FieldLabel>Ruleset</FieldLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <RulesetSelectContent />
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {DIFFICULTY_FIELDS.map((field) => (
+                      <NumberField
+                        key={field.name}
+                        control={form.control}
+                        {...field}
+                      />
+                    ))}
+                  </div>
+                </FieldGroup>
+
+                <FieldGroup icon={Shapes} title="Objects">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {OBJECT_FIELDS.map((field) => (
+                      <NumberField
+                        key={field.name}
+                        control={form.control}
+                        {...field}
+                      />
+                    ))}
+                  </div>
+                </FieldGroup>
+              </div>
+
+              <div className="space-y-3 border-t bg-muted/30 px-5 py-4">
+                <Alert
+                  variant="destructive"
+                  className="border-destructive/40 bg-destructive/5"
+                >
+                  <TriangleAlert />
+                  <AlertTitle>Saving is permanent</AlertTitle>
+                  <AlertDescription>
+                    This beatmap stops receiving osu! API updates for good.
+                    Nothing can undo it.
+                  </AlertDescription>
+                </Alert>
+
+                {saveError ? (
+                  <p className="text-sm text-destructive-foreground">
+                    {saveError}
+                  </p>
+                ) : null}
+
+                {mode === 'edit' ? (
+                  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => requestClose(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" variant="destructive">
+                      Save changes
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+                    <p className="text-sm sm:mr-auto">
+                      Pin this beatmap permanently?
+                    </p>
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={saving}
+                        onClick={() => setMode('edit')}
+                      >
+                        Back
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        disabled={saving}
+                        onClick={save}
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className="animate-spin" />
+                            Saving
+                          </>
+                        ) : (
+                          'Save permanently'
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={discarding} onOpenChange={setDiscarding}>
         <AlertDialogContent>
