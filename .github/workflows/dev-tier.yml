@@ -150,6 +150,7 @@ jobs:
               nightly)
                 ./scripts/preview/dev-db.sh restore
                 ./scripts/preview/dev-db.sh reap
+                docker image prune -f
                 ;;
             esac
           EOF

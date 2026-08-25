@@ -107,6 +107,10 @@ create table drizzle.__drizzle_migrations (
 );
 insert into drizzle.__drizzle_migrations (created_at, hash) values (1000, 'aaa');
 SQL
+if [[ "${STUB_RESTORE_PARTIAL:-}" == true ]]; then
+  docker exec -i "$DEV_DB_CONTAINER" psql -U postgres -d "$DEV_SEED_DB" -tAc \
+    "alter table matches drop constraint matches_tournament_id_fkey" >/dev/null
+fi
 STUB
 
 # Stands in for drizzle's migrator, including the rule that decides what to
@@ -117,7 +121,7 @@ set -euo pipefail
 database="$1"
 echo "connecting to postgresql://postgres:$DOCKER_POSTGRES_PASSWORD@db:5432/$database"
 echo "DETAIL:  Key (osu_id)=(12345) already exists."
-run() { docker exec -i "$DEV_DB_CONTAINER" psql -U postgres -d "$database" -tAc "$1"; }
+run() { docker exec "$DEV_DB_CONTAINER" psql -U postgres -d "$database" -tAc "$1"; }
 run "create schema if not exists drizzle" >/dev/null
 run "create table if not exists drizzle.__drizzle_migrations
   (id serial primary key, hash text not null, created_at bigint)" >/dev/null
@@ -250,6 +254,16 @@ status=0
 out="$(dev_db drop otr_test_live 2>&1)" || status=$?
 equals "drop refuses a database outside the per-PR namespace" "$status" 1
 contains "drop says why" "$out" "not a per-PR database name"
+
+# a restore that dies partway never reaches the live database
+live="$(psql_scratch postgres "select oid from pg_database where datname='otr_test_live'")"
+status=0
+out="$(STUB_RESTORE_PARTIAL=true dev_db restore 2>&1)" || status=$?
+equals "a partial restore fails" "$status" 1
+contains "the failure names the problem" "$out" "restore was incomplete"
+missing "a partial restore does not rebuild the live database" "$out" "rebuilding otr_test_live"
+equals "the live database is untouched" \
+  "$(psql_scratch postgres "select oid from pg_database where datname='otr_test_live'")" "$live"
 
 # R8: a second mutating operation waits, then gives up
 STUB_RESTORE_SLEEP=10 dev_db restore >/dev/null 2>&1 &
