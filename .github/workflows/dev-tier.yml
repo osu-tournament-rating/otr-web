@@ -105,9 +105,9 @@ jobs:
             docker compose up -d --remove-orphans
             # Nothing consumes these queues without a data worker, so let idle
             # ones delete themselves after a day.
-            until docker exec otr-dev-rabbitmq rabbitmq-diagnostics -q ping; do sleep 3; done
+            until docker exec otr-dev-rabbitmq rabbitmq-diagnostics -q ping </dev/null; do sleep 3; done
             docker exec otr-dev-rabbitmq rabbitmqctl set_policy preview-expiry \
-              '.*' '{"expires":86400000}' --apply-to queues
+              '.*' '{"expires":86400000}' --apply-to queues </dev/null
           EOF
 
       - name: Run database operation
@@ -122,12 +122,11 @@ jobs:
           EXPECTED_JOURNAL: ${{ steps.journal.outputs.expected }}
         run: |
           set -euo pipefail
-          # The host cannot ask GitHub what is still open, and must never be
-          # given a token. A failure here stops the run before the reaper sees
-          # an empty list and reads it as nothing being open.
+          . scripts/preview/dev-db-lib.sh
+          # Resolved here; the host has no GitHub token.
           open_prs=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open \
             --limit 200 --json number --jq '.[].number')
-          echo "$(wc -l <<<"$open_prs") open pull requests"
+          echo "$(count_lines "$open_prs") open pull requests"
 
           ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
             bash -s -- "$DEV_REMOTE_PATH" "$ACTION" "$OTR_SCRIPTS_DIR" \
@@ -141,9 +140,8 @@ jobs:
             export PREVIEW_REMOTE_PATH="$6"
 
             case "$2" in
-              # A first deploy has no database yet, and a migration merged
-              # since the last run only needs migrating forward.
-              deploy | check) ./scripts/preview/dev-db.sh sync ;;
+              deploy) ./scripts/preview/dev-db.sh sync ;;
+              check) ./scripts/preview/dev-db.sh check ;;
               restore) ./scripts/preview/dev-db.sh restore ;;
               reap) ./scripts/preview/dev-db.sh reap ;;
               reap-dry-run) ./scripts/preview/dev-db.sh reap --dry-run ;;

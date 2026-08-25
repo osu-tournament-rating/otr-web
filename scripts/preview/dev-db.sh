@@ -74,7 +74,7 @@ read -ra ROW_FLOORS <<<"${DEV_DB_ROW_FLOORS:-players:50000 tournaments:1500 \
 matches:75000 games:500000 game_scores:2000000 rating_adjustments:2000000}"
 
 query() { # query <database> <sql>
-  docker exec -i "$CONTAINER" psql -U "$DB_USER" -d "$1" -tAc "$2"
+  docker exec "$CONTAINER" psql -U "$DB_USER" -d "$1" -tAc "$2" </dev/null
 }
 
 # Only the migration container needs a URL, and it dials over the otr-dev
@@ -120,9 +120,9 @@ require_clone_name() {
 }
 
 applied_journal() { # applied_journal <database>
-  query "$1" "select coalesce((select string_agg(created_at || ' ' || hash, chr(10) order by id)
-    from drizzle.__drizzle_migrations), '')
-    where to_regclass('drizzle.__drizzle_migrations') is not null"
+  [[ "$(query "$1" "select to_regclass('drizzle.__drizzle_migrations') is not null")" == t ]] || return 0
+  query "$1" "select coalesce(string_agg(created_at || ' ' || hash, chr(10) order by id), '')
+    from drizzle.__drizzle_migrations"
 }
 
 provenance() { # provenance <database>
@@ -143,11 +143,11 @@ migrate() { # migrate <database>
   local output status=0
   if [[ -n "${DEV_MIGRATOR_COMMAND:-}" ]]; then
     # shellcheck disable=SC2086 # the seam is a command line, not one word
-    output="$($DEV_MIGRATOR_COMMAND "$1" 2>&1)" || status=$?
+    output="$($DEV_MIGRATOR_COMMAND "$1" 2>&1 </dev/null)" || status=$?
   else
     output="$(docker run --rm --network "$NETWORK" \
       -e DATABASE_URL="$(db_url "$1")" \
-      "$MIGRATION_IMAGE" ./scripts/run-migrations.sh 2>&1)" || status=$?
+      "$MIGRATION_IMAGE" ./scripts/run-migrations.sh 2>&1 </dev/null)" || status=$?
   fi
   redact <<<"$output"
   [[ "$status" == 0 ]] || fail "migrating $1 failed"
@@ -157,7 +157,7 @@ migrate() { # migrate <database>
 health_problem() { # health_problem <database>
   local database="$1" value entry table floor
 
-  if ! docker exec "$CONTAINER" pg_isready -U "$DB_USER" >/dev/null 2>&1; then
+  if ! docker exec "$CONTAINER" pg_isready -U "$DB_USER" >/dev/null 2>&1 </dev/null; then
     echo "postgres is not accepting connections"
     return 1
   fi
@@ -204,7 +204,7 @@ capabilities() {
 
 classify() { # classify <database>
   require_journal
-  docker exec "$CONTAINER" pg_isready -U "$DB_USER" >/dev/null 2>&1 ||
+  docker exec "$CONTAINER" pg_isready -U "$DB_USER" >/dev/null 2>&1 </dev/null ||
     fail "postgres is not accepting connections"
   database_exists "$1" || fail "database $1 does not exist"
 
@@ -229,7 +229,7 @@ check() {
 sync() {
   require_journal
   local problem status
-  if ! problem="$(health_problem "$LIVE_DB")"; then
+  if ! problem="$(health_problem "$SEED_DB")" || ! problem="$(health_problem "$LIVE_DB")"; then
     echo "sync: restoring, $problem"
     restore
     return
@@ -258,11 +258,12 @@ restore() {
   # --db-only keeps this to the dev tier's own db container. The scoping that
   # keeps it off production lives in the otr-scripts .env: OTR_WEB_DIR must
   # point at the dev tier directory and DB_NAME at the seed.
-  (
-    cd "$OTR_SCRIPTS_DIR"
-    # shellcheck disable=SC2086 # the seam is a command line, not one word
-    ${DEV_RESTORE_COMMAND:-uv run python src/main.py --script recovery --recovery-bucket dev --db-only}
-  )
+  local output status=0
+  # shellcheck disable=SC2086 # the seam is a command line, not one word
+  output="$(cd "$OTR_SCRIPTS_DIR" && ${DEV_RESTORE_COMMAND:-uv run python src/main.py \
+    --script recovery --recovery-bucket dev --db-only} 2>&1 </dev/null)" || status=$?
+  redact <<<"$output"
+  [[ "$status" == 0 ]] || fail "restore of $SEED_DB failed (exit $status)"
 
   database_exists "$SEED_DB" || fail "restore did not produce $SEED_DB"
 
@@ -289,7 +290,7 @@ restore() {
 
 capacity() { # capacity <target>
   local free seed clones verdict
-  free="$(docker exec "$CONTAINER" sh -c 'df -P -B1 "${PGDATA:-/var/lib/postgresql/data}"' |
+  free="$(docker exec "$CONTAINER" sh -c 'df -P -B1 "${PGDATA:-/var/lib/postgresql/data}"' </dev/null |
     awk 'NR == 2 { print $4 }')"
   seed="$(database_size "$SEED_DB")"
   clones="$(query postgres "select count(*) from pg_database
@@ -311,6 +312,12 @@ capacity() { # capacity <target>
 clone() { # clone <database>
   require_journal
   require_clone_name "$1"
+
+  local problem
+  if ! problem="$(health_problem "$SEED_DB")"; then
+    echo "clone: restoring first, $problem"
+    restore
+  fi
 
   local seed_generation exists=false status='' generation='' created='' age='' action
   seed_generation="$(provenance_field "$(provenance "$SEED_DB")" generation)"
@@ -383,8 +390,6 @@ drop() { # drop <database>
   echo "dropped $1"
 }
 
-# Teardown only runs when a pull request closes, so a cancelled or failed run
-# leaks a full copy of the replica.
 reap() { # reap [--dry-run] [--force]
   local dry=false force=false
   while [[ $# -gt 0 ]]; do
@@ -396,8 +401,7 @@ reap() { # reap [--dry-run] [--force]
     shift
   done
 
-  # Unset means the runner never asked GitHub, which is not the same as no
-  # pull request being open.
+  # Unset means the runner never asked GitHub; empty means nothing is open.
   [[ -n "${OPEN_PRS+set}" ]] || fail "OPEN_PRS is not set; the runner must pass it in"
 
   local existing candidates count database number size total=0
@@ -435,7 +439,7 @@ remove_stack() { # remove_stack <pr number>
       cd "$directory"
       # No -v: the compose file names the volumes, so a preview could
       # otherwise nominate one belonging to something else on the host.
-      docker compose -p "otr-pr-$1" down --remove-orphans
+      docker compose -p "otr-pr-$1" down --remove-orphans </dev/null
     ) || true
     rm -rf "$directory"
   else
@@ -449,9 +453,7 @@ usage() {
   exit 2
 }
 
-# Taken once, here, so no function can re-enter it. Shared for the read-only
-# subcommands: a classification that runs while restore is dropping the live
-# database would otherwise report a false divergence.
+# Taken once, here; read-only subcommands share it.
 lock() { # lock <-s|-x>
   exec 9>"$LOCK_FILE"
   flock -w "$LOCK_WAIT" -E 4 "$1" 9 || {

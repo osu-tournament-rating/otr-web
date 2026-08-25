@@ -59,10 +59,7 @@ classify_journal() { # classify_journal <applied> <expected>
 }
 
 # share | share-behind | isolate | rebase-required, then a short reason.
-#
-# Clones are templated from the seed, which sits at the base branch tip, and
-# the migrator only compares max(created_at): a head entry older than the
-# base's newest entry would be skipped without any error, so refuse it.
+# rebase-required: drizzle applies only entries newer than max(created_at).
 decide_isolation() { # decide_isolation <base journal> <head journal>
   local -a base=() head=()
   if [[ -n "$1" ]]; then mapfile -t base <<<"$1"; fi

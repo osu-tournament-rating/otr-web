@@ -56,6 +56,10 @@ psql_scratch() { # psql_scratch <database> <sql>
   docker exec -i "$container" psql -U postgres -d "$1" -tAc "$2"
 }
 
+fk_count() { # fk_count <database>
+  psql_scratch "$1" "select count(*) from pg_constraint where conname='matches_tournament_id_fkey'"
+}
+
 docker network create "$network" >/dev/null
 docker run -d --name "$container" --network "$network" \
   -e POSTGRES_PASSWORD=harness-password postgres:17 >/dev/null
@@ -73,7 +77,8 @@ ENVFILE
 
 # Stands in for the otr-scripts replica recovery: builds the seed with one
 # migration recorded, as a production replica trailing the default branch
-# would arrive.
+# would arrive. STUB_RESTORE_PARTIAL leaves the foreign key off and exits 0;
+# STUB_RESTORE_FAIL leaves it off and exits 1, as a psql load that died would.
 cat > stubs/restore-stub.sh <<'STUB'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -107,9 +112,14 @@ create table drizzle.__drizzle_migrations (
 );
 insert into drizzle.__drizzle_migrations (created_at, hash) values (1000, 'aaa');
 SQL
-if [[ "${STUB_RESTORE_PARTIAL:-}" == true ]]; then
+if [[ "${STUB_RESTORE_PARTIAL:-}" == true || "${STUB_RESTORE_FAIL:-}" == true ]]; then
   docker exec -i "$DEV_DB_CONTAINER" psql -U postgres -d "$DEV_SEED_DB" -tAc \
     "alter table matches drop constraint matches_tournament_id_fkey" >/dev/null
+fi
+if [[ "${STUB_RESTORE_FAIL:-}" == true ]]; then
+  echo 'ERROR:  invalid input syntax for type integer: "x"' >&2
+  echo 'CONTEXT:  COPY matches, line 3: "secret-row"' >&2
+  exit 1
 fi
 STUB
 
@@ -172,6 +182,13 @@ equals "sync leaves the live database at the journal" \
   "$(psql_scratch otr_test_live 'select count(*) from drizzle.__drizzle_migrations')" 2
 contains "check passes after sync" "$(dev_db check)" "dev-db check passed"
 
+# the workflows deliver the host script on stdin; nothing here may read it
+out="$(printf '%s\n' './scripts/preview/dev-db.sh restore' \
+  './scripts/preview/dev-db.sh info otr_test_live' 'echo AFTER' | bash -s 2>&1)"
+contains "a piped restore runs" "$out" "rebuilt otr_test_live"
+contains "a piped info runs" "$out" "database=otr_test_live"
+contains "the piped script runs to its end" "$out" "AFTER"
+
 # a migration merged to the default branch, R2
 export EXPECTED_JOURNAL=$'1000 aaa\n2000 bbb\n3000 ccc'
 out="$(dev_db sync 2>&1)"
@@ -210,6 +227,12 @@ contains "the disk refusal reports free space" "$out" "free"
 psql_scratch postgres "comment on database otr_test_seed is '{\"generation\":1,\"created\":1}'" >/dev/null
 contains "a clone from an older seed generation is recreated" \
   "$(dev_db clone otr_pr_1 2>&1)" "action=recreate"
+contains "a second clone is created" "$(dev_db clone otr_pr_2 2>&1)" "action=create"
+
+psql_scratch otr_pr_2 "drop schema drizzle cascade" >/dev/null 2>&1
+out="$(dev_db classify otr_pr_2)"
+contains "a database with no journal table is behind" "$out" "status=behind"
+contains "and has nothing applied" "$out" "applied=0"
 
 # info, R7
 out="$(dev_db info otr_pr_1)"
@@ -218,33 +241,38 @@ contains "info reports a readable size" "$out" "size_pretty="
 contains "info reports the data age" "$out" "data_age_seconds="
 
 # reap, R6
-mkdir -p "$work/previews/pr-1"
+mkdir -p "$work/previews/pr-1" "$work/previews/pr-2"
 status=0
 out="$(dev_db reap 2>&1)" || status=$?
 equals "reap refuses without OPEN_PRS" "$status" 1
 contains "reap says why it refused" "$out" "OPEN_PRS is not set"
 
+export OPEN_PRS=$'1\n2'
+out="$(dev_db reap --dry-run)"
+contains "open pull requests keep their databases" "$out" "reap: 0 databases"
+
 export OPEN_PRS=1
 out="$(dev_db reap --dry-run)"
-contains "an open pull request keeps its database" "$out" "reap: 0 databases"
-
-export OPEN_PRS=
-out="$(dev_db reap --dry-run)"
-contains "a dry run reports the database it would remove" "$out" "would remove otr_pr_1"
+contains "a dry run reports the database it would remove" "$out" "would remove otr_pr_2"
+missing "an open pull request keeps its database" "$out" "otr_pr_1"
 contains "a dry run reports the bytes it would free" "$out" "reap: 1 databases"
 equals "a dry run removes nothing" \
-  "$(psql_scratch postgres "select count(*) from pg_database where datname='otr_pr_1'")" 1
+  "$(psql_scratch postgres "select count(*) from pg_database where datname='otr_pr_2'")" 1
 
+export OPEN_PRS=
 status=0
-out="$(DEV_DB_REAP_LIMIT=0 dev_db reap 2>&1)" || status=$?
+out="$(DEV_DB_REAP_LIMIT=1 dev_db reap 2>&1)" || status=$?
 equals "reap refuses to exceed its limit" "$status" 1
 contains "reap names the limit" "$out" "DEV_DB_REAP_LIMIT"
 
 out="$(dev_db reap 2>&1)"
-contains "reap removes the orphan" "$out" "removed otr_pr_1"
-equals "the orphan database is gone" \
-  "$(psql_scratch postgres "select count(*) from pg_database where datname='otr_pr_1'")" 0
-equals "the orphan directory is gone" "$([[ -d "$work/previews/pr-1" ]] && echo yes || echo no)" no
+contains "reap removes the first orphan" "$out" "removed otr_pr_1"
+contains "reap removes the second orphan" "$out" "removed otr_pr_2"
+contains "reap counts every orphan" "$out" "reap: 2 databases"
+equals "the orphan databases are gone" \
+  "$(psql_scratch postgres "select count(*) from pg_database where datname in ('otr_pr_1','otr_pr_2')")" 0
+equals "the orphan directories are gone" \
+  "$([[ -d "$work/previews/pr-1" || -d "$work/previews/pr-2" ]] && echo yes || echo no)" no
 equals "reap leaves the seed and live databases alone" \
   "$(psql_scratch postgres "select count(*) from pg_database
     where datname in ('otr_test_seed','otr_test_live')")" 2
@@ -264,6 +292,25 @@ contains "the failure names the problem" "$out" "restore was incomplete"
 missing "a partial restore does not rebuild the live database" "$out" "rebuilding otr_test_live"
 equals "the live database is untouched" \
   "$(psql_scratch postgres "select oid from pg_database where datname='otr_test_live'")" "$live"
+
+# a restore that exits partway leaves a seed that must never be templated
+status=0
+out="$(STUB_RESTORE_FAIL=true dev_db restore 2>&1)" || status=$?
+equals "a failed restore exits 1" "$status" 1
+contains "the failure reports the exit status" "$out" "restore of otr_test_seed failed (exit 1)"
+missing "restore output drops CONTEXT lines" "$out" "secret-row"
+missing "a failed restore does not rebuild the live database" "$out" "rebuilding otr_test_live"
+equals "the seed is left without its foreign key" "$(fk_count otr_test_seed)" 0
+
+out="$(dev_db sync 2>&1)"
+contains "sync restores a broken seed" "$out" "sync: restoring, matches has no foreign keys"
+equals "sync repairs the seed" "$(fk_count otr_test_seed)" 1
+
+STUB_RESTORE_FAIL=true dev_db restore >/dev/null 2>&1 || true
+out="$(dev_db clone otr_pr_3 2>&1)"
+contains "clone restores a broken seed first" "$out" "clone: restoring first"
+contains "clone then creates the database" "$out" "action=create"
+equals "the clone has the foreign key" "$(fk_count otr_pr_3)" 1
 
 # R8: a second mutating operation waits, then gives up
 STUB_RESTORE_SLEEP=10 dev_db restore >/dev/null 2>&1 &

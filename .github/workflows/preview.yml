@@ -37,7 +37,6 @@ jobs:
       deploy: ${{ steps.decide.outputs.deploy }}
       pr: ${{ steps.decide.outputs.pr }}
       head_sha: ${{ steps.decide.outputs.head_sha }}
-      base_sha: ${{ steps.decide.outputs.base_sha }}
       base_ref: ${{ steps.decide.outputs.base_ref }}
       default_branch: ${{ steps.decide.outputs.default_branch }}
       notify: ${{ steps.decide.outputs.notify }}
@@ -83,7 +82,6 @@ jobs:
           {
             echo "pr=$PR_NUMBER"
             echo "head_sha=$head_sha"
-            echo "base_sha=$(jq -r .base.sha <<<"$pull")"
             echo "base_ref=$(jq -r .base.ref <<<"$pull")"
             echo "default_branch=$(jq -r .base.repo.default_branch <<<"$pull")"
           } >> "$GITHUB_OUTPUT"
@@ -156,7 +154,6 @@ jobs:
 
     env:
       PR_NUMBER: ${{ needs.authorize.outputs.pr }}
-      BASE_SHA: ${{ needs.authorize.outputs.base_sha }}
 
     steps:
       - name: Checkout repository
@@ -294,8 +291,7 @@ jobs:
           file: apps/web/Dockerfile
           push: true
           tags: stagecodes/otr-web:pr-${{ env.PR_NUMBER }}
-          # One shared cache to read from, and a small per-PR layer on top, so
-          # a preview cannot evict everyone else from the 10 GB budget.
+          # Shared read cache plus a per-PR layer; the GHA cache budget is 10 GB.
           cache-from: |
             type=gha,scope=web
             type=gha,scope=web-pr-${{ env.PR_NUMBER }}
@@ -314,6 +310,7 @@ jobs:
           PREVIEW_DB: ${{ steps.context.outputs.database }}
         run: |
           set -euo pipefail
+          . scripts/preview/dev-db-lib.sh
           status=0
           output=$(ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
             bash -s -- "$DEV_REMOTE_PATH" "$OTR_SCRIPTS_DIR" "$BASE_JOURNAL" \
@@ -331,18 +328,22 @@ jobs:
           ) || status=$?
           echo "$output"
 
-          if (( status == 3 )); then
+          if (( status != 0 )); then
+            if (( status == 3 )); then
+              reason="the dev tier refused to prepare \`$PREVIEW_DB\`"
+            else
+              reason="preparing \`$PREVIEW_DB\` on the dev tier failed with exit $status"
+            fi
             {
-              echo "No preview: the dev tier refused to prepare \`$PREVIEW_DB\`."
+              echo "No preview: $reason."
               echo
               echo '```'
-              tail -n 5 <<<"$output"
+              redact <<<"$output"
               echo '```'
             } > "$RUNNER_TEMP/preview-comment.md"
-            echo "::error::the dev tier refused to prepare $PREVIEW_DB"
+            echo "::error::$reason"
             exit 1
           fi
-          (( status == 0 )) || exit "$status"
 
           {
             echo "size=$(sed -n 's/^size_pretty=//p' <<<"$output" | tail -1)"
@@ -409,7 +410,8 @@ jobs:
 
             migration=0
             if [[ "$3" == "true" ]]; then
-              log="$(docker compose -p "$2" --profile migrate run --rm migrate 2>&1)" || migration=$?
+              # compose run attaches stdin, which is this script
+              log="$(docker compose -p "$2" --profile migrate run --rm -T migrate 2>&1 </dev/null)" || migration=$?
               redact <<<"$log"
             fi
             if (( migration == 0 )); then
