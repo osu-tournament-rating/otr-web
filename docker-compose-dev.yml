@@ -23,7 +23,24 @@ services:
       POSTGRES_PASSWORD: ${DOCKER_POSTGRES_PASSWORD}
       POSTGRES_DB: ${DOCKER_POSTGRES_DB}
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - /c/otr-dev/postgres:/var/lib/postgresql/data
+    # Disposable data, tuned for bulk restores
+    command:
+      - postgres
+      - -c
+      - fsync=off
+      - -c
+      - synchronous_commit=off
+      - -c
+      - full_page_writes=off
+      - -c
+      - shared_buffers=1GB
+      - -c
+      - maintenance_work_mem=1GB
+      - -c
+      - max_wal_size=4GB
+      - -c
+      - checkpoint_timeout=30min
     networks:
       otr-dev:
         aliases:
@@ -66,5 +83,4 @@ networks:
     name: otr-dev
 
 volumes:
-  postgres-data:
   rabbitmq-data:
