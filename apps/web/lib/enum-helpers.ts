@@ -869,6 +869,10 @@ export const AuditEntityTypeEnumHelper: IEnumHelper<AuditEntityType> = {
       text: 'Score',
       description: '',
     },
+    [AuditEntityType.Beatmap]: {
+      text: 'Beatmap',
+      description: '',
+    },
   },
 };
 

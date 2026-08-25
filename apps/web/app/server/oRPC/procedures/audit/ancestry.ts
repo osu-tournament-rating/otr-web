@@ -40,6 +40,13 @@ const ANCESTRY: Record<AuditEntityType, AncestryInfo> = {
     },
     nameExpr: null,
   },
+  // Beatmaps sit outside the tournament hierarchy.
+  [AuditEntityType.Beatmap]: {
+    fromClause:
+      'beatmap_audits a JOIN beatmaps b ON b.id = a.reference_id_lock',
+    ancestorIdExpr: {},
+    nameExpr: 'b.diff_name',
+  },
 };
 
 const PATH_EXPRESSIONS: Partial<

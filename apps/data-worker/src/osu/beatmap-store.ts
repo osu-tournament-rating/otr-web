@@ -10,6 +10,7 @@ type UpdateExecutor = Pick<DatabaseClient, 'update'>;
 export interface BeatmapRecord {
   id: number;
   dataFetchStatus: number;
+  manualOverride: boolean;
 }
 
 export const ensureBeatmapPlaceholder = async (
@@ -23,6 +24,7 @@ export const ensureBeatmapPlaceholder = async (
     columns: {
       id: true,
       dataFetchStatus: true,
+      manualOverride: true,
     },
   });
 
@@ -57,6 +59,7 @@ export const ensureBeatmapPlaceholder = async (
     .returning({
       id: schema.beatmaps.id,
       dataFetchStatus: schema.beatmaps.dataFetchStatus,
+      manualOverride: schema.beatmaps.manualOverride,
     });
 
   if (inserted) {
@@ -68,6 +71,7 @@ export const ensureBeatmapPlaceholder = async (
     columns: {
       id: true,
       dataFetchStatus: true,
+      manualOverride: true,
     },
   });
 

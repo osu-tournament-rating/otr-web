@@ -1,3 +1,4 @@
+import { and, eq, inArray } from 'drizzle-orm';
 import type { API } from 'osu-api-v2-js';
 
 import { withApiErrorHandling, withApiMetrics } from '../api-helpers';
@@ -209,9 +210,33 @@ export class BeatmapFetchService {
         }
       }
 
+      const pinnedOsuIds = new Set(
+        (
+          await tx
+            .select({ osuId: schema.beatmaps.osuId })
+            .from(schema.beatmaps)
+            .where(
+              and(
+                inArray(
+                  schema.beatmaps.osuId,
+                  beatmapRows.map((beatmap) => beatmap.id)
+                ),
+                eq(schema.beatmaps.manualOverride, true)
+              )
+            )
+        ).map((row) => row.osuId)
+      );
+
       const affectedBeatmapIds: number[] = [];
 
       for (const beatmap of beatmapRows) {
+        if (pinnedOsuIds.has(beatmap.id)) {
+          this.logger.info('Skipping manually configured beatmap', {
+            osuBeatmapId: beatmap.id,
+          });
+          continue;
+        }
+
         const ruleset = convertRuleset(beatmap.mode_int ?? beatmap.mode);
 
         const beatmapValues = {

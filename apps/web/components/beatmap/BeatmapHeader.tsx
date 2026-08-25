@@ -1,6 +1,6 @@
 'use client';
 
-import { Music2, UserRound } from 'lucide-react';
+import { Music2, PencilLine, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import type * as React from 'react';
 import { Fragment, useEffect, useRef } from 'react';
@@ -8,6 +8,7 @@ import { Fragment, useEffect, useRef } from 'react';
 import { Ruleset } from '@otr/core/osu';
 
 import AudioPreviewButton from '@/components/audio/AudioPreviewButton';
+import BeatmapAdminView from '@/components/beatmap/BeatmapAdminView';
 import BeatmapBannerData from '@/components/beatmap/BeatmapBannerData';
 import { Eyebrow, SectionCard } from '@/components/beatmap/BeatmapSection';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
@@ -15,7 +16,11 @@ import StarRatingPill from '@/components/beatmaps/StarRatingPill';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { Separator } from '@/components/ui/separator';
-import { getBeatmapDisplayRuleset } from '@/lib/beatmaps/presentation';
+import {
+  getBeatmapArtist,
+  getBeatmapDisplayRuleset,
+  getBeatmapTitle,
+} from '@/lib/beatmaps/presentation';
 import { getStarRatingIconColor } from '@/lib/beatmaps/star-rating-color';
 import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import type {
@@ -32,16 +37,16 @@ export default function BeatmapHeader({
   beatmap,
   relatedDifficulties,
 }: BeatmapHeaderProps) {
+  const setOwner = beatmap.setOwnerOverride ?? beatmap.beatmapset?.creator;
   const creators = Array.from(
     new Map(
-      [
-        ...(beatmap.beatmapset?.creator ? [beatmap.beatmapset.creator] : []),
-        ...beatmap.creators,
-      ].map((creator) => [creator.id, creator] as const)
+      [...(setOwner ? [setOwner] : []), ...beatmap.creators].map(
+        (creator) => [creator.id, creator] as const
+      )
     ).values()
   );
-  const artist = beatmap.beatmapset?.artist ?? 'Unknown artist';
-  const title = beatmap.beatmapset?.title ?? 'Unknown title';
+  const artist = getBeatmapArtist(beatmap) ?? 'Unknown artist';
+  const title = getBeatmapTitle(beatmap) ?? 'Unknown title';
 
   return (
     <SectionCard as="header" data-testid="beatmap-header">
@@ -61,6 +66,10 @@ export default function BeatmapHeader({
           data-testid="beatmap-matte-overlay"
           className="absolute inset-0 bg-black/60"
         />
+
+        <div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
+          <BeatmapAdminView beatmap={beatmap} />
+        </div>
 
         <div className="absolute right-4 bottom-4 z-20 sm:right-6 sm:bottom-6">
           <AudioPreviewButton
@@ -88,6 +97,17 @@ export default function BeatmapHeader({
                 <Music2 className="size-4 shrink-0" aria-hidden="true" />
                 <span className="min-w-0 break-words">{artist}</span>
               </span>
+              {beatmap.manualOverride && (
+                <SimpleTooltip content="Set by an admin because the osu! API no longer serves this beatmap">
+                  <span className="inline-flex items-center gap-1.5">
+                    <PencilLine
+                      className="size-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                    Manually configured
+                  </span>
+                </SimpleTooltip>
+              )}
               <span className="inline-flex min-w-0 items-start gap-1.5">
                 <UserRound
                   className="mt-0.5 size-4 shrink-0"

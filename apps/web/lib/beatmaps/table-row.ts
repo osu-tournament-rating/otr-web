@@ -1,5 +1,9 @@
 import type { BeatmapListSortKey } from '@/lib/beatmaps/list-params';
-import { isDeletedTournamentBeatmap } from '@/lib/beatmaps/presentation';
+import {
+  getBeatmapArtist,
+  getBeatmapTitle,
+  isDeletedTournamentBeatmap,
+} from '@/lib/beatmaps/presentation';
 import type {
   BeatmapListItem,
   BeatmapListTopMod,
@@ -121,8 +125,8 @@ export function toTournamentBeatmapTableRows(
     return {
       id: beatmap.id,
       osuId: beatmap.osuId,
-      artist: beatmap.beatmapset?.artist || 'Unknown artist',
-      title: beatmap.beatmapset?.title || 'Unknown title',
+      artist: getBeatmapArtist(beatmap) || 'Unknown artist',
+      title: getBeatmapTitle(beatmap) || 'Unknown title',
       diffName: beatmap.diffName || 'Unknown difficulty',
       creator: creator?.username ?? null,
       beatmapsetOsuId: beatmap.beatmapset?.osuId ?? null,

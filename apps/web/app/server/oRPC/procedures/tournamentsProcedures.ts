@@ -387,6 +387,10 @@ export const getTournament = publicProcedure
           maxCombo: schema.beatmaps.maxCombo,
           beatmapsetId: schema.beatmaps.beatmapsetId,
           dataFetchStatus: schema.beatmaps.dataFetchStatus,
+          manualOverride: schema.beatmaps.manualOverride,
+          titleOverride: schema.beatmaps.titleOverride,
+          artistOverride: schema.beatmaps.artistOverride,
+          setOwnerIdOverride: schema.beatmaps.setOwnerIdOverride,
           beatmapsetDbId: schema.beatmapsets.id,
           beatmapsetOsuId: schema.beatmapsets.osuId,
           beatmapsetArtist: schema.beatmapsets.artist,
@@ -551,6 +555,10 @@ export const getTournament = publicProcedure
               beatmapMaxCombo: schema.beatmaps.maxCombo,
               beatmapBeatmapsetId: schema.beatmaps.beatmapsetId,
               beatmapDataFetchStatus: schema.beatmaps.dataFetchStatus,
+              beatmapManualOverride: schema.beatmaps.manualOverride,
+              beatmapTitleOverride: schema.beatmaps.titleOverride,
+              beatmapArtistOverride: schema.beatmaps.artistOverride,
+              beatmapSetOwnerIdOverride: schema.beatmaps.setOwnerIdOverride,
             })
             .from(schema.games)
             .leftJoin(
@@ -677,6 +685,10 @@ export const getTournament = publicProcedure
                   maxCombo: game.beatmapMaxCombo ?? null,
                   beatmapsetId: game.beatmapBeatmapsetId ?? null,
                   dataFetchStatus: game.beatmapDataFetchStatus ?? 0,
+                  manualOverride: game.beatmapManualOverride ?? false,
+                  titleOverride: game.beatmapTitleOverride ?? null,
+                  artistOverride: game.beatmapArtistOverride ?? null,
+                  setOwnerIdOverride: game.beatmapSetOwnerIdOverride ?? null,
                 }
               : null,
         })),
@@ -868,6 +880,10 @@ export const getTournament = publicProcedure
           maxCombo: beatmap.maxCombo ?? null,
           beatmapsetId: beatmap.beatmapsetId ?? null,
           dataFetchStatus: beatmap.dataFetchStatus ?? 0,
+          manualOverride: beatmap.manualOverride ?? false,
+          titleOverride: beatmap.titleOverride ?? null,
+          artistOverride: beatmap.artistOverride ?? null,
+          setOwnerIdOverride: beatmap.setOwnerIdOverride ?? null,
           beatmapset,
           attributes: [],
           creators,
