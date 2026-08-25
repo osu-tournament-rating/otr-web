@@ -1,0 +1,145 @@
+import { beforeEach, describe, expect, it } from 'bun:test';
+
+import { PlayerFetchService } from '../player-fetch-service';
+import type { API } from 'osu-api-v2-js';
+import type { DatabaseClient } from '../../../db';
+import type { Logger } from '../../../logging/logger';
+import type { RateLimiter } from '../../../rate-limiter';
+import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
+
+type PlayerUpdate = Record<string, unknown>;
+
+const PLAYER_ID = 7;
+const OSU_ID = 4001;
+
+const createLogger = (): Logger => {
+  const logger: Logger = {
+    debug: () => {},
+    info: () => {},
+    warn: () => {},
+    error: () => {},
+    child: () => logger,
+  };
+  return logger;
+};
+
+const createHarness = (apiUser: Record<string, unknown>) => {
+  const updates: PlayerUpdate[] = [];
+
+  const db = {
+    query: {
+      players: {
+        findFirst: async () => ({
+          id: PLAYER_ID,
+          dataFetchStatus: DataFetchStatus.Fetching,
+        }),
+      },
+    },
+    update: () => ({
+      set: (values: PlayerUpdate) => {
+        updates.push(values);
+        return { where: async () => undefined };
+      },
+    }),
+    insert: () => ({
+      values: () => ({
+        onConflictDoUpdate: async () => undefined,
+      }),
+    }),
+  } as unknown as DatabaseClient;
+
+  const api = {
+    getUser: async () => apiUser,
+  } as unknown as API;
+
+  const rateLimiter = {
+    schedule: <T>(task: () => Promise<T>) => task(),
+  } as unknown as RateLimiter;
+
+  const service = new PlayerFetchService({
+    db,
+    api,
+    rateLimiter,
+    logger: createLogger(),
+  });
+
+  return { service, updates };
+};
+
+const previousUsernamesOf = (updates: PlayerUpdate[]) =>
+  updates.find((update) => 'previousUsernames' in update)?.previousUsernames as
+    string[] | undefined;
+
+const buildApiUser = (overrides: Record<string, unknown>) => ({
+  id: OSU_ID,
+  username: 'currentname',
+  playmode: 'osu',
+  country_code: 'US',
+  statistics: { pp: 1000, global_rank: 500 },
+  ...overrides,
+});
+
+describe('PlayerFetchService previous usernames', () => {
+  let harness: ReturnType<typeof createHarness>;
+
+  beforeEach(() => {
+    harness = createHarness(buildApiUser({}));
+  });
+
+  it('persists the previous usernames returned by the API', async () => {
+    const { service, updates } = createHarness(
+      buildApiUser({ previous_usernames: ['hotdog2000', 'oldname'] })
+    );
+
+    await service.fetchAndPersist(OSU_ID);
+
+    expect(previousUsernamesOf(updates)).toEqual(['hotdog2000', 'oldname']);
+  });
+
+  it('clears the column when the API returns an empty array', async () => {
+    const { service, updates } = createHarness(
+      buildApiUser({ previous_usernames: [] })
+    );
+
+    await service.fetchAndPersist(OSU_ID);
+
+    expect(previousUsernamesOf(updates)).toEqual([]);
+  });
+
+  it('collapses duplicates while preserving API order', async () => {
+    const { service, updates } = createHarness(
+      buildApiUser({
+        previous_usernames: [
+          'hotdog2000',
+          'HotDog2000',
+          'oldname',
+          'hotdog2000',
+        ],
+      })
+    );
+
+    await service.fetchAndPersist(OSU_ID);
+
+    expect(previousUsernamesOf(updates)).toEqual(['hotdog2000', 'oldname']);
+  });
+
+  it('drops blank entries and the current username', async () => {
+    const { service, updates } = createHarness(
+      buildApiUser({
+        previous_usernames: ['', '   ', '  oldname  ', 'CurrentName'],
+      })
+    );
+
+    await service.fetchAndPersist(OSU_ID);
+
+    expect(previousUsernamesOf(updates)).toEqual(['oldname']);
+  });
+
+  it('clears the column when the API omits the field', async () => {
+    const { service, updates } = harness;
+
+    await service.fetchAndPersist(OSU_ID);
+
+    expect(previousUsernamesOf(updates)).toEqual([]);
+  });
+});

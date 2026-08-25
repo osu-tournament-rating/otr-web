@@ -5,6 +5,7 @@ import * as schema from '@otr/core/db/schema';
 const rawPlayerSelectSchema = createSelectSchema(schema.players);
 export const playerSelectSchema = rawPlayerSelectSchema.omit({
   searchVector: true,
+  previousUsernames: true,
 });
 
 export const userSelectSchema = createSelectSchema(schema.users);

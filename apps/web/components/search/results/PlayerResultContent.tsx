@@ -26,9 +26,20 @@ export function PlayerResultContent({ data, query }: PlayerResultContentProps) {
         size={24}
         className="flex-shrink-0"
       />
-      <span className="min-w-0 flex-1 truncate font-medium">
-        {highlightMatch(data.username ?? 'Unknown user', query)}
-      </span>
+      {data.matchedPreviousUsername ? (
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-2">
+          <span className="min-w-0 truncate font-medium">
+            {highlightMatch(data.username ?? 'Unknown user', query)}
+          </span>
+          <span className="min-w-0 truncate text-xs text-muted-foreground">
+            formerly {highlightMatch(data.matchedPreviousUsername, query)}
+          </span>
+        </span>
+      ) : (
+        <span className="min-w-0 flex-1 truncate font-medium">
+          {highlightMatch(data.username ?? 'Unknown user', query)}
+        </span>
+      )}
 
       <div className="flex flex-shrink-0 items-center gap-3">
         {data.rating && data.tierProgress && (

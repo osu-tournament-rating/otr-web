@@ -25,6 +25,27 @@ const MANIA_VARIANT_MAP: Record<string, Ruleset> = {
 
 type RulesetConfig = (typeof FETCHABLE_RULESETS)[number];
 
+const normalizePreviousUsernames = (
+  values: readonly string[] | null | undefined,
+  currentUsername: string
+): string[] => {
+  const seen = new Set([currentUsername.trim().toLowerCase()]);
+  const names: string[] = [];
+
+  for (const value of values ?? []) {
+    const name = value?.trim();
+    if (!name) continue;
+
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    names.push(name);
+  }
+
+  return names;
+};
+
 interface PlayerFetchServiceOptions {
   db: DatabaseClient;
   api: API;
@@ -151,11 +172,16 @@ export class PlayerFetchService {
   ) {
     const defaultRuleset = convertRuleset(apiUser.playmode ?? null);
     const updatedCountry = apiUser.country?.code ?? apiUser.country_code ?? '';
+    const username = apiUser.username ?? '';
 
     await this.db
       .update(schema.players)
       .set({
-        username: apiUser.username ?? '',
+        username,
+        previousUsernames: normalizePreviousUsernames(
+          apiUser.previous_usernames,
+          username
+        ),
         country: updatedCountry,
         defaultRuleset,
         osuLastFetch: nowIso,
