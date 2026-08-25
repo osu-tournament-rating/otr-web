@@ -30,6 +30,7 @@ import {
 } from '@/lib/beatmaps/presentation';
 import type { BeatmapTableRow } from '@/lib/beatmaps/table-row';
 import { cn } from '@/lib/utils';
+import { stickyTableHeader } from '@/lib/utils/table';
 import { formatDuration } from '@/lib/utils/date';
 
 /** Row selection, for the surfaces that let an admin act on a set of rows. */
@@ -52,6 +53,7 @@ interface BeatmapListTableProps {
   selection?: BeatmapTableSelection;
   /** A width floor for callers that render this fixed layout below `sm`. */
   minWidthClassName?: string;
+  stickyHeader?: boolean;
   className?: string;
 }
 
@@ -83,15 +85,21 @@ export default function BeatmapListTable({
   showTournamentCount = true,
   selection,
   minWidthClassName,
+  stickyHeader = false,
   className,
 }: BeatmapListTableProps) {
   const sortProps = { activeSort: sort, descending, onSortChange };
 
   return (
-    <div className={className}>
+    <div className={cn(className, stickyHeader && stickyTableHeader)}>
       <Table className={cn('table-fixed', minWidthClassName)}>
         <TableHeader>
-          <TableRow className="hover:bg-transparent">
+          <TableRow
+            className={cn(
+              'hover:bg-transparent',
+              stickyHeader && 'bg-background hover:bg-background'
+            )}
+          >
             {selection ? (
               <TableHead className={cn('h-8', COLUMN.select)}>
                 <Checkbox
