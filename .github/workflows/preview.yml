@@ -17,7 +17,7 @@ on:
 
 concurrency:
   group: preview-${{ github.event.pull_request.number || github.event.issue.number }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -537,6 +537,7 @@ jobs:
               cd /
               rm -rf "$directory"
             fi
+            docker image rm "stagecodes/otr-web:pr-$3" || true
             # The tailnet node is ephemeral and removes itself with the stack.
             cd "$2"
             ./scripts/preview/dev-db.sh drop "otr_pr_$3"

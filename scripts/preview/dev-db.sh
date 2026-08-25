@@ -61,7 +61,7 @@ MAX_CLONES="${DEV_DB_MAX_CLONES:-6}"
 MIN_FREE_BYTES="${DEV_DB_MIN_FREE_BYTES:-21474836480}"
 FREE_FACTOR_PERCENT="${DEV_DB_FREE_FACTOR_PERCENT:-120}"
 LOCK_FILE="${DEV_DB_LOCK_FILE:-$PWD/.dev-db.lock}"
-LOCK_WAIT="${DEV_DB_LOCK_WAIT:-900}"
+LOCK_WAIT="${DEV_DB_LOCK_WAIT:-1800}"
 CLONE_MAX_AGE_DAYS="${DEV_DB_CLONE_MAX_AGE_DAYS:-14}"
 REAP_LIMIT="${DEV_DB_REAP_LIMIT:-10}"
 # staging-latest is rebuilt on every push to the default branch.
@@ -272,13 +272,18 @@ restore() {
   echo "migrating $SEED_DB"
   migrate "$SEED_DB"
   verify "$SEED_DB"
+  local problem
+  if ! problem="$(health_problem "$SEED_DB")"; then
+    fail "restore left $SEED_DB unusable: $problem"
+  fi
   stamp "$SEED_DB" "$(now)"
 
   echo "rebuilding $LIVE_DB from $SEED_DB"
   disconnect "$LIVE_DB"
   query postgres "drop database if exists $LIVE_DB" >/dev/null
   disconnect "$SEED_DB"
-  query postgres "create database $LIVE_DB template $SEED_DB" >/dev/null
+  # wal_log, the default, spends minutes on a seed this size
+  query postgres "create database $LIVE_DB template $SEED_DB strategy file_copy" >/dev/null
   echo "rebuilt $LIVE_DB"
 }
 
@@ -332,7 +337,7 @@ clone() { # clone <database>
       disconnect "$1"
       query postgres "drop database if exists $1" >/dev/null
       disconnect "$SEED_DB"
-      query postgres "create database $1 template $SEED_DB" >/dev/null
+      query postgres "create database $1 template $SEED_DB strategy file_copy" >/dev/null
       # TEMPLATE does not copy the comment, so every clone is stamped here.
       stamp "$1" "${seed_generation:-0}"
       ;;
