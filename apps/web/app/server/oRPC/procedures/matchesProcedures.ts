@@ -8,7 +8,6 @@ import { AdminNoteSchema, AdminNoteUserSchema } from '@/lib/orpc/schema/common';
 import {
   GameScoreSchema,
   MatchDetailSchema,
-  MatchRoster,
   RatingAdjustment,
 } from '@/lib/orpc/schema/match';
 import { PlayerSchema } from '@/lib/orpc/schema/player';
@@ -24,6 +23,7 @@ import {
 
 import { publicProcedure } from './base';
 import { KeyTypeSchema, resolveMatchId } from './shared/keyType';
+import { deriveWinRecord } from './shared/winRecord';
 
 type AdminNote = ReturnType<(typeof AdminNoteSchema)['parse']>;
 
@@ -107,43 +107,6 @@ function mapAdminNote(row: AdminNoteRow): AdminNote {
       player: { ...FALLBACK_PLAYER },
     },
   };
-}
-
-function deriveWinRecord(matchId: number, rosters: MatchRoster[]) {
-  if (rosters.length < 2) {
-    return null;
-  }
-
-  const sorted = [...rosters].sort((a, b) => b.score - a.score);
-  const topScore = sorted[0]?.score ?? 0;
-  const tied = sorted.filter((roster) => roster.score === topScore);
-
-  if (tied.length > 1) {
-    return {
-      matchId,
-      isTied: true,
-      loserRoster: null,
-      winnerRoster: null,
-      loserPoints: topScore,
-      winnerPoints: topScore,
-      loserTeam: null,
-      winnerTeam: null,
-    } as const;
-  }
-
-  const winner = sorted[0];
-  const loser = sorted[1];
-
-  return {
-    matchId,
-    isTied: false,
-    loserRoster: loser?.roster ?? null,
-    winnerRoster: winner?.roster ?? null,
-    loserPoints: loser?.score ?? 0,
-    winnerPoints: winner?.score ?? 0,
-    loserTeam: loser?.team ?? null,
-    winnerTeam: winner?.team ?? null,
-  } as const;
 }
 
 export const getMatch = publicProcedure

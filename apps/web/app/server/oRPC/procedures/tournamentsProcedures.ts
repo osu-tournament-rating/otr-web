@@ -36,10 +36,13 @@ import {
   Mods,
   Ruleset,
   ScoringType,
+  Team,
   TeamType,
   TournamentQuerySortType,
   VerificationStatus,
 } from '@otr/core/osu';
+
+import { deriveTournamentWinRecord } from './shared/winRecord';
 
 const DEFAULT_PAGE_SIZE = 30;
 const MAX_PAGE_SIZE = 100;
@@ -627,6 +630,32 @@ export const getTournament = publicProcedure
         gameAdminNotesByGameId.set(row.referenceId, notes);
       }
 
+      const rosterRows = matchIds.length
+        ? await context.db
+            .select({
+              matchId: schema.matchRosters.matchId,
+              roster: schema.matchRosters.roster,
+              team: schema.matchRosters.team,
+              score: schema.matchRosters.score,
+            })
+            .from(schema.matchRosters)
+            .where(inArray(schema.matchRosters.matchId, matchIds))
+        : [];
+
+      const rostersByMatchId = new Map<
+        number,
+        { roster: number[]; team: Team; score: number }[]
+      >();
+      for (const row of rosterRows) {
+        const rosters = rostersByMatchId.get(row.matchId) ?? [];
+        rosters.push({
+          roster: row.roster ?? [],
+          team: row.team as Team,
+          score: row.score,
+        });
+        rostersByMatchId.set(row.matchId, rosters);
+      }
+
       const normalizedMatches = matchRows.map((match) => ({
         id: match.id,
         osuId: match.osuId,
@@ -643,6 +672,11 @@ export const getTournament = publicProcedure
         verifiedByUsername: match.verifiedByUsername ?? null,
         dataFetchStatus: match.dataFetchStatus,
         adminNotes: matchAdminNotesByMatchId.get(match.id) ?? [],
+        winRecord: deriveTournamentWinRecord(
+          match.id,
+          match.verificationStatus,
+          rostersByMatchId.get(match.id) ?? []
+        ),
         games: (gamesByMatchId.get(match.id) ?? []).map((game) => ({
           id: game.id,
           osuId: game.osuId,
