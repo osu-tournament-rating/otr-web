@@ -16,6 +16,8 @@ on:
           - deploy
           - restore
           - check
+          - reap
+          - reap-dry-run
   schedule:
     # Nightly replica refresh, after the processor run at 12:00 UTC.
     - cron: '0 14 * * *'
@@ -24,9 +26,13 @@ concurrency:
   group: dev-tier
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   run:
-    name: ${{ github.event.inputs.action || 'restore' }}
+    name: ${{ github.event.inputs.action || 'nightly' }}
     runs-on: ubuntu-latest
     environment: dev
 
@@ -41,14 +47,20 @@ jobs:
           sparse-checkout: |
             docker-compose-dev.yml
             scripts/preview
-            apps/web/drizzle/meta
+            apps/web/drizzle
 
-      - name: Resolve expected migration count
-        id: migrations
+      - name: Resolve the expected journal
+        id: journal
         run: |
           set -euo pipefail
-          count=$(jq '.entries | length' apps/web/drizzle/meta/_journal.json)
-          echo "count=$count" >> "$GITHUB_OUTPUT"
+          # The pair drizzle records for every migration it applies: the
+          # journal's `when` and the sha256 of the .sql file. The host has
+          # neither jq nor the migrations.
+          list=$(jq -r '.entries[] | "\(.when) \(.tag)"' apps/web/drizzle/meta/_journal.json |
+            while read -r when tag; do
+              echo "$when $(sha256sum "apps/web/drizzle/${tag}.sql" | cut -d' ' -f1)"
+            done)
+          echo "expected=$(base64 -w0 <<<"$list")" >> "$GITHUB_OUTPUT"
 
       - name: Connect to tailscale
         uses: tailscale/github-action@v4
@@ -59,7 +71,7 @@ jobs:
           ping: ${{ secrets.SSH_HOST }}
 
       - name: Upload dev tier assets
-        if: ${{ (github.event.inputs.action || 'restore') == 'deploy' }}
+        if: ${{ (github.event.inputs.action || 'nightly') == 'deploy' }}
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
@@ -77,7 +89,7 @@ jobs:
             "$SSH_USER@$SSH_HOST:$DEV_REMOTE_PATH/scripts/"
 
       - name: Bring up dev tier
-        if: ${{ (github.event.inputs.action || 'restore') == 'deploy' }}
+        if: ${{ (github.event.inputs.action || 'nightly') == 'deploy' }}
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
@@ -93,35 +105,50 @@ jobs:
             docker compose up -d --remove-orphans
             # Nothing consumes these queues without a data worker, so let idle
             # ones delete themselves after a day.
-            until docker exec otr-dev-rabbitmq rabbitmq-diagnostics -q ping; do sleep 3; done
+            until docker exec otr-dev-rabbitmq rabbitmq-diagnostics -q ping </dev/null; do sleep 3; done
             docker exec otr-dev-rabbitmq rabbitmqctl set_policy preview-expiry \
-              '.*' '{"expires":86400000}' --apply-to queues
+              '.*' '{"expires":86400000}' --apply-to queues </dev/null
           EOF
 
       - name: Run database operation
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
           DEV_REMOTE_PATH: ${{ secrets.DEV_REMOTE_PATH }}
+          PREVIEW_REMOTE_PATH: ${{ secrets.PREVIEW_REMOTE_PATH }}
           OTR_SCRIPTS_DIR: ${{ secrets.OTR_SCRIPTS_DIR }}
-          ACTION: ${{ github.event.inputs.action || 'restore' }}
-          EXPECTED_MIGRATIONS: ${{ steps.migrations.outputs.count }}
+          ACTION: ${{ github.event.inputs.action || 'nightly' }}
+          EXPECTED_JOURNAL: ${{ steps.journal.outputs.expected }}
         run: |
           set -euo pipefail
-          operation="$ACTION"
-          if [[ "$operation" == "deploy" ]]; then
-            operation="check"
-          fi
+          . scripts/preview/dev-db-lib.sh
+          # Resolved here; the host has no GitHub token.
+          open_prs=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open \
+            --limit 200 --json number --jq '.[].number')
+          echo "$(count_lines "$open_prs") open pull requests"
+
           ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
-            bash -s -- "$DEV_REMOTE_PATH" "$operation" "$OTR_SCRIPTS_DIR" "$EXPECTED_MIGRATIONS" <<'EOF'
+            bash -s -- "$DEV_REMOTE_PATH" "$ACTION" "$OTR_SCRIPTS_DIR" \
+            "$EXPECTED_JOURNAL" "$(base64 -w0 <<<"$open_prs")" "$PREVIEW_REMOTE_PATH" <<'EOF'
             set -euo pipefail
             cd "$1"
             export OTR_SCRIPTS_DIR="$3"
-            export EXPECTED_MIGRATIONS="$4"
-            # A first deploy has no database yet, so a failing check restores.
-            if [[ "$2" == "check" ]]; then
-              ./scripts/preview/dev-db.sh check || ./scripts/preview/dev-db.sh restore
-            else
-              ./scripts/preview/dev-db.sh "$2"
-            fi
+            EXPECTED_JOURNAL="$(printf %s "$4" | base64 -d)"
+            OPEN_PRS="$(printf %s "$5" | base64 -d)"
+            export EXPECTED_JOURNAL OPEN_PRS
+            export PREVIEW_REMOTE_PATH="$6"
+
+            case "$2" in
+              deploy) ./scripts/preview/dev-db.sh sync ;;
+              check) ./scripts/preview/dev-db.sh check ;;
+              restore) ./scripts/preview/dev-db.sh restore ;;
+              reap) ./scripts/preview/dev-db.sh reap ;;
+              reap-dry-run) ./scripts/preview/dev-db.sh reap --dry-run ;;
+              nightly)
+                ./scripts/preview/dev-db.sh restore
+                ./scripts/preview/dev-db.sh reap
+                docker image prune -f
+                ;;
+            esac
           EOF
