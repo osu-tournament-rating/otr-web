@@ -97,6 +97,8 @@ const BeatmapForStatsSchema = beatmapSelectSchema
 
 export const BeatmapWithDetailsSchema = BeatmapForStatsSchema.extend({
   creators: z.array(PlayerCompactSchema),
+  /** Resolved from `setOwnerIdOverride`; takes the beatmapset creator's place. */
+  setOwnerOverride: PlayerCompactSchema.nullable(),
 });
 
 export const RelatedBeatmapDifficultySchema = z.object({

@@ -11,6 +11,11 @@ import {
   TournamentAdminNoteUpdateInputSchema,
 } from '@/lib/orpc/schema/tournament';
 import {
+  BeatmapAdminNoteCreateInputSchema,
+  BeatmapAdminNoteDeleteInputSchema,
+  BeatmapAdminNoteUpdateInputSchema,
+} from '@/lib/orpc/schema/beatmap';
+import {
   GameAdminNoteCreateInputSchema,
   GameAdminNoteDeleteInputSchema,
   GameAdminNoteUpdateInputSchema,
@@ -58,7 +63,8 @@ export type AdminNoteTable =
   | typeof schema.tournamentAdminNotes
   | typeof schema.matchAdminNotes
   | typeof schema.gameAdminNotes
-  | typeof schema.gameScoreAdminNotes;
+  | typeof schema.gameScoreAdminNotes
+  | typeof schema.beatmapAdminNotes;
 
 export type AdminNoteRow = {
   id: number;
@@ -225,6 +231,19 @@ async function assertGameExists(db: DrizzleDatabase, gameId: number) {
   if (!game) {
     throw new ORPCError('NOT_FOUND', {
       message: 'Game not found',
+    });
+  }
+}
+
+async function assertBeatmapExists(db: DrizzleDatabase, beatmapId: number) {
+  const beatmap = await db.query.beatmaps.findFirst({
+    columns: { id: true },
+    where: eq(schema.beatmaps.id, beatmapId),
+  });
+
+  if (!beatmap) {
+    throw new ORPCError('NOT_FOUND', {
+      message: 'Beatmap not found',
     });
   }
 }
@@ -774,6 +793,134 @@ export const deleteScoreAdminNote = protectedProcedure
     await context.db
       .delete(schema.gameScoreAdminNotes)
       .where(eq(schema.gameScoreAdminNotes.id, input.noteId));
+
+    return { success: true } as const;
+  });
+
+export const createBeatmapAdminNote = protectedProcedure
+  .input(BeatmapAdminNoteCreateInputSchema)
+  .output(AdminNoteSchema)
+  .route({
+    summary: 'Create beatmap admin note',
+    tags: ['admin'],
+    method: 'POST',
+    path: '/beatmaps/admin-notes',
+  })
+  .handler(async ({ input, context }) => {
+    const { adminUserId } = ensureAdminSession(context.session);
+
+    await assertBeatmapExists(context.db, input.beatmapId);
+
+    const [created] = await context.db
+      .insert(schema.beatmapAdminNotes)
+      .values({
+        referenceId: input.beatmapId,
+        adminUserId,
+        note: input.note,
+      })
+      .returning({ id: schema.beatmapAdminNotes.id });
+
+    const note = await fetchAdminNoteById(
+      context.db,
+      schema.beatmapAdminNotes,
+      created.id
+    );
+
+    if (!note) {
+      throw new ORPCError('INTERNAL_SERVER_ERROR', {
+        message: 'Unable to load created admin note',
+      });
+    }
+
+    return note;
+  });
+
+export const updateBeatmapAdminNote = protectedProcedure
+  .input(BeatmapAdminNoteUpdateInputSchema)
+  .output(AdminNoteSchema)
+  .route({
+    summary: 'Update beatmap admin note',
+    tags: ['admin'],
+    method: 'PATCH',
+    path: '/beatmaps/admin-notes/{noteId}',
+  })
+  .handler(async ({ input, context }) => {
+    const { adminUserId } = ensureAdminSession(context.session);
+
+    const noteRecord = await getAdminNoteRecord(
+      context.db,
+      schema.beatmapAdminNotes,
+      input.noteId
+    );
+
+    if (!noteRecord) {
+      throw new ORPCError('NOT_FOUND', {
+        message: ADMIN_NOTE_NOT_FOUND,
+      });
+    }
+
+    if (noteRecord.adminUserId !== adminUserId) {
+      throw new ORPCError('FORBIDDEN', {
+        message: ADMIN_NOTE_FORBIDDEN,
+      });
+    }
+
+    await context.db
+      .update(schema.beatmapAdminNotes)
+      .set({
+        note: input.note,
+        updated: NOW,
+      })
+      .where(eq(schema.beatmapAdminNotes.id, input.noteId));
+
+    const updated = await fetchAdminNoteById(
+      context.db,
+      schema.beatmapAdminNotes,
+      input.noteId
+    );
+
+    if (!updated) {
+      throw new ORPCError('INTERNAL_SERVER_ERROR', {
+        message: 'Unable to load updated admin note',
+      });
+    }
+
+    return updated;
+  });
+
+export const deleteBeatmapAdminNote = protectedProcedure
+  .input(BeatmapAdminNoteDeleteInputSchema)
+  .output(TournamentAdminMutationResponseSchema)
+  .route({
+    summary: 'Delete beatmap admin note',
+    tags: ['admin'],
+    method: 'DELETE',
+    path: '/beatmaps/admin-notes/{noteId}',
+  })
+  .handler(async ({ input, context }) => {
+    const { adminUserId } = ensureAdminSession(context.session);
+
+    const noteRecord = await getAdminNoteRecord(
+      context.db,
+      schema.beatmapAdminNotes,
+      input.noteId
+    );
+
+    if (!noteRecord) {
+      throw new ORPCError('NOT_FOUND', {
+        message: ADMIN_NOTE_NOT_FOUND,
+      });
+    }
+
+    if (noteRecord.adminUserId !== adminUserId) {
+      throw new ORPCError('FORBIDDEN', {
+        message: ADMIN_NOTE_FORBIDDEN,
+      });
+    }
+
+    await context.db
+      .delete(schema.beatmapAdminNotes)
+      .where(eq(schema.beatmapAdminNotes.id, input.noteId));
 
     return { success: true } as const;
   });

@@ -214,6 +214,7 @@ export enum AuditEntityType {
   Match = 1,
   Game = 2,
   Score = 3,
+  Beatmap = 4,
 }
 
 export type BitwiseEnum = number;

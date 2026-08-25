@@ -92,9 +92,22 @@ export function getBeatmapAttributeRows(
   }
 }
 
-/** A pooled beatmap whose set osu! no longer serves, detected by absent metadata. */
-export function isDeletedTournamentBeatmap(beatmap: {
+/** Metadata an admin filled in by hand, else the beatmapset's. */
+type BeatmapMetadata = {
+  artistOverride?: string | null;
+  titleOverride?: string | null;
   beatmapset?: { artist?: string; title?: string } | null;
-}): boolean {
-  return !beatmap.beatmapset?.artist && !beatmap.beatmapset?.title;
+};
+
+export function getBeatmapArtist(beatmap: BeatmapMetadata): string | null {
+  return beatmap.artistOverride || beatmap.beatmapset?.artist || null;
+}
+
+export function getBeatmapTitle(beatmap: BeatmapMetadata): string | null {
+  return beatmap.titleOverride || beatmap.beatmapset?.title || null;
+}
+
+/** A pooled beatmap whose set osu! no longer serves, detected by absent metadata. */
+export function isDeletedTournamentBeatmap(beatmap: BeatmapMetadata): boolean {
+  return !getBeatmapArtist(beatmap) && !getBeatmapTitle(beatmap);
 }

@@ -158,6 +158,35 @@ export const auditFieldConfig: Record<
     playerId: { label: 'Player ID' },
     created: { label: 'Created' },
   },
+  [AuditEntityType.Beatmap]: {
+    osuId: { label: 'osu! ID' },
+    diffName: { label: 'Difficulty' },
+    ruleset: { label: 'Ruleset', enumHelper: RulesetEnumHelper },
+    rankedStatus: { label: 'Ranked Status' },
+    totalLength: { label: 'Total Length' },
+    drainLength: { label: 'Drain Length' },
+    bpm: { label: 'BPM' },
+    countCircle: { label: 'Circles' },
+    countSlider: { label: 'Sliders' },
+    countSpinner: { label: 'Spinners' },
+    cs: { label: 'CS' },
+    hp: { label: 'HP' },
+    od: { label: 'OD' },
+    ar: { label: 'AR' },
+    sr: { label: 'Star Rating' },
+    maxCombo: { label: 'Max Combo' },
+    beatmapsetId: { label: 'Beatmapset ID' },
+    dataFetchStatus: {
+      label: 'Data Fetch Status',
+      enumHelper: DataFetchStatusEnumHelper,
+    },
+    manualOverride: { label: 'Manually Configured' },
+    titleOverride: { label: 'Title Override' },
+    artistOverride: { label: 'Artist Override' },
+    setOwnerIdOverride: { label: 'Set Owner Override' },
+    creators: { label: 'Creators' },
+    created: { label: 'Created' },
+  },
 };
 
 export function getTrackedFields(entityType: AuditEntityType): string[] {
@@ -204,6 +233,7 @@ const ENTITY_TYPES_FOR_FIELDS = [
   AuditEntityType.Match,
   AuditEntityType.Game,
   AuditEntityType.Score,
+  AuditEntityType.Beatmap,
 ] as const;
 
 export function getFieldOptionsWithEntityType(): FieldOption[] {

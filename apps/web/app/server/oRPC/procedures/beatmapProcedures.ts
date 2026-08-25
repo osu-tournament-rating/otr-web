@@ -196,6 +196,10 @@ export const getBeatmapStats = publicProcedure
             maxCombo: schema.beatmaps.maxCombo,
             beatmapsetId: schema.beatmaps.beatmapsetId,
             dataFetchStatus: schema.beatmaps.dataFetchStatus,
+            manualOverride: schema.beatmaps.manualOverride,
+            beatmapTitleOverride: schema.beatmaps.titleOverride,
+            beatmapArtistOverride: schema.beatmaps.artistOverride,
+            setOwnerIdOverride: schema.beatmaps.setOwnerIdOverride,
             beatmapsetOsuId: schema.beatmapsets.osuId,
             artist: schema.beatmapsets.artist,
             title: schema.beatmapsets.title,
@@ -826,6 +830,30 @@ export const getBeatmapStats = publicProcedure
         beatmap.beatmapsetId
       );
 
+      const setOwnerOverrideRows = beatmap.setOwnerIdOverride
+        ? await context.db
+            .select({
+              id: schema.players.id,
+              osuId: schema.players.osuId,
+              username: schema.players.username,
+              country: schema.players.country,
+              defaultRuleset: schema.players.defaultRuleset,
+            })
+            .from(schema.players)
+            .where(eq(schema.players.id, beatmap.setOwnerIdOverride))
+            .limit(1)
+        : [];
+
+      const setOwnerOverride = setOwnerOverrideRows[0]
+        ? {
+            id: setOwnerOverrideRows[0].id,
+            osuId: setOwnerOverrideRows[0].osuId,
+            username: setOwnerOverrideRows[0].username,
+            country: setOwnerOverrideRows[0].country,
+            defaultRuleset: setOwnerOverrideRows[0].defaultRuleset as Ruleset,
+          }
+        : null;
+
       const creators = creatorsRows.map((row) => ({
         id: row.id,
         osuId: row.osuId,
@@ -1142,6 +1170,10 @@ export const getBeatmapStats = publicProcedure
           osuId: beatmap.osuId,
           ruleset: beatmap.ruleset as Ruleset,
           rankedStatus: beatmap.rankedStatus,
+          manualOverride: beatmap.manualOverride,
+          titleOverride: beatmap.beatmapTitleOverride,
+          artistOverride: beatmap.beatmapArtistOverride,
+          setOwnerIdOverride: beatmap.setOwnerIdOverride,
           diffName: beatmap.diffName,
           totalLength: beatmap.totalLength,
           drainLength: beatmap.drainLength,
@@ -1181,6 +1213,7 @@ export const getBeatmapStats = publicProcedure
               }
             : null,
           creators,
+          setOwnerOverride,
         },
         relatedDifficulties: relatedDifficultyRows.map((difficulty) => ({
           osuId: difficulty.osuId,

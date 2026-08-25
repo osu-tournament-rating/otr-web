@@ -26,6 +26,8 @@ export function getAuditTable(entityType: AuditEntityType) {
       return schema.gameAudits;
     case AuditEntityType.Score:
       return schema.gameScoreAudits;
+    case AuditEntityType.Beatmap:
+      return schema.beatmapAudits;
   }
 }
 
@@ -39,6 +41,8 @@ export function getAdminNotesTable(entityType: AuditEntityType) {
       return schema.gameAdminNotes;
     case AuditEntityType.Score:
       return schema.gameScoreAdminNotes;
+    case AuditEntityType.Beatmap:
+      return schema.beatmapAdminNotes;
   }
 }
 
@@ -52,6 +56,8 @@ export function getTableNameString(entityType: AuditEntityType): string {
       return 'game_audits';
     case AuditEntityType.Score:
       return 'game_score_audits';
+    case AuditEntityType.Beatmap:
+      return 'beatmap_audits';
   }
 }
 
@@ -67,6 +73,8 @@ export function getAdminNotesTableNameString(
       return 'game_admin_notes';
     case AuditEntityType.Score:
       return 'game_score_admin_notes';
+    case AuditEntityType.Beatmap:
+      return 'beatmap_admin_notes';
   }
 }
 
@@ -76,6 +84,7 @@ export const ALL_AUDIT_TABLES = [
   { table: schema.matchAudits, entityType: AuditEntityType.Match },
   { table: schema.gameAudits, entityType: AuditEntityType.Game },
   { table: schema.gameScoreAudits, entityType: AuditEntityType.Score },
+  { table: schema.beatmapAudits, entityType: AuditEntityType.Beatmap },
 ] as const;
 
 /** Subset for the default activity view; skips the large game/score tables. */
@@ -112,6 +121,12 @@ export function getParentEntityJoinInfo(entityType: AuditEntityType): {
         fromClause:
           'game_score_audits a LEFT JOIN game_scores gs ON gs.id = a.reference_id_lock LEFT JOIN games g ON g.id = gs.game_id LEFT JOIN matches m ON m.id = g.match_id',
         parentIdExpr: 'm.tournament_id',
+      };
+    // Beatmaps sit outside the tournament hierarchy.
+    case AuditEntityType.Beatmap:
+      return {
+        fromClause: 'beatmap_audits a',
+        parentIdExpr: 'NULL::integer',
       };
   }
 }
@@ -325,6 +340,8 @@ export function getImmediateChildType(
     case AuditEntityType.Game:
       return AuditEntityType.Score;
     case AuditEntityType.Score:
+      return null;
+    case AuditEntityType.Beatmap:
       return null;
   }
 }
@@ -582,7 +599,7 @@ export function buildFieldChangeConditions(
   });
 }
 
-/** Only tournaments and matches have name fields. */
+/** Only tournaments, matches, and beatmaps have name fields. */
 export async function resolveEntityNames(
   db: DatabaseClient,
   entityType: AuditEntityType,
@@ -599,6 +616,14 @@ export async function resolveEntityNames(
       .select({ id: schema.matches.id, name: schema.matches.name })
       .from(schema.matches)
       .where(inArray(schema.matches.id, entityIds));
+    return new Map(rows.map((r) => [r.id, r.name]));
+  }
+
+  if (entityType === AuditEntityType.Beatmap) {
+    const rows = await db
+      .select({ id: schema.beatmaps.id, name: schema.beatmaps.diffName })
+      .from(schema.beatmaps)
+      .where(inArray(schema.beatmaps.id, entityIds));
     return new Map(rows.map((r) => [r.id, r.name]));
   }
 

@@ -32,6 +32,7 @@ const ALL_ENTITY_TYPES = [
   AuditEntityType.Match,
   AuditEntityType.Game,
   AuditEntityType.Score,
+  AuditEntityType.Beatmap,
 ] as const;
 
 const ALL_ACTION_TYPES = [

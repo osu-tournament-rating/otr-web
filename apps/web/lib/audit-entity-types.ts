@@ -5,6 +5,7 @@ export const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   [AuditEntityType.Match]: 'match',
   [AuditEntityType.Game]: 'game',
   [AuditEntityType.Score]: 'score',
+  [AuditEntityType.Beatmap]: 'beatmap',
 };
 
 export const ENTITY_TYPE_PLURALS: Record<AuditEntityType, string> = {
@@ -12,6 +13,7 @@ export const ENTITY_TYPE_PLURALS: Record<AuditEntityType, string> = {
   [AuditEntityType.Match]: 'matches',
   [AuditEntityType.Game]: 'games',
   [AuditEntityType.Score]: 'scores',
+  [AuditEntityType.Beatmap]: 'beatmaps',
 };
 
 /** URL path slug for an entity type. */
@@ -35,6 +37,8 @@ export function getDescendantTypes(
     case AuditEntityType.Game:
       return [AuditEntityType.Score];
     case AuditEntityType.Score:
+      return [];
+    case AuditEntityType.Beatmap:
       return [];
   }
 }
