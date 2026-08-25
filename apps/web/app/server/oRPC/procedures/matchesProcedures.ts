@@ -653,8 +653,8 @@ export const getMatch = publicProcedure
               beatmapsetId: game.beatmapBeatmapsetId ?? null,
               dataFetchStatus: game.beatmapDataFetchStatus ?? 0,
               manualOverride: game.beatmapManualOverride ?? false,
-              title: game.beatmapTitleOverride ?? null,
-              artist: game.beatmapArtistOverride ?? null,
+              titleOverride: game.beatmapTitleOverride ?? null,
+              artistOverride: game.beatmapArtistOverride ?? null,
               setOwnerIdOverride: game.beatmapSetOwnerIdOverride ?? null,
               beatmapset:
                 game.beatmapsetId != null
