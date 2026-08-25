@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Loader2, X } from 'lucide-react';
+import { Check, ChevronsUpDown, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Skeleton } from '@/components/ui/skeleton';
 import { orpc } from '@/lib/orpc/orpc';
 import type { PlayerLookupResult } from '@/lib/orpc/schema/player';
 import { cn } from '@/lib/utils';
@@ -26,6 +27,8 @@ type Props = {
   value: PlayerLookupResult[];
   onChange: (players: PlayerLookupResult[]) => void;
   multiple?: boolean;
+  /** Names the selection in accessible labels and the empty state. */
+  label: string;
   placeholder?: string;
 };
 
@@ -33,6 +36,7 @@ export default function PlayerPicker({
   value,
   onChange,
   multiple = false,
+  label,
   placeholder = 'Search players or paste an osu! id',
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -40,10 +44,12 @@ export default function PlayerPicker({
   const [results, setResults] = useState<PlayerLookupResult[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const term = query.trim();
+
   useEffect(() => {
-    const term = query.trim();
     if (!term) {
       setResults([]);
+      setLoading(false);
       return;
     }
 
@@ -64,7 +70,7 @@ export default function PlayerPicker({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query]);
+  }, [term]);
 
   const select = (player: PlayerLookupResult) => {
     if (value.some((selected) => selected.osuId === player.osuId)) {
@@ -83,13 +89,16 @@ export default function PlayerPicker({
           <Button
             type="button"
             variant="outline"
-            className="w-full justify-start font-normal"
+            role="combobox"
+            aria-expanded={open}
+            aria-label={`Search ${label}`}
+            className="w-full justify-between font-normal text-muted-foreground"
           >
-            {value.length === 0
-              ? placeholder
-              : multiple
-                ? `${value.length} selected`
-                : value[0].username}
+            <span className="flex min-w-0 items-center gap-2">
+              <Search className="size-4 shrink-0" />
+              <span className="truncate">{placeholder}</span>
+            </span>
+            <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
@@ -100,54 +109,65 @@ export default function PlayerPicker({
               placeholder={placeholder}
             />
             <CommandList>
-              {loading && (
-                <div className="flex items-center gap-2 p-3 text-sm text-muted-foreground">
-                  <Loader2 className="size-4 animate-spin" />
-                  Searching
+              {loading ? (
+                <div className="space-y-2 p-2">
+                  <Skeleton className="h-7 w-full" />
+                  <Skeleton className="h-7 w-full" />
+                  <Skeleton className="h-7 w-full" />
                 </div>
-              )}
-              {!loading && (
+              ) : (
                 <CommandEmpty>
-                  No players found. Enter an osu! user id to pin one.
+                  {term
+                    ? 'No players found. Paste an osu! user id to pin one.'
+                    : 'Type a username or osu! user id.'}
                 </CommandEmpty>
               )}
               <CommandGroup>
-                {results.map((player) => {
-                  const selected = value.some(
-                    (entry) => entry.osuId === player.osuId
-                  );
-                  return (
-                    <CommandItem
-                      key={player.osuId}
-                      value={String(player.osuId)}
-                      onSelect={() => select(player)}
-                    >
-                      <Check
-                        className={cn(
-                          'size-4',
-                          selected ? 'opacity-100' : 'opacity-0'
-                        )}
-                      />
-                      <span className="flex-1">{player.username}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {player.playerId === null
-                          ? 'not yet fetched'
-                          : player.osuId}
-                      </span>
-                    </CommandItem>
-                  );
-                })}
+                {!loading &&
+                  results.map((player) => {
+                    const selected = value.some(
+                      (entry) => entry.osuId === player.osuId
+                    );
+                    return (
+                      <CommandItem
+                        key={player.osuId}
+                        value={String(player.osuId)}
+                        onSelect={() => select(player)}
+                      >
+                        <Check
+                          className={cn(
+                            'size-4',
+                            selected ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                        <span className="flex-1 truncate">
+                          {player.username}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                          {player.playerId === null
+                            ? 'not yet fetched'
+                            : player.osuId}
+                        </span>
+                      </CommandItem>
+                    );
+                  })}
               </CommandGroup>
             </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
 
-      {value.length > 0 && (
+      {value.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No {label} selected.</p>
+      ) : (
         <div className="flex flex-wrap gap-1.5">
           {value.map((player) => (
-            <Badge key={player.osuId} variant="secondary" className="gap-1">
-              {player.username}
+            <Badge
+              key={player.osuId}
+              variant="secondary"
+              className="gap-1 pr-1"
+            >
+              <span className="truncate">{player.username}</span>
               <button
                 type="button"
                 aria-label={`Remove ${player.username}`}
@@ -156,6 +176,7 @@ export default function PlayerPicker({
                     value.filter((entry) => entry.osuId !== player.osuId)
                   )
                 }
+                className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
               >
                 <X className="size-3" />
               </button>
