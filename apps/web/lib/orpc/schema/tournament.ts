@@ -14,7 +14,7 @@ import {
 } from './constants';
 import type { VerificationStatusValue } from './constants';
 import { AdminNotePreviewSchema, AdminNoteSchema } from './common';
-import { GameSchema, MatchSchema } from './match';
+import { GameSchema, MatchSchema, MatchWinRecordSchema } from './match';
 import { PlayerSchema } from './player';
 import { TournamentQuerySortType } from '@otr/core/osu';
 
@@ -90,7 +90,12 @@ export const TournamentAdminNoteDeleteInputSchema = z.object({
 
 export const TournamentMatchGameSchema = GameSchema;
 
-export const TournamentMatchSchema = MatchSchema;
+export const TournamentMatchSchema = MatchSchema.extend({
+  winRecord: MatchWinRecordSchema.unwrap()
+    .omit({ winnerRoster: true, loserRoster: true })
+    .nullable()
+    .default(null),
+});
 
 export const TournamentPlayerStatsSchema = playerTournamentStatsSelectSchema
   .omit({
@@ -113,7 +118,7 @@ const tournamentDetailBaseSchema = tournamentSelectSchema
   .extend({
     ruleset: RulesetSchema,
     verificationStatus: VerificationStatusSchema,
-    matches: z.array(MatchSchema).default([]),
+    matches: z.array(TournamentMatchSchema).default([]),
     adminNotes: z.array(TournamentAdminNoteSchema).default([]),
     playerTournamentStats: z.array(TournamentPlayerStatsSchema).default([]),
     pooledBeatmaps: z.array(TournamentBeatmapSchema).default([]),
