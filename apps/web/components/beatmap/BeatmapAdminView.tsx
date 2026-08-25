@@ -606,7 +606,7 @@ const DIFFICULTY_FIELDS: readonly NumericField[] = [
   { name: 'bpm', label: 'BPM', hint: 'bpm', step: '0.01' },
   { name: 'totalLength', label: 'Length', hint: 'mm:ss', placeholder: '3:42' },
   { name: 'drainLength', label: 'Drain', hint: 'mm:ss', placeholder: '3:20' },
-  { name: 'cs', label: 'CS', hint: '0-10', step: '0.1' },
+  { name: 'cs', label: 'CS', hint: '0-20', step: '0.1' },
   { name: 'hp', label: 'HP', hint: '0-10', step: '0.1' },
   { name: 'od', label: 'OD', hint: '0-10', step: '0.1' },
   { name: 'ar', label: 'AR', hint: '0-10', step: '0.1' },
