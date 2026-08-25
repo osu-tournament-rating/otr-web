@@ -1,11 +1,17 @@
-import { beforeEach, describe, expect, it } from 'bun:test';
+import { beforeEach, describe, expect, it, mock } from 'bun:test';
 
-import { PlayerFetchService } from '../player-fetch-service';
 import type { API } from 'osu-api-v2-js';
 import type { DatabaseClient } from '../../../db';
 import type { Logger } from '../../../logging/logger';
 import type { RateLimiter } from '../../../rate-limiter';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
+
+// The real client module reads the worker env at import time, which `bun test` has no values for.
+mock.module('../../client', () => ({
+  APIError: class APIError extends Error {},
+}));
+
+const { PlayerFetchService } = await import('../player-fetch-service');
 
 type PlayerUpdate = Record<string, unknown>;
 
