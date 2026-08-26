@@ -31,6 +31,8 @@ import TRText from '../rating/TRText';
 import { getTierFromRating } from '@/lib/utils/tierData';
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 import { RatingAdjustmentType } from '@otr/core/osu';
+import { cn } from '@/lib/utils';
+import { stickyTableHeaderInScrollArea } from '@/lib/utils/table';
 
 type TimeRangeOption = 'all' | '1y' | '6m' | '3m' | 'custom';
 
@@ -323,7 +325,13 @@ export default function PlayerRatingChart({
             theme={theme}
           />
         </TabsContent>
-        <TabsContent value="table" className="max-h-[300px] overflow-y-scroll">
+        <TabsContent
+          value="table"
+          className={cn(
+            'max-h-[300px] overflow-y-scroll',
+            stickyTableHeaderInScrollArea
+          )}
+        >
           <PlayerRatingChartTable data={filteredData} activeTab={activeTab} />
         </TabsContent>
       </Tabs>

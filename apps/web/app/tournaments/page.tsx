@@ -47,7 +47,7 @@ export default async function Page({ searchParams }: PageSearchParams) {
       <section
         aria-label="Tournament archive"
         data-testid="tournament-results"
-        className="overflow-hidden rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none"
+        className="overflow-clip rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none"
       >
         <div className="border-b bg-muted/20 p-3 sm:p-4 dark:bg-muted">
           <TournamentListFilter filter={filter} />

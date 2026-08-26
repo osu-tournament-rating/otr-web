@@ -39,8 +39,8 @@ export default function PlayerRatingChartTable({
 }: PlayerRatingChartTableProps) {
   return (
     <Table>
-      <TableHeader className="bg-popover">
-        <TableRow>
+      <TableHeader>
+        <TableRow className="bg-popover">
           <TableHead>Date</TableHead>
           <TableHead>Type</TableHead>
           <TableHead className="text-right">

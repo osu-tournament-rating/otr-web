@@ -29,6 +29,7 @@ import FailureReasonsBadges from './FailureReasonsBadges';
 import PlayerCell from './PlayerCell';
 import StatusIcon from './StatusIcon';
 import { SortableHeader, NumericCell } from './tableHelpers';
+import { stickyTableHeader } from '@/lib/utils/table';
 
 interface FilteringResultsTableProps {
   results: FilteringResult;
@@ -173,6 +174,7 @@ export default function FilteringResultsTable({
         <div
           className={cn(
             'w-fit max-w-full overflow-x-auto rounded-lg border [&_[data-slot=table-container]]:w-fit [&_table]:w-auto',
+            stickyTableHeader,
             hideCard && 'bg-background'
           )}
         >
@@ -181,7 +183,7 @@ export default function FilteringResultsTable({
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
                   key={headerGroup.id}
-                  className="bg-muted/50 hover:bg-muted/50"
+                  className="bg-muted hover:bg-muted"
                 >
                   {headerGroup.headers.map((header) => {
                     const getHeaderClass = () => {

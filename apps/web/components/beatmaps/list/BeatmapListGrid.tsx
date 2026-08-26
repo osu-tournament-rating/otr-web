@@ -79,6 +79,7 @@ export default function BeatmapListGrid({
             sort={sort}
             descending={descending}
             onSortChange={onSortChange}
+            stickyHeader
             className="hidden sm:block"
           />
           <BeatmapListRows beatmaps={beatmaps} className="sm:hidden" />

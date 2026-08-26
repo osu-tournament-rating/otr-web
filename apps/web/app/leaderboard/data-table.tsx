@@ -17,6 +17,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { LeaderboardEntry } from '@/lib/orpc/schema/leaderboard';
+import { cn } from '@/lib/utils';
+import { stickyTableHeaderFromLg } from '@/lib/utils/table';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -48,11 +50,16 @@ export function LeaderboardDataTable<TData, TValue>({
   };
 
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div
+      className={cn(
+        'overflow-x-auto rounded-lg border',
+        stickyTableHeaderFromLg
+      )}
+    >
       <Table data-testid="leaderboard-table">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="bg-muted/50">
+            <TableRow key={headerGroup.id} className="bg-muted">
               {headerGroup.headers.map((header) => {
                 return (
                   <TableHead
