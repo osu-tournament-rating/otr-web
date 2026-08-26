@@ -33,3 +33,15 @@ export function formatDuration(seconds: number): string {
 
   return formatSecondsToMinutesSeconds(seconds);
 }
+
+/** Inverse of {@link formatDuration}. Accepts `3:45`, `1:23:45`, or bare seconds. */
+export function parseDuration(value: string): number | null {
+  const trimmed = value.trim();
+  if (!/^\d+(:[0-5]?\d){0,2}$/.test(trimmed)) {
+    return null;
+  }
+
+  return trimmed
+    .split(':')
+    .reduce((total, part) => total * 60 + Number(part), 0);
+}
