@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, not } from 'drizzle-orm';
 import type { API, Match } from 'osu-api-v2-js';
 
 import {
@@ -214,7 +214,8 @@ export class MatchFetchService {
             .where(
               and(
                 eq(schema.beatmaps.id, beatmapRecord.id),
-                eq(schema.beatmaps.dataFetchStatus, DataFetchStatus.NotFetched)
+                eq(schema.beatmaps.dataFetchStatus, DataFetchStatus.NotFetched),
+                not(schema.beatmaps.manualOverride)
               )
             )
             .returning({ id: schema.beatmaps.id });
