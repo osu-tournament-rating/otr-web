@@ -311,6 +311,10 @@ function buildBeatmapCandidateIds(
   return buildCandidateFilter(schema.beatmaps.id, branches);
 }
 
+/** A deleted beatmap comes back only once an admin fills its metadata in by hand. */
+export const beatmapIsVisible = () =>
+  sql`(${schema.beatmaps.dataFetchStatus} != ${DataFetchStatus.NotFound} OR ${schema.beatmaps.manualOverride})`;
+
 export function buildBeatmapSearchExpressions(
   searchTerm: string
 ): SearchExpressions | null {
@@ -334,18 +338,16 @@ export function buildBeatmapSearchExpressions(
     parsed
   );
   const beatmapArtistSimilarity = buildSimilarity(
-    sql`coalesce(${schema.beatmapsets.artist}, '')`,
+    sql`coalesce(${schema.beatmaps.artistOverride}, ${schema.beatmapsets.artist}, '')`,
     parsed
   );
   const beatmapTitleSimilarity = buildSimilarity(
-    sql`coalesce(${schema.beatmapsets.title}, '')`,
+    sql`coalesce(${schema.beatmaps.titleOverride}, ${schema.beatmapsets.title}, '')`,
     parsed
   );
   const beatmapSimilarity = sql`greatest(${beatmapDiffSimilarity}, ${beatmapArtistSimilarity}, ${beatmapTitleSimilarity})`;
 
-  const isFetchable = sql`${schema.beatmaps.dataFetchStatus} != ${DataFetchStatus.NotFound}`;
-
-  const condition = sql`(${buildBeatmapCandidateIds(parsed, osuIdCandidate)} AND ${isFetchable})`;
+  const condition = sql`(${buildBeatmapCandidateIds(parsed, osuIdCandidate)} AND ${beatmapIsVisible()})`;
 
   const beatmapRank = prefixTsQuery
     ? sql<number>`greatest(ts_rank_cd(${beatmapVector}, ${tsQuery}), ts_rank_cd(${beatmapVector}, ${prefixTsQuery}), ${beatmapSimilarity})`

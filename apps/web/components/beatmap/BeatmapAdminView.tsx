@@ -80,17 +80,17 @@ const duration = required.refine((value) => {
   return seconds !== null && seconds <= 86_400;
 }, 'Enter a length as mm:ss');
 
-const formSchema = z.object({
+export const formSchema = z.object({
   diffName: required,
   ruleset: z.string(),
   sr: decimal(100),
   bpm: decimal(10_000),
   totalLength: duration,
   drainLength: duration,
-  cs: decimal(20),
-  hp: decimal(20),
-  od: decimal(20),
-  ar: decimal(20),
+  cs: decimal(10),
+  hp: decimal(10),
+  od: decimal(10),
+  ar: decimal(10),
   countCircle: count,
   countSlider: count,
   countSpinner: count,
@@ -214,9 +214,17 @@ export default function BeatmapAdminView({
     setSaving(true);
     setSaveError(null);
 
-    const values = formSchema.parse(form.getValues());
-
     try {
+      const parsed = formSchema.safeParse(form.getValues());
+
+      if (!parsed.success) {
+        await form.trigger();
+        setMode('edit');
+        return;
+      }
+
+      const values = parsed.data;
+
       await orpc.beatmaps.admin.update({
         id: beatmap.id,
         diffName: values.diffName,
@@ -606,10 +614,10 @@ const DIFFICULTY_FIELDS: readonly NumericField[] = [
   { name: 'bpm', label: 'BPM', hint: 'bpm', step: '0.01' },
   { name: 'totalLength', label: 'Length', hint: 'mm:ss', placeholder: '3:42' },
   { name: 'drainLength', label: 'Drain', hint: 'mm:ss', placeholder: '3:20' },
-  { name: 'cs', label: 'CS', hint: '0-20', step: '0.1' },
-  { name: 'hp', label: 'HP', hint: '0-10', step: '0.1' },
-  { name: 'od', label: 'OD', hint: '0-10', step: '0.1' },
-  { name: 'ar', label: 'AR', hint: '0-10', step: '0.1' },
+  { name: 'cs', label: 'CS', step: '0.1', placeholder: '10' },
+  { name: 'hp', label: 'HP', step: '0.1', placeholder: '10' },
+  { name: 'od', label: 'OD', step: '0.1', placeholder: '10' },
+  { name: 'ar', label: 'AR', step: '0.1', placeholder: '10' },
 ];
 
 const OBJECT_FIELDS: readonly NumericField[] = [

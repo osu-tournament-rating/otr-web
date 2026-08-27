@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'bun:test';
+import type { SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { Ruleset } from '@otr/core/osu';
 
 import type { DatabaseClient } from '@/lib/db';
@@ -17,6 +19,28 @@ describe('related beatmap difficulty query', () => {
 
     expect(await getRelatedBeatmapDifficulties(db, null)).toEqual([]);
     expect(queried).toBeFalse();
+  });
+
+  test('admits a deleted difficulty once it is overridden by hand', async () => {
+    let clause: SQL | undefined;
+    const db = {
+      select: () => ({
+        from: () => ({
+          leftJoin: () => ({
+            where: (where: SQL) => {
+              clause = where;
+              return { orderBy: async () => [] };
+            },
+          }),
+        }),
+      }),
+    } as unknown as DatabaseClient;
+
+    await getRelatedBeatmapDifficulties(db, 42);
+
+    const { sql: text } = new PgDialect().sqlToQuery(clause!);
+    expect(text).toContain('"beatmaps"."manual_override"');
+    expect(text).toContain('"beatmaps"."data_fetch_status" !=');
   });
 
   test('returns the selected set difficulties in query order', async () => {
