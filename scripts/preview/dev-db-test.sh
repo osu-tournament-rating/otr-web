@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Integration harness for dev-db.sh. It creates its own scratch postgres
-# container and network, runs every mutating subcommand against them, and
-# removes both on the way out. It never reaches the deployment host: the
-# replica restore and the migrator are stubs, and the row floors are lowered
-# so a six-row fixture stands in for the replica.
+# Integration harness for dev-db.sh. It never reaches the deployment host:
+# the replica restore and the migrator are stubs, and the row floors are
+# lowered so a six-row fixture stands in for the replica.
 #
 #   scripts/preview/dev-db-test.sh
 
@@ -75,10 +73,8 @@ cat > .env <<'ENVFILE'
 DOCKER_POSTGRES_PASSWORD=harness-password
 ENVFILE
 
-# Stands in for the otr-scripts replica recovery: builds the seed with one
-# migration recorded, as a production replica trailing the default branch
-# would arrive. STUB_RESTORE_PARTIAL leaves the foreign key off and exits 0;
-# STUB_RESTORE_FAIL leaves it off and exits 1, as a psql load that died would.
+# Stands in for the otr-scripts replica recovery. STUB_RESTORE_PARTIAL leaves
+# the foreign key off and exits 0; STUB_RESTORE_FAIL leaves it off and exits 1.
 cat > stubs/restore-stub.sh <<'STUB'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -161,7 +157,7 @@ export DEV_DB_LOCK_WAIT=30
 
 dev_db() { ./scripts/preview/dev-db.sh "$@"; }
 
-# capabilities, R9
+# capabilities
 out="$(dev_db capabilities)"
 contains "capabilities reports the api version" "$out" "version=2"
 contains "capabilities lists reap" "$out" "reap"
@@ -172,7 +168,7 @@ out="$(dev_db check 2>&1)" || status=$?
 equals "check fails before the live database exists" "$status" 1
 contains "check names the missing database" "$out" "otr_test_live does not exist"
 
-# sync restores when the live database is missing, R2
+# sync restores when the live database is missing
 out="$(dev_db sync 2>&1)"
 contains "sync restores a missing live database" "$out" "sync: restoring"
 contains "sync verifies the seed before templating" "$out" "verified otr_test_seed"
@@ -189,14 +185,14 @@ contains "a piped restore runs" "$out" "rebuilt otr_test_live"
 contains "a piped info runs" "$out" "database=otr_test_live"
 contains "the piped script runs to its end" "$out" "AFTER"
 
-# a migration merged to the default branch, R2
+# a migration merged to the default branch
 export EXPECTED_JOURNAL=$'1000 aaa\n2000 bbb\n3000 ccc'
 out="$(dev_db sync 2>&1)"
 contains "sync migrates a behind live database forward" "$out" "migrating otr_test_live forward"
 missing "sync does not restore to catch up" "$out" "sync: restoring"
 contains "classify reports the live database" "$(dev_db classify otr_test_live)" "status=match"
 
-# clone, R4 and R7
+# clone
 out="$(dev_db clone otr_pr_1 2>&1)"
 contains "a first clone is created" "$out" "action=create"
 generation="$(sed -n 's/^generation=//p' <<<"$out")"
@@ -223,7 +219,7 @@ out="$(DEV_DB_MIN_FREE_BYTES=999999999999999 dev_db clone otr_pr_2 2>&1)" || sta
 equals "a full volume refuses with exit 3" "$status" 3
 contains "the disk refusal reports free space" "$out" "free"
 
-# a stale seed generation forces a re-clone, R4
+# a stale seed generation forces a re-clone
 psql_scratch postgres "comment on database otr_test_seed is '{\"generation\":1,\"created\":1}'" >/dev/null
 contains "a clone from an older seed generation is recreated" \
   "$(dev_db clone otr_pr_1 2>&1)" "action=recreate"
@@ -234,13 +230,13 @@ out="$(dev_db classify otr_pr_2)"
 contains "a database with no journal table is behind" "$out" "status=behind"
 contains "and has nothing applied" "$out" "applied=0"
 
-# info, R7
+# info
 out="$(dev_db info otr_pr_1)"
 contains "info reports the database name" "$out" "database=otr_pr_1"
 contains "info reports a readable size" "$out" "size_pretty="
 contains "info reports the data age" "$out" "data_age_seconds="
 
-# reap, R6
+# reap
 mkdir -p "$work/previews/pr-1" "$work/previews/pr-2"
 status=0
 out="$(dev_db reap 2>&1)" || status=$?
@@ -312,7 +308,7 @@ contains "clone restores a broken seed first" "$out" "clone: restoring first"
 contains "clone then creates the database" "$out" "action=create"
 equals "the clone has the foreign key" "$(fk_count otr_pr_3)" 1
 
-# R8: a second mutating operation waits, then gives up
+# a second mutating operation waits, then gives up
 STUB_RESTORE_SLEEP=10 dev_db restore >/dev/null 2>&1 &
 holder=$!
 for _ in $(seq 1 100); do
@@ -322,7 +318,8 @@ done
 status=0
 out="$(DEV_DB_LOCK_WAIT=1 dev_db drop otr_pr_9 2>&1)" || status=$?
 equals "a concurrent mutation exits 4" "$status" 4
-contains "the lock message names the holder" "$out" "another operation still holds it"
+contains "the lock message says a lock is held" "$out" \
+  "another dev tier operation still holds the lock"
 wait "$holder" || true
 
 if ((failures > 0)); then
