@@ -180,7 +180,6 @@ export type SearchExpressions = {
 };
 
 export type PlayerSearchExpressions = SearchExpressions & {
-  /** Whether the current username itself satisfied the query. */
   currentUsernameMatched: SQL<boolean>;
   /** The former username the query hit, or null when the current username did. */
   matchedPreviousUsername: SQL<string | null>;
@@ -217,7 +216,6 @@ export function buildPlayerSearchExpressions(
 
   const previousUsernames = sql`unnest(${schema.players.previousUsernames}) with ordinality as entry(previous_username, ordinality)`;
   const closestPreviousUsername = sql`(select previous_username from ${previousUsernames} where ${matchesTerm(sql`previous_username`)} order by length(previous_username), ordinality limit 1)`;
-  // A multi-token query can be covered by several former names and no single one.
   const contributingPreviousUsernames = anyTokenTsQuery
     ? sql`(select string_agg(previous_username, ', ' order by ordinality) from ${previousUsernames} where to_tsvector('simple', ${searchableText(sql`previous_username`)}) @@ ${anyTokenTsQuery})`
     : null;

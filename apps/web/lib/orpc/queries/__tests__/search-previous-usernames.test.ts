@@ -97,7 +97,6 @@ describe.skipIf(!url)('player search over previous usernames', () => {
   it('ranks the current holder of a username above a former holder', async () => {
     const rows = await search('hotdog2000');
 
-    // `apricot` sorts first alphabetically, so only the rank can order these
     expect(rows.map((row) => row.username)).toEqual(['hotdog2000', 'apricot']);
     expect(rows[0]?.matchedPreviousUsername).toBeNull();
     expect(rows[1]?.matchedPreviousUsername).toBe('hotdog2000');
