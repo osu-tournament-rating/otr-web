@@ -66,6 +66,13 @@ export const AuditEventActionSchema = z.enum([
 
 export type AuditEventAction = z.infer<typeof AuditEventActionSchema>;
 
+export const AuditEventActionCountSchema = z.object({
+  action: AuditEventActionSchema,
+  count: z.number().int(),
+});
+
+export type AuditEventActionCount = z.infer<typeof AuditEventActionCountSchema>;
+
 export const AuditEventChildLevelSchema = z.object({
   entityType: z.nativeEnum(AuditEntityType),
   affectedCount: z.number().int(),
@@ -80,6 +87,8 @@ export const AuditEventSchema = z.object({
   eventId: z.number().int().positive().nullable(),
   /** Derived from the top-level entity's `verificationStatus` change. */
   action: AuditEventActionSchema,
+  /** Entities per outcome when the event wrote more than one verification status. */
+  actionBreakdown: z.array(AuditEventActionCountSchema).nullable(),
   /** Null for system actions. */
   actionUserId: z.number().int().nullable(),
   actionUser: AuditActionUserSchema.nullable(),

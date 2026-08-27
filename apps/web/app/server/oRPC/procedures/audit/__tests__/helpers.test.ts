@@ -22,7 +22,7 @@ function groupedRow(overrides: Partial<GroupedAuditRow> = {}): GroupedAuditRow {
     parentEntityId: 10,
     entryCount: 1,
     auditEntryCount: 1,
-    verificationStatusValues: [],
+    verificationStatusCounts: [],
     changedFields: ['name'],
     sampleChanges: {
       name: { originalValue: 'Old', newValue: 'New' },
@@ -145,11 +145,11 @@ describe('assembleEvents', () => {
 
   it('labels a system rejection cascade as a rejection', () => {
     const [event] = assembleEvents([
-      groupedRow({ actionUserId: null, verificationStatusValues: ['3'] }),
+      groupedRow({ actionUserId: null, verificationStatusCounts: ['3:1'] }),
       groupedRow({
         actionUserId: null,
         entityType: AuditEntityType.Match,
-        verificationStatusValues: ['3'],
+        verificationStatusCounts: ['3:4'],
         sampleEntityId: 11,
       }),
     ]);
@@ -172,20 +172,97 @@ describe('assembleEvents', () => {
     expect(event.topEntryCount).toBe(2);
   });
 
-  it('uses a generic action for mixed verification outcomes in one group', () => {
+  it('keeps a single outcome without a breakdown', () => {
     const [event] = assembleEvents([
-      groupedRow({ verificationStatusValues: ['3', '4'] }),
+      groupedRow({ entryCount: 12, verificationStatusCounts: ['4:12'] }),
     ]);
 
-    expect(event.action).toBe('update');
+    expect(event.action).toBe('verification');
+    expect(event.actionBreakdown).toBeNull();
   });
 
-  it('uses a generic action when verification and ordinary updates mix', () => {
+  it('breaks down two verification outcomes in one group', () => {
     const [event] = assembleEvents([
-      groupedRow({ verificationStatusValues: ['4', 'unchanged'] }),
+      groupedRow({ entryCount: 15, verificationStatusCounts: ['3:12', '4:3'] }),
     ]);
 
     expect(event.action).toBe('update');
+    expect(event.actionBreakdown).toEqual([
+      { action: 'rejection', count: 12 },
+      { action: 'verification', count: 3 },
+    ]);
+  });
+
+  it('breaks down three verification outcomes in one group', () => {
+    const [event] = assembleEvents([
+      groupedRow({
+        entryCount: 9,
+        verificationStatusCounts: ['1:2', '2:3', '4:4'],
+      }),
+    ]);
+
+    expect(event.actionBreakdown).toEqual([
+      { action: 'verification', count: 4 },
+      { action: 'pre_verification', count: 3 },
+      { action: 'pre_rejection', count: 2 },
+    ]);
+  });
+
+  it('counts untouched statuses as ordinary updates', () => {
+    const [event] = assembleEvents([
+      groupedRow({
+        entryCount: 10,
+        verificationStatusCounts: ['4:4', 'unchanged:6'],
+      }),
+    ]);
+
+    expect(event.action).toBe('update');
+    expect(event.actionBreakdown).toEqual([
+      { action: 'update', count: 6 },
+      { action: 'verification', count: 4 },
+    ]);
+  });
+
+  it('counts cleared statuses as ordinary updates', () => {
+    const [event] = assembleEvents([
+      groupedRow({
+        entryCount: 3,
+        verificationStatusCounts: ['3:2', 'null:1'],
+      }),
+    ]);
+
+    expect(event.actionBreakdown).toEqual([
+      { action: 'rejection', count: 2 },
+      { action: 'update', count: 1 },
+    ]);
+  });
+
+  it('has no breakdown when every status resolves to one outcome', () => {
+    const [event] = assembleEvents([
+      groupedRow({
+        entryCount: 3,
+        verificationStatusCounts: ['null:1', 'unchanged:2'],
+      }),
+    ]);
+
+    expect(event.action).toBe('update');
+    expect(event.actionBreakdown).toBeNull();
+  });
+
+  it('sums outcomes across the top level groups of one event', () => {
+    const [event] = assembleEvents([
+      groupedRow({ parentEntityId: 10, verificationStatusCounts: ['3:5'] }),
+      groupedRow({
+        parentEntityId: 11,
+        sampleEntityId: 11,
+        verificationStatusCounts: ['3:2', '4:1'],
+      }),
+    ]);
+
+    expect(event.actionBreakdown).toEqual([
+      { action: 'rejection', count: 7 },
+      { action: 'verification', count: 1 },
+    ]);
   });
 });
 

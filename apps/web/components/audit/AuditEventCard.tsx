@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import Link from 'next/link';
 import useSWRInfinite from 'swr/infinite';
 import { ChevronRight, Loader2 } from 'lucide-react';
@@ -78,9 +78,31 @@ type EventDetailsResponse = {
   hasMore: boolean;
 };
 
+/** "rejected 12, verified 3" when one event wrote several outcomes. */
+function buildActionPhrase(event: AuditEvent): React.ReactNode {
+  if (!event.actionBreakdown) {
+    return (
+      <span className={ACTION_TEXT_COLORS[event.action]}>
+        {ACTION_LABELS[event.action]}
+      </span>
+    );
+  }
+
+  return event.actionBreakdown.map((part, index) => (
+    <Fragment key={part.action}>
+      {index > 0 && ', '}
+      <span className={ACTION_TEXT_COLORS[part.action]}>
+        {ACTION_LABELS[part.action]}
+      </span>{' '}
+      {part.count}
+    </Fragment>
+  ));
+}
+
 function buildDescription(event: AuditEvent): React.ReactNode {
   const {
     action,
+    actionBreakdown,
     topEntity,
     childLevel,
     isCascade,
@@ -166,16 +188,18 @@ function buildDescription(event: AuditEvent): React.ReactNode {
 
     return (
       <>
-        <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>{' '}
-        {topEntity.count} {entityPlural}
+        {buildActionPhrase(event)}{' '}
+        {actionBreakdown ? entityPlural : `${topEntity.count} ${entityPlural}`}
         {parentContext}
-        {!FIELD_SUPPRESSED_ACTIONS.has(action) && fieldLabels.length > 0 && (
-          <span className="text-muted-foreground">
-            {fieldLabels.length > 3
-              ? ` (${fieldLabels.length} fields)`
-              : ` (${fieldLabels.join(', ')})`}
-          </span>
-        )}
+        {!actionBreakdown &&
+          !FIELD_SUPPRESSED_ACTIONS.has(action) &&
+          fieldLabels.length > 0 && (
+            <span className="text-muted-foreground">
+              {fieldLabels.length > 3
+                ? ` (${fieldLabels.length} fields)`
+                : ` (${fieldLabels.join(', ')})`}
+            </span>
+          )}
       </>
     );
   }
