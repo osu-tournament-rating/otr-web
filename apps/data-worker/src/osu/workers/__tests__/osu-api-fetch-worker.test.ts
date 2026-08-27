@@ -65,6 +65,7 @@ describe('OsuApiFetchWorker', () => {
         matchService: { fetchAndPersist: fetchAndPersistMatch },
         playerService: { fetchAndPersist: fetchAndPersistPlayer },
         logger,
+        maintenanceWindowEnabled: false,
       });
 
       await worker.start();
@@ -90,6 +91,7 @@ describe('OsuApiFetchWorker', () => {
         matchService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         playerService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         logger,
+        maintenanceWindowEnabled: false,
       });
 
       await worker.start();
@@ -119,6 +121,7 @@ describe('OsuApiFetchWorker', () => {
         matchService: { fetchAndPersist: fetchAndPersistMatch },
         playerService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         logger,
+        maintenanceWindowEnabled: false,
       });
 
       await worker.start();
@@ -147,6 +150,7 @@ describe('OsuApiFetchWorker', () => {
         matchService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         playerService: { fetchAndPersist: fetchAndPersistPlayer },
         logger,
+        maintenanceWindowEnabled: false,
       });
 
       await worker.start();
@@ -173,6 +177,7 @@ describe('OsuApiFetchWorker', () => {
         matchService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         playerService: { fetchAndPersist: mock(() => Promise.resolve(true)) },
         logger,
+        maintenanceWindowEnabled: false,
       });
 
       await worker.start();

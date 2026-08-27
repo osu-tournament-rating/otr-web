@@ -16,6 +16,8 @@ interface DeferOptions {
   enabled: boolean;
   message: DeferrableMessage;
   logger: Logger;
+  now?: Date;
+  delayMs?: number;
 }
 
 /** Requeues the message during the maintenance window; returns whether it deferred. */
@@ -23,13 +25,15 @@ export const deferIfMaintenanceWindow = async ({
   enabled,
   message,
   logger,
+  now = new Date(),
+  delayMs = MAINTENANCE_REQUEUE_DELAY_MS,
 }: DeferOptions): Promise<boolean> => {
-  if (!enabled || !isWithinMaintenanceWindow(new Date())) {
+  if (!enabled || !isWithinMaintenanceWindow(now)) {
     return false;
   }
 
   logger.info('deferring fetch during maintenance window');
-  await sleep(MAINTENANCE_REQUEUE_DELAY_MS);
+  await sleep(delayMs);
   await message.nack(true);
 
   return true;

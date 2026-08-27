@@ -27,7 +27,7 @@ export interface OsuTrackPlayerWorkerOptions extends OsuTrackPlayerWorkerEvents 
   rateLimiter: RateLimiter;
   db: DatabaseClient;
   logger?: Logger;
-  maintenanceWindowEnabled?: boolean;
+  maintenanceWindowEnabled: boolean;
 }
 
 const defaultLogger = consoleLogger;
@@ -50,7 +50,7 @@ export class OsuTrackPlayerWorker {
     this.events = {
       onPlayer: options.onPlayer,
     };
-    this.maintenanceWindowEnabled = options.maintenanceWindowEnabled ?? true;
+    this.maintenanceWindowEnabled = options.maintenanceWindowEnabled;
   }
 
   async start() {

@@ -109,6 +109,7 @@ describe('osu!track end-to-end', () => {
       client,
       rateLimiter,
       logger: noopLogger,
+      maintenanceWindowEnabled: false,
       onPlayer: async ({ message, results: playerResults }) => {
         received = {
           message,
