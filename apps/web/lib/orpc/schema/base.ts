@@ -9,6 +9,7 @@ export const playerSelectSchema = rawPlayerSelectSchema.omit({
 });
 
 export const userSelectSchema = createSelectSchema(schema.users);
+export const userSettingsSelectSchema = createSelectSchema(schema.userSettings);
 
 const rawBeatmapsetSelectSchema = createSelectSchema(schema.beatmapsets);
 export const beatmapsetSelectSchema = rawBeatmapsetSelectSchema.omit({

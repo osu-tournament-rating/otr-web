@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import * as schema from '@otr/core/db/schema';
-import { CurrentUserSchema } from '@/lib/orpc/schema/user';
+import { CurrentUserSchema, UserDetailSchema } from '@/lib/orpc/schema/user';
 import { auth } from '@/lib/auth/auth';
 import { db } from '@/lib/db';
 
@@ -15,6 +15,7 @@ export const getUser = protectedProcedure
       id: z.number().int().positive(),
     })
   )
+  .output(UserDetailSchema)
   .route({
     summary: 'Get user details',
     tags: ['authenticated'],
