@@ -30,6 +30,7 @@ import {
 import RatingDelta from '@/components/rating/RatingDelta';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { stickyTableHeaderFromLg } from '@/lib/utils/table';
 
 interface TournamentRatingsViewProps {
   playerStats: TournamentPlayerStats[];
@@ -286,14 +287,16 @@ export default function TournamentRatingsView({
           </Button>
         </div>
       </div>
-      <div className="overflow-x-auto rounded-lg border bg-gradient-to-br from-background to-muted/20">
+      <div
+        className={cn(
+          'overflow-x-auto rounded-lg border bg-gradient-to-br from-background to-muted/20',
+          stickyTableHeaderFromLg
+        )}
+      >
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="bg-muted/50 hover:bg-muted/70"
-              >
+              <TableRow key={headerGroup.id} className="bg-muted">
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}

@@ -18,6 +18,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
+import { stickyTableHeader } from '@/lib/utils/table';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -42,13 +44,13 @@ export default function TournamentDataTable<TData, TValue>({
   });
 
   return (
-    <div className="rounded-lg bg-popover/50">
+    <div className={cn('rounded-lg bg-popover/50', stickyTableHeader)}>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow
               key={headerGroup.id}
-              className="border-b border-border/50 hover:bg-transparent"
+              className="border-b border-border/50 bg-muted"
             >
               {headerGroup.headers.map((header) => {
                 return (

@@ -20,6 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import { stickyTableHeader } from '@/lib/utils/table';
 
 /** Column chrome the renderer puts on the `th` and on every matching `td`. */
 export interface TournamentColumnMeta {
@@ -71,13 +72,13 @@ export default function TournamentDataTableWithCheckboxes<TData>({
   const rows = table.getRowModel().rows;
 
   return (
-    <div className="rounded-lg bg-popover/50">
+    <div className={cn('rounded-lg bg-popover/50', stickyTableHeader)}>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow
               key={headerGroup.id}
-              className="border-b border-border/50 hover:bg-transparent"
+              className="border-b border-border/50 bg-muted"
             >
               {isSelectable && <TableHead className="w-[40px]" />}
               {headerGroup.headers.map((header) => {
