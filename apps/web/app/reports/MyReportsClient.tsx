@@ -33,6 +33,7 @@ import {
   ReportEntityTypeEnumHelper,
   ReportStatusEnumHelper,
 } from '@/lib/enum-helpers';
+import { notifyReportChange } from '@/lib/hooks/useReportCount';
 import { orpc } from '@/lib/orpc/orpc';
 import type { MyReport } from '@/lib/orpc/schema/report';
 import { ReportEntityType, ReportStatus } from '@otr/core/osu';
@@ -150,9 +151,12 @@ export default function MyReportsClient() {
         r.id === report.id ? { ...r, hasUnreadUpdate: false } : r
       )
     );
-    orpc.reports.markMineViewed({ reportId: report.id }).catch((error) => {
-      console.error('[my-reports] failed to mark report viewed', error);
-    });
+    orpc.reports
+      .markMineViewed({ reportId: report.id })
+      .then(notifyReportChange)
+      .catch((error) => {
+        console.error('[my-reports] failed to mark report viewed', error);
+      });
   }, []);
 
   return (

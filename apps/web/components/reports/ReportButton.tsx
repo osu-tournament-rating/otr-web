@@ -40,6 +40,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { ReportEntityTypeEnumHelper } from '@/lib/enum-helpers';
 import { useSession } from '@/lib/hooks/useSession';
+import { notifyReportChange } from '@/lib/hooks/useReportCount';
 import { orpc } from '@/lib/orpc/orpc';
 import { cn } from '@/lib/utils';
 
@@ -132,6 +133,7 @@ export default function ReportButton({
         reasonKey: data.reasonKey,
         additionalInformation: additionalInformation || undefined,
       });
+      notifyReportChange();
 
       form.reset();
       setOpen(false);
