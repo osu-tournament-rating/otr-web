@@ -40,7 +40,7 @@ export default function PlayerRatingChartTable({
   return (
     <Table>
       <TableHeader>
-        <TableRow className="bg-popover">
+        <TableRow className="bg-muted">
           <TableHead>Date</TableHead>
           <TableHead>Type</TableHead>
           <TableHead className="text-right">

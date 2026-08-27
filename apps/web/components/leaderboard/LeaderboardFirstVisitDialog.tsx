@@ -40,7 +40,9 @@ export default function LeaderboardFirstVisitDialog() {
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Welcome to the o!TR Leaderboard</DialogTitle>
+          <DialogTitle className="pr-8">
+            Welcome to the o!TR Leaderboard
+          </DialogTitle>
           <DialogDescription>
             Ratings measure tournament match performance, not skill, so players
             may place higher or lower than you expect.

@@ -263,6 +263,6 @@ export default function FilteringResultsTable({
   return hideCard ? (
     tableContent
   ) : (
-    <Card className="w-full overflow-hidden p-4">{tableContent}</Card>
+    <Card className="w-full overflow-y-clip p-4">{tableContent}</Card>
   );
 }
