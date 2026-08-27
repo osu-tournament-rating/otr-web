@@ -1,6 +1,7 @@
 import { eq, sql, type AnyColumn, type SQL } from 'drizzle-orm';
 import { alias, QueryBuilder } from 'drizzle-orm/pg-core';
 import * as schema from '@otr/core/db/schema';
+import { searchableText } from '@otr/core/db/schema';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 // pg_trgm's own default, so `%>` and this recheck agree without the session GUC.
@@ -177,6 +178,60 @@ export type SearchExpressions = {
   condition: SQL;
   rank: SQL<number>;
 };
+
+export type PlayerSearchExpressions = SearchExpressions & {
+  currentUsernameMatched: SQL<boolean>;
+  /** The former username the query hit, or null when the current username did. */
+  matchedPreviousUsername: SQL<string | null>;
+};
+
+/** The site-wide player criteria, shared with the admin player lookup. */
+export function buildPlayerSearchExpressions(
+  parsed: ParsedSearchTerm
+): PlayerSearchExpressions {
+  const { tsQuery, prefixTsQuery, anyTokenTsQuery } = parsed;
+  const vector = schema.players.searchVector;
+  const similarity = buildSimilarity(schema.players.username, parsed);
+  // `%>` nominates candidates from the index; the precision half filters them
+  const trigram = sql`(${buildTrigramMatch(schema.players.username, parsed)} AND ${buildTrigramPrecision(
+    [schema.players.username],
+    parsed
+  )})`;
+
+  const condition = prefixTsQuery
+    ? sql`(${vector} @@ ${tsQuery} OR ${vector} @@ ${prefixTsQuery} OR ${trigram})`
+    : sql`(${vector} @@ ${tsQuery} OR ${trigram})`;
+  const rank = prefixTsQuery
+    ? sql<number>`greatest(ts_rank_cd(${vector}, ${tsQuery}), ts_rank_cd(${vector}, ${prefixTsQuery}), ${similarity})`
+    : sql<number>`greatest(ts_rank_cd(${vector}, ${tsQuery}), ${similarity})`;
+
+  const matchesTerm = (value: SQL) => {
+    const valueVector = sql`to_tsvector('simple', ${searchableText(value)})`;
+    return prefixTsQuery
+      ? sql`(${valueVector} @@ ${tsQuery} OR ${valueVector} @@ ${prefixTsQuery})`
+      : sql`${valueVector} @@ ${tsQuery}`;
+  };
+
+  const currentUsernameMatched = sql<boolean>`(${matchesTerm(sql`${schema.players.username}`)} OR ${trigram})`;
+
+  const previousUsernames = sql`unnest(${schema.players.previousUsernames}) with ordinality as entry(previous_username, ordinality)`;
+  const closestPreviousUsername = sql`(select previous_username from ${previousUsernames} where ${matchesTerm(sql`previous_username`)} order by length(previous_username), ordinality limit 1)`;
+  const contributingPreviousUsernames = anyTokenTsQuery
+    ? sql`(select string_agg(previous_username, ', ' order by ordinality) from ${previousUsernames} where to_tsvector('simple', ${searchableText(sql`previous_username`)}) @@ ${anyTokenTsQuery})`
+    : null;
+  const disclosedPreviousUsername = contributingPreviousUsernames
+    ? sql`coalesce(${closestPreviousUsername}, ${contributingPreviousUsernames})`
+    : closestPreviousUsername;
+
+  return {
+    condition,
+    rank,
+    currentUsernameMatched,
+    matchedPreviousUsername: sql<
+      string | null
+    >`case when ${currentUsernameMatched} then null else ${disclosedPreviousUsername} end`,
+  };
+}
 
 type CandidateBranch = { getSQL: () => SQL };
 
@@ -374,27 +429,4 @@ export function buildMatchSearchExpressions(
     : sql<number>`greatest(ts_rank_cd(${matchVector}, ${parsed.tsQuery}), ${matchSimilarity})`;
 
   return { condition: buildMatchCandidateIds(parsed), rank };
-}
-
-/** The site-wide player criteria, shared with the admin player lookup. */
-export function buildPlayerSearchExpressions(
-  parsed: ParsedSearchTerm
-): SearchExpressions {
-  const vector = schema.players.searchVector;
-  const similarity = buildSimilarity(schema.players.username, parsed);
-  // `%>` nominates candidates from the index; the precision half filters them
-  const trigram = sql`(${buildTrigramMatch(
-    schema.players.username,
-    parsed
-  )} AND ${buildTrigramPrecision([schema.players.username], parsed)})`;
-  const { tsQuery, prefixTsQuery } = parsed;
-
-  return {
-    condition: prefixTsQuery
-      ? sql`(${vector} @@ ${tsQuery} OR ${vector} @@ ${prefixTsQuery} OR ${trigram})`
-      : sql`(${vector} @@ ${tsQuery} OR ${trigram})`,
-    rank: prefixTsQuery
-      ? sql`greatest(ts_rank_cd(${vector}, ${tsQuery}), ts_rank_cd(${vector}, ${prefixTsQuery}), ${similarity})`
-      : sql`greatest(ts_rank_cd(${vector}, ${tsQuery}), ${similarity})`,
-  };
 }
