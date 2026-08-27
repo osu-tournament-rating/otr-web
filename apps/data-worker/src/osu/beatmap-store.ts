@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, not } from 'drizzle-orm';
 
 import type { DatabaseClient } from '../db';
 import * as schema from '@otr/core/db/schema';
@@ -10,7 +10,6 @@ type UpdateExecutor = Pick<DatabaseClient, 'update'>;
 export interface BeatmapRecord {
   id: number;
   dataFetchStatus: number;
-  manualOverride: boolean;
 }
 
 export const ensureBeatmapPlaceholder = async (
@@ -24,7 +23,6 @@ export const ensureBeatmapPlaceholder = async (
     columns: {
       id: true,
       dataFetchStatus: true,
-      manualOverride: true,
     },
   });
 
@@ -59,7 +57,6 @@ export const ensureBeatmapPlaceholder = async (
     .returning({
       id: schema.beatmaps.id,
       dataFetchStatus: schema.beatmaps.dataFetchStatus,
-      manualOverride: schema.beatmaps.manualOverride,
     });
 
   if (inserted) {
@@ -71,7 +68,6 @@ export const ensureBeatmapPlaceholder = async (
     columns: {
       id: true,
       dataFetchStatus: true,
-      manualOverride: true,
     },
   });
 
@@ -94,5 +90,10 @@ export const updateBeatmapStatus = async (
       dataFetchStatus: status,
       updated: updatedIso,
     })
-    .where(eq(schema.beatmaps.id, beatmapId));
+    .where(
+      and(
+        eq(schema.beatmaps.id, beatmapId),
+        not(schema.beatmaps.manualOverride)
+      )
+    );
 };

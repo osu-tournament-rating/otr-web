@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'bun:test';
+import type { SQL } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
 
 import { TournamentDataCompletionService } from '../../src/osu/services/tournament-data-completion-service';
 import type { DatabaseClient } from '../../src/db';
@@ -19,6 +21,7 @@ interface MatchRow {
 interface BeatmapRow {
   id: number;
   dataFetchStatus: number;
+  manualOverride: boolean;
 }
 
 interface TournamentRow {
@@ -44,63 +47,23 @@ const noopLogger: Logger = {
   error: () => {},
 };
 
-const extractColumnName = (condition: any): string | undefined => {
-  if (
-    condition &&
-    Array.isArray(condition.queryChunks) &&
-    condition.queryChunks[1]
-  ) {
-    const chunk = condition.queryChunks[1] as { name?: string };
-    return chunk.name;
-  }
-  return undefined;
-};
+const dialect = new PgDialect();
 
-const extractNumbers = (condition: any): number[] => {
-  if (!condition || !Array.isArray(condition.queryChunks)) {
-    return [];
-  }
+const render = (condition: unknown) =>
+  condition
+    ? dialect.sqlToQuery(condition as SQL)
+    : { sql: '', params: [] as unknown[] };
 
-  const numbers: number[] = [];
+const extractColumnName = (condition: unknown): string | undefined =>
+  render(condition).sql.match(/"[^"]+"\."([^"]+)"/)?.[1];
 
-  for (const chunk of condition.queryChunks) {
-    if (chunk && typeof (chunk as any).value === 'number') {
-      numbers.push((chunk as any).value);
-      continue;
-    }
+const extractNumbers = (condition: unknown): number[] =>
+  render(condition).params.filter(
+    (param): param is number => typeof param === 'number'
+  );
 
-    if (Array.isArray(chunk)) {
-      for (const item of chunk) {
-        if (typeof item === 'number') {
-          numbers.push(item);
-        } else if (item && typeof (item as any).value === 'number') {
-          numbers.push((item as any).value);
-        }
-      }
-      continue;
-    }
-
-    if (chunk && Array.isArray((chunk as any).value)) {
-      for (const value of (chunk as any).value) {
-        if (typeof value === 'number') {
-          numbers.push(value);
-        }
-      }
-    }
-
-    if (chunk && typeof chunk === 'object') {
-      for (const value of Object.values(chunk as Record<string, unknown>)) {
-        if (typeof value === 'number') {
-          numbers.push(value);
-        } else if (value && typeof (value as any).value === 'number') {
-          numbers.push((value as any).value);
-        }
-      }
-    }
-  }
-
-  return numbers;
-};
+const excludesManualOverride = (condition: unknown): boolean =>
+  render(condition).sql.includes('manual_override');
 
 class TournamentDataTestDb {
   matches = new Map<number, MatchRow>();
@@ -219,7 +182,11 @@ class TournamentDataTestDb {
           where: (condition: unknown) => {
             const [beatmapId] = extractNumbers(condition);
             const beatmap = this.beatmaps.get(beatmapId);
-            if (beatmap && typeof values.dataFetchStatus === 'number') {
+            if (
+              beatmap &&
+              typeof values.dataFetchStatus === 'number' &&
+              !(excludesManualOverride(condition) && beatmap.manualOverride)
+            ) {
               beatmap.dataFetchStatus = values.dataFetchStatus;
             }
             return undefined;
@@ -365,8 +332,16 @@ describe('TournamentDataCompletionService', () => {
         },
       ],
       beatmaps: [
-        { id: 10, dataFetchStatus: DataFetchStatus.NotFetched },
-        { id: 11, dataFetchStatus: DataFetchStatus.NotFetched },
+        {
+          id: 10,
+          dataFetchStatus: DataFetchStatus.NotFetched,
+          manualOverride: false,
+        },
+        {
+          id: 11,
+          dataFetchStatus: DataFetchStatus.NotFetched,
+          manualOverride: false,
+        },
       ],
       games: [{ matchId: 1, beatmapId: 11 }],
       joins: [{ pooledBeatmapsId: 10, tournamentsPooledInId: 100 }],
@@ -401,6 +376,37 @@ describe('TournamentDataCompletionService', () => {
       tournamentId: 100,
       overrideVerifiedState: false,
     });
+  });
+
+  it('leaves a manually configured beatmap status alone', async () => {
+    const db = new TournamentDataTestDb({
+      matches: [],
+      beatmaps: [
+        {
+          id: 10,
+          dataFetchStatus: DataFetchStatus.NotFound,
+          manualOverride: true,
+        },
+        {
+          id: 11,
+          dataFetchStatus: DataFetchStatus.NotFetched,
+          manualOverride: false,
+        },
+      ],
+      games: [],
+      joins: [],
+    });
+
+    const service = new TournamentDataCompletionService({
+      db: db as unknown as DatabaseClient,
+      logger: noopLogger,
+    });
+
+    await service.updateBeatmapFetchStatus(10, DataFetchStatus.Fetched);
+    await service.updateBeatmapFetchStatus(11, DataFetchStatus.Fetched);
+
+    expect(db.beatmaps.get(10)?.dataFetchStatus).toBe(DataFetchStatus.NotFound);
+    expect(db.beatmaps.get(11)?.dataFetchStatus).toBe(DataFetchStatus.Fetched);
   });
 
   it('updates tournament start and end dates when matches are fully fetched', async () => {

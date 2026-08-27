@@ -1,4 +1,4 @@
-import { eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, not } from 'drizzle-orm';
 
 import type { DatabaseClient } from '../../db';
 import type { Logger } from '../../logging/logger';
@@ -79,7 +79,12 @@ export class TournamentDataCompletionService {
     await this.db
       .update(schema.beatmaps)
       .set({ dataFetchStatus: status })
-      .where(eq(schema.beatmaps.id, beatmapId));
+      .where(
+        and(
+          eq(schema.beatmaps.id, beatmapId),
+          not(schema.beatmaps.manualOverride)
+        )
+      );
 
     const pooledTournamentRows = await this.db
       .select({ tournamentId: schema.joinPooledBeatmaps.tournamentsPooledInId })
