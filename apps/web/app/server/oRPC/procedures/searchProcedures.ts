@@ -14,6 +14,7 @@ import {
 import {
   buildBeatmapSearchExpressions,
   buildMatchSearchExpressions,
+  buildPlayerSearchExpressions,
   buildSimilarity,
   buildTrigramMatch,
   buildTrigramPrecision,
@@ -56,19 +57,12 @@ export const searchEntities = protectedProcedure
       buildTrigramMatch(column, parsed);
 
     try {
-      const playerVector = schema.players.searchVector;
-      const playerSimilarity = similarity(schema.players.username);
-      // `%>` nominates candidates from the index; the precision half filters them
-      const playerTrigram = sql`(${trigramMatch(schema.players.username)} AND ${buildTrigramPrecision(
-        [schema.players.username],
-        parsed
-      )})`;
-      const playerCondition = prefixTsQuery
-        ? sql`(${playerVector} @@ ${tsQuery} OR ${playerVector} @@ ${prefixTsQuery} OR ${playerTrigram})`
-        : sql`(${playerVector} @@ ${tsQuery} OR ${playerTrigram})`;
-      const playerRank = prefixTsQuery
-        ? sql`greatest(ts_rank_cd(${playerVector}, ${tsQuery}), ts_rank_cd(${playerVector}, ${prefixTsQuery}), ${playerSimilarity})`
-        : sql`greatest(ts_rank_cd(${playerVector}, ${tsQuery}), ${playerSimilarity})`;
+      const {
+        condition: playerCondition,
+        rank: playerRank,
+        currentUsernameMatched,
+        matchedPreviousUsername,
+      } = buildPlayerSearchExpressions(parsed);
 
       const tournamentVector = schema.tournaments.searchVector;
       const tournamentNameSimilarity = similarity(schema.tournaments.name);
@@ -118,6 +112,7 @@ export const searchEntities = protectedProcedure
               rating: schema.playerRatings.rating,
               ratingRuleset: schema.playerRatings.ruleset,
               globalRank: schema.playerRatings.globalRank,
+              matchedPreviousUsername,
             })
             .from(schema.players)
             .leftJoin(
@@ -129,6 +124,7 @@ export const searchEntities = protectedProcedure
             )
             .where(playerCondition)
             .orderBy(
+              desc(currentUsernameMatched),
               desc(playerRank),
               sql`${schema.playerRatings.rating} desc nulls last`,
               asc(schema.players.username)
@@ -240,6 +236,7 @@ export const searchEntities = protectedProcedure
           globalRank,
           tierProgress,
           isFriend: friendIds.has(playerId),
+          matchedPreviousUsername: row.matchedPreviousUsername ?? null,
         });
       });
 

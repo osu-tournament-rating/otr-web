@@ -26,6 +26,7 @@ export const PlayerSearchResultSchema = playerSelectSchema
     globalRank: playerRatingSelectSchema.shape.globalRank.nullable(),
     tierProgress: TierProgressSchema.nullable(),
     isFriend: z.boolean().optional(),
+    matchedPreviousUsername: z.string().nullable().optional(),
   });
 
 const tournamentSearchBaseSchema = tournamentSelectSchema.pick({
