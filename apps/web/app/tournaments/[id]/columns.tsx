@@ -197,8 +197,9 @@ export const columns = [
               <span className="whitespace-nowrap">
                 {formatUTCDate(new Date(row.original.startDate))}
               </span>
-              <span>•</span>
-              <span>{row.original.games.length} games</span>
+              <span className="whitespace-nowrap">
+                {row.original.games.length} games
+              </span>
             </div>
           </div>
         </div>
