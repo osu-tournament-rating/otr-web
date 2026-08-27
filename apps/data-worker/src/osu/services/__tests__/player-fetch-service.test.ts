@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { describe, expect, it, mock } from 'bun:test';
 
 import type { API } from 'osu-api-v2-js';
 import type { DatabaseClient } from '../../../db';
@@ -6,7 +6,7 @@ import type { Logger } from '../../../logging/logger';
 import type { RateLimiter } from '../../../rate-limiter';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
-// The real client module reads the worker env at import time, which `bun test` has no values for.
+// The client module reads worker env at import time
 mock.module('../../client', () => ({
   APIError: class APIError extends Error {},
 }));
@@ -86,12 +86,6 @@ const buildApiUser = (overrides: Record<string, unknown>) => ({
 });
 
 describe('PlayerFetchService previous usernames', () => {
-  let harness: ReturnType<typeof createHarness>;
-
-  beforeEach(() => {
-    harness = createHarness(buildApiUser({}));
-  });
-
   it('persists the previous usernames returned by the API', async () => {
     const { service, updates } = createHarness(
       buildApiUser({ previous_usernames: ['hotdog2000', 'oldname'] })
@@ -142,7 +136,7 @@ describe('PlayerFetchService previous usernames', () => {
   });
 
   it('clears the column when the API omits the field', async () => {
-    const { service, updates } = harness;
+    const { service, updates } = createHarness(buildApiUser({}));
 
     await service.fetchAndPersist(OSU_ID);
 
