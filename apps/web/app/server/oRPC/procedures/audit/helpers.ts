@@ -502,15 +502,155 @@ export function buildChildSummary(
   affected: number,
   total: number | null
 ): string {
+  const showsTotal = total !== null && total > affected;
+  const counted = showsTotal ? total : affected;
   const label =
-    affected === 1
+    counted === 1
       ? ENTITY_TYPE_LABELS[childType]
       : ENTITY_TYPE_PLURALS[childType];
 
-  if (total !== null && total !== affected) {
+  if (showsTotal) {
     return `also affected ${affected} of ${total} ${label}`;
   }
   return `also affected ${affected} ${label}`;
+}
+
+/** The entity a cascade's counts are bounded by. */
+export function getCascadeCountParent(
+  topEntityType: AuditEntityType,
+  topEntityId: number,
+  topEntityCount: number,
+  parentTournamentId: number | null
+): { entityType: AuditEntityType; entityId: number } | null {
+  if (topEntityCount === 1) {
+    return { entityType: topEntityType, entityId: topEntityId };
+  }
+  if (parentTournamentId === null) return null;
+  return {
+    entityType: AuditEntityType.Tournament,
+    entityId: parentTournamentId,
+  };
+}
+
+function countEntitiesUnder(
+  db: DatabaseClient,
+  parentType: AuditEntityType,
+  parentIds: number[],
+  childType: AuditEntityType
+): Promise<{ id: number; cnt: number }[]> | null {
+  const cnt = sql<number>`count(*)::int`;
+
+  if (parentType === AuditEntityType.Tournament) {
+    if (childType === AuditEntityType.Match) {
+      return db
+        .select({ id: schema.matches.tournamentId, cnt })
+        .from(schema.matches)
+        .where(inArray(schema.matches.tournamentId, parentIds))
+        .groupBy(schema.matches.tournamentId);
+    }
+    if (childType === AuditEntityType.Game) {
+      return db
+        .select({ id: schema.matches.tournamentId, cnt })
+        .from(schema.games)
+        .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+        .where(inArray(schema.matches.tournamentId, parentIds))
+        .groupBy(schema.matches.tournamentId);
+    }
+    if (childType === AuditEntityType.Score) {
+      return db
+        .select({ id: schema.matches.tournamentId, cnt })
+        .from(schema.gameScores)
+        .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
+        .innerJoin(schema.matches, eq(schema.matches.id, schema.games.matchId))
+        .where(inArray(schema.matches.tournamentId, parentIds))
+        .groupBy(schema.matches.tournamentId);
+    }
+    return null;
+  }
+
+  if (parentType === AuditEntityType.Match) {
+    if (childType === AuditEntityType.Game) {
+      return db
+        .select({ id: schema.games.matchId, cnt })
+        .from(schema.games)
+        .where(inArray(schema.games.matchId, parentIds))
+        .groupBy(schema.games.matchId);
+    }
+    if (childType === AuditEntityType.Score) {
+      return db
+        .select({ id: schema.games.matchId, cnt })
+        .from(schema.gameScores)
+        .innerJoin(schema.games, eq(schema.games.id, schema.gameScores.gameId))
+        .where(inArray(schema.games.matchId, parentIds))
+        .groupBy(schema.games.matchId);
+    }
+    return null;
+  }
+
+  if (
+    parentType === AuditEntityType.Game &&
+    childType === AuditEntityType.Score
+  ) {
+    return db
+      .select({ id: schema.gameScores.gameId, cnt })
+      .from(schema.gameScores)
+      .where(inArray(schema.gameScores.gameId, parentIds))
+      .groupBy(schema.gameScores.gameId);
+  }
+
+  return null;
+}
+
+/** Totals for cascade fractions, one query per parent and child type pair. */
+export async function countChildLevels(
+  db: DatabaseClient,
+  levels: {
+    parentType: AuditEntityType;
+    parentId: number;
+    childType: AuditEntityType;
+  }[]
+): Promise<
+  (
+    parentType: AuditEntityType,
+    parentId: number,
+    childType: AuditEntityType
+  ) => number | null
+> {
+  const parentIdsByLevel = new Map<string, Set<number>>();
+  for (const { parentType, parentId, childType } of levels) {
+    const levelKey = `${parentType}:${childType}`;
+    const existing = parentIdsByLevel.get(levelKey);
+    if (existing) {
+      existing.add(parentId);
+    } else {
+      parentIdsByLevel.set(levelKey, new Set([parentId]));
+    }
+  }
+
+  const counts = new Map<string, number>();
+  await Promise.all(
+    Array.from(parentIdsByLevel.entries()).map(
+      async ([levelKey, parentIds]) => {
+        const [parentType, childType] = levelKey.split(':').map(Number) as [
+          AuditEntityType,
+          AuditEntityType,
+        ];
+        const rows = countEntitiesUnder(
+          db,
+          parentType,
+          [...parentIds],
+          childType
+        );
+        if (rows === null) return;
+        for (const row of await rows) {
+          counts.set(`${levelKey}:${row.id}`, row.cnt);
+        }
+      }
+    )
+  );
+
+  return (parentType, parentId, childType) =>
+    counts.get(`${parentType}:${childType}:${parentId}`) ?? null;
 }
 
 /** Change fields holding user IDs that need resolution. */

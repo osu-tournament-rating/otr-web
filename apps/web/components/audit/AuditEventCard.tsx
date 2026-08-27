@@ -108,6 +108,16 @@ function buildDescription(event: AuditEvent): React.ReactNode {
       childLevel.totalCount && childLevel.affectedCount < childLevel.totalCount
         ? `${childLevel.affectedCount} of ${childLevel.totalCount} ${childPlural}`
         : null;
+    const topDisplay =
+      topEntity.count > 1 ? (
+        <>
+          {topEntity.count} {ENTITY_TYPE_PLURALS[topEntity.entityType]}
+        </>
+      ) : (
+        <>
+          {entityLabel} {entityLink}
+        </>
+      );
 
     // Non-tournament top entity: "rejected Match #123 in Tournament Y (15 games)"
     if (
@@ -126,7 +136,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
       return (
         <>
           <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>{' '}
-          {entityLabel} {entityLink} in {tournamentLink}
+          {topDisplay} in {tournamentLink}
           {countDisplay && (
             <span className="text-muted-foreground"> ({countDisplay})</span>
           )}
@@ -137,7 +147,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
     return (
       <>
         <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>{' '}
-        {entityLabel} {entityLink}
+        {topDisplay}
         {countDisplay && (
           <span className="text-muted-foreground"> ({countDisplay})</span>
         )}
