@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { formatChartNumber } from '@/lib/utils/chart';
 import { formatUTCDate } from '@/lib/utils/date';
 import { formatAccuracy } from '@/lib/utils/format';
+import { stickyTableHeader } from '@/lib/utils/table';
 
 type DisplayRank = {
   /** Rendered numeral, prefixed with `=` when the position is shared. */
@@ -100,10 +101,10 @@ export default function BeatmapLeaderboardCard({
         <EmptyState />
       ) : (
         <>
-          <div className="hidden sm:block">
-            <Table className="min-w-[39rem] table-fixed">
+          <div className={cn('hidden sm:block', stickyTableHeader)}>
+            <Table className="min-w-156 table-fixed">
               <TableHeader>
-                <TableRow className="bg-muted/20">
+                <TableRow className="bg-muted">
                   <TableHead className="h-8 w-12 pl-4">
                     <Eyebrow>#</Eyebrow>
                   </TableHead>

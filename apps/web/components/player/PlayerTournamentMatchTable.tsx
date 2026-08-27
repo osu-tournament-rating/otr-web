@@ -14,6 +14,8 @@ import Link from 'next/link';
 import RatingDelta from '@/components/rating/RatingDelta';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { HelpCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { stickyTableHeaderFromLg } from '@/lib/utils/table';
 
 const RATING_PRECISION = {
   DISPLAY: 0,
@@ -31,14 +33,14 @@ export default function PlayerTournamentMatchTable({
   );
 
   return (
-    <div className="overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="overflow-clip">
+      <div className={cn('overflow-x-auto', stickyTableHeaderFromLg)}>
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="bg-muted/50">Date</TableHead>
-              <TableHead className="bg-muted/50">Match</TableHead>
-              <TableHead className="bg-muted/50 text-center">
+            <TableRow className="bg-muted">
+              <TableHead>Date</TableHead>
+              <TableHead>Match</TableHead>
+              <TableHead className="text-center">
                 <div className="flex items-center justify-center gap-1">
                   Games (W-L)
                   <SimpleTooltip content="Win-loss record for games this player participated in, not the entire team">
@@ -46,9 +48,9 @@ export default function PlayerTournamentMatchTable({
                   </SimpleTooltip>
                 </div>
               </TableHead>
-              <TableHead className="bg-muted/50 text-center">Before</TableHead>
-              <TableHead className="bg-muted/50 text-center">After</TableHead>
-              <TableHead className="bg-muted/50 text-center">Change</TableHead>
+              <TableHead className="text-center">Before</TableHead>
+              <TableHead className="text-center">After</TableHead>
+              <TableHead className="text-center">Change</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

@@ -37,6 +37,7 @@ import { orpc } from '@/lib/orpc/orpc';
 import type { MyReport } from '@/lib/orpc/schema/report';
 import { ReportEntityType, ReportStatus } from '@otr/core/osu';
 import { cn } from '@/lib/utils';
+import { stickyTableHeaderFromLg } from '@/lib/utils/table';
 
 const formatDateTime = (value: string | null | undefined) => {
   if (!value) return '—';
@@ -179,12 +180,15 @@ export default function MyReportsClient() {
             </p>
           ) : (
             <div
-              className="overflow-x-auto rounded-lg border"
+              className={cn(
+                'overflow-x-auto rounded-lg border',
+                stickyTableHeaderFromLg
+              )}
               data-testid="my-reports-list"
             >
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-muted">
                     <TableHead className="w-8" />
                     <TableHead>Type</TableHead>
                     <TableHead>Entity</TableHead>

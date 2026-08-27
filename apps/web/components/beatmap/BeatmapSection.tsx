@@ -27,7 +27,7 @@ export function SectionCard({
   return (
     <Tag
       className={cn(
-        'overflow-hidden rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none',
+        'overflow-clip rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none',
         className
       )}
       {...props}

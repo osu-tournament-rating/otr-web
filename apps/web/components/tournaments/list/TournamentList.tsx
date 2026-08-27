@@ -215,7 +215,7 @@ function ListHeader() {
   return (
     <div
       aria-hidden="true"
-      className="hidden grid-cols-[minmax(0,1fr)_18rem_230px] gap-5 border-b bg-muted px-5 py-2.5 text-xs font-medium text-muted-foreground lg:sticky lg:top-(--header-height-px) lg:z-20 lg:grid dark:bg-secondary"
+      className="hidden grid-cols-[minmax(0,1fr)_18rem_230px] gap-5 border-b bg-muted px-5 py-2.5 text-xs font-medium text-muted-foreground lg:sticky lg:top-(--header-height-px) lg:z-30 lg:grid dark:bg-secondary"
     >
       <span>Tournament</span>
       <span>Format</span>

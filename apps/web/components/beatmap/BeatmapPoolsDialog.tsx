@@ -25,9 +25,11 @@ import {
 } from '@/components/ui/table';
 import { formatRankRangeBound } from '@/lib/beatmaps/rankRange';
 import type { BeatmapTournamentUsage } from '@/lib/orpc/schema/beatmapStats';
+import { cn } from '@/lib/utils';
 import { formatChartNumber } from '@/lib/utils/chart';
 import { formatUTCDate } from '@/lib/utils/date';
 import { normalizeBeatmapDisplayMods } from '@/lib/utils/mods';
+import { stickyTableHeaderInScrollArea } from '@/lib/utils/table';
 import { VerificationStatus } from '@otr/core/osu';
 
 /** `2021-11-05 – 2021-12-18`, or one bound, or an em dash. */
@@ -100,12 +102,15 @@ export default function BeatmapPoolsDialog({
         {/* Focusable so the list scrolls by keyboard */}
         <div
           tabIndex={0}
-          className="min-h-0 flex-1 overflow-y-auto focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset"
+          className={cn(
+            'min-h-0 flex-1 overflow-y-auto focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset',
+            stickyTableHeaderInScrollArea
+          )}
         >
           <div className="hidden md:block">
             <Table className="table-fixed">
               <TableHeader>
-                <TableRow className="bg-muted/20">
+                <TableRow className="bg-muted">
                   <TableHead className="h-8 pl-4">
                     <Eyebrow>Tournament</Eyebrow>
                   </TableHead>
