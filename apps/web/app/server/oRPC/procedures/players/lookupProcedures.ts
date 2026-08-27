@@ -63,7 +63,8 @@ export const lookupPlayers = protectedProcedure
       return PlayerLookupResponseSchema.parse({ players: [] });
     }
 
-    const { condition, rank } = buildPlayerSearchExpressions(parsed);
+    const { condition, rank, currentUsernameMatched } =
+      buildPlayerSearchExpressions(parsed);
 
     const rows = await context.db
       .select({
@@ -73,7 +74,11 @@ export const lookupPlayers = protectedProcedure
       })
       .from(schema.players)
       .where(condition)
-      .orderBy(desc(rank), asc(schema.players.username))
+      .orderBy(
+        desc(currentUsernameMatched),
+        desc(rank),
+        asc(schema.players.username)
+      )
       .limit(input.limit);
 
     return PlayerLookupResponseSchema.parse({

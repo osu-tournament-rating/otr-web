@@ -60,6 +60,7 @@ export const searchEntities = protectedProcedure
       const {
         condition: playerCondition,
         rank: playerRank,
+        currentUsernameMatched,
         matchedPreviousUsername,
       } = buildPlayerSearchExpressions(parsed);
 
@@ -123,6 +124,7 @@ export const searchEntities = protectedProcedure
             )
             .where(playerCondition)
             .orderBy(
+              desc(currentUsernameMatched),
               desc(playerRank),
               sql`${schema.playerRatings.rating} desc nulls last`,
               asc(schema.players.username)

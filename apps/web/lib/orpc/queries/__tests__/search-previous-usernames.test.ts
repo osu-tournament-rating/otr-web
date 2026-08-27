@@ -1,18 +1,26 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { asc, desc, inArray } from 'drizzle-orm';
+import { and, asc, desc, inArray } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
 import * as schema from '@otr/core/db/schema';
 import { buildPlayerSearchExpressions, parseSearchTerm } from '../search';
 
-// Seeds and deletes rows, so it only runs against a database you nominate as
-// disposable. `bun test` in CI has no Postgres and skips.
+// Seeds and deletes rows; point it at a disposable database
 const url = process.env.SEARCH_TEST_DATABASE_URL;
 
 const CURRENT_HOLDER_OSU_ID = 999_000_001;
 const FORMER_HOLDER_OSU_ID = 999_000_002;
-const osuIds = [CURRENT_HOLDER_OSU_ID, FORMER_HOLDER_OSU_ID];
+const PREFIX_HOLDER_OSU_ID = 999_000_003;
+const MANY_FORMER_NAMES_OSU_ID = 999_000_004;
+const TWO_FORMER_NAMES_OSU_ID = 999_000_005;
+const osuIds = [
+  CURRENT_HOLDER_OSU_ID,
+  FORMER_HOLDER_OSU_ID,
+  PREFIX_HOLDER_OSU_ID,
+  MANY_FORMER_NAMES_OSU_ID,
+  TWO_FORMER_NAMES_OSU_ID,
+];
 
 describe.skipIf(!url)('player search over previous usernames', () => {
   const pool = new Pool({ connectionString: url });
@@ -20,7 +28,7 @@ describe.skipIf(!url)('player search over previous usernames', () => {
 
   const search = async (term: string) => {
     const parsed = parseSearchTerm(term)!;
-    const { condition, rank, matchedPreviousUsername } =
+    const { condition, rank, currentUsernameMatched, matchedPreviousUsername } =
       buildPlayerSearchExpressions(parsed);
 
     return db
@@ -30,8 +38,12 @@ describe.skipIf(!url)('player search over previous usernames', () => {
         matchedPreviousUsername,
       })
       .from(schema.players)
-      .where(condition)
-      .orderBy(desc(rank), asc(schema.players.username));
+      .where(and(condition, inArray(schema.players.osuId, osuIds)))
+      .orderBy(
+        desc(currentUsernameMatched),
+        desc(rank),
+        asc(schema.players.username)
+      );
   };
 
   beforeAll(async () => {
@@ -48,6 +60,21 @@ describe.skipIf(!url)('player search over previous usernames', () => {
         osuId: FORMER_HOLDER_OSU_ID,
         username: 'apricot',
         previousUsernames: ['hotdog2000', 'burgerking'],
+      },
+      {
+        osuId: PREFIX_HOLDER_OSU_ID,
+        username: 'Aoi',
+        previousUsernames: [],
+      },
+      {
+        osuId: MANY_FORMER_NAMES_OSU_ID,
+        username: 'renamer3',
+        previousUsernames: ['Aoba', 'Aozora', 'Aomine'],
+      },
+      {
+        osuId: TWO_FORMER_NAMES_OSU_ID,
+        username: 'Cookiezi',
+        previousUsernames: ['Rafis', 'Shigetora'],
       },
     ]);
   });
@@ -72,8 +99,23 @@ describe.skipIf(!url)('player search over previous usernames', () => {
 
     // `apricot` sorts first alphabetically, so only the rank can order these
     expect(rows.map((row) => row.username)).toEqual(['hotdog2000', 'apricot']);
-    expect(Number(rows[0]?.rank)).toBeGreaterThan(Number(rows[1]?.rank));
     expect(rows[0]?.matchedPreviousUsername).toBeNull();
     expect(rows[1]?.matchedPreviousUsername).toBe('hotdog2000');
+  });
+
+  it('ranks a current username above several matching former names', async () => {
+    const rows = await search('ao');
+
+    expect(rows.map((row) => row.username)).toEqual(['Aoi', 'renamer3']);
+    expect(rows[0]?.matchedPreviousUsername).toBeNull();
+    expect(Number(rows[1]?.rank)).toBeGreaterThan(Number(rows[0]?.rank));
+  });
+
+  it('discloses former names when the query spans two of them', async () => {
+    const rows = await search('rafis shigetora');
+
+    expect(rows).toMatchObject([
+      { username: 'Cookiezi', matchedPreviousUsername: 'Rafis, Shigetora' },
+    ]);
   });
 });

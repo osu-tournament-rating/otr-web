@@ -180,6 +180,8 @@ export type SearchExpressions = {
 };
 
 export type PlayerSearchExpressions = SearchExpressions & {
+  /** Whether the current username itself satisfied the query. */
+  currentUsernameMatched: SQL<boolean>;
   /** The former username the query hit, or null when the current username did. */
   matchedPreviousUsername: SQL<string | null>;
 };
@@ -188,7 +190,7 @@ export type PlayerSearchExpressions = SearchExpressions & {
 export function buildPlayerSearchExpressions(
   parsed: ParsedSearchTerm
 ): PlayerSearchExpressions {
-  const { tsQuery, prefixTsQuery } = parsed;
+  const { tsQuery, prefixTsQuery, anyTokenTsQuery } = parsed;
   const vector = schema.players.searchVector;
   const similarity = buildSimilarity(schema.players.username, parsed);
   // `%>` nominates candidates from the index; the precision half filters them
@@ -211,15 +213,25 @@ export function buildPlayerSearchExpressions(
       : sql`${valueVector} @@ ${tsQuery}`;
   };
 
-  const currentUsernameMatched = sql`(${matchesTerm(sql`${schema.players.username}`)} OR ${trigram})`;
-  const firstMatchingPreviousUsername = sql`(select previous_username from unnest(${schema.players.previousUsernames}) as previous_username where ${matchesTerm(sql`previous_username`)} limit 1)`;
+  const currentUsernameMatched = sql<boolean>`(${matchesTerm(sql`${schema.players.username}`)} OR ${trigram})`;
+
+  const previousUsernames = sql`unnest(${schema.players.previousUsernames}) with ordinality as entry(previous_username, ordinality)`;
+  const closestPreviousUsername = sql`(select previous_username from ${previousUsernames} where ${matchesTerm(sql`previous_username`)} order by length(previous_username), ordinality limit 1)`;
+  // A multi-token query can be covered by several former names and no single one.
+  const contributingPreviousUsernames = anyTokenTsQuery
+    ? sql`(select string_agg(previous_username, ', ' order by ordinality) from ${previousUsernames} where to_tsvector('simple', ${searchableText(sql`previous_username`)}) @@ ${anyTokenTsQuery})`
+    : null;
+  const disclosedPreviousUsername = contributingPreviousUsernames
+    ? sql`coalesce(${closestPreviousUsername}, ${contributingPreviousUsernames})`
+    : closestPreviousUsername;
 
   return {
     condition,
     rank,
+    currentUsernameMatched,
     matchedPreviousUsername: sql<
       string | null
-    >`case when ${currentUsernameMatched} then null else ${firstMatchingPreviousUsername} end`,
+    >`case when ${currentUsernameMatched} then null else ${disclosedPreviousUsername} end`,
   };
 }
 
