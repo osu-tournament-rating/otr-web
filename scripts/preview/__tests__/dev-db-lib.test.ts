@@ -166,27 +166,39 @@ describe('redact', () => {
     expect(out).toContain('duplicate key value');
   });
 
-  test('strips absolute paths and the secret paths in the environment', () => {
+  test('strips absolute and home paths in every shape', () => {
     const noisy = [
-      'gzip: /home/runner/otr-dev/dump.sql.gz: No such file or directory',
-      'downloaded to otr-dev-home/dumps',
+      'gzip: /srv/dev/dumps/latest.sql.gz: No such file or directory',
+      'psql:/srv/dev/seed.sql:12: ERROR: relation missing',
+      'error at [/srv/dev/seed.sql]',
+      'moving to:/srv/dev/dumps',
+      'copy from ~/dev/dumps/seed.sql failed',
       'applied 10/20 migrations and/or seeds',
     ].join('\n');
     const result = Bun.spawnSync({
       cmd: ['bash', '-c', 'set -euo pipefail; . "$0"; redact', lib],
-      env: {
-        ...process.env,
-        DEV_REMOTE_PATH: '/home/runner/otr-dev',
-        PREVIEW_REMOTE_PATH: 'otr-dev-home',
-        OTR_SCRIPTS_DIR: '/opt/otr-scripts',
-      },
       stdin: Buffer.from(noisy),
     });
     const out = result.stdout.toString();
-    expect(out).not.toContain('/home/runner');
-    expect(out).not.toContain('otr-dev-home');
+    expect(out).not.toContain('/srv');
+    expect(out).not.toContain('~/dev');
     expect(out).toContain('gzip: /redacted: No such file or directory');
+    expect(out).toContain('psql:/redacted:12: ERROR: relation missing');
+    expect(out).toContain('error at [/redacted]');
+    expect(out).toContain('moving to:/redacted');
+    expect(out).toContain('copy from /redacted failed');
     expect(out).toContain('10/20 migrations and/or seeds');
+  });
+
+  test('strips a relative OTR_SCRIPTS_DIR the path rule cannot see', () => {
+    const result = Bun.spawnSync({
+      cmd: ['bash', '-c', 'set -euo pipefail; . "$0"; redact', lib],
+      env: { ...process.env, OTR_SCRIPTS_DIR: 'otr-scripts' },
+      stdin: Buffer.from('bash: otr-scripts/recover.sh: not found'),
+    });
+    expect(result.stdout.toString()).toBe(
+      'bash: redacted/recover.sh: not found\n'
+    );
   });
 
   test('keeps the connection string rule without a password in the environment', () => {

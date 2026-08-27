@@ -12,11 +12,10 @@ redact() {
   local line name value
   sed -E -e '/^[[:space:]]*(DETAIL|CONTEXT):/d' \
     -e 's#postgres(ql)?://[^[:space:]"'\'']*#postgresql://redacted#g' \
-    -e 's#(^|[[:space:]"'\''(=])/[A-Za-z0-9._+-]+(/[A-Za-z0-9._+-]+)*#\1/redacted#g' |
+    -e 's#(^|[^A-Za-z0-9/])~?/[A-Za-z0-9._+-]+(/[A-Za-z0-9._+-]+)*#\1/redacted#g' |
     tail -n "${DEV_DB_LOG_LINES:-20}" |
     while IFS= read -r line || [[ -n "$line" ]]; do
-      for name in DOCKER_POSTGRES_PASSWORD DEV_REMOTE_PATH PREVIEW_REMOTE_PATH \
-        OTR_SCRIPTS_DIR; do
+      for name in DOCKER_POSTGRES_PASSWORD OTR_SCRIPTS_DIR; do
         value="${!name:-}"
         if [[ -n "$value" ]]; then
           line="${line//"$value"/redacted}"

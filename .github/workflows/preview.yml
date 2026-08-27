@@ -418,7 +418,6 @@ jobs:
               ) || migration=$?
             fi
             if (( migration != 0 )); then
-              # The database stays for diagnosis.
               docker compose -p "$2" down --remove-orphans
               exit 1
             fi
@@ -526,8 +525,7 @@ jobs:
             directory="$1/pr-$3"
             if [[ -d "$directory" ]]; then
               cd "$directory"
-              # No -v: the compose file names the volumes, so a preview could
-              # otherwise nominate one belonging to something else on the host.
+              # No -v: the compose file names shared volumes.
               docker compose -p "otr-pr-$3" down --remove-orphans
               cd /
               rm -rf "$directory"

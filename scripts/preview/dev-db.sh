@@ -345,7 +345,7 @@ clone() { # clone <database>
       query postgres "drop database if exists $1" >/dev/null
       disconnect "$SEED_DB"
       query postgres "create database $1 template $SEED_DB strategy file_copy" >/dev/null
-      # TEMPLATE does not copy the comment, so every clone is stamped here.
+      # TEMPLATE does not copy the comment.
       stamp "$1" "${seed_generation:-0}"
       ;;
     reuse)
