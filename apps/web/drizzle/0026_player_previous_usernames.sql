@@ -3,6 +3,7 @@ RETURNS text
 LANGUAGE sql
 IMMUTABLE
 PARALLEL SAFE
+SET search_path = pg_catalog, pg_temp
 AS $$
   SELECT COALESCE(string_agg(part, ' '), '') FROM unnest(parts) AS part;
 $$;--> statement-breakpoint
