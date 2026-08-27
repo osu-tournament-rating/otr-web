@@ -3,9 +3,11 @@ import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 
 import {
   assembleEvents,
+  buildChildSummary,
   camelizeChangesKeys,
   decodeEventFeedCursor,
   encodeEventFeedCursor,
+  getCascadeCountParent,
   type GroupedAuditRow,
 } from '../helpers';
 
@@ -231,5 +233,51 @@ describe('audit change key normalization', () => {
         newValue: 4,
       },
     });
+  });
+});
+
+describe('buildChildSummary', () => {
+  it('states a fraction when the total is larger', () => {
+    expect(buildChildSummary(AuditEntityType.Match, 85, 118)).toBe(
+      'also affected 85 of 118 matches'
+    );
+  });
+
+  it('drops the fraction when every child was affected', () => {
+    expect(buildChildSummary(AuditEntityType.Game, 8, 8)).toBe(
+      'also affected 8 games'
+    );
+  });
+
+  it('drops the fraction when the counts cover different scopes', () => {
+    expect(buildChildSummary(AuditEntityType.Game, 993, 8)).toBe(
+      'also affected 993 games'
+    );
+  });
+
+  it('drops the fraction without a total', () => {
+    expect(buildChildSummary(AuditEntityType.Score, 1, null)).toBe(
+      'also affected 1 score'
+    );
+  });
+});
+
+describe('getCascadeCountParent', () => {
+  it('counts under the top entity when the cascade has one', () => {
+    expect(
+      getCascadeCountParent(AuditEntityType.Match, 162949, 1, 500)
+    ).toEqual({ entityType: AuditEntityType.Match, entityId: 162949 });
+  });
+
+  it('counts under the tournament when the top level spans several entities', () => {
+    expect(
+      getCascadeCountParent(AuditEntityType.Match, 162949, 124, 500)
+    ).toEqual({ entityType: AuditEntityType.Tournament, entityId: 500 });
+  });
+
+  it('has no scope when several top entities span tournaments', () => {
+    expect(
+      getCascadeCountParent(AuditEntityType.Match, 162949, 124, null)
+    ).toBeNull();
   });
 });

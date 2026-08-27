@@ -35,6 +35,8 @@ import {
   classifyAction,
   getImmediateChildType,
   buildChildSummary,
+  countChildLevels,
+  getCascadeCountParent,
   buildFieldChangeConditions,
   buildReferencedUsers,
   extractUserIdsFromChanges,
@@ -498,7 +500,7 @@ export const getEntityAuditTimeline = publicProcedure
                   return sql`
                 SELECT
                   ${et}::int AS entity_type,
-                  COUNT(*)::int AS cnt,
+                  COUNT(DISTINCT a.reference_id_lock)::int AS cnt,
                   (array_agg(a.reference_id_lock ORDER BY a.id DESC))[1] AS sample_id,
                   (array_agg(a.changes ORDER BY a.id DESC))[1] AS sample_changes
                 FROM ${sql.raw(info.fromClause)}
@@ -538,12 +540,20 @@ export const getEntityAuditTimeline = publicProcedure
 
           siblingRows.sort((a, b) => a.entity_type - b.entity_type);
           const topRow = siblingRows[0]!;
-          const topEntityType = topRow.entity_type as AuditEntityType;
-          const topEntityId = topRow.sample_id;
+          const topRowType = topRow.entity_type as AuditEntityType;
           const topChanges = camelizeChangesKeys(
             topRow.sample_changes as Record<string, unknown> | null
           );
           const action = classifyAction(actionType, topChanges);
+
+          // A cascade over several entities of its top type is rooted at their tournament.
+          const spansTopLevel = topRow.cnt > 1;
+          const topEntityType = spansTopLevel
+            ? AuditEntityType.Tournament
+            : topRowType;
+          const topEntityId = spansTopLevel
+            ? parentTournamentId
+            : topRow.sample_id;
 
           const descendantCounts = siblingRows
             .filter((row) => row.entity_type > topEntityType && row.cnt > 0)
@@ -571,60 +581,16 @@ export const getEntityAuditTimeline = publicProcedure
           });
         }
 
-        const childCountQueries: {
-          cacheKey: string;
-          query: Promise<{ cnt: number }[]>;
-        }[] = [];
-        for (const info of cascadeInfos) {
-          if (info.childType === null || info.childAffectedCount === 0)
-            continue;
-          const cacheKey = `${info.topEntityType}:${info.topEntityId}`;
-          if (
-            info.topEntityType === AuditEntityType.Tournament &&
-            info.childType === AuditEntityType.Match
-          ) {
-            childCountQueries.push({
-              cacheKey,
-              query: context.db
-                .select({ cnt: sql<number>`count(*)::int` })
-                .from(schema.matches)
-                .where(eq(schema.matches.tournamentId, info.topEntityId)),
-            });
-          } else if (
-            info.topEntityType === AuditEntityType.Match &&
-            info.childType === AuditEntityType.Game
-          ) {
-            childCountQueries.push({
-              cacheKey,
-              query: context.db
-                .select({ cnt: sql<number>`count(*)::int` })
-                .from(schema.games)
-                .where(eq(schema.games.matchId, info.topEntityId)),
-            });
-          } else if (
-            info.topEntityType === AuditEntityType.Game &&
-            info.childType === AuditEntityType.Score
-          ) {
-            childCountQueries.push({
-              cacheKey,
-              query: context.db
-                .select({ cnt: sql<number>`count(*)::int` })
-                .from(schema.gameScores)
-                .where(eq(schema.gameScores.gameId, info.topEntityId)),
-            });
-          }
-        }
-
-        const totalChildCounts = new Map<string, number>();
-        if (childCountQueries.length > 0) {
-          const countResults = await Promise.all(
-            childCountQueries.map((q) => q.query)
-          );
-          for (let i = 0; i < childCountQueries.length; i++) {
-            const cnt = countResults[i][0]?.cnt ?? 0;
-            totalChildCounts.set(childCountQueries[i].cacheKey, cnt);
-          }
-        }
+        const childTotal = await countChildLevels(
+          context.db,
+          cascadeInfos.flatMap((info) =>
+            info.descendantCounts.map((descendant) => ({
+              parentType: info.topEntityType,
+              parentId: info.topEntityId,
+              childType: descendant.entityType,
+            }))
+          )
+        );
 
         const entityNameMaps = await resolveEntityNamesBatched(
           context.db,
@@ -638,8 +604,10 @@ export const getEntityAuditTimeline = publicProcedure
           const topEntityName =
             entityNameMaps.get(info.topEntityType)?.get(info.topEntityId) ??
             null;
-          const cacheKey = `${info.topEntityType}:${info.topEntityId}`;
-          const totalChildCount = totalChildCounts.get(cacheKey) ?? null;
+          const totalChildCount =
+            info.childType !== null
+              ? childTotal(info.topEntityType, info.topEntityId, info.childType)
+              : null;
 
           const childSummary =
             info.childType !== null && info.childAffectedCount > 0
@@ -659,8 +627,11 @@ export const getEntityAuditTimeline = publicProcedure
             descendants: info.descendantCounts.map(({ entityType, count }) => ({
               entityType,
               affectedCount: count,
-              totalCount:
-                entityType === info.childType ? totalChildCount : null,
+              totalCount: childTotal(
+                info.topEntityType,
+                info.topEntityId,
+                entityType
+              ),
             })),
             eventId: info.eventId,
             actionUserId: info.actionUserId,
@@ -1009,11 +980,10 @@ export const getAuditEventFeed = publicProcedure
       }))
     );
 
-    const totalChildCounts = new Map<string, number>();
-    const tournamentIdsForMatchCount: number[] = [];
-    const matchIdsForGameCount: number[] = [];
-    const gameIdsForScoreCount: number[] = [];
-
+    const cascadeCountParents = new Map<
+      string,
+      { entityType: AuditEntityType; entityId: number }
+    >();
     for (const event of assembledEvents) {
       if (
         !event.isCascade ||
@@ -1021,82 +991,33 @@ export const getAuditEventFeed = publicProcedure
         event.childAffectedCount === 0
       )
         continue;
-      if (
-        event.topEntityType === AuditEntityType.Tournament &&
-        event.childEntityType === AuditEntityType.Match
-      ) {
-        tournamentIdsForMatchCount.push(event.topEntityId);
-      } else if (
-        event.topEntityType === AuditEntityType.Match &&
-        event.childEntityType === AuditEntityType.Game
-      ) {
-        matchIdsForGameCount.push(event.topEntityId);
-      } else if (
-        event.topEntityType === AuditEntityType.Game &&
-        event.childEntityType === AuditEntityType.Score
-      ) {
-        gameIdsForScoreCount.push(event.topEntityId);
+      const countParent = getCascadeCountParent(
+        event.topEntityType,
+        event.topEntityId,
+        event.topEntityCount,
+        event.parentEntityId
+      );
+      if (countParent !== null) {
+        cascadeCountParents.set(event.eventKey, countParent);
       }
     }
 
-    await Promise.all([
-      tournamentIdsForMatchCount.length > 0
-        ? context.db
-            .select({
-              id: schema.matches.tournamentId,
-              cnt: sql<number>`count(*)::int`,
-            })
-            .from(schema.matches)
-            .where(
-              inArray(schema.matches.tournamentId, tournamentIdsForMatchCount)
-            )
-            .groupBy(schema.matches.tournamentId)
-            .then((rows) => {
-              for (const row of rows) {
-                totalChildCounts.set(
-                  `${AuditEntityType.Tournament}:${row.id}`,
-                  row.cnt
-                );
-              }
-            })
-        : Promise.resolve(),
-      matchIdsForGameCount.length > 0
-        ? context.db
-            .select({
-              id: schema.games.matchId,
-              cnt: sql<number>`count(*)::int`,
-            })
-            .from(schema.games)
-            .where(inArray(schema.games.matchId, matchIdsForGameCount))
-            .groupBy(schema.games.matchId)
-            .then((rows) => {
-              for (const row of rows) {
-                totalChildCounts.set(
-                  `${AuditEntityType.Match}:${row.id}`,
-                  row.cnt
-                );
-              }
-            })
-        : Promise.resolve(),
-      gameIdsForScoreCount.length > 0
-        ? context.db
-            .select({
-              id: schema.gameScores.gameId,
-              cnt: sql<number>`count(*)::int`,
-            })
-            .from(schema.gameScores)
-            .where(inArray(schema.gameScores.gameId, gameIdsForScoreCount))
-            .groupBy(schema.gameScores.gameId)
-            .then((rows) => {
-              for (const row of rows) {
-                totalChildCounts.set(
-                  `${AuditEntityType.Game}:${row.id}`,
-                  row.cnt
-                );
-              }
-            })
-        : Promise.resolve(),
-    ]);
+    const childTotal = await countChildLevels(
+      context.db,
+      assembledEvents.flatMap((event) => {
+        const countParent = cascadeCountParents.get(event.eventKey);
+        if (countParent === undefined || event.childEntityType === null) {
+          return [];
+        }
+        return [
+          {
+            parentType: countParent.entityType,
+            parentId: countParent.entityId,
+            childType: event.childEntityType,
+          },
+        ];
+      })
+    );
 
     const allRefUserIds: number[] = [];
     for (const event of assembledEvents) {
@@ -1133,8 +1054,14 @@ export const getAuditEventFeed = publicProcedure
 
       let childLevel: AuditEvent['childLevel'] = null;
       if (event.childEntityType !== null && event.childAffectedCount > 0) {
-        const cacheKey = `${event.topEntityType}:${event.topEntityId}`;
-        const totalCount = totalChildCounts.get(cacheKey) ?? null;
+        const countParent = cascadeCountParents.get(event.eventKey);
+        const totalCount = countParent
+          ? childTotal(
+              countParent.entityType,
+              countParent.entityId,
+              event.childEntityType
+            )
+          : null;
         childLevel = {
           entityType: event.childEntityType,
           affectedCount: event.childAffectedCount,

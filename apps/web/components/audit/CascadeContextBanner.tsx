@@ -45,7 +45,7 @@ function countLabel(descendant: CascadeDescendant): string {
       ? ENTITY_TYPE_LABELS[entityType]
       : ENTITY_TYPE_PLURALS[entityType];
 
-  if (totalCount !== null && totalCount !== affectedCount) {
+  if (totalCount !== null && totalCount > affectedCount) {
     return `${numberFormat.format(affectedCount)} of ${numberFormat.format(totalCount)} ${label}`;
   }
   return `${numberFormat.format(affectedCount)} ${label}`;
