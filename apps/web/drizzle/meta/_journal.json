@@ -183,6 +183,13 @@
       "when": 1787608877367,
       "tag": "0025_colossal_dorian_gray",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1787860155054,
+      "tag": "0026_opposite_nehzno",
+      "breakpoints": true
     }
   ]
 }

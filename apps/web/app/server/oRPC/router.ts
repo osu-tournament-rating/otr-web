@@ -62,17 +62,14 @@ import {
 import { manageTournamentBeatmapsAdmin } from './procedures/tournaments/beatmapAdminProcedures';
 import { manageTournamentMatchesAdmin } from './procedures/tournaments/matchAdminProcedures';
 import {
-  createBeatmapAdminNote,
   createGameAdminNote,
   createMatchAdminNote,
   createScoreAdminNote,
   createTournamentAdminNote,
-  deleteBeatmapAdminNote,
   deleteGameAdminNote,
   deleteMatchAdminNote,
   deleteScoreAdminNote,
   deleteTournamentAdminNote,
-  updateBeatmapAdminNote,
   updateGameAdminNote,
   updateMatchAdminNote,
   updateScoreAdminNote,
@@ -207,11 +204,6 @@ export const router = base.router({
     stats: getBeatmapStats,
     admin: {
       update: updateBeatmapAdmin,
-    },
-    adminNotes: {
-      create: createBeatmapAdminNote,
-      update: updateBeatmapAdminNote,
-      delete: deleteBeatmapAdminNote,
     },
   },
   stats: {

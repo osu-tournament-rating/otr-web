@@ -323,6 +323,7 @@ export const getEntityAuditTimeline = publicProcedure
       '- `1` — Match',
       '- `2` — Game',
       '- `3` — Score',
+      '- `4` — Beatmap',
       '',
       'Each timeline item is either an `audit` entry (a recorded change) or a `note` (an admin comment).',
       'Audit entries that were part of a bulk cascade operation include a `cascadeContext` object describing',
