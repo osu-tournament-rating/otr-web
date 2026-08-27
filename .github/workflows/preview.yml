@@ -181,8 +181,6 @@ jobs:
             echo "project=otr-pr-${PR_NUMBER}"
           } >> "$GITHUB_OUTPUT"
 
-          # The pair drizzle records for every migration it applies: the
-          # journal's `when` and the sha256 of the .sql file.
           journal() {
             local ref="$1" when tag
             git show "$ref:apps/web/drizzle/meta/_journal.json" |
@@ -195,16 +193,15 @@ jobs:
 
           git fetch --no-tags --quiet origin \
             "+refs/heads/${DEFAULT_BRANCH}:refs/remotes/origin/${DEFAULT_BRANCH}"
-          base_list="$(journal "origin/${DEFAULT_BRANCH}")"
-          head_list="$(journal HEAD)"
+          base_journal="$(journal "origin/${DEFAULT_BRANCH}")"
+          head_journal="$(journal HEAD)"
 
-          # The shared database tracks the default branch, so what it should
-          # hold comes from there and never from this pull request.
+          # The shared database tracks the default branch.
           if [[ "$BASE_REF" != "$DEFAULT_BRANCH" ]]; then
             verdict=isolate
             reason="the pull request is not based on $DEFAULT_BRANCH"
           else
-            read -r verdict reason <<<"$(decide_isolation "$base_list" "$head_list")"
+            read -r verdict reason <<<"$(decide_isolation "$base_journal" "$head_journal")"
           fi
           echo "isolation: $verdict, $reason"
 
@@ -223,18 +220,18 @@ jobs:
 
           if [[ "$verdict" == "isolate" ]]; then
             database="otr_pr_${PR_NUMBER}"
-            expected_list="$head_list"
+            expected_journal="$head_journal"
           else
             database="$DEV_LIVE_DB"
-            expected_list="$base_list"
+            expected_journal="$base_journal"
           fi
 
           {
             echo "database=$database"
             echo "isolate=$([[ "$verdict" == "isolate" ]] && echo true || echo false)"
             echo "behind=$([[ "$verdict" == "share-behind" ]] && echo true || echo false)"
-            echo "base_journal=$(base64 -w0 <<<"$base_list")"
-            echo "expected_journal=$(base64 -w0 <<<"$expected_list")"
+            echo "base_journal=$(base64 -w0 <<<"$base_journal")"
+            echo "expected_journal=$(base64 -w0 <<<"$expected_journal")"
           } >> "$GITHUB_OUTPUT"
 
       - name: Connect to tailscale
@@ -308,9 +305,9 @@ jobs:
           EXPECTED_JOURNAL: ${{ steps.context.outputs.expected_journal }}
           ISOLATE: ${{ steps.context.outputs.isolate }}
           PREVIEW_DB: ${{ steps.context.outputs.database }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          . scripts/preview/dev-db-lib.sh
           status=0
           output=$(ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
             bash -s -- "$DEV_REMOTE_PATH" "$OTR_SCRIPTS_DIR" "$BASE_JOURNAL" \
@@ -329,17 +326,15 @@ jobs:
           echo "$output"
 
           if (( status != 0 )); then
-            if (( status == 3 )); then
-              reason="the dev tier refused to prepare \`$PREVIEW_DB\`"
-            else
-              reason="preparing \`$PREVIEW_DB\` on the dev tier failed with exit $status"
-            fi
+            case "$status" in
+              3) reason="the dev tier refused to prepare \`$PREVIEW_DB\`" ;;
+              4) reason="another dev tier operation is still running; retry once it finishes" ;;
+              *) reason="preparing \`$PREVIEW_DB\` on the dev tier failed with exit $status" ;;
+            esac
             {
               echo "No preview: $reason."
               echo
-              echo '```'
-              redact <<<"$output"
-              echo '```'
+              echo "\`Prepare the preview database\` failed; the output is in the [run log]($RUN_URL)."
             } > "$RUNNER_TEMP/preview-comment.md"
             echo "::error::$reason"
             exit 1
@@ -397,6 +392,7 @@ jobs:
           NEEDS_MIGRATE: ${{ steps.context.outputs.isolate }}
           EXPECTED_JOURNAL: ${{ steps.context.outputs.expected_journal }}
           PREVIEW_DB: ${{ steps.context.outputs.database }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
           status=0
@@ -422,9 +418,6 @@ jobs:
               ) || migration=$?
             fi
             if (( migration != 0 )); then
-              # The database stays for diagnosis. No -v: the compose file names
-              # the volumes, so a preview could otherwise nominate one
-              # belonging to something else on the host.
               docker compose -p "$2" down --remove-orphans
               exit 1
             fi
@@ -439,9 +432,7 @@ jobs:
               echo "No preview: the migration failed and the stack was stopped."
               echo "\`$PREVIEW_DB\` was left in place for diagnosis."
               echo
-              echo '```'
-              tail -n 20 <<<"$output"
-              echo '```'
+              echo "\`Migrate and start the preview stack\` failed; the output is in the [run log]($RUN_URL)."
             } > "$RUNNER_TEMP/preview-comment.md"
             echo "::error::the preview migration failed"
             exit 1
@@ -472,9 +463,13 @@ jobs:
             if [[ "${DATA_AGE:-}" =~ ^[0-9]+$ ]]; then
               age="$((DATA_AGE / 86400)) days old"
             fi
+            size="size unknown"
+            if [[ "${SIZE:-}" =~ ^[0-9]+([.][0-9]+)?[[:space:]](bytes|[kMGT]B)$ ]]; then
+              size="$SIZE"
+            fi
             {
               printf '%s\n\n' "Deployed \`${HEAD_SHA:0:7}\`: $PREVIEW_URL"
-              printf '%s\n' "Database \`$PREVIEW_DB\`, ${SIZE:-size unknown}, data $age."
+              printf '%s\n' "Database \`$PREVIEW_DB\`, $size, data $age."
               if [[ "$BEHIND" == "true" ]]; then
                 printf '\n%s\n' "This branch is behind \`$DEFAULT_BRANCH\`, so the preview runs"
                 printf '%s\n' "against the older schema. Rebase to preview against the current one."
@@ -484,9 +479,6 @@ jobs:
 
           body=$(printf '<!-- otr-preview -->\n%s\n' "$(cat "$message")")
 
-          # Edited in place rather than appended, so every deploy reports the
-          # commit it published without leaving a trail of stale URLs. The
-          # marker is how the comment is found again; it does not render.
           found=$(gh api "repos/$GITHUB_REPOSITORY/issues/${PR_NUMBER}/comments" --paginate \
             --jq '.[] | select(.body | startswith("<!-- otr-preview -->")) | .id')
           id=${found%%$'\n'*}
@@ -533,8 +525,7 @@ jobs:
             directory="$1/pr-$3"
             if [[ -d "$directory" ]]; then
               cd "$directory"
-              # No -v: the compose file names the volumes, so a preview could
-              # otherwise nominate one belonging to something else on the host.
+              # No -v: the compose file names shared volumes.
               docker compose -p "otr-pr-$3" down --remove-orphans
               cd /
               rm -rf "$directory"
@@ -545,20 +536,15 @@ jobs:
             ./scripts/preview/dev-db.sh drop "otr_pr_$3"
           EOF
 
-      # Nothing else reaps these, and the registry is public, so a closed PR
-      # would otherwise leave its image published forever. Runs even when the
-      # host cleanup above failed, since the tag is unrelated to it.
       - name: Delete the preview image tag
         if: always()
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           # Needs the delete scope, which the push steps do not.
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          IMAGE: ${{ vars.WEB_IMAGE || 'stagecodes/otr-web' }}
+          IMAGE: stagecodes/otr-web
         run: |
           set -euo pipefail
-          # Parsed separately so a non-JSON body -- an error page, a proxy 502 --
-          # reaches the check below instead of killing the step on jq's exit.
           response=$(curl -sS -X POST https://hub.docker.com/v2/auth/token \
             -H 'content-type: application/json' \
             -d "$(jq -nc --arg u "$DOCKERHUB_USERNAME" --arg s "$DOCKERHUB_TOKEN" \

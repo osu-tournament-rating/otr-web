@@ -166,6 +166,55 @@ describe('redact', () => {
     expect(out).toContain('duplicate key value');
   });
 
+  test('strips absolute and home paths in every shape', () => {
+    const noisy = [
+      'gzip: /srv/dev/dumps/latest.sql.gz: No such file or directory',
+      'psql:/srv/dev/seed.sql:12: ERROR: relation missing',
+      'error at [/srv/dev/seed.sql]',
+      'moving to:/srv/dev/dumps',
+      'copy from ~/dev/dumps/seed.sql failed',
+      'applied 10/20 migrations and/or seeds',
+    ].join('\n');
+    const result = Bun.spawnSync({
+      cmd: ['bash', '-c', 'set -euo pipefail; . "$0"; redact', lib],
+      stdin: Buffer.from(noisy),
+    });
+    const out = result.stdout.toString();
+    expect(out).not.toContain('/srv');
+    expect(out).not.toContain('~/dev');
+    expect(out).toContain('gzip: /redacted: No such file or directory');
+    expect(out).toContain('psql:/redacted:12: ERROR: relation missing');
+    expect(out).toContain('error at [/redacted]');
+    expect(out).toContain('moving to:/redacted');
+    expect(out).toContain('copy from /redacted failed');
+    expect(out).toContain('10/20 migrations and/or seeds');
+  });
+
+  test('strips a relative OTR_SCRIPTS_DIR the path rule cannot see', () => {
+    const result = Bun.spawnSync({
+      cmd: ['bash', '-c', 'set -euo pipefail; . "$0"; redact', lib],
+      env: { ...process.env, OTR_SCRIPTS_DIR: 'otr-scripts' },
+      stdin: Buffer.from('bash: otr-scripts/recover.sh: not found'),
+    });
+    expect(result.stdout.toString()).toBe(
+      'bash: redacted/recover.sh: not found\n'
+    );
+  });
+
+  test('keeps the connection string rule without a password in the environment', () => {
+    const result = Bun.spawnSync({
+      cmd: ['bash', '-c', 'set -euo pipefail; . "$0"; redact', lib],
+      env: { ...process.env, DOCKER_POSTGRES_PASSWORD: '' },
+      stdin: Buffer.from(
+        'connecting to postgresql://otr:hunter2@db:5432/otr_pr_1'
+      ),
+    });
+    const out = result.stdout.toString();
+    expect(out).toContain('postgresql://redacted');
+    expect(out).not.toContain('hunter2');
+    expect(out).not.toContain('otr_pr_1');
+  });
+
   test('caps the output', () => {
     const result = Bun.spawnSync({
       cmd: ['bash', '-c', 'set -euo pipefail; . "$0"; redact', lib],
@@ -211,6 +260,7 @@ test('gives up when the host lock is already held', async () => {
 
   expect(result.exitCode).toBe(4);
   expect(result.stderr.toString()).toContain(
-    'another operation still holds it'
+    'another dev tier operation still holds the lock'
   );
+  expect(result.stderr.toString()).not.toContain(lockFile);
 });

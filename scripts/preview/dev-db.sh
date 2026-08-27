@@ -25,8 +25,8 @@ set -euo pipefail
 # stays idle so it can act as a template, and the live database is recreated
 # from it and shared by every preview.
 #
-# EXPECTED_JOURNAL is a newline-separated `<when> <sha256>` list computed on
-# the runner, which has jq and the migration files; the host has neither.
+# EXPECTED_JOURNAL is computed on the runner, which has jq and the migration
+# files; the host has neither.
 
 API_VERSION=2
 
@@ -345,7 +345,7 @@ clone() { # clone <database>
       query postgres "drop database if exists $1" >/dev/null
       disconnect "$SEED_DB"
       query postgres "create database $1 template $SEED_DB strategy file_copy" >/dev/null
-      # TEMPLATE does not copy the comment, so every clone is stamped here.
+      # TEMPLATE does not copy the comment.
       stamp "$1" "${seed_generation:-0}"
       ;;
     reuse)
@@ -437,8 +437,7 @@ remove_stack() { # remove_stack <pr number>
   if [[ -n "$PREVIEW_REMOTE_PATH" && -d "$directory" ]]; then
     (
       cd "$directory"
-      # No -v: the compose file names the volumes, so a preview could
-      # otherwise nominate one belonging to something else on the host.
+      # No -v: the compose file names shared volumes.
       docker compose -p "otr-pr-$1" down --remove-orphans </dev/null
     ) || true
     rm -rf "$directory"
@@ -457,7 +456,7 @@ usage() {
 lock() { # lock <-s|-x>
   exec 9>"$LOCK_FILE"
   flock -w "$LOCK_WAIT" -E 4 "$1" 9 || {
-    echo "dev-db: waited ${LOCK_WAIT}s for $LOCK_FILE; another operation still holds it" >&2
+    echo "dev-db: another dev tier operation still holds the lock after ${LOCK_WAIT}s" >&2
     exit 4
   }
 }

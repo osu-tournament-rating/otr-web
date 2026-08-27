@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
 
-# Decision functions for dev-db.sh, kept free of docker, psql and the
-# filesystem so they can be tested directly. Every one takes strings and
-# prints a verdict; redact is the one filter, and preview.yml pipes the
-# preview stack's migration output through it on the host.
+# Decision functions for dev-db.sh.
 #
 # Journal lists are newline-separated `<when> <sha256>` entries: the drizzle
 # journal's `when` and the sha256 of the migration's .sql file, which is what
 # drizzle stores in drizzle.__drizzle_migrations.
 
-# Actions logs are public and this tier holds a replica of real player data.
 # Postgres puts key values in DETAIL and CONTEXT, and a failing migration
 # prints the URL it dialled.
 redact() {
-  local line
+  local line name value
   sed -E -e '/^[[:space:]]*(DETAIL|CONTEXT):/d' \
-    -e 's#postgres(ql)?://[^[:space:]"'\'']*#postgresql://redacted#g' |
+    -e 's#postgres(ql)?://[^[:space:]"'\'']*#postgresql://redacted#g' \
+    -e 's#(^|[^A-Za-z0-9/])~?/[A-Za-z0-9._+-]+(/[A-Za-z0-9._+-]+)*#\1/redacted#g' |
     tail -n "${DEV_DB_LOG_LINES:-20}" |
     while IFS= read -r line || [[ -n "$line" ]]; do
-      if [[ -n "${DOCKER_POSTGRES_PASSWORD:-}" ]]; then
-        line="${line//"$DOCKER_POSTGRES_PASSWORD"/redacted}"
-      fi
+      for name in DOCKER_POSTGRES_PASSWORD OTR_SCRIPTS_DIR; do
+        value="${!name:-}"
+        if [[ -n "$value" ]]; then
+          line="${line//"$value"/redacted}"
+        fi
+      done
       printf '%s\n' "$line"
     done
 }
@@ -100,8 +100,7 @@ decide_isolation() { # decide_isolation <base journal> <head journal>
 }
 
 # create | recreate | reuse | reuse-migrate. Provenance that is missing or
-# unparseable yields recreate: the reaper reclaims space, nothing reclaims a
-# wrong schema.
+# unparseable yields recreate.
 decide_clone_action() { # decide_clone_action <exists> <status> <clone generation> <seed generation> <age> <max age>
   local exists="$1" status="$2" clone_generation="$3" seed_generation="$4" age="$5" max_age="$6"
 
@@ -125,7 +124,6 @@ decide_clone_action() { # decide_clone_action <exists> <status> <clone generatio
   esac
 }
 
-# The per-PR databases with no open pull request behind them.
 select_reapable() { # select_reapable <databases> <open pr numbers>
   local open=" ${2//$'\n'/ } " database number
   while IFS= read -r database; do
@@ -138,8 +136,7 @@ select_reapable() { # select_reapable <databases> <open pr numbers>
   done <<<"$1"
 }
 
-# ok | refuse-disk | refuse-cap. A figure that will not parse is treated as no
-# room at all.
+# ok | refuse-disk | refuse-cap.
 check_capacity() { # check_capacity <free> <seed size> <clones> <max clones> <factor percent> <headroom>
   local value
   for value in "$@"; do
@@ -159,7 +156,6 @@ check_capacity() { # check_capacity <free> <seed size> <clones> <max clones> <fa
   echo ok
 }
 
-# The provenance comment carries integers only, so no JSON parser is needed.
 provenance_field() { # provenance_field <json> <key>
   if [[ "$1" =~ \"$2\"[[:space:]]*:[[:space:]]*([0-9]+) ]]; then
     echo "${BASH_REMATCH[1]}"
