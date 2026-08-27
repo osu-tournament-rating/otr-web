@@ -17,7 +17,7 @@ interface OsuApiFetchWorkerOptions {
   matchService: MatchFetchServiceContract;
   playerService: PlayerFetchServiceContract;
   logger: Logger;
-  maintenanceWindowEnabled?: boolean;
+  maintenanceWindowEnabled: boolean;
 }
 
 export class OsuApiFetchWorker {
@@ -34,7 +34,7 @@ export class OsuApiFetchWorker {
     this.matchService = options.matchService;
     this.playerService = options.playerService;
     this.logger = options.logger;
-    this.maintenanceWindowEnabled = options.maintenanceWindowEnabled ?? true;
+    this.maintenanceWindowEnabled = options.maintenanceWindowEnabled;
   }
 
   async start() {
