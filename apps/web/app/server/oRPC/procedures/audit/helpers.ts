@@ -8,12 +8,14 @@ import {
 import type {
   AuditEntry,
   AuditEventAction,
+  AuditEventActionCount,
   EntityTimelineItem,
 } from '@/lib/orpc/schema/audit';
 import {
   ENTITY_TYPE_LABELS,
   ENTITY_TYPE_PLURALS,
 } from '@/lib/audit-entity-types';
+import { ACTION_LABELS } from '@/lib/audit-actions';
 import type { DatabaseClient } from '@/lib/db';
 
 export function getAuditTable(entityType: AuditEntityType) {
@@ -286,8 +288,8 @@ export type GroupedAuditRow = {
   parentEntityId: number | null;
   entryCount: number;
   auditEntryCount: number;
-  /** "null" means a cleared verification status. */
-  verificationStatusValues: string[];
+  /** `status:count` pairs; "null" is a cleared status. */
+  verificationStatusCounts: string[];
   changedFields: string[];
   sampleChanges: Record<string, unknown> | null;
   sampleEntityId: number;
@@ -357,6 +359,7 @@ export type AssembledEvent = {
   eventKey: string;
   eventId: number | null;
   action: AuditEventAction;
+  actionBreakdown: AuditEventActionCount[] | null;
   actionUserId: number | null;
   created: string;
   isSystem: boolean;
@@ -384,18 +387,68 @@ function classifyGroupedAuditRow(row: GroupedAuditRow): AuditEventAction {
     return classifyAction(actionType, null);
   }
 
-  const verificationStatusValues = new Set(row.verificationStatusValues);
-  if (verificationStatusValues.size !== 1) return 'update';
+  const statusCounts = parseStatusCounts(row.verificationStatusCounts);
+  if (statusCounts.size !== 1) return 'update';
 
-  const rawStatus = verificationStatusValues.values().next().value!;
-  if (rawStatus === 'null' || rawStatus === 'unchanged') return 'update';
+  return classifyStatus(statusCounts.keys().next().value!, actionType);
+}
 
+function parseStatusCounts(pairs: string[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const pair of pairs) {
+    const separator = pair.lastIndexOf(':');
+    if (separator === -1) continue;
+    const count = Number(pair.slice(separator + 1));
+    if (!Number.isFinite(count)) continue;
+    const status = pair.slice(0, separator);
+    counts.set(status, (counts.get(status) ?? 0) + count);
+  }
+  return counts;
+}
+
+function classifyStatus(
+  status: string,
+  actionType: AuditActionType
+): AuditEventAction {
+  if (status === 'null' || status === 'unchanged') return 'update';
   return classifyAction(actionType, {
     verificationStatus: {
       originalValue: null,
-      newValue: Number(rawStatus),
+      newValue: Number(status),
     },
   });
+}
+
+/** Entities per outcome, for an event that wrote more than one verification status. */
+export function buildActionBreakdown(
+  rows: GroupedAuditRow[]
+): AuditEventActionCount[] | null {
+  const counts = new Map<AuditEventAction, number>();
+  let counted = 0;
+  let entities = 0;
+
+  for (const row of rows) {
+    const actionType =
+      row.actionTypes.length === 1
+        ? row.actionTypes[0]!
+        : AuditActionType.Updated;
+    entities += row.entryCount;
+    for (const [status, count] of parseStatusCounts(
+      row.verificationStatusCounts
+    )) {
+      const action = classifyStatus(status, actionType);
+      counts.set(action, (counts.get(action) ?? 0) + count);
+      counted += count;
+    }
+  }
+
+  if (counts.size < 2 || counted !== entities) return null;
+
+  return Array.from(counts, ([action, count]) => ({ action, count })).sort(
+    (a, b) =>
+      b.count - a.count ||
+      ACTION_LABELS[a.action].localeCompare(ACTION_LABELS[b.action])
+  );
 }
 
 /** Groups rows from multiple audit tables into events keyed by the database's event key. */
@@ -473,6 +526,7 @@ export function assembleEvents(rows: GroupedAuditRow[]): AssembledEvent[] {
       eventKey,
       eventId: topRow.eventId,
       action,
+      actionBreakdown: buildActionBreakdown(topRows),
       actionUserId: topRow.actionUserId,
       created: topRow.created,
       isSystem,
