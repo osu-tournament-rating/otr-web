@@ -38,6 +38,20 @@ Run commands from the repository root unless noted.
   to compensate for it.
 - `text-xs` (12px) is the minimum. Update manual overrides to adhere if encountered.
 
+## Tailwind
+
+- Use semantic color tokens for text, never palette colors like
+  `text-neutral-200` or `text-orange-500`.
+- For colored text on a plain background use the base token
+  (`text-destructive`, `text-primary`), not a `*-foreground` token;
+  `text-primary-foreground` only goes on `bg-primary`. `text-muted-foreground`
+  is the muted text token and is fine anywhere.
+- Never set a `z-*` class on shadcn overlay content (`PopoverContent`,
+  `DropdownMenuContent`, `TooltipContent`). They are portalled at `z-50`, and
+  `cn` is `twMerge` (`apps/web/lib/utils.ts`), so a call-site `z-1` overrides
+  the primitive.
+- Wrap the tooltip around `DialogTrigger`, never around `Dialog`.
+
 ## Database and migrations
 
 - `packages/otr-core/src/db/schema.ts` is the model source of truth. Generate
