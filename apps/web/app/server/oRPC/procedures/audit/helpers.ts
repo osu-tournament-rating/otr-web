@@ -287,7 +287,7 @@ export type GroupedAuditRow = {
   parentEntityId: number | null;
   entryCount: number;
   auditEntryCount: number;
-  /** `status:count` pairs; "null" is a cleared status and "unchanged" is an untouched one. */
+  /** `status:count` pairs; "null" is a cleared status. */
   verificationStatusCounts: string[];
   changedFields: string[];
   sampleChanges: Record<string, unknown> | null;

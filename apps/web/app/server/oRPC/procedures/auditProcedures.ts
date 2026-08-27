@@ -856,6 +856,7 @@ export const getAuditEventFeed = publicProcedure
           ${sql.raw(parentIdExpr)} AS parent_entity_id,
           COUNT(DISTINCT a.reference_id_lock)::int AS count,
           COUNT(*)::int AS entry_count,
+          -- Both array_agg calls share ORDER BY a.id so unnest pairs status with entity.
           ARRAY(
             SELECT
               grouped_statuses.status

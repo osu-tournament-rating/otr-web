@@ -78,7 +78,6 @@ type EventDetailsResponse = {
   hasMore: boolean;
 };
 
-/** "rejected 12, verified 3" when one event wrote several outcomes. */
 function buildActionPhrase(event: AuditEvent): React.ReactNode {
   if (!event.actionBreakdown) {
     return (
