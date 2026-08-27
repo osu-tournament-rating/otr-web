@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ORPCError } from '@orpc/client';
 import {
   Gauge,
   Info,
@@ -78,16 +79,16 @@ const count = required.refine((value) => {
 const duration = required.refine((value) => {
   const seconds = parseDuration(value);
   return seconds !== null && seconds <= 86_400;
-}, 'Enter a length as mm:ss');
+}, 'Enter a length as [h:]mm:ss');
 
-const formSchema = z.object({
+export const formSchema = z.object({
   diffName: required,
   ruleset: z.string(),
   sr: decimal(100),
   bpm: decimal(10_000),
   totalLength: duration,
   drainLength: duration,
-  cs: decimal(20),
+  cs: decimal(10),
   hp: decimal(20),
   od: decimal(20),
   ar: decimal(20),
@@ -100,8 +101,8 @@ const formSchema = z.object({
     .refine((value) => {
       if (value === '') return true;
       const parsed = Number(value);
-      return Number.isInteger(parsed) && parsed >= 0;
-    }, 'Enter a whole number, 0 or more'),
+      return Number.isInteger(parsed) && parsed >= 1;
+    }, 'Enter a whole number, 1 or more'),
   titleOverride: z.string().trim().max(512),
   artistOverride: z.string().trim().max(512),
 });
@@ -110,7 +111,29 @@ type FormValues = z.input<typeof formSchema>;
 
 type FooterMode = 'edit' | 'confirm';
 
-/** Order-sensitive: any difference is a difference in the saved payload. */
+export function fieldErrors(error: unknown) {
+  if (!(error instanceof ORPCError)) {
+    return [];
+  }
+
+  const issues = (error.data as { issues?: unknown })?.issues;
+  if (!Array.isArray(issues)) {
+    return [];
+  }
+
+  return issues.flatMap((issue) => {
+    const first = issue?.path?.[0];
+    const name =
+      typeof first === 'object' && first !== null ? first.key : first;
+
+    return typeof name === 'string' &&
+      name in formSchema.shape &&
+      typeof issue?.message === 'string'
+      ? [{ name: name as keyof FormValues, message: issue.message as string }]
+      : [];
+  });
+}
+
 export function sameOsuIds(
   a: readonly PlayerLookupResult[],
   b: readonly PlayerLookupResult[]
@@ -163,7 +186,7 @@ export default function BeatmapAdminView({
     countCircle: String(beatmap.countCircle),
     countSlider: String(beatmap.countSlider),
     countSpinner: String(beatmap.countSpinner),
-    maxCombo: beatmap.maxCombo === null ? '' : String(beatmap.maxCombo),
+    maxCombo: beatmap.maxCombo ? String(beatmap.maxCombo) : '',
     titleOverride: beatmap.titleOverride ?? beatmap.beatmapset?.title ?? '',
     artistOverride: beatmap.artistOverride ?? beatmap.beatmapset?.artist ?? '',
   };
@@ -207,52 +230,63 @@ export default function BeatmapAdminView({
     setOpen(next);
   }
 
-  async function save() {
-    if (inFlight.current) return;
+  const save = form.handleSubmit(
+    async (values) => {
+      if (inFlight.current) return;
 
-    inFlight.current = true;
-    setSaving(true);
-    setSaveError(null);
+      inFlight.current = true;
+      setSaving(true);
+      setSaveError(null);
 
-    const values = formSchema.parse(form.getValues());
+      try {
+        await orpc.beatmaps.admin.update({
+          id: beatmap.id,
+          diffName: values.diffName,
+          ruleset: Number(values.ruleset) as Ruleset,
+          rankedStatus: beatmap.rankedStatus,
+          totalLength: parseDuration(values.totalLength) ?? 0,
+          drainLength: parseDuration(values.drainLength) ?? 0,
+          bpm: Number(values.bpm),
+          countCircle: Number(values.countCircle),
+          countSlider: Number(values.countSlider),
+          countSpinner: Number(values.countSpinner),
+          cs: Number(values.cs),
+          hp: Number(values.hp),
+          od: Number(values.od),
+          ar: Number(values.ar),
+          sr: Number(values.sr),
+          maxCombo: values.maxCombo === '' ? null : Number(values.maxCombo),
+          titleOverride: values.titleOverride || null,
+          artistOverride: values.artistOverride || null,
+          setOwnerOsuIdOverride: setOwner[0]?.osuId ?? null,
+          creatorOsuIds: mappers.map((mapper) => mapper.osuId),
+        });
 
-    try {
-      await orpc.beatmaps.admin.update({
-        id: beatmap.id,
-        diffName: values.diffName,
-        ruleset: Number(values.ruleset) as Ruleset,
-        rankedStatus: beatmap.rankedStatus,
-        totalLength: parseDuration(values.totalLength) ?? 0,
-        drainLength: parseDuration(values.drainLength) ?? 0,
-        bpm: Number(values.bpm),
-        countCircle: Number(values.countCircle),
-        countSlider: Number(values.countSlider),
-        countSpinner: Number(values.countSpinner),
-        cs: Number(values.cs),
-        hp: Number(values.hp),
-        od: Number(values.od),
-        ar: Number(values.ar),
-        sr: Number(values.sr),
-        maxCombo: values.maxCombo === '' ? null : Number(values.maxCombo),
-        titleOverride: values.titleOverride || null,
-        artistOverride: values.artistOverride || null,
-        setOwnerOsuIdOverride: setOwner[0]?.osuId ?? null,
-        creatorOsuIds: mappers.map((mapper) => mapper.osuId),
-      });
+        saveToast();
+        setOpen(false);
+        setMode('edit');
+        router.refresh();
+      } catch (error) {
+        const fields = fieldErrors(error);
+        fields.forEach(({ name, message }, index) => {
+          form.setError(name, { message }, { shouldFocus: index === 0 });
+        });
 
-      saveToast();
-      setOpen(false);
-      setMode('edit');
-      router.refresh();
-    } catch {
-      errorSaveToast();
-      setSaveError('The save did not go through. Your changes are still here.');
-      setMode('edit');
-    } finally {
-      inFlight.current = false;
-      setSaving(false);
-    }
-  }
+        setMode('edit');
+
+        if (!fields.length) {
+          errorSaveToast();
+          setSaveError(
+            'The save did not go through. Your changes are still here.'
+          );
+        }
+      } finally {
+        inFlight.current = false;
+        setSaving(false);
+      }
+    },
+    () => setMode('edit')
+  );
 
   return (
     <div className="flex items-center gap-0.5 rounded-full border border-white/20 bg-black/50 p-0.5 shadow-lg backdrop-blur-sm">
@@ -548,10 +582,10 @@ function FieldLabel({
   hint?: string;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-2">
-      <FormLabel className="truncate">{children}</FormLabel>
+    <div className="flex flex-wrap items-baseline justify-between gap-x-2">
+      <FormLabel>{children}</FormLabel>
       {hint ? (
-        <span className="shrink-0 text-xs text-muted-foreground">{hint}</span>
+        <span className="text-xs text-muted-foreground">{hint}</span>
       ) : null}
     </div>
   );
@@ -570,7 +604,7 @@ function NumberField({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
+        <FormItem className="content-end">
           <FieldLabel hint={hint}>{label}</FieldLabel>
           <FormControl>
             {step ? (
@@ -596,7 +630,6 @@ type NumericField = {
   name: keyof FormValues;
   label: string;
   hint?: string;
-  /** Omitted for the length fields, which are typed as mm:ss. */
   step?: string;
   placeholder?: string;
 };
@@ -604,17 +637,37 @@ type NumericField = {
 const DIFFICULTY_FIELDS: readonly NumericField[] = [
   { name: 'sr', label: 'Star rating', hint: 'stars', step: '0.01' },
   { name: 'bpm', label: 'BPM', hint: 'bpm', step: '0.01' },
-  { name: 'totalLength', label: 'Length', hint: 'mm:ss', placeholder: '3:42' },
-  { name: 'drainLength', label: 'Drain', hint: 'mm:ss', placeholder: '3:20' },
-  { name: 'cs', label: 'CS', hint: '0-20', step: '0.1' },
-  { name: 'hp', label: 'HP', hint: '0-10', step: '0.1' },
-  { name: 'od', label: 'OD', hint: '0-10', step: '0.1' },
-  { name: 'ar', label: 'AR', hint: '0-10', step: '0.1' },
+  {
+    name: 'totalLength',
+    label: 'Length',
+    hint: '[h:]mm:ss',
+    placeholder: '3:42',
+  },
+  {
+    name: 'drainLength',
+    label: 'Drain',
+    hint: '[h:]mm:ss',
+    placeholder: '3:20',
+  },
+  {
+    name: 'cs',
+    label: 'CS',
+    hint: '0-10; key count in osu!mania',
+    step: '0.1',
+  },
+  { name: 'hp', label: 'HP', hint: '0-20', step: '0.1' },
+  { name: 'od', label: 'OD', hint: '0-20', step: '0.1' },
+  { name: 'ar', label: 'AR', hint: '0-20', step: '0.1' },
 ];
 
 const OBJECT_FIELDS: readonly NumericField[] = [
   { name: 'countCircle', label: 'Circles', step: '1' },
   { name: 'countSlider', label: 'Sliders', step: '1' },
   { name: 'countSpinner', label: 'Spinners', step: '1' },
-  { name: 'maxCombo', label: 'Max combo', hint: 'optional', step: '1' },
+  {
+    name: 'maxCombo',
+    label: 'Max combo',
+    hint: 'optional; 1 or more',
+    step: '1',
+  },
 ];

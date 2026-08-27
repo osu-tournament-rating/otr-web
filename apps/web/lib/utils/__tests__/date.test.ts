@@ -2,6 +2,12 @@ import { describe, expect, it } from 'bun:test';
 
 import { formatDuration, parseDuration } from '@/lib/utils/date';
 
+describe('formatDuration', () => {
+  it('counts hours past the first', () => {
+    expect(formatDuration(4335)).toBe('1:12:15');
+  });
+});
+
 describe('parseDuration', () => {
   it('reads mm:ss', () => {
     expect(parseDuration('3:42')).toBe(222);
@@ -11,11 +17,7 @@ describe('parseDuration', () => {
 
   it('reads h:mm:ss', () => {
     expect(parseDuration('1:23:45')).toBe(5025);
-  });
-
-  it('reads bare seconds', () => {
-    expect(parseDuration('222')).toBe(222);
-    expect(parseDuration('0')).toBe(0);
+    expect(parseDuration('72:15')).toBe(4335);
   });
 
   it('ignores surrounding whitespace', () => {
@@ -28,6 +30,8 @@ describe('parseDuration', () => {
       'abc',
       '-1',
       '3:60',
+      '222',
+      '0',
       '3:',
       ':42',
       '1.5',
@@ -38,7 +42,7 @@ describe('parseDuration', () => {
   });
 
   it('round-trips through formatDuration', () => {
-    for (const seconds of [0, 7, 222, 720, 5025]) {
+    for (const seconds of [0, 7, 222, 720, 4335, 5025]) {
       expect(parseDuration(formatDuration(seconds))).toBe(seconds);
     }
   });

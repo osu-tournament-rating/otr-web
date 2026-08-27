@@ -1,4 +1,3 @@
-import { formatSecondsToMinutesSeconds } from '@otr/core/utils/time';
 import { Activity, Clock3, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
@@ -6,6 +5,7 @@ import RulesetPill from '@/components/beatmaps/RulesetPill';
 import StarRatingPill from '@/components/beatmaps/StarRatingPill';
 import { Button } from '@/components/ui/button';
 import type { BeatmapWithDetails } from '@/lib/orpc/schema/beatmapStats';
+import { formatDuration } from '@/lib/utils/date';
 
 export default function BeatmapBannerData({
   beatmap,
@@ -40,7 +40,7 @@ export default function BeatmapBannerData({
         </span>
         <span className="inline-flex h-8 items-center gap-1.5 px-1 text-sm font-semibold">
           <Clock3 className="size-4 text-muted-foreground" aria-hidden="true" />
-          {formatSecondsToMinutesSeconds(beatmap.totalLength)}
+          {formatDuration(beatmap.totalLength)}
         </span>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">

@@ -34,10 +34,10 @@ export function formatDuration(seconds: number): string {
   return formatSecondsToMinutesSeconds(seconds);
 }
 
-/** Inverse of {@link formatDuration}. Accepts `3:45`, `1:23:45`, or bare seconds. */
+/** Inverse of {@link formatDuration}. Accepts `3:45` or `1:23:45`. */
 export function parseDuration(value: string): number | null {
   const trimmed = value.trim();
-  if (!/^\d+(:[0-5]?\d){0,2}$/.test(trimmed)) {
+  if (!/^\d+(:[0-5]?\d){1,2}$/.test(trimmed)) {
     return null;
   }
 
