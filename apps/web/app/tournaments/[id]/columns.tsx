@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowUpDown, ArrowUp, ArrowDown, StickyNote } from 'lucide-react';
 import SimpleTooltip from '@/components/simple-tooltip';
-import { formatUTCDateFull } from '@/lib/utils/date';
+import { formatUTCDate, formatUTCDateFull } from '@/lib/utils/date';
 import { TournamentMatchGame } from '@/lib/orpc/schema/tournament';
 
 export type AdminNotePreview = {
@@ -194,11 +194,12 @@ export const columns = [
           </div>
           <div className="mt-1 flex flex-col gap-1 text-xs text-muted-foreground md:hidden">
             <div className="flex items-center gap-2">
-              <span>
-                {new Date(row.original.startDate).toLocaleDateString()}
+              <span className="whitespace-nowrap">
+                {formatUTCDate(new Date(row.original.startDate))}
               </span>
-              <span>•</span>
-              <span>{row.original.games.length} games</span>
+              <span className="whitespace-nowrap">
+                {row.original.games.length} games
+              </span>
             </div>
           </div>
         </div>
