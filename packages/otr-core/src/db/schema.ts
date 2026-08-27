@@ -23,8 +23,12 @@ const tsVector = customType<{ data: string }>({
 });
 
 /** Punctuation-stripped text for `to_tsvector`; the query side normalizes the same way. */
-const searchableText = (column: SQL | unknown): SQL =>
+export const searchableText = (column: SQL | unknown): SQL =>
   sql`regexp_replace(coalesce(${column}, ''), '[^[:alnum:]]+', ' ', 'g')`;
+
+/** `array_to_string` is only STABLE, which a stored generated column rejects. */
+const joinedText = (column: SQL | unknown): SQL =>
+  sql`join_text_array(${column})`;
 
 /** `searchableText` with letter/digit runs split, so `OWC2024` indexes as `owc` + `2024`. */
 const searchableTextSplitDigits = (column: SQL | unknown): SQL =>
@@ -1390,11 +1394,12 @@ export const players = pgTable(
     // You can use { mode: "bigint" } if numbers are exceeding js number limitations
     osuId: bigint('osu_id', { mode: 'number' }).notNull(),
     username: varchar({ length: 32 }).default('').notNull(),
+    previousUsernames: text('previous_usernames').array().default([]).notNull(),
     searchVector: tsVector('search_vector')
       .notNull()
       .generatedAlwaysAs(
         (): SQL =>
-          sql`setweight(to_tsvector('simple', ${searchableText(players.username)}), 'A')`
+          sql`setweight(to_tsvector('simple', ${searchableText(players.username)}), 'A') || setweight(to_tsvector('simple', ${searchableText(joinedText(players.previousUsernames))}), 'B')`
       ),
     country: varchar({ length: 4 }).default('').notNull(),
     defaultRuleset: integer('default_ruleset').default(0).notNull(),
