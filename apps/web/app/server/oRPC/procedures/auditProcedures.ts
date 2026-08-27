@@ -856,31 +856,36 @@ export const getAuditEventFeed = publicProcedure
           ${sql.raw(parentIdExpr)} AS parent_entity_id,
           COUNT(DISTINCT a.reference_id_lock)::int AS count,
           COUNT(*)::int AS entry_count,
-          -- Both array_agg calls share ORDER BY a.id so unnest pairs status with entity.
           ARRAY(
-            SELECT
-              grouped_statuses.status
-                || ':'
-                || COUNT(DISTINCT grouped_statuses.entity_id)::text
-            FROM unnest(
-              array_agg(
-                CASE
-                  WHEN normalized_changes.verification_status_change IS NULL THEN
-                    'unchanged'
-                  ELSE
-                    COALESCE(
-                      normalized_changes.verification_status_change ->> 'newValue',
-                      normalized_changes.verification_status_change ->> 'NewValue',
-                      normalized_changes.verification_status_change ->> 'new_value',
-                      'null'
-                    )
-                END
-                ORDER BY a.id
-              ),
-              array_agg(a.reference_id_lock ORDER BY a.id)
-            ) AS grouped_statuses(status, entity_id)
-            GROUP BY grouped_statuses.status
-            ORDER BY grouped_statuses.status
+            SELECT entity_statuses.status || ':' || COUNT(*)::text
+            FROM (
+              -- Both array_agg calls share ORDER BY a.id so unnest pairs status with entity.
+              SELECT DISTINCT ON (grouped_statuses.entity_id)
+                grouped_statuses.status
+              FROM unnest(
+                array_agg(
+                  CASE
+                    WHEN normalized_changes.verification_status_change IS NULL THEN
+                      'unchanged'
+                    ELSE
+                      COALESCE(
+                        normalized_changes.verification_status_change ->> 'newValue',
+                        normalized_changes.verification_status_change ->> 'NewValue',
+                        normalized_changes.verification_status_change ->> 'new_value',
+                        'null'
+                      )
+                  END
+                  ORDER BY a.id
+                ),
+                array_agg(a.reference_id_lock ORDER BY a.id)
+              ) WITH ORDINALITY AS grouped_statuses(status, entity_id, position)
+              ORDER BY
+                grouped_statuses.entity_id,
+                grouped_statuses.status IN ('unchanged', 'null'),
+                grouped_statuses.position DESC
+            ) entity_statuses
+            GROUP BY entity_statuses.status
+            ORDER BY entity_statuses.status
           ) AS verification_status_counts,
           ARRAY(
             SELECT DISTINCT field_name

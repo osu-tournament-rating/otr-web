@@ -26,6 +26,7 @@ import {
   ENTITY_TYPE_LABELS,
   ENTITY_TYPE_PLURALS,
 } from '@/lib/audit-entity-types';
+import { ACTION_LABELS } from '@/lib/audit-actions';
 import { getFieldLabel } from './auditFieldConfig';
 import RelativeTime from './RelativeTime';
 
@@ -37,16 +38,6 @@ const FIELD_SUPPRESSED_ACTIONS = new Set<AuditEventAction>([
   'submission',
   'deletion',
 ]);
-
-const ACTION_LABELS: Record<AuditEventAction, string> = {
-  verification: 'verified',
-  rejection: 'rejected',
-  pre_verification: 'pre-verified',
-  pre_rejection: 'pre-rejected',
-  submission: 'submitted',
-  update: 'updated',
-  deletion: 'deleted',
-};
 
 const ACTION_TEXT_COLORS: Record<AuditEventAction, string> = {
   verification: 'text-green-600 dark:text-green-400',
@@ -78,6 +69,8 @@ type EventDetailsResponse = {
   hasMore: boolean;
 };
 
+const numberFormat = new Intl.NumberFormat('en-US');
+
 function buildActionPhrase(event: AuditEvent): React.ReactNode {
   if (!event.actionBreakdown) {
     return (
@@ -93,7 +86,7 @@ function buildActionPhrase(event: AuditEvent): React.ReactNode {
       <span className={ACTION_TEXT_COLORS[part.action]}>
         {ACTION_LABELS[part.action]}
       </span>{' '}
-      {part.count}
+      {numberFormat.format(part.count)}
     </Fragment>
   ));
 }

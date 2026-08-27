@@ -15,6 +15,7 @@ import {
   ENTITY_TYPE_LABELS,
   ENTITY_TYPE_PLURALS,
 } from '@/lib/audit-entity-types';
+import { ACTION_LABELS } from '@/lib/audit-actions';
 import type { DatabaseClient } from '@/lib/db';
 
 export function getAuditTable(entityType: AuditEntityType) {
@@ -423,23 +424,30 @@ export function buildActionBreakdown(
   rows: GroupedAuditRow[]
 ): AuditEventActionCount[] | null {
   const counts = new Map<AuditEventAction, number>();
+  let counted = 0;
+  let entities = 0;
+
   for (const row of rows) {
     const actionType =
       row.actionTypes.length === 1
         ? row.actionTypes[0]!
         : AuditActionType.Updated;
+    entities += row.entryCount;
     for (const [status, count] of parseStatusCounts(
       row.verificationStatusCounts
     )) {
       const action = classifyStatus(status, actionType);
       counts.set(action, (counts.get(action) ?? 0) + count);
+      counted += count;
     }
   }
 
-  if (counts.size < 2) return null;
+  if (counts.size < 2 || counted !== entities) return null;
 
   return Array.from(counts, ([action, count]) => ({ action, count })).sort(
-    (a, b) => b.count - a.count || a.action.localeCompare(b.action)
+    (a, b) =>
+      b.count - a.count ||
+      ACTION_LABELS[a.action].localeCompare(ACTION_LABELS[b.action])
   );
 }
 

@@ -237,6 +237,29 @@ describe('assembleEvents', () => {
     ]);
   });
 
+  it('has no breakdown when the outcomes exceed the entities touched', () => {
+    const [event] = assembleEvents([
+      groupedRow({
+        entryCount: 5,
+        verificationStatusCounts: ['4:5', 'unchanged:5'],
+      }),
+    ]);
+
+    expect(event.action).toBe('update');
+    expect(event.actionBreakdown).toBeNull();
+  });
+
+  it('orders equal outcomes by their label', () => {
+    const [event] = assembleEvents([
+      groupedRow({ entryCount: 2, verificationStatusCounts: ['3:1', '4:1'] }),
+    ]);
+
+    expect(event.actionBreakdown).toEqual([
+      { action: 'rejection', count: 1 },
+      { action: 'verification', count: 1 },
+    ]);
+  });
+
   it('has no breakdown when every status resolves to one outcome', () => {
     const [event] = assembleEvents([
       groupedRow({
@@ -251,10 +274,15 @@ describe('assembleEvents', () => {
 
   it('sums outcomes across the top level groups of one event', () => {
     const [event] = assembleEvents([
-      groupedRow({ parentEntityId: 10, verificationStatusCounts: ['3:5'] }),
+      groupedRow({
+        parentEntityId: 10,
+        entryCount: 5,
+        verificationStatusCounts: ['3:5'],
+      }),
       groupedRow({
         parentEntityId: 11,
         sampleEntityId: 11,
+        entryCount: 3,
         verificationStatusCounts: ['3:2', '4:1'],
       }),
     ]);
