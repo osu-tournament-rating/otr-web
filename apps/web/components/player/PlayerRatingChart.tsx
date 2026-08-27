@@ -328,7 +328,7 @@ export default function PlayerRatingChart({
         <TabsContent
           value="table"
           className={cn(
-            'max-h-[300px] overflow-y-scroll',
+            'max-h-75 overflow-y-scroll',
             stickyTableHeaderInScrollArea
           )}
         >

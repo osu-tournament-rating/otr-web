@@ -97,7 +97,7 @@ export default function BeatmapListTable({
           <TableRow
             className={cn(
               'hover:bg-transparent',
-              stickyHeader && 'bg-background hover:bg-background'
+              stickyHeader && 'bg-muted hover:bg-muted'
             )}
           >
             {selection ? (
