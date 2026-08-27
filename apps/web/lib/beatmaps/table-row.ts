@@ -1,8 +1,9 @@
 import type { BeatmapListSortKey } from '@/lib/beatmaps/list-params';
 import {
   getBeatmapArtist,
+  getBeatmapSetOwner,
   getBeatmapTitle,
-  isDeletedTournamentBeatmap,
+  isDeletedBeatmap,
 } from '@/lib/beatmaps/presentation';
 import type {
   BeatmapListItem,
@@ -120,7 +121,7 @@ export function toTournamentBeatmapTableRows(
 
   return beatmaps.map((beatmap) => {
     const played = usage.get(beatmap.osuId);
-    const creator = beatmap.creators[0] ?? beatmap.beatmapset?.creator;
+    const creator = beatmap.creators[0] ?? getBeatmapSetOwner(beatmap);
 
     return {
       id: beatmap.id,
@@ -141,7 +142,7 @@ export function toTournamentBeatmapTableRows(
       gameCount: played?.gameCount ?? 0,
       tournamentCount: 1,
       topMods: played?.topMods ?? [],
-      isDeleted: isDeletedTournamentBeatmap(beatmap),
+      isDeleted: isDeletedBeatmap(beatmap),
     };
   });
 }

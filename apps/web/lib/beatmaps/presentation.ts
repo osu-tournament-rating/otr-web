@@ -1,3 +1,4 @@
+import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import { Ruleset } from '@otr/core/osu';
 
 import { RulesetEnumHelper } from '@/lib/enum-helpers';
@@ -92,11 +93,17 @@ export function getBeatmapAttributeRows(
   }
 }
 
-/** Metadata an admin filled in by hand, else the beatmapset's. */
+type BeatmapSetOwner = { id: number; username: string };
+
 type BeatmapMetadata = {
   artistOverride?: string | null;
   titleOverride?: string | null;
-  beatmapset?: { artist?: string; title?: string } | null;
+  setOwnerOverride?: BeatmapSetOwner | null;
+  beatmapset?: {
+    artist?: string;
+    title?: string;
+    creator?: BeatmapSetOwner | null;
+  } | null;
 };
 
 export function getBeatmapArtist(beatmap: BeatmapMetadata): string | null {
@@ -107,7 +114,20 @@ export function getBeatmapTitle(beatmap: BeatmapMetadata): string | null {
   return beatmap.titleOverride || beatmap.beatmapset?.title || null;
 }
 
-/** A pooled beatmap whose set osu! no longer serves, detected by absent metadata. */
-export function isDeletedTournamentBeatmap(beatmap: BeatmapMetadata): boolean {
-  return !getBeatmapArtist(beatmap) && !getBeatmapTitle(beatmap);
+export function getBeatmapSetOwner<T extends BeatmapSetOwner>(beatmap: {
+  setOwnerOverride?: T | null;
+  beatmapset?: { creator?: T | null } | null;
+}): T | null {
+  return beatmap.setOwnerOverride ?? beatmap.beatmapset?.creator ?? null;
+}
+
+/** osu! no longer serves the beatmap and no admin has filled its metadata in. */
+export function isDeletedBeatmap(beatmap: {
+  dataFetchStatus?: number | null;
+  manualOverride?: boolean | null;
+}): boolean {
+  return (
+    beatmap.dataFetchStatus === DataFetchStatus.NotFound &&
+    !beatmap.manualOverride
+  );
 }

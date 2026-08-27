@@ -28,7 +28,7 @@ export const PlayerBeatmapStatsSchema = z.object({
   ar: z.number(),
   sr: z.number().nonnegative(),
   maxCombo: z.number().int().nonnegative().default(0),
-  beatmapsetId: z.number().int().nonnegative(),
+  beatmapsetId: z.number().int().nonnegative().nullable(),
   ruleset: RulesetSchema,
   artist: z.string().default(''),
   title: z.string().default(''),

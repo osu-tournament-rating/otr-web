@@ -8,6 +8,7 @@ import {
   ReportEntityType,
 } from '@otr/core/osu';
 import { MatchDetail } from '@/lib/orpc/schema/match';
+import { getBeatmapTitle } from '@/lib/beatmaps/presentation';
 import { formatUTCDate } from '@/lib/utils/date';
 import VerificationBadge from '../badges/VerificationBadge';
 import { LazerBadge } from '../badges/LazerBadge';
@@ -52,7 +53,7 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
                   >
                     <BeatmapBackground
                       beatmapsetId={game.beatmap?.beatmapset?.osuId}
-                      alt={`${game.beatmap?.beatmapset?.title ?? 'Deleted beatmap'} cover`}
+                      alt={`${(game.beatmap && getBeatmapTitle(game.beatmap)) ?? 'Deleted beatmap'} cover`}
                     />
                   </div>
                 </Fragment>

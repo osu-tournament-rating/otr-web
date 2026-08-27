@@ -10,6 +10,11 @@ import {
   AuditEntityType,
   ReportEntityType,
 } from '@otr/core/osu';
+import {
+  getBeatmapSetOwner,
+  getBeatmapTitle,
+  isDeletedBeatmap,
+} from '@/lib/beatmaps/presentation';
 import { resolveGameDisplayMods } from '@/lib/utils/mods';
 import AuditButton from '../audit/AuditButton';
 import BeatmapBackground from './BeatmapBackground';
@@ -26,14 +31,17 @@ import SimpleTooltip from '../simple-tooltip';
 export default function GameCardHeader({ game }: { game: Game }) {
   const startTime = game.startTime ? new Date(game.startTime) : null;
   const endTime = game.endTime ? new Date(game.endTime) : null;
-  const isDeletedBeatmap =
-    !game.beatmap || !game.beatmap.beatmapset || game.beatmap.osuId === 0;
+  const beatmap = game.beatmap;
+  const isDeleted =
+    !beatmap || beatmap.osuId === 0 || isDeletedBeatmap(beatmap);
+  const title = beatmap ? getBeatmapTitle(beatmap) : null;
+  const setOwner = beatmap ? getBeatmapSetOwner(beatmap) : null;
   const headerMods = resolveGameDisplayMods(game, game.scores);
 
   return (
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
       <BeatmapBackground
-        beatmapsetId={game.beatmap?.beatmapset?.osuId}
+        beatmapsetId={beatmap?.beatmapset?.osuId}
         alt="beatmap cover"
       />
 
@@ -82,7 +90,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
                 className="h-6 w-6 hover:bg-white/20 hover:text-white"
               >
                 <Link
-                  href={`https://osu.ppy.sh/b/${game.beatmap?.osuId ?? 0}`}
+                  href={`https://osu.ppy.sh/b/${beatmap?.osuId ?? 0}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="View beatmap on osu! website"
@@ -95,9 +103,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
               entityType={ReportEntityType.Game}
               entityId={game.id}
               entityDisplayName={
-                game.beatmap?.beatmapset?.title
-                  ? `${game.beatmap.beatmapset.title} [${game.beatmap.diffName}]`
-                  : `Game ${game.id}`
+                title ? `${title} [${beatmap?.diffName}]` : `Game ${game.id}`
               }
               darkMode={true}
             />
@@ -119,24 +125,24 @@ export default function GameCardHeader({ game }: { game: Game }) {
           <div className="flex max-w-3/4 flex-1 flex-col justify-end overflow-hidden">
             <span className="flex gap-1 truncate text-xs text-white/80 sm:text-sm">
               <span>Set by</span>
-              {isDeletedBeatmap || !game.beatmap?.beatmapset?.creator ? (
+              {isDeleted || !setOwner ? (
                 <span className="font-semibold text-white">Unknown user</span>
               ) : (
                 <Link
-                  href={`/players/${game.beatmap.beatmapset.creator.id}`}
+                  href={`/players/${setOwner.id}`}
                   className="font-semibold text-white"
                 >
-                  {game.beatmap.beatmapset.creator.username}
+                  {setOwner.username}
                 </Link>
               )}
               <span>• Map by</span>
-              {isDeletedBeatmap || !game.beatmap?.creators?.length ? (
+              {isDeleted || !beatmap?.creators?.length ? (
                 <span className="font-semibold text-white">
                   Unknown creator
                 </span>
               ) : (
                 <span className="font-semibold text-white">
-                  {game.beatmap.creators.map((c, i) => (
+                  {beatmap.creators.map((c, i) => (
                     <span key={c.id}>
                       {i > 0 && ', '}
                       <Link href={`/players/${c.id}`} className="">
@@ -147,18 +153,17 @@ export default function GameCardHeader({ game }: { game: Game }) {
                 </span>
               )}
             </span>
-            {isDeletedBeatmap ? (
+            {isDeleted ? (
               <span className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl">
                 Deleted beatmap
               </span>
             ) : (
               <Link
                 data-testid="beatmap-link"
-                href={`/beatmaps/${game.beatmap?.osuId}`}
+                href={`/beatmaps/${beatmap?.osuId}`}
                 className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl"
               >
-                {game.beatmap?.beatmapset?.title ?? 'Deleted beatmap'} [
-                {game.beatmap?.diffName ?? 'Unknown'}]
+                {title ?? 'Unknown title'} [{beatmap?.diffName ?? 'Unknown'}]
               </Link>
             )}
           </div>

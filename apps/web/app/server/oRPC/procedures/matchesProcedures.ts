@@ -203,6 +203,7 @@ export const getMatch = publicProcedure
 
     const verifierUser = alias(schema.users, 'verifierUser');
     const verifierPlayer = alias(schema.players, 'verifierPlayer');
+    const setOwnerOverride = alias(schema.players, 'setOwnerOverride');
 
     const verifiedByUsername = matchRow.verifiedByUserId
       ? await context.db
@@ -255,6 +256,11 @@ export const getMatch = publicProcedure
         beatmapTitleOverride: schema.beatmaps.titleOverride,
         beatmapArtistOverride: schema.beatmaps.artistOverride,
         beatmapSetOwnerIdOverride: schema.beatmaps.setOwnerIdOverride,
+        beatmapSetOwnerPlayerId: setOwnerOverride.id,
+        beatmapSetOwnerOsuId: setOwnerOverride.osuId,
+        beatmapSetOwnerUsername: setOwnerOverride.username,
+        beatmapSetOwnerCountry: setOwnerOverride.country,
+        beatmapSetOwnerDefaultRuleset: setOwnerOverride.defaultRuleset,
         beatmapsetId: schema.beatmapsets.id,
         beatmapsetOsuId: schema.beatmapsets.osuId,
         beatmapsetTitle: schema.beatmapsets.title,
@@ -283,6 +289,10 @@ export const getMatch = publicProcedure
       .leftJoin(
         schema.players,
         eq(schema.players.id, schema.beatmapsets.creatorId)
+      )
+      .leftJoin(
+        setOwnerOverride,
+        eq(setOwnerOverride.id, schema.beatmaps.setOwnerIdOverride)
       )
       .where(eq(schema.games.matchId, matchId))
       .orderBy(asc(schema.games.startTime), asc(schema.games.id));
@@ -656,6 +666,17 @@ export const getMatch = publicProcedure
               titleOverride: game.beatmapTitleOverride ?? null,
               artistOverride: game.beatmapArtistOverride ?? null,
               setOwnerIdOverride: game.beatmapSetOwnerIdOverride ?? null,
+              setOwnerOverride:
+                game.beatmapSetOwnerPlayerId != null
+                  ? {
+                      id: game.beatmapSetOwnerPlayerId,
+                      osuId: game.beatmapSetOwnerOsuId ?? 0,
+                      username: game.beatmapSetOwnerUsername ?? 'Unknown',
+                      country: game.beatmapSetOwnerCountry ?? '',
+                      defaultRuleset: (game.beatmapSetOwnerDefaultRuleset ??
+                        Ruleset.Osu) as Ruleset,
+                    }
+                  : null,
               beatmapset:
                 game.beatmapsetId != null
                   ? {

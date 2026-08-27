@@ -365,6 +365,7 @@ export const getTournament = publicProcedure
         : null;
 
       const beatmapsetCreator = alias(schema.players, 'beatmapsetCreator');
+      const pooledSetOwner = alias(schema.players, 'pooledSetOwner');
 
       const pooledBeatmapRows = await context.db
         .select({
@@ -391,6 +392,11 @@ export const getTournament = publicProcedure
           titleOverride: schema.beatmaps.titleOverride,
           artistOverride: schema.beatmaps.artistOverride,
           setOwnerIdOverride: schema.beatmaps.setOwnerIdOverride,
+          setOwnerPlayerId: pooledSetOwner.id,
+          setOwnerOsuId: pooledSetOwner.osuId,
+          setOwnerUsername: pooledSetOwner.username,
+          setOwnerCountry: pooledSetOwner.country,
+          setOwnerDefaultRuleset: pooledSetOwner.defaultRuleset,
           beatmapsetDbId: schema.beatmapsets.id,
           beatmapsetOsuId: schema.beatmapsets.osuId,
           beatmapsetArtist: schema.beatmapsets.artist,
@@ -423,6 +429,10 @@ export const getTournament = publicProcedure
         .leftJoin(
           beatmapsetCreator,
           eq(beatmapsetCreator.id, schema.beatmapsets.creatorId)
+        )
+        .leftJoin(
+          pooledSetOwner,
+          eq(pooledSetOwner.id, schema.beatmaps.setOwnerIdOverride)
         )
         .where(
           eq(schema.joinPooledBeatmaps.tournamentsPooledInId, tournament.id)
@@ -520,6 +530,8 @@ export const getTournament = publicProcedure
 
       const matchIds = matchRows.map((match) => match.id);
 
+      const gameSetOwner = alias(schema.players, 'gameSetOwner');
+
       const gameRows = matchIds.length
         ? await context.db
             .select({
@@ -559,11 +571,20 @@ export const getTournament = publicProcedure
               beatmapTitleOverride: schema.beatmaps.titleOverride,
               beatmapArtistOverride: schema.beatmaps.artistOverride,
               beatmapSetOwnerIdOverride: schema.beatmaps.setOwnerIdOverride,
+              beatmapSetOwnerPlayerId: gameSetOwner.id,
+              beatmapSetOwnerOsuId: gameSetOwner.osuId,
+              beatmapSetOwnerUsername: gameSetOwner.username,
+              beatmapSetOwnerCountry: gameSetOwner.country,
+              beatmapSetOwnerDefaultRuleset: gameSetOwner.defaultRuleset,
             })
             .from(schema.games)
             .leftJoin(
               schema.beatmaps,
               eq(schema.beatmaps.id, schema.games.beatmapId)
+            )
+            .leftJoin(
+              gameSetOwner,
+              eq(gameSetOwner.id, schema.beatmaps.setOwnerIdOverride)
             )
             .where(inArray(schema.games.matchId, matchIds))
             .orderBy(asc(schema.games.startTime), asc(schema.games.id))
@@ -689,6 +710,17 @@ export const getTournament = publicProcedure
                   titleOverride: game.beatmapTitleOverride ?? null,
                   artistOverride: game.beatmapArtistOverride ?? null,
                   setOwnerIdOverride: game.beatmapSetOwnerIdOverride ?? null,
+                  setOwnerOverride:
+                    game.beatmapSetOwnerPlayerId == null
+                      ? null
+                      : {
+                          id: game.beatmapSetOwnerPlayerId,
+                          osuId: game.beatmapSetOwnerOsuId ?? 0,
+                          username: game.beatmapSetOwnerUsername ?? 'Unknown',
+                          country: game.beatmapSetOwnerCountry ?? '',
+                          defaultRuleset: (game.beatmapSetOwnerDefaultRuleset ??
+                            Ruleset.Osu) as Ruleset,
+                        },
                 }
               : null,
         })),
@@ -884,6 +916,17 @@ export const getTournament = publicProcedure
           titleOverride: beatmap.titleOverride ?? null,
           artistOverride: beatmap.artistOverride ?? null,
           setOwnerIdOverride: beatmap.setOwnerIdOverride ?? null,
+          setOwnerOverride:
+            beatmap.setOwnerPlayerId == null
+              ? null
+              : {
+                  id: beatmap.setOwnerPlayerId,
+                  osuId: beatmap.setOwnerOsuId ?? 0,
+                  username: beatmap.setOwnerUsername ?? 'Unknown',
+                  country: beatmap.setOwnerCountry ?? '',
+                  defaultRuleset: (beatmap.setOwnerDefaultRuleset ??
+                    Ruleset.Osu) as Ruleset,
+                },
           beatmapset,
           attributes: [],
           creators,

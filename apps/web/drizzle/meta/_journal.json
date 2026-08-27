@@ -183,6 +183,13 @@
       "when": 1787608877367,
       "tag": "0025_colossal_dorian_gray",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1787838027832,
+      "tag": "0026_beatmap_override_search_vector",
+      "breakpoints": true
     }
   ]
 }

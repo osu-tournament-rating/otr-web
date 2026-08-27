@@ -177,6 +177,7 @@ export const searchEntities = protectedProcedure
               schema.players,
               'beatmapsetCreator'
             );
+            const setOwnerOverride = alias(schema.players, 'setOwnerOverride');
             return context.db
               .select({
                 id: schema.beatmaps.id,
@@ -184,9 +185,15 @@ export const searchEntities = protectedProcedure
                 diffName: schema.beatmaps.diffName,
                 sr: schema.beatmaps.sr,
                 ruleset: schema.beatmaps.ruleset,
-                artist: schema.beatmapsets.artist,
-                title: schema.beatmapsets.title,
-                creator: beatmapsetCreator.username,
+                artist: sql<
+                  string | null
+                >`coalesce(${schema.beatmaps.artistOverride}, ${schema.beatmapsets.artist})`,
+                title: sql<
+                  string | null
+                >`coalesce(${schema.beatmaps.titleOverride}, ${schema.beatmapsets.title})`,
+                creator: sql<
+                  string | null
+                >`coalesce(${setOwnerOverride.username}, ${beatmapsetCreator.username})`,
                 beatmapsetOsuId: schema.beatmapsets.osuId,
                 gameCount: schema.beatmapStats.verifiedGameCount,
                 tournamentCount: schema.beatmapStats.verifiedTournamentCount,
@@ -199,6 +206,10 @@ export const searchEntities = protectedProcedure
               .leftJoin(
                 beatmapsetCreator,
                 eq(schema.beatmapsets.creatorId, beatmapsetCreator.id)
+              )
+              .leftJoin(
+                setOwnerOverride,
+                eq(schema.beatmaps.setOwnerIdOverride, setOwnerOverride.id)
               )
               .leftJoin(
                 schema.beatmapStats,

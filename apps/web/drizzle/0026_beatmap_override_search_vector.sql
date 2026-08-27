@@ -1,0 +1,3 @@
+ALTER TABLE "beatmaps" drop column "search_vector";--> statement-breakpoint
+ALTER TABLE "beatmaps" ADD COLUMN "search_vector" "tsvector" GENERATED ALWAYS AS (setweight(to_tsvector('simple', regexp_replace(coalesce("beatmaps"."diff_name", ''), '[^[:alnum:]]+', ' ', 'g')), 'A') || setweight(to_tsvector('simple', regexp_replace(coalesce("beatmaps"."artist_override", ''), '[^[:alnum:]]+', ' ', 'g')), 'A') || setweight(to_tsvector('simple', regexp_replace(coalesce("beatmaps"."title_override", ''), '[^[:alnum:]]+', ' ', 'g')), 'A')) STORED NOT NULL;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "ix_beatmaps_search_vector" ON "beatmaps" USING gin ("search_vector");

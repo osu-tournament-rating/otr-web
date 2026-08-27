@@ -18,6 +18,7 @@ import SimpleTooltip from '@/components/simple-tooltip';
 import { Separator } from '@/components/ui/separator';
 import {
   getBeatmapArtist,
+  getBeatmapSetOwner,
   getBeatmapDisplayRuleset,
   getBeatmapTitle,
 } from '@/lib/beatmaps/presentation';
@@ -37,7 +38,7 @@ export default function BeatmapHeader({
   beatmap,
   relatedDifficulties,
 }: BeatmapHeaderProps) {
-  const setOwner = beatmap.setOwnerOverride ?? beatmap.beatmapset?.creator;
+  const setOwner = getBeatmapSetOwner(beatmap);
   const creators = Array.from(
     new Map(
       [...(setOwner ? [setOwner] : []), ...beatmap.creators].map(

@@ -302,7 +302,9 @@ export const lookupGamesAdmin = protectedProcedure
         matchId: schema.games.matchId,
         startTime: schema.games.startTime,
         beatmapOsuId: schema.beatmaps.osuId,
-        beatmapTitle: schema.beatmapsets.title,
+        beatmapTitle: sql<
+          string | null
+        >`coalesce(${schema.beatmaps.titleOverride}, ${schema.beatmapsets.title})`,
         beatmapDifficulty: schema.beatmaps.diffName,
       })
       .from(schema.games)

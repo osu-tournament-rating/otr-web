@@ -4,6 +4,7 @@ import { and, desc, eq, gt, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
 import { ReportEntityType, ReportStatus } from '@otr/core/osu/enums';
 
+import { getBeatmapTitle } from '@/lib/beatmaps/presentation';
 import type { DatabaseClient } from '@/lib/db';
 import {
   MarkReportViewedInputSchema,
@@ -90,7 +91,7 @@ async function getEntityDisplayName(
         where: eq(schema.games.id, entityId),
         with: {
           beatmap: {
-            columns: { diffName: true },
+            columns: { diffName: true, titleOverride: true },
             with: {
               beatmapset: {
                 columns: { title: true },
@@ -100,7 +101,7 @@ async function getEntityDisplayName(
         },
       });
       if (game?.beatmap) {
-        return `${game.beatmap.beatmapset?.title ?? 'Unknown'} [${game.beatmap.diffName}]`;
+        return `${getBeatmapTitle(game.beatmap) ?? 'Unknown'} [${game.beatmap.diffName}]`;
       }
       return `Game #${entityId}`;
     }

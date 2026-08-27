@@ -1,8 +1,8 @@
-import { and, asc, eq, ne, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 
-import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import * as schema from '@otr/core/db/schema';
 import type { DatabaseClient } from '@/lib/db';
+import { visibleBeatmapFilter } from '@/lib/orpc/queries/search';
 import {
   RelatedBeatmapDifficultySchema,
   type RelatedBeatmapDifficulty,
@@ -37,10 +37,7 @@ export async function getRelatedBeatmapDifficulties(
       eq(schema.beatmaps.id, schema.beatmapStats.beatmapId)
     )
     .where(
-      and(
-        eq(schema.beatmaps.beatmapsetId, beatmapsetId),
-        ne(schema.beatmaps.dataFetchStatus, DataFetchStatus.NotFound)
-      )
+      and(eq(schema.beatmaps.beatmapsetId, beatmapsetId), visibleBeatmapFilter)
     )
     .orderBy(asc(schema.beatmaps.sr), asc(schema.beatmaps.osuId));
 

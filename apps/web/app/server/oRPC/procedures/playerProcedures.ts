@@ -641,11 +641,15 @@ export const getPlayerBeatmaps = publicProcedure
         maxCombo: schema.beatmaps.maxCombo,
         beatmapsetId: schema.beatmapsets.osuId,
         ruleset: schema.beatmaps.ruleset,
-        artist: schema.beatmapsets.artist,
-        title: schema.beatmapsets.title,
+        artist: sql<
+          string | null
+        >`coalesce(${schema.beatmaps.artistOverride}, ${schema.beatmapsets.artist})`,
+        title: sql<
+          string | null
+        >`coalesce(${schema.beatmaps.titleOverride}, ${schema.beatmapsets.title})`,
       })
       .from(schema.beatmaps)
-      .innerJoin(
+      .leftJoin(
         schema.beatmapsets,
         eq(schema.beatmaps.beatmapsetId, schema.beatmapsets.id)
       )
@@ -656,7 +660,6 @@ export const getPlayerBeatmaps = publicProcedure
     const beatmaps = beatmapOrderingRows.flatMap((orderingRow) => {
       const beatmap = beatmapRowsById.get(orderingRow.beatmapId);
 
-      // Beatmaps without a beatmapset are dropped by the inner join above.
       if (!beatmap) {
         return [];
       }
@@ -664,6 +667,8 @@ export const getPlayerBeatmaps = publicProcedure
       return [
         {
           ...beatmap,
+          artist: beatmap.artist ?? 'Unknown artist',
+          title: beatmap.title ?? 'Unknown title',
           // max_combo is nullable in the database.
           maxCombo: beatmap.maxCombo ?? 0,
           tournamentCount: Number(orderingRow.tournamentCount),

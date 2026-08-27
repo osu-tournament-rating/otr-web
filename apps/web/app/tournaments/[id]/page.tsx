@@ -16,7 +16,7 @@ import {
   SectionCard,
   SectionHeader,
 } from '@/components/beatmap/BeatmapSection';
-import { isDeletedTournamentBeatmap } from '@/lib/beatmaps/presentation';
+import { isDeletedBeatmap } from '@/lib/beatmaps/presentation';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
@@ -389,9 +389,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   const tournamentGames =
     tournament.matches?.flatMap((match) => match.games ?? []) ?? [];
 
-  const hiddenBeatmapsCount = beatmaps.filter(
-    isDeletedTournamentBeatmap
-  ).length;
+  const hiddenBeatmapsCount = beatmaps.filter(isDeletedBeatmap).length;
 
   const visibleBeatmapsCount = beatmaps.length - hiddenBeatmapsCount;
   const pooledBeatmapsMeta = `${visibleBeatmapsCount} beatmap${

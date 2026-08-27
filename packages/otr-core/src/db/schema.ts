@@ -579,7 +579,6 @@ export const beatmaps = pgTable(
     // Once set, the osu! API never overwrites this row again.
     manualOverride: boolean('manual_override').default(false).notNull(),
     // Set metadata for a deleted beatmap, which has no beatmapset to carry it.
-    // Null everywhere else; readers fall back to the beatmapset.
     titleOverride: varchar('title_override', { length: 512 }),
     artistOverride: varchar('artist_override', { length: 512 }),
     setOwnerIdOverride: integer('set_owner_id_override'),
@@ -587,7 +586,7 @@ export const beatmaps = pgTable(
       .notNull()
       .generatedAlwaysAs(
         (): SQL =>
-          sql`setweight(to_tsvector('simple', ${searchableText(beatmaps.diffName)}), 'A')`
+          sql`setweight(to_tsvector('simple', ${searchableText(beatmaps.diffName)}), 'A') || setweight(to_tsvector('simple', ${searchableText(beatmaps.artistOverride)}), 'A') || setweight(to_tsvector('simple', ${searchableText(beatmaps.titleOverride)}), 'A')`
       ),
   },
   (table) => [

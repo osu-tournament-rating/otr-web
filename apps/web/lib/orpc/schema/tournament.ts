@@ -14,6 +14,7 @@ import type { VerificationStatusValue } from './constants';
 import { AdminNotePreviewSchema, AdminNoteSchema } from './common';
 import { GameSchema, MatchSchema } from './match';
 import { PlayerSchema } from './player';
+import { PlayerCompactSchema } from './playerStats';
 import { TournamentQuerySortType } from '@otr/core/osu';
 
 export const TournamentListRequestSchema = z.object({
@@ -103,6 +104,7 @@ export const TournamentPlayerStatsSchema = playerTournamentStatsSelectSchema
 export const TournamentBeatmapSchema = BeatmapSchema.extend({
   attributes: z.array(BeatmapAttributeSchema),
   creators: z.array(PlayerSchema),
+  setOwnerOverride: PlayerCompactSchema.nullable().default(null),
 });
 
 const tournamentDetailBaseSchema = tournamentSelectSchema

@@ -22,6 +22,7 @@ import {
 } from './constants';
 import { AdminNoteSchema } from './common';
 import { PlayerSchema } from './player';
+import { PlayerCompactSchema } from './playerStats';
 
 const AdminNoteContentSchema = z.string().trim().min(1);
 
@@ -55,6 +56,7 @@ export const MatchPlayerSchema = PlayerSchema.pick({
 
 export const MatchBeatmapSchema = BeatmapSchema.extend({
   creators: z.array(PlayerSchema).default([]),
+  setOwnerOverride: PlayerCompactSchema.nullable().default(null),
 });
 
 export const MatchRosterSchema = matchRosterSelectSchema

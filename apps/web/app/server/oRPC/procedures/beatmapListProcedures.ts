@@ -11,16 +11,19 @@ import {
   lte,
   sql,
 } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import * as schema from '@otr/core/db/schema';
 import { Ruleset, VerificationStatus } from '@otr/core/osu';
-import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 import {
   BeatmapListRequestSchema,
   BeatmapListResponseSchema,
   BeatmapListItemSchema,
 } from '@/lib/orpc/schema/beatmapList';
-import { buildBeatmapSearchExpressions } from '@/lib/orpc/queries/search';
+import {
+  buildBeatmapSearchExpressions,
+  visibleBeatmapFilter,
+} from '@/lib/orpc/queries/search';
 import {
   calculateBeatmapListModDistribution,
   filterBeatmapModDistribution,
@@ -130,15 +133,17 @@ export const listBeatmaps = publicProcedure
         );
       }
 
-      // NotFound is the one exclusion shared with buildBeatmapSearchExpressions
-      filters.push(
-        sql`${schema.beatmaps.dataFetchStatus} != ${DataFetchStatus.NotFound}`
-      );
+      filters.push(visibleBeatmapFilter);
 
       const whereClause = filters.length > 0 ? and(...filters) : undefined;
 
       const sortValue = input.sort;
       const direction = input.descending ? desc : asc;
+
+      const setOwner = alias(schema.players, 'set_owner');
+      const creator = sql<
+        string | null
+      >`coalesce(${schema.players.username}, ${setOwner.username})`;
 
       const getSortColumn = () => {
         switch (sortValue) {
@@ -162,7 +167,7 @@ export const listBeatmaps = publicProcedure
           case 'gameCount':
             return sql`COALESCE(${schema.beatmapStats.verifiedGameCount}, 0)`;
           case 'creator':
-            return schema.players.username;
+            return creator;
           default:
             return schema.beatmaps.sr;
         }
@@ -194,15 +199,15 @@ export const listBeatmaps = publicProcedure
           hp: schema.beatmaps.hp,
           totalLength: schema.beatmaps.totalLength,
           artist:
-            sql`coalesce(${schema.beatmaps.artistOverride}, ${schema.beatmapsets.artist})`.as(
+            sql<string>`coalesce(${schema.beatmaps.artistOverride}, ${schema.beatmapsets.artist})`.as(
               'artist'
             ),
           title:
-            sql`coalesce(${schema.beatmaps.titleOverride}, ${schema.beatmapsets.title})`.as(
+            sql<string>`coalesce(${schema.beatmaps.titleOverride}, ${schema.beatmapsets.title})`.as(
               'title'
             ),
           beatmapsetOsuId: schema.beatmapsets.osuId,
-          creator: schema.players.username,
+          creator: creator.as('creator'),
           verifiedTournamentCount:
             sql<number>`COALESCE(${schema.beatmapStats.verifiedTournamentCount}, 0)`.as(
               'verified_tournament_count'
@@ -228,6 +233,10 @@ export const listBeatmaps = publicProcedure
         .leftJoin(
           schema.players,
           sql`"beatmap_creator"."creator_id" = ${schema.players.id}`
+        )
+        .leftJoin(
+          setOwner,
+          eq(schema.beatmaps.setOwnerIdOverride, setOwner.id)
         );
 
       const conditionedQuery = whereClause

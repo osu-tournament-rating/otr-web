@@ -3,9 +3,11 @@ import { sql, type SQL } from 'drizzle-orm';
 import { PgDialect } from 'drizzle-orm/pg-core';
 
 import {
+  buildBeatmapSearchExpressions,
   buildPrefixQuery,
   buildTrigramPrecision,
   parseSearchTerm,
+  visibleBeatmapFilter,
 } from '../search';
 
 const dialect = new PgDialect();
@@ -134,5 +136,34 @@ describe('buildTrigramPrecision', () => {
     const { sql: text } = render('w', columns);
 
     expect(text).toBe('false');
+  });
+});
+
+describe('beatmap search expressions', () => {
+  it('admits a deleted beatmap an admin has filled in', () => {
+    const { sql: text } = dialect.sqlToQuery(visibleBeatmapFilter);
+
+    expect(text).toBe(
+      '("beatmaps"."data_fetch_status" != $1 OR "beatmaps"."manual_override")'
+    );
+  });
+
+  it('applies the same admission to the search condition', () => {
+    const expressions = buildBeatmapSearchExpressions('blue zenith');
+    const { sql: text } = dialect.sqlToQuery(expressions!.condition);
+
+    expect(text).toContain('"beatmaps"."manual_override"');
+  });
+
+  it('ranks a match on the override before falling back to the beatmapset', () => {
+    const expressions = buildBeatmapSearchExpressions('blue zenith');
+    const { sql: text } = dialect.sqlToQuery(expressions!.rank);
+
+    expect(text).toContain(
+      'coalesce("beatmaps"."artist_override", "beatmapsets"."artist", \'\')'
+    );
+    expect(text).toContain(
+      'coalesce("beatmaps"."title_override", "beatmapsets"."title", \'\')'
+    );
   });
 });
