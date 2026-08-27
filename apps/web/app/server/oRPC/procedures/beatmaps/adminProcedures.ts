@@ -7,6 +7,7 @@ import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import {
   BeatmapAdminUpdateInputSchema,
   BeatmapAdminUpdateResponseSchema,
+  type BeatmapAdminUpdateInput,
 } from '@/lib/orpc/schema/beatmap';
 import type { DatabaseClient } from '@/lib/db';
 import { publishFetchPlayerMessage } from '@/lib/queue/publishers';
@@ -15,9 +16,163 @@ import { adminMutationProcedure } from '../base';
 import {
   ensureAdminDataMutationAllowed,
   ensureAdminSession,
+  type AdminDataMutationClockContext,
 } from '../shared/adminGuard';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
+
+interface UpdateBeatmapAdminContext extends AdminDataMutationClockContext {
+  db: DatabaseClient;
+  session: {
+    dbUser?: {
+      id: number;
+      scopes?: string[] | null;
+    } | null;
+  } | null;
+}
+
+export interface UpdateBeatmapAdminArgs {
+  input: BeatmapAdminUpdateInput;
+  context: UpdateBeatmapAdminContext;
+}
+
+export async function updateBeatmapAdminHandler({
+  input,
+  context,
+}: UpdateBeatmapAdminArgs) {
+  const { adminUserId } = ensureAdminSession(context.session);
+  ensureAdminDataMutationAllowed(context);
+
+  const existing = await context.db.query.beatmaps.findFirst({
+    columns: {
+      id: true,
+      dataFetchStatus: true,
+    },
+    where: eq(schema.beatmaps.id, input.id),
+  });
+
+  if (!existing) {
+    throw new ORPCError('NOT_FOUND', {
+      message: 'Beatmap not found',
+    });
+  }
+
+  if (existing.dataFetchStatus !== DataFetchStatus.NotFound) {
+    throw new ORPCError('CONFLICT', {
+      message:
+        'Only beatmaps the osu! API no longer serves can be edited by hand',
+    });
+  }
+
+  const creatorOsuIds = Array.from(new Set(input.creatorOsuIds));
+  const queuedPlayerOsuIds: number[] = [];
+
+  await context.db.transaction((tx) =>
+    withAuditUserId(tx, adminUserId, async () => {
+      const [setOwnerIdOverride] = input.setOwnerOsuIdOverride
+        ? await resolvePlayerIds(
+            tx,
+            [input.setOwnerOsuIdOverride],
+            queuedPlayerOsuIds
+          )
+        : [];
+
+      if (input.setOwnerOsuIdOverride && setOwnerIdOverride == null) {
+        throw new ORPCError('NOT_FOUND', {
+          message: `No player could be resolved for osu! id ${input.setOwnerOsuIdOverride}`,
+        });
+      }
+
+      await tx
+        .update(schema.beatmaps)
+        .set({
+          diffName: input.diffName,
+          ruleset: input.ruleset,
+          rankedStatus: input.rankedStatus,
+          totalLength: input.totalLength,
+          drainLength: input.drainLength,
+          bpm: input.bpm,
+          countCircle: input.countCircle,
+          countSlider: input.countSlider,
+          countSpinner: input.countSpinner,
+          cs: input.cs,
+          hp: input.hp,
+          od: input.od,
+          ar: input.ar,
+          sr: input.sr,
+          maxCombo: input.maxCombo,
+          titleOverride: input.titleOverride || null,
+          artistOverride: input.artistOverride || null,
+          setOwnerIdOverride: setOwnerIdOverride ?? null,
+          manualOverride: true,
+          updated: NOW,
+        })
+        .where(eq(schema.beatmaps.id, input.id));
+
+      const previousCreators = await tx
+        .select({ osuId: schema.players.osuId })
+        .from(schema.joinBeatmapCreators)
+        .innerJoin(
+          schema.players,
+          eq(schema.players.id, schema.joinBeatmapCreators.creatorsId)
+        )
+        .where(eq(schema.joinBeatmapCreators.createdBeatmapsId, input.id));
+
+      const creatorPlayerIds = await resolvePlayerIds(
+        tx,
+        creatorOsuIds,
+        queuedPlayerOsuIds
+      );
+
+      await tx
+        .delete(schema.joinBeatmapCreators)
+        .where(
+          and(
+            eq(schema.joinBeatmapCreators.createdBeatmapsId, input.id),
+            creatorPlayerIds.length > 0
+              ? notInArray(
+                  schema.joinBeatmapCreators.creatorsId,
+                  creatorPlayerIds
+                )
+              : undefined
+          )
+        );
+
+      if (creatorPlayerIds.length > 0) {
+        await tx
+          .insert(schema.joinBeatmapCreators)
+          .values(
+            creatorPlayerIds.map((creatorsId) => ({
+              createdBeatmapsId: input.id,
+              creatorsId,
+            }))
+          )
+          .onConflictDoNothing();
+      }
+
+      await recordCreatorAudit(
+        tx,
+        input.id,
+        adminUserId,
+        previousCreators.map((row) => row.osuId).sort((a, b) => a - b),
+        [...creatorOsuIds].sort((a, b) => a - b)
+      );
+    })
+  );
+
+  for (const osuId of queuedPlayerOsuIds) {
+    try {
+      await publishFetchPlayerMessage({ osuPlayerId: osuId });
+    } catch (error) {
+      console.error('Failed to publish player fetch message', {
+        osuId,
+        error,
+      });
+    }
+  }
+
+  return { success: true };
+}
 
 export const updateBeatmapAdmin = adminMutationProcedure
   .input(BeatmapAdminUpdateInputSchema)
@@ -28,156 +183,31 @@ export const updateBeatmapAdmin = adminMutationProcedure
     method: 'PATCH',
     path: '/beatmaps/{id}',
   })
-  .handler(async ({ input, context }) => {
-    const { adminUserId } = ensureAdminSession(context.session);
-    ensureAdminDataMutationAllowed(context);
-
-    const existing = await context.db.query.beatmaps.findFirst({
-      columns: {
-        id: true,
-        dataFetchStatus: true,
-      },
-      where: eq(schema.beatmaps.id, input.id),
-    });
-
-    if (!existing) {
-      throw new ORPCError('NOT_FOUND', {
-        message: 'Beatmap not found',
-      });
-    }
-
-    if (existing.dataFetchStatus !== DataFetchStatus.NotFound) {
-      throw new ORPCError('CONFLICT', {
-        message:
-          'Only beatmaps the osu! API no longer serves can be edited by hand',
-      });
-    }
-
-    const creatorOsuIds = Array.from(new Set(input.creatorOsuIds));
-    const queuedPlayerOsuIds: number[] = [];
-
-    await context.db.transaction((tx) =>
-      withAuditUserId(tx, adminUserId, async () => {
-        const [setOwnerIdOverride] = input.setOwnerOsuIdOverride
-          ? await resolveCreatorPlayerIds(
-              tx,
-              [input.setOwnerOsuIdOverride],
-              queuedPlayerOsuIds
-            )
-          : [];
-
-        await tx
-          .update(schema.beatmaps)
-          .set({
-            diffName: input.diffName,
-            ruleset: input.ruleset,
-            rankedStatus: input.rankedStatus,
-            totalLength: input.totalLength,
-            drainLength: input.drainLength,
-            bpm: input.bpm,
-            countCircle: input.countCircle,
-            countSlider: input.countSlider,
-            countSpinner: input.countSpinner,
-            cs: input.cs,
-            hp: input.hp,
-            od: input.od,
-            ar: input.ar,
-            sr: input.sr,
-            maxCombo: input.maxCombo,
-            titleOverride: input.titleOverride || null,
-            artistOverride: input.artistOverride || null,
-            setOwnerIdOverride: setOwnerIdOverride ?? null,
-            manualOverride: true,
-            updated: NOW,
-          })
-          .where(eq(schema.beatmaps.id, input.id));
-
-        const previousCreators = await tx
-          .select({ osuId: schema.players.osuId })
-          .from(schema.joinBeatmapCreators)
-          .innerJoin(
-            schema.players,
-            eq(schema.players.id, schema.joinBeatmapCreators.creatorsId)
-          )
-          .where(eq(schema.joinBeatmapCreators.createdBeatmapsId, input.id));
-
-        const creatorPlayerIds = await resolveCreatorPlayerIds(
-          tx,
-          creatorOsuIds,
-          queuedPlayerOsuIds
-        );
-
-        await tx
-          .delete(schema.joinBeatmapCreators)
-          .where(
-            and(
-              eq(schema.joinBeatmapCreators.createdBeatmapsId, input.id),
-              creatorPlayerIds.length > 0
-                ? notInArray(
-                    schema.joinBeatmapCreators.creatorsId,
-                    creatorPlayerIds
-                  )
-                : undefined
-            )
-          );
-
-        if (creatorPlayerIds.length > 0) {
-          await tx
-            .insert(schema.joinBeatmapCreators)
-            .values(
-              creatorPlayerIds.map((creatorsId) => ({
-                createdBeatmapsId: input.id,
-                creatorsId,
-              }))
-            )
-            .onConflictDoNothing();
-        }
-
-        await recordCreatorAudit(
-          tx,
-          input.id,
-          adminUserId,
-          previousCreators.map((row) => row.osuId).sort((a, b) => a - b),
-          [...creatorOsuIds].sort((a, b) => a - b)
-        );
-      })
-    );
-
-    for (const osuId of queuedPlayerOsuIds) {
-      try {
-        await publishFetchPlayerMessage({ osuPlayerId: osuId });
-      } catch (error) {
-        console.error('Failed to publish player fetch message', {
-          osuId,
-          error,
-        });
-      }
-    }
-
-    return { success: true };
-  });
+  .handler(async ({ input, context }) =>
+    updateBeatmapAdminHandler({ input, context })
+  );
 
 type TransactionClient = Parameters<
   Parameters<DatabaseClient['transaction']>[0]
 >[0];
 
-/** Creates a placeholder for any creator o!TR has never seen. */
-const resolveCreatorPlayerIds = async (
+/** Creates a placeholder for any player o!TR has never seen. */
+const resolvePlayerIds = async (
   tx: TransactionClient,
-  creatorOsuIds: number[],
+  osuIds: number[],
   queuedPlayerOsuIds: number[]
 ): Promise<number[]> => {
-  if (creatorOsuIds.length === 0) {
+  if (osuIds.length === 0) {
     return [];
   }
 
   const known = await tx
     .select({ id: schema.players.id, osuId: schema.players.osuId })
     .from(schema.players)
-    .where(inArray(schema.players.osuId, creatorOsuIds));
+    .where(inArray(schema.players.osuId, osuIds));
 
   const idByOsuId = new Map(known.map((row) => [row.osuId, row.id]));
-  const missing = creatorOsuIds.filter((osuId) => !idByOsuId.has(osuId));
+  const missing = osuIds.filter((osuId) => !idByOsuId.has(osuId));
 
   if (missing.length > 0) {
     const inserted = await tx
@@ -190,14 +220,27 @@ const resolveCreatorPlayerIds = async (
       idByOsuId.set(row.osuId, row.id);
       queuedPlayerOsuIds.push(row.osuId);
     }
+
+    const conflicted = missing.filter((osuId) => !idByOsuId.has(osuId));
+
+    if (conflicted.length > 0) {
+      const rows = await tx
+        .select({ id: schema.players.id, osuId: schema.players.osuId })
+        .from(schema.players)
+        .where(inArray(schema.players.osuId, conflicted));
+
+      for (const row of rows) {
+        idByOsuId.set(row.osuId, row.id);
+      }
+    }
   }
 
-  return creatorOsuIds
+  return osuIds
     .map((osuId) => idByOsuId.get(osuId))
     .filter((id): id is number => id != null);
 };
 
-/** The creator join table has no trigger, so the diff is written explicitly. */
+// No audit trigger on the creator join table
 const recordCreatorAudit = async (
   tx: TransactionClient,
   beatmapId: number,
