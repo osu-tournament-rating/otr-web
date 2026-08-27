@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useContext, useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useContext } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   AlertTriangle,
@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils';
 import { hasAdminScope } from '@/lib/auth/roles';
 import { signOut, useSession as useAuthSession } from '@/lib/auth/auth-client';
 import { SessionContext } from '@/components/session-provider';
-import { orpc } from '@/lib/orpc/orpc';
+import { useReportCount } from '@/lib/hooks/useReportCount';
 
 type ProfileCardProps = {
   isMobileNav?: boolean;
@@ -55,7 +55,6 @@ type UserAvatarProps = {
 export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const [isOpen, toggleIsOpen] = useToggle();
   const router = useRouter();
-  const pathname = usePathname();
   const path = useAuthRedirectPath();
   const isMobile = useMediaQuery('only screen and (max-width : 768px)');
   const sessionResult = useAuthSession();
@@ -67,39 +66,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const isLoading = Boolean(isSessionPending);
   const { refreshSession } = useContext(SessionContext);
   const userId = session?.dbUser?.id ?? null;
-  // Admins track the review queue; reporters track their own reports
-  const [unseenReportCount, setUnseenReportCount] = useState(0);
-  const [myUnreadReportCount, setMyUnreadReportCount] = useState(0);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    let active = true;
-
-    if (isAdmin) {
-      orpc.reports
-        .unseenCount({})
-        .then((result) => {
-          if (active) setUnseenReportCount(result.count);
-        })
-        .catch(() => {
-          if (active) setUnseenReportCount(0);
-        });
-    } else {
-      orpc.reports
-        .myUnreadCount({})
-        .then((result) => {
-          if (active) setMyUnreadReportCount(result.count);
-        })
-        .catch(() => {
-          if (active) setMyUnreadReportCount(0);
-        });
-    }
-
-    return () => {
-      active = false;
-    };
-  }, [isAdmin, pathname, userId]);
+  const reportCount = useReportCount(userId, isAdmin);
 
   const handleLogout = async () => {
     await signOut({
@@ -128,24 +95,21 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const player = dbPlayer;
 
   const reportsHref = isAdmin ? '/admin/reports' : '/reports';
-  const reportCountDisplay =
-    unseenReportCount > 99 ? '99+' : unseenReportCount.toString();
-  const hasReportNotification = isAdmin
-    ? unseenReportCount > 0
-    : myUnreadReportCount > 0;
+  const reportCountDisplay = reportCount > 99 ? '99+' : reportCount.toString();
+  const hasReportNotification = reportCount > 0;
 
-  const reportsIndicator = isAdmin
-    ? unseenReportCount > 0 && (
-        <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-xs font-medium text-white">
-          {reportCountDisplay}
-        </span>
-      )
-    : myUnreadReportCount > 0 && (
-        <span
-          className="size-2 rounded-full bg-blue-500"
-          aria-label="Unread report updates"
-        />
-      );
+  const reportsIndicator =
+    reportCount > 0 &&
+    (isAdmin ? (
+      <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-xs font-medium text-white">
+        {reportCountDisplay}
+      </span>
+    ) : (
+      <span
+        className="size-2 rounded-full bg-blue-500"
+        aria-label="Unread report updates"
+      />
+    ));
 
   if (isMobile) {
     return (

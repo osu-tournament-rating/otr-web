@@ -42,6 +42,7 @@ import {
   ReportEntityTypeEnumHelper,
   ReportStatusEnumHelper,
 } from '@/lib/enum-helpers';
+import { notifyReportChange } from '@/lib/hooks/useReportCount';
 import { orpc } from '@/lib/orpc/orpc';
 import type { Report } from '@/lib/orpc/schema/report';
 import { ReportEntityType, ReportStatus } from '@otr/core/osu';
@@ -137,7 +138,12 @@ export default function AdminReportsClient() {
   }, [fetchReports]);
 
   useEffect(() => {
-    orpc.reports.markViewed({});
+    orpc.reports
+      .markViewed({})
+      .then(notifyReportChange)
+      .catch((error) => {
+        console.error('[admin-reports] failed to mark reports viewed', error);
+      });
   }, []);
 
   const handleViewDetails = useCallback((report: Report) => {
@@ -158,6 +164,7 @@ export default function AdminReportsClient() {
           status,
           adminNote: comment,
         });
+        notifyReportChange();
 
         setReports((prev) =>
           prev.map((r) =>
@@ -191,6 +198,7 @@ export default function AdminReportsClient() {
       await orpc.reports.reopen({
         reportId: selectedReport.id,
       });
+      notifyReportChange();
 
       setReports((prev) =>
         prev.map((r) =>
