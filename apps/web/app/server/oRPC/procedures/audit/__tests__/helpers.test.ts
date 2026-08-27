@@ -255,6 +255,18 @@ describe('buildChildSummary', () => {
     );
   });
 
+  it('pluralizes a fraction by its total', () => {
+    expect(buildChildSummary(AuditEntityType.Match, 1, 5)).toBe(
+      'also affected 1 of 5 matches'
+    );
+  });
+
+  it('pluralizes a bare count by the affected entities', () => {
+    expect(buildChildSummary(AuditEntityType.Match, 1, 1)).toBe(
+      'also affected 1 match'
+    );
+  });
+
   it('drops the fraction without a total', () => {
     expect(buildChildSummary(AuditEntityType.Score, 1, null)).toBe(
       'also affected 1 score'

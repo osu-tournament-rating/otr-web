@@ -546,7 +546,6 @@ export const getEntityAuditTimeline = publicProcedure
           );
           const action = classifyAction(actionType, topChanges);
 
-          // A cascade over several entities of its top type is rooted at their tournament.
           const spansTopLevel = topRow.cnt > 1;
           const topEntityType = spansTopLevel
             ? AuditEntityType.Tournament

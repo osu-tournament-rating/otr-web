@@ -502,18 +502,20 @@ export function buildChildSummary(
   affected: number,
   total: number | null
 ): string {
+  const showsTotal = total !== null && total > affected;
+  const counted = showsTotal ? total : affected;
   const label =
-    affected === 1
+    counted === 1
       ? ENTITY_TYPE_LABELS[childType]
       : ENTITY_TYPE_PLURALS[childType];
 
-  if (total !== null && total > affected) {
+  if (showsTotal) {
     return `also affected ${affected} of ${total} ${label}`;
   }
   return `also affected ${affected} ${label}`;
 }
 
-/** The entity a cascade's counts are bounded by; several top entities are only bounded by their tournament. */
+/** The entity a cascade's counts are bounded by. */
 export function getCascadeCountParent(
   topEntityType: AuditEntityType,
   topEntityId: number,

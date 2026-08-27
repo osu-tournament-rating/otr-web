@@ -40,12 +40,14 @@ const numberFormat = new Intl.NumberFormat('en-US');
 
 function countLabel(descendant: CascadeDescendant): string {
   const { entityType, affectedCount, totalCount } = descendant;
+  const showsTotal = totalCount !== null && totalCount > affectedCount;
+  const counted = showsTotal ? totalCount : affectedCount;
   const label =
-    affectedCount === 1
+    counted === 1
       ? ENTITY_TYPE_LABELS[entityType]
       : ENTITY_TYPE_PLURALS[entityType];
 
-  if (totalCount !== null && totalCount > affectedCount) {
+  if (showsTotal) {
     return `${numberFormat.format(affectedCount)} of ${numberFormat.format(totalCount)} ${label}`;
   }
   return `${numberFormat.format(affectedCount)} ${label}`;
