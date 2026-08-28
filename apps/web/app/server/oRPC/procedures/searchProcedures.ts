@@ -180,8 +180,14 @@ export const searchEntities = protectedProcedure
                 diffName: schema.beatmaps.diffName,
                 sr: schema.beatmaps.sr,
                 ruleset: schema.beatmaps.ruleset,
-                artist: schema.beatmapsets.artist,
-                title: schema.beatmapsets.title,
+                artist:
+                  sql`coalesce(${schema.beatmaps.artistOverride}, ${schema.beatmapsets.artist})`.as(
+                    'artist'
+                  ),
+                title:
+                  sql`coalesce(${schema.beatmaps.titleOverride}, ${schema.beatmapsets.title})`.as(
+                    'title'
+                  ),
                 creator: beatmapsetCreator.username,
                 beatmapsetOsuId: schema.beatmapsets.osuId,
                 gameCount: schema.beatmapStats.verifiedGameCount,

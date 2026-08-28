@@ -13,14 +13,16 @@ import {
 } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
 import { Ruleset, VerificationStatus } from '@otr/core/osu';
-import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 import {
   BeatmapListRequestSchema,
   BeatmapListResponseSchema,
   BeatmapListItemSchema,
 } from '@/lib/orpc/schema/beatmapList';
-import { buildBeatmapSearchExpressions } from '@/lib/orpc/queries/search';
+import {
+  beatmapIsVisible,
+  buildBeatmapSearchExpressions,
+} from '@/lib/orpc/queries/search';
 import {
   calculateBeatmapListModDistribution,
   filterBeatmapModDistribution,
@@ -130,10 +132,7 @@ export const listBeatmaps = publicProcedure
         );
       }
 
-      // NotFound is the one exclusion shared with buildBeatmapSearchExpressions
-      filters.push(
-        sql`${schema.beatmaps.dataFetchStatus} != ${DataFetchStatus.NotFound}`
-      );
+      filters.push(beatmapIsVisible());
 
       const whereClause = filters.length > 0 ? and(...filters) : undefined;
 

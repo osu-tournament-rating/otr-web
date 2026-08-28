@@ -591,7 +591,7 @@ export const beatmaps = pgTable(
       .notNull()
       .generatedAlwaysAs(
         (): SQL =>
-          sql`setweight(to_tsvector('simple', ${searchableText(beatmaps.diffName)}), 'A')`
+          sql`setweight(to_tsvector('simple', ${searchableText(beatmaps.diffName)}), 'A') || setweight(to_tsvector('simple', ${searchableText(beatmaps.titleOverride)}), 'A') || setweight(to_tsvector('simple', ${searchableText(beatmaps.artistOverride)}), 'A')`
       ),
   },
   (table) => [

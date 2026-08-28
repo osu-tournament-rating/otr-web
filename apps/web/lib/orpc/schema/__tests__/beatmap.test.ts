@@ -34,25 +34,23 @@ describe('BeatmapAdminUpdateInputSchema', () => {
     expect(parse()).toBe(true);
   });
 
-  test('takes an unknown max combo as null, never 0', () => {
+  test('takes an unknown max combo as null and a stored 0 as 0', () => {
     expect(parse({ maxCombo: null })).toBe(true);
     expect(parse({ maxCombo: 1 })).toBe(true);
-    expect(parse({ maxCombo: 0 })).toBe(false);
+    expect(parse({ maxCombo: 0 })).toBe(true);
     expect(parse({ maxCombo: -1 })).toBe(false);
   });
 
-  test('caps cs at 10 and keeps fractions', () => {
-    expect(parse({ cs: 0 })).toBe(true);
-    expect(parse({ cs: 4.2 })).toBe(true);
-    expect(parse({ cs: 10 })).toBe(true);
-    expect(parse({ cs: 10.5 })).toBe(false);
-    expect(parse({ cs: 11 })).toBe(false);
-    expect(parse({ cs: -0.1 })).toBe(false);
-  });
-
-  test('keeps hp, od and ar at 20', () => {
-    expect(parse({ hp: 20, od: 20, ar: 20 })).toBe(true);
-    expect(parse({ hp: 20.5 })).toBe(false);
+  test('caps cs, hp, od and ar at 10 and keeps fractions', () => {
+    for (const name of ['cs', 'hp', 'od', 'ar']) {
+      expect(parse({ [name]: 0 })).toBe(true);
+      expect(parse({ [name]: 4.2 })).toBe(true);
+      expect(parse({ [name]: 10 })).toBe(true);
+      expect(parse({ [name]: 10.5 })).toBe(false);
+      expect(parse({ [name]: 11 })).toBe(false);
+      expect(parse({ [name]: 20 })).toBe(false);
+      expect(parse({ [name]: -0.1 })).toBe(false);
+    }
   });
 
   test('bounds integer columns to the postgres range', () => {
