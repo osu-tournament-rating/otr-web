@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
@@ -56,6 +56,8 @@ describe.skipIf(!url)(
     const pool = new Pool({ connectionString: url });
     const db = drizzle(pool, { schema });
 
+    const seeded = [OVERRIDDEN_BEATMAP_OSU_ID, DELETED_BEATMAP_OSU_ID];
+
     const beatmap = (osuId: number, overridden: boolean) => ({
       osuId,
       ruleset: Ruleset.Osu,
@@ -78,23 +80,42 @@ describe.skipIf(!url)(
       artistOverride: overridden ? 'Kamiyama Yoko' : null,
     });
 
-    afterAll(async () => {
+    const remove = () =>
+      db.delete(schema.beatmaps).where(inArray(schema.beatmaps.osuId, seeded));
+
+    beforeAll(async () => {
+      await remove();
       await db
-        .delete(schema.beatmaps)
-        .where(
-          inArray(schema.beatmaps.osuId, [
-            OVERRIDDEN_BEATMAP_OSU_ID,
-            DELETED_BEATMAP_OSU_ID,
-          ])
-        );
+        .insert(schema.beatmaps)
+        .values([
+          beatmap(OVERRIDDEN_BEATMAP_OSU_ID, true),
+          beatmap(DELETED_BEATMAP_OSU_ID, false),
+        ]);
+    });
+
+    afterAll(async () => {
+      await remove();
       await pool.end();
     });
 
+    // Mirrors the select in searchProcedures and the beatmap list.
     const search = async (term: string) => {
       const expressions = buildBeatmapSearchExpressions(term)!;
 
       return db
-        .select({ osuId: schema.beatmaps.osuId })
+        .select({
+          osuId: schema.beatmaps.osuId,
+          artist: sql<
+            string | null
+          >`coalesce(${schema.beatmaps.artistOverride}, ${schema.beatmapsets.artist})`.as(
+            'artist'
+          ),
+          title: sql<
+            string | null
+          >`coalesce(${schema.beatmaps.titleOverride}, ${schema.beatmapsets.title})`.as(
+            'title'
+          ),
+        })
         .from(schema.beatmaps)
         .leftJoin(
           schema.beatmapsets,
@@ -105,37 +126,41 @@ describe.skipIf(!url)(
           eq(schema.beatmapStats.beatmapId, schema.beatmaps.id)
         )
         .where(
-          and(
-            inArray(schema.beatmaps.osuId, [
-              OVERRIDDEN_BEATMAP_OSU_ID,
-              DELETED_BEATMAP_OSU_ID,
-            ]),
-            expressions.condition
-          )
+          and(inArray(schema.beatmaps.osuId, seeded), expressions.condition)
         )
         .orderBy(expressions.rank);
     };
 
-    it('finds a hand-repaired beatmap by its overridden title and artist', async () => {
-      await db
-        .insert(schema.beatmaps)
-        .values([
-          beatmap(OVERRIDDEN_BEATMAP_OSU_ID, true),
-          beatmap(DELETED_BEATMAP_OSU_ID, false),
-        ]);
+    const matches = async (term: string) =>
+      (await search(term)).map(({ osuId }) => osuId);
 
-      expect(await search('sasayaka')).toEqual([
-        { osuId: OVERRIDDEN_BEATMAP_OSU_ID },
-      ]);
-      expect(await search('kamiyama yoko')).toEqual([
-        { osuId: OVERRIDDEN_BEATMAP_OSU_ID },
+    it('finds a hand-repaired beatmap by its overridden title and artist', async () => {
+      expect(await matches('sasayaka')).toEqual([OVERRIDDEN_BEATMAP_OSU_ID]);
+      expect(await matches('kamiyama yoko')).toEqual([
+        OVERRIDDEN_BEATMAP_OSU_ID,
       ]);
     });
 
     it('leaves a deleted beatmap nobody repaired out of the results', async () => {
-      expect(await search('yomogi')).toEqual([
-        { osuId: OVERRIDDEN_BEATMAP_OSU_ID },
+      expect(await matches('yomogi')).toEqual([OVERRIDDEN_BEATMAP_OSU_ID]);
+    });
+
+    it('carries the overridden artist and title into the result, not a set it has none of', async () => {
+      expect(await search('sasayaka')).toEqual([
+        {
+          osuId: OVERRIDDEN_BEATMAP_OSU_ID,
+          artist: 'Kamiyama Yoko',
+          title: 'Sasayaka na Kanashimi',
+        },
       ]);
+    });
+
+    it('keeps the search vector index across the generated-column rebuild', async () => {
+      const { rows } = await db.execute<{ indexdef: string }>(
+        sql`SELECT indexdef FROM pg_indexes WHERE tablename = 'beatmaps' AND indexname = 'ix_beatmaps_search_vector'`
+      );
+
+      expect(rows[0]?.indexdef).toContain('USING gin');
     });
   }
 );
