@@ -434,9 +434,15 @@ const VERIFICATION_OUTCOMES = new Set<AuditEventAction>([
   'pre_rejection',
 ]);
 
+/** The parts of a grouped row an outcome breakdown is counted from. */
+export type BreakdownRow = Pick<
+  GroupedAuditRow,
+  'actionTypes' | 'entryCount' | 'verificationStatusCounts'
+>;
+
 /** Entities per outcome, for an event that wrote at least `minOutcomes` verification statuses. */
 export function buildActionBreakdown(
-  rows: GroupedAuditRow[],
+  rows: BreakdownRow[],
   minOutcomes = 2
 ): AuditEventActionCount[] | null {
   const counts = new Map<AuditEventAction, number>();
@@ -465,6 +471,19 @@ export function buildActionBreakdown(
       b.count - a.count ||
       ACTION_LABELS[a.action].localeCompare(ACTION_LABELS[b.action])
   );
+}
+
+/** A breakdown worth showing next to `action`: it names a verification outcome and says something `action` does not. */
+export function buildOutcomeBreakdown(
+  rows: BreakdownRow[],
+  action: AuditEventAction
+): AuditEventActionCount[] | null {
+  const breakdown = buildActionBreakdown(rows, 1);
+  if (!breakdown) return null;
+  if (!breakdown.some((part) => VERIFICATION_OUTCOMES.has(part.action)))
+    return null;
+  if (breakdown.length === 1 && breakdown[0]!.action === action) return null;
+  return breakdown;
 }
 
 /** Groups rows from multiple audit tables into events keyed by the database's event key. */
@@ -539,13 +558,7 @@ export function assembleEvents(rows: GroupedAuditRow[]): AssembledEvent[] {
       (total, row) => total + row.entryCount,
       0
     );
-    const childBreakdown = buildActionBreakdown(childRows, 1);
-    const childActionBreakdown =
-      childBreakdown &&
-      childBreakdown.some((part) => VERIFICATION_OUTCOMES.has(part.action)) &&
-      (childBreakdown.length > 1 || childBreakdown[0]!.action !== action)
-        ? childBreakdown
-        : null;
+    const childActionBreakdown = buildOutcomeBreakdown(childRows, action);
 
     events.push({
       eventKey,

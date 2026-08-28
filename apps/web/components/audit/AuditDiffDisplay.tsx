@@ -2,6 +2,7 @@ import { ArrowRight } from 'lucide-react';
 import { AuditEntityType, VerificationStatus } from '@otr/core/osu';
 import type { IBitwiseEnumHelper, EnumMetadata } from '@/lib/enum-helpers';
 import { VerificationStatusEnumHelper } from '@/lib/enum-helpers';
+import VerificationBadge from '@/components/badges/VerificationBadge';
 import { cn } from '@/lib/utils';
 import {
   getFieldLabel,
@@ -22,19 +23,11 @@ type ChangeValue = {
   newValue: unknown;
 };
 
-const MUTED_VALUE_STYLE = 'bg-muted-foreground/10 text-muted-foreground';
-
-const STATUS_VALUE_STYLES: Record<VerificationStatus, string> = {
-  [VerificationStatus.None]: MUTED_VALUE_STYLE,
-  [VerificationStatus.PreRejected]: 'bg-destructive/10 text-destructive',
-  [VerificationStatus.PreVerified]: 'bg-success/10 text-success',
-  [VerificationStatus.Rejected]: 'bg-destructive/10 text-destructive',
-  [VerificationStatus.Verified]: 'bg-success/10 text-success',
-};
-
-function verificationStatusStyle(value: unknown): string {
-  if (typeof value !== 'number') return MUTED_VALUE_STYLE;
-  return STATUS_VALUE_STYLES[value as VerificationStatus] ?? MUTED_VALUE_STYLE;
+function toVerificationStatus(value: unknown): VerificationStatus | null {
+  if (typeof value !== 'number') return null;
+  return value in VerificationStatusEnumHelper.metadata
+    ? (value as VerificationStatus)
+    : null;
 }
 
 function formatValue(
@@ -44,7 +37,7 @@ function formatValue(
   referencedUsers?: Record<string, ReferencedUser>
 ): string {
   if (value === null || value === undefined || value === 'null' || value === '')
-    return '\u2014';
+    return '—';
 
   if (
     isFieldUserReference(entityType, fieldName) &&
@@ -102,6 +95,15 @@ export default function AuditDiffDisplay({
   );
   const isStatusField =
     getFieldEnumHelper(entityType, fieldName) === VerificationStatusEnumHelper;
+  const oldStatus = isStatusField
+    ? toVerificationStatus(change.originalValue)
+    : null;
+  const newStatus = isStatusField
+    ? toVerificationStatus(change.newValue)
+    : null;
+  // Only a verdict may be red or green; a status carries its own badge colour.
+  const isNeutral =
+    isStatusField || isFieldUserReference(entityType, fieldName);
 
   return (
     <div
@@ -118,25 +120,44 @@ export default function AuditDiffDisplay({
         <span
           data-testid="diff-old-value"
           className={cn(
-            'rounded px-1.5 py-0.5 line-through',
-            isStatusField
-              ? verificationStatusStyle(change.originalValue)
-              : 'bg-red-500/10 text-red-600 dark:text-red-400'
+            oldStatus !== null
+              ? 'opacity-50'
+              : cn(
+                  'rounded px-1.5 py-0.5 line-through',
+                  isNeutral
+                    ? 'text-muted-foreground'
+                    : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                )
           )}
         >
-          {oldVal}
+          {oldStatus !== null ? (
+            <VerificationBadge
+              verificationStatus={oldStatus}
+              displayText
+              minimal
+            />
+          ) : (
+            oldVal
+          )}
         </span>
         <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground" />
         <span
           data-testid="diff-new-value"
           className={cn(
-            'rounded px-1.5 py-0.5',
-            isStatusField
-              ? verificationStatusStyle(change.newValue)
-              : 'bg-green-500/10 text-green-600 dark:text-green-400'
+            newStatus === null &&
+              cn(
+                'rounded px-1.5 py-0.5',
+                isNeutral
+                  ? 'text-foreground'
+                  : 'bg-green-500/10 text-green-600 dark:text-green-400'
+              )
           )}
         >
-          {newVal}
+          {newStatus !== null ? (
+            <VerificationBadge verificationStatus={newStatus} displayText />
+          ) : (
+            newVal
+          )}
         </span>
       </span>
     </div>

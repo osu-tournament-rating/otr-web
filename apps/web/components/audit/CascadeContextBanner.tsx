@@ -4,10 +4,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import useSWRInfinite from 'swr/infinite';
 import { ChevronRight, Info, Loader2 } from 'lucide-react';
-import { AuditEntityType } from '@otr/core/osu';
+import { AuditEntityType, VerificationStatus } from '@otr/core/osu';
 import type {
   AuditEntry,
-  AuditEventAction,
   CascadeContext,
   CascadeDescendant,
 } from '@/lib/orpc/schema/audit';
@@ -16,9 +15,13 @@ import {
   ENTITY_TYPE_LABELS,
   ENTITY_TYPE_PLURALS,
 } from '@/lib/audit-entity-types';
+import { ACTION_NOUNS } from '@/lib/audit-actions';
+import { VerificationStatusEnumHelper } from '@/lib/enum-helpers';
 import { orpc } from '@/lib/orpc/orpc';
 import { Button } from '@/components/ui/button';
+import VerificationBadge from '@/components/badges/VerificationBadge';
 import { cn } from '@/lib/utils';
+import ActionBreakdownPhrase from './ActionBreakdownPhrase';
 
 type CascadeContextBannerProps = {
   context: CascadeContext;
@@ -26,31 +29,40 @@ type CascadeContextBannerProps = {
   viewedEntity?: { entityType: AuditEntityType; entityId: number };
 };
 
-const ACTION_LABELS: Record<AuditEventAction, string> = {
-  verification: 'verification',
-  rejection: 'rejection',
-  pre_verification: 'pre-verification',
-  pre_rejection: 'pre-rejection',
-  submission: 'submission',
-  update: 'update',
-  deletion: 'deletion',
-};
-
 const numberFormat = new Intl.NumberFormat('en-US');
 
-function countLabel(descendant: CascadeDescendant): string {
-  const { entityType, affectedCount, totalCount } = descendant;
+function countLabel(descendant: CascadeDescendant): React.ReactNode {
+  const { entityType, affectedCount, totalCount, actionBreakdown } = descendant;
   const showsTotal = totalCount !== null && totalCount > affectedCount;
   const counted = showsTotal ? totalCount : affectedCount;
   const label =
     counted === 1
       ? ENTITY_TYPE_LABELS[entityType]
       : ENTITY_TYPE_PLURALS[entityType];
+  const totalDisplay =
+    counted === 1 ? label : `of ${numberFormat.format(counted)} ${label}`;
 
+  if (actionBreakdown) {
+    return (
+      <>
+        <ActionBreakdownPhrase breakdown={actionBreakdown} /> {totalDisplay}
+      </>
+    );
+  }
   if (showsTotal) {
-    return `${numberFormat.format(affectedCount)} of ${numberFormat.format(totalCount)} ${label}`;
+    return `${numberFormat.format(affectedCount)} ${totalDisplay}`;
   }
   return `${numberFormat.format(affectedCount)} ${label}`;
+}
+
+function entryStatus(entry: AuditEntry): VerificationStatus | null {
+  const change = entry.changes?.verificationStatus as
+    { newValue?: unknown } | undefined;
+  const value = change?.newValue;
+  if (typeof value !== 'number') return null;
+  return value in VerificationStatusEnumHelper.metadata
+    ? (value as VerificationStatus)
+    : null;
 }
 
 type AffectedEntitiesResponse = {
@@ -127,15 +139,22 @@ function AffectedEntities({
 
       {entries.map((entry) => {
         const id = entry.referenceId ?? entry.referenceIdLock;
+        const status = entryStatus(entry);
         return (
-          <Link
-            key={entry.id}
-            href={`/audit/${slug}/${id}`}
-            className="text-primary hover:underline"
-          >
-            {entry.entityName ??
-              `${label.charAt(0).toUpperCase()}${label.slice(1)} #${id}`}
-          </Link>
+          <div key={entry.id} className="flex items-center gap-1.5">
+            <span className="flex w-6 shrink-0 justify-center">
+              {status !== null && (
+                <VerificationBadge verificationStatus={status} />
+              )}
+            </span>
+            <Link
+              href={`/audit/${slug}/${id}`}
+              className="text-primary hover:underline"
+            >
+              {entry.entityName ??
+                `${label.charAt(0).toUpperCase()}${label.slice(1)} #${id}`}
+            </Link>
+          </div>
         );
       })}
 
@@ -164,7 +183,7 @@ export default function CascadeContextBanner({
 
   const slug = entityTypeToSlug(context.topEntityType);
   const entityName = context.topEntityName ?? `#${context.topEntityId}`;
-  const actionLabel = ACTION_LABELS[context.action];
+  const actionLabel = ACTION_NOUNS[context.action];
   const startedHere =
     viewedEntity?.entityType === context.topEntityType &&
     viewedEntity.entityId === context.topEntityId;

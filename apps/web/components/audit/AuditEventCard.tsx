@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import useSWRInfinite from 'swr/infinite';
 import { ChevronRight, Loader2 } from 'lucide-react';
@@ -9,7 +9,6 @@ import type {
   AuditEntry,
   AuditEvent,
   AuditEventAction,
-  AuditEventActionCount,
 } from '@/lib/orpc/schema/audit';
 import { cn } from '@/lib/utils';
 import { orpc } from '@/lib/orpc/orpc';
@@ -28,6 +27,9 @@ import {
   ENTITY_TYPE_PLURALS,
 } from '@/lib/audit-entity-types';
 import { ACTION_LABELS } from '@/lib/audit-actions';
+import ActionBreakdownPhrase, {
+  ACTION_TEXT_COLORS,
+} from './ActionBreakdownPhrase';
 import { getFieldLabel } from './auditFieldConfig';
 import RelativeTime from './RelativeTime';
 
@@ -39,16 +41,6 @@ const FIELD_SUPPRESSED_ACTIONS = new Set<AuditEventAction>([
   'submission',
   'deletion',
 ]);
-
-const ACTION_TEXT_COLORS: Record<AuditEventAction, string> = {
-  verification: 'text-green-600 dark:text-green-400',
-  pre_verification: 'text-green-600 dark:text-green-400',
-  rejection: 'text-red-600 dark:text-red-400',
-  pre_rejection: 'text-red-600 dark:text-red-400',
-  submission: 'text-blue-600 dark:text-blue-400',
-  update: 'text-blue-600 dark:text-blue-400',
-  deletion: 'text-red-600 dark:text-red-400',
-};
 
 const ACTION_BORDER_COLORS: Record<AuditEventAction, string> = {
   verification: 'border-l-green-500',
@@ -72,20 +64,6 @@ type EventDetailsResponse = {
 
 const numberFormat = new Intl.NumberFormat('en-US');
 
-function buildBreakdownPhrase(
-  breakdown: AuditEventActionCount[]
-): React.ReactNode {
-  return breakdown.map((part, index) => (
-    <Fragment key={part.action}>
-      {index > 0 && ', '}
-      <span className={ACTION_TEXT_COLORS[part.action]}>
-        {ACTION_LABELS[part.action]}
-      </span>{' '}
-      {numberFormat.format(part.count)}
-    </Fragment>
-  ));
-}
-
 function buildActionPhrase(event: AuditEvent): React.ReactNode {
   if (!event.actionBreakdown) {
     return (
@@ -95,7 +73,7 @@ function buildActionPhrase(event: AuditEvent): React.ReactNode {
     );
   }
 
-  return buildBreakdownPhrase(event.actionBreakdown);
+  return <ActionBreakdownPhrase breakdown={event.actionBreakdown} />;
 }
 
 function buildDescription(event: AuditEvent): React.ReactNode {
@@ -140,7 +118,8 @@ function buildDescription(event: AuditEvent): React.ReactNode {
         : `of ${numberFormat.format(childTotal)} ${childLabel}`;
     const countDisplay: React.ReactNode = childLevel.actionBreakdown ? (
       <>
-        {buildBreakdownPhrase(childLevel.actionBreakdown)} {childTotalDisplay}
+        <ActionBreakdownPhrase breakdown={childLevel.actionBreakdown} />{' '}
+        {childTotalDisplay}
       </>
     ) : childTotal > childLevel.affectedCount ? (
       `${numberFormat.format(childLevel.affectedCount)} ${childTotalDisplay}`

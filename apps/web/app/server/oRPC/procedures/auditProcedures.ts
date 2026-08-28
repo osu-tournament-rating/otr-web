@@ -13,6 +13,7 @@ import {
   type AuditEntry,
   type AuditAdminNote,
   type AuditEvent,
+  type AuditEventActionCount,
   type CascadeContext,
   type EntityTimelineItem,
   type EntityTimelineEvent,
@@ -35,6 +36,7 @@ import {
   classifyAction,
   getImmediateChildType,
   buildChildSummary,
+  buildOutcomeBreakdown,
   countChildLevels,
   getCascadeCountParent,
   buildFieldChangeConditions,
@@ -45,6 +47,7 @@ import {
   resolveTournamentNames,
   decodeEventFeedCursor,
   encodeEventFeedCursor,
+  type BreakdownRow,
   type ReferencedUser,
   type GroupedAuditRow,
 } from './audit/helpers';
@@ -305,12 +308,65 @@ type GroupedEventRow = {
   sample_entity_id: number;
 };
 
+/** Distinct verification status per entity as `status:count` pairs; `unchanged` and `null` lose to a real status. */
+const verificationStatusCountsExpr = sql`
+  ARRAY(
+    SELECT entity_statuses.status || ':' || COUNT(*)::text
+    FROM (
+      -- Both array_agg calls share ORDER BY a.id so unnest pairs status with entity.
+      SELECT DISTINCT ON (grouped_statuses.entity_id)
+        grouped_statuses.status
+      FROM unnest(
+        array_agg(
+          CASE
+            WHEN normalized_changes.verification_status_change IS NULL THEN
+              'unchanged'
+            ELSE
+              COALESCE(
+                normalized_changes.verification_status_change ->> 'newValue',
+                normalized_changes.verification_status_change ->> 'NewValue',
+                normalized_changes.verification_status_change ->> 'new_value',
+                'null'
+              )
+          END
+          ORDER BY a.id
+        ),
+        array_agg(a.reference_id_lock ORDER BY a.id)
+      ) WITH ORDINALITY AS grouped_statuses(status, entity_id, position)
+      ORDER BY
+        grouped_statuses.entity_id,
+        grouped_statuses.status IN ('unchanged', 'null'),
+        grouped_statuses.position DESC
+    ) entity_statuses
+    GROUP BY entity_statuses.status
+    ORDER BY entity_statuses.status
+  )`;
+
+const normalizedChangesJoin = sql`
+  CROSS JOIN LATERAL (
+    SELECT COALESCE(
+      a.changes -> 'verification_status',
+      a.changes -> 'verificationStatus',
+      a.changes -> 'VerificationStatus'
+    ) AS verification_status_change
+  ) normalized_changes`;
+
 type CascadeSiblingRow = {
   entity_type: number;
   cnt: number;
   sample_id: number;
   sample_changes: unknown;
+  action_types: number[];
+  verification_status_counts: string[];
 };
+
+function toBreakdownRow(row: CascadeSiblingRow): BreakdownRow {
+  return {
+    actionTypes: row.action_types as AuditActionType[],
+    entryCount: row.cnt,
+    verificationStatusCounts: row.verification_status_counts ?? [],
+  };
+}
 
 export const getEntityAuditTimeline = publicProcedure
   .input(EntityAuditInputSchema)
@@ -502,8 +558,11 @@ export const getEntityAuditTimeline = publicProcedure
                   ${et}::int AS entity_type,
                   COUNT(DISTINCT a.reference_id_lock)::int AS cnt,
                   (array_agg(a.reference_id_lock ORDER BY a.id DESC))[1] AS sample_id,
-                  (array_agg(a.changes ORDER BY a.id DESC))[1] AS sample_changes
+                  (array_agg(a.changes ORDER BY a.id DESC))[1] AS sample_changes,
+                  ARRAY_AGG(DISTINCT a.action_type ORDER BY a.action_type) AS action_types,
+                  ${verificationStatusCountsExpr} AS verification_status_counts
                 FROM ${sql.raw(info.fromClause)}
+                ${normalizedChangesJoin}
                 WHERE ${eventIdentityCondition}
                   AND ${sql.raw(info.parentIdExpr)} = ${parentTournamentId}
                 GROUP BY entity_type
@@ -527,7 +586,11 @@ export const getEntityAuditTimeline = publicProcedure
           action: ReturnType<typeof classifyAction>;
           childType: AuditEntityType | null;
           childAffectedCount: number;
-          descendantCounts: { entityType: AuditEntityType; count: number }[];
+          descendantCounts: {
+            entityType: AuditEntityType;
+            count: number;
+            actionBreakdown: AuditEventActionCount[] | null;
+          }[];
         };
         const cascadeInfos: CascadeInfo[] = [];
 
@@ -559,6 +622,10 @@ export const getEntityAuditTimeline = publicProcedure
             .map((row) => ({
               entityType: row.entity_type as AuditEntityType,
               count: row.cnt,
+              actionBreakdown: buildOutcomeBreakdown(
+                [toBreakdownRow(row)],
+                action
+              ),
             }));
 
           const childType = getImmediateChildType(topEntityType);
@@ -623,15 +690,18 @@ export const getEntityAuditTimeline = publicProcedure
             topEntityName,
             action: info.action,
             childSummary,
-            descendants: info.descendantCounts.map(({ entityType, count }) => ({
-              entityType,
-              affectedCount: count,
-              totalCount: childTotal(
-                info.topEntityType,
-                info.topEntityId,
-                entityType
-              ),
-            })),
+            descendants: info.descendantCounts.map(
+              ({ entityType, count, actionBreakdown }) => ({
+                entityType,
+                affectedCount: count,
+                totalCount: childTotal(
+                  info.topEntityType,
+                  info.topEntityId,
+                  entityType
+                ),
+                actionBreakdown,
+              })
+            ),
             eventId: info.eventId,
             actionUserId: info.actionUserId,
             created: info.created,
@@ -826,37 +896,7 @@ export const getAuditEventFeed = publicProcedure
           ${sql.raw(parentIdExpr)} AS parent_entity_id,
           COUNT(DISTINCT a.reference_id_lock)::int AS count,
           COUNT(*)::int AS entry_count,
-          ARRAY(
-            SELECT entity_statuses.status || ':' || COUNT(*)::text
-            FROM (
-              -- Both array_agg calls share ORDER BY a.id so unnest pairs status with entity.
-              SELECT DISTINCT ON (grouped_statuses.entity_id)
-                grouped_statuses.status
-              FROM unnest(
-                array_agg(
-                  CASE
-                    WHEN normalized_changes.verification_status_change IS NULL THEN
-                      'unchanged'
-                    ELSE
-                      COALESCE(
-                        normalized_changes.verification_status_change ->> 'newValue',
-                        normalized_changes.verification_status_change ->> 'NewValue',
-                        normalized_changes.verification_status_change ->> 'new_value',
-                        'null'
-                      )
-                  END
-                  ORDER BY a.id
-                ),
-                array_agg(a.reference_id_lock ORDER BY a.id)
-              ) WITH ORDINALITY AS grouped_statuses(status, entity_id, position)
-              ORDER BY
-                grouped_statuses.entity_id,
-                grouped_statuses.status IN ('unchanged', 'null'),
-                grouped_statuses.position DESC
-            ) entity_statuses
-            GROUP BY entity_statuses.status
-            ORDER BY entity_statuses.status
-          ) AS verification_status_counts,
+          ${verificationStatusCountsExpr} AS verification_status_counts,
           ARRAY(
             SELECT DISTINCT field_name
             FROM unnest(array_agg(a.changes)) AS grouped_changes(change)
@@ -868,13 +908,7 @@ export const getAuditEventFeed = publicProcedure
           (array_agg(a.changes ORDER BY a.id DESC))[1] AS sample_changes,
           (array_agg(a.reference_id_lock ORDER BY a.id DESC))[1] AS sample_entity_id
         FROM ${sql.raw(fromClause)}
-        CROSS JOIN LATERAL (
-          SELECT COALESCE(
-            a.changes -> 'verification_status',
-            a.changes -> 'verificationStatus',
-            a.changes -> 'VerificationStatus'
-          ) AS verification_status_change
-        ) normalized_changes
+        ${normalizedChangesJoin}
         ${boundedWhereClause}
         GROUP BY
           ${eventKeyExpr},
