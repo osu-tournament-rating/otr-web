@@ -69,7 +69,7 @@ function groupByEntity(entries: AuditEntry[]): AffectedEntity[] {
     const id = entry.referenceId ?? entry.referenceIdLock;
     const existing = byEntity.get(id);
     if (existing) {
-      Object.assign(existing.changes, entry.changes);
+      existing.changes = { ...entry.changes, ...existing.changes };
       existing.entityName ??= entry.entityName ?? null;
     } else {
       byEntity.set(id, {

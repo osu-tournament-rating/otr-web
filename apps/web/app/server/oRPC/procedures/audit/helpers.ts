@@ -14,8 +14,6 @@ import {
 import { ACTION_LABELS, classifyAction } from '@/lib/audit-actions';
 import type { DatabaseClient } from '@/lib/db';
 
-export { classifyAction };
-
 export function getAuditTable(entityType: AuditEntityType) {
   switch (entityType) {
     case AuditEntityType.Tournament:
@@ -436,7 +434,7 @@ export function buildActionBreakdown(
   );
 }
 
-/** A breakdown worth showing next to `action`: it names a verification outcome and says something `action` does not. */
+/** Breakdown worth showing next to `action`. */
 export function buildOutcomeBreakdown(
   rows: BreakdownRow[],
   action: AuditEventAction

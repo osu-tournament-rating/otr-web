@@ -33,7 +33,6 @@ import {
   camelizeChangesKeys,
   mergeTimelineItems,
   assembleEvents,
-  classifyAction,
   getImmediateChildType,
   buildChildSummary,
   buildOutcomeBreakdown,
@@ -51,6 +50,7 @@ import {
   type ReferencedUser,
   type GroupedAuditRow,
 } from './audit/helpers';
+import { classifyAction } from '@/lib/audit-actions';
 
 type AuditRow = {
   id: number;
