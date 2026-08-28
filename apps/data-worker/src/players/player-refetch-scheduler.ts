@@ -1,10 +1,11 @@
-import { and, asc, isNull, lt, ne, or } from 'drizzle-orm';
+import { and, asc, eq, isNull, lt, ne, or, sql } from 'drizzle-orm';
 import type {
   FetchOsuMessage,
   FetchPlayerOsuTrackMessage,
   MessageEnvelope,
 } from '@otr/core';
 import { MessagePriority } from '@otr/core';
+import { Ruleset } from '@otr/core/osu';
 import * as schema from '@otr/core/db/schema';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
@@ -29,6 +30,19 @@ type SchedulerConfig = {
 
 const MS_PER_MINUTE = 60_000;
 const MS_PER_DAY = 86_400_000;
+
+// Ceilings on player_ratings.global_rank; `maxRank: null` matches any rank.
+const REFETCH_TIERS = {
+  osu: [
+    { maxRank: 500, days: 1 },
+    { maxRank: 5000, days: 3 },
+    { maxRank: 20000, days: 7 },
+  ],
+  otherRulesets: [
+    { maxRank: 500, days: 1 },
+    { maxRank: null, days: 7 },
+  ],
+} as const;
 
 type IntervalHandle = ReturnType<typeof setInterval> | null;
 
@@ -149,24 +163,45 @@ export class PlayerRefetchScheduler {
   }
 
   private async runOsuRefetch() {
-    const cutoffIso = this.calculateCutoff(this.config.osu.outdatedDays);
+    const cadenceDays = this.buildCadenceExpression(
+      this.config.osu.outdatedDays
+    );
+
     const players = await this.db
-      .select({ osuPlayerId: schema.players.osuId })
+      .select({
+        osuPlayerId: schema.players.osuId,
+        cadenceDays,
+      })
       .from(schema.players)
-      .where(
-        and(
-          ne(schema.players.dataFetchStatus, DataFetchStatus.Fetching),
-          lt(schema.players.osuLastFetch, cutoffIso)
-        )
+      .leftJoin(
+        schema.playerRatings,
+        eq(schema.playerRatings.playerId, schema.players.id)
       )
-      .orderBy(asc(schema.players.osuLastFetch));
+      .where(ne(schema.players.dataFetchStatus, DataFetchStatus.Fetching))
+      .groupBy(schema.players.id)
+      .having(
+        sql`${schema.players.osuLastFetch} < now() - (${cadenceDays} * interval '1 day')`
+      )
+      .orderBy(asc(cadenceDays), asc(schema.players.osuLastFetch));
+
+    const enqueuedByCadence = new Map<number, number>();
 
     const enqueued = await this.enqueuePlayers({
       players,
-      publish: async (osuPlayerId) => {
+      publish: async (osuPlayerId, player) => {
+        const cadence = Number(player.cadenceDays);
         await this.osuPublisher.publish(
           { type: 'player', osuPlayerId },
-          { metadata: { priority: MessagePriority.Low } }
+          {
+            metadata: {
+              priority:
+                cadence <= 1 ? MessagePriority.Normal : MessagePriority.Low,
+            },
+          }
+        );
+        enqueuedByCadence.set(
+          cadence,
+          (enqueuedByCadence.get(cadence) ?? 0) + 1
         );
       },
       logContext: 'osu!',
@@ -183,8 +218,34 @@ export class PlayerRefetchScheduler {
     if (enqueued > 0) {
       this.logger.info('Auto-refetch enqueued osu! players', {
         count: enqueued,
+        byCadenceDays: Object.fromEntries(
+          [...enqueuedByCadence.entries()].sort((a, b) => a[0] - b[0])
+        ),
       });
     }
+  }
+
+  private buildCadenceExpression(fallbackDays: number) {
+    // Inlined as literals so postgres types them as integers rather than text parameters.
+    const literal = (value: number) => sql.raw(String(Math.trunc(value)));
+
+    const branch = (
+      rulesetMatch: ReturnType<typeof sql>,
+      tier: { maxRank: number | null; days: number }
+    ) =>
+      tier.maxRank === null
+        ? sql`when ${rulesetMatch} then ${literal(tier.days)}`
+        : sql`when ${rulesetMatch} and ${schema.playerRatings.globalRank} <= ${literal(tier.maxRank)} then ${literal(tier.days)}`;
+
+    const isOsu = sql`${schema.playerRatings.ruleset} = ${literal(Ruleset.Osu)}`;
+    const isNotOsu = sql`${schema.playerRatings.ruleset} <> ${literal(Ruleset.Osu)}`;
+
+    const branches = [
+      ...REFETCH_TIERS.osu.map((tier) => branch(isOsu, tier)),
+      ...REFETCH_TIERS.otherRulesets.map((tier) => branch(isNotOsu, tier)),
+    ];
+
+    return sql<number>`coalesce(min(case ${sql.join(branches, sql` `)} else ${literal(fallbackDays)} end), ${literal(fallbackDays)})`;
   }
 
   private async runOsuTrackRefetch() {
@@ -231,9 +292,11 @@ export class PlayerRefetchScheduler {
     }
   }
 
-  private async enqueuePlayers(options: {
-    players: Array<{ osuPlayerId: number }>;
-    publish: (osuPlayerId: number) => Promise<void>;
+  private async enqueuePlayers<
+    TPlayer extends { osuPlayerId: number },
+  >(options: {
+    players: Array<TPlayer>;
+    publish: (osuPlayerId: number, player: TPlayer) => Promise<void>;
     logContext: string;
     setFetchingStatus?: (osuPlayerId: number) => Promise<void>;
   }): Promise<number> {
@@ -246,7 +309,7 @@ export class PlayerRefetchScheduler {
         if (options.setFetchingStatus) {
           await options.setFetchingStatus(osuPlayerId);
         }
-        await options.publish(osuPlayerId);
+        await options.publish(osuPlayerId, player);
         enqueued += 1;
       } catch (error) {
         this.logger.error('Failed to publish auto-refetch player', {
