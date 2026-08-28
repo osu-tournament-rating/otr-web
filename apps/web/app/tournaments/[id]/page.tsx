@@ -108,6 +108,7 @@ function generateTableData(matches: TournamentMatch[]): MatchRow[] {
     startDate: match.startTime
       ? new Date(match.startTime).toISOString()
       : new Date().toISOString(),
+    winRecord: match.winRecord,
     games: (match.games ?? []).map((game) => ({
       id: game.id,
       verificationStatus: game.verificationStatus,

@@ -12,7 +12,10 @@ import { Button } from '@/components/ui/button';
 import { ArrowUpDown, ArrowUp, ArrowDown, StickyNote } from 'lucide-react';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { formatUTCDate, formatUTCDateFull } from '@/lib/utils/date';
-import { TournamentMatchGame } from '@/lib/orpc/schema/tournament';
+import {
+  TournamentMatch,
+  TournamentMatchGame,
+} from '@/lib/orpc/schema/tournament';
 
 export type AdminNotePreview = {
   note: string;
@@ -38,13 +41,16 @@ export type MatchRow = {
     verifiedByUsername: string | null;
   };
   startDate: string;
+  winRecord: TournamentMatch['winRecord'];
   games: GameWithNotes[];
   matchAdminNotes: AdminNotePreview[];
 };
 
 const columnHelper = createColumnHelper<MatchRow>();
 
-const getVerificationStatusPriority = (status: VerificationStatus): number => {
+export const getVerificationStatusPriority = (
+  status: VerificationStatus
+): number => {
   switch (status) {
     case VerificationStatus.Verified:
       return 4;

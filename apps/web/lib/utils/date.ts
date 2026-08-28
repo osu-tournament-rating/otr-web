@@ -21,6 +21,14 @@ export function formatUTCDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+/** `14:30`, in UTC. */
+export function formatUTCTime(date: Date): string {
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+
+  return `${hours}:${minutes}`;
+}
+
 /** `3:45`, `1:23:45`. */
 export function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);

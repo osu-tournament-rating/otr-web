@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -20,9 +20,8 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import TournamentDataTable from '@/app/tournaments/[id]/data-table';
-import TournamentMatchesDataTableWithCheckboxes from './TournamentMatchesDataTableWithCheckboxes';
-import { columns, MatchRow } from '@/app/tournaments/[id]/columns';
+import TournamentMatchesLedger from './TournamentMatchesLedger';
+import { MatchRow } from '@/app/tournaments/[id]/columns';
 
 interface TournamentMatchesAdminViewProps {
   tournamentId: number;
@@ -70,15 +69,6 @@ export default function TournamentMatchesAdminView({
 
   const isAdmin = hasAdminScope(session?.scopes);
 
-  const matchesWithSelection = useMemo(
-    () =>
-      matches.map((match) => ({
-        ...match,
-        isSelected: selectedMatchIds.has(match.id),
-      })),
-    [matches, selectedMatchIds]
-  );
-
   const handleSelectMatch = useCallback((matchId: number, checked: boolean) => {
     setSelectedMatchIds((prev) => {
       const newSet = new Set(prev);
@@ -90,6 +80,23 @@ export default function TournamentMatchesAdminView({
       return newSet;
     });
   }, []);
+
+  const handleSelectMatches = useCallback(
+    (matchIds: number[], checked: boolean) => {
+      setSelectedMatchIds((prev) => {
+        const next = new Set(prev);
+        for (const matchId of matchIds) {
+          if (checked) {
+            next.add(matchId);
+          } else {
+            next.delete(matchId);
+          }
+        }
+        return next;
+      });
+    },
+    []
+  );
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {
@@ -233,7 +240,7 @@ export default function TournamentMatchesAdminView({
   }, [matchIdsToAdd, tournamentId, addAsLazer, router]);
 
   if (!isAdmin) {
-    return <TournamentDataTable columns={columns} data={matches} />;
+    return <TournamentMatchesLedger matches={matches} />;
   }
 
   return (
@@ -432,13 +439,12 @@ export default function TournamentMatchesAdminView({
         </div>
       </div>
 
-      <div className="relative">
-        <TournamentMatchesDataTableWithCheckboxes
-          columns={columns}
-          data={matchesWithSelection}
-          onSelectMatch={handleSelectMatch}
-        />
-      </div>
+      <TournamentMatchesLedger
+        matches={matches}
+        selectedMatchIds={selectedMatchIds}
+        onSelectMatch={handleSelectMatch}
+        onSelectMatches={handleSelectMatches}
+      />
     </div>
   );
 }

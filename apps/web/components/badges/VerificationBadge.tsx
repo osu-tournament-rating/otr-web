@@ -58,6 +58,12 @@ const statusConfig = {
 };
 
 const sizeVariants = {
+  xs: {
+    container: 'h-4 w-auto min-w-4',
+    icon: 'h-3.5 w-3.5',
+    text: 'text-xs',
+    padding: 'px-1.5 py-0.5',
+  },
   xsmall: {
     container: 'h-5 w-auto min-w-5',
     icon: 'h-3 w-3',
@@ -90,7 +96,7 @@ interface VerificationBadgeProps {
   verificationStatus: VerificationStatus;
   /** Status as text instead of a tooltip; warnings and rejections still get one. */
   displayText?: boolean;
-  size?: 'xsmall' | 'small' | 'large';
+  size?: 'xs' | 'xsmall' | 'small' | 'large';
   /** Drop the badge background. */
   minimal?: boolean;
   /** Strike the label; the icon is left alone. */
