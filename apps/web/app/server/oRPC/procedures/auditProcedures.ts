@@ -1083,6 +1083,7 @@ export const getAuditEventFeed = publicProcedure
           entityType: event.childEntityType,
           affectedCount: event.childAffectedCount,
           totalCount,
+          actionBreakdown: event.childActionBreakdown,
         };
       }
 

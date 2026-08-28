@@ -9,6 +9,7 @@ import type {
   AuditEntry,
   AuditEvent,
   AuditEventAction,
+  AuditEventActionCount,
 } from '@/lib/orpc/schema/audit';
 import { cn } from '@/lib/utils';
 import { orpc } from '@/lib/orpc/orpc';
@@ -71,6 +72,20 @@ type EventDetailsResponse = {
 
 const numberFormat = new Intl.NumberFormat('en-US');
 
+function buildBreakdownPhrase(
+  breakdown: AuditEventActionCount[]
+): React.ReactNode {
+  return breakdown.map((part, index) => (
+    <Fragment key={part.action}>
+      {index > 0 && ', '}
+      <span className={ACTION_TEXT_COLORS[part.action]}>
+        {ACTION_LABELS[part.action]}
+      </span>{' '}
+      {numberFormat.format(part.count)}
+    </Fragment>
+  ));
+}
+
 function buildActionPhrase(event: AuditEvent): React.ReactNode {
   if (!event.actionBreakdown) {
     return (
@@ -80,15 +95,7 @@ function buildActionPhrase(event: AuditEvent): React.ReactNode {
     );
   }
 
-  return event.actionBreakdown.map((part, index) => (
-    <Fragment key={part.action}>
-      {index > 0 && ', '}
-      <span className={ACTION_TEXT_COLORS[part.action]}>
-        {ACTION_LABELS[part.action]}
-      </span>{' '}
-      {numberFormat.format(part.count)}
-    </Fragment>
-  ));
+  return buildBreakdownPhrase(event.actionBreakdown);
 }
 
 function buildDescription(event: AuditEvent): React.ReactNode {
@@ -115,18 +122,39 @@ function buildDescription(event: AuditEvent): React.ReactNode {
     </Link>
   );
 
-  // Cascade: "rejected Tournament X (118 matches)" or "(85 of 118 matches)"
+  // Cascade: "(85 of 118 matches)", or "(verified 115, rejected 3 of 118 matches)"
   if (isCascade && childLevel) {
-    const childPlural = ENTITY_TYPE_PLURALS[childLevel.entityType];
-    const countDisplay =
-      childLevel.totalCount && childLevel.affectedCount < childLevel.totalCount
-        ? `${childLevel.affectedCount} of ${childLevel.totalCount} ${childPlural}`
-        : null;
+    // A live child count can sit below a historical affected count once children are deleted.
+    const childTotal =
+      childLevel.totalCount !== null &&
+      childLevel.totalCount > childLevel.affectedCount
+        ? childLevel.totalCount
+        : childLevel.affectedCount;
+    const childLabel =
+      childTotal === 1
+        ? ENTITY_TYPE_LABELS[childLevel.entityType]
+        : ENTITY_TYPE_PLURALS[childLevel.entityType];
+    const childTotalDisplay =
+      childTotal === 1
+        ? childLabel
+        : `of ${numberFormat.format(childTotal)} ${childLabel}`;
+    const countDisplay: React.ReactNode = childLevel.actionBreakdown ? (
+      <>
+        {buildBreakdownPhrase(childLevel.actionBreakdown)} {childTotalDisplay}
+      </>
+    ) : childTotal > childLevel.affectedCount ? (
+      `${numberFormat.format(childLevel.affectedCount)} ${childTotalDisplay}`
+    ) : null;
+    const topPlural = ENTITY_TYPE_PLURALS[topEntity.entityType];
     const topDisplay =
       topEntity.count > 1 ? (
-        <>
-          {topEntity.count} {ENTITY_TYPE_PLURALS[topEntity.entityType]}
-        </>
+        actionBreakdown ? (
+          topPlural
+        ) : (
+          <>
+            {numberFormat.format(topEntity.count)} {topPlural}
+          </>
+        )
       ) : (
         <>
           {entityLabel} {entityLink}
@@ -149,8 +177,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
 
       return (
         <>
-          <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>{' '}
-          {topDisplay} in {tournamentLink}
+          {buildActionPhrase(event)} {topDisplay} in {tournamentLink}
           {countDisplay && (
             <span className="text-muted-foreground"> ({countDisplay})</span>
           )}
@@ -160,8 +187,7 @@ function buildDescription(event: AuditEvent): React.ReactNode {
 
     return (
       <>
-        <span className={ACTION_TEXT_COLORS[action]}>{actionLabel}</span>{' '}
-        {topDisplay}
+        {buildActionPhrase(event)} {topDisplay}
         {countDisplay && (
           <span className="text-muted-foreground"> ({countDisplay})</span>
         )}
@@ -191,7 +217,9 @@ function buildDescription(event: AuditEvent): React.ReactNode {
     return (
       <>
         {buildActionPhrase(event)}{' '}
-        {actionBreakdown ? entityPlural : `${topEntity.count} ${entityPlural}`}
+        {actionBreakdown
+          ? entityPlural
+          : `${numberFormat.format(topEntity.count)} ${entityPlural}`}
         {parentContext}
         {!actionBreakdown &&
           !FIELD_SUPPRESSED_ACTIONS.has(action) &&
