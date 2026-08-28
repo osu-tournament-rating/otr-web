@@ -125,6 +125,7 @@ function generateTableData(matches: TournamentMatch[]): MatchRow[] {
       adminUsername: note.adminUser?.player?.username ?? 'Unknown',
       created: note.created,
     })),
+    winRecord: match.winRecord,
   }));
 }
 

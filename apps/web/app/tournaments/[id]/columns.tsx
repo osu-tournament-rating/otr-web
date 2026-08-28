@@ -12,7 +12,10 @@ import { Button } from '@/components/ui/button';
 import { ArrowUpDown, ArrowUp, ArrowDown, StickyNote } from 'lucide-react';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { formatUTCDate, formatUTCDateFull } from '@/lib/utils/date';
-import { TournamentMatchGame } from '@/lib/orpc/schema/tournament';
+import {
+  TournamentMatch,
+  TournamentMatchGame,
+} from '@/lib/orpc/schema/tournament';
 
 export type AdminNotePreview = {
   note: string;
@@ -40,6 +43,7 @@ export type MatchRow = {
   startDate: string;
   games: GameWithNotes[];
   matchAdminNotes: AdminNotePreview[];
+  winRecord: TournamentMatch['winRecord'];
 };
 
 const columnHelper = createColumnHelper<MatchRow>();

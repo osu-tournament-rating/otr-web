@@ -94,7 +94,7 @@ interface VerificationBadgeProps {
   verifierUsername?: string;
 }
 
-function getWarningMetadata(
+export function getWarningMetadata(
   warningFlags: EntityWarningFlags,
   entityType?: ApiItemType
 ) {
@@ -125,7 +125,7 @@ function getWarningMetadata(
   }
 }
 
-function getRejectionMetadata(
+export function getRejectionMetadata(
   rejectionReason: EntityRejectionReason,
   entityType?: ApiItemType
 ) {
