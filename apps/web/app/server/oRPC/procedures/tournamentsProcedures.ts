@@ -23,6 +23,10 @@ import {
   TournamentListResponseSchema,
   TournamentIdInputSchema,
 } from '@/lib/orpc/schema/tournament';
+import {
+  calculateBeatmapListModDistribution,
+  filterBeatmapModDistribution,
+} from '@/lib/utils/mods';
 
 import {
   fetchTournamentAdminNotes,
@@ -429,6 +433,45 @@ export const getTournament = publicProcedure
         );
 
       const beatmapIds = pooledBeatmapRows.map((row) => row.beatmapId);
+
+      // Counts every score the tournament has, verified or not.
+      const pooledModRows = beatmapIds.length
+        ? await context.db
+            .select({
+              beatmapId: schema.games.beatmapId,
+              mods: schema.gameScores.mods,
+              scoreCount: sql<number>`COUNT(*)`,
+            })
+            .from(schema.gameScores)
+            .innerJoin(
+              schema.games,
+              eq(schema.games.id, schema.gameScores.gameId)
+            )
+            .innerJoin(
+              schema.matches,
+              eq(schema.matches.id, schema.games.matchId)
+            )
+            .where(
+              and(
+                eq(schema.matches.tournamentId, tournament.id),
+                inArray(schema.games.beatmapId, beatmapIds)
+              )
+            )
+            .groupBy(schema.games.beatmapId, schema.gameScores.mods)
+        : [];
+
+      const pooledModsByBeatmapId = new Map<
+        number,
+        Array<{ mods: number; scoreCount: number }>
+      >();
+
+      for (const row of pooledModRows) {
+        if (row.beatmapId === null) continue;
+
+        const rows = pooledModsByBeatmapId.get(row.beatmapId) ?? [];
+        rows.push({ mods: row.mods, scoreCount: Number(row.scoreCount) });
+        pooledModsByBeatmapId.set(row.beatmapId, rows);
+      }
 
       const beatmapCreatorsRows = beatmapIds.length
         ? await context.db
@@ -887,6 +930,15 @@ export const getTournament = publicProcedure
           beatmapset,
           attributes: [],
           creators,
+          topMods: filterBeatmapModDistribution(
+            calculateBeatmapListModDistribution(
+              pooledModsByBeatmapId.get(beatmap.beatmapId) ?? []
+            )
+          ).map(({ label, mods, percentage }) => ({
+            mod: label,
+            mods,
+            percentage,
+          })),
         };
       });
 

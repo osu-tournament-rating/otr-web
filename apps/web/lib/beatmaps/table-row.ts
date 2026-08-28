@@ -12,7 +12,6 @@ import type {
   TournamentBeatmap,
   TournamentMatchGame,
 } from '@/lib/orpc/schema/tournament';
-import { calculateBeatmapListModDistribution } from '@/lib/utils/mods';
 import type { Ruleset } from '@otr/core/osu';
 
 /**
@@ -69,57 +68,27 @@ export function toBeatmapTableRows(
   }));
 }
 
-interface TournamentBeatmapUsage {
-  gameCount: number;
-  topMods: BeatmapListTopMod[];
-}
-
-/** How often each pooled beatmap was played, and under which mods, in one pass over the games. */
-function buildUsageIndex(
-  games: TournamentMatchGame[]
-): Map<number, TournamentBeatmapUsage> {
-  const countsByBeatmap = new Map<number, Map<number, number>>();
+/** How often each pooled beatmap was played, in one pass over the games. */
+function buildUsageIndex(games: TournamentMatchGame[]): Map<number, number> {
+  const gameCounts = new Map<number, number>();
 
   for (const game of games) {
     const osuId = game.beatmap?.osuId;
     if (osuId === undefined || osuId === null) continue;
 
-    let counts = countsByBeatmap.get(osuId);
-    if (!counts) {
-      counts = new Map<number, number>();
-      countsByBeatmap.set(osuId, counts);
-    }
-    counts.set(game.mods, (counts.get(game.mods) ?? 0) + 1);
+    gameCounts.set(osuId, (gameCounts.get(osuId) ?? 0) + 1);
   }
 
-  const usage = new Map<number, TournamentBeatmapUsage>();
-
-  for (const [osuId, counts] of countsByBeatmap) {
-    // Games stand in for scores, matching the aggregation the beatmap list API runs.
-    const rows = Array.from(counts, ([mods, scoreCount]) => ({
-      mods,
-      scoreCount,
-    }));
-
-    usage.set(osuId, {
-      gameCount: rows.reduce((total, row) => total + row.scoreCount, 0),
-      topMods: calculateBeatmapListModDistribution(rows).map(
-        ({ label, mods, percentage }) => ({ mod: label, mods, percentage })
-      ),
-    });
-  }
-
-  return usage;
+  return gameCounts;
 }
 
 export function toTournamentBeatmapTableRows(
   beatmaps: TournamentBeatmap[],
   games: TournamentMatchGame[]
 ): BeatmapTableRow[] {
-  const usage = buildUsageIndex(games);
+  const gameCounts = buildUsageIndex(games);
 
   return beatmaps.map((beatmap) => {
-    const played = usage.get(beatmap.osuId);
     const creator = beatmap.creators[0] ?? beatmap.beatmapset?.creator;
 
     return {
@@ -138,9 +107,9 @@ export function toTournamentBeatmapTableRows(
       ar: beatmap.ar,
       od: beatmap.od,
       hp: beatmap.hp,
-      gameCount: played?.gameCount ?? 0,
+      gameCount: gameCounts.get(beatmap.osuId) ?? 0,
       tournamentCount: 1,
-      topMods: played?.topMods ?? [],
+      topMods: beatmap.topMods,
       isDeleted: isDeletedTournamentBeatmap(beatmap),
     };
   });
