@@ -58,9 +58,10 @@ import {
   tournamentListFilterSchema,
 } from '@/lib/validation-schema';
 import {
-  RANK_RANGE_DEFAULT_MAX,
   RANK_RANGE_MAX,
   RANK_RANGE_MIN,
+  hasRankRangeFilter,
+  toRankRangeFilter,
   tournamentRankScale,
 } from '@/lib/filters/tournament-rank';
 
@@ -384,10 +385,9 @@ function buildFilterFields(
       format: (value) => value.toLocaleString(),
       value: {
         min: filter.minRankRange ?? RANK_RANGE_MIN,
-        max: filter.maxRankRange ?? RANK_RANGE_DEFAULT_MAX,
+        max: filter.maxRankRange ?? RANK_RANGE_MAX,
       },
-      onChange: ({ min, max }) =>
-        applyPatch({ minRankRange: min, maxRankRange: max }),
+      onChange: (range) => applyPatch(toRankRangeFilter(range)),
     },
     {
       id: 'dates',
@@ -413,9 +413,7 @@ function countAdvancedFilters(filter: FilterFormData): number {
     filter.rejectionReason !== undefined,
     Boolean(filter.lobbySize?.length),
     Boolean(filter.dateMin || filter.dateMax),
-    filter.minRankRange !== undefined && filter.minRankRange !== RANK_RANGE_MIN,
-    filter.maxRankRange !== undefined &&
-      filter.maxRankRange !== RANK_RANGE_DEFAULT_MAX,
+    hasRankRangeFilter(filter),
   ].filter(Boolean).length;
 }
 
@@ -491,19 +489,18 @@ function ActiveFilterSummary({
     });
   }
 
-  if (
-    (filter.minRankRange !== undefined &&
-      filter.minRankRange !== RANK_RANGE_MIN) ||
-    (filter.maxRankRange !== undefined &&
-      filter.maxRankRange !== RANK_RANGE_DEFAULT_MAX)
-  ) {
+  if (hasRankRangeFilter(filter)) {
+    const max =
+      filter.maxRankRange === undefined
+        ? `${RANK_RANGE_MAX.toLocaleString()}+`
+        : filter.maxRankRange.toLocaleString();
     filters.push({
       key: 'rank',
-      label: `Rank: ${(filter.minRankRange ?? RANK_RANGE_MIN).toLocaleString()} – ${(filter.maxRankRange ?? RANK_RANGE_DEFAULT_MAX).toLocaleString()}`,
+      label: `Rank: ${(filter.minRankRange ?? RANK_RANGE_MIN).toLocaleString()} – ${max}`,
       clear: () =>
         applyPatch({
           minRankRange: RANK_RANGE_MIN,
-          maxRankRange: RANK_RANGE_DEFAULT_MAX,
+          maxRankRange: undefined,
         }),
     });
   }

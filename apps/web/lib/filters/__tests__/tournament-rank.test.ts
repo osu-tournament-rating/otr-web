@@ -2,20 +2,42 @@ import { describe, expect, it } from 'bun:test';
 
 import { tieredScale } from '../scale';
 import {
-  RANK_RANGE_DEFAULT_MAX,
   RANK_RANGE_MAX,
+  RANK_RANGE_MIN,
   RANK_SLIDER_MAX,
+  hasRankRangeFilter,
   moveRankBySliderStops,
   rankToSliderPosition,
   sliderPositionToRank,
   snapRankToSliderStop,
+  toRankRangeFilter,
   tournamentRankScale,
 } from '../tournament-rank';
 
 describe('tournament rank slider', () => {
-  it('keeps the default below the slider ceiling', () => {
-    expect(RANK_RANGE_DEFAULT_MAX).toBe(200_000);
-    expect(RANK_RANGE_MAX).toBeGreaterThan(RANK_RANGE_DEFAULT_MAX);
+  it('drops the maximum bound at the slider ceiling', () => {
+    expect(
+      toRankRangeFilter({ min: RANK_RANGE_MIN, max: RANK_RANGE_MAX })
+    ).toEqual({
+      minRankRange: RANK_RANGE_MIN,
+      maxRankRange: undefined,
+    });
+    expect(toRankRangeFilter({ min: 5_000, max: 250_000 })).toEqual({
+      minRankRange: 5_000,
+      maxRankRange: 250_000,
+    });
+    expect(toRankRangeFilter({})).toEqual({
+      minRankRange: undefined,
+      maxRankRange: undefined,
+    });
+  });
+
+  it('treats an unset maximum as no rank filter', () => {
+    expect(hasRankRangeFilter({})).toBe(false);
+    expect(hasRankRangeFilter({ minRankRange: RANK_RANGE_MIN })).toBe(false);
+    expect(hasRankRangeFilter({ maxRankRange: RANK_RANGE_MAX })).toBe(false);
+    expect(hasRankRangeFilter({ maxRankRange: 250_000 })).toBe(true);
+    expect(hasRankRangeFilter({ minRankRange: 5_000 })).toBe(true);
   });
 
   it('uses the requested step at each increasing threshold', () => {

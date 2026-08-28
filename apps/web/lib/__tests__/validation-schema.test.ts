@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
-import { beatmapListFilterSchema } from '../validation-schema';
+import {
+  beatmapListFilterSchema,
+  tournamentListFilterSchema,
+} from '../validation-schema';
 
 describe('beatmapListFilterSchema', () => {
   test('parses valid params', () => {
@@ -94,5 +97,20 @@ describe('beatmapListFilterSchema', () => {
     expect(filter.sort).toBe('gameCount');
     expect(filter.descending).toBe(true);
     expect(filter.page).toBeUndefined();
+  });
+});
+
+describe('tournamentListFilterSchema', () => {
+  test('drops a maximum rank at the slider ceiling', () => {
+    expect(
+      tournamentListFilterSchema.parse({ maxRankRange: '1000000' }).maxRankRange
+    ).toBeUndefined();
+    expect(tournamentListFilterSchema.parse({}).maxRankRange).toBeUndefined();
+  });
+
+  test('keeps a maximum rank below the slider ceiling', () => {
+    expect(
+      tournamentListFilterSchema.parse({ maxRankRange: '250000' }).maxRankRange
+    ).toBe(250_000);
   });
 });

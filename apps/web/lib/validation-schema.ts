@@ -17,7 +17,7 @@ import {
 import { z } from 'zod';
 import { leaderboardTierFilterValues } from './utils/leaderboard';
 import { TournamentListFilter } from './types';
-import { RANK_RANGE_DEFAULT_MAX } from '@/lib/filters/tournament-rank';
+import { toRankRangeFilter } from '@/lib/filters/tournament-rank';
 
 // Replaces zod v3's removed `EnumLike`.
 type EnumLike = Record<string, string | number>;
@@ -77,41 +77,52 @@ export const defaultTournamentListFilter: Partial<TournamentListFilter> = {
   verificationStatus: [],
   lobbySize: [],
   minRankRange: 1,
-  maxRankRange: RANK_RANGE_DEFAULT_MAX,
 };
 
-export const tournamentListFilterSchema = z.object({
-  verified: z.union([z.boolean(), booleanStringSchema]).catch(false),
-  ruleset: numericEnumValueSchema(Ruleset).optional(),
-  searchQuery: z.string().catch(''),
-  dateMin: z.coerce.date().optional(),
-  dateMax: z.coerce.date().optional(),
-  verificationStatus: z.preprocess(
-    (val) => {
-      if (Array.isArray(val)) return val.map(Number);
-      if (val !== undefined && val !== null && val !== '') return [Number(val)];
-      return undefined;
-    },
-    z.array(numericEnumValueSchema(VerificationStatus)).optional()
-  ),
-  rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason).optional(),
-  submittedBy: z.coerce.number().optional(),
-  verifiedBy: z.coerce.number().optional(),
-  lobbySize: z.preprocess(
-    (val) => {
-      if (Array.isArray(val)) return val.map(Number);
-      if (val !== undefined && val !== null && val !== '') return [Number(val)];
-      return undefined;
-    },
-    z.array(z.coerce.number().min(1).max(8)).optional()
-  ),
-  minRankRange: z.coerce.number().min(1).optional(),
-  maxRankRange: z.coerce.number().min(1).default(RANK_RANGE_DEFAULT_MAX),
-  sort: numericEnumValueSchema(TournamentQuerySortType).catch(
-    TournamentQuerySortType.EndTime
-  ),
-  descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
-});
+export const tournamentListFilterSchema = z
+  .object({
+    verified: z.union([z.boolean(), booleanStringSchema]).catch(false),
+    ruleset: numericEnumValueSchema(Ruleset).optional(),
+    searchQuery: z.string().catch(''),
+    dateMin: z.coerce.date().optional(),
+    dateMax: z.coerce.date().optional(),
+    verificationStatus: z.preprocess(
+      (val) => {
+        if (Array.isArray(val)) return val.map(Number);
+        if (val !== undefined && val !== null && val !== '')
+          return [Number(val)];
+        return undefined;
+      },
+      z.array(numericEnumValueSchema(VerificationStatus)).optional()
+    ),
+    rejectionReason: bitwiseEnumValueSchema(
+      TournamentRejectionReason
+    ).optional(),
+    submittedBy: z.coerce.number().optional(),
+    verifiedBy: z.coerce.number().optional(),
+    lobbySize: z.preprocess(
+      (val) => {
+        if (Array.isArray(val)) return val.map(Number);
+        if (val !== undefined && val !== null && val !== '')
+          return [Number(val)];
+        return undefined;
+      },
+      z.array(z.coerce.number().min(1).max(8)).optional()
+    ),
+    minRankRange: z.coerce.number().min(1).optional(),
+    maxRankRange: z.coerce.number().min(1).optional(),
+    sort: numericEnumValueSchema(TournamentQuerySortType).catch(
+      TournamentQuerySortType.EndTime
+    ),
+    descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
+  })
+  .transform((filter) => ({
+    ...filter,
+    ...toRankRangeFilter({
+      min: filter.minRankRange,
+      max: filter.maxRankRange,
+    }),
+  }));
 
 export const matchEditFormSchema = z.object({
   name: z.string().min(1),
