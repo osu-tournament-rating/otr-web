@@ -369,6 +369,8 @@ export type AssembledEvent = {
   topEntryCount: number;
   childEntityType: AuditEntityType | null;
   childAffectedCount: number;
+  /** Outcomes at the child level, only when they differ from `action`. */
+  childActionBreakdown: AuditEventActionCount[] | null;
   isCascade: boolean;
   parentEntityId: number | null;
   changedFields: string[];
@@ -410,6 +412,12 @@ function classifyStatus(
   status: string,
   actionType: AuditActionType
 ): AuditEventAction {
+  if (
+    actionType === AuditActionType.Created ||
+    actionType === AuditActionType.Deleted
+  ) {
+    return classifyAction(actionType, null);
+  }
   if (status === 'null' || status === 'unchanged') return 'update';
   return classifyAction(actionType, {
     verificationStatus: {
@@ -419,9 +427,17 @@ function classifyStatus(
   });
 }
 
-/** Entities per outcome, for an event that wrote more than one verification status. */
+const VERIFICATION_OUTCOMES = new Set<AuditEventAction>([
+  'verification',
+  'rejection',
+  'pre_verification',
+  'pre_rejection',
+]);
+
+/** Entities per outcome, for an event that wrote at least `minOutcomes` verification statuses. */
 export function buildActionBreakdown(
-  rows: GroupedAuditRow[]
+  rows: GroupedAuditRow[],
+  minOutcomes = 2
 ): AuditEventActionCount[] | null {
   const counts = new Map<AuditEventAction, number>();
   let counted = 0;
@@ -442,7 +458,7 @@ export function buildActionBreakdown(
     }
   }
 
-  if (counts.size < 2 || counted !== entities) return null;
+  if (counts.size < minOutcomes || counted !== entities) return null;
 
   return Array.from(counts, ([action, count]) => ({ action, count })).sort(
     (a, b) =>
@@ -515,12 +531,21 @@ export function assembleEvents(rows: GroupedAuditRow[]): AssembledEvent[] {
       : null;
 
     const childType = getImmediateChildType(topRow.entityType);
-    let childAffectedCount = 0;
-    if (childType !== null) {
-      childAffectedCount = groupRows
-        .filter((row) => row.entityType === childType)
-        .reduce((total, row) => total + row.entryCount, 0);
-    }
+    const childRows =
+      childType === null
+        ? []
+        : groupRows.filter((row) => row.entityType === childType);
+    const childAffectedCount = childRows.reduce(
+      (total, row) => total + row.entryCount,
+      0
+    );
+    const childBreakdown = buildActionBreakdown(childRows, 1);
+    const childActionBreakdown =
+      childBreakdown &&
+      childBreakdown.some((part) => VERIFICATION_OUTCOMES.has(part.action)) &&
+      (childBreakdown.length > 1 || childBreakdown[0]!.action !== action)
+        ? childBreakdown
+        : null;
 
     events.push({
       eventKey,
@@ -536,6 +561,7 @@ export function assembleEvents(rows: GroupedAuditRow[]): AssembledEvent[] {
       topEntryCount,
       childEntityType: childType,
       childAffectedCount,
+      childActionBreakdown,
       isCascade,
       parentEntityId,
       changedFields: [...changedFields].sort(),

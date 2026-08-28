@@ -78,6 +78,8 @@ export const AuditEventChildLevelSchema = z.object({
   affectedCount: z.number().int(),
   /** Children in the parent entity, for the "85 of 118" display; null when not computed. */
   totalCount: z.number().int().nullable(),
+  /** Children per outcome, only when those outcomes differ from the event's action. */
+  actionBreakdown: z.array(AuditEventActionCountSchema).nullable(),
 });
 
 export const AuditEventSchema = z.object({

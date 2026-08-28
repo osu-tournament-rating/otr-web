@@ -294,6 +294,139 @@ describe('assembleEvents', () => {
       { action: 'verification', count: 1 },
     ]);
   });
+
+  it('names the child outcome when it differs from the top action', () => {
+    const [event] = assembleEvents([
+      groupedRow({ entryCount: 1, verificationStatusCounts: ['4:1'] }),
+      groupedRow({
+        entityType: AuditEntityType.Match,
+        entryCount: 3,
+        auditEntryCount: 3,
+        sampleEntityId: 20,
+        verificationStatusCounts: ['3:3'],
+      }),
+    ]);
+
+    expect(event.action).toBe('verification');
+    expect(event.childActionBreakdown).toEqual([
+      { action: 'rejection', count: 3 },
+    ]);
+  });
+
+  it('names every child outcome when the children ended in several', () => {
+    const [event] = assembleEvents([
+      groupedRow({ entryCount: 1, verificationStatusCounts: ['4:1'] }),
+      groupedRow({
+        entityType: AuditEntityType.Match,
+        entryCount: 118,
+        auditEntryCount: 118,
+        sampleEntityId: 20,
+        verificationStatusCounts: ['3:3', '4:115'],
+      }),
+    ]);
+
+    expect(event.childActionBreakdown).toEqual([
+      { action: 'verification', count: 115 },
+      { action: 'rejection', count: 3 },
+    ]);
+  });
+
+  it('drops the child breakdown when it repeats the top action', () => {
+    const [event] = assembleEvents([
+      groupedRow({ entryCount: 1, verificationStatusCounts: ['4:1'] }),
+      groupedRow({
+        entityType: AuditEntityType.Match,
+        entryCount: 3,
+        auditEntryCount: 3,
+        sampleEntityId: 20,
+        verificationStatusCounts: ['4:3'],
+      }),
+    ]);
+
+    expect(event.childActionBreakdown).toBeNull();
+  });
+
+  it('has no child breakdown when the children carry no statuses', () => {
+    const [event] = assembleEvents([
+      groupedRow({ entryCount: 1, verificationStatusCounts: ['4:1'] }),
+      groupedRow({
+        entityType: AuditEntityType.Match,
+        entryCount: 3,
+        auditEntryCount: 3,
+        sampleEntityId: 20,
+      }),
+    ]);
+
+    expect(event.childActionBreakdown).toBeNull();
+  });
+
+  it('has no child breakdown when the children carry no verification outcome', () => {
+    const [event] = assembleEvents([
+      groupedRow({ entryCount: 1, verificationStatusCounts: ['4:1'] }),
+      groupedRow({
+        entityType: AuditEntityType.Match,
+        entryCount: 9,
+        auditEntryCount: 9,
+        sampleEntityId: 20,
+        verificationStatusCounts: ['unchanged:9'],
+      }),
+    ]);
+
+    expect(event.action).toBe('verification');
+    expect(event.childActionBreakdown).toBeNull();
+  });
+
+  it('has no child breakdown for a delete cascade', () => {
+    const [event] = assembleEvents([
+      groupedRow({
+        actionTypes: [AuditActionType.Deleted],
+        entryCount: 1,
+        verificationStatusCounts: ['null:1'],
+      }),
+      groupedRow({
+        actionTypes: [AuditActionType.Deleted],
+        entityType: AuditEntityType.Match,
+        entryCount: 118,
+        auditEntryCount: 118,
+        sampleEntityId: 20,
+        verificationStatusCounts: ['null:118'],
+      }),
+    ]);
+
+    expect(event.action).toBe('deletion');
+    expect(event.actionBreakdown).toBeNull();
+    expect(event.childActionBreakdown).toBeNull();
+  });
+
+  it('has no child breakdown for a submission cascade', () => {
+    const [event] = assembleEvents([
+      groupedRow({
+        actionTypes: [AuditActionType.Created],
+        entryCount: 1,
+        verificationStatusCounts: ['0:1'],
+      }),
+      groupedRow({
+        actionTypes: [AuditActionType.Created],
+        entityType: AuditEntityType.Match,
+        entryCount: 12,
+        auditEntryCount: 12,
+        sampleEntityId: 20,
+        verificationStatusCounts: ['0:12'],
+      }),
+    ]);
+
+    expect(event.action).toBe('submission');
+    expect(event.actionBreakdown).toBeNull();
+    expect(event.childActionBreakdown).toBeNull();
+  });
+
+  it('has no child breakdown without a cascade', () => {
+    const [event] = assembleEvents([
+      groupedRow({ entryCount: 1, verificationStatusCounts: ['4:1'] }),
+    ]);
+
+    expect(event.childActionBreakdown).toBeNull();
+  });
 });
 
 describe('audit event feed cursors', () => {
