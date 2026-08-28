@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -20,14 +20,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import TournamentDataTable from '@/app/tournaments/[id]/data-table';
-import TournamentMatchesDataTableWithCheckboxes from './TournamentMatchesDataTableWithCheckboxes';
-import { columns, MatchRow } from '@/app/tournaments/[id]/columns';
+import TournamentMatchGrid from './TournamentMatchGrid';
+import type { MatchScoreboardRow } from './MatchScoreboardCard';
 
 interface TournamentMatchesAdminViewProps {
   tournamentId: number;
   tournamentName: string;
-  matches: MatchRow[];
+  matches: MatchScoreboardRow[];
   isLazer: boolean;
 }
 
@@ -69,15 +68,6 @@ export default function TournamentMatchesAdminView({
   const [addAsLazer, setAddAsLazer] = useState(isLazer);
 
   const isAdmin = hasAdminScope(session?.scopes);
-
-  const matchesWithSelection = useMemo(
-    () =>
-      matches.map((match) => ({
-        ...match,
-        isSelected: selectedMatchIds.has(match.id),
-      })),
-    [matches, selectedMatchIds]
-  );
 
   const handleSelectMatch = useCallback((matchId: number, checked: boolean) => {
     setSelectedMatchIds((prev) => {
@@ -233,7 +223,7 @@ export default function TournamentMatchesAdminView({
   }, [matchIdsToAdd, tournamentId, addAsLazer, router]);
 
   if (!isAdmin) {
-    return <TournamentDataTable columns={columns} data={matches} />;
+    return <TournamentMatchGrid matches={matches} />;
   }
 
   return (
@@ -432,13 +422,11 @@ export default function TournamentMatchesAdminView({
         </div>
       </div>
 
-      <div className="relative">
-        <TournamentMatchesDataTableWithCheckboxes
-          columns={columns}
-          data={matchesWithSelection}
-          onSelectMatch={handleSelectMatch}
-        />
-      </div>
+      <TournamentMatchGrid
+        matches={matches}
+        selectedMatchIds={selectedMatchIds}
+        onSelectMatch={handleSelectMatch}
+      />
     </div>
   );
 }

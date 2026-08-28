@@ -58,17 +58,26 @@ const statusConfig = {
 };
 
 const sizeVariants = {
+  pip: {
+    container: 'h-4 w-4',
+    icon: 'h-4 w-4',
+    text: 'text-xs',
+    padding: 'p-0',
+    iconOnlyPadding: 'p-0',
+  },
   small: {
     container: 'h-6 w-auto min-w-6',
     icon: 'h-4 w-4',
     text: 'text-sm',
     padding: 'px-2 py-1',
+    iconOnlyPadding: 'p-1',
   },
   large: {
     container: 'h-8 w-auto min-w-8',
     icon: 'h-5 w-5',
     text: 'text-base',
     padding: 'px-3 py-1.5',
+    iconOnlyPadding: 'p-1',
   },
 };
 
@@ -84,7 +93,7 @@ interface VerificationBadgeProps {
   verificationStatus: VerificationStatus;
   /** Status as text instead of a tooltip; warnings and rejections still get one. */
   displayText?: boolean;
-  size?: 'small' | 'large';
+  size?: 'pip' | 'small' | 'large';
   /** Drop the badge background. */
   minimal?: boolean;
   warningFlags?: EntityWarningFlags;
@@ -276,7 +285,7 @@ export default function VerificationBadge({
       className={cn(
         ...badgeStyles,
         sizeConfig.container,
-        displayText ? sizeConfig.padding : 'p-1'
+        displayText ? sizeConfig.padding : sizeConfig.iconOnlyPadding
       )}
     >
       <Icon className={cn(sizeConfig.icon, iconColor)} />

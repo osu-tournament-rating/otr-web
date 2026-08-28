@@ -11,7 +11,8 @@ import {
 } from '@/lib/orpc/schema/tournament';
 import type { Metadata } from 'next';
 import { z } from 'zod';
-import { MatchRow } from './columns';
+import { parseMatchTeams } from '@/lib/utils/matchName';
+import type { MatchScoreboardRow } from '@/components/tournaments/MatchScoreboardCard';
 import {
   SectionCard,
   SectionHeader,
@@ -89,7 +90,10 @@ export async function generateMetadata({
   return { title: tournament.name };
 }
 
-function generateTableData(matches: TournamentMatch[]): MatchRow[] {
+function generateTableData(
+  matches: TournamentMatch[],
+  beatmapsetIdsByBeatmapId: Map<number, number>
+): MatchScoreboardRow[] {
   const sortedMatches = [...matches].sort((a, b) => {
     const timeA = a.startTime ? new Date(a.startTime).getTime() : 0;
     const timeB = b.startTime ? new Date(b.startTime).getTime() : 0;
@@ -99,6 +103,14 @@ function generateTableData(matches: TournamentMatch[]): MatchRow[] {
   return sortedMatches.map((match) => ({
     id: match.id,
     name: match.name,
+    winRecord: match.winRecord,
+    teams: parseMatchTeams(match.name),
+    coverBeatmapsetId:
+      (match.games ?? [])
+        .map((game) =>
+          game.beatmapId ? beatmapsetIdsByBeatmapId.get(game.beatmapId) : null
+        )
+        .find((beatmapsetId) => beatmapsetId != null) ?? null,
     status: {
       verificationStatus: match.verificationStatus,
       warningFlags: match.warningFlags,
@@ -383,7 +395,15 @@ export default async function Page({ params, searchParams }: PageProps) {
   const tournament: TournamentDetail = await fetchOrpcOrNotFound(() =>
     getTournamentCached(id)
   );
-  const tableData = generateTableData(tournament.matches ?? []);
+  const beatmapsetIdsByBeatmapId = new Map(
+    (tournament.pooledBeatmaps ?? []).flatMap((beatmap) =>
+      beatmap.beatmapset ? [[beatmap.id, beatmap.beatmapset.osuId]] : []
+    )
+  );
+  const tableData = generateTableData(
+    tournament.matches ?? [],
+    beatmapsetIdsByBeatmapId
+  );
   const beatmaps = tournament.pooledBeatmaps ?? [];
 
   const tournamentGames =
