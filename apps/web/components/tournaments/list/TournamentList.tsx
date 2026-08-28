@@ -16,10 +16,7 @@ import {
   type TournamentListRequest,
 } from '@/lib/orpc/schema/tournament';
 import { type TournamentListFilter } from '@/lib/types';
-import {
-  RANK_RANGE_DEFAULT_MAX,
-  RANK_RANGE_MIN,
-} from '@/lib/filters/tournament-rank';
+import { hasRankRangeFilter } from '@/lib/filters/tournament-rank';
 
 const pageSize = 30;
 
@@ -81,10 +78,7 @@ function hasActiveFilters(filter: TournamentListFilter) {
     filter.submittedBy !== undefined ||
     filter.verifiedBy !== undefined ||
     filter.lobbySize?.length ||
-    (filter.minRankRange !== undefined &&
-      filter.minRankRange !== RANK_RANGE_MIN) ||
-    (filter.maxRankRange !== undefined &&
-      filter.maxRankRange !== RANK_RANGE_DEFAULT_MAX)
+    hasRankRangeFilter(filter)
   );
 }
 

@@ -271,7 +271,7 @@ test.describe('Tournaments', () => {
       );
     });
 
-    test('rank restriction defaults to 200000 and accepts larger values', async ({
+    test('rank restriction sends a maximum only below the ceiling', async ({
       page,
     }) => {
       await page.goto(ROUTES.tournaments);
@@ -279,13 +279,20 @@ test.describe('Tournaments', () => {
       await page.locator('[data-testid="tournament-filters-button"]').click();
 
       const maximumRank = page.locator('#tournament-rank-max');
-      await expect(maximumRank).toHaveValue('200000');
+      await expect(maximumRank).toHaveValue('1000000');
       await maximumRank.fill('250000');
       await maximumRank.blur();
 
       await expect
         .poll(() => new URL(page.url()).searchParams.get('maxRankRange'))
         .toBe('250000');
+
+      await maximumRank.fill('1000000');
+      await maximumRank.blur();
+
+      await expect
+        .poll(() => new URL(page.url()).searchParams.has('maxRankRange'))
+        .toBe(false);
     });
 
     test('filters by multiple rejection reasons from a checkbox menu', async ({

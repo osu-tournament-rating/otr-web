@@ -142,11 +142,10 @@ export default function FilterRangeField({
   const valueLabel = field.valueLabel ?? field.label;
   const format = field.format ?? String;
   const isHalf = field.span === 'half';
-  // Six-plus digit bounds (rank tops out at 1,000,000) clip inside w-16.
   const boxWidth = isHalf
     ? 'w-12'
     : Math.max(String(min).length, String(max).length) > 5
-      ? 'w-20'
+      ? 'w-24'
       : 'w-16';
 
   const clampToBound = (bound: Bound, next: number) =>
