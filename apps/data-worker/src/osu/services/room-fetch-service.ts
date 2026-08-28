@@ -8,6 +8,7 @@ import {
 import { TournamentDataCompletionService } from './tournament-data-completion-service';
 import { withApiErrorHandling, withApiMetrics } from '../api-helpers';
 import {
+  calculateScoreWithMods,
   convertModsToFlags,
   convertScoreGrade,
   convertTeam,
@@ -383,11 +384,11 @@ export class RoomFetchService {
       const playerId = await getOrCreatePlayerId(tx, osuUserId, meta);
 
       const stats = score.statistics;
-      const totalScore = score.total_score;
       const teamColor = playlistItem.details.teams?.[osuUserId];
       const team = convertTeam(teamColor);
       const grade = convertScoreGrade(score.rank);
       const mods = convertModsToFlags(score.mods ?? []);
+      const totalScore = calculateScoreWithMods(score.total_score, mods);
 
       const baseValues = {
         score: totalScore,
@@ -417,7 +418,7 @@ export class RoomFetchService {
         statIgnoreMiss: stats.ignore_miss ?? null,
         statLegacyComboIncrease: stats.legacy_combo_increase ?? null,
         statComboBreak: stats.combo_break ?? null,
-        legacyTotalScore: score.legacy_total_score ?? totalScore,
+        legacyTotalScore: score.legacy_total_score ?? score.total_score,
         team,
         ruleset,
       };
