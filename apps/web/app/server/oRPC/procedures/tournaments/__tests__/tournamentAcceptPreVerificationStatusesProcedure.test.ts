@@ -86,7 +86,13 @@ const matches = (condition: SQL, row: Row): boolean => {
   }
 
   if (operator === 'in') {
-    return (other as unknown[]).includes(value);
+    const values = other as unknown[];
+
+    if (values.length === 0) {
+      throw new Error('inArray reached the database with no values');
+    }
+
+    return values.includes(value);
   }
 
   throw new Error(`Unsupported operator ${operator}`);
@@ -110,6 +116,12 @@ const evaluate = (value: unknown, row: Row): unknown => {
 
   return operator;
 };
+
+// Mirrors compute_audit_changes: a statement is audited only when it changes a
+// tracked column, and `updated` is not tracked.
+const auditedWrites = new WeakMap<Row, number>();
+
+const auditWriteCount = (row: Row) => auditedWrites.get(row) ?? 0;
 
 class FakeDb {
   constructor(private readonly rows: Map<unknown, Row[]>) {}
@@ -157,8 +169,20 @@ class FakeDb {
           );
 
           for (const row of affected) {
+            let audited = false;
+
             for (const [key, value] of Object.entries(values)) {
-              row[key] = evaluate(value, row);
+              const next = evaluate(value, row);
+
+              if (key !== 'updated' && next !== row[key]) {
+                audited = true;
+              }
+
+              row[key] = next;
+            }
+
+            if (audited) {
+              auditedWrites.set(row, auditWriteCount(row) + 1);
             }
           }
 
@@ -199,11 +223,30 @@ const childOutcome = [
 
 const adminUserId = 7;
 
+const startingReason = 1;
+
+const expectedReason = (
+  startingStatus: VerificationStatus,
+  status: VerificationStatus,
+  parentRejected: boolean,
+  inheritedReason: number
+) => {
+  if (status === Verified) {
+    return startingStatus === PreVerified ? 0 : startingReason;
+  }
+
+  if (status === Rejected && parentRejected) {
+    return startingReason | inheritedReason;
+  }
+
+  return startingReason;
+};
+
 const buildFixture = (tournamentStatus: VerificationStatus) => {
   const tournament: Row = {
     id: 1,
     verificationStatus: tournamentStatus,
-    rejectionReason: 0,
+    rejectionReason: startingReason,
     verifiedByUserId: null,
   };
 
@@ -221,7 +264,7 @@ const buildFixture = (tournamentStatus: VerificationStatus) => {
       id: matchId,
       tournamentId: 1,
       verificationStatus: matchStatus,
-      rejectionReason: 0,
+      rejectionReason: startingReason,
       warningFlags: 0,
       verifiedByUserId: null,
     });
@@ -232,7 +275,7 @@ const buildFixture = (tournamentStatus: VerificationStatus) => {
         id: gameId,
         matchId,
         verificationStatus: gameStatus,
-        rejectionReason: 0,
+        rejectionReason: startingReason,
         warningFlags: 0,
       });
 
@@ -242,7 +285,7 @@ const buildFixture = (tournamentStatus: VerificationStatus) => {
           id: scoreId,
           gameId,
           verificationStatus: scoreStatus,
-          rejectionReason: 0,
+          rejectionReason: startingReason,
         });
       }
     }
@@ -288,6 +331,9 @@ describe('acceptTournamentPreVerificationStatusesHandler', () => {
 
       const expectedTournament = tournamentOutcome[tournamentStatus];
       expect(fixture.tournament.verificationStatus).toBe(expectedTournament);
+      expect(fixture.tournament.rejectionReason).toBe(
+        tournamentStatus === PreVerified ? 0 : startingReason
+      );
 
       const matchStatuses = fixture.matchRows.map(
         (row) => row.verificationStatus as VerificationStatus
@@ -299,9 +345,12 @@ describe('acceptTournamentPreVerificationStatusesHandler', () => {
 
         expect(row.verificationStatus).toBe(expected);
         expect(row.rejectionReason).toBe(
-          expectedTournament === Rejected
-            ? MatchRejectionReason.RejectedTournament
-            : 0
+          expectedReason(
+            startingMatchStatuses[index],
+            expected,
+            expectedTournament === Rejected,
+            MatchRejectionReason.RejectedTournament
+          )
         );
       });
 
@@ -311,7 +360,12 @@ describe('acceptTournamentPreVerificationStatusesHandler', () => {
 
         expect(row.verificationStatus).toBe(expected);
         expect(row.rejectionReason).toBe(
-          parent === Rejected ? GameRejectionReason.RejectedMatch : 0
+          expectedReason(
+            startingGameStatuses[index],
+            expected,
+            parent === Rejected,
+            GameRejectionReason.RejectedMatch
+          )
         );
       });
 
@@ -325,9 +379,23 @@ describe('acceptTournamentPreVerificationStatusesHandler', () => {
 
         expect(row.verificationStatus).toBe(expected);
         expect(row.rejectionReason).toBe(
-          parent === Rejected ? ScoreRejectionReason.RejectedGame : 0
+          expectedReason(
+            startingScoreStatuses[index],
+            expected,
+            parent === Rejected,
+            ScoreRejectionReason.RejectedGame
+          )
         );
       });
+
+      for (const row of [
+        fixture.tournament,
+        ...fixture.matchRows,
+        ...fixture.gameRows,
+        ...fixture.scoreRows,
+      ]) {
+        expect(auditWriteCount(row)).toBeLessThanOrEqual(1);
+      }
     });
   }
 
@@ -341,7 +409,9 @@ describe('acceptTournamentPreVerificationStatusesHandler', () => {
     );
 
     expect(game?.verificationStatus).toBe(Rejected);
-    expect(game?.rejectionReason).toBe(GameRejectionReason.RejectedMatch);
+    expect(game?.rejectionReason).toBe(
+      startingReason | GameRejectionReason.RejectedMatch
+    );
   });
 
   it('rejects a verified score under an already rejected game', async () => {
@@ -353,7 +423,34 @@ describe('acceptTournamentPreVerificationStatusesHandler', () => {
 
     expect(score?.gameId).toBe(14);
     expect(score?.verificationStatus).toBe(Rejected);
-    expect(score?.rejectionReason).toBe(ScoreRejectionReason.RejectedGame);
+    expect(score?.rejectionReason).toBe(
+      startingReason | ScoreRejectionReason.RejectedGame
+    );
+  });
+
+  it('writes one audited statement per pre-rejected match', async () => {
+    const fixture = buildFixture(PreVerified);
+
+    await run(fixture.db);
+
+    const preRejected = fixture.matchRows[1];
+
+    expect(preRejected?.verificationStatus).toBe(Rejected);
+    expect(auditWriteCount(preRejected)).toBe(1);
+  });
+
+  it('clears the rejection reason on rows it verifies', async () => {
+    const fixture = buildFixture(PreVerified);
+
+    await run(fixture.db);
+
+    expect(fixture.matchRows[2]?.rejectionReason).toBe(0);
+    expect(fixture.gameRows.find((row) => row.id === 13)?.rejectionReason).toBe(
+      0
+    );
+    expect(
+      fixture.scoreRows.find((row) => row.id === 63)?.rejectionReason
+    ).toBe(0);
   });
 
   it('records the admin on statuses it accepts', async () => {

@@ -579,6 +579,7 @@ export async function acceptTournamentPreVerificationStatusesHandler({
           .update(schema.matches)
           .set({
             verificationStatus: VerificationStatus.Verified,
+            rejectionReason: 0,
             warningFlags: MatchWarningFlags.None,
             verifiedByUserId: adminUserId,
             updated: NOW,
@@ -594,7 +595,12 @@ export async function acceptTournamentPreVerificationStatusesHandler({
       if (preRejectedMatchIds.length > 0) {
         await tx
           .update(schema.matches)
-          .set({ verifiedByUserId: adminUserId, updated: NOW })
+          .set({
+            verificationStatus: VerificationStatus.Rejected,
+            warningFlags: MatchWarningFlags.None,
+            verifiedByUserId: adminUserId,
+            updated: NOW,
+          })
           .where(inArray(schema.matches.id, preRejectedMatchIds));
       }
 
@@ -629,6 +635,7 @@ export async function acceptTournamentPreVerificationStatusesHandler({
           .update(schema.games)
           .set({
             verificationStatus: VerificationStatus.Verified,
+            rejectionReason: 0,
             warningFlags: GameWarningFlags.None,
             updated: NOW,
           })
@@ -666,6 +673,7 @@ export async function acceptTournamentPreVerificationStatusesHandler({
         .update(schema.gameScores)
         .set({
           verificationStatus: VerificationStatus.Verified,
+          rejectionReason: 0,
           updated: NOW,
         })
         .where(

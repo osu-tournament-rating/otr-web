@@ -39,11 +39,11 @@ export default function AcceptPreVerificationStatusesButton({
       await orpc.tournaments.admin.acceptPreVerificationStatuses({
         id: tournament.id,
       });
-      toast.success('Pre-verification statuses accepted successfully');
+      toast.success('Pre-verified and pre-rejected statuses accepted');
       setIsOpen(false);
       window.location.reload();
     } catch {
-      toast.error('Failed to accept pre-verification statuses');
+      toast.error('Failed to accept pre-verified and pre-rejected statuses');
     } finally {
       setIsLoading(false);
     }
@@ -64,24 +64,39 @@ export default function AcceptPreVerificationStatusesButton({
           </DialogTrigger>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Accept pre-verification statuses for tournament and children</p>
+          <p>Accept pre-verified and pre-rejected statuses</p>
         </TooltipContent>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Accept Pre-Verification Statuses</DialogTitle>
+            <DialogTitle>
+              Accept pre-verified and pre-rejected statuses
+            </DialogTitle>
             <DialogDescription asChild>
               <div>
-                Are you sure you want to accept pre-verification statuses for{' '}
-                <strong>{tournament.name}</strong>? This action cannot be
-                undone.
+                Are you sure you want to accept pre-verified and pre-rejected
+                statuses for <strong>{tournament.name}</strong>? This action
+                cannot be undone.
                 <br />
                 <br />
                 <ul className="list-disc pl-4">
-                  <li>Pre-rejected items will be marked as rejected.</li>
-                  <li>Pre-verified items will be marked as verified.</li>
                   <li>
                     This action will process the tournament and all its children
                     (matches, games, scores).
+                  </li>
+                  <li>
+                    Everything under a rejected item will be marked as rejected,
+                    even if it is already verified.
+                  </li>
+                  <li>
+                    Elsewhere, pre-rejected items will be marked as rejected and
+                    pre-verified items will be marked as verified.
+                  </li>
+                  <li>
+                    Pending items are left alone unless they sit under a
+                    rejected item.
+                  </li>
+                  <li>
+                    Warning flags are cleared on matches and games it changes.
                   </li>
                 </ul>
               </div>
