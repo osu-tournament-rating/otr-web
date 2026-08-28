@@ -1,19 +1,6 @@
 import { Fragment } from 'react';
-import type {
-  AuditEventAction,
-  AuditEventActionCount,
-} from '@/lib/orpc/schema/audit';
-import { ACTION_LABELS } from '@/lib/audit-actions';
-
-export const ACTION_TEXT_COLORS: Record<AuditEventAction, string> = {
-  verification: 'text-green-600 dark:text-green-400',
-  pre_verification: 'text-green-600 dark:text-green-400',
-  rejection: 'text-red-600 dark:text-red-400',
-  pre_rejection: 'text-red-600 dark:text-red-400',
-  submission: 'text-blue-600 dark:text-blue-400',
-  update: 'text-blue-600 dark:text-blue-400',
-  deletion: 'text-red-600 dark:text-red-400',
-};
+import type { AuditEventActionCount } from '@/lib/orpc/schema/audit';
+import { ACTION_LABELS, ACTION_TEXT_COLORS } from '@/lib/audit-actions';
 
 const numberFormat = new Intl.NumberFormat('en-US');
 

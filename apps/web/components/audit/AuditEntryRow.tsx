@@ -4,8 +4,16 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { AuditActionType, AuditEntityType } from '@otr/core/osu';
-import type { AuditEntry, CascadeContext } from '@/lib/orpc/schema/audit';
-import { AuditActionTypeEnumHelper } from '@/lib/enum-helpers';
+import type {
+  AuditEntry,
+  AuditEventAction,
+  CascadeContext,
+} from '@/lib/orpc/schema/audit';
+import {
+  ACTION_LABELS,
+  ACTION_TEXT_COLORS,
+  classifyAction,
+} from '@/lib/audit-actions';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
@@ -25,19 +33,14 @@ const ACTION_ICONS: Record<AuditActionType, typeof PlusCircle> = {
   [AuditActionType.Deleted]: Trash2,
 };
 
-const ACTION_ICON_COLORS: Record<AuditActionType, string> = {
-  [AuditActionType.Created]: 'text-green-500',
-  [AuditActionType.Updated]: 'text-blue-500',
-  [AuditActionType.Deleted]: 'text-red-500',
-};
-
-const ACTION_BADGE_COLORS: Record<AuditActionType, string> = {
-  [AuditActionType.Created]:
-    'bg-green-500/5 text-green-600 dark:text-green-400 border-green-500/15',
-  [AuditActionType.Updated]:
-    'bg-blue-500/5 text-blue-600 dark:text-blue-400 border-blue-500/15',
-  [AuditActionType.Deleted]:
-    'bg-red-500/5 text-red-600 dark:text-red-400 border-red-500/15',
+const ACTION_BADGE_COLORS: Record<AuditEventAction, string> = {
+  verification: 'bg-green-500/5 border-green-500/15',
+  pre_verification: 'bg-green-500/5 border-green-500/15',
+  rejection: 'bg-red-500/5 border-red-500/15',
+  pre_rejection: 'bg-warning/5 border-warning/15',
+  submission: 'bg-green-500/5 border-green-500/15',
+  update: 'bg-blue-500/5 border-blue-500/15',
+  deletion: 'bg-red-500/5 border-red-500/15',
 };
 
 type AuditEntryRowProps = {
@@ -55,7 +58,6 @@ export default function AuditEntryRow({
   viewedEntity,
   heading,
 }: AuditEntryRowProps): React.JSX.Element {
-  const actionMeta = AuditActionTypeEnumHelper.getMetadata(entry.actionType);
   const changes = entry.changes as Record<
     string,
     { originalValue: unknown; newValue: unknown }
@@ -63,6 +65,8 @@ export default function AuditEntryRow({
   const changeCount = changes ? Object.keys(changes).length : 0;
   const [isOpen, setIsOpen] = useState(changeCount > 0 && changeCount < 10);
 
+  const action = classifyAction(entry.actionType, entry.changes);
+  const actionLabel = ACTION_LABELS[action];
   const ActionIcon = ACTION_ICONS[entry.actionType];
 
   return (
@@ -97,10 +101,7 @@ export default function AuditEntryRow({
             )}
           >
             <ActionIcon
-              className={cn(
-                'h-4 w-4 shrink-0',
-                ACTION_ICON_COLORS[entry.actionType]
-              )}
+              className={cn('h-4 w-4 shrink-0', ACTION_TEXT_COLORS[action])}
             />
 
             <Badge
@@ -108,10 +109,11 @@ export default function AuditEntryRow({
               variant="outline"
               className={cn(
                 'shrink-0 text-xs',
-                ACTION_BADGE_COLORS[entry.actionType]
+                ACTION_TEXT_COLORS[action],
+                ACTION_BADGE_COLORS[action]
               )}
             >
-              {actionMeta.text}
+              {actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)}
             </Badge>
 
             <span className="flex items-center gap-1.5 text-sm">

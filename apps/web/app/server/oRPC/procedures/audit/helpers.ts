@@ -1,10 +1,6 @@
 import { eq, inArray, sql, type SQL } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
-import {
-  AuditActionType,
-  AuditEntityType,
-  VerificationStatus,
-} from '@otr/core/osu';
+import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 import type {
   AuditEntry,
   AuditEventAction,
@@ -15,8 +11,10 @@ import {
   ENTITY_TYPE_LABELS,
   ENTITY_TYPE_PLURALS,
 } from '@/lib/audit-entity-types';
-import { ACTION_LABELS } from '@/lib/audit-actions';
+import { ACTION_LABELS, classifyAction } from '@/lib/audit-actions';
 import type { DatabaseClient } from '@/lib/db';
+
+export { classifyAction };
 
 export function getAuditTable(entityType: AuditEntityType) {
   switch (entityType) {
@@ -294,41 +292,6 @@ export type GroupedAuditRow = {
   sampleChanges: Record<string, unknown> | null;
   sampleEntityId: number;
 };
-
-/** Classifies the semantic action from the top-level entity's sample changes. */
-export function classifyAction(
-  actionType: AuditActionType,
-  sampleChanges: Record<string, unknown> | null
-): AuditEventAction {
-  if (actionType === AuditActionType.Created) return 'submission';
-  if (actionType === AuditActionType.Deleted) return 'deletion';
-
-  if (!sampleChanges) return 'update';
-
-  const changes = sampleChanges as Record<
-    string,
-    { originalValue: unknown; newValue: unknown }
-  >;
-
-  const vsChange = changes.verificationStatus ?? changes.verification_status;
-
-  if (vsChange?.newValue !== undefined) {
-    const newStatus = vsChange.newValue as number;
-
-    switch (newStatus) {
-      case VerificationStatus.Verified:
-        return 'verification';
-      case VerificationStatus.Rejected:
-        return 'rejection';
-      case VerificationStatus.PreVerified:
-        return 'pre_verification';
-      case VerificationStatus.PreRejected:
-        return 'pre_rejection';
-    }
-  }
-
-  return 'update';
-}
 
 /** Tournament → Match → Game → Score → null. */
 export function getImmediateChildType(

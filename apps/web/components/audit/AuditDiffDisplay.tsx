@@ -37,7 +37,7 @@ function formatValue(
   referencedUsers?: Record<string, ReferencedUser>
 ): string {
   if (value === null || value === undefined || value === 'null' || value === '')
-    return '—';
+    return '\u2014';
 
   if (
     isFieldUserReference(entityType, fieldName) &&
@@ -101,9 +101,26 @@ export default function AuditDiffDisplay({
   const newStatus = isStatusField
     ? toVerificationStatus(change.newValue)
     : null;
-  // Only a verdict may be red or green; a status carries its own badge colour.
   const isNeutral =
     isStatusField || isFieldUserReference(entityType, fieldName);
+  const oldClass =
+    oldStatus !== null
+      ? 'opacity-40'
+      : cn(
+          'rounded px-1.5 py-0.5 line-through',
+          isNeutral
+            ? 'bg-muted-foreground/10 text-muted-foreground'
+            : 'bg-red-500/10 text-red-600 dark:text-red-400'
+        );
+  const newClass =
+    newStatus !== null
+      ? undefined
+      : cn(
+          'rounded px-1.5 py-0.5',
+          isNeutral
+            ? 'bg-muted-foreground/10 text-foreground'
+            : 'bg-green-500/10 text-green-600 dark:text-green-400'
+        );
 
   return (
     <div
@@ -117,19 +134,7 @@ export default function AuditDiffDisplay({
         {label}
       </span>
       <span className="flex items-center gap-1.5">
-        <span
-          data-testid="diff-old-value"
-          className={cn(
-            oldStatus !== null
-              ? 'opacity-50'
-              : cn(
-                  'rounded px-1.5 py-0.5 line-through',
-                  isNeutral
-                    ? 'text-muted-foreground'
-                    : 'bg-red-500/10 text-red-600 dark:text-red-400'
-                )
-          )}
-        >
+        <span data-testid="diff-old-value" className={oldClass}>
           {oldStatus !== null ? (
             <VerificationBadge
               verificationStatus={oldStatus}
@@ -141,18 +146,7 @@ export default function AuditDiffDisplay({
           )}
         </span>
         <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground" />
-        <span
-          data-testid="diff-new-value"
-          className={cn(
-            newStatus === null &&
-              cn(
-                'rounded px-1.5 py-0.5',
-                isNeutral
-                  ? 'text-foreground'
-                  : 'bg-green-500/10 text-green-600 dark:text-green-400'
-              )
-          )}
-        >
+        <span data-testid="diff-new-value" className={newClass}>
           {newStatus !== null ? (
             <VerificationBadge verificationStatus={newStatus} displayText />
           ) : (

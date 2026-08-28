@@ -22,14 +22,13 @@ import {
 } from '@/components/ui/collapsible';
 import AuditDiffDisplay from './AuditDiffDisplay';
 import {
+  childCountTail,
   entityTypeToSlug,
   ENTITY_TYPE_LABELS,
   ENTITY_TYPE_PLURALS,
 } from '@/lib/audit-entity-types';
-import { ACTION_LABELS } from '@/lib/audit-actions';
-import ActionBreakdownPhrase, {
-  ACTION_TEXT_COLORS,
-} from './ActionBreakdownPhrase';
+import { ACTION_LABELS, ACTION_TEXT_COLORS } from '@/lib/audit-actions';
+import ActionBreakdownPhrase from './ActionBreakdownPhrase';
 import { getFieldLabel } from './auditFieldConfig';
 import RelativeTime from './RelativeTime';
 
@@ -46,7 +45,7 @@ const ACTION_BORDER_COLORS: Record<AuditEventAction, string> = {
   verification: 'border-l-green-500',
   pre_verification: 'border-l-green-500',
   rejection: 'border-l-red-500',
-  pre_rejection: 'border-l-red-500',
+  pre_rejection: 'border-l-warning',
   submission: 'border-l-blue-500',
   update: 'border-l-blue-500',
   deletion: 'border-l-red-500',
@@ -103,26 +102,21 @@ function buildDescription(event: AuditEvent): React.ReactNode {
   // Cascade: "(85 of 118 matches)", or "(verified 115, rejected 3 of 118 matches)"
   if (isCascade && childLevel) {
     // A live child count can sit below a historical affected count once children are deleted.
-    const childTotal =
+    const showsChildTotal =
       childLevel.totalCount !== null &&
-      childLevel.totalCount > childLevel.affectedCount
-        ? childLevel.totalCount
-        : childLevel.affectedCount;
-    const childLabel =
-      childTotal === 1
-        ? ENTITY_TYPE_LABELS[childLevel.entityType]
-        : ENTITY_TYPE_PLURALS[childLevel.entityType];
-    const childTotalDisplay =
-      childTotal === 1
-        ? childLabel
-        : `of ${numberFormat.format(childTotal)} ${childLabel}`;
+      childLevel.totalCount > childLevel.affectedCount;
+    const childTail = childCountTail(
+      childLevel.entityType,
+      childLevel.affectedCount,
+      childLevel.totalCount
+    );
     const countDisplay: React.ReactNode = childLevel.actionBreakdown ? (
       <>
         <ActionBreakdownPhrase breakdown={childLevel.actionBreakdown} />{' '}
-        {childTotalDisplay}
+        {childTail}
       </>
-    ) : childTotal > childLevel.affectedCount ? (
-      `${numberFormat.format(childLevel.affectedCount)} ${childTotalDisplay}`
+    ) : showsChildTotal ? (
+      `${numberFormat.format(childLevel.affectedCount)} ${childTail}`
     ) : null;
     const topPlural = ENTITY_TYPE_PLURALS[topEntity.entityType];
     const topDisplay =
