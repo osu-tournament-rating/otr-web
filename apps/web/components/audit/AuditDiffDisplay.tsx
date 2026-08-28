@@ -140,6 +140,7 @@ export default function AuditDiffDisplay({
               verificationStatus={oldStatus}
               displayText
               minimal
+              size="xsmall"
             />
           ) : (
             oldVal
@@ -148,7 +149,11 @@ export default function AuditDiffDisplay({
         <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground" />
         <span data-testid="diff-new-value" className={newClass}>
           {newStatus !== null ? (
-            <VerificationBadge verificationStatus={newStatus} displayText />
+            <VerificationBadge
+              verificationStatus={newStatus}
+              displayText
+              size="xsmall"
+            />
           ) : (
             newVal
           )}

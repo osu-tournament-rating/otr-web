@@ -158,9 +158,9 @@ function AffectedEntities({
         const status = statusOf(entity.changes);
         return (
           <div key={entity.id} className="flex items-center gap-1.5">
-            <span className="flex w-6 shrink-0 justify-center">
+            <span className="flex w-5 shrink-0 justify-center">
               {status !== null && (
-                <VerificationBadge verificationStatus={status} />
+                <VerificationBadge verificationStatus={status} size="xsmall" />
               )}
             </span>
             <Link
