@@ -5,6 +5,7 @@ import {
   tournamentSelectSchema,
 } from './base';
 import { BeatmapAttributeSchema, BeatmapSchema } from './beatmap';
+import { BeatmapListTopModSchema } from './beatmapList';
 import {
   CreatedUpdatedOmit,
   RulesetSchema,
@@ -103,6 +104,7 @@ export const TournamentPlayerStatsSchema = playerTournamentStatsSelectSchema
 export const TournamentBeatmapSchema = BeatmapSchema.extend({
   attributes: z.array(BeatmapAttributeSchema),
   creators: z.array(PlayerSchema),
+  topMods: z.array(BeatmapListTopModSchema).default([]),
 });
 
 const tournamentDetailBaseSchema = tournamentSelectSchema
