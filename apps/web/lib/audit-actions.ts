@@ -24,13 +24,13 @@ export const ACTION_NOUNS: Record<AuditEventAction, string> = {
 
 /** Matches the colours `VerificationBadge` gives each status. */
 export const ACTION_TEXT_COLORS: Record<AuditEventAction, string> = {
-  verification: 'text-success',
-  pre_verification: 'text-success',
-  rejection: 'text-destructive',
-  pre_rejection: 'text-warning',
+  verification: 'text-success-foreground',
+  pre_verification: 'text-success-foreground',
+  rejection: 'text-destructive-foreground',
+  pre_rejection: 'text-warning-foreground',
   submission: 'text-blue-600 dark:text-blue-400',
   update: 'text-blue-600 dark:text-blue-400',
-  deletion: 'text-destructive',
+  deletion: 'text-destructive-foreground',
 };
 
 /** Classifies the semantic action from an entity's changes. */

@@ -293,7 +293,7 @@ export default function ApiKeySettingsClient({
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="text-destructive hover:bg-destructive/10"
+                                className="text-destructive-foreground hover:bg-destructive/10"
                                 onClick={() =>
                                   setConfirmingKeyId(keyMetadata.id)
                                 }

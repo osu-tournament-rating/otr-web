@@ -246,7 +246,7 @@ export default function AdminReportsClient() {
         }
         className={cn(
           status === ReportStatus.Approved &&
-            'bg-success text-success-foreground hover:bg-success/90'
+            'bg-success text-green-950 hover:bg-success/90'
         )}
       >
         {metadata.text}
@@ -539,7 +539,7 @@ export default function AdminReportsClient() {
                       <Button
                         onClick={() => handleResolve(ReportStatus.Approved)}
                         disabled={resolving || !adminNote.trim()}
-                        className="bg-success text-success-foreground hover:bg-success/90"
+                        className="bg-success text-green-950 hover:bg-success/90"
                       >
                         {resolving ? (
                           <Loader2 className="mr-2 size-4 animate-spin" />

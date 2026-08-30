@@ -44,7 +44,7 @@ const STATUS_CONFIG = {
   },
   'Awaiting Review': {
     label: 'Awaiting Review',
-    color: 'var(--color-warning)',
+    color: 'var(--color-status-awaiting)',
     icon: AlertTriangle,
   },
   Rejected: {

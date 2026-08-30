@@ -42,7 +42,7 @@ export default async function BannedPage(props: BannedPageProps) {
   return (
     <main className="mx-auto w-full max-w-2xl px-4 pt-4 pb-12 sm:pt-8">
       <div className="space-y-6 rounded-2xl border border-border bg-background px-6 py-8 text-center shadow-sm sm:px-10 sm:py-12">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive ring-1 ring-destructive/30">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive-foreground ring-1 ring-destructive/30">
           <ShieldAlert aria-hidden="true" className="h-7 w-7" />
         </div>
         <header className="space-y-3">
@@ -58,7 +58,7 @@ export default async function BannedPage(props: BannedPageProps) {
           </p>
         </header>
         {reason ? (
-          <section className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-left text-sm text-destructive sm:text-base">
+          <section className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-left text-sm text-destructive-foreground sm:text-base">
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
               <span className="font-medium">Reason:</span>
               <span data-testid="banned-reason" className="break-words">

@@ -39,7 +39,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
 
       <div className="absolute inset-0 z-2 h-full w-full rounded-xl bg-gradient-to-b from-black/40 via-black/50 to-black/70 dark:from-black/60 dark:via-black/70 dark:to-black/80" />
 
-      <div className="z-3 flex h-full w-full flex-col p-2 text-white">
+      <div className="dark z-3 flex h-full w-full flex-col p-2 text-white">
         <div className="flex h-8 w-full items-center justify-between gap-2">
           <div className="flex h-full flex-row items-center gap-2 overflow-hidden sm:gap-4">
             <VerificationBadge
