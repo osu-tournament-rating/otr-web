@@ -4,21 +4,25 @@ import { useState } from 'react';
 import Link from 'next/link';
 import useSWRInfinite from 'swr/infinite';
 import { ChevronRight, Info, Loader2 } from 'lucide-react';
-import { AuditEntityType } from '@otr/core/osu';
+import { AuditEntityType, VerificationStatus } from '@otr/core/osu';
 import type {
   AuditEntry,
-  AuditEventAction,
   CascadeContext,
   CascadeDescendant,
 } from '@/lib/orpc/schema/audit';
 import {
+  childCountTail,
   entityTypeToSlug,
   ENTITY_TYPE_LABELS,
   ENTITY_TYPE_PLURALS,
 } from '@/lib/audit-entity-types';
+import { ACTION_NOUNS } from '@/lib/audit-actions';
+import { VerificationStatusEnumHelper } from '@/lib/enum-helpers';
 import { orpc } from '@/lib/orpc/orpc';
 import { Button } from '@/components/ui/button';
+import VerificationBadge from '@/components/badges/VerificationBadge';
 import { cn } from '@/lib/utils';
+import ActionBreakdownPhrase from './ActionBreakdownPhrase';
 
 type CascadeContextBannerProps = {
   context: CascadeContext;
@@ -26,31 +30,56 @@ type CascadeContextBannerProps = {
   viewedEntity?: { entityType: AuditEntityType; entityId: number };
 };
 
-const ACTION_LABELS: Record<AuditEventAction, string> = {
-  verification: 'verification',
-  rejection: 'rejection',
-  pre_verification: 'pre-verification',
-  pre_rejection: 'pre-rejection',
-  submission: 'submission',
-  update: 'update',
-  deletion: 'deletion',
-};
-
 const numberFormat = new Intl.NumberFormat('en-US');
 
-function countLabel(descendant: CascadeDescendant): string {
-  const { entityType, affectedCount, totalCount } = descendant;
-  const showsTotal = totalCount !== null && totalCount > affectedCount;
-  const counted = showsTotal ? totalCount : affectedCount;
-  const label =
-    counted === 1
-      ? ENTITY_TYPE_LABELS[entityType]
-      : ENTITY_TYPE_PLURALS[entityType];
+function countLabel(descendant: CascadeDescendant): React.ReactNode {
+  const { entityType, affectedCount, totalCount, actionBreakdown } = descendant;
+  const tail = childCountTail(entityType, affectedCount, totalCount);
 
-  if (showsTotal) {
-    return `${numberFormat.format(affectedCount)} of ${numberFormat.format(totalCount)} ${label}`;
+  if (actionBreakdown) {
+    return (
+      <>
+        <ActionBreakdownPhrase breakdown={actionBreakdown} /> {tail}
+      </>
+    );
   }
-  return `${numberFormat.format(affectedCount)} ${label}`;
+  return `${numberFormat.format(affectedCount)} ${tail}`;
+}
+
+type AffectedEntity = {
+  id: number;
+  entityName: string | null;
+  changes: Record<string, unknown>;
+};
+
+function statusOf(changes: Record<string, unknown>): VerificationStatus | null {
+  const change = changes.verificationStatus as
+    { newValue?: unknown } | undefined;
+  const value = change?.newValue;
+  if (typeof value !== 'number') return null;
+  return value in VerificationStatusEnumHelper.metadata
+    ? (value as VerificationStatus)
+    : null;
+}
+
+/** An event writes one audit row per changed field group, so an entity can appear several times. */
+function groupByEntity(entries: AuditEntry[]): AffectedEntity[] {
+  const byEntity = new Map<number, AffectedEntity>();
+  for (const entry of entries) {
+    const id = entry.referenceId ?? entry.referenceIdLock;
+    const existing = byEntity.get(id);
+    if (existing) {
+      existing.changes = { ...entry.changes, ...existing.changes };
+      existing.entityName ??= entry.entityName ?? null;
+    } else {
+      byEntity.set(id, {
+        id,
+        entityName: entry.entityName ?? null,
+        changes: { ...entry.changes },
+      });
+    }
+  }
+  return [...byEntity.values()];
 }
 
 type AffectedEntitiesResponse = {
@@ -96,7 +125,7 @@ function AffectedEntities({
     );
 
   const pages = data ?? [];
-  const entries = pages.flatMap((page) => page.entries);
+  const affected = groupByEntity(pages.flatMap((page) => page.entries));
   const hasMore = pages[pages.length - 1]?.hasMore ?? false;
   const slug = entityTypeToSlug(entityType);
   const label = ENTITY_TYPE_LABELS[entityType];
@@ -125,17 +154,23 @@ function AffectedEntities({
         </span>
       )}
 
-      {entries.map((entry) => {
-        const id = entry.referenceId ?? entry.referenceIdLock;
+      {affected.map((entity) => {
+        const status = statusOf(entity.changes);
         return (
-          <Link
-            key={entry.id}
-            href={`/audit/${slug}/${id}`}
-            className="text-primary hover:underline"
-          >
-            {entry.entityName ??
-              `${label.charAt(0).toUpperCase()}${label.slice(1)} #${id}`}
-          </Link>
+          <div key={entity.id} className="flex items-center gap-1.5">
+            <span className="flex w-5 shrink-0 justify-center">
+              {status !== null && (
+                <VerificationBadge verificationStatus={status} size="xsmall" />
+              )}
+            </span>
+            <Link
+              href={`/audit/${slug}/${entity.id}`}
+              className="text-primary hover:underline"
+            >
+              {entity.entityName ??
+                `${label.charAt(0).toUpperCase()}${label.slice(1)} #${entity.id}`}
+            </Link>
+          </div>
         );
       })}
 
@@ -164,7 +199,7 @@ export default function CascadeContextBanner({
 
   const slug = entityTypeToSlug(context.topEntityType);
   const entityName = context.topEntityName ?? `#${context.topEntityId}`;
-  const actionLabel = ACTION_LABELS[context.action];
+  const actionLabel = ACTION_NOUNS[context.action];
   const startedHere =
     viewedEntity?.entityType === context.topEntityType &&
     viewedEntity.entityId === context.topEntityId;
@@ -180,7 +215,7 @@ export default function CascadeContextBanner({
           {startedHere ? (
             <>
               This {actionLabel} also affected
-              {context.descendants.length === 0 && ' no children'}
+              {context.descendants.length === 0 ? ' no children' : ':'}
             </>
           ) : (
             <>
@@ -192,7 +227,7 @@ export default function CascadeContextBanner({
                 {entityName}
               </Link>{' '}
               {actionLabel}
-              {context.descendants.length > 0 && ' — also affected'}
+              {context.descendants.length > 0 && ' — also affected:'}
             </>
           )}
         </span>

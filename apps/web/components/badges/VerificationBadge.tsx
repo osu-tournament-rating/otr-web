@@ -58,6 +58,12 @@ const statusConfig = {
 };
 
 const sizeVariants = {
+  xsmall: {
+    container: 'h-5 w-auto min-w-5',
+    icon: 'h-3 w-3',
+    text: 'text-xs',
+    padding: 'px-1.5 py-0.5',
+  },
   small: {
     container: 'h-6 w-auto min-w-6',
     icon: 'h-4 w-4',
@@ -84,9 +90,11 @@ interface VerificationBadgeProps {
   verificationStatus: VerificationStatus;
   /** Status as text instead of a tooltip; warnings and rejections still get one. */
   displayText?: boolean;
-  size?: 'small' | 'large';
+  size?: 'xsmall' | 'small' | 'large';
   /** Drop the badge background. */
   minimal?: boolean;
+  /** Strike the label; the icon is left alone. */
+  strikethrough?: boolean;
   warningFlags?: EntityWarningFlags;
   rejectionReason?: EntityRejectionReason;
   entityType?: ApiItemType;
@@ -246,6 +254,7 @@ export default function VerificationBadge({
   displayText = false,
   size = 'small',
   minimal = false,
+  strikethrough = false,
   warningFlags,
   rejectionReason,
   entityType,
@@ -281,7 +290,13 @@ export default function VerificationBadge({
     >
       <Icon className={cn(sizeConfig.icon, iconColor)} />
       {displayText && (
-        <span className={cn('ml-1.5 font-medium', sizeConfig.text)}>
+        <span
+          className={cn(
+            'ml-1.5 font-medium',
+            sizeConfig.text,
+            strikethrough && 'line-through'
+          )}
+        >
           {statusText}
         </span>
       )}

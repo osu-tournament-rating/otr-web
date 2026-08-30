@@ -1,10 +1,6 @@
 import { eq, inArray, sql, type SQL } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
-import {
-  AuditActionType,
-  AuditEntityType,
-  VerificationStatus,
-} from '@otr/core/osu';
+import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 import type {
   AuditEntry,
   AuditEventAction,
@@ -15,7 +11,7 @@ import {
   ENTITY_TYPE_LABELS,
   ENTITY_TYPE_PLURALS,
 } from '@/lib/audit-entity-types';
-import { ACTION_LABELS } from '@/lib/audit-actions';
+import { ACTION_LABELS, classifyAction } from '@/lib/audit-actions';
 import type { DatabaseClient } from '@/lib/db';
 
 export function getAuditTable(entityType: AuditEntityType) {
@@ -295,41 +291,6 @@ export type GroupedAuditRow = {
   sampleEntityId: number;
 };
 
-/** Classifies the semantic action from the top-level entity's sample changes. */
-export function classifyAction(
-  actionType: AuditActionType,
-  sampleChanges: Record<string, unknown> | null
-): AuditEventAction {
-  if (actionType === AuditActionType.Created) return 'submission';
-  if (actionType === AuditActionType.Deleted) return 'deletion';
-
-  if (!sampleChanges) return 'update';
-
-  const changes = sampleChanges as Record<
-    string,
-    { originalValue: unknown; newValue: unknown }
-  >;
-
-  const vsChange = changes.verificationStatus ?? changes.verification_status;
-
-  if (vsChange?.newValue !== undefined) {
-    const newStatus = vsChange.newValue as number;
-
-    switch (newStatus) {
-      case VerificationStatus.Verified:
-        return 'verification';
-      case VerificationStatus.Rejected:
-        return 'rejection';
-      case VerificationStatus.PreVerified:
-        return 'pre_verification';
-      case VerificationStatus.PreRejected:
-        return 'pre_rejection';
-    }
-  }
-
-  return 'update';
-}
-
 /** Tournament → Match → Game → Score → null. */
 export function getImmediateChildType(
   entityType: AuditEntityType
@@ -434,9 +395,15 @@ const VERIFICATION_OUTCOMES = new Set<AuditEventAction>([
   'pre_rejection',
 ]);
 
+/** The parts of a grouped row an outcome breakdown is counted from. */
+export type BreakdownRow = Pick<
+  GroupedAuditRow,
+  'actionTypes' | 'entryCount' | 'verificationStatusCounts'
+>;
+
 /** Entities per outcome, for an event that wrote at least `minOutcomes` verification statuses. */
 export function buildActionBreakdown(
-  rows: GroupedAuditRow[],
+  rows: BreakdownRow[],
   minOutcomes = 2
 ): AuditEventActionCount[] | null {
   const counts = new Map<AuditEventAction, number>();
@@ -465,6 +432,19 @@ export function buildActionBreakdown(
       b.count - a.count ||
       ACTION_LABELS[a.action].localeCompare(ACTION_LABELS[b.action])
   );
+}
+
+/** Breakdown worth showing next to `action`. */
+export function buildOutcomeBreakdown(
+  rows: BreakdownRow[],
+  action: AuditEventAction
+): AuditEventActionCount[] | null {
+  const breakdown = buildActionBreakdown(rows, 1);
+  if (!breakdown) return null;
+  if (!breakdown.some((part) => VERIFICATION_OUTCOMES.has(part.action)))
+    return null;
+  if (breakdown.length === 1 && breakdown[0]!.action === action) return null;
+  return breakdown;
 }
 
 /** Groups rows from multiple audit tables into events keyed by the database's event key. */
@@ -539,13 +519,7 @@ export function assembleEvents(rows: GroupedAuditRow[]): AssembledEvent[] {
       (total, row) => total + row.entryCount,
       0
     );
-    const childBreakdown = buildActionBreakdown(childRows, 1);
-    const childActionBreakdown =
-      childBreakdown &&
-      childBreakdown.some((part) => VERIFICATION_OUTCOMES.has(part.action)) &&
-      (childBreakdown.length > 1 || childBreakdown[0]!.action !== action)
-        ? childBreakdown
-        : null;
+    const childActionBreakdown = buildOutcomeBreakdown(childRows, action);
 
     events.push({
       eventKey,

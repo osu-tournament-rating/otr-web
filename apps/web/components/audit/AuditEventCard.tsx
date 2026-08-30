@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import useSWRInfinite from 'swr/infinite';
 import { ChevronRight, Loader2 } from 'lucide-react';
@@ -9,7 +9,6 @@ import type {
   AuditEntry,
   AuditEvent,
   AuditEventAction,
-  AuditEventActionCount,
 } from '@/lib/orpc/schema/audit';
 import { cn } from '@/lib/utils';
 import { orpc } from '@/lib/orpc/orpc';
@@ -23,11 +22,13 @@ import {
 } from '@/components/ui/collapsible';
 import AuditDiffDisplay from './AuditDiffDisplay';
 import {
+  childCountTail,
   entityTypeToSlug,
   ENTITY_TYPE_LABELS,
   ENTITY_TYPE_PLURALS,
 } from '@/lib/audit-entity-types';
-import { ACTION_LABELS } from '@/lib/audit-actions';
+import { ACTION_LABELS, ACTION_TEXT_COLORS } from '@/lib/audit-actions';
+import ActionBreakdownPhrase from './ActionBreakdownPhrase';
 import { getFieldLabel } from './auditFieldConfig';
 import RelativeTime from './RelativeTime';
 
@@ -40,24 +41,14 @@ const FIELD_SUPPRESSED_ACTIONS = new Set<AuditEventAction>([
   'deletion',
 ]);
 
-const ACTION_TEXT_COLORS: Record<AuditEventAction, string> = {
-  verification: 'text-green-600 dark:text-green-400',
-  pre_verification: 'text-green-600 dark:text-green-400',
-  rejection: 'text-red-600 dark:text-red-400',
-  pre_rejection: 'text-red-600 dark:text-red-400',
-  submission: 'text-blue-600 dark:text-blue-400',
-  update: 'text-blue-600 dark:text-blue-400',
-  deletion: 'text-red-600 dark:text-red-400',
-};
-
 const ACTION_BORDER_COLORS: Record<AuditEventAction, string> = {
-  verification: 'border-l-green-500',
-  pre_verification: 'border-l-green-500',
-  rejection: 'border-l-red-500',
-  pre_rejection: 'border-l-red-500',
+  verification: 'border-l-success',
+  pre_verification: 'border-l-success',
+  rejection: 'border-l-destructive',
+  pre_rejection: 'border-l-warning',
   submission: 'border-l-blue-500',
   update: 'border-l-blue-500',
-  deletion: 'border-l-red-500',
+  deletion: 'border-l-destructive',
 };
 
 type AuditEventCardProps = {
@@ -72,20 +63,6 @@ type EventDetailsResponse = {
 
 const numberFormat = new Intl.NumberFormat('en-US');
 
-function buildBreakdownPhrase(
-  breakdown: AuditEventActionCount[]
-): React.ReactNode {
-  return breakdown.map((part, index) => (
-    <Fragment key={part.action}>
-      {index > 0 && ', '}
-      <span className={ACTION_TEXT_COLORS[part.action]}>
-        {ACTION_LABELS[part.action]}
-      </span>{' '}
-      {numberFormat.format(part.count)}
-    </Fragment>
-  ));
-}
-
 function buildActionPhrase(event: AuditEvent): React.ReactNode {
   if (!event.actionBreakdown) {
     return (
@@ -95,7 +72,7 @@ function buildActionPhrase(event: AuditEvent): React.ReactNode {
     );
   }
 
-  return buildBreakdownPhrase(event.actionBreakdown);
+  return <ActionBreakdownPhrase breakdown={event.actionBreakdown} />;
 }
 
 function buildDescription(event: AuditEvent): React.ReactNode {
@@ -125,25 +102,21 @@ function buildDescription(event: AuditEvent): React.ReactNode {
   // Cascade: "(85 of 118 matches)", or "(verified 115, rejected 3 of 118 matches)"
   if (isCascade && childLevel) {
     // A live child count can sit below a historical affected count once children are deleted.
-    const childTotal =
+    const showsChildTotal =
       childLevel.totalCount !== null &&
-      childLevel.totalCount > childLevel.affectedCount
-        ? childLevel.totalCount
-        : childLevel.affectedCount;
-    const childLabel =
-      childTotal === 1
-        ? ENTITY_TYPE_LABELS[childLevel.entityType]
-        : ENTITY_TYPE_PLURALS[childLevel.entityType];
-    const childTotalDisplay =
-      childTotal === 1
-        ? childLabel
-        : `of ${numberFormat.format(childTotal)} ${childLabel}`;
+      childLevel.totalCount > childLevel.affectedCount;
+    const childTail = childCountTail(
+      childLevel.entityType,
+      childLevel.affectedCount,
+      childLevel.totalCount
+    );
     const countDisplay: React.ReactNode = childLevel.actionBreakdown ? (
       <>
-        {buildBreakdownPhrase(childLevel.actionBreakdown)} {childTotalDisplay}
+        <ActionBreakdownPhrase breakdown={childLevel.actionBreakdown} />{' '}
+        {childTail}
       </>
-    ) : childTotal > childLevel.affectedCount ? (
-      `${numberFormat.format(childLevel.affectedCount)} ${childTotalDisplay}`
+    ) : showsChildTotal ? (
+      `${numberFormat.format(childLevel.affectedCount)} ${childTail}`
     ) : null;
     const topPlural = ENTITY_TYPE_PLURALS[topEntity.entityType];
     const topDisplay =

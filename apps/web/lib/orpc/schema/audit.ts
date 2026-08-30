@@ -167,6 +167,8 @@ export const CascadeDescendantSchema = z.object({
   affectedCount: z.number().int(),
   /** Children in the top entity, for the "85 of 118" display; null when not computed. */
   totalCount: z.number().int().nullable(),
+  /** Entities per outcome at this level, only when those outcomes differ from the event's action. */
+  actionBreakdown: z.array(AuditEventActionCountSchema).nullable(),
 });
 
 export type CascadeDescendant = z.infer<typeof CascadeDescendantSchema>;
