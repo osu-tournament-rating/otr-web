@@ -105,7 +105,7 @@ export default function AuditDiffDisplay({
     isStatusField || isFieldUserReference(entityType, fieldName);
   const oldClass =
     oldStatus !== null
-      ? 'opacity-40'
+      ? undefined
       : cn(
           'rounded px-1.5 py-0.5 line-through',
           isNeutral
@@ -139,7 +139,7 @@ export default function AuditDiffDisplay({
             <VerificationBadge
               verificationStatus={oldStatus}
               displayText
-              minimal
+              strikethrough
               size="xsmall"
             />
           ) : (

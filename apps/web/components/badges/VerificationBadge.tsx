@@ -93,6 +93,8 @@ interface VerificationBadgeProps {
   size?: 'xsmall' | 'small' | 'large';
   /** Drop the badge background. */
   minimal?: boolean;
+  /** Strike the label; the icon is left alone. */
+  strikethrough?: boolean;
   warningFlags?: EntityWarningFlags;
   rejectionReason?: EntityRejectionReason;
   entityType?: ApiItemType;
@@ -252,6 +254,7 @@ export default function VerificationBadge({
   displayText = false,
   size = 'small',
   minimal = false,
+  strikethrough = false,
   warningFlags,
   rejectionReason,
   entityType,
@@ -287,7 +290,13 @@ export default function VerificationBadge({
     >
       <Icon className={cn(sizeConfig.icon, iconColor)} />
       {displayText && (
-        <span className={cn('ml-1.5 font-medium', sizeConfig.text)}>
+        <span
+          className={cn(
+            'ml-1.5 font-medium',
+            sizeConfig.text,
+            strikethrough && 'line-through'
+          )}
+        >
           {statusText}
         </span>
       )}
