@@ -17,6 +17,7 @@ describe('UserDetailSchema', () => {
           id: 3,
           defaultRuleset: 0,
           defaultRulesetIsControlled: false,
+          themeHotkeyEnabled: true,
           userId: 1,
           created: '2026-08-01 00:00:00+00',
           updated: null,

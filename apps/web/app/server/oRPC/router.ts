@@ -38,6 +38,7 @@ import {
   deleteMyFriends,
   getCurrentUser,
   getUser,
+  updateMySettings,
 } from './procedures/userProcedures';
 import {
   banUserAdmin,
@@ -142,6 +143,7 @@ export const router = base.router({
     me: getCurrentUser,
     deleteMe: deleteMyAccount,
     deleteMyFriends: deleteMyFriends,
+    updateMySettings: updateMySettings,
     admin: {
       search: searchPlayersAdmin,
       lookup: lookupAuthUserAdmin,

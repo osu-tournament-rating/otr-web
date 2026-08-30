@@ -2,6 +2,7 @@ import { CurrentUserSchema, type CurrentUser } from '@/lib/orpc/schema/user';
 
 export type SessionUser = CurrentUser & {
   player: CurrentUser['player'] & { defaultRuleset: number };
+  themeHotkeyEnabled: boolean;
 };
 
 export const mapAppSessionToUser = (session: unknown): SessionUser | null => {
@@ -14,7 +15,7 @@ export const mapAppSessionToUser = (session: unknown): SessionUser | null => {
     return null;
   }
 
-  const { dbPlayer, dbUser } = session as {
+  const { dbPlayer, dbUser, themeHotkeyEnabled } = session as {
     dbPlayer: {
       id: number;
       osuId: number | bigint;
@@ -26,6 +27,7 @@ export const mapAppSessionToUser = (session: unknown): SessionUser | null => {
       id: number;
       scopes?: string[] | null;
     } | null;
+    themeHotkeyEnabled?: boolean;
   };
 
   const parsed = CurrentUserSchema.safeParse({
@@ -50,5 +52,6 @@ export const mapAppSessionToUser = (session: unknown): SessionUser | null => {
       ...parsed.data.player,
       defaultRuleset: dbPlayer.defaultRuleset,
     },
+    themeHotkeyEnabled: themeHotkeyEnabled ?? true,
   } satisfies SessionUser;
 };

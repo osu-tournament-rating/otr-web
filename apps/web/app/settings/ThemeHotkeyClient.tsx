@@ -14,13 +14,14 @@ import {
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
-  setThemeHotkeyEnabled,
+  useSetThemeHotkeyEnabled,
   useThemeHotkeyEnabled,
 } from '@/lib/hooks/useThemeHotkey';
 import { cn } from '@/lib/utils';
 
 export default function ThemeHotkeyClient() {
   const enabled = useThemeHotkeyEnabled();
+  const setEnabled = useSetThemeHotkeyEnabled();
   const searchParams = useSearchParams();
   const highlightParam = searchParams.get('highlight');
   const [highlighted, setHighlighted] = useState(false);
@@ -70,7 +71,7 @@ export default function ThemeHotkeyClient() {
             id="theme-hotkey-switch"
             data-testid="settings-theme-hotkey-switch"
             checked={enabled}
-            onCheckedChange={setThemeHotkeyEnabled}
+            onCheckedChange={setEnabled}
             className="cursor-pointer"
           />
         </div>

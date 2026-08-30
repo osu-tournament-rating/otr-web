@@ -1865,6 +1865,7 @@ export const userSettings = pgTable(
     defaultRulesetIsControlled: boolean('default_ruleset_is_controlled')
       .default(false)
       .notNull(),
+    themeHotkeyEnabled: boolean('theme_hotkey_enabled').default(true).notNull(),
     userId: integer('user_id').notNull(),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)

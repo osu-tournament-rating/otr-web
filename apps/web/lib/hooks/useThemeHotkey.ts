@@ -1,11 +1,18 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
+import { toast } from 'sonner';
+
+import { useSession } from '@/lib/hooks/useSession';
+import { orpc } from '@/lib/orpc/orpc';
 
 const STORAGE_KEY = 'otr-theme-hotkey-enabled';
 const CHANGE_EVENT = 'otr-theme-hotkey-change';
 
-function isThemeHotkeyEnabled() {
+// Mirrored once per sign-in
+let seededUserId: number | null = null;
+
+function readStored() {
   if (typeof window === 'undefined') return true;
 
   try {
@@ -38,5 +45,45 @@ function subscribe(onChange: () => void) {
 }
 
 export function useThemeHotkeyEnabled() {
-  return useSyncExternalStore(subscribe, isThemeHotkeyEnabled, () => true);
+  const user = useSession();
+  const stored = useSyncExternalStore(subscribe, readStored, () => true);
+  const userId = user?.userId ?? null;
+
+  useEffect(() => {
+    if (!user || userId === null) {
+      seededUserId = null;
+      return;
+    }
+
+    if (seededUserId === userId) return;
+
+    seededUserId = userId;
+    setThemeHotkeyEnabled(user.themeHotkeyEnabled);
+  }, [user, userId]);
+
+  if (user && userId !== null && seededUserId !== userId) {
+    return user.themeHotkeyEnabled;
+  }
+
+  return stored;
+}
+
+export function useSetThemeHotkeyEnabled() {
+  const user = useSession();
+
+  return useCallback(
+    async (enabled: boolean) => {
+      setThemeHotkeyEnabled(enabled);
+
+      if (!user) return;
+
+      try {
+        await orpc.users.updateMySettings({ themeHotkeyEnabled: enabled });
+      } catch {
+        setThemeHotkeyEnabled(!enabled);
+        toast.error('Failed to save the shortcut setting');
+      }
+    },
+    [user]
+  );
 }

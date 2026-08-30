@@ -665,6 +665,13 @@ export const auth = betterAuth({
           })
         : null;
 
+      const settings = dbUser
+        ? await db.query.userSettings.findFirst({
+            columns: { themeHotkeyEnabled: true },
+            where: eq(schema.userSettings.userId, dbUser.id),
+          })
+        : null;
+
       const osuId = dbPlayer?.osuId ?? parseOsuId(account?.accountId);
 
       return {
@@ -675,6 +682,7 @@ export const auth = betterAuth({
         session,
         dbPlayer,
         dbUser,
+        themeHotkeyEnabled: settings?.themeHotkeyEnabled ?? true,
       };
     }),
     nextCookies(), // must be the last plugin

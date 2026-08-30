@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import * as schema from '@otr/core/db/schema';
@@ -81,6 +81,38 @@ export const getCurrentUser = protectedProcedure
       scopes: user?.scopes ?? [],
       userId: user?.id ?? null,
     });
+  });
+
+export const updateMySettings = protectedProcedure
+  .input(z.object({ themeHotkeyEnabled: z.boolean() }))
+  .output(z.object({ success: z.boolean() }))
+  .route({
+    summary: 'Update settings for the current user',
+    tags: ['authenticated'],
+    method: 'PATCH',
+    path: '/users/me/settings',
+  })
+  .handler(async ({ input, context }) => {
+    const userId = context.session.dbUser?.id;
+
+    if (!userId) {
+      throw new ORPCError('NOT_FOUND', {
+        message: 'User not found for the current session',
+      });
+    }
+
+    await context.db
+      .insert(schema.userSettings)
+      .values({ userId, themeHotkeyEnabled: input.themeHotkeyEnabled })
+      .onConflictDoUpdate({
+        target: schema.userSettings.userId,
+        set: {
+          themeHotkeyEnabled: input.themeHotkeyEnabled,
+          updated: sql`CURRENT_TIMESTAMP`,
+        },
+      });
+
+    return { success: true };
   });
 
 export const deleteMyAccount = protectedProcedure
