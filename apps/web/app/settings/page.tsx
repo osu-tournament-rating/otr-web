@@ -6,6 +6,7 @@ import { Suspense } from 'react';
 import AccountDeletionClient from '@/app/settings/AccountDeletionClient';
 import ApiKeySettingsClient from '@/app/settings/ApiKeySettingsClient';
 import FriendsSyncClient from '@/app/settings/FriendsSyncClient';
+import ThemeHotkeyClient from '@/app/settings/ThemeHotkeyClient';
 import { auth } from '@/lib/auth/auth';
 import { orpc } from '@/lib/orpc/orpc';
 import { getFriendCount } from '@/lib/db/player-friends';
@@ -40,6 +41,9 @@ export default async function SettingsPage() {
           initialKeys={keys}
           rateLimit={{ maxRequests: 60, timeWindowMs: 60_000 }}
         />
+        <Suspense fallback={null}>
+          <ThemeHotkeyClient />
+        </Suspense>
         <AccountDeletionClient />
       </div>
     </div>
