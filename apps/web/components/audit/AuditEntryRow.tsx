@@ -34,13 +34,13 @@ const ACTION_ICONS: Record<AuditActionType, typeof PlusCircle> = {
 };
 
 const ACTION_BADGE_COLORS: Record<AuditEventAction, string> = {
-  verification: 'bg-green-500/5 border-green-500/15',
-  pre_verification: 'bg-green-500/5 border-green-500/15',
-  rejection: 'bg-red-500/5 border-red-500/15',
+  verification: 'bg-success/5 border-success/15',
+  pre_verification: 'bg-success/5 border-success/15',
+  rejection: 'bg-destructive/5 border-destructive/15',
   pre_rejection: 'bg-warning/5 border-warning/15',
   submission: 'bg-green-500/5 border-green-500/15',
   update: 'bg-blue-500/5 border-blue-500/15',
-  deletion: 'bg-red-500/5 border-red-500/15',
+  deletion: 'bg-destructive/5 border-destructive/15',
 };
 
 type AuditEntryRowProps = {
