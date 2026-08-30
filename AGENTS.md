@@ -42,10 +42,16 @@ Run commands from the repository root unless noted.
 
 - Use semantic color tokens for text, never palette colors like
   `text-neutral-200` or `text-orange-500`.
-- For colored text on a plain background use the base token
-  (`text-destructive`, `text-primary`), not a `*-foreground` token;
+- The base status token (`success`, `warning`, `destructive`) is the vivid role:
+  fills, chip tints, borders, and icons. It clears the 3:1 graphics bar, not the
+  4.5:1 text bar.
+- The matching `*-foreground` token is the readable text role in both themes,
+  for a label on a tinted chip and for colored body text alike.
   `text-primary-foreground` only goes on `bg-primary`. `text-muted-foreground`
   is the muted text token and is fine anywhere.
+- Measure the label on a solid status fill rather than assuming it. `bg-success`
+  takes `text-green-950`, the one measured exception to the rule above: white is
+  3.22 and `green-800` is 2.21 on `green-600`.
 - Never set a `z-*` class on shadcn overlay content (`PopoverContent`,
   `DropdownMenuContent`, `TooltipContent`). They are portalled at `z-50`, and
   `cn` is `twMerge` (`apps/web/lib/utils.ts`), so a call-site `z-1` overrides

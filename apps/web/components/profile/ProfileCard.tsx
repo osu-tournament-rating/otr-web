@@ -248,7 +248,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
 
           <hr className="my-1 border-border" />
           <button
-            className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+            className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive-foreground hover:bg-destructive/10"
             onClick={handleLogout}
           >
             <LogOut className="size-4" />
@@ -337,7 +337,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="cursor-pointer text-destructive hover:bg-destructive/10 focus:text-destructive"
+          className="cursor-pointer text-destructive-foreground hover:bg-destructive/10 focus:text-destructive-foreground"
           onClick={handleLogout}
         >
           <LogOut className="mr-2 size-4" />

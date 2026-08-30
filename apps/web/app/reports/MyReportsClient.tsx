@@ -105,7 +105,7 @@ function getStatusBadge(status: ReportStatus) {
       }
       className={cn(
         status === ReportStatus.Approved &&
-          'bg-success text-success-foreground hover:bg-success/90'
+          'bg-success text-green-950 hover:bg-success/90'
       )}
     >
       {metadata.text}

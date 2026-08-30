@@ -35,9 +35,9 @@ export default function PlayerRatingChartTooltip({
 
   const deltaClassName = `font-medium ${
     isPositiveChange
-      ? 'text-success'
+      ? 'text-success-foreground'
       : isNegativeChange
-        ? 'text-destructive'
+        ? 'text-destructive-foreground'
         : ''
   }`;
 

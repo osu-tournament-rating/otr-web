@@ -26,7 +26,7 @@ export default function PlayerRatingChartSummaryStats({
       <span className="text-muted-foreground">Total Change</span>
       <span
         className={`flex items-center gap-1 font-semibold ${
-          isPositive ? 'text-success' : 'text-destructive'
+          isPositive ? 'text-success-foreground' : 'text-destructive-foreground'
         }`}
         aria-label={`Total change ${isPositive ? 'up' : 'down'} ${Math.abs(
           totalChange

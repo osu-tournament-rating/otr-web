@@ -37,22 +37,22 @@ const statusConfig = {
   },
   [VerificationStatus.PreRejected]: {
     Icon: AlertTriangle,
-    color: 'text-warning',
+    color: 'text-warning-foreground',
     bgColor: 'bg-warning/20',
   },
   [VerificationStatus.PreVerified]: {
     Icon: Square,
-    color: 'text-success',
+    color: 'text-success-foreground',
     bgColor: 'bg-success/20',
   },
   [VerificationStatus.Rejected]: {
     Icon: XCircle,
-    color: 'text-destructive',
+    color: 'text-destructive-foreground',
     bgColor: 'bg-destructive/20',
   },
   [VerificationStatus.Verified]: {
     Icon: CheckCircle2,
-    color: 'text-success',
+    color: 'text-success-foreground',
     bgColor: 'bg-success/20',
   },
 };
@@ -237,7 +237,9 @@ function createTooltipContent(
 
       {rejectionMetadata.length > 0 && (
         <div className="mt-2">
-          <strong className="text-destructive">Rejection Reasons:</strong>
+          <strong className="text-destructive-foreground">
+            Rejection Reasons:
+          </strong>
           <ul className="mt-1 list-disc pl-3.5">
             {rejectionMetadata.map(({ text }, index) => (
               <li key={`rejection-${index}`}>{text}</li>

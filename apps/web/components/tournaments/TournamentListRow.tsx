@@ -166,7 +166,7 @@ export default function TournamentListRow({
         {(isAwaitingReview || tournament.isLazer) && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {isAwaitingReview && (
-              <span className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-2 text-xs font-medium whitespace-nowrap text-warning">
+              <span className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-2 text-xs font-medium whitespace-nowrap text-warning-foreground">
                 <span
                   className="size-1.5 rounded-full bg-current"
                   aria-hidden="true"

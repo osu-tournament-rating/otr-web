@@ -78,9 +78,9 @@ export default function PlayerRatingChartTable({
               <TableCell
                 className={`text-right font-medium ${
                   point.ratingDelta > 0
-                    ? 'text-success'
+                    ? 'text-success-foreground'
                     : point.ratingDelta < 0
-                      ? 'text-destructive'
+                      ? 'text-destructive-foreground'
                       : ''
                 }`}
               >
@@ -91,9 +91,9 @@ export default function PlayerRatingChartTable({
               <TableCell
                 className={`text-right font-medium ${
                   point.volatilityDelta < 0
-                    ? 'text-success'
+                    ? 'text-success-foreground'
                     : point.volatilityDelta > 0
-                      ? 'text-destructive'
+                      ? 'text-destructive-foreground'
                       : ''
                 }`}
               >

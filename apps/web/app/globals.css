@@ -92,15 +92,16 @@
 }
 
 @theme {
-  --color-success: var(--color-green-400);
-  --color-success-foreground: var(--color-green-900);
+  --color-success: var(--color-green-600);
+  --color-success-foreground: var(--color-green-800);
 
-  --color-warning: var(--color-yellow-400);
-  --color-warning-foreground: var(--color-yellow-900);
-  /* Verification status color alias */
+  --color-warning: var(--color-amber-600);
+  --color-warning-foreground: var(--color-amber-800);
+  /* Verification status chart fills */
   --color-status-pending: var(--color-muted-foreground);
-  --color-status-rejected: var(--destructive);
-  --color-status-verified: var(--color-success);
+  --color-status-awaiting: var(--color-yellow-400);
+  --color-status-rejected: var(--color-red-500);
+  --color-status-verified: var(--color-green-400);
 }
 
 :root {
@@ -121,8 +122,8 @@
   --secondary: oklch(0.92 0 0);
   --secondary-foreground: oklch(0 0 0);
 
-  --destructive: var(--color-red-500);
-  --destructive-foreground: var(--color-red-500);
+  --destructive: var(--color-red-600);
+  --destructive-foreground: var(--color-red-800);
 
   --warning: var(--color-warning);
   --warning-foreground: var(--color-warning-foreground);
@@ -138,7 +139,7 @@
 
   --score-performance-label: hsl(51 60% 55%);
   --team-no-team: #333;
-  --team-red: var(--destructive);
+  --team-red: var(--color-red-500);
   --team-blue: var(--primary);
 
   /* Tournament rank-range ramp (ordinal: Open -> 100k+). Each color has to
@@ -282,6 +283,14 @@
   --muted-foreground: oklch(0.69 0 0);
   --card: oklch(0.2 0 264.47);
   --border: oklch(0.32 0 0);
+
+  --color-success: var(--color-green-400);
+  --color-success-foreground: var(--color-green-400);
+  --color-warning: var(--color-yellow-400);
+  --color-warning-foreground: var(--color-yellow-400);
+
+  --destructive: var(--color-red-500);
+  --destructive-foreground: var(--color-red-500);
 
   --warning: var(--color-warning);
   --warning-foreground: var(--color-warning-foreground);

@@ -434,7 +434,7 @@ export default function BeatmapAdminView({
                 </Alert>
 
                 {saveError ? (
-                  <p className="text-sm font-medium text-destructive">
+                  <p className="text-sm font-medium text-destructive-foreground">
                     {saveError}
                   </p>
                 ) : null}
