@@ -42,13 +42,13 @@ const FIELD_SUPPRESSED_ACTIONS = new Set<AuditEventAction>([
 ]);
 
 const ACTION_BORDER_COLORS: Record<AuditEventAction, string> = {
-  verification: 'border-l-green-500',
-  pre_verification: 'border-l-green-500',
-  rejection: 'border-l-red-500',
+  verification: 'border-l-success',
+  pre_verification: 'border-l-success',
+  rejection: 'border-l-destructive',
   pre_rejection: 'border-l-warning',
   submission: 'border-l-blue-500',
   update: 'border-l-blue-500',
-  deletion: 'border-l-red-500',
+  deletion: 'border-l-destructive',
 };
 
 type AuditEventCardProps = {
