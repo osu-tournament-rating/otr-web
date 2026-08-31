@@ -40,7 +40,7 @@ export type MatchRow = {
     rejectionReason: MatchRejectionReason;
     verifiedByUsername: string | null;
   };
-  startDate: string;
+  startDate: string | null;
   winRecord: TournamentMatch['winRecord'];
   games: GameWithNotes[];
   matchAdminNotes: AdminNotePreview[];
@@ -200,9 +200,11 @@ export const columns = [
           </div>
           <div className="mt-1 flex flex-col gap-1 text-xs text-muted-foreground md:hidden">
             <div className="flex items-center gap-2">
-              <span className="whitespace-nowrap">
-                {formatUTCDate(new Date(row.original.startDate))}
-              </span>
+              {row.original.startDate && (
+                <span className="whitespace-nowrap">
+                  {formatUTCDate(new Date(row.original.startDate))}
+                </span>
+              )}
               <span className="whitespace-nowrap">
                 {row.original.games.length} games
               </span>
@@ -281,14 +283,21 @@ export const columns = [
         </Button>
       );
     },
-    cell: ({ getValue }) => (
-      <span className="hidden md:inline">
-        {formatUTCDateFull(new Date(getValue()))}
-      </span>
-    ),
+    cell: ({ getValue }) => {
+      const startDate = getValue();
+      return (
+        <span className="hidden md:inline">
+          {startDate ? formatUTCDateFull(new Date(startDate)) : 'Unknown'}
+        </span>
+      );
+    },
     sortingFn: (rowA, rowB) => {
-      const dateA = new Date(rowA.original.startDate).getTime();
-      const dateB = new Date(rowB.original.startDate).getTime();
+      const dateA = rowA.original.startDate
+        ? new Date(rowA.original.startDate).getTime()
+        : 0;
+      const dateB = rowB.original.startDate
+        ? new Date(rowB.original.startDate).getTime()
+        : 0;
       return dateA - dateB;
     },
   }),

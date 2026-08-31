@@ -53,3 +53,21 @@ export function parseDuration(value: string): number | null {
     .split(':')
     .reduce((total, part) => total * 60 + Number(part), 0);
 }
+
+/** Key of the UTC week containing `date`, weeks running Thursday to Wednesday. */
+export function playWeekKey(date: Date): number {
+  return Math.floor(date.getTime() / 86_400_000 / 7);
+}
+
+const dateRangeFormat = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+/** `Sat, Jul 20 – Sun, Jul 21, 2024`, collapsing to one date when they match. */
+export function formatUTCDateRange(first: Date, last: Date): string {
+  return dateRangeFormat.formatRange(first, last);
+}

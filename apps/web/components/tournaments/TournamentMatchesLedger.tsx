@@ -14,22 +14,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatUTCDate } from '@/lib/utils/date';
+import { formatUTCDateRange, playWeekKey } from '@/lib/utils/date';
 import { cn } from '@/lib/utils';
 import MatchLedgerRow from './MatchLedgerRow';
 
 type SortKey = 'newest' | 'oldest' | 'name' | 'games' | 'closest' | 'status';
 
 const sortLabels: Record<SortKey, string> = {
-  newest: 'Day, newest first',
-  oldest: 'Day, oldest first',
+  newest: 'Date, newest first',
+  oldest: 'Date, oldest first',
   name: 'Match name',
   games: 'Games played',
   closest: 'Closest result',
   status: 'Verification status',
 };
 
-const startedAt = (match: MatchRow) => new Date(match.startDate).getTime();
+const startedAt = (match: MatchRow) =>
+  match.startDate ? new Date(match.startDate).getTime() : 0;
 
 const margin = (match: MatchRow) =>
   match.winRecord
@@ -46,16 +47,6 @@ const comparators: Record<SortKey, (a: MatchRow, b: MatchRow) => number> = {
     getVerificationStatusPriority(a.status.verificationStatus) -
     getVerificationStatusPriority(b.status.verificationStatus),
 };
-
-function dayLabel(day: string) {
-  return new Date(`${day}T00:00:00Z`).toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-}
 
 interface TournamentMatchesLedgerProps {
   matches: MatchRow[];
@@ -74,22 +65,39 @@ export default function TournamentMatchesLedger({
 
   const groups = useMemo(() => {
     const sorted = [...matches].sort(comparators[sort]);
-
-    if (sort !== 'newest' && sort !== 'oldest') {
-      return [{ day: null, matches: sorted }];
-    }
-
-    const byDay = new Map<string, MatchRow[]>();
+    const byWeek = new Map<number, MatchRow[]>();
+    const undated: MatchRow[] = [];
 
     for (const match of sorted) {
-      const day = formatUTCDate(new Date(match.startDate));
-      byDay.set(day, [...(byDay.get(day) ?? []), match]);
+      if (!match.startDate) {
+        undated.push(match);
+        continue;
+      }
+
+      const week = playWeekKey(new Date(match.startDate));
+      byWeek.set(week, [...(byWeek.get(week) ?? []), match]);
     }
 
-    return [...byDay].map(([day, dayMatches]) => ({
-      day,
-      matches: dayMatches,
-    }));
+    const weeks = [...byWeek]
+      .sort(([a], [b]) => (sort === 'oldest' ? a - b : b - a))
+      .map(([week, weekMatches]) => {
+        const times = weekMatches.map(startedAt);
+
+        return {
+          key: String(week),
+          label: formatUTCDateRange(
+            new Date(Math.min(...times)),
+            new Date(Math.max(...times))
+          ),
+          matches: weekMatches,
+        };
+      });
+
+    if (undated.length) {
+      weeks.push({ key: 'undated', label: 'No start time', matches: undated });
+    }
+
+    return weeks;
   }, [matches, sort]);
 
   return (
@@ -126,7 +134,7 @@ export default function TournamentMatchesLedger({
             : 0;
 
           return (
-            <section key={group.day ?? 'all'}>
+            <section key={group.key}>
               <header
                 className={cn(
                   'z-10 flex items-center gap-2 border-b bg-muted px-3 py-1.5 md:sticky md:top-(--header-height-px)',
@@ -145,18 +153,12 @@ export default function TournamentMatchesLedger({
                     onCheckedChange={(checked) =>
                       onSelectMatches(ids, checked === true)
                     }
-                    aria-label={
-                      group.day
-                        ? `Select matches on ${dayLabel(group.day)}`
-                        : 'Select all matches'
-                    }
+                    aria-label={`Select matches from ${group.label}`}
                   />
                 )}
-                <span className="text-sm font-semibold">
-                  {group.day ? dayLabel(group.day) : sortLabels[sort]}
-                </span>
+                <span className="text-sm font-semibold">{group.label}</span>
                 <span className="text-xs text-muted-foreground">
-                  {group.matches.length}{' '}
+                  · {group.matches.length}{' '}
                   {group.matches.length === 1 ? 'match' : 'matches'}
                 </span>
               </header>

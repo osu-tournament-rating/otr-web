@@ -8,9 +8,10 @@ import VerificationBadge from '@/components/badges/VerificationBadge';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { formatUTCTime } from '@/lib/utils/date';
+import { VerificationStatusEnumHelper } from '@/lib/enum-helpers';
 import { parseTeamNames } from '@/lib/utils/match';
 import { cn } from '@/lib/utils';
-import { Team } from '@otr/core/osu';
+import { Team, VerificationStatus } from '@otr/core/osu';
 
 function Scoreline({ winRecord }: { winRecord: MatchRow['winRecord'] }) {
   if (!winRecord) {
@@ -122,6 +123,49 @@ function Notes({ match }: { match: MatchRow }) {
   );
 }
 
+function GamePips({
+  games,
+  className,
+}: {
+  games: MatchRow['games'];
+  className?: string;
+}) {
+  const counts = new Map<VerificationStatus, number>();
+  for (const game of games) {
+    counts.set(
+      game.verificationStatus,
+      (counts.get(game.verificationStatus) ?? 0) + 1
+    );
+  }
+
+  const summary = [...counts]
+    .map(
+      ([status, count]) =>
+        `${count} ${VerificationStatusEnumHelper.getMetadata(status).text.toLowerCase()}`
+    )
+    .join(', ');
+
+  return (
+    <div
+      className={cn('flex flex-wrap items-center gap-0.5', className)}
+      aria-label={`${games.length} ${games.length === 1 ? 'game' : 'games'}: ${summary}`}
+    >
+      {games.map((game, index) => (
+        <VerificationBadge
+          key={game.id}
+          verificationStatus={game.verificationStatus}
+          warningFlags={game.warningFlags}
+          rejectionReason={game.rejectionReason}
+          entityType="game"
+          gameIndex={index}
+          size="pip"
+          minimal
+        />
+      ))}
+    </div>
+  );
+}
+
 interface MatchLedgerRowProps {
   match: MatchRow;
   isSelected: boolean;
@@ -133,12 +177,12 @@ export default function MatchLedgerRow({
   isSelected,
   onSelect,
 }: MatchLedgerRowProps) {
-  const pips = [...match.games].sort((a, b) => {
+  const games = [...match.games].sort((a, b) => {
     const startA = a.startTime ? new Date(a.startTime).getTime() : 0;
     const startB = b.startTime ? new Date(b.startTime).getTime() : 0;
     return startA - startB;
   });
-  const shown = pips.slice(0, 16);
+  const startedAt = match.startDate ? new Date(match.startDate) : null;
 
   return (
     <div
@@ -166,10 +210,13 @@ export default function MatchLedgerRow({
           </Link>
           <Notes match={match} />
         </div>
-        <span className="text-xs text-muted-foreground md:hidden">
-          {formatUTCTime(new Date(match.startDate))} · {match.games.length}{' '}
-          games
-        </span>
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground md:hidden">
+          <span>
+            {startedAt ? `${formatUTCTime(startedAt)} · ` : ''}
+            {match.games.length} games
+          </span>
+          <GamePips games={games} />
+        </div>
       </div>
       <span className="shrink-0">
         <VerificationBadge
@@ -178,31 +225,13 @@ export default function MatchLedgerRow({
           rejectionReason={match.status.rejectionReason}
           entityType="match"
           verifierUsername={match.status.verifiedByUsername ?? undefined}
-          size="xs"
+          size="pip"
           minimal
         />
       </span>
-      <div className="hidden w-60 shrink-0 items-center gap-0.5 md:flex">
-        {shown.map((game, index) => (
-          <VerificationBadge
-            key={game.id}
-            verificationStatus={game.verificationStatus}
-            warningFlags={game.warningFlags}
-            rejectionReason={game.rejectionReason}
-            entityType="game"
-            gameIndex={index}
-            size="xs"
-            minimal
-          />
-        ))}
-        {pips.length > shown.length && (
-          <span className="text-xs text-muted-foreground">
-            +{pips.length - shown.length}
-          </span>
-        )}
-      </div>
+      <GamePips games={games} className="hidden w-72 shrink-0 md:flex" />
       <span className="hidden w-10 shrink-0 text-right text-xs text-muted-foreground tabular-nums md:inline">
-        {formatUTCTime(new Date(match.startDate))}
+        {startedAt ? formatUTCTime(startedAt) : ''}
       </span>
     </div>
   );
