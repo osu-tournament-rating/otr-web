@@ -292,13 +292,6 @@ export default function VerificationBadge({
     minimal
   );
 
-  const pipTone =
-    size === 'pip' &&
-    !hasWarnings &&
-    verificationStatus === VerificationStatus.Verified
-      ? 'text-success-foreground/45'
-      : undefined;
-
   const badge = (
     <div
       className={cn(
@@ -307,7 +300,7 @@ export default function VerificationBadge({
         displayText ? sizeConfig.padding : sizeConfig.iconPadding
       )}
     >
-      <Icon className={cn(sizeConfig.icon, iconColor, pipTone)} />
+      <Icon className={cn(sizeConfig.icon, iconColor)} />
       {displayText && (
         <span
           className={cn(

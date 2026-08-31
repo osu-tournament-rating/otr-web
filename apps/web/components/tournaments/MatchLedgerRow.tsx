@@ -225,8 +225,7 @@ export default function MatchLedgerRow({
           rejectionReason={match.status.rejectionReason}
           entityType="match"
           verifierUsername={match.status.verifiedByUsername ?? undefined}
-          size="pip"
-          minimal
+          size="small"
         />
       </span>
       <GamePips games={games} className="hidden w-72 shrink-0 md:flex" />
