@@ -388,10 +388,12 @@ export class RoomFetchService {
       const team = convertTeam(teamColor);
       const grade = convertScoreGrade(score.rank);
       const mods = convertModsToFlags(score.mods ?? []);
-      const totalScore = calculateScoreWithMods(score.total_score, mods);
+      const rawScore = score.total_score;
+      const adjustedScore = calculateScoreWithMods(rawScore, mods);
 
       const baseValues = {
-        score: totalScore,
+        rawScore,
+        scoreOverride: adjustedScore === rawScore ? null : adjustedScore,
         placement: 0,
         accuracy: score.accuracy,
         pp: score.pp,
@@ -418,7 +420,7 @@ export class RoomFetchService {
         statIgnoreMiss: stats.ignore_miss ?? null,
         statLegacyComboIncrease: stats.legacy_combo_increase ?? null,
         statComboBreak: stats.combo_break ?? null,
-        legacyTotalScore: score.legacy_total_score ?? score.total_score,
+        legacyTotalScore: score.legacy_total_score,
         team,
         ruleset,
       };
