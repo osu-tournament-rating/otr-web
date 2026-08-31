@@ -35,7 +35,9 @@ function Scoreline({ winRecord }: { winRecord: MatchRow['winRecord'] }) {
   return (
     <SimpleTooltip
       content={
-        winRecord.isTied ? 'Draw' : 'Points won across the verified games'
+        winRecord.isTied
+          ? 'Draw — some games may not have been counted, so this result is not accurate'
+          : 'Points won across the verified games'
       }
     >
       <span
