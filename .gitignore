@@ -37,6 +37,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
+.claude/agent-memory
 .env
 .env.*
 !.env.example
