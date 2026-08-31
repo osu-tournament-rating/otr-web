@@ -515,13 +515,15 @@ export class MatchFetchService {
       );
       const team = convertTeam(score.match?.team ?? 'none');
       const mods = convertModsToFlags(score.mods ?? []);
-      const totalScore = calculateScoreWithMods(score.total_score ?? 0, mods);
+      const rawScore = score.total_score ?? 0;
+      const adjustedScore = calculateScoreWithMods(rawScore, mods);
       const grade = convertScoreGrade(score.rank);
 
       const stats = score.statistics ?? {};
 
       const baseValues = {
-        score: totalScore,
+        rawScore,
+        scoreOverride: adjustedScore === rawScore ? null : adjustedScore,
         placement: 0,
         accuracy: score.accuracy,
         pp: score.pp ?? null,

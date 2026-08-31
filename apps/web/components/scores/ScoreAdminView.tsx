@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -158,7 +159,8 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
 
       await orpc.scores.admin.update({
         id: score.id,
-        score: values.score,
+        rawScore: values.rawScore,
+        scoreOverride: values.scoreOverride,
         placement: values.placement,
         maxCombo: values.maxCombo,
         accuracy: values.accuracy,
@@ -214,7 +216,8 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
 
   async function handleSubmit(values: z.infer<typeof scoreEditFormSchema>) {
     const scoreFields = [
-      'score',
+      'rawScore',
+      'scoreOverride',
       'accuracy',
       'maxCombo',
       'statGreat',
@@ -315,13 +318,13 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                 />
               </div>
 
-              <div className="flex gap-5">
+              <div className="grid grid-cols-2 items-start gap-4 sm:grid-cols-3">
                 <FormField
                   control={form.control}
-                  name="score"
+                  name="rawScore"
                   render={({ field, fieldState }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Score</FormLabel>
+                    <FormItem>
+                      <FormLabel>Raw Score</FormLabel>
                       <FormControl>
                         <Input
                           className={inputChangedStyle(fieldState)}
@@ -330,6 +333,38 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                           {...field}
                         />
                       </FormControl>
+                      <FormDescription>
+                        The total osu! reported.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="scoreOverride"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormLabel>Score Override</FormLabel>
+                      <FormControl>
+                        <Input
+                          className={inputChangedStyle(fieldState)}
+                          type="number"
+                          min={0}
+                          {...field}
+                          value={field.value ?? ''}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ''
+                                ? null
+                                : Number(e.target.value)
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Used in place of the raw score. Empty for none.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -338,7 +373,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                   control={form.control}
                   name="maxCombo"
                   render={({ field, fieldState }) => (
-                    <FormItem className="flex-1">
+                    <FormItem>
                       <FormLabel>Max Combo</FormLabel>
                       <FormControl>
                         <Input
@@ -356,7 +391,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                   control={form.control}
                   name="accuracy"
                   render={({ field, fieldState }) => (
-                    <FormItem className="flex-1">
+                    <FormItem>
                       <FormLabel>Accuracy</FormLabel>
                       <FormControl>
                         <Input
@@ -373,7 +408,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                   control={form.control}
                   name="grade"
                   render={({ field: { value, onChange }, fieldState }) => (
-                    <FormItem className="flex-1">
+                    <FormItem>
                       <FormLabel>Grade</FormLabel>
                       <Select
                         onValueChange={(val) => onChange(Number(val))}
