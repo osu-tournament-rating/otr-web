@@ -431,13 +431,6 @@ export default async function Page({ params, searchParams }: PageProps) {
           className="mt-4"
         >
           <Card className="p-6 font-sans">
-            <div className="flex items-center gap-2">
-              <Swords className="h-6 w-6 text-primary" />
-              <h3 className="font-sans text-lg font-semibold">Matches</h3>
-              <span className="text-sm text-muted-foreground">
-                ({tableData.length})
-              </span>
-            </div>
             <TournamentMatchesAdminView
               tournamentId={tournament.id}
               tournamentName={tournament.name}

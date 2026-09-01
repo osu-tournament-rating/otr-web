@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Swords, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from '@/lib/hooks/useSession';
@@ -20,7 +20,10 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import TournamentMatchesLedger from './TournamentMatchesLedger';
+import TournamentMatchesLedger, {
+  MatchSortSelect,
+  type SortKey,
+} from './TournamentMatchesLedger';
 import { MatchRow } from './matchRow';
 
 interface TournamentMatchesAdminViewProps {
@@ -59,6 +62,7 @@ export default function TournamentMatchesAdminView({
   const [selectedMatchIds, setSelectedMatchIds] = useState<Set<number>>(
     new Set()
   );
+  const [sort, setSort] = useState<SortKey>('newest');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -239,212 +243,236 @@ export default function TournamentMatchesAdminView({
     }
   }, [matchIdsToAdd, tournamentId, addAsLazer, router]);
 
+  const header = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Swords className="h-6 w-6 text-primary" />
+      <h3 className="font-sans text-lg font-semibold">Matches</h3>
+      <span className="text-sm text-muted-foreground">({matches.length})</span>
+      <div className="ml-auto">
+        <MatchSortSelect value={sort} onChange={setSort} />
+      </div>
+    </div>
+  );
+
   if (!isAdmin) {
-    return <TournamentMatchesLedger matches={matches} />;
+    return (
+      <div className="space-y-4">
+        {header}
+        <TournamentMatchesLedger matches={matches} sort={sort} />
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
-        <div className="flex items-center gap-2">
-          <Checkbox
-            checked={
-              matches.length > 0 && selectedMatchIds.size === matches.length
-            }
-            onCheckedChange={handleSelectAll}
-            aria-label="Select all matches"
-          />
-          <span className="text-sm text-muted-foreground">
-            {selectedMatchIds.size > 0
-              ? `${selectedMatchIds.size} selected`
-              : 'Select all'}
-          </span>
-        </div>
+    <div className="space-y-4">
+      {header}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={
+                matches.length > 0 && selectedMatchIds.size === matches.length
+              }
+              onCheckedChange={handleSelectAll}
+              aria-label="Select all matches"
+            />
+            <span className="text-sm text-muted-foreground">
+              {selectedMatchIds.size > 0
+                ? `${selectedMatchIds.size} selected`
+                : 'Select all'}
+            </span>
+          </div>
 
-        <div className="flex items-center gap-2">
-          {selectedMatchIds.size > 0 && (
-            <Dialog
-              open={isDeleteDialogOpen}
-              onOpenChange={setIsDeleteDialogOpen}
-            >
+          <div className="flex items-center gap-2">
+            {selectedMatchIds.size > 0 && (
+              <Dialog
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Remove Selected ({selectedMatchIds.size})
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col overflow-hidden">
+                  <DialogHeader>
+                    <DialogTitle>Confirm Match Removal</DialogTitle>
+                    <DialogDescription asChild>
+                      <div>
+                        Are you sure you want to remove{' '}
+                        <strong>{selectedMatchIds.size}</strong> match
+                        {selectedMatchIds.size === 1 ? '' : 'es'} from{' '}
+                        <strong>{tournamentName}</strong>?
+                      </div>
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="flex-1 space-y-3 overflow-y-auto py-2">
+                    <div className="rounded-lg border bg-muted/30 p-3">
+                      <p className="mb-2 text-sm font-medium">
+                        Matches to be removed:
+                      </p>
+                      <div className="max-h-60 space-y-1 overflow-y-auto">
+                        {Array.from(selectedMatchIds).map((matchId) => {
+                          const match = matches.find((m) => m.id === matchId);
+                          if (!match) return null;
+
+                          return (
+                            <div
+                              key={matchId}
+                              className="rounded px-2 py-1 text-sm hover:bg-muted/50"
+                            >
+                              <div className="flex items-start gap-2">
+                                <Link
+                                  href={`/matches/${match.id}`}
+                                  className="min-w-[3rem] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-primary"
+                                >
+                                  #{match.id}
+                                </Link>
+                                <div className="flex-1">
+                                  <span>
+                                    {match.name || `Match ${match.id}`}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 text-sm text-muted-foreground">
+                      <p>
+                        • This will permanently delete the selected matches from
+                        the tournament
+                      </p>
+                      <p>
+                        • All games and scores within these matches will also be
+                        deleted
+                      </p>
+                      <p>• This action cannot be undone</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsDeleteDialogOpen(false)}
+                      disabled={isDeleting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteSelected}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Removing...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Remove Matches
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="destructive" size="sm">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Remove Selected ({selectedMatchIds.size})
+                <Button size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Matches
                 </Button>
               </DialogTrigger>
-              <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col overflow-hidden">
+              <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Confirm Match Removal</DialogTitle>
+                  <DialogTitle>Add Matches</DialogTitle>
                   <DialogDescription asChild>
                     <div>
-                      Are you sure you want to remove{' '}
-                      <strong>{selectedMatchIds.size}</strong> match
-                      {selectedMatchIds.size === 1 ? '' : 'es'} from{' '}
-                      <strong>{tournamentName}</strong>?
+                      <p>
+                        Enter osu! match IDs or URLs to add to the tournament.
+                        You can enter multiple values separated by commas or new
+                        lines. Match data will be automatically fetched from the
+                        osu! API.
+                      </p>
+                      <p className="mt-2 text-sm">Accepted formats:</p>
+                      <ul className="mt-1 list-inside list-disc text-sm">
+                        <li>Direct match ID (e.g., 123456789)</li>
+                        <li>
+                          Match URL (e.g.,
+                          https://osu.ppy.sh/community/matches/123456789)
+                        </li>
+                        <li>
+                          Short URL (e.g., https://osu.ppy.sh/mp/123456789)
+                        </li>
+                      </ul>
                     </div>
                   </DialogDescription>
                 </DialogHeader>
-
-                <div className="flex-1 space-y-3 overflow-y-auto py-2">
-                  <div className="rounded-lg border bg-muted/30 p-3">
-                    <p className="mb-2 text-sm font-medium">
-                      Matches to be removed:
-                    </p>
-                    <div className="max-h-60 space-y-1 overflow-y-auto">
-                      {Array.from(selectedMatchIds).map((matchId) => {
-                        const match = matches.find((m) => m.id === matchId);
-                        if (!match) return null;
-
-                        return (
-                          <div
-                            key={matchId}
-                            className="rounded px-2 py-1 text-sm hover:bg-muted/50"
-                          >
-                            <div className="flex items-start gap-2">
-                              <Link
-                                href={`/matches/${match.id}`}
-                                className="min-w-[3rem] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-primary"
-                              >
-                                #{match.id}
-                              </Link>
-                              <div className="flex-1">
-                                <span>{match.name || `Match ${match.id}`}</span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                <div className="space-y-4">
+                  <Textarea
+                    placeholder={`Enter match IDs or URLs`}
+                    value={matchIdsToAdd}
+                    onChange={(e) => setMatchIdsToAdd(e.target.value)}
+                    rows={5}
+                  />
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="lazer-mode"
+                      checked={addAsLazer}
+                      onCheckedChange={(checked) =>
+                        setAddAsLazer(checked === true)
+                      }
+                    />
+                    <Label htmlFor="lazer-mode" className="text-sm">
+                      Lazer matches
+                    </Label>
                   </div>
-
-                  <div className="space-y-1 text-sm text-muted-foreground">
-                    <p>
-                      • This will permanently delete the selected matches from
-                      the tournament
-                    </p>
-                    <p>
-                      • All games and scores within these matches will also be
-                      deleted
-                    </p>
-                    <p>• This action cannot be undone</p>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsAddDialogOpen(false);
+                        setMatchIdsToAdd('');
+                      }}
+                      disabled={isAdding}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleAddMatches} disabled={isAdding}>
+                      {isAdding ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4" />
+                          Add Matches
+                        </>
+                      )}
+                    </Button>
                   </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsDeleteDialogOpen(false)}
-                    disabled={isDeleting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={handleDeleteSelected}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Removing...
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Remove Matches
-                      </>
-                    )}
-                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
-          )}
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Matches
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Matches</DialogTitle>
-                <DialogDescription asChild>
-                  <div>
-                    <p>
-                      Enter osu! match IDs or URLs to add to the tournament. You
-                      can enter multiple values separated by commas or new
-                      lines. Match data will be automatically fetched from the
-                      osu! API.
-                    </p>
-                    <p className="mt-2 text-sm">Accepted formats:</p>
-                    <ul className="mt-1 list-inside list-disc text-sm">
-                      <li>Direct match ID (e.g., 123456789)</li>
-                      <li>
-                        Match URL (e.g.,
-                        https://osu.ppy.sh/community/matches/123456789)
-                      </li>
-                      <li>Short URL (e.g., https://osu.ppy.sh/mp/123456789)</li>
-                    </ul>
-                  </div>
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Textarea
-                  placeholder={`Enter match IDs or URLs`}
-                  value={matchIdsToAdd}
-                  onChange={(e) => setMatchIdsToAdd(e.target.value)}
-                  rows={5}
-                />
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="lazer-mode"
-                    checked={addAsLazer}
-                    onCheckedChange={(checked) =>
-                      setAddAsLazer(checked === true)
-                    }
-                  />
-                  <Label htmlFor="lazer-mode" className="text-sm">
-                    Lazer matches
-                  </Label>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsAddDialogOpen(false);
-                      setMatchIdsToAdd('');
-                    }}
-                    disabled={isAdding}
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={handleAddMatches} disabled={isAdding}>
-                    {isAdding ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Adding...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-4 w-4" />
-                        Add Matches
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          </div>
         </div>
-      </div>
 
-      <TournamentMatchesLedger
-        matches={matches}
-        selectedMatchIds={selectedMatchIds}
-        onSelectMatch={handleSelectMatch}
-        onSelectMatches={handleSelectMatches}
-      />
+        <TournamentMatchesLedger
+          matches={matches}
+          sort={sort}
+          selectedMatchIds={selectedMatchIds}
+          onSelectMatch={handleSelectMatch}
+          onSelectMatches={handleSelectMatches}
+        />
+      </div>
     </div>
   );
 }

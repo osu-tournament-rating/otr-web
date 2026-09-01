@@ -13,10 +13,18 @@ import { parseTeamNames } from '@/lib/utils/match';
 import { cn } from '@/lib/utils';
 import { Team, VerificationStatus } from '@otr/core/osu';
 
-function Scoreline({ winRecord }: { winRecord: MatchRow['winRecord'] }) {
+function Scoreline({ match }: { match: MatchRow }) {
+  const winRecord = match.winRecord;
+
   if (!winRecord) {
     return (
-      <SimpleTooltip content="No result yet — the match is not verified">
+      <SimpleTooltip
+        content={
+          match.status.verificationStatus === VerificationStatus.Verified
+            ? 'No result yet — check back once stats are generated'
+            : 'No result yet — the match is not verified'
+        }
+      >
         <span className="w-14 shrink-0 text-center text-sm text-muted-foreground/60">
           &mdash;
         </span>
@@ -201,7 +209,7 @@ export default function MatchLedgerRow({
           className="shrink-0"
         />
       )}
-      <Scoreline winRecord={match.winRecord} />
+      <Scoreline match={match} />
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex min-w-0 items-baseline gap-1.5">
           <Link
