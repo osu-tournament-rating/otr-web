@@ -15,8 +15,8 @@ Run commands from the repository root unless noted.
   RabbitMQ, and auth fixtures. Write or run them only when instructed.
 - Avoid `bun run build` and the full E2E suite — both build, and both are slow.
   Fast iteration outweighs exhaustive checks on small changes.
-- Prefer running the site and screenshotting it to check your own work before
-  reporting a finished result.
+- Do not run the site or screenshot it to check your own work; the web
+  designer and tester verify the preview deployment.
 
 ## Tracing
 

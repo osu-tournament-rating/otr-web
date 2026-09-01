@@ -37,6 +37,8 @@ Use the current source as the authority. The bundled player-page screenshots are
 
 ## Run the local application
 
+Engineers do not run the site to check their own work; see `Verify in a browser`.
+
 Use the repository's existing root `.env` without printing, replacing, or committing it. The local environment already contains the data needed for realistic UI verification, so do not migrate, restore, or seed the database merely to verify UI.
 
 ```bash
@@ -48,6 +50,8 @@ The web app normally serves on `http://localhost:3000`. Poll `/` until it respon
 The data worker is not needed for ordinary UI verification. If a page is empty or the database connection fails, report the environment problem; do not mutate shared data to make a screenshot work.
 
 ## Verify in a browser
+
+This section is for the web-designer and tester agents on a preview deployment. An engineer stops after Checks.
 
 Use any available Playwright-compatible browser automation. If no browser integration is available, use the repository's installed Playwright package from a temporary untracked script or the CLI. Do not commit auth state, traces, reports, logs, or intermediate screenshots.
 
