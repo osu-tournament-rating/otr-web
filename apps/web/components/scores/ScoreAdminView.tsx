@@ -592,7 +592,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                 />
               </div>
 
-              <div className="flex gap-5">
+              <div className="grid gap-5 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="rejectionReason"
@@ -600,7 +600,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                     const flags = getEnumFlags(value, ScoreRejectionReason);
 
                     return (
-                      <FormItem className="flex-1">
+                      <FormItem className="min-w-0">
                         <FormLabel>Rejection Reason</FormLabel>
                         <MultipleSelect
                           className={inputChangedStyle(fieldState)}
@@ -627,7 +627,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                     const flags = getEnumFlags(value, Mods);
 
                     return (
-                      <FormItem className="flex-1">
+                      <FormItem className="min-w-0">
                         <FormLabel>Mods</FormLabel>
                         <MultipleSelect
                           className={inputChangedStyle(fieldState)}
