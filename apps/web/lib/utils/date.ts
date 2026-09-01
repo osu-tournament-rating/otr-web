@@ -21,6 +21,14 @@ export function formatUTCDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+/** `14:30`, in UTC. */
+export function formatUTCTime(date: Date): string {
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+
+  return `${hours}:${minutes}`;
+}
+
 /** `3:45`, `1:23:45`. */
 export function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
@@ -44,4 +52,22 @@ export function parseDuration(value: string): number | null {
   return trimmed
     .split(':')
     .reduce((total, part) => total * 60 + Number(part), 0);
+}
+
+/** Key of the UTC week containing `date`, weeks running Thursday to Wednesday. */
+export function playWeekKey(date: Date): number {
+  return Math.floor(date.getTime() / 86_400_000 / 7);
+}
+
+const dateRangeFormat = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+/** `Sat, Jul 20 – Sun, Jul 21, 2024`, collapsing to one date when they match. */
+export function formatUTCDateRange(first: Date, last: Date): string {
+  return dateRangeFormat.formatRange(first, last);
 }
