@@ -267,11 +267,15 @@ export default function TournamentMatchesAdminView({
     <div className="space-y-4">
       {header}
       <div className="space-y-2">
-        <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+        <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/30 p-3">
           <div className="flex items-center gap-2">
             <Checkbox
               checked={
-                matches.length > 0 && selectedMatchIds.size === matches.length
+                selectedMatchIds.size === 0
+                  ? false
+                  : selectedMatchIds.size === matches.length
+                    ? true
+                    : 'indeterminate'
               }
               onCheckedChange={handleSelectAll}
               aria-label="Select all matches"
