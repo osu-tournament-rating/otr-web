@@ -29,6 +29,7 @@ interface ChartDataEntry {
   averageScore: number;
   count: number;
   fill: string;
+  mods: number;
 }
 
 interface PlayerModStatsChartProps {
@@ -88,6 +89,7 @@ export default function PlayerModStatsChart({
           averageScore: Math.round(weightedSum / totalCount),
           count: totalCount,
           fill: getModColor(stat.mods),
+          mods: existing.mods | stat.mods,
         });
       } else {
         modMap.set(label, {
@@ -95,16 +97,18 @@ export default function PlayerModStatsChart({
           averageScore: normalizedAverageScore,
           count,
           fill: getModColor(stat.mods),
+          mods: stat.mods,
         });
       }
     });
 
     return Array.from(modMap.values())
       .filter((entry) => entry.count >= threshold)
-      .map(({ label, averageScore, fill }) => ({
+      .map(({ label, averageScore, fill, mods }) => ({
         label,
         averageScore,
         fill,
+        mods,
       }))
       .sort((a, b) => b.averageScore - a.averageScore);
   }, [modStats]);
@@ -120,21 +124,17 @@ export default function PlayerModStatsChart({
     );
   }
 
-  const hasEasyMod =
-    modStats.filter((stat) => stat.mods & Mods.Easy).length >=
-    modStats.length * MOD_CHART_DISPLAY_THRESHOLD;
+  const hasEasyMod = chartData.some((entry) => entry.mods & Mods.Easy);
 
   return (
     <Card className={className}>
       <CardHeader className="items-center">
-        <CardTitle className="flex flex-row gap-2">
+        <CardTitle className="flex items-center gap-2">
           <span>Mod Performance</span>
           {hasEasyMod && (
-            <span className="flex items-center">
-              <SimpleTooltip content="All EZ scores are multiplied by 1.75x">
-                <InfoIcon className="h-5 w-5 text-muted-foreground" />
-              </SimpleTooltip>
-            </span>
+            <SimpleTooltip content="All EZ scores are multiplied by 1.75x">
+              <InfoIcon className="h-4 w-4 text-muted-foreground" />
+            </SimpleTooltip>
           )}
         </CardTitle>
         <CardDescription>
