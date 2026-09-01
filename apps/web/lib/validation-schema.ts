@@ -147,7 +147,6 @@ export const gameEditFormSchema = z.object({
 });
 
 export const scoreEditFormSchema = z.object({
-  rawScore: z.coerce.number().nonnegative().int(),
   scoreOverride: z.coerce.number().nonnegative().int().nullable(),
   placement: z.coerce.number().nonnegative().int(),
   maxCombo: z.coerce.number().nonnegative().int(),
