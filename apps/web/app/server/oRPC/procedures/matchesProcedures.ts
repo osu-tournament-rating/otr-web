@@ -386,6 +386,8 @@ export const getMatch = publicProcedure
             id: schema.gameScores.id,
             playerId: schema.gameScores.playerId,
             gameId: schema.gameScores.gameId,
+            rawScore: schema.gameScores.rawScore,
+            scoreOverride: schema.gameScores.scoreOverride,
             score: schema.gameScores.score,
             placement: schema.gameScores.placement,
             maxCombo: schema.gameScores.maxCombo,

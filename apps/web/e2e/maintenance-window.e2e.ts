@@ -19,7 +19,8 @@ const MISSING_ID = 999_999_999;
 /** A valid score-update body, so a request reaching the handler fails at lookup. */
 const SCORE_UPDATE_BODY = {
   id: MISSING_ID,
-  score: 0,
+  rawScore: 0,
+  scoreOverride: null,
   placement: 1,
   maxCombo: 0,
   statGreat: null,

@@ -414,7 +414,14 @@ export const gameScores = pgTable(
       maxValue: 2147483647,
       cache: 1,
     }),
-    score: integer().notNull(),
+    rawScore: integer('raw_score').notNull(),
+    scoreOverride: integer('score_override'),
+    score: integer()
+      .notNull()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`COALESCE(${gameScores.scoreOverride}, ${gameScores.rawScore})`
+      ),
     placement: integer().notNull(),
     accuracy: doublePrecision().notNull(),
     pp: doublePrecision(),
