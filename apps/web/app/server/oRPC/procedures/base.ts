@@ -697,12 +697,46 @@ const withMetrics = base.middleware(async ({ context, path, next }) => {
   }
 });
 
+// Raised by the verification inheritance constraint triggers (0030); drizzle
+// wraps the driver error, so walk the cause chain
+function verificationInheritanceMessage(error: unknown): string | null {
+  for (let current = error; current;) {
+    if (typeof current !== 'object') {
+      return null;
+    }
+
+    const { code, constraint, message, cause } = current as Record<
+      string,
+      unknown
+    >;
+
+    if (
+      code === '23514' &&
+      typeof constraint === 'string' &&
+      constraint.endsWith('_verification_inheritance') &&
+      typeof message === 'string'
+    ) {
+      return message;
+    }
+
+    current = cause;
+  }
+
+  return null;
+}
+
 const withErrorBoundary = base.middleware(async ({ path, next }) => {
   try {
     return await next();
   } catch (error) {
     if (error instanceof ORPCError) {
       throw error;
+    }
+
+    const inheritanceMessage = verificationInheritanceMessage(error);
+
+    if (inheritanceMessage) {
+      throw new ORPCError('BAD_REQUEST', { message: inheritanceMessage });
     }
 
     const procedurePath = formatProcedurePath(path);

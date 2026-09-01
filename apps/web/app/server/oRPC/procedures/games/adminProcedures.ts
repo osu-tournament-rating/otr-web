@@ -5,6 +5,7 @@ import * as schema from '@otr/core/db/schema';
 import { withAuditUserId } from '@otr/core/db';
 import { cascadeGameRejection } from '@otr/core/db/rejection-cascade';
 import { cascadeGameVerification } from '@otr/core/db/verification-cascade';
+import { resolveGameVerification } from '@otr/core/db/verification-resolve';
 import {
   GameAdminDeleteInputSchema,
   GameAdminLookupInputSchema,
@@ -84,7 +85,11 @@ export const updateGameAdmin = adminMutationProcedure
           .where(eq(schema.games.id, input.id));
 
         if (input.verificationStatus === VerificationStatus.Verified) {
-          await cascadeGameVerification(tx, [input.id], { updatedAt: NOW });
+          if (input.children === 'set') {
+            await cascadeGameVerification(tx, [input.id], { updatedAt: NOW });
+          } else if (input.children === 'accept') {
+            await resolveGameVerification(tx, input.id, { updatedAt: NOW });
+          }
         }
 
         if (input.verificationStatus === VerificationStatus.Rejected) {

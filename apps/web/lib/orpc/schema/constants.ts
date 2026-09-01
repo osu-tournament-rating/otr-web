@@ -50,3 +50,14 @@ export type RatingAdjustmentTypeValue = z.infer<
   typeof RatingAdjustmentTypeSchema
 >;
 export type VerificationStatusValue = z.infer<typeof VerificationStatusSchema>;
+
+export const VerificationChildrenChoiceSchema = z
+  .enum(['set', 'accept', 'none'])
+  .optional()
+  .describe(
+    'What a verified parent does to its children: set=verify all, accept=resolve pre-statuses, none=leave unchanged (default)'
+  );
+
+export type VerificationChildrenChoice = NonNullable<
+  z.infer<typeof VerificationChildrenChoiceSchema>
+>;

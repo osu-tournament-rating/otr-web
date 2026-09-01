@@ -204,6 +204,13 @@
       "when": 1788217606445,
       "tag": "0028_game_score_score_override",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1788221803165,
+      "tag": "0029_verification_inheritance",
+      "breakpoints": true
     }
   ]
 }

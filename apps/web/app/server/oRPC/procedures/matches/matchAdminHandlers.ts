@@ -5,6 +5,7 @@ import * as schema from '@otr/core/db/schema';
 import { withAuditUserId } from '@otr/core/db';
 import { cascadeMatchRejection } from '@otr/core/db/rejection-cascade';
 import { cascadeMatchVerification } from '@otr/core/db/verification-cascade';
+import { resolveMatchVerification } from '@otr/core/db/verification-resolve';
 import type { MatchAdminUpdateInput } from '@/lib/orpc/schema/match';
 import type { DatabaseClient } from '@/lib/db';
 import { MatchWarningFlags, VerificationStatus } from '@otr/core/osu';
@@ -100,7 +101,11 @@ export async function updateMatchAdminHandler({
         .where(eq(schema.matches.id, input.id));
 
       if (input.verificationStatus === VerificationStatus.Verified) {
-        await cascadeMatchVerification(tx, [input.id], { updatedAt: NOW });
+        if (input.children === 'set') {
+          await cascadeMatchVerification(tx, [input.id], { updatedAt: NOW });
+        } else if (input.children === 'accept') {
+          await resolveMatchVerification(tx, input.id, { updatedAt: NOW });
+        }
       }
 
       if (input.verificationStatus === VerificationStatus.Rejected) {

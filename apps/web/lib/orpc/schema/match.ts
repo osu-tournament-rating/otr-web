@@ -18,6 +18,7 @@ import {
   ScoringTypeSchema,
   TeamSchema,
   TeamTypeSchema,
+  VerificationChildrenChoiceSchema,
   VerificationStatusSchema,
 } from './constants';
 import { AdminNoteSchema } from './common';
@@ -165,6 +166,7 @@ export const MatchAdminUpdateInputSchema = z.object({
   warningFlags: BitmaskEnumValueSchema,
   startTime: z.string().datetime().nullable(),
   endTime: z.string().datetime().nullable(),
+  children: VerificationChildrenChoiceSchema,
 });
 
 export const MatchAdminMutationResponseSchema = z.object({
@@ -193,6 +195,7 @@ export const GameAdminUpdateInputSchema = z.object({
   warningFlags: BitmaskEnumValueSchema,
   startTime: z.string().datetime().nullable(),
   endTime: z.string().datetime().nullable(),
+  children: VerificationChildrenChoiceSchema,
 });
 
 export const GameAdminMutationResponseSchema = z.object({
