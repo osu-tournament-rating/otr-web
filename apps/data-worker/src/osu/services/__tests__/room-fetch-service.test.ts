@@ -81,7 +81,7 @@ describe('processRoomScores', () => {
     await processRoomScores(createScore(['EZ', 'HD']));
 
     expect(inserted[0]?.rawScore).toBe(100_001);
-    expect(inserted[0]?.scoreOverride).toBe(175_002);
+    expect(inserted[0]?.adjustedScore).toBe(175_002);
     expect(inserted[0]?.mods).toBe((Mods.Easy | Mods.Hidden) as Mods);
     expect(inserted[0]?.legacyTotalScore).toBe(40_000);
   });
@@ -92,7 +92,7 @@ describe('processRoomScores', () => {
     await processRoomScores(createScore(['HD']));
 
     expect(inserted[0]?.rawScore).toBe(100_001);
-    expect(inserted[0]?.scoreOverride).toBeNull();
+    expect(inserted[0]?.adjustedScore).toBeNull();
     expect(inserted[0]?.legacyTotalScore).toBe(40_000);
   });
 
@@ -105,7 +105,7 @@ describe('processRoomScores', () => {
     await processRoomScores(createScore(['EZ']));
 
     expect(updated[0]?.rawScore).toBe(100_001);
-    expect(updated[0]?.scoreOverride).toBe(175_002);
+    expect(updated[0]?.adjustedScore).toBe(175_002);
     expect(updated[0]?.legacyTotalScore).toBe(40_000);
   });
 });

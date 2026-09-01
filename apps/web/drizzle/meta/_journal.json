@@ -211,6 +211,13 @@
       "when": 1788221803165,
       "tag": "0029_verification_inheritance",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1788226065174,
+      "tag": "0030_game_score_adjusted_score",
+      "breakpoints": true
     }
   ]
 }

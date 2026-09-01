@@ -117,6 +117,7 @@ export const auditFieldConfig: Record<
   [AuditEntityType.Score]: {
     score: { label: 'Score' },
     rawScore: { label: 'Raw Score' },
+    adjustedScore: { label: 'Adjusted Score' },
     scoreOverride: { label: 'Score Override' },
     placement: { label: 'Placement' },
     accuracy: { label: 'Accuracy' },

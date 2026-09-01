@@ -523,7 +523,7 @@ export class MatchFetchService {
 
       const baseValues = {
         rawScore,
-        scoreOverride: adjustedScore === rawScore ? null : adjustedScore,
+        adjustedScore: adjustedScore === rawScore ? null : adjustedScore,
         placement: 0,
         accuracy: score.accuracy,
         pp: score.pp ?? null,
