@@ -79,6 +79,7 @@ export default function AcceptPreVerificationStatusesButton({
                 <ul className="list-disc pl-4">
                   <li>Pre-rejected items will be marked as rejected.</li>
                   <li>Pre-verified items will be marked as verified.</li>
+                  <li>Everything under a rejected item will be rejected.</li>
                   <li>
                     This action will process the tournament and all its children
                     (matches, games, scores).

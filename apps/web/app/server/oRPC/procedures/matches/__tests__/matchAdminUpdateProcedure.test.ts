@@ -233,6 +233,29 @@ describe('updateMatchAdminHandler', () => {
     expect(db.matchUpdates[0].verifiedByUserId).toBe(99);
   });
 
+  it('leaves children alone when verified without a choice', async () => {
+    const db = new UpdateMatchTestDb(
+      {
+        id: 1,
+        verificationStatus: VerificationStatus.None,
+        verifiedByUserId: null,
+      },
+      { games: [{ id: 20, matchId: 1 }], gameScores: [{ id: 30, gameId: 20 }] }
+    );
+
+    await updateMatchAdminHandler({
+      input: { ...baseInput, verificationStatus: VerificationStatus.Verified },
+      context: {
+        db: db as unknown as DatabaseClient,
+        session: adminSession,
+        adminDataMutationDate: safeAdminDataMutationDate,
+      },
+    });
+
+    expect(db.gameUpdates).toHaveLength(0);
+    expect(db.gameScoreUpdates).toHaveLength(0);
+  });
+
   it('sets verifiedByUserId to admin on Rejected', async () => {
     const db = new UpdateMatchTestDb({
       id: 1,

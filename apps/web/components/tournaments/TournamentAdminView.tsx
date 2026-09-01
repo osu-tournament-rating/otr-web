@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +11,10 @@ import { z } from 'zod';
 import { hasAdminScope } from '@/lib/auth/roles';
 import { useSession } from '@/lib/hooks/useSession';
 import { orpc } from '@/lib/orpc/orpc';
-import type { VerificationStatusValue } from '@/lib/orpc/schema/tournament';
+import type {
+  VerificationChildrenChoice,
+  VerificationStatusValue,
+} from '@/lib/orpc/schema/constants';
 import { TournamentDetail } from '@/lib/orpc/schema/tournament';
 import { tournamentEditFormSchema } from '@/lib/validation-schema';
 import { cn } from '@/lib/utils';
@@ -42,6 +45,7 @@ import RulesetSelectContent from '../select/RulesetSelectContent';
 import VerificationStatusSelectContent from '../select/VerificationStatusSelectContent';
 import ResetAutomatedChecksButton from './ResetAutomatedChecksButton';
 import DeleteButton from '../shared/DeleteButton';
+import VerificationChildrenDialog from '../shared/VerificationChildrenDialog';
 import AcceptPreVerificationStatusesButton from './AcceptPreVerificationStatusesButton';
 import DeleteTournamentBeatmapsButton from './DeleteTournamentBeatmapsButton';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
@@ -49,7 +53,7 @@ import {
   getEnumFlags,
   TournamentRejectionReasonEnumHelper,
 } from '@/lib/enum-helpers';
-import { TournamentRejectionReason } from '@otr/core/osu';
+import { TournamentRejectionReason, VerificationStatus } from '@otr/core/osu';
 import RefetchMatchDataButton from './RefetchMatchDataButton';
 import RefetchBeatmapDataButton from './RefetchBeatmapDataButton';
 
@@ -98,6 +102,9 @@ export default function TournamentAdminView({
     () => mapTournamentToFormValues(tournament),
     [tournament]
   );
+  const [pendingValues, setPendingValues] = useState<z.infer<
+    typeof tournamentEditFormSchema
+  > | null>(null);
   const form = useForm<z.infer<typeof tournamentEditFormSchema>>({
     resolver: zodResolver(tournamentEditFormSchema) as Resolver<
       z.infer<typeof tournamentEditFormSchema>
@@ -117,6 +124,21 @@ export default function TournamentAdminView({
   const handleSubmit = async (
     values: z.infer<typeof tournamentEditFormSchema>
   ) => {
+    if (
+      values.verificationStatus === VerificationStatus.Verified &&
+      values.verificationStatus !== tournament.verificationStatus
+    ) {
+      setPendingValues(values);
+      return;
+    }
+
+    await submit(values);
+  };
+
+  const submit = async (
+    values: z.infer<typeof tournamentEditFormSchema>,
+    children?: VerificationChildrenChoice
+  ) => {
     try {
       await orpc.tournaments.admin.update({
         id: tournament.id,
@@ -131,12 +153,13 @@ export default function TournamentAdminView({
         rejectionReason: values.rejectionReason,
         startTime: values.startTime ? values.startTime.toISOString() : null,
         endTime: values.endTime ? values.endTime.toISOString() : null,
+        children,
       });
       form.reset(values);
       saveToast();
       router.refresh();
-    } catch {
-      errorSaveToast();
+    } catch (error) {
+      errorSaveToast(error);
     }
   };
 
@@ -385,6 +408,22 @@ export default function TournamentAdminView({
             </div>
           </form>
         </Form>
+        <VerificationChildrenDialog
+          open={pendingValues !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingValues(null);
+            }
+          }}
+          onChoice={(choice) => {
+            const values = pendingValues;
+            setPendingValues(null);
+
+            if (values) {
+              void submit(values, choice);
+            }
+          }}
+        />
       </DialogContent>
     </Dialog>
   );

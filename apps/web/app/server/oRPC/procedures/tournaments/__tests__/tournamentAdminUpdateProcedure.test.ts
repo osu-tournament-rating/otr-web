@@ -238,7 +238,7 @@ describe('updateTournamentAdminHandler', () => {
     expect(db.gameScoreUpdates).toHaveLength(0);
   });
 
-  it('clears warnings when the tournament is verified', async () => {
+  it('clears warnings when the tournament is verified and children are set', async () => {
     const db = new UpdateTournamentTestDb(
       {
         id: 1,
@@ -264,6 +264,7 @@ describe('updateTournamentAdminHandler', () => {
       input: {
         ...baseInput,
         verificationStatus: VerificationStatus.Verified,
+        children: 'set',
       },
       context: {
         db: db as unknown as DatabaseClient,
@@ -350,6 +351,79 @@ describe('updateTournamentAdminHandler', () => {
         }),
       ])
     );
+  });
+
+  it('leaves children alone when verified without a choice', async () => {
+    const db = new UpdateTournamentTestDb(
+      {
+        id: 1,
+        verificationStatus: VerificationStatus.None,
+        verifiedByUserId: null,
+        ruleset: Ruleset.Mania4k,
+      },
+      {
+        matches: [{ id: 10 }],
+        games: [{ id: 20, matchId: 10 }],
+        gameScores: [{ id: 30, gameId: 20 }],
+      }
+    );
+
+    await updateTournamentAdminHandler({
+      input: { ...baseInput, verificationStatus: VerificationStatus.Verified },
+      context: {
+        db: db as unknown as DatabaseClient,
+        session: adminSession,
+        adminDataMutationDate: safeAdminDataMutationDate,
+      },
+    });
+
+    expect(db.matchUpdates).toHaveLength(0);
+    expect(db.gameUpdates).toHaveLength(0);
+    expect(db.gameScoreUpdates).toHaveLength(0);
+  });
+
+  it('resolves pre-statuses when verified with the accept choice', async () => {
+    const db = new UpdateTournamentTestDb(
+      {
+        id: 1,
+        verificationStatus: VerificationStatus.None,
+        verifiedByUserId: null,
+        ruleset: Ruleset.Mania4k,
+      },
+      {
+        matches: [{ id: 10, verificationStatus: VerificationStatus.None }],
+        games: [
+          { id: 20, matchId: 10, verificationStatus: VerificationStatus.None },
+        ],
+        gameScores: [{ id: 30, gameId: 20 }],
+      }
+    );
+
+    await updateTournamentAdminHandler({
+      input: {
+        ...baseInput,
+        verificationStatus: VerificationStatus.Verified,
+        children: 'accept',
+      },
+      context: {
+        db: db as unknown as DatabaseClient,
+        session: adminSession,
+        adminDataMutationDate: safeAdminDataMutationDate,
+      },
+    });
+
+    expect(db.matchUpdates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          verificationStatus: VerificationStatus.Verified,
+          verifiedByUserId: 99,
+        }),
+        expect.objectContaining({
+          verificationStatus: VerificationStatus.Rejected,
+        }),
+      ])
+    );
+    expect(db.gameScoreUpdates.length).toBeGreaterThan(0);
   });
 
   describe('submittedByUserId and verifiedByUserId', () => {

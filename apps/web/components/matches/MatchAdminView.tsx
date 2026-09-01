@@ -37,12 +37,21 @@ import VerificationStatusSelectContent from '../select/VerificationStatusSelectC
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import { useSession } from '@/lib/hooks/useSession';
 import { hasAdminScope } from '@/lib/auth/roles';
-import { MatchRejectionReason, MatchWarningFlags } from '@otr/core/osu';
+import {
+  MatchRejectionReason,
+  MatchWarningFlags,
+  VerificationStatus,
+} from '@otr/core/osu';
 import type { MatchDetail } from '@/lib/orpc/schema/match';
-import type { VerificationStatusValue } from '@/lib/orpc/schema/constants';
+import type {
+  VerificationChildrenChoice,
+  VerificationStatusValue,
+} from '@/lib/orpc/schema/constants';
 import DeleteButton from '../shared/DeleteButton';
+import VerificationChildrenDialog from '../shared/VerificationChildrenDialog';
 import MergeMatchButton from './MergeMatchButton';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 const inputChangedStyle = (fieldState: ControllerFieldState) =>
   cn(
@@ -90,6 +99,9 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
     endTime: match.endTime ? new Date(match.endTime) : undefined,
   };
 
+  const [pendingValues, setPendingValues] = useState<z.infer<
+    typeof matchEditFormSchema
+  > | null>(null);
   const form = useForm<z.infer<typeof matchEditFormSchema>>({
     resolver: zodResolver(matchEditFormSchema) as Resolver<
       z.infer<typeof matchEditFormSchema>
@@ -108,6 +120,21 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
   }
 
   async function onSubmit(values: z.infer<typeof matchEditFormSchema>) {
+    if (
+      values.verificationStatus === VerificationStatus.Verified &&
+      values.verificationStatus !== match.verificationStatus
+    ) {
+      setPendingValues(values);
+      return;
+    }
+
+    await submit(values);
+  }
+
+  async function submit(
+    values: z.infer<typeof matchEditFormSchema>,
+    children?: VerificationChildrenChoice
+  ) {
     try {
       const startTimeInput =
         values.startTime ??
@@ -128,12 +155,13 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
         warningFlags: values.warningFlags,
         startTime: toNullableISOString(startTimeInput),
         endTime: toNullableISOString(endTimeInput),
+        children,
       });
 
       saveToast();
       router.refresh();
-    } catch {
-      errorSaveToast();
+    } catch (error) {
+      errorSaveToast(error);
     }
   }
 
@@ -303,6 +331,22 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
             </div>
           </form>
         </Form>
+        <VerificationChildrenDialog
+          open={pendingValues !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingValues(null);
+            }
+          }}
+          onChoice={(choice) => {
+            const values = pendingValues;
+            setPendingValues(null);
+
+            if (values) {
+              void submit(values, choice);
+            }
+          }}
+        />
       </DialogContent>
     </Dialog>
   );

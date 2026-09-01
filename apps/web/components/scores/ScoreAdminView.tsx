@@ -206,8 +206,8 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
       setAdminNote('');
 
       router.refresh();
-    } catch {
-      errorSaveToast();
+    } catch (error) {
+      errorSaveToast(error);
     } finally {
       setShowNotePrompt(false);
       setPendingSubmit(null);

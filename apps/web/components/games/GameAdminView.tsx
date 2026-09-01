@@ -10,12 +10,18 @@ import {
 } from '@/components/ui/form';
 import { gameEditFormSchema } from '@/lib/validation-schema';
 import { Game } from '@/lib/orpc/schema/match';
-import { GameRejectionReason, GameWarningFlags, Mods } from '@otr/core/osu';
+import {
+  GameRejectionReason,
+  GameWarningFlags,
+  Mods,
+  VerificationStatus,
+} from '@otr/core/osu';
 import { useSession } from '@/lib/hooks/useSession';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { EditIcon, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { ControllerFieldState, useForm, Resolver } from 'react-hook-form';
 import { z } from 'zod';
 import {
@@ -41,8 +47,12 @@ import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { orpc } from '@/lib/orpc/orpc';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import { hasAdminScope } from '@/lib/auth/roles';
-import type { VerificationStatusValue } from '@/lib/orpc/schema/constants';
+import type {
+  VerificationChildrenChoice,
+  VerificationStatusValue,
+} from '@/lib/orpc/schema/constants';
 import DeleteButton from '../shared/DeleteButton';
+import VerificationChildrenDialog from '../shared/VerificationChildrenDialog';
 import MergeGameButton from './MergeGameButton';
 import { Checkbox } from '@/components/ui/checkbox';
 import RulesetSelectContent from '@/components/select/RulesetSelectContent';
@@ -95,6 +105,9 @@ export default function GameAdminView({ game }: { game: Game }) {
     endTime: game.endTime ? new Date(game.endTime) : undefined,
   };
 
+  const [pendingValues, setPendingValues] = useState<z.infer<
+    typeof gameEditFormSchema
+  > | null>(null);
   const form = useForm<z.infer<typeof gameEditFormSchema>>({
     resolver: zodResolver(gameEditFormSchema) as Resolver<
       z.infer<typeof gameEditFormSchema>
@@ -113,6 +126,21 @@ export default function GameAdminView({ game }: { game: Game }) {
   }
 
   async function onSubmit(values: z.infer<typeof gameEditFormSchema>) {
+    if (
+      values.verificationStatus === VerificationStatus.Verified &&
+      values.verificationStatus !== game.verificationStatus
+    ) {
+      setPendingValues(values);
+      return;
+    }
+
+    await submit(values);
+  }
+
+  async function submit(
+    values: z.infer<typeof gameEditFormSchema>,
+    children?: VerificationChildrenChoice
+  ) {
     try {
       const verificationStatus =
         values.verificationStatus as VerificationStatusValue;
@@ -134,6 +162,7 @@ export default function GameAdminView({ game }: { game: Game }) {
         warningFlags: values.warningFlags,
         startTime: startTimeIso,
         endTime: endTimeIso,
+        children,
       });
 
       const nextStartTime =
@@ -148,8 +177,8 @@ export default function GameAdminView({ game }: { game: Game }) {
       });
       saveToast();
       router.refresh();
-    } catch {
-      errorSaveToast();
+    } catch (error) {
+      errorSaveToast(error);
     }
   }
 
@@ -413,6 +442,22 @@ export default function GameAdminView({ game }: { game: Game }) {
             </div>
           </form>
         </Form>
+        <VerificationChildrenDialog
+          open={pendingValues !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingValues(null);
+            }
+          }}
+          onChoice={(choice) => {
+            const values = pendingValues;
+            setPendingValues(null);
+
+            if (values) {
+              void submit(values, choice);
+            }
+          }}
+        />
       </DialogContent>
     </Dialog>
   );

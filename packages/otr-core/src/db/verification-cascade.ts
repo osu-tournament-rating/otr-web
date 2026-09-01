@@ -1,4 +1,4 @@
-import { and, inArray, ne, sql, type SQL } from 'drizzle-orm';
+import { inArray, sql, type SQL } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 import {
@@ -48,7 +48,7 @@ function resolveTimestamp(value?: TimestampValue): TimestampValue {
   return value ?? DEFAULT_TIMESTAMP;
 }
 
-/** Cascades to scores that are not already Verified or Rejected. */
+/** Cascades to every score under the given games. */
 async function cascadeScoresVerification(
   db: MutationClient,
   gameIds: number[],
@@ -65,19 +65,13 @@ async function cascadeScoresVerification(
       rejectionReason: 0,
       updated: updatedAt,
     })
-    .where(
-      and(
-        inArray(schema.gameScores.gameId, gameIds),
-        ne(schema.gameScores.verificationStatus, VerificationStatus.Verified),
-        ne(schema.gameScores.verificationStatus, VerificationStatus.Rejected)
-      )
-    )
+    .where(inArray(schema.gameScores.gameId, gameIds))
     .returning({ id: schema.gameScores.id });
 
   return updatedScores.length;
 }
 
-/** Cascades to games that are not already Verified or Rejected, clearing their warning flags. */
+/** Cascades to every game under the given matches, clearing their warning flags. */
 async function cascadeGamesVerification(
   db: MutationClient,
   matchIds: number[],
@@ -95,13 +89,7 @@ async function cascadeGamesVerification(
       warningFlags: GameWarningFlags.None,
       updated: updatedAt,
     })
-    .where(
-      and(
-        inArray(schema.games.matchId, matchIds),
-        ne(schema.games.verificationStatus, VerificationStatus.Verified),
-        ne(schema.games.verificationStatus, VerificationStatus.Rejected)
-      )
-    )
+    .where(inArray(schema.games.matchId, matchIds))
     .returning({ id: schema.games.id });
 
   const gameIds = updatedGames.map((game) => game.id);
@@ -109,7 +97,7 @@ async function cascadeGamesVerification(
   return { gameIds, gameCount: updatedGames.length };
 }
 
-/** Cascades to matches that are not already Verified or Rejected, clearing their warning flags. */
+/** Cascades to every match under the given tournaments, clearing their warning flags. */
 async function cascadeMatchesVerification(
   db: MutationClient,
   tournamentIds: number[],
@@ -127,13 +115,7 @@ async function cascadeMatchesVerification(
       warningFlags: MatchWarningFlags.None,
       updated: updatedAt,
     })
-    .where(
-      and(
-        inArray(schema.matches.tournamentId, tournamentIds),
-        ne(schema.matches.verificationStatus, VerificationStatus.Verified),
-        ne(schema.matches.verificationStatus, VerificationStatus.Rejected)
-      )
-    )
+    .where(inArray(schema.matches.tournamentId, tournamentIds))
     .returning({ id: schema.matches.id });
 
   const matchIds = updatedMatches.map((match) => match.id);

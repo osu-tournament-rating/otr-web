@@ -9,6 +9,7 @@ import { BeatmapListTopModSchema } from './beatmapList';
 import {
   CreatedUpdatedOmit,
   RulesetSchema,
+  VerificationChildrenChoiceSchema,
   VerificationStatusSchema,
 } from './constants';
 import type { VerificationStatusValue } from './constants';
@@ -145,6 +146,7 @@ export const TournamentAdminUpdateInputSchema = z.object({
   rejectionReason: z.number().int().min(0),
   startTime: z.string().datetime().nullable(),
   endTime: z.string().datetime().nullable(),
+  children: VerificationChildrenChoiceSchema,
 });
 
 export const TournamentIdInputSchema = z.object({
