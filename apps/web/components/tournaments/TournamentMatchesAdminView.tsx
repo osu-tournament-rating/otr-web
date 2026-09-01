@@ -283,7 +283,7 @@ export default function TournamentMatchesAdminView({
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {selectedMatchIds.size > 0 && (
               <Dialog
                 open={isDeleteDialogOpen}
