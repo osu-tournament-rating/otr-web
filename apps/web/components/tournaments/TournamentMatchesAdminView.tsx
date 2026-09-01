@@ -21,7 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import TournamentMatchesLedger from './TournamentMatchesLedger';
-import { MatchRow } from '@/app/tournaments/[id]/columns';
+import { MatchRow } from './matchRow';
 
 interface TournamentMatchesAdminViewProps {
   tournamentId: number;

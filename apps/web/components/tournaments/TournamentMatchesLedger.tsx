@@ -2,10 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-import {
-  getVerificationStatusPriority,
-  type MatchRow,
-} from '@/app/tournaments/[id]/columns';
+import { getVerificationStatusPriority, type MatchRow } from './matchRow';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
@@ -75,7 +72,12 @@ export default function TournamentMatchesLedger({
       }
 
       const week = playWeekKey(new Date(match.startDate));
-      byWeek.set(week, [...(byWeek.get(week) ?? []), match]);
+      const weekMatches = byWeek.get(week);
+      if (weekMatches) {
+        weekMatches.push(match);
+      } else {
+        byWeek.set(week, [match]);
+      }
     }
 
     const weeks = [...byWeek]

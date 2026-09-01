@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { StickyNote } from 'lucide-react';
 
-import type { MatchRow } from '@/app/tournaments/[id]/columns';
+import type { MatchRow } from './matchRow';
 import VerificationBadge from '@/components/badges/VerificationBadge';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -212,10 +212,10 @@ export default function MatchLedgerRow({
           </Link>
           <Notes match={match} />
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground md:hidden">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground lg:hidden">
           <span>
             {startedAt ? `${formatUTCTime(startedAt)} · ` : ''}
-            {match.games.length} games
+            {match.games.length} {match.games.length === 1 ? 'game' : 'games'}
           </span>
           <GamePips games={games} />
         </div>
@@ -230,8 +230,11 @@ export default function MatchLedgerRow({
           size="small"
         />
       </span>
-      <GamePips games={games} className="hidden w-72 shrink-0 md:flex" />
-      <span className="hidden w-10 shrink-0 text-right text-xs text-muted-foreground tabular-nums md:inline">
+      <GamePips
+        games={games}
+        className="hidden w-72 shrink-0 self-stretch border-l pl-3 lg:flex"
+      />
+      <span className="hidden w-10 shrink-0 text-right text-xs text-muted-foreground tabular-nums lg:inline">
         {startedAt ? formatUTCTime(startedAt) : ''}
       </span>
     </div>

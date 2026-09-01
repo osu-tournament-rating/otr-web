@@ -11,7 +11,7 @@ import {
 } from '@/lib/orpc/schema/tournament';
 import type { Metadata } from 'next';
 import { z } from 'zod';
-import { MatchRow } from './columns';
+import { MatchRow } from '@/components/tournaments/matchRow';
 import {
   SectionCard,
   SectionHeader,
