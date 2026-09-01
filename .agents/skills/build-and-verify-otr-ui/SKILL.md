@@ -13,9 +13,9 @@ Use the current source as the authority. The bundled player-page screenshots are
 2. Trace the data from its server procedure or query helper into the rendered component before choosing a client boundary.
 3. Reuse existing domain components, semantic theme tokens, icons, formatting helpers, and interaction patterns.
 4. Implement all states the boundary can produce: loading, empty, error, disabled, success, and permission-restricted states as applicable.
-5. Run focused static and behavior checks before opening the browser.
-6. Exercise the real workflow in the development app at desktop and mobile sizes, then run the relevant Playwright spec when its prerequisites are available.
-7. Report what changed, commands and results, visual checks, and any environment gap.
+5. Run focused static and behavior checks.
+6. Run the relevant Playwright spec when its prerequisites are available. The web designer and tester exercise the workflow on the preview deployment.
+7. Report what changed, commands and results, and any environment gap.
 
 ## Preserve frontend data boundaries
 
