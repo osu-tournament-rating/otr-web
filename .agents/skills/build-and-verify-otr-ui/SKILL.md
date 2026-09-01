@@ -13,9 +13,9 @@ Use the current source as the authority. The bundled player-page screenshots are
 2. Trace the data from its server procedure or query helper into the rendered component before choosing a client boundary.
 3. Reuse existing domain components, semantic theme tokens, icons, formatting helpers, and interaction patterns.
 4. Implement all states the boundary can produce: loading, empty, error, disabled, success, and permission-restricted states as applicable.
-5. Run focused static and behavior checks before opening the browser.
-6. Exercise the real workflow in the development app at desktop and mobile sizes, then run the relevant Playwright spec when its prerequisites are available.
-7. Report what changed, commands and results, visual checks, and any environment gap.
+5. Run focused static and behavior checks.
+6. Run the relevant Playwright spec when its prerequisites are available. The web designer and tester exercise the workflow on the preview deployment.
+7. Report what changed, commands and results, and any environment gap.
 
 ## Preserve frontend data boundaries
 
@@ -37,6 +37,8 @@ Use the current source as the authority. The bundled player-page screenshots are
 
 ## Run the local application
 
+Engineers do not run the site to check their own work; see `Verify in a browser`.
+
 Use the repository's existing root `.env` without printing, replacing, or committing it. The local environment already contains the data needed for realistic UI verification, so do not migrate, restore, or seed the database merely to verify UI.
 
 ```bash
@@ -48,6 +50,8 @@ The web app normally serves on `http://localhost:3000`. Poll `/` until it respon
 The data worker is not needed for ordinary UI verification. If a page is empty or the database connection fails, report the environment problem; do not mutate shared data to make a screenshot work.
 
 ## Verify in a browser
+
+This section is for the web-designer and tester agents on a preview deployment. An engineer stops after Checks.
 
 Use any available Playwright-compatible browser automation. If no browser integration is available, use the repository's installed Playwright package from a temporary untracked script or the CLI. Do not commit auth state, traces, reports, logs, or intermediate screenshots.
 
