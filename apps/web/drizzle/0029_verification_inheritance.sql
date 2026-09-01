@@ -125,21 +125,21 @@ EXECUTE FUNCTION public.check_tournament_verification_inheritance();--> statemen
 
 DROP TRIGGER IF EXISTS trg_matches_verification_inheritance ON matches;--> statement-breakpoint
 CREATE CONSTRAINT TRIGGER trg_matches_verification_inheritance
-AFTER INSERT OR UPDATE OF verification_status ON matches
+AFTER INSERT OR UPDATE OF verification_status, tournament_id ON matches
 DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW WHEN (NEW.verification_status IN (3, 4))
 EXECUTE FUNCTION public.check_match_verification_inheritance();--> statement-breakpoint
 
 DROP TRIGGER IF EXISTS trg_games_verification_inheritance ON games;--> statement-breakpoint
 CREATE CONSTRAINT TRIGGER trg_games_verification_inheritance
-AFTER INSERT OR UPDATE OF verification_status ON games
+AFTER INSERT OR UPDATE OF verification_status, match_id ON games
 DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW WHEN (NEW.verification_status IN (3, 4))
 EXECUTE FUNCTION public.check_game_verification_inheritance();--> statement-breakpoint
 
 DROP TRIGGER IF EXISTS trg_game_scores_verification_inheritance ON game_scores;--> statement-breakpoint
 CREATE CONSTRAINT TRIGGER trg_game_scores_verification_inheritance
-AFTER INSERT OR UPDATE OF verification_status ON game_scores
+AFTER INSERT OR UPDATE OF verification_status, game_id ON game_scores
 DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW WHEN (NEW.verification_status = 4)
 EXECUTE FUNCTION public.check_game_score_verification_inheritance();
