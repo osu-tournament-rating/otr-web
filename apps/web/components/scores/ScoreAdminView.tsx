@@ -122,10 +122,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
   );
 
   const isAdmin = hasAdminScope(session?.scopes ?? []);
-  const rawScoreInput = String(form.watch('rawScore') ?? '').trim();
-  const fallbackScore =
-    score.adjustedScore ??
-    (rawScoreInput === '' ? score.rawScore : Number(rawScoreInput));
+  const fallbackScore = score.adjustedScore ?? score.rawScore;
 
   if (!isAdmin) {
     return null;
@@ -163,7 +160,6 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
 
       await orpc.scores.admin.update({
         id: score.id,
-        rawScore: values.rawScore,
         scoreOverride: values.scoreOverride,
         placement: values.placement,
         maxCombo: values.maxCombo,
@@ -220,7 +216,6 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
 
   async function handleSubmit(values: z.infer<typeof scoreEditFormSchema>) {
     const scoreFields = [
-      'rawScore',
       'scoreOverride',
       'accuracy',
       'maxCombo',
@@ -323,27 +318,13 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
               </div>
 
               <div className="grid grid-cols-2 items-start gap-4 sm:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="rawScore"
-                  render={({ field, fieldState }) => (
-                    <FormItem>
-                      <FormLabel>Raw Score</FormLabel>
-                      <FormControl>
-                        <Input
-                          className={inputChangedStyle(fieldState)}
-                          type="number"
-                          min={0}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        The total osu! reported.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormItem>
+                  <FormLabel>Raw Score</FormLabel>
+                  <FormControl>
+                    <Input disabled type="number" value={score.rawScore} />
+                  </FormControl>
+                  <FormDescription>The total osu! reported.</FormDescription>
+                </FormItem>
                 <FormItem>
                   <FormLabel>Adjusted Score</FormLabel>
                   <FormControl>

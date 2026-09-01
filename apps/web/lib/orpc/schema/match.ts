@@ -229,7 +229,6 @@ export const GameAdminPreviewSchema = z.object({
 
 export const GameScoreAdminUpdateInputSchema = z.object({
   id: PositiveIntSchema,
-  rawScore: NonNegativeIntSchema,
   scoreOverride: NonNegativeIntSchema.nullable(),
   placement: NonNegativeIntSchema,
   maxCombo: NonNegativeIntSchema,

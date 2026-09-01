@@ -46,7 +46,6 @@ export const updateScoreAdmin = adminMutationProcedure
         await tx
           .update(schema.gameScores)
           .set({
-            rawScore: input.rawScore,
             scoreOverride: input.scoreOverride,
             placement: input.placement,
             maxCombo: input.maxCombo,
