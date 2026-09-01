@@ -27,6 +27,9 @@ type TimestampValue = string | SQL<unknown>;
 
 type ResolveOptions = {
   updatedAt?: TimestampValue;
+};
+
+type TournamentResolveOptions = ResolveOptions & {
   verifiedByUserId?: number;
 };
 
@@ -196,7 +199,7 @@ async function resolveUnderMatches(
 export async function resolveTournamentVerification(
   db: MutationClient,
   tournamentId: number,
-  options?: ResolveOptions
+  options?: TournamentResolveOptions
 ): Promise<VerificationResolveResult> {
   const updatedAt = resolveTimestamp(options?.updatedAt);
 

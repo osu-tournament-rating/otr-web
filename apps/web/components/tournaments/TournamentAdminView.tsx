@@ -121,6 +121,20 @@ export default function TournamentAdminView({
     return null;
   }
 
+  const handleSubmit = async (
+    values: z.infer<typeof tournamentEditFormSchema>
+  ) => {
+    if (
+      values.verificationStatus === VerificationStatus.Verified &&
+      values.verificationStatus !== tournament.verificationStatus
+    ) {
+      setPendingValues(values);
+      return;
+    }
+
+    await submit(values);
+  };
+
   const submit = async (
     values: z.infer<typeof tournamentEditFormSchema>,
     children?: VerificationChildrenChoice
@@ -149,99 +163,34 @@ export default function TournamentAdminView({
     }
   };
 
-  const handleSubmit = async (
-    values: z.infer<typeof tournamentEditFormSchema>
-  ) => {
-    if (
-      values.verificationStatus === VerificationStatus.Verified &&
-      values.verificationStatus !== tournament.verificationStatus
-    ) {
-      setPendingValues(values);
-      return;
-    }
-
-    await submit(values);
-  };
-
   return (
-    <>
-      <VerificationChildrenDialog
-        open={pendingValues !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPendingValues(null);
-          }
-        }}
-        onChoice={(choice) => {
-          const values = pendingValues;
-          setPendingValues(null);
-
-          if (values) {
-            void submit(values, choice);
-          }
-        }}
-      />
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button
-            className="h-6 w-6 hover:bg-black/15 hover:text-black dark:hover:bg-white/20 dark:hover:text-white"
-            variant={'ghost'}
-            size="icon"
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          className="h-6 w-6 hover:bg-black/15 hover:text-black dark:hover:bg-white/20 dark:hover:text-white"
+          variant={'ghost'}
+          size="icon"
+        >
+          <EditIcon className="h-3 w-3 text-neutral-600 hover:text-black dark:text-white/70 dark:hover:text-white" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="p-4">
+        <DialogHeader className="space-y-1">
+          <DialogTitle>Edit Tournament</DialogTitle>
+          <DialogDescription>Editing {tournament.name}</DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-3"
           >
-            <EditIcon className="h-3 w-3 text-neutral-600 hover:text-black dark:text-white/70 dark:hover:text-white" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="p-4">
-          <DialogHeader className="space-y-1">
-            <DialogTitle>Edit Tournament</DialogTitle>
-            <DialogDescription>Editing {tournament.name}</DialogDescription>
-          </DialogHeader>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSubmit)}
-              className="space-y-3"
-            >
-              <div className="flex gap-5">
-                <FormField
-                  control={form.control}
-                  name="abbreviation"
-                  render={({ field, fieldState }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Abbreviation</FormLabel>
-                      <FormControl>
-                        <Input
-                          className={inputChangedStyle(fieldState)}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field, fieldState }) => (
-                    <FormItem className="flex-3">
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          className={inputChangedStyle(fieldState)}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
+            <div className="flex gap-5">
               <FormField
                 control={form.control}
-                name="forumUrl"
+                name="abbreviation"
                 render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel>Forum URL</FormLabel>
+                  <FormItem className="flex-1">
+                    <FormLabel>Abbreviation</FormLabel>
                     <FormControl>
                       <Input
                         className={inputChangedStyle(fieldState)}
@@ -252,14 +201,71 @@ export default function TournamentAdminView({
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field, fieldState }) => (
+                  <FormItem className="flex-3">
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        className={inputChangedStyle(fieldState)}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-              <div className="flex gap-5">
-                <FormField
-                  control={form.control}
-                  name="ruleset"
-                  render={({ field: { onChange, value }, fieldState }) => (
+            <FormField
+              control={form.control}
+              name="forumUrl"
+              render={({ field, fieldState }) => (
+                <FormItem>
+                  <FormLabel>Forum URL</FormLabel>
+                  <FormControl>
+                    <Input
+                      className={inputChangedStyle(fieldState)}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex gap-5">
+              <FormField
+                control={form.control}
+                name="ruleset"
+                render={({ field: { onChange, value }, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Ruleset</FormLabel>
+                    <Select
+                      onValueChange={(val) => onChange(Number(val))}
+                      value={value.toString()}
+                    >
+                      <FormControl className="w-full">
+                        <SelectTrigger
+                          className={inputChangedStyle(fieldState)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <RulesetSelectContent />
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lobbySize"
+                render={({ field: { onChange, value }, fieldState }) => {
+                  return (
                     <FormItem className="flex-1">
-                      <FormLabel>Ruleset</FormLabel>
+                      <FormLabel>Format</FormLabel>
                       <Select
                         onValueChange={(val) => onChange(Number(val))}
                         value={value.toString()}
@@ -271,166 +277,154 @@ export default function TournamentAdminView({
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
-                        <RulesetSelectContent />
+                        <LobbySizeSelectContent />
                       </Select>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lobbySize"
-                  render={({ field: { onChange, value }, fieldState }) => {
-                    return (
-                      <FormItem className="flex-1">
-                        <FormLabel>Format</FormLabel>
-                        <Select
-                          onValueChange={(val) => onChange(Number(val))}
-                          value={value.toString()}
-                        >
-                          <FormControl className="w-full">
-                            <SelectTrigger
-                              className={inputChangedStyle(fieldState)}
-                            >
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <LobbySizeSelectContent />
-                        </Select>
-                      </FormItem>
-                    );
-                  }}
-                />
-                <FormField
-                  control={form.control}
-                  name="rankRangeLowerBound"
-                  render={({ field, fieldState }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Rank Restriction</FormLabel>
-                      <FormControl className="w-full">
-                        <Input
-                          {...field}
-                          min={1}
-                          className={inputChangedStyle(fieldState)}
-                          type={'number'}
-                          onChange={(e) =>
-                            field.onChange(e.target.valueAsNumber)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="rejectionReason"
-                render={({ field: { value, onChange }, fieldState }) => {
-                  const flags = getEnumFlags(value, TournamentRejectionReason);
-
-                  return (
-                    <FormItem>
-                      <FormLabel>Rejection Reason</FormLabel>
-                      <MultipleSelect
-                        className={inputChangedStyle(fieldState)}
-                        placeholder={'No rejection reason'}
-                        selected={flags.map(String)}
-                        options={tournamentRejectionReasonOptions}
-                        onChange={(values: string[]) => {
-                          let flag = 0;
-                          values.forEach((v: string) => {
-                            flag |= Number(v);
-                          });
-
-                          onChange(flag);
-                        }}
-                      />
                     </FormItem>
                   );
                 }}
               />
+              <FormField
+                control={form.control}
+                name="rankRangeLowerBound"
+                render={({ field, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Rank Restriction</FormLabel>
+                    <FormControl className="w-full">
+                      <Input
+                        {...field}
+                        min={1}
+                        className={inputChangedStyle(fieldState)}
+                        type={'number'}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-              <div className="flex gap-5">
-                <FormField
-                  control={form.control}
-                  name="verificationStatus"
-                  render={({ field: { value, onChange }, fieldState }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Verification Status</FormLabel>
-                      <Select
-                        onValueChange={(val) => {
-                          onChange(Number(val));
-                        }}
-                        value={value.toString()}
-                      >
-                        <FormControl className="w-full">
-                          <SelectTrigger
-                            className={inputChangedStyle(fieldState)}
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <VerificationStatusSelectContent />
-                      </Select>
-                    </FormItem>
-                  )}
+            <FormField
+              control={form.control}
+              name="rejectionReason"
+              render={({ field: { value, onChange }, fieldState }) => {
+                const flags = getEnumFlags(value, TournamentRejectionReason);
+
+                return (
+                  <FormItem>
+                    <FormLabel>Rejection Reason</FormLabel>
+                    <MultipleSelect
+                      className={inputChangedStyle(fieldState)}
+                      placeholder={'No rejection reason'}
+                      selected={flags.map(String)}
+                      options={tournamentRejectionReasonOptions}
+                      onChange={(values: string[]) => {
+                        let flag = 0;
+                        values.forEach((v: string) => {
+                          flag |= Number(v);
+                        });
+
+                        onChange(flag);
+                      }}
+                    />
+                  </FormItem>
+                );
+              }}
+            />
+
+            <div className="flex gap-5">
+              <FormField
+                control={form.control}
+                name="verificationStatus"
+                render={({ field: { value, onChange }, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Verification Status</FormLabel>
+                    <Select
+                      onValueChange={(val) => {
+                        onChange(Number(val));
+                      }}
+                      value={value.toString()}
+                    >
+                      <FormControl className="w-full">
+                        <SelectTrigger
+                          className={inputChangedStyle(fieldState)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <VerificationStatusSelectContent />
+                    </Select>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="flex items-center gap-6 border-t border-b border-border py-3">
+              <div className="flex gap-2">
+                <AcceptPreVerificationStatusesButton tournament={tournament} />
+                <ResetAutomatedChecksButton tournament={tournament} />
+              </div>
+
+              <div className="flex gap-2 border-l border-border pl-6">
+                <RefetchMatchDataButton tournament={tournament} />
+                <RefetchBeatmapDataButton tournament={tournament} />
+              </div>
+
+              <div className="flex gap-2 border-l border-border pl-6">
+                <DeleteTournamentBeatmapsButton tournament={tournament} />
+                <DeleteButton
+                  entityType="tournament"
+                  entityId={tournament.id}
+                  entityName={tournament.name}
+                  onDeleted={() => (window.location.href = '/tournaments')}
                 />
               </div>
+            </div>
 
-              <div className="flex items-center gap-6 border-t border-b border-border py-3">
-                <div className="flex gap-2">
-                  <AcceptPreVerificationStatusesButton
-                    tournament={tournament}
-                  />
-                  <ResetAutomatedChecksButton tournament={tournament} />
-                </div>
+            <div className="flex justify-between">
+              <Button
+                type="reset"
+                variant={'secondary'}
+                size="sm"
+                onClick={() => form.reset()}
+                disabled={
+                  !form.formState.isDirty || form.formState.isSubmitting
+                }
+              >
+                Clear
+              </Button>
 
-                <div className="flex gap-2 border-l border-border pl-6">
-                  <RefetchMatchDataButton tournament={tournament} />
-                  <RefetchBeatmapDataButton tournament={tournament} />
-                </div>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!form.formState.isValid || !form.formState.isDirty}
+              >
+                {form.formState.isSubmitting ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  'Save'
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
+        <VerificationChildrenDialog
+          open={pendingValues !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingValues(null);
+            }
+          }}
+          onChoice={(choice) => {
+            const values = pendingValues;
+            setPendingValues(null);
 
-                <div className="flex gap-2 border-l border-border pl-6">
-                  <DeleteTournamentBeatmapsButton tournament={tournament} />
-                  <DeleteButton
-                    entityType="tournament"
-                    entityId={tournament.id}
-                    entityName={tournament.name}
-                    onDeleted={() => (window.location.href = '/tournaments')}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-between">
-                <Button
-                  type="reset"
-                  variant={'secondary'}
-                  size="sm"
-                  onClick={() => form.reset()}
-                  disabled={
-                    !form.formState.isDirty || form.formState.isSubmitting
-                  }
-                >
-                  Clear
-                </Button>
-
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={!form.formState.isValid || !form.formState.isDirty}
-                >
-                  {form.formState.isSubmitting ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    'Save'
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-    </>
+            if (values) {
+              void submit(values, choice);
+            }
+          }}
+        />
+      </DialogContent>
+    </Dialog>
   );
 }

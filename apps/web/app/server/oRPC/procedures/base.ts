@@ -697,7 +697,7 @@ const withMetrics = base.middleware(async ({ context, path, next }) => {
   }
 });
 
-// Raised by the verification inheritance constraint triggers (0030); drizzle
+// Raised by the verification inheritance constraint triggers (0029); drizzle
 // wraps the driver error, so walk the cause chain
 function verificationInheritanceMessage(error: unknown): string | null {
   for (let current = error; current;) {

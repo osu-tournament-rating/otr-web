@@ -166,192 +166,188 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
   }
 
   return (
-    <>
-      <VerificationChildrenDialog
-        open={pendingValues !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPendingValues(null);
-          }
-        }}
-        onChoice={(choice) => {
-          const values = pendingValues;
-          setPendingValues(null);
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          className="h-6 w-6 hover:bg-white/20 hover:text-white"
+          variant={'ghost'}
+          size="icon"
+        >
+          <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="p-4">
+        <DialogHeader className="space-y-1">
+          <DialogTitle>Edit Match</DialogTitle>
+          <DialogDescription>
+            Editing <strong>{match.name}</strong>
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field, fieldState }) => (
+                <FormItem className="flex-3">
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      className={inputChangedStyle(fieldState)}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          if (values) {
-            void submit(values, choice);
-          }
-        }}
-      />
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button
-            className="h-6 w-6 hover:bg-white/20 hover:text-white"
-            variant={'ghost'}
-            size="icon"
-          >
-            <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="p-4">
-          <DialogHeader className="space-y-1">
-            <DialogTitle>Edit Match</DialogTitle>
-            <DialogDescription>
-              Editing <strong>{match.name}</strong>
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+            <FormField
+              control={form.control}
+              name="rejectionReason"
+              render={({ field: { value, onChange }, fieldState }) => {
+                const flags = getEnumFlags(value, MatchRejectionReason);
+
+                return (
+                  <FormItem>
+                    <FormLabel>Rejection Reason</FormLabel>
+                    <MultipleSelect
+                      className={inputChangedStyle(fieldState)}
+                      placeholder={'No rejection reason'}
+                      selected={flags.map(String)}
+                      options={matchRejectionReasonOptions}
+                      onChange={(values: string[]) => {
+                        let flag = 0;
+                        values.forEach((v: string) => {
+                          flag |= Number(v);
+                        });
+
+                        onChange(flag);
+                      }}
+                    />
+                  </FormItem>
+                );
+              }}
+            />
+
+            <FormField
+              control={form.control}
+              name="warningFlags"
+              render={({ field: { value, onChange }, fieldState }) => {
+                const flags = getEnumFlags(value, MatchWarningFlags);
+
+                return (
+                  <FormItem>
+                    <FormLabel>Warning Flags</FormLabel>
+                    <MultipleSelect
+                      className={inputChangedStyle(fieldState)}
+                      placeholder={'No warnings'}
+                      disabled
+                      selected={flags.map(String)}
+                      options={warningFlagOptions}
+                      onChange={(values: string[]) => {
+                        let flag = 0;
+                        values.forEach((v: string) => {
+                          flag |= Number(v);
+                        });
+
+                        onChange(flag);
+                      }}
+                    />
+                  </FormItem>
+                );
+              }}
+            />
+
+            <div className="flex gap-5">
               <FormField
                 control={form.control}
-                name="name"
-                render={({ field, fieldState }) => (
-                  <FormItem className="flex-3">
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        className={inputChangedStyle(fieldState)}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
+                name="verificationStatus"
+                render={({ field: { value, onChange }, fieldState }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>Verification Status</FormLabel>
+                    <Select
+                      onValueChange={(val) => {
+                        onChange(Number(val));
+                      }}
+                      value={value.toString()}
+                    >
+                      <FormControl className="w-full">
+                        <SelectTrigger
+                          className={inputChangedStyle(fieldState)}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <VerificationStatusSelectContent />
+                    </Select>
                   </FormItem>
                 )}
               />
+            </div>
 
-              <FormField
-                control={form.control}
-                name="rejectionReason"
-                render={({ field: { value, onChange }, fieldState }) => {
-                  const flags = getEnumFlags(value, MatchRejectionReason);
+            <div className="flex justify-between">
+              <div className="flex gap-2">
+                <Button
+                  type="reset"
+                  variant={'secondary'}
+                  size="sm"
+                  onClick={() => form.reset()}
+                  disabled={
+                    !form.formState.isDirty || form.formState.isSubmitting
+                  }
+                >
+                  Reset
+                </Button>
 
-                  return (
-                    <FormItem>
-                      <FormLabel>Rejection Reason</FormLabel>
-                      <MultipleSelect
-                        className={inputChangedStyle(fieldState)}
-                        placeholder={'No rejection reason'}
-                        selected={flags.map(String)}
-                        options={matchRejectionReasonOptions}
-                        onChange={(values: string[]) => {
-                          let flag = 0;
-                          values.forEach((v: string) => {
-                            flag |= Number(v);
-                          });
+                <MergeMatchButton match={{ id: match.id, name: match.name }} />
 
-                          onChange(flag);
-                        }}
-                      />
-                    </FormItem>
-                  );
-                }}
-              />
+                <DeleteButton
+                  entityType="match"
+                  entityId={match.id}
+                  entityName={match.name}
+                  onDeleted={() => {
+                    const redirectTarget = match.tournament?.id
+                      ? `/tournaments/${match.tournament.id}`
+                      : '/tournaments';
 
-              <FormField
-                control={form.control}
-                name="warningFlags"
-                render={({ field: { value, onChange }, fieldState }) => {
-                  const flags = getEnumFlags(value, MatchWarningFlags);
-
-                  return (
-                    <FormItem>
-                      <FormLabel>Warning Flags</FormLabel>
-                      <MultipleSelect
-                        className={inputChangedStyle(fieldState)}
-                        placeholder={'No warnings'}
-                        disabled
-                        selected={flags.map(String)}
-                        options={warningFlagOptions}
-                        onChange={(values: string[]) => {
-                          let flag = 0;
-                          values.forEach((v: string) => {
-                            flag |= Number(v);
-                          });
-
-                          onChange(flag);
-                        }}
-                      />
-                    </FormItem>
-                  );
-                }}
-              />
-
-              <div className="flex gap-5">
-                <FormField
-                  control={form.control}
-                  name="verificationStatus"
-                  render={({ field: { value, onChange }, fieldState }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel>Verification Status</FormLabel>
-                      <Select
-                        onValueChange={(val) => {
-                          onChange(Number(val));
-                        }}
-                        value={value.toString()}
-                      >
-                        <FormControl className="w-full">
-                          <SelectTrigger
-                            className={inputChangedStyle(fieldState)}
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <VerificationStatusSelectContent />
-                      </Select>
-                    </FormItem>
-                  )}
+                    router.replace(redirectTarget);
+                    router.refresh();
+                  }}
                 />
               </div>
 
-              <div className="flex justify-between">
-                <div className="flex gap-2">
-                  <Button
-                    type="reset"
-                    variant={'secondary'}
-                    size="sm"
-                    onClick={() => form.reset()}
-                    disabled={
-                      !form.formState.isDirty || form.formState.isSubmitting
-                    }
-                  >
-                    Reset
-                  </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!form.formState.isValid || !form.formState.isDirty}
+              >
+                {form.formState.isSubmitting ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  'Save'
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
+        <VerificationChildrenDialog
+          open={pendingValues !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingValues(null);
+            }
+          }}
+          onChoice={(choice) => {
+            const values = pendingValues;
+            setPendingValues(null);
 
-                  <MergeMatchButton
-                    match={{ id: match.id, name: match.name }}
-                  />
-
-                  <DeleteButton
-                    entityType="match"
-                    entityId={match.id}
-                    entityName={match.name}
-                    onDeleted={() => {
-                      const redirectTarget = match.tournament?.id
-                        ? `/tournaments/${match.tournament.id}`
-                        : '/tournaments';
-
-                      router.replace(redirectTarget);
-                      router.refresh();
-                    }}
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={!form.formState.isValid || !form.formState.isDirty}
-                >
-                  {form.formState.isSubmitting ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    'Save'
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-    </>
+            if (values) {
+              void submit(values, choice);
+            }
+          }}
+        />
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -118,24 +118,28 @@ $$;--> statement-breakpoint
 
 DROP TRIGGER IF EXISTS trg_tournaments_verification_inheritance ON tournaments;--> statement-breakpoint
 CREATE CONSTRAINT TRIGGER trg_tournaments_verification_inheritance
-AFTER INSERT OR UPDATE ON tournaments
+AFTER INSERT OR UPDATE OF verification_status ON tournaments
 DEFERRABLE INITIALLY DEFERRED
-FOR EACH ROW EXECUTE FUNCTION public.check_tournament_verification_inheritance();--> statement-breakpoint
+FOR EACH ROW WHEN (NEW.verification_status = 3)
+EXECUTE FUNCTION public.check_tournament_verification_inheritance();--> statement-breakpoint
 
 DROP TRIGGER IF EXISTS trg_matches_verification_inheritance ON matches;--> statement-breakpoint
 CREATE CONSTRAINT TRIGGER trg_matches_verification_inheritance
-AFTER INSERT OR UPDATE ON matches
+AFTER INSERT OR UPDATE OF verification_status ON matches
 DEFERRABLE INITIALLY DEFERRED
-FOR EACH ROW EXECUTE FUNCTION public.check_match_verification_inheritance();--> statement-breakpoint
+FOR EACH ROW WHEN (NEW.verification_status IN (3, 4))
+EXECUTE FUNCTION public.check_match_verification_inheritance();--> statement-breakpoint
 
 DROP TRIGGER IF EXISTS trg_games_verification_inheritance ON games;--> statement-breakpoint
 CREATE CONSTRAINT TRIGGER trg_games_verification_inheritance
-AFTER INSERT OR UPDATE ON games
+AFTER INSERT OR UPDATE OF verification_status ON games
 DEFERRABLE INITIALLY DEFERRED
-FOR EACH ROW EXECUTE FUNCTION public.check_game_verification_inheritance();--> statement-breakpoint
+FOR EACH ROW WHEN (NEW.verification_status IN (3, 4))
+EXECUTE FUNCTION public.check_game_verification_inheritance();--> statement-breakpoint
 
 DROP TRIGGER IF EXISTS trg_game_scores_verification_inheritance ON game_scores;--> statement-breakpoint
 CREATE CONSTRAINT TRIGGER trg_game_scores_verification_inheritance
-AFTER INSERT OR UPDATE ON game_scores
+AFTER INSERT OR UPDATE OF verification_status ON game_scores
 DEFERRABLE INITIALLY DEFERRED
-FOR EACH ROW EXECUTE FUNCTION public.check_game_score_verification_inheritance();
+FOR EACH ROW WHEN (NEW.verification_status = 4)
+EXECUTE FUNCTION public.check_game_score_verification_inheritance();
