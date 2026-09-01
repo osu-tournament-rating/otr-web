@@ -122,6 +122,10 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
   );
 
   const isAdmin = hasAdminScope(session?.scopes ?? []);
+  const rawScoreInput = String(form.watch('rawScore') ?? '').trim();
+  const fallbackScore =
+    score.adjustedScore ??
+    (rawScoreInput === '' ? score.rawScore : Number(rawScoreInput));
 
   if (!isAdmin) {
     return null;
@@ -340,6 +344,18 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                     </FormItem>
                   )}
                 />
+                <FormItem>
+                  <FormLabel>Adjusted Score</FormLabel>
+                  <FormControl>
+                    <Input
+                      disabled
+                      type="number"
+                      value={score.adjustedScore ?? ''}
+                      placeholder="None"
+                    />
+                  </FormControl>
+                  <FormDescription>The automatic Easy total.</FormDescription>
+                </FormItem>
                 <FormField
                   control={form.control}
                   name="scoreOverride"
@@ -363,7 +379,9 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                         />
                       </FormControl>
                       <FormDescription>
-                        Used in place of the raw score. Empty for none.
+                        {field.value == null
+                          ? `Empty falls back to ${fallbackScore.toLocaleString()}.`
+                          : 'Used in place of the adjusted score.'}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
