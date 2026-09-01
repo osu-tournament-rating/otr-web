@@ -354,7 +354,10 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                       placeholder="None"
                     />
                   </FormControl>
-                  <FormDescription>The automatic Easy total.</FormDescription>
+                  <FormDescription>
+                    The total after automatic adjustments made during ingestion,
+                    such as mod multipliers.
+                  </FormDescription>
                 </FormItem>
                 <FormField
                   control={form.control}
