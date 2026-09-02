@@ -33,19 +33,31 @@ export const row = (
   components,
 });
 
+// Discord rejects two equal custom ids in one message; parseCustomId rejects the off: ids.
+const pageButton = (
+  label: string,
+  id: CustomId,
+  target: number,
+  pages: number,
+  placeholder: string
+): APIButtonComponent =>
+  target >= 1 && target <= pages
+    ? { ...button(label, { ...id, page: target }), disabled: false }
+    : {
+        type: ComponentType.Button,
+        style: ButtonStyle.Secondary,
+        label,
+        custom_id: placeholder,
+        disabled: true,
+      };
+
 /** The previous and next buttons of a paged view. */
 export const pageButtons = (
   id: CustomId,
   pages: number
 ): APIButtonComponent[] => [
-  {
-    ...button('◀', { ...id, page: Math.max(1, id.page - 1) }),
-    disabled: id.page <= 1,
-  },
-  {
-    ...button('▶', { ...id, page: Math.min(pages, id.page + 1) }),
-    disabled: id.page >= pages,
-  },
+  pageButton('◀', id, id.page - 1, pages, 'off:prev'),
+  pageButton('▶', id, id.page + 1, pages, 'off:next'),
 ];
 
 /** A pager row; empty when the list fits on one page. */
@@ -57,12 +69,17 @@ export const tabs = (
   key: string,
   ruleset: number | null,
   active: string,
+  page: number,
   views: [label: string, view: string][],
   link: APIButtonComponent
 ) =>
   row(
     ...views.map(([label, view]) =>
-      button(label, { view, key, ruleset, page: 1 }, view === active)
+      button(
+        label,
+        { view, key, ruleset, page: view === active ? page : 1 },
+        view === active
+      )
     ),
     link
   );

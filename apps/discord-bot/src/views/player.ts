@@ -61,11 +61,17 @@ const shell = (stats: PlayerStats, ctx: ViewContext) => {
   return { embed, files, ruleset };
 };
 
-const nav = (stats: PlayerStats, active: View, ctx: ViewContext) =>
+const nav = (
+  stats: PlayerStats,
+  active: View,
+  ctx: ViewContext,
+  page: number
+) =>
   tabs(
     String(stats.playerInfo.id),
     stats.ruleset,
     active,
+    page,
     [
       ['Overview', 'po'],
       ['Tournaments', 'pt'],
@@ -82,7 +88,7 @@ const chartPoints = (stats: PlayerStats) =>
 export function playerCard(stats: PlayerStats, ctx: ViewContext): Reply {
   const { embed, files, ruleset } = shell(stats, ctx);
   const { playerInfo: player, rating, matchStats } = stats;
-  const components = [nav(stats, 'po', ctx)];
+  const components = [nav(stats, 'po', ctx, 1)];
 
   if (!rating) {
     return {
@@ -221,7 +227,7 @@ export function playerTournaments(
         },
       },
     ],
-    components: [nav(stats, 'pt', ctx), ...pager({ ...id, page }, pages)],
+    components: [nav(stats, 'pt', ctx, page), ...pager({ ...id, page }, pages)],
     files,
   };
 }
@@ -255,7 +261,7 @@ export function playerBeatmaps(
         },
       },
     ],
-    components: [nav(stats, 'pb', ctx), ...pager({ ...id, page }, pages)],
+    components: [nav(stats, 'pb', ctx, page), ...pager({ ...id, page }, pages)],
     files,
   };
 }

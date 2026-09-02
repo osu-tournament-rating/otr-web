@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { VerificationStatus } from '@otr/core/osu';
 
-import { ctx, siteUrl, tournamentDetail } from '../../__tests__/fixtures';
+import {
+  ctx,
+  customIds,
+  siteUrl,
+  tournamentDetail,
+} from '../../__tests__/fixtures';
 import { finalize } from '../../runner';
 import {
   tournamentCard,
@@ -170,5 +175,21 @@ describe('tournament card', () => {
     expect(reply.embeds[0].footer?.text).toBe(
       'o!TR · osu! · 12 matches · page 2 of 2'
     );
+  });
+
+  test('the paged views give every button a distinct id', () => {
+    const views = [
+      ['tp', tournamentPlayers],
+      ['tb', tournamentPool],
+      ['tm', tournamentMatches],
+    ] as const;
+    for (const [view, render] of views) {
+      for (const page of [1, 2]) {
+        const ids = customIds(
+          render(tournamentDetail, { ...id, view, page }, ctx)
+        );
+        expect(new Set(ids).size).toBe(ids.length);
+      }
+    }
   });
 });
