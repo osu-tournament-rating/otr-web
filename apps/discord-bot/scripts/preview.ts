@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 import { createApi } from '../src/api';
-import { commands } from '../src/commands';
+import { commands, findPage } from '../src/commands';
 import { parseCustomId } from '../src/custom-id';
 import { env } from '../src/env';
 import { finalize } from '../src/runner';
@@ -19,12 +19,11 @@ const ctx = { siteUrl: env.siteUrl };
 const run = async () => {
   if (name === 'button') {
     const id = parseCustomId(values.id ?? '');
-    const command = id && commands.find((c) => c.pages?.[id.view]);
-    const page = id && command?.pages?.[id.view];
-    if (!id || !page) {
+    const found = id && findPage(commands, id);
+    if (!id || !found) {
       throw new Error(`Unknown button id: ${values.id}\n${usage}`);
     }
-    return page({ id, api, ctx });
+    return found.page({ id, api, ctx });
   }
 
   const command = commands.find((c) => c.data.name === name);

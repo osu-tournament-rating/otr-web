@@ -13,6 +13,7 @@ import {
 
 import { ApiError, type Api } from './api';
 import { ReplyError, type Command, type Reply } from './command';
+import { findPage } from './commands';
 import { parseCustomId } from './custom-id';
 import { commandCalls, commandDuration } from './metrics';
 import { clip } from './views/format';
@@ -69,7 +70,7 @@ export type Deps = {
 export const GENERIC_ERROR = 'o!TR did not answer. Try again in a minute.';
 export const EXPIRED = 'This button expired. Run the command again.';
 
-/** Clips every text to its Discord limit; the clip is the only limit mechanism. */
+/** Clips every text to its Discord limit. */
 export function finalize(reply: Reply): Reply {
   if (reply.embeds.length > 10) {
     throw new Error(`${reply.embeds.length} embeds exceed the limit of 10`);
@@ -114,7 +115,7 @@ export function finalize(reply: Reply): Reply {
 const note = (text: string): Reply =>
   finalize({ embeds: [{ color: grey, description: text }] });
 
-export const toPayload = (reply: Reply, components?: Components): Payload => ({
+const toPayload = (reply: Reply, components?: Components): Payload => ({
   embeds: reply.embeds,
   components: reply.components ?? components ?? [],
   files: (reply.files ?? []).map(
@@ -145,7 +146,6 @@ type Delivery = {
   produce(): Promise<Reply>;
   send(payload: Payload): Promise<unknown>;
   notFound(): string;
-  /** Components kept on an error reply. */
   keep?: Components;
 };
 
@@ -274,18 +274,11 @@ export async function handleAutocomplete(
 
 export async function handleButton(interaction: ButtonLike, deps: Deps) {
   const id = parseCustomId(interaction.customId);
-  const command = id
-    ? deps.commands.find(
-        (candidate) =>
-          candidate.pages !== undefined &&
-          Object.hasOwn(candidate.pages, id.view)
-      )
-    : undefined;
-  const page = id && command?.pages?.[id.view];
+  const found = id && findPage(deps.commands, id);
   const owner =
     interaction.message.interactionMetadata?.user.id === interaction.user.id;
 
-  if (!id || !command || !page) {
+  if (!id || !found) {
     const ephemeral = () =>
       interaction.deferReply({ flags: MessageFlags.Ephemeral });
     if (await acknowledge('button', deps, ephemeral)) {
@@ -298,6 +291,7 @@ export async function handleButton(interaction: ButtonLike, deps: Deps) {
     return;
   }
 
+  const { command, page } = found;
   const name = `${command.data.name}:${id.view}`;
   const acknowledged = await acknowledge(name, deps, () =>
     owner

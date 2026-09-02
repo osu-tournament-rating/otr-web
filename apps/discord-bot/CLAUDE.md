@@ -27,10 +27,10 @@ over `/rpc` and stores nothing.
 
 ## Contract
 
-- A command calls the API and returns a `Reply` of embeds, components, and files; views and `chart/svg.ts` are pure.
+- A command calls the API and returns a `Reply` of embeds, components, and files; views call no API and keep no state; `chart/svg.ts` is pure.
 - The runner owns `deferReply`, the embed limits (`finalize`), the error embeds, and the metrics.
 - A button keeps all state in its `custom_id` (`1:<view>:<key>:<ruleset>:<page>[:<country>]`); a click after a restart works.
-- A `ReplyError` message is shown to the user. An oRPC `NOT_FOUND` shows the command's `notFound` copy.
+- The user sees a `ReplyError` message as the reply. An oRPC `NOT_FOUND` shows the command's `notFound` copy.
 
 ## Data
 
@@ -41,12 +41,12 @@ over `/rpc` and stores nothing.
 
 ## Env
 
-`DISCORD_BOT_TOKEN` (blank idles the bot), `DISCORD_BOT_GUILD_ID` (dev guild for instant command updates), `NEXT_PUBLIC_APP_BASE_URL` (shared with the site; embed links), `INTERNAL_APP_BASE_URL` (API base inside compose), `METRICS_PORT` (default 9091).
+The bot reads `DISCORD_BOT_TOKEN` (blank idles the bot), `DISCORD_BOT_GUILD_ID` (dev guild for instant command updates), `NEXT_PUBLIC_APP_BASE_URL` (shared with the site; embed links), `INTERNAL_APP_BASE_URL` (API base inside compose), and `METRICS_PORT` (default 9091).
 
 ## Run and test
 
 - `bun test` from the repository root; no token and no network.
-- `bun run --cwd apps/discord-bot preview player name=Stage` renders one reply against `INTERNAL_APP_BASE_URL`.
+- `bun run --cwd apps/discord-bot preview player name=Stage` renders one reply against `INTERNAL_APP_BASE_URL`, or `NEXT_PUBLIC_APP_BASE_URL` when unset.
 - `bun run dev:bot` with a token and `DISCORD_BOT_GUILD_ID` set registers the commands to that guild.
 
 ## Charts

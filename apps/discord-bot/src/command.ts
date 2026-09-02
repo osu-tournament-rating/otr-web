@@ -45,5 +45,5 @@ export type Command = {
   notFound(query: string): string;
 };
 
-/** The message is shown to the user as the reply. */
+/** The user sees the message as the reply. */
 export class ReplyError extends Error {}

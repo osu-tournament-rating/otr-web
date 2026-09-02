@@ -40,7 +40,6 @@ const year = (iso: string | null) => (iso ? ` (${iso.slice(0, 4)})` : '');
 const verified = (t: TournamentListItem) =>
   t.verificationStatus === VerificationStatus.Verified;
 
-/** A verified exact abbreviation, then the first verified hit, then any exact abbreviation, then the first hit. */
 const pick = (query: string, hits: TournamentListItem[]) => {
   const exact = (t: TournamentListItem) =>
     t.abbreviation.toLowerCase() === query.toLowerCase();

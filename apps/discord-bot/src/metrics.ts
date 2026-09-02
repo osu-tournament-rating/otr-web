@@ -6,7 +6,7 @@ import {
   collectDefaultMetrics,
 } from 'prom-client';
 
-export const registry = new Registry();
+const registry = new Registry();
 registry.setDefaultLabels({ app: 'discord-bot' });
 collectDefaultMetrics({ register: registry });
 

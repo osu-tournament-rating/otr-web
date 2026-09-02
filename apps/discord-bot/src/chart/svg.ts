@@ -10,6 +10,7 @@ const pad = { top: 40, right: 40, bottom: 60, left: 110 };
 const monthYear = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   year: 'numeric',
+  timeZone: 'UTC',
 });
 const numbers = new Intl.NumberFormat('en-US');
 const compact = new Intl.NumberFormat('en-US', { notation: 'compact' });
@@ -19,12 +20,8 @@ const scale = (
   [rangeMin, rangeMax]: [number, number]
 ) => {
   const span = domainMax - domainMin || 1;
-  const extent = rangeMax - rangeMin || 1;
-  const map = (value: number) =>
-    rangeMin + ((value - domainMin) / span) * extent;
-  map.invert = (position: number) =>
-    domainMin + ((position - rangeMin) / extent) * span;
-  return map;
+  return (value: number) =>
+    rangeMin + ((value - domainMin) / span) * (rangeMax - rangeMin);
 };
 
 const steps = (min: number, max: number, count: number) =>
@@ -34,15 +31,16 @@ const round = (value: number) => Math.round(value * 10) / 10;
 
 /** Labels along an axis; the first anchors at its start and the last at its end. */
 const xAxis = (
-  positions: number[],
+  values: number[],
+  x: (value: number) => number,
   y: number,
   label: (value: number) => string
 ) =>
-  positions
+  values
     .map((value, i) => {
       const anchor =
-        i === 0 ? 'start' : i === positions.length - 1 ? 'end' : 'middle';
-      return `<text x="${round(value)}" y="${y}" text-anchor="${anchor}" ${text}>${label(value)}</text>`;
+        i === 0 ? 'start' : i === values.length - 1 ? 'end' : 'middle';
+      return `<text x="${round(x(value))}" y="${y}" text-anchor="${anchor}" ${text}>${label(value)}</text>`;
     })
     .join('');
 
@@ -80,9 +78,10 @@ export function ratingHistory(
     )
     .join('');
   const xLabels = xAxis(
-    steps(points[0].time, points[points.length - 1].time, 4).map(x),
+    steps(points[0].time, points[points.length - 1].time, 4),
+    x,
     height - pad.bottom + 34,
-    (value) => monthYear.format(x.invert(value))
+    (time) => monthYear.format(time)
   );
   const path = points
     .map(
@@ -133,9 +132,10 @@ export function percentileCurve(
     )
     .join('');
   const xLabels = xAxis(
-    steps(0, 100, 4).map(x),
+    steps(0, 100, 4),
+    x,
     height - pad.bottom + 34,
-    (value) => `${Math.round(x.invert(value))}%`
+    (value) => `${value}%`
   );
   const line = sorted
     .map(
