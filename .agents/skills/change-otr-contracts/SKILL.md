@@ -106,7 +106,7 @@ Inspect `/api/openapi.json` from the built application and exercise both `/rpc` 
 For any processor-visible database, enum, eligibility, rating, or stats-message change, run in the sibling `otr-processor` repository:
 
 ```bash
-cargo fmt --check
+cargo +nightly fmt -- --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo test
 ```
