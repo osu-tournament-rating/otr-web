@@ -40,11 +40,17 @@ const year = (iso: string | null) => (iso ? ` (${iso.slice(0, 4)})` : '');
 const verified = (t: TournamentListItem) =>
   t.verificationStatus === VerificationStatus.Verified;
 
-/** The exact abbreviation first, then the first verified hit, then the first hit. */
-const pick = (query: string, hits: TournamentListItem[]) =>
-  hits.find((t) => t.abbreviation.toLowerCase() === query.toLowerCase()) ??
-  hits.find(verified) ??
-  hits[0];
+/** A verified exact abbreviation, then the first verified hit, then any exact abbreviation, then the first hit. */
+const pick = (query: string, hits: TournamentListItem[]) => {
+  const exact = (t: TournamentListItem) =>
+    t.abbreviation.toLowerCase() === query.toLowerCase();
+  return (
+    hits.find((t) => verified(t) && exact(t)) ??
+    hits.find(verified) ??
+    hits.find(exact) ??
+    hits[0]
+  );
+};
 
 export const tournament: Command = {
   data: slash('tournament', 'Show a tournament card')

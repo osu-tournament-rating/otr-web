@@ -47,14 +47,21 @@ describe('/tournament', () => {
     expect(get).toHaveBeenCalledWith({ id: 512 });
   });
 
-  test('free text prefers the exact abbreviation, then a verified hit', async () => {
+  test('free text prefers a verified exact abbreviation, then a verified hit, then any exact abbreviation', async () => {
     const rejected = {
       ...tournamentList[0],
       id: 900,
-      name: 'OWC but for 6 digits (Noob OWC)',
-      abbreviation: 'NOWC',
+      name: 'Oscillating Wincon Clash',
+      abbreviation: 'OWC',
       verificationStatus: VerificationStatus.Rejected,
     };
+    const worldCup = {
+      ...tournamentList[1],
+      id: 901,
+      name: 'osu! World Cup 2025',
+      abbreviation: 'OWC2025',
+    };
+    const verifiedExact = { ...worldCup, id: 902, abbreviation: 'OWC' };
     const get = procedure(tournamentDetail);
     const run = async (query: string, hits: typeof tournamentList) => {
       get.mockClear();
@@ -65,13 +72,17 @@ describe('/tournament', () => {
       });
       return get.mock.calls[0][0];
     };
-    expect(await run('owc24', [rejected, tournamentList[1]])).toEqual({
-      id: 513,
+    expect(await run('OWC', [rejected, worldCup])).toEqual({ id: 901 });
+    expect(await run('owc', [rejected, worldCup, verifiedExact])).toEqual({
+      id: 902,
     });
-    expect(await run('OWC', [rejected, tournamentList[1]])).toEqual({
-      id: 513,
-    });
-    expect(await run('OWC', [rejected])).toEqual({ id: 900 });
+    expect(
+      await run('OWC', [
+        rejected,
+        { ...worldCup, verificationStatus: VerificationStatus.Rejected },
+      ])
+    ).toEqual({ id: 900 });
+    expect(await run('zzz', [rejected])).toEqual({ id: 900 });
   });
 
   test('no hit raises the not-found copy', async () => {
