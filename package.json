@@ -12,6 +12,7 @@
     "dev": "bun run --filter web dev",
     "dev:all": "bun run --filter '*' --parallel dev",
     "dev:worker": "bun run --filter data-worker dev",
+    "dev:bot": "bun run --filter discord-bot dev",
     "format": "bunx prettier . --write"
   },
   "dependencies": {

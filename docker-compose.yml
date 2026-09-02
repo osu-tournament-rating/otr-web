@@ -154,6 +154,34 @@ services:
       retries: 3
       start_period: 10s
 
+  discord-bot:
+    build:
+      context: .
+      dockerfile: apps/discord-bot/Dockerfile
+    image: stagecodes/otr-discord-bot:latest
+    container_name: otr-discord-bot
+    restart: unless-stopped
+    depends_on:
+      web:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    environment:
+      INTERNAL_APP_BASE_URL: http://otr-web:3000
+      METRICS_PORT: '9091'
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otr-alloy:4318
+      OTEL_SERVICE_NAME: otr-discord-bot
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'bun -e "fetch(\"http://localhost:9091/health\").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   prometheus:
     image: prom/prometheus:v3.13.1
     container_name: otr-prometheus

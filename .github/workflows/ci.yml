@@ -68,6 +68,7 @@ jobs:
           path: |
             apps/web/node_modules/.cache/eslint
             apps/data-worker/node_modules/.cache/eslint
+            apps/discord-bot/node_modules/.cache/eslint
           key: eslint-${{ runner.os }}-${{ hashFiles('bun.lock') }}-${{ github.sha }}
           restore-keys: |
             eslint-${{ runner.os }}-${{ hashFiles('bun.lock') }}-

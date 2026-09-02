@@ -1,6 +1,6 @@
 import type { Logger } from '@otr/core/logging';
 
-export type AccessMethod = 'session' | 'api-key' | 'anonymous';
+export type AccessMethod = 'session' | 'api-key' | 'anonymous' | 'discord-bot';
 
 export interface ActorInfo {
   accessMethod: AccessMethod;

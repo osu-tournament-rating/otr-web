@@ -1,3 +1,5 @@
+import { DISCORD_BOT_CLIENT } from '@otr/core/logging';
+
 import type { ActorInfo } from './types';
 
 type OsuIdValue = bigint | number | string | null | undefined;
@@ -30,6 +32,7 @@ interface ActorResolutionContext {
   apiKey?: VerifiedApiKey | null;
   apiKeyActor?: ApiKeyActor | null;
   session?: SessionSnapshot | null;
+  client?: string | null;
 }
 
 function normalizeOsuId(value: OsuIdValue): string | null {
@@ -53,6 +56,18 @@ function maskApiKey(value: string): string {
 }
 
 export function resolveActor(context: ActorResolutionContext): ActorInfo {
+  if (context.client === DISCORD_BOT_CLIENT) {
+    return {
+      accessMethod: 'discord-bot',
+      userId: null,
+      playerId: null,
+      osuId: null,
+      osuUsername: null,
+      apiKeyId: null,
+      apiKeyName: null,
+    };
+  }
+
   if (context.apiKey && context.apiKeyActor) {
     return {
       accessMethod: 'api-key',

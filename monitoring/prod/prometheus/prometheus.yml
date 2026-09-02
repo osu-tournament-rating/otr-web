@@ -34,6 +34,10 @@ scrape_configs:
     static_configs:
       - targets: ['otr-data-worker:9091']
 
+  - job_name: 'discord-bot'
+    static_configs:
+      - targets: ['otr-discord-bot:9091']
+
   - job_name: 'tempo'
     static_configs:
       - targets: ['otr-tempo:3200']

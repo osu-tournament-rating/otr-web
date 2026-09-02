@@ -3,6 +3,7 @@ import { APIError } from 'better-auth/api';
 import * as schema from '@otr/core/db/schema';
 import { eq } from 'drizzle-orm';
 import {
+  CLIENT_HEADER,
   createLogger,
   generateCorrelationId,
   extractCorrelationId,
@@ -569,7 +570,10 @@ const withLoggingContext = base.middleware(async ({ context, path, next }) => {
   const correlationId =
     extractCorrelationId(context.headers) ?? generateCorrelationId();
   const procedurePath = formatProcedurePath(path);
-  const actor = resolveActor(context);
+  const actor = resolveActor({
+    ...context,
+    client: context.headers.get(CLIENT_HEADER),
+  });
   const requestPath = extractRequestPath(context.requestUrl);
 
   setActiveSpanAttributes({

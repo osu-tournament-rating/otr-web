@@ -723,6 +723,15 @@
                 "value": { "fixedColor": "orange", "mode": "fixed" }
               }
             ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "discord-bot" },
+            "properties": [
+              {
+                "id": "color",
+                "value": { "fixedColor": "purple", "mode": "fixed" }
+              }
+            ]
           }
         ]
       },
@@ -782,6 +791,15 @@
                 "value": { "fixedColor": "orange", "mode": "fixed" }
               }
             ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "discord-bot" },
+            "properties": [
+              {
+                "id": "color",
+                "value": { "fixedColor": "purple", "mode": "fixed" }
+              }
+            ]
           }
         ]
       },
@@ -821,6 +839,12 @@
           "instant": true,
           "legendFormat": "api-key",
           "refId": "C"
+        },
+        {
+          "expr": "sum(increase(web_orpc_procedure_calls_total{accessMethod=\"discord-bot\"}[$__range]))",
+          "instant": true,
+          "legendFormat": "discord-bot",
+          "refId": "D"
         }
       ],
       "title": "Traffic Distribution",
@@ -877,6 +901,15 @@
               {
                 "id": "color",
                 "value": { "fixedColor": "orange", "mode": "fixed" }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "discord-bot" },
+            "properties": [
+              {
+                "id": "color",
+                "value": { "fixedColor": "purple", "mode": "fixed" }
               }
             ]
           }
@@ -954,6 +987,15 @@
               {
                 "id": "color",
                 "value": { "fixedColor": "orange", "mode": "fixed" }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "p95 discord-bot" },
+            "properties": [
+              {
+                "id": "color",
+                "value": { "fixedColor": "purple", "mode": "fixed" }
               }
             ]
           }
