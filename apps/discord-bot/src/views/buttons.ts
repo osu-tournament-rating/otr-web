@@ -33,7 +33,7 @@ export const row = (
   components,
 });
 
-// Discord rejects two equal custom ids in one message; parseCustomId rejects the off: ids.
+// Discord rejects duplicate custom ids in one message
 const pageButton = (
   label: string,
   id: CustomId,
