@@ -4,7 +4,6 @@ import { withSpan } from '@otr/core/tracing';
 import {
   ApplicationCommandOptionType,
   AttachmentBuilder,
-  EmbedBuilder,
   MessageFlags,
   type APIEmbed,
   type APIMessageTopLevelComponent,
@@ -16,6 +15,7 @@ import { ApiError, type Api } from './api';
 import { ReplyError, type Command, type Reply } from './command';
 import { parseCustomId } from './custom-id';
 import { commandCalls, commandDuration } from './metrics';
+import { clip } from './views/format';
 import { grey } from './views/theme';
 
 export type Components = readonly (
@@ -69,14 +69,7 @@ export type Deps = {
 export const GENERIC_ERROR = 'o!TR did not answer. Try again in a minute.';
 export const EXPIRED = 'This button expired. Run the command again.';
 
-const note = (text: string): Reply => ({
-  embeds: [{ color: grey, description: text }],
-});
-
-const clip = (text: string, max: number) =>
-  text.length > max ? `${text.slice(0, max - 1)}…` : text;
-
-/** Clips every text to its Discord limit and validates through the builder. */
+/** Clips every text to its Discord limit; the clip is the only limit mechanism. */
 export function finalize(reply: Reply): Reply {
   if (reply.embeds.length > 10) {
     throw new Error(`${reply.embeds.length} embeds exceed the limit of 10`);
@@ -115,11 +108,11 @@ export function finalize(reply: Reply): Reply {
     throw new Error(`${total} embed characters exceed the limit of 6000`);
   }
 
-  return {
-    ...reply,
-    embeds: embeds.map((embed) => EmbedBuilder.from(embed).toJSON()),
-  };
+  return { ...reply, embeds };
 }
+
+const note = (text: string): Reply =>
+  finalize({ embeds: [{ color: grey, description: text }] });
 
 export const toPayload = (reply: Reply, components?: Components): Payload => ({
   embeds: reply.embeds,
@@ -129,6 +122,22 @@ export const toPayload = (reply: Reply, components?: Components): Payload => ({
   ),
 });
 
+/** False when Discord refuses the acknowledgement, for example after the 3 second window. */
+const acknowledge = async (
+  name: string,
+  deps: Deps,
+  run: () => Promise<unknown>
+) => {
+  try {
+    await run();
+    return true;
+  } catch (error) {
+    deps.logger.warn('acknowledgement failed', { command: name, error });
+    commandCalls.labels({ command: name, status: 'error' }).inc();
+    return false;
+  }
+};
+
 type Delivery = {
   name: string;
   interactionId: string;
@@ -136,7 +145,7 @@ type Delivery = {
   produce(): Promise<Reply>;
   send(payload: Payload): Promise<unknown>;
   notFound(): string;
-  /** Components kept on an error reply, so an owner can still navigate. */
+  /** Components kept on an error reply. */
   keep?: Components;
 };
 
@@ -205,7 +214,10 @@ export async function handleSlash(interaction: SlashLike, deps: Deps) {
     return;
   }
 
-  await interaction.deferReply();
+  const name = command.data.name;
+  if (!(await acknowledge(name, deps, () => interaction.deferReply()))) {
+    return;
+  }
 
   const options = {
     string: (name: string) => interaction.options.getString(name),
@@ -218,7 +230,7 @@ export async function handleSlash(interaction: SlashLike, deps: Deps) {
       : '';
 
   await deliver({
-    name: command.data.name,
+    name,
     interactionId: interaction.id,
     deps,
     produce: () =>
@@ -263,26 +275,41 @@ export async function handleAutocomplete(
 export async function handleButton(interaction: ButtonLike, deps: Deps) {
   const id = parseCustomId(interaction.customId);
   const command = id
-    ? deps.commands.find((candidate) => candidate.pages?.[id.view])
+    ? deps.commands.find(
+        (candidate) =>
+          candidate.pages !== undefined &&
+          Object.hasOwn(candidate.pages, id.view)
+      )
     : undefined;
   const page = id && command?.pages?.[id.view];
   const owner =
     interaction.message.interactionMetadata?.user.id === interaction.user.id;
 
   if (!id || !command || !page) {
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-    await interaction.editReply(toPayload(note(EXPIRED)));
+    const ephemeral = () =>
+      interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    if (await acknowledge('button', deps, ephemeral)) {
+      await interaction
+        .editReply(toPayload(note(EXPIRED)))
+        .catch((error: unknown) =>
+          deps.logger.warn('reply failed', { command: 'button', error })
+        );
+    }
     return;
   }
 
-  if (owner) {
-    await interaction.deferUpdate();
-  } else {
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  const name = `${command.data.name}:${id.view}`;
+  const acknowledged = await acknowledge(name, deps, () =>
+    owner
+      ? interaction.deferUpdate()
+      : interaction.deferReply({ flags: MessageFlags.Ephemeral })
+  );
+  if (!acknowledged) {
+    return;
   }
 
   await deliver({
-    name: `${command.data.name}:${id.view}`,
+    name,
     interactionId: interaction.id,
     deps,
     produce: () =>

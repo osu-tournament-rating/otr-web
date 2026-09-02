@@ -5,7 +5,6 @@ import {
   RulesetEnumHelper,
   VerificationStatusEnumHelper,
 } from '@/lib/enum-helpers';
-import { getBeatmapModLabel } from '@/lib/utils/mods';
 import { getTierString, type TierName } from '@/lib/utils/tierData';
 
 const numbers = new Intl.NumberFormat('en-US');
@@ -41,8 +40,6 @@ export const tier = (progress: {
     progress.currentTier as TierName,
     progress.currentSubTier ?? undefined
   );
-
-export const mods = (value: number) => getBeatmapModLabel(value);
 
 export const flag = (country: string) => {
   const code = country.trim().toUpperCase();
@@ -95,6 +92,33 @@ export const table = (rows: string[][], right: boolean[] = []) => {
       .trimEnd()
   );
   return `\`\`\`\n${lines.join('\n')}\n\`\`\``;
+};
+
+export const plural = (
+  count: number,
+  singular: string,
+  pluralForm = `${singular}s`
+) => (count === 1 ? singular : pluralForm);
+
+export const inProgress = 'Stats are still in progress. Check back later.';
+
+export const time = (iso: string | null) => (iso ? Date.parse(iso) : 0);
+
+/** `Artist - Title [Diff]` from the overrides or the set; `Beatmap <osuId>` when neither exists. */
+export const mapTitle = (b: {
+  osuId: number;
+  diffName: string;
+  artistOverride: string | null;
+  titleOverride: string | null;
+  beatmapset?: { artist: string; title: string } | null;
+}) => {
+  const artist = b.artistOverride ?? b.beatmapset?.artist;
+  const title = b.titleOverride ?? b.beatmapset?.title;
+  const name =
+    artist && title
+      ? `${artist} - ${title}`
+      : (title ?? artist ?? `Beatmap ${b.osuId}`);
+  return b.diffName ? `${name} [${b.diffName}]` : name;
 };
 
 export const paginate = <T>(items: T[], page: number, size: number) => {

@@ -8,6 +8,23 @@ const points = Array.from({ length: 12 }, (_, i) => ({
   rating: 1500 + i * 17,
 }));
 
+/** Every label's estimated ink, at about 12 px per glyph, stays inside the frame. */
+const labelsFit = (svg: string, width: number) => {
+  const labels = [
+    ...svg.matchAll(
+      /<text x="([\d.]+)" y="[\d.]+" text-anchor="(\w+)"[^>]*>([^<]*)<\/text>/g
+    ),
+  ];
+  expect(labels.length).toBeGreaterThan(0);
+  for (const [, x, anchor, label] of labels) {
+    const ink = label.length * 12;
+    const left =
+      Number(x) - (anchor === 'end' ? ink : anchor === 'middle' ? ink / 2 : 0);
+    expect(left).toBeGreaterThanOrEqual(0);
+    expect(left + ink).toBeLessThanOrEqual(width);
+  }
+};
+
 const size = (png: Uint8Array) => {
   const view = new DataView(png.buffer, png.byteOffset, png.byteLength);
   return { width: view.getUint32(16), height: view.getUint32(20) };
@@ -21,6 +38,8 @@ describe('charts', () => {
     expect(svg).toContain('peak 1,701');
     expect(svg.match(/<circle /g)).toHaveLength(12);
     expect(svg).toContain('Jan 2025');
+    expect(svg).toContain('text-anchor="end"');
+    labelsFit(svg, 1350);
   });
 
   test('fewer than two points is no chart', () => {
@@ -40,6 +59,7 @@ describe('charts', () => {
     expect(svg.match(/<path /g)).toHaveLength(1);
     expect(svg).toContain('<polygon');
     expect(svg).toContain('100%');
+    labelsFit(svg, 1350);
   });
 
   test('renderPng yields a PNG of the requested size', () => {

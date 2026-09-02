@@ -4,8 +4,8 @@ import type { TierName } from '@/lib/utils/tierData';
 
 export const primary = 0x5a8ff0;
 export const grey = 0x8c8c8c;
-export const amber = 0xddb246;
-export const red = 0xe83030;
+const amber = 0xddb246;
+const red = 0xe83030;
 
 const tierColors: Record<TierName, number> = {
   'Elite Grandmaster': primary,

@@ -6,6 +6,8 @@ import {
   tournamentDetail,
   tournamentList,
 } from '../../__tests__/fixtures';
+import { VerificationStatus } from '@otr/core/osu';
+
 import { ReplyError } from '../../command';
 import { tournament } from '../tournament';
 
@@ -40,9 +42,36 @@ describe('/tournament', () => {
       searchQuery: 'corsace',
       sort: 3,
       page: 1,
-      pageSize: 1,
+      pageSize: 25,
     });
     expect(get).toHaveBeenCalledWith({ id: 512 });
+  });
+
+  test('free text prefers the exact abbreviation, then a verified hit', async () => {
+    const rejected = {
+      ...tournamentList[0],
+      id: 900,
+      name: 'OWC but for 6 digits (Noob OWC)',
+      abbreviation: 'NOWC',
+      verificationStatus: VerificationStatus.Rejected,
+    };
+    const get = procedure(tournamentDetail);
+    const run = async (query: string, hits: typeof tournamentList) => {
+      get.mockClear();
+      await tournament.execute({
+        options: options(query),
+        api: fakeApi({ tournaments: { list: procedure(hits), get } }),
+        ctx,
+      });
+      return get.mock.calls[0][0];
+    };
+    expect(await run('owc24', [rejected, tournamentList[1]])).toEqual({
+      id: 513,
+    });
+    expect(await run('OWC', [rejected, tournamentList[1]])).toEqual({
+      id: 513,
+    });
+    expect(await run('OWC', [rejected])).toEqual({ id: 900 });
   });
 
   test('no hit raises the not-found copy', async () => {
@@ -76,6 +105,18 @@ describe('/tournament', () => {
       name: 'CO25 — Corsace Open 2025 (2025)',
       value: '512',
     });
+  });
+
+  test('autocomplete names the status of an unverified tournament', async () => {
+    const list = procedure([
+      { ...tournamentList[0], verificationStatus: VerificationStatus.Rejected },
+    ]);
+    const [choice] = await tournament.autocomplete!({
+      name: 'name',
+      value: 'co',
+      api: fakeApi({ tournaments: { list } }),
+    });
+    expect(choice.name).toBe('CO25 — Corsace Open 2025 (2025) · rejected');
   });
 
   test('autocomplete answers nothing for blank input', async () => {

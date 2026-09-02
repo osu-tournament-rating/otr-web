@@ -6,31 +6,31 @@ import type { TournamentDetail } from '@/lib/orpc/schema/tournament';
 
 import type { Reply, ViewContext } from '../command';
 import type { CustomId } from '../custom-id';
-import { button, linkButton, pager, row } from './buttons';
+import { linkButton, pager, tabs } from './buttons';
 import {
   clip,
+  inProgress,
   link,
   lobby,
+  mapTitle,
   num,
   paginate,
+  plural,
   rankRange,
   rulesetName,
   signed,
   statusName,
   table,
+  time,
   when,
 } from './format';
 import { logo } from './icons';
 import { statusColor } from './theme';
 
-const inProgress = 'Stats are still in progress. Check back later.';
-
 type View = 'to' | 'tp' | 'tb' | 'tm';
 
-const time = (iso: string | null) => (iso ? Date.parse(iso) : 0);
-
 /** The detail payload trimmed and sorted to what the card and pages show. */
-export function summarize(detail: TournamentDetail) {
+function summarize(detail: TournamentDetail) {
   const players = [...detail.playerTournamentStats]
     .sort((a, b) => b.averageMatchCost - a.averageMatchCost)
     .map((p) => ({
@@ -41,16 +41,20 @@ export function summarize(detail: TournamentDetail) {
       delta: p.ratingAfter - p.ratingBefore,
     }));
   const pool = [...detail.pooledBeatmaps]
-    .sort(
-      (a, b) =>
-        (a.topMods[0]?.mod ?? '').localeCompare(b.topMods[0]?.mod ?? '') ||
+    .sort((a, b) => {
+      const modA = a.topMods[0]?.mod;
+      const modB = b.topMods[0]?.mod;
+      return (
+        Number(!modA) - Number(!modB) ||
+        (modA ?? '').localeCompare(modB ?? '') ||
         b.sr - a.sr
-    )
+      );
+    })
     .map((b) => ({
       osuId: b.osuId,
       sr: b.sr,
       bpm: b.bpm,
-      title: `${b.artistOverride ?? b.beatmapset?.artist ?? 'Unknown artist'} - ${b.titleOverride ?? b.beatmapset?.title ?? 'Unknown title'} [${b.diffName}]`,
+      title: mapTitle(b),
       topMod: b.topMods[0] ?? null,
     }));
   const matches = [...detail.matches]
@@ -88,7 +92,7 @@ export function summarize(detail: TournamentDetail) {
   };
 }
 
-export type TournamentSummary = ReturnType<typeof summarize>;
+type TournamentSummary = ReturnType<typeof summarize>;
 
 const shell = (t: TournamentSummary, ctx: ViewContext) => {
   const ruleset = rulesetName(t.ruleset);
@@ -106,21 +110,19 @@ const shell = (t: TournamentSummary, ctx: ViewContext) => {
   return { embed, files: [{ name: 'logo.png', data: logo() }], ruleset };
 };
 
-const nav = (t: TournamentSummary, active: View) => {
-  const id = (view: View): CustomId => ({
-    view,
-    key: String(t.id),
-    ruleset: null,
-    page: 1,
-  });
-  return row(
-    button('Overview', id('to'), active === 'to'),
-    button('Players', id('tp'), active === 'tp'),
-    button('Pool', id('tb'), active === 'tb'),
-    button('Matches', id('tm'), active === 'tm'),
+const nav = (t: TournamentSummary, active: View) =>
+  tabs(
+    String(t.id),
+    null,
+    active,
+    [
+      ['Overview', 'to'],
+      ['Players', 'tp'],
+      ['Pool', 'tb'],
+      ['Matches', 'tm'],
+    ],
     linkButton('Forum', t.forumUrl)
   );
-};
 
 const playerTable = (players: TournamentSummary['players'], from: number) =>
   table(
@@ -163,10 +165,10 @@ export function tournamentCard(
     .map((iso) => when(iso, 'D'))
     .join(' – ');
   const counts = [
-    `**${num(t.matchCount)}** matches`,
-    `**${num(t.gameCount)}** games`,
-    `**${num(t.players.length)}** players`,
-    `**${num(t.pool.length)}** maps`,
+    `**${num(t.matchCount)}** ${plural(t.matchCount, 'match', 'matches')}`,
+    `**${num(t.gameCount)}** ${plural(t.gameCount, 'game')}`,
+    `**${num(t.players.length)}** ${plural(t.players.length, 'player')}`,
+    `**${num(t.pool.length)}** ${plural(t.pool.length, 'map')}`,
     t.srMin !== null && t.srMax !== null
       ? `${t.srMin.toFixed(1)}★–${t.srMax.toFixed(1)}★`
       : null,
@@ -252,7 +254,7 @@ export const tournamentPlayers = (
             : 'Player stats exist for verified tournaments only.',
       pages,
       count: t.players.length,
-      unit: 'players',
+      unit: plural(t.players.length, 'player'),
     };
   });
 
@@ -275,7 +277,7 @@ export const tournamentPool = (
           : 'No pooled maps recorded.',
       pages,
       count: t.pool.length,
-      unit: 'maps',
+      unit: plural(t.pool.length, 'map'),
     };
   });
 
@@ -303,6 +305,6 @@ export const tournamentMatches = (
           : 'No matches recorded.',
       pages,
       count: t.matches.length,
-      unit: 'matches',
+      unit: plural(t.matches.length, 'match', 'matches'),
     };
   });

@@ -101,6 +101,30 @@ describe('handleSlash', () => {
     expect(sentEmbed(interaction).description).toBe('nothing for "Nobody"');
   });
 
+  test('a long user error is clipped to the description limit', async () => {
+    const interaction = fakeSlash('player', { name: 'Stage' });
+    await handleSlash(
+      interaction,
+      deps(
+        command({
+          execute: async () => {
+            throw new ReplyError('x'.repeat(5000));
+          },
+        })
+      )
+    );
+    expect(sentEmbed(interaction).description).toHaveLength(4096);
+  });
+
+  test('a refused acknowledgement is logged and answered nowhere', async () => {
+    const logger = quietLogger();
+    const interaction = fakeSlash('player', { name: 'Stage' });
+    interaction.deferReply.mockRejectedValue(new Error('Unknown interaction'));
+    await handleSlash(interaction, deps(command(), logger));
+    expect(interaction.editReply).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+  });
+
   test('any other error becomes the generic note and logs the command and procedure', async () => {
     const logger = quietLogger();
     const interaction = fakeSlash('player', { name: 'Stage' });
@@ -186,6 +210,24 @@ describe('handleButton', () => {
     });
     expect(interaction.deferUpdate).not.toHaveBeenCalled();
     expect(sentEmbed(interaction).title).toBe('Card');
+  });
+
+  test('a refused update is logged and answered nowhere', async () => {
+    const logger = quietLogger();
+    const interaction = fakeButton('1:pt:1:0:2');
+    interaction.deferUpdate.mockRejectedValue(new Error('Unknown interaction'));
+    await handleButton(interaction, deps(command(), logger));
+    expect(interaction.editReply).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledTimes(1);
+  });
+
+  test('a refused acknowledgement on the expired path is logged', async () => {
+    const logger = quietLogger();
+    const interaction = fakeButton('2:pt:1:0:2');
+    interaction.deferReply.mockRejectedValue(new Error('Unknown interaction'));
+    await handleButton(interaction, deps(command(), logger));
+    expect(interaction.editReply).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledTimes(1);
   });
 
   test('an owner click that fails keeps the message buttons', async () => {

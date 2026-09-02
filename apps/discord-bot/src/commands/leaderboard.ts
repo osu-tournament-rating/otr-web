@@ -15,7 +15,7 @@ export const leaderboard: Command = {
         .setName('country')
         .setDescription('Two-letter country code')
         .setMinLength(2)
-        .setMaxLength(4)
+        .setMaxLength(2)
     )
     .addIntegerOption((option) =>
       option.setName('page').setDescription('Page of 20 players').setMinValue(1)

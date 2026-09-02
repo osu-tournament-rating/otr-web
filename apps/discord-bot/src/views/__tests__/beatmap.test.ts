@@ -67,6 +67,33 @@ describe('beatmap card', () => {
     expect(reply.components![0].components).toHaveLength(3);
   });
 
+  test('a map without a fetched set falls back to its id and has no cover', () => {
+    const beatmap = {
+      ...beatmapStats.beatmap,
+      beatmapset: null,
+      diffName: '',
+      creators: [],
+    };
+    const [embed] = beatmapCard({ ...beatmapStats, beatmap }, ctx).embeds;
+    expect(embed.title).toBe('Beatmap 658127');
+    expect(embed.image).toBeUndefined();
+    expect(embed.author?.name).toBe('osu! · mapped by unknown');
+  });
+
+  test('a single tournament and game read in the singular', () => {
+    const summary = {
+      ...beatmapStats.summary,
+      totalTournamentCount: 1,
+      verifiedTournamentCount: 1,
+      totalGameCount: 1,
+    };
+    expect(
+      beatmapCard({ ...beatmapStats, summary }, ctx).embeds[0].description
+    ).toContain(
+      'Pooled in **1** tournament (1 verified) · **1** verified game'
+    );
+  });
+
   test('the card stays within the limits after finalize', () => {
     expect(() => finalize(beatmapCard(beatmapStats, ctx))).not.toThrow();
   });

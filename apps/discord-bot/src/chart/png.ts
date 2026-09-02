@@ -5,7 +5,7 @@ const fontPath = fileURLToPath(
   new URL('../../assets/Inter-Regular.ttf', import.meta.url)
 );
 
-/** Rasterizes an SVG string; `width` scales the output, otherwise the SVG size is kept. */
+/** Rasterizes an SVG string; `width` scales the output. */
 export function renderPng(svg: string, width?: number): Uint8Array {
   return new Resvg(svg, {
     font: {

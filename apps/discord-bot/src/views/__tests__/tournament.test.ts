@@ -115,6 +115,35 @@ describe('tournament card', () => {
     expect(reply.components).toHaveLength(2);
   });
 
+  test('maps without a mod share sort last on the pool page', () => {
+    const [first, second, third] = tournamentDetail.pooledBeatmaps;
+    const detail = {
+      ...tournamentDetail,
+      pooledBeatmaps: [{ ...first, topMods: [] }, second, third],
+    };
+    const lines = tournamentPool(detail, id, ctx).embeds[0].description!.split(
+      '\n'
+    );
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toContain('%');
+    expect(lines[1]).toContain('%');
+    expect(lines[2]).not.toContain('%');
+  });
+
+  test('a single match reads in the singular', () => {
+    const detail = {
+      ...tournamentDetail,
+      matches: tournamentDetail.matches.slice(0, 1),
+    };
+    expect(tournamentCard(detail, ctx).embeds[0].description).toContain(
+      '**1** match · **9** games'
+    );
+    expect(
+      tournamentMatches(detail, { ...id, view: 'tm' }, ctx).embeds[0].footer
+        ?.text
+    ).toBe('o!TR · osu! · 1 match · page 1 of 1');
+  });
+
   test('the players page numbers rows across pages', () => {
     const reply = tournamentPlayers(
       tournamentDetail,

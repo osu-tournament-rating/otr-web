@@ -19,14 +19,32 @@ const scale = (
   [rangeMin, rangeMax]: [number, number]
 ) => {
   const span = domainMax - domainMin || 1;
-  return (value: number) =>
-    rangeMin + ((value - domainMin) / span) * (rangeMax - rangeMin);
+  const extent = rangeMax - rangeMin || 1;
+  const map = (value: number) =>
+    rangeMin + ((value - domainMin) / span) * extent;
+  map.invert = (position: number) =>
+    domainMin + ((position - rangeMin) / extent) * span;
+  return map;
 };
 
 const steps = (min: number, max: number, count: number) =>
   Array.from({ length: count + 1 }, (_, i) => min + ((max - min) * i) / count);
 
 const round = (value: number) => Math.round(value * 10) / 10;
+
+/** Labels along an axis; the first anchors at its start and the last at its end. */
+const xAxis = (
+  positions: number[],
+  y: number,
+  label: (value: number) => string
+) =>
+  positions
+    .map((value, i) => {
+      const anchor =
+        i === 0 ? 'start' : i === positions.length - 1 ? 'end' : 'middle';
+      return `<text x="${round(value)}" y="${y}" text-anchor="${anchor}" ${text}>${label(value)}</text>`;
+    })
+    .join('');
 
 const frame = (width: number, height: number, body: string) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${body}</svg>`;
@@ -61,12 +79,11 @@ export function ratingHistory(
         `<text x="${pad.left - 14}" y="${round(y(value) + 8)}" text-anchor="end" ${text}>${numbers.format(value)}</text>`
     )
     .join('');
-  const xLabels = steps(points[0].time, points[points.length - 1].time, 4)
-    .map(
-      (time) =>
-        `<text x="${round(x(time))}" y="${height - pad.bottom + 34}" text-anchor="middle" ${text}>${monthYear.format(time)}</text>`
-    )
-    .join('');
+  const xLabels = xAxis(
+    steps(points[0].time, points[points.length - 1].time, 4).map(x),
+    height - pad.bottom + 34,
+    (value) => monthYear.format(x.invert(value))
+  );
   const path = points
     .map(
       (p, i) =>
@@ -115,12 +132,11 @@ export function percentileCurve(
         `<text x="${pad.left - 14}" y="${round(y(value) + 8)}" text-anchor="end" ${text}>${compact.format(value)}</text>`
     )
     .join('');
-  const xLabels = steps(0, 100, 4)
-    .map(
-      (value) =>
-        `<text x="${round(x(value))}" y="${height - pad.bottom + 34}" text-anchor="middle" ${text}>${value}%</text>`
-    )
-    .join('');
+  const xLabels = xAxis(
+    steps(0, 100, 4).map(x),
+    height - pad.bottom + 34,
+    (value) => `${Math.round(x.invert(value))}%`
+  );
   const line = sorted
     .map(
       (p, i) =>

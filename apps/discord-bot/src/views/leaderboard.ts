@@ -2,8 +2,8 @@ import type { LeaderboardResponse } from '@/lib/orpc/schema/leaderboard';
 
 import type { Reply, ViewContext } from '../command';
 import type { CustomId } from '../custom-id';
-import { button, linkButton, row } from './buttons';
-import { flag, link, num, pct, rulesetName, tier } from './format';
+import { linkButton, pageButtons, row } from './buttons';
+import { flag, link, num, pct, plural, rulesetName, tier } from './format';
 import { logo } from './icons';
 import { primary } from './theme';
 
@@ -13,7 +13,7 @@ export function leaderboardPage(
   ctx: ViewContext
 ): Reply {
   const ruleset = rulesetName(response.ruleset);
-  const country = id.country?.toUpperCase();
+  const country = id.country;
   const pages = Math.max(1, response.pages);
   const query = new URLSearchParams({
     page: String(response.page),
@@ -39,22 +39,12 @@ export function leaderboardPage(
         description:
           rows.length > 0 ? rows.join('\n') : 'No rated players match.',
         footer: {
-          text: `o!TR · ${ruleset} · ${num(response.total)} rated players · page ${response.page} of ${pages}`,
+          text: `o!TR · ${ruleset} · ${num(response.total)} rated ${plural(response.total, 'player')} · page ${response.page} of ${pages}`,
         },
       },
     ],
     components: [
-      row(
-        {
-          ...button('◀', { ...page, page: Math.max(1, response.page - 1) }),
-          disabled: response.page <= 1,
-        },
-        {
-          ...button('▶', { ...page, page: Math.min(pages, response.page + 1) }),
-          disabled: response.page >= pages,
-        },
-        linkButton('Open on o!TR', url)
-      ),
+      row(...pageButtons(page, pages), linkButton('Open on o!TR', url)),
     ],
     files: [{ name: 'logo.png', data: logo() }],
   };

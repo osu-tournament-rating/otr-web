@@ -1,8 +1,11 @@
-import { TournamentQuerySortType } from '@otr/core/osu';
+import { TournamentQuerySortType, VerificationStatus } from '@otr/core/osu';
+
+import type { TournamentListItem } from '@/lib/orpc/schema/tournament';
 
 import type { Api } from '../api';
 import { ReplyError, type Command } from '../command';
-import { clip } from '../views/format';
+import type { CustomId } from '../custom-id';
+import { clip, statusName } from '../views/format';
 import {
   tournamentCard,
   tournamentMatches,
@@ -29,7 +32,19 @@ const search = (
     { signal }
   );
 
+const get = (api: Api, id: CustomId) =>
+  api.tournaments.get({ id: Number(id.key) });
+
 const year = (iso: string | null) => (iso ? ` (${iso.slice(0, 4)})` : '');
+
+const verified = (t: TournamentListItem) =>
+  t.verificationStatus === VerificationStatus.Verified;
+
+/** The exact abbreviation first, then the first verified hit, then the first hit. */
+const pick = (query: string, hits: TournamentListItem[]) =>
+  hits.find((t) => t.abbreviation.toLowerCase() === query.toLowerCase()) ??
+  hits.find(verified) ??
+  hits[0];
 
 export const tournament: Command = {
   data: slash('tournament', 'Show a tournament card')
@@ -38,6 +53,7 @@ export const tournament: Command = {
         .setName('name')
         .setDescription('Tournament name or abbreviation')
         .setRequired(true)
+        .setMaxLength(100)
         .setAutocomplete(true)
     )
     .toJSON(),
@@ -49,7 +65,10 @@ export const tournament: Command = {
     }
     const items = await search(api, query, 25, AbortSignal.timeout(2500));
     return items.map((t) => ({
-      name: clip(`${t.abbreviation} — ${t.name}${year(t.startTime)}`, 100),
+      name: clip(
+        `${t.abbreviation} — ${t.name}${year(t.startTime)}${verified(t) ? '' : ` · ${statusName(t.verificationStatus).toLowerCase()}`}`,
+        100
+      ),
       value: String(t.id),
     }));
   },
@@ -58,7 +77,7 @@ export const tournament: Command = {
     const query = (options.string('name') ?? '').trim();
     const id = /^\d+$/.test(query)
       ? Number(query)
-      : (await search(api, query, 1))[0]?.id;
+      : pick(query, await search(api, query, 25))?.id;
     if (!id) {
       throw new ReplyError(notFound(query));
     }
@@ -66,26 +85,12 @@ export const tournament: Command = {
   },
 
   pages: {
-    to: async ({ id, api, ctx }) =>
-      tournamentCard(await api.tournaments.get({ id: Number(id.key) }), ctx),
+    to: async ({ id, api, ctx }) => tournamentCard(await get(api, id), ctx),
     tp: async ({ id, api, ctx }) =>
-      tournamentPlayers(
-        await api.tournaments.get({ id: Number(id.key) }),
-        id,
-        ctx
-      ),
-    tb: async ({ id, api, ctx }) =>
-      tournamentPool(
-        await api.tournaments.get({ id: Number(id.key) }),
-        id,
-        ctx
-      ),
+      tournamentPlayers(await get(api, id), id, ctx),
+    tb: async ({ id, api, ctx }) => tournamentPool(await get(api, id), id, ctx),
     tm: async ({ id, api, ctx }) =>
-      tournamentMatches(
-        await api.tournaments.get({ id: Number(id.key) }),
-        id,
-        ctx
-      ),
+      tournamentMatches(await get(api, id), id, ctx),
   },
 
   notFound,

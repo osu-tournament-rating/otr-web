@@ -5,41 +5,40 @@ import type { BeatmapStatsResponse } from '@/lib/orpc/schema/beatmapStats';
 import {
   calculateBeatmapModDistribution,
   filterBeatmapModDistribution,
+  getBeatmapModLabel,
 } from '@/lib/utils/mods';
 
 import { renderPng } from '../chart/png';
 import { percentileCurve } from '../chart/svg';
 import type { Reply, ViewContext } from '../command';
 import type { CustomId } from '../custom-id';
-import { button, linkButton, pager, row } from './buttons';
+import { linkButton, pager, tabs } from './buttons';
 import {
   bar,
   clip,
   duration,
   link,
   lobby,
-  mods,
+  mapTitle,
   num,
   paginate,
   pct,
+  plural,
   rankRange,
   rulesetName,
   setting,
   statusName,
   table,
+  time,
   when,
 } from './format';
 import { grey, hex, primary } from './theme';
 
 type View = 'bo' | 'bs' | 'bt';
 
-const time = (iso: string | null) => (iso ? Date.parse(iso) : 0);
-
 const shell = (stats: BeatmapStatsResponse, ctx: ViewContext) => {
   const { beatmap: b, summary } = stats;
   const set = b.beatmapset;
-  const artist = b.artistOverride ?? set?.artist ?? 'Unknown artist';
-  const title = b.titleOverride ?? set?.title ?? 'Unknown title';
   const mapper =
     b.creators.map((c) => c.username).join(', ') ||
     b.setOwnerOverride?.username ||
@@ -49,7 +48,7 @@ const shell = (stats: BeatmapStatsResponse, ctx: ViewContext) => {
   const embed: APIEmbed = {
     color: summary.totalGameCount > 0 ? primary : grey,
     author: { name: `${ruleset} · mapped by ${mapper}` },
-    title: `${artist} - ${title} [${b.diffName}]`,
+    title: mapTitle(b),
     url: `${ctx.siteUrl}/beatmaps/${b.osuId}`,
     ...(set
       ? {
@@ -64,22 +63,20 @@ const shell = (stats: BeatmapStatsResponse, ctx: ViewContext) => {
   return { embed, specs, ruleset };
 };
 
-const nav = (stats: BeatmapStatsResponse, active: View) => {
-  const id = (view: View): CustomId => ({
-    view,
-    key: String(stats.beatmap.osuId),
-    ruleset: null,
-    page: 1,
-  });
-  return row(
-    button('Overview', id('bo'), active === 'bo'),
-    ...(stats.summary.totalGameCount > 0
-      ? [button('Scores', id('bs'), active === 'bs')]
-      : []),
-    button('Tournaments', id('bt'), active === 'bt'),
+const nav = (stats: BeatmapStatsResponse, active: View) =>
+  tabs(
+    String(stats.beatmap.osuId),
+    null,
+    active,
+    [
+      ['Overview', 'bo'],
+      ...(stats.summary.totalGameCount > 0
+        ? [['Scores', 'bs'] as [string, string]]
+        : []),
+      ['Tournaments', 'bt'],
+    ],
     linkButton('osu!', `https://osu.ppy.sh/b/${stats.beatmap.osuId}`)
   );
-};
 
 const scoreTable = (stats: BeatmapStatsResponse, count: number) =>
   table(
@@ -91,7 +88,7 @@ const scoreTable = (stats: BeatmapStatsResponse, count: number) =>
           String(i + 1),
           num(s.score),
           clip(s.player.username, 15),
-          mods(s.mods),
+          getBeatmapModLabel(s.mods),
           s.accuracy === null ? '—' : pct(s.accuracy, 1),
           clip(s.tournament.name, 24),
         ]),
@@ -112,8 +109,8 @@ export function beatmapCard(
 
   const pooled =
     summary.totalGameCount > 0
-      ? `Pooled in **${num(summary.totalTournamentCount)}** tournaments (${num(summary.verifiedTournamentCount)} verified) · **${num(summary.totalGameCount)}** verified games`
-      : `No verified games yet. Pooled in ${num(summary.totalTournamentCount)} tournaments.`;
+      ? `Pooled in **${num(summary.totalTournamentCount)}** ${plural(summary.totalTournamentCount, 'tournament')} (${num(summary.verifiedTournamentCount)} verified) · **${num(summary.totalGameCount)}** verified ${plural(summary.totalGameCount, 'game')}`
+      : `No verified games yet. Pooled in ${num(summary.totalTournamentCount)} ${plural(summary.totalTournamentCount, 'tournament')}.`;
 
   if (summary.totalGameCount > 0) {
     const distribution = filterBeatmapModDistribution(
@@ -178,7 +175,7 @@ export function beatmapScores(
     embeds: [
       {
         ...embed,
-        description: `${specs}\n**${num(stats.chartedScoreCount)}** scores on the curve (NM, HD, HR, DT)`,
+        description: `${specs}\n**${num(stats.chartedScoreCount)}** ${plural(stats.chartedScoreCount, 'score')} on the curve (NM, HD, HR, DT)`,
         fields,
         ...(chart ? { image: { url: 'attachment://scores.png' } } : {}),
       },
@@ -209,7 +206,7 @@ export function beatmapTournaments(
               ),
               lobby(t.lobbySize),
               rankRange(t.rankRangeLowerBound),
-              `${num(t.gameCount)} games`,
+              `${num(t.gameCount)} ${plural(t.gameCount, 'game')}`,
               t.startTime ? when(t.startTime, 'd') : null,
               t.verificationStatus === VerificationStatus.Verified
                 ? null
@@ -227,7 +224,7 @@ export function beatmapTournaments(
         ...embed,
         description: `${specs}\n\n${rows}`,
         footer: {
-          text: `o!TR · ${ruleset} · ${num(all.length)} tournaments · page ${page} of ${pages}`,
+          text: `o!TR · ${ruleset} · ${num(all.length)} ${plural(all.length, 'tournament')} · page ${page} of ${pages}`,
         },
       },
     ],

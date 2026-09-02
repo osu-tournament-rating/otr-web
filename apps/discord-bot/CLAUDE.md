@@ -17,8 +17,8 @@ over `/rpc` and stores nothing.
 
 ## Layout
 
-- `src/index.ts` starts tracing, the metrics server, and the gateway client.
-- `src/runner.ts` is the only file that talks to Discord: defer, limits, errors, metrics.
+- `src/index.ts` owns the gateway session, the metrics server, and tracing.
+- `src/runner.ts` alone answers an interaction: defer, limits, errors, metrics.
 - `src/commands/` builds the slash command data, calls the API, and picks a view.
 - `src/views/` turns fetched data into `Reply` objects; `theme.ts` holds the colors.
 - `src/chart/` builds SVG strings and rasterizes them to PNG.
@@ -27,7 +27,7 @@ over `/rpc` and stores nothing.
 
 ## Contract
 
-- A command is a pure function: `execute({ options, api, ctx })` returns a `Reply` of embeds, components, and files.
+- A command calls the API and returns a `Reply` of embeds, components, and files; views and `chart/svg.ts` are pure.
 - The runner owns `deferReply`, the embed limits (`finalize`), the error embeds, and the metrics.
 - A button keeps all state in its `custom_id` (`1:<view>:<key>:<ruleset>:<page>[:<country>]`); a click after a restart works.
 - A `ReplyError` message is shown to the user. An oRPC `NOT_FOUND` shows the command's `notFound` copy.

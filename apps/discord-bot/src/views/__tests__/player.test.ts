@@ -48,6 +48,53 @@ describe('player card', () => {
     );
   });
 
+  test('the card carries no timestamp', () => {
+    expect(playerCard(playerStats, ctx).embeds[0].timestamp).toBeUndefined();
+  });
+
+  test('the bar and the text describe the same target', () => {
+    const progress = {
+      ...playerStats.rating.tierProgress,
+      nextTier: 'Master',
+      nextSubTier: null,
+      ratingForNextTier: 1900,
+      majorTierFillPercentage: 0.14,
+    };
+    const rating = { ...playerStats.rating, tierProgress: progress };
+    const [embed] = playerCard({ ...playerStats, rating }, ctx).embeds;
+    expect(embed.description).toContain('`▰▱▱▱▱▱▱▱▱▱` 258 TR to Master');
+  });
+
+  test('rank 1 reads #1 and the top share floors at 0.1%', () => {
+    const first = { ...playerStats.rating, globalRank: 1, percentile: 100 };
+    expect(
+      playerCard({ ...playerStats, rating: first }, ctx).embeds[0].description
+    ).toContain('**1,642 TR** · #1 ·');
+    const second = { ...playerStats.rating, globalRank: 2, percentile: 99.995 };
+    expect(
+      playerCard({ ...playerStats, rating: second }, ctx).embeds[0].description
+    ).toContain('· top 0.1% ·');
+  });
+
+  test('a single tournament and match read in the singular', () => {
+    const rating = {
+      ...playerStats.rating,
+      tournamentsPlayed: 1,
+      matchesPlayed: 1,
+    };
+    const [embed] = playerCard({ ...playerStats, rating }, ctx).embeds;
+    expect(embed.fields?.[1].value).toStartWith('1 tournament\n1 match ·');
+    const page = tournamentsPage(
+      playerStats,
+      playerTournaments.slice(0, 1),
+      { view: 'pt', key: '1', ruleset: 0, page: 1 },
+      ctx
+    );
+    expect(page.embeds[0].footer?.text).toBe(
+      'o!TR · osu! · 1 tournament · page 1 of 1'
+    );
+  });
+
   test('the tier icon and the chart rasterize to PNG files', () => {
     const files = playerCard(playerStats, ctx).files ?? [];
     expect(files.map((f) => f.name)).toEqual(['tier.png', 'rating.png']);

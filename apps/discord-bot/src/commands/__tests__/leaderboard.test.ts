@@ -44,6 +44,12 @@ describe('/leaderboard', () => {
     });
   });
 
+  test('the country option takes exactly two letters', () => {
+    expect(
+      leaderboard.data.options?.find((option) => option.name === 'country')
+    ).toMatchObject({ min_length: 2, max_length: 2 });
+  });
+
   test('the page button refetches with the encoded filters', async () => {
     const list = procedure(page);
     await leaderboard.pages!.lb({

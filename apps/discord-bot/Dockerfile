@@ -1,9 +1,7 @@
 FROM oven/bun:1.3
 WORKDIR /app
 
-# Copy only manifests first so `bun install` is cached independently of source
-# changes. All workspace manifests are needed for --frozen-lockfile to resolve
-# the workspace graph.
+# Manifests first, so the install layer caches across source changes.
 COPY package.json bun.lock ./
 COPY apps/web/package.json apps/web/
 COPY apps/data-worker/package.json apps/data-worker/

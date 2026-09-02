@@ -19,6 +19,7 @@ export const player: Command = {
         .setName('name')
         .setDescription('Exact osu! username, osu! id, or profile link')
         .setRequired(true)
+        .setMaxLength(100)
     )
     .addIntegerOption((option) =>
       option
@@ -51,16 +52,23 @@ export const player: Command = {
       return playerTournaments(response, tournaments, id, ctx);
     },
     pb: async ({ id, api, ctx }) => {
-      const [response, beatmaps] = await Promise.all([
-        stats(api, id),
+      const beatmaps = (page: number) =>
         api.players.beatmaps({
           id: Number(id.key),
           keyType: 'otr',
           limit: 5,
-          offset: (id.page - 1) * 5,
-        }),
+          offset: (page - 1) * 5,
+        });
+      const [response, first] = await Promise.all([
+        stats(api, id),
+        beatmaps(id.page),
       ]);
-      return playerBeatmaps(response, beatmaps, id, ctx);
+      const page = Math.min(
+        id.page,
+        Math.max(1, Math.ceil(first.totalCount / 5))
+      );
+      const current = page === id.page ? first : await beatmaps(page);
+      return playerBeatmaps(response, current, { ...id, page }, ctx);
     },
   },
 

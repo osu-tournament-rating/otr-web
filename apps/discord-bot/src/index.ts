@@ -1,4 +1,4 @@
-// Must be first so the tracer provider is live before anything else loads.
+// First import: registers the tracer provider before anything else loads.
 import './tracing';
 
 import {
@@ -62,13 +62,16 @@ if (!env.token) {
   client.on(Events.ShardDisconnect, () => gatewayConnected.set(0));
 
   client.on(Events.InteractionCreate, (interaction) => {
-    if (interaction.isChatInputCommand()) {
-      void handleSlash(interaction, deps);
-    } else if (interaction.isAutocomplete()) {
-      void handleAutocomplete(interaction, deps);
-    } else if (interaction.isButton()) {
-      void handleButton(interaction, deps);
-    }
+    const handled = interaction.isChatInputCommand()
+      ? handleSlash(interaction, deps)
+      : interaction.isAutocomplete()
+        ? handleAutocomplete(interaction, deps)
+        : interaction.isButton()
+          ? handleButton(interaction, deps)
+          : undefined;
+    handled?.catch((error: unknown) =>
+      logger.error('interaction failed', { error })
+    );
   });
 
   const shutdown = async () => {

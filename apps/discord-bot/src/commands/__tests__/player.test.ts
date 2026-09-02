@@ -98,11 +98,34 @@ describe('/player', () => {
       api: fakeApi({ players: { stats, beatmaps } }),
       ctx,
     });
+    expect(beatmaps).toHaveBeenCalledTimes(1);
     expect(beatmaps).toHaveBeenCalledWith({
       id: 1,
       keyType: 'otr',
       limit: 5,
       offset: 5,
+    });
+  });
+
+  test('a page past the end refetches the last page', async () => {
+    const stats = procedure(playerStats);
+    const beatmaps = procedure({ ...playerBeatmaps, beatmaps: [] });
+    const reply = await player.pages!.pb({
+      id: { view: 'pb', key: '1', ruleset: 0, page: 15 },
+      api: fakeApi({ players: { stats, beatmaps } }),
+      ctx,
+    });
+    expect(beatmaps.mock.calls.map(([input]) => input)).toEqual([
+      { id: 1, keyType: 'otr', limit: 5, offset: 70 },
+      { id: 1, keyType: 'otr', limit: 5, offset: 5 },
+    ]);
+    expect(reply.embeds[0].footer?.text).toEndWith('page 2 of 2');
+  });
+
+  test('the name option is capped at 100 characters', () => {
+    expect(player.data.options?.[0]).toMatchObject({
+      name: 'name',
+      max_length: 100,
     });
   });
 });

@@ -31,6 +31,7 @@ export const beatmap: Command = {
         .setName('query')
         .setDescription('Artist, title, difficulty, beatmap id, or link')
         .setRequired(true)
+        .setMaxLength(100)
         .setAutocomplete(true)
     )
     .toJSON(),

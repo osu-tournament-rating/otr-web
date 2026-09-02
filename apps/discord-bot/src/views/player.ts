@@ -10,16 +10,18 @@ import { renderPng } from '../chart/png';
 import { ratingHistory } from '../chart/svg';
 import type { Reply, ViewContext } from '../command';
 import type { CustomId } from '../custom-id';
-import { button, linkButton, pager, row } from './buttons';
+import { linkButton, pager, tabs } from './buttons';
 import {
   bar,
   countryName,
   flag,
+  inProgress,
   link,
   lobby,
   num,
   paginate,
   pct,
+  plural,
   rulesetName,
   signed,
   tier,
@@ -27,8 +29,6 @@ import {
 } from './format';
 import { tierIcon } from './icons';
 import { grey, hex, tierColor } from './theme';
-
-const inProgress = 'Stats are still in progress. Check back later.';
 
 type View = 'po' | 'pt' | 'pb';
 
@@ -61,20 +61,18 @@ const shell = (stats: PlayerStats, ctx: ViewContext) => {
   return { embed, files, ruleset };
 };
 
-const nav = (stats: PlayerStats, active: View, ctx: ViewContext) => {
-  const id = (view: View): CustomId => ({
-    view,
-    key: String(stats.playerInfo.id),
-    ruleset: stats.ruleset,
-    page: 1,
-  });
-  return row(
-    button('Overview', id('po'), active === 'po'),
-    button('Tournaments', id('pt'), active === 'pt'),
-    button('Pooled maps', id('pb'), active === 'pb'),
+const nav = (stats: PlayerStats, active: View, ctx: ViewContext) =>
+  tabs(
+    String(stats.playerInfo.id),
+    stats.ruleset,
+    active,
+    [
+      ['Overview', 'po'],
+      ['Tournaments', 'pt'],
+      ['Pooled maps', 'pb'],
+    ],
     linkButton('Open on o!TR', `${ctx.siteUrl}/players/${stats.playerInfo.id}`)
   );
-};
 
 const chartPoints = (stats: PlayerStats) =>
   (stats.rating?.adjustments ?? [])
@@ -104,12 +102,23 @@ export function playerCard(stats: PlayerStats, ctx: ViewContext): Reply {
   const lastMatch = rating.adjustments.findLast(
     (a) => a.adjustmentType === RatingAdjustmentType.Match
   );
-  const next = progress.nextTier
-    ? `${num(progress.ratingForNextTier - rating.rating)} TR to ${getTierString(progress.nextTier as TierName, progress.nextSubTier ?? undefined)}`
-    : 'Top tier';
+  const target = progress.nextTier
+    ? getTierString(
+        progress.nextTier as TierName,
+        progress.nextSubTier ?? undefined
+      )
+    : null;
+  const fill =
+    progress.nextSubTier === null
+      ? progress.majorTierFillPercentage
+      : progress.subTierFillPercentage;
+  const standing =
+    rating.globalRank === 1
+      ? '#1'
+      : `top ${Math.max(0.1, 100 - rating.percentile).toFixed(1)}%`;
   const lines = [
-    `**${num(rating.rating)} TR** · top ${(100 - rating.percentile).toFixed(1)}% · ${flag(player.country)} ${countryName(player.country)}`,
-    `\`${bar(progress.subTierFillPercentage ?? 1)}\` ${next}`,
+    `**${num(rating.rating)} TR** · ${standing} · ${flag(player.country)} ${countryName(player.country)}`,
+    `\`${bar(target ? (fill ?? 0) : 1)}\` ${target ? `${num(progress.ratingForNextTier - rating.rating)} TR to ${target}` : 'Top tier'}`,
     [
       lastMatch ? `Last match ${when(lastMatch.timestamp, 'R')}` : null,
       rating.isProvisional
@@ -129,7 +138,7 @@ export function playerCard(stats: PlayerStats, ctx: ViewContext): Reply {
     {
       name: 'Record',
       value: matchStats
-        ? `${num(rating.tournamentsPlayed)} tournaments\n${num(rating.matchesPlayed)} matches · ${pct(matchStats.matchWinRate)} won`
+        ? `${num(rating.tournamentsPlayed)} ${plural(rating.tournamentsPlayed, 'tournament')}\n${num(rating.matchesPlayed)} ${plural(rating.matchesPlayed, 'match', 'matches')} · ${pct(matchStats.matchWinRate)} won`
         : inProgress,
       inline: true,
     },
@@ -177,12 +186,6 @@ export function playerCard(stats: PlayerStats, ctx: ViewContext): Reply {
         footer: {
           text: `o!TR · ${ruleset} · TR estimates relative tournament performance, not skill`,
         },
-        ...(rating.adjustments.length > 0
-          ? {
-              timestamp:
-                rating.adjustments[rating.adjustments.length - 1].timestamp,
-            }
-          : {}),
       },
     ],
     components,
@@ -214,7 +217,7 @@ export function playerTournaments(
         ...embed,
         description,
         footer: {
-          text: `o!TR · ${ruleset} · ${num(tournaments.length)} tournaments · page ${page} of ${pages}`,
+          text: `o!TR · ${ruleset} · ${num(tournaments.length)} ${plural(tournaments.length, 'tournament')} · page ${page} of ${pages}`,
         },
       },
     ],
@@ -237,7 +240,7 @@ export function playerBeatmaps(
       ? response.beatmaps
           .map(
             (b) =>
-              `★${b.sr.toFixed(2)} · ${Math.round(b.bpm)} BPM · ${link(`${b.artist} - ${b.title} [${b.diffName}]`, `${ctx.siteUrl}/beatmaps/${b.osuId}`)} · ${num(b.tournamentCount)} pools`
+              `★${b.sr.toFixed(2)} · ${Math.round(b.bpm)} BPM · ${link(`${b.artist} - ${b.title} [${b.diffName}]`, `${ctx.siteUrl}/beatmaps/${b.osuId}`)} · ${num(b.tournamentCount)} ${plural(b.tournamentCount, 'pool')}`
           )
           .join('\n')
       : `No pooled maps by ${stats.playerInfo.username} yet.`;
@@ -248,7 +251,7 @@ export function playerBeatmaps(
         ...embed,
         description,
         footer: {
-          text: `o!TR · ${ruleset} · ${num(response.totalCount)} pooled maps · page ${page} of ${pages}`,
+          text: `o!TR · ${ruleset} · ${num(response.totalCount)} pooled ${plural(response.totalCount, 'map')} · page ${page} of ${pages}`,
         },
       },
     ],
