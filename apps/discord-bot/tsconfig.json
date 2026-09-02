@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["bun-types"],
+    "paths": {
+      "@/*": ["../web/*"],
+      "@otr/core": ["../../packages/otr-core/src/index.ts"],
+      "@otr/core/*": ["../../packages/otr-core/src/*"],
+      "@otr/core/osu": ["../../packages/otr-core/src/osu/enums.ts"]
+    }
+  },
+  "include": ["env.d.ts", "src/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["node_modules"]
+}

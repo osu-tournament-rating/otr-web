@@ -36,6 +36,9 @@
     "apps/web/**/*.tsx",
     "apps/data-worker/env.d.ts",
     "apps/data-worker/src/**/*.ts",
+    "apps/discord-bot/env.d.ts",
+    "apps/discord-bot/src/**/*.ts",
+    "apps/discord-bot/scripts/**/*.ts",
     "packages/**/*.ts"
   ],
   "exclude": [
@@ -43,6 +46,7 @@
     "apps/web/.next",
     "apps/web/node_modules",
     "apps/data-worker/node_modules",
+    "apps/discord-bot/node_modules",
     "**/dist",
     "**/build"
   ]

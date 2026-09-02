@@ -49,12 +49,15 @@ jobs:
           set -euo pipefail
           WEB_TAGS="stagecodes/otr-web:${{ inputs.deploy_tag }}"
           DW_TAGS="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
+          BOT_TAGS="stagecodes/otr-discord-bot:${{ inputs.deploy_tag }}"
           if [[ "${{ inputs.target }}" == "production" ]]; then
             WEB_TAGS="${WEB_TAGS},stagecodes/otr-web:latest"
             DW_TAGS="${DW_TAGS},stagecodes/otr-data-worker:latest"
+            BOT_TAGS="${BOT_TAGS},stagecodes/otr-discord-bot:latest"
           fi
           echo "web=${WEB_TAGS}" >> "$GITHUB_OUTPUT"
           echo "data-worker=${DW_TAGS}" >> "$GITHUB_OUTPUT"
+          echo "discord-bot=${BOT_TAGS}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push web image
         uses: docker/build-push-action@v6
@@ -75,6 +78,16 @@ jobs:
           tags: ${{ steps.tags.outputs.data-worker }}
           cache-from: type=gha,scope=data-worker
           cache-to: type=gha,scope=data-worker,mode=max
+
+      - name: Build and push discord bot image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/discord-bot/Dockerfile
+          push: true
+          tags: ${{ steps.tags.outputs.discord-bot }}
+          cache-from: type=gha,scope=discord-bot
+          cache-to: type=gha,scope=discord-bot,mode=max
 
   deploy:
     name: Copy assets & deploy

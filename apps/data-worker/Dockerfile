@@ -7,6 +7,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY apps/web/package.json apps/web/
 COPY apps/data-worker/package.json apps/data-worker/
+COPY apps/discord-bot/package.json apps/discord-bot/
 COPY packages/otr-core/package.json packages/otr-core/
 
 RUN bun install --frozen-lockfile
