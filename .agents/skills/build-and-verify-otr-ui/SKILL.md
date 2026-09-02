@@ -1,11 +1,11 @@
 ---
 name: build-and-verify-otr-ui
-description: Implement, refactor, debug, run, or visually verify user-facing UI and frontend data flows in otr-web. Use for Next.js routes and components, oRPC or SWR boundaries, Tailwind and shadcn styling, responsive or theme behavior, local startup, browser interaction checks, Playwright E2E, screenshots, or player-page reference capture.
+description: Implement, refactor, debug, run, or visually verify user-facing UI and frontend data flows in otr-web. Use for Next.js routes and components, oRPC or SWR boundaries, Tailwind and shadcn styling, responsive or theme behavior, browser interaction checks, Playwright E2E, and preview-deployment verification.
 ---
 
 # Build and verify otr-web UI
 
-Use the current source as the authority. The bundled player-page screenshots are visual references, not pixel-perfect specifications and not substitutes for inspecting the running application.
+Use the current source as the authority. The design reference is `/beatmaps` and `/beatmaps/:id`; read `.agents/skills/otr-design-system/SKILL.md`.
 
 ## Work from the real feature boundary
 
@@ -33,63 +33,62 @@ Use the current source as the authority. The bundled player-page screenshots are
 - Start mobile-first and keep text, controls, charts, tables, and navigation within stable responsive constraints.
 - Preserve accessible names, keyboard interaction, visible focus, sensible DOM order, and non-color status cues.
 - Keep fixed-format controls and charts dimensionally stable across loading, hover, and dynamic content.
-- Treat current implementation and behavior as newer than the reference images when they disagree.
+- Treat the beatmaps pages as the canonical pattern source; see `.agents/skills/otr-design-system/SKILL.md`.
 
 ## Run the local application
 
-Engineers do not run the site to check their own work; see `Verify in a browser`.
+Engineers do not run the site or screenshot it to check their own work.
 
-Use the repository's existing root `.env` without printing, replacing, or committing it. The local environment already contains the data needed for realistic UI verification, so do not migrate, restore, or seed the database merely to verify UI.
+The web designer runs the site in prototype mode, against a disposable database on port
+`5434` created with the `template-db` operation in `otr-scripts`. Never connect to the
+Postgres on `localhost:5432`. Use the repository's root `.env` without printing,
+replacing, or committing it.
 
 ```bash
 bun run dev
 ```
 
-The web app normally serves on `http://localhost:3000`. Poll `/` until it responds before navigating. If the port is already owned by an unrelated process, use another port rather than stopping that process.
+The web app serves on `http://localhost:3000`. Poll `/` until it responds before you
+navigate. If another process owns the port, use a different port; do not stop that
+process. The data worker is not needed. If a page is empty or the database connection
+fails, report the environment problem; do not mutate shared data.
 
-The data worker is not needed for ordinary UI verification. If a page is empty or the database connection fails, report the environment problem; do not mutate shared data to make a screenshot work.
+## Verify the preview deployment
 
-## Verify in a browser
+This section is for the web-designer and tester agents. An engineer stops after Checks.
 
-This section is for the web-designer and tester agents on a preview deployment. An engineer stops after Checks.
+Use any available Playwright-compatible browser automation against the pull request's
+preview deployment. Do not commit auth state, traces, reports, logs, or intermediate
+screenshots.
 
-Use any available Playwright-compatible browser automation. If no browser integration is available, use the repository's installed Playwright package from a temporary untracked script or the CLI. Do not commit auth state, traces, reports, logs, or intermediate screenshots.
-
-Screenshots are the default way to verify. Page snapshots and accessibility-tree dumps are expensive and stay in context for the rest of the session, so treat them as opt-in: reach for one only when you need accessible names, keyboard order, or DOM structure that a screenshot cannot show. When you do need one, scope it to the affected element. Never dump a whole-page tree when a scoped query answers the question.
+Screenshots are the default way to verify. Page snapshots and accessibility-tree dumps
+are expensive and stay in context for the rest of the session, so treat them as opt-in:
+reach for one only when you need accessible names, keyboard order, or DOM structure that
+a screenshot cannot show. When you do need one, scope it to the affected element. Never
+dump a whole-page tree when a scoped query answers the question.
 
 Inspect the affected workflow at:
 
 - Desktop `1440x1000` and mobile `390x844` — always.
-- Light and dark themes — only when the change affects color, elevation, charts, or tokens.
-- `767px` and `768px` — only when the change affects shared navigation or breakpoint behavior.
+- Light and dark themes — only when the change affects color, elevation, charts, or
+  tokens.
+- `767px` and `768px` — only when the change affects shared navigation or breakpoint
+  behavior.
 
 Confirm:
 
-- There are no new uncaught page errors, console errors, or failed same-origin document, script, stylesheet, or fetch requests.
-- `scrollWidth` does not exceed `clientWidth`; controls and text are not clipped or overlapping.
-- Images have nonzero natural dimensions, fonts load, and charts contain nonblank rendered pixels after animation settles.
-- Keyboard controls, focus, loading/disabled behavior, and relevant URL state work after reload.
-- Dynamic controls cannot double-submit, remain stuck, or resize the surrounding layout unexpectedly.
+- No new uncaught page errors, console errors, or failed same-origin document, script,
+  stylesheet, or fetch requests.
+- `scrollWidth` does not exceed `clientWidth`; controls and text are not clipped or
+  overlapping.
+- Images have nonzero natural dimensions, fonts load, and charts contain nonblank
+  rendered pixels.
+- Keyboard controls, focus, loading and disabled behavior, and relevant URL state work
+  after reload.
+- Dynamic controls cannot double-submit, remain stuck, or resize the surrounding layout
+  unexpectedly.
 
 Never claim a visual pass without inspecting rendered output.
-
-## Player-page references
-
-The reusable references live at:
-
-- `assets/references/player-page-desktop.png`
-- `assets/references/player-page-mobile.png`
-
-Open them only when the broader design language is relevant, and open one rather than both when one answers the question. They capture the top of `/players/440` in the light theme using the existing local database. They are deliberately cropped rather than full-page: a full-page capture gets downscaled so far that it costs more tokens and renders illegibly.
-
-When intentionally refreshing them:
-
-1. Run the normal development server and verify `/players/440` behaves correctly before capture.
-2. Use an isolated browser context, device scale factor 1, and reduced motion.
-3. Wait for fonts, images, data, and chart animation to settle.
-4. Capture the top `1440x1000` on desktop and the top `390x1568` on mobile. Keep these dimensions: they are the largest crops that survive image downscaling at readable resolution.
-5. Exclude the Next.js development toolbar from the image only after confirming it is not reporting an application error.
-6. Do not update the references merely to make a regression look expected.
 
 ## Checks
 
