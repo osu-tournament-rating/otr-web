@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   ctx,
+  customIds,
   playerBeatmaps,
   playerStats,
   playerTournaments,
@@ -15,6 +16,12 @@ import {
 } from '../player';
 
 const png = [0x89, 0x50, 0x4e, 0x47];
+
+const many = Array.from({ length: 7 }, (_, i) => ({
+  ...playerTournaments[0],
+  id: 600 + i,
+  abbreviation: `T${i}`,
+}));
 
 describe('player card', () => {
   test('carries the tier color, the site link, the avatar, the chart, and the footer', () => {
@@ -155,11 +162,6 @@ describe('player card', () => {
   });
 
   test('the tournaments page keeps the header, lists five per page, and pages', () => {
-    const many = Array.from({ length: 7 }, (_, i) => ({
-      ...playerTournaments[0],
-      id: 600 + i,
-      abbreviation: `T${i}`,
-    }));
     const reply = tournamentsPage(
       playerStats,
       many,
@@ -199,5 +201,28 @@ describe('player card', () => {
     expect(reply.embeds[0].footer?.text).toBe(
       'o!TR · osu! · 7 pooled maps · page 1 of 2'
     );
+  });
+
+  test('the paged views give every button a distinct id', () => {
+    for (const page of [1, 2]) {
+      const tournaments = customIds(
+        tournamentsPage(
+          playerStats,
+          many,
+          { view: 'pt', key: '1', ruleset: 0, page },
+          ctx
+        )
+      );
+      expect(new Set(tournaments).size).toBe(tournaments.length);
+      const maps = customIds(
+        pooledMaps(
+          playerStats,
+          playerBeatmaps,
+          { view: 'pb', key: '1', ruleset: 0, page },
+          ctx
+        )
+      );
+      expect(new Set(maps).size).toBe(maps.length);
+    }
   });
 });

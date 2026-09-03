@@ -63,11 +63,12 @@ const shell = (stats: BeatmapStatsResponse, ctx: ViewContext) => {
   return { embed, specs, ruleset };
 };
 
-const nav = (stats: BeatmapStatsResponse, active: View) =>
+const nav = (stats: BeatmapStatsResponse, active: View, page: number) =>
   tabs(
     String(stats.beatmap.osuId),
     null,
     active,
+    page,
     [
       ['Overview', 'bo'],
       ...(stats.summary.totalGameCount > 0
@@ -149,7 +150,7 @@ export function beatmapCard(
 
   return {
     embeds: [{ ...embed, description: `${specs}\n${pooled}`, fields }],
-    components: [nav(stats, 'bo')],
+    components: [nav(stats, 'bo', 1)],
   };
 }
 
@@ -180,7 +181,7 @@ export function beatmapScores(
         ...(chart ? { image: { url: 'attachment://scores.png' } } : {}),
       },
     ],
-    components: [nav(stats, 'bs')],
+    components: [nav(stats, 'bs', 1)],
     ...(chart
       ? { files: [{ name: 'scores.png', data: renderPng(chart) }] }
       : {}),
@@ -228,6 +229,6 @@ export function beatmapTournaments(
         },
       },
     ],
-    components: [nav(stats, 'bt'), ...pager({ ...id, page }, pages)],
+    components: [nav(stats, 'bt', page), ...pager({ ...id, page }, pages)],
   };
 }

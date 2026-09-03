@@ -1,8 +1,22 @@
 import { describe, expect, test } from 'bun:test';
 
-import { beatmapStats, ctx, siteUrl } from '../../__tests__/fixtures';
+import {
+  beatmapStats,
+  ctx,
+  customIds,
+  siteUrl,
+} from '../../__tests__/fixtures';
 import { finalize } from '../../runner';
 import { beatmapCard, beatmapScores, beatmapTournaments } from '../beatmap';
+
+const many = {
+  ...beatmapStats,
+  tournaments: Array.from({ length: 9 }, (_, i) => ({
+    ...beatmapStats.tournaments[0],
+    tournament: { id: 700 + i, name: `T${i}` },
+    startTime: `2025-0${(i % 9) + 1}-01T00:00:00.000Z`,
+  })),
+};
 
 describe('beatmap card', () => {
   test('carries the cover, the specs line, mod bars, top scores, and recent pools', () => {
@@ -109,14 +123,6 @@ describe('beatmap card', () => {
   });
 
   test('the tournaments page lists eight per page newest first', () => {
-    const many = {
-      ...beatmapStats,
-      tournaments: Array.from({ length: 9 }, (_, i) => ({
-        ...beatmapStats.tournaments[0],
-        tournament: { id: 700 + i, name: `T${i}` },
-        startTime: `2025-0${(i % 9) + 1}-01T00:00:00.000Z`,
-      })),
-    };
     const reply = beatmapTournaments(
       many,
       { view: 'bt', key: '658127', ruleset: null, page: 1 },
@@ -130,5 +136,18 @@ describe('beatmap card', () => {
     expect(reply.embeds[0].footer?.text).toBe(
       'o!TR · osu! · 9 tournaments · page 1 of 2'
     );
+  });
+
+  test('the tournaments page gives every button a distinct id', () => {
+    for (const page of [1, 2]) {
+      const ids = customIds(
+        beatmapTournaments(
+          many,
+          { view: 'bt', key: '658127', ruleset: null, page },
+          ctx
+        )
+      );
+      expect(new Set(ids).size).toBe(ids.length);
+    }
   });
 });

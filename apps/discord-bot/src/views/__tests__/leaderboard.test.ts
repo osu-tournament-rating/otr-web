@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { ctx, leaderboard, siteUrl } from '../../__tests__/fixtures';
+import { ctx, customIds, leaderboard, siteUrl } from '../../__tests__/fixtures';
 import { finalize } from '../../runner';
 import { leaderboardPage } from '../leaderboard';
 
@@ -63,6 +63,17 @@ describe('leaderboard page', () => {
       true,
       undefined,
     ]);
+  });
+
+  test('a single page gives every button a distinct id', () => {
+    const ids = customIds(
+      leaderboardPage(
+        { ...leaderboard, page: 1, pages: 1 },
+        { ...id, page: 1 },
+        ctx
+      )
+    );
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   test('an empty page says so and stays within the limits', () => {

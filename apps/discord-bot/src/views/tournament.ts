@@ -110,11 +110,12 @@ const shell = (t: TournamentSummary, ctx: ViewContext) => {
   return { embed, files: [{ name: 'logo.png', data: logo() }], ruleset };
 };
 
-const nav = (t: TournamentSummary, active: View) =>
+const nav = (t: TournamentSummary, active: View, page: number) =>
   tabs(
     String(t.id),
     null,
     active,
+    page,
     [
       ['Overview', 'to'],
       ['Players', 'tp'],
@@ -204,7 +205,7 @@ export function tournamentCard(
 
   return {
     embeds: [{ ...embed, description, fields }],
-    components: [nav(t, 'to')],
+    components: [nav(t, 'to', 1)],
     files,
   };
 }
@@ -233,7 +234,10 @@ const page = (
         },
       },
     ],
-    components: [nav(t, view), ...pager({ ...id, page: current }, pages)],
+    components: [
+      nav(t, view, current),
+      ...pager({ ...id, page: current }, pages),
+    ],
     files,
   };
 };

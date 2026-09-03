@@ -25,8 +25,15 @@ import type {
   TournamentPlayerStats,
 } from '@/lib/orpc/schema/tournament';
 
+import type { Reply } from '../command';
+
 export const siteUrl = 'https://otr.stagec.net';
 export const ctx = { siteUrl };
+
+export const customIds = (reply: Reply) =>
+  (reply.components ?? []).flatMap((r) =>
+    r.components.flatMap((c) => ('custom_id' in c ? [c.custom_id] : []))
+  );
 
 const day = (offset: number) =>
   new Date(Date.UTC(2025, 5, 1) + offset * 86_400_000).toISOString();
