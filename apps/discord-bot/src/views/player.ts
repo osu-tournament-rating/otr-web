@@ -119,7 +119,7 @@ const tournamentLine = (
   adjustments: Adjustments
 ) =>
   [
-    `**${t.matchesWon}–${t.matchesLost}**`,
+    `**${num(t.matchesWon)}–${num(t.matchesLost)}**`,
     `**${signed(tournamentDelta(adjustments, t.id))} TR**`,
     lobby(t.lobbySize),
     rankRange(t.rankRangeLowerBound),
@@ -262,7 +262,7 @@ export function playerCard(
     {
       name: '⚔️ Record',
       value: matchStats
-        ? `**${matchStats.matchesWon}–${matchStats.matchesLost}** · ${pct(matchStats.matchWinRate)} won\n**${num(rating.tournamentsPlayed)}** ${plural(rating.tournamentsPlayed, 'tournament')} · peak **${num(matchStats.highestRating ?? rating.rating)} TR**`
+        ? `**${num(matchStats.matchesWon)}–${num(matchStats.matchesLost)}** · ${pct(matchStats.matchWinRate)} won\n**${num(rating.tournamentsPlayed)}** ${plural(rating.tournamentsPlayed, 'tournament')} · peak **${num(matchStats.highestRating ?? rating.rating)} TR**`
         : inProgress,
       inline: true,
     },
@@ -326,7 +326,7 @@ export function playerTournaments(
   const header = [
     `🏆 **${num(tournaments.length)}** ${plural(tournaments.length, 'tournament')}`,
     matchStats
-      ? `**${matchStats.matchesWon}–${matchStats.matchesLost}** ${plural(matchStats.matchesPlayed, 'match', 'matches')}`
+      ? `**${num(matchStats.matchesWon)}–${num(matchStats.matchesLost)}** ${plural(matchStats.matchesPlayed, 'match', 'matches')}`
       : null,
     matchStats ? `**${pct(matchStats.matchWinRate)}** won` : null,
   ]

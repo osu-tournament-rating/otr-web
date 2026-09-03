@@ -29,7 +29,6 @@ import type { Reply } from '../command';
 
 export const siteUrl = 'https://otr.stagec.net';
 
-/** Stands in for the application emojis the bot owns at runtime. */
 export const fakeEmoji = (name: string) => `<:${name}:1>`;
 export const ctx = { siteUrl, emoji: fakeEmoji };
 

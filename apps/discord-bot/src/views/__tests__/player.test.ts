@@ -277,6 +277,27 @@ describe('player card', () => {
     expect(reply.files).toEqual([]);
   });
 
+  test('a four figure record carries the thousands separator', () => {
+    const matchStats = {
+      ...playerStats.matchStats,
+      matchesWon: 1234,
+      matchesLost: 1089,
+    };
+    const [embed] = playerCard(
+      { ...playerStats, matchStats },
+      playerTournaments,
+      ctx
+    ).embeds;
+    expect(embed.fields?.[0].value).toStartWith('**1,234–1,089** ·');
+    const page = tournamentsPage(
+      { ...playerStats, matchStats },
+      playerTournaments,
+      { view: 'pt', key: '1', ruleset: 0, page: 1 },
+      ctx
+    );
+    expect(page.embeds[0].description).toContain('**1,234–1,089** matches');
+  });
+
   test('missing match stats read as in progress', () => {
     const [embed] = playerCard(
       { ...playerStats, matchStats: null },
