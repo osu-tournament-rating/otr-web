@@ -8,12 +8,15 @@ over `/rpc` and stores nothing.
 
 ## Commands
 
-| Command                                   | Procedures                                                        | Chart                  | Buttons                                  |
-| ----------------------------------------- | ----------------------------------------------------------------- | ---------------------- | ---------------------------------------- |
-| `/player name [ruleset]`                  | `players.stats`, then `players.tournaments` or `players.beatmaps` | rating history         | Overview, Tournaments, Pooled maps, link |
-| `/tournament name` (autocomplete)         | `tournaments.list`, `tournaments.get`                             | none                   | Overview, Players, Pool, Matches, Forum  |
-| `/beatmap query` (autocomplete)           | `beatmaps.list`, `beatmaps.stats`                                 | score percentile curve | Overview, Scores, Tournaments, osu! link |
-| `/leaderboard [ruleset] [country] [page]` | `leaderboard.list`                                                | none                   | previous, next, link                     |
+| Command                                   | Procedures                                                         | Chart                  | Buttons                                  |
+| ----------------------------------------- | ------------------------------------------------------------------ | ---------------------- | ---------------------------------------- |
+| `/player name [ruleset]`                  | `players.stats` and `players.tournaments`, then `players.beatmaps` | rating history         | Overview, Tournaments, Pooled maps, link |
+| `/tournament name` (autocomplete)         | `tournaments.list`, `tournaments.get`                              | none                   | Overview, Players, Pool, Matches, Forum  |
+| `/beatmap query` (autocomplete)           | `beatmaps.list`, `beatmaps.stats`                                  | score percentile curve | Overview, Scores, Tournaments, osu! link |
+| `/leaderboard [ruleset] [country] [page]` | `leaderboard.list`                                                 | none                   | previous, next, link                     |
+
+The `/player` overview reads the tournaments as well: it names the last
+tournament and the tournament of the last match.
 
 ## Layout
 
@@ -21,6 +24,7 @@ over `/rpc` and stores nothing.
 - `src/runner.ts` alone answers an interaction: defer, limits, errors, metrics.
 - `src/commands/` builds the slash command data, calls the API, and picks a view.
 - `src/views/` turns fetched data into `Reply` objects; `theme.ts` holds the colors.
+- `src/emojis.ts` syncs the application emojis at boot and resolves them by name.
 - `src/chart/` builds SVG strings and rasterizes them to PNG.
 - `src/__tests__/` holds the fake API, fake interactions, and typed fixtures.
 - `scripts/preview.ts` runs one command against a live site and writes the PNGs to `.tmp/`.
@@ -48,6 +52,15 @@ The bot reads `DISCORD_BOT_TOKEN` (blank idles the bot), `DISCORD_BOT_GUILD_ID` 
 - `bun test` from the repository root; no token and no network.
 - `bun run --cwd apps/discord-bot preview player name=Stage` renders one reply against `INTERNAL_APP_BASE_URL`, or `NEXT_PUBLIC_APP_BASE_URL` when unset.
 - `bun run dev:bot` with a token and `DISCORD_BOT_GUILD_ID` set registers the commands to that guild.
+
+## Emojis
+
+The bot owns its emojis as application emojis, so every server sees them. After
+`ready`, `syncEmojis` fetches `client.application.emojis` and uploads each
+missing tier icon from `apps/web/public/icons/tiers` at 128 px. Names are
+`tier_bronze1` through `tier_grandmaster3`, plus `tier_elite_grandmaster`. A
+view resolves one with `ctx.emoji(name)`, which gives empty text when the bot
+owns no emoji of that name. No emoji id lives in the configuration.
 
 ## Charts
 

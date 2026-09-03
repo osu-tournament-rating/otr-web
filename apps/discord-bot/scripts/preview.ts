@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { createApi } from '../src/api';
 import { commands, findPage } from '../src/commands';
 import { parseCustomId } from '../src/custom-id';
+import { noEmojis } from '../src/emojis';
 import { env } from '../src/env';
 import { finalize } from '../src/runner';
 
@@ -14,7 +15,7 @@ const usage =
   'usage: bun run preview <player|tournament|beatmap|leaderboard> key=value ... | button id=1:pt:1:0:2';
 
 const api = createApi(env.apiUrl);
-const ctx = { siteUrl: env.siteUrl };
+const ctx = { siteUrl: env.siteUrl, emoji: noEmojis };
 
 const run = async () => {
   if (name === 'button') {

@@ -57,7 +57,7 @@ const shell = (stats: BeatmapStatsResponse, ctx: ViewContext) => {
           },
         }
       : {}),
-    footer: { text: `o!TR · ${ruleset} · stats from verified games only` },
+    footer: { text: `o!TR · ${ruleset}` },
   };
   const specs = `★ **${b.sr.toFixed(2)}** · ${Math.round(b.bpm)} BPM · ${duration(b.totalLength)} · CS ${setting(b.cs)} · AR ${setting(b.ar)} · OD ${setting(b.od)} · HP ${setting(b.hp)} · ${link('osu!', `https://osu.ppy.sh/b/${b.osuId}`)}`;
   return { embed, specs, ruleset };

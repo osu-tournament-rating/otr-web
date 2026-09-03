@@ -28,15 +28,20 @@ import type {
 import type { Reply } from '../command';
 
 export const siteUrl = 'https://otr.stagec.net';
-export const ctx = { siteUrl };
+
+/** Stands in for the application emojis the bot owns at runtime. */
+export const fakeEmoji = (name: string) => `<:${name}:1>`;
+export const ctx = { siteUrl, emoji: fakeEmoji };
 
 export const customIds = (reply: Reply) =>
   (reply.components ?? []).flatMap((r) =>
     r.components.flatMap((c) => ('custom_id' in c ? [c.custom_id] : []))
   );
 
-const day = (offset: number) =>
-  new Date(Date.UTC(2025, 5, 1) + offset * 86_400_000).toISOString();
+const day = (offset: number, hour = 0) =>
+  new Date(
+    Date.UTC(2025, 5, 1) + offset * 86_400_000 + hour * 3_600_000
+  ).toISOString();
 
 export const player = (
   id: number,
@@ -67,6 +72,8 @@ export const roster = names.map((name, i) =>
   player(10 + i, name, ['KR', 'US', 'DE', 'JP', 'FR', 'CA'][i])
 );
 
+const company = [...roster, player(16, 'Nifty'), player(17, 'Perci')];
+
 const adjustments = (count: number, start: number) => {
   let rating = start;
   return Array.from({ length: count }, (_, i) => {
@@ -77,7 +84,7 @@ const adjustments = (count: number, start: number) => {
       playerId: 1,
       adjustmentType:
         i === 0 ? RatingAdjustmentType.Initial : RatingAdjustmentType.Match,
-      timestamp: day(i * 9),
+      timestamp: day(i * 9, [13, 14, 16, 18, 15, 22, 17, 14][i % 8]),
       ratingBefore: before,
       ratingAfter: rating,
       volatilityBefore: 200 - i,
@@ -148,14 +155,18 @@ export const playerStats = {
   modStats: [
     { mods: Mods.None, count: 400, averageScore: 600_000 },
     { mods: Mods.Hidden, count: 210, averageScore: 640_000 },
+    { mods: Mods.Nightcore, count: 30, averageScore: 610_000 },
+    { mods: Mods.DoubleTime, count: 20, averageScore: 605_000 },
+    { mods: Mods.NoFail | Mods.Hidden, count: 10, averageScore: 590_000 },
+    { mods: Mods.HardRock, count: 5, averageScore: 580_000 },
   ],
-  frequentTeammates: roster.slice(0, 3).map((p, i) => ({
+  frequentTeammates: company.slice(0, 6).map((p, i) => ({
     player: compact(p),
-    frequency: 14 - i * 2,
+    frequency: 16 - i * 2,
   })),
-  frequentOpponents: roster.slice(3).map((p, i) => ({
+  frequentOpponents: company.slice(2, 8).map((p, i) => ({
     player: compact(p),
-    frequency: 12 - i * 2,
+    frequency: 12 - i,
   })),
   tournamentPerformanceStats: null,
 } satisfies PlayerStats;

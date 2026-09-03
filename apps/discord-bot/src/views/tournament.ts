@@ -104,7 +104,7 @@ const shell = (t: TournamentSummary, ctx: ViewContext) => {
     title: `${t.name} (${t.abbreviation})`,
     url: `${ctx.siteUrl}/tournaments/${t.id}`,
     thumbnail: { url: 'attachment://logo.png' },
-    footer: { text: `o!TR · ${ruleset} · stats from verified matches` },
+    footer: { text: `o!TR · ${ruleset}` },
     ...(t.endTime ? { timestamp: t.endTime } : {}),
   };
   return { embed, files: [{ name: 'logo.png', data: logo() }], ruleset };
