@@ -48,6 +48,17 @@ describe('hourWindow', () => {
   test('wraps past midnight', () => {
     const hours = hoursOf({ 22: 5, 23: 5, 0: 5, 1: 5, 12: 1 });
     expect(hourWindow(hours)).toMatchObject({ start: 22, end: 2 });
+    const later = hoursOf({ 22: 5, 23: 5, 0: 5, 1: 5, 2: 5, 12: 1 });
+    expect(hourWindow(later)).toMatchObject({ start: 22, end: 3 });
+  });
+
+  test('a window that ends at midnight reads 24, never 0', () => {
+    const hours = hoursOf({ 16: 5, 17: 5, 18: 5, 19: 5, 4: 1 });
+    expect(hourWindow(hours)).toMatchObject({ start: 16, end: 20 });
+    const late = hoursOf({ 21: 5, 22: 5, 23: 5, 4: 1 });
+    expect(hourWindow(late)).toMatchObject({ start: 21, end: 24 });
+    const one = hoursOf({ 23: 5, 4: 1 });
+    expect(hourWindow(one)).toMatchObject({ start: 23, end: 24 });
   });
 
   test('takes the earliest start when two runs tie', () => {
@@ -91,4 +102,13 @@ test('histogram scales the bar to the top row', () => {
   ).toBe(
     '```\nNM  34%  61  ▰▰▰▰▰▰▰\nDT  31%  56  ▰▰▰▰▰▰▱\nHR  30%  54  ▰▰▰▰▰▰▱\nHD   4%   7  ▰▱▱▱▱▱▱\n```'
   );
+});
+
+test('a counted row keeps one pip', () => {
+  expect(
+    histogram([
+      { label: 'NM', count: 650, share: 0.4 },
+      { label: 'HDHR', count: 21, share: 0.013 },
+    ])
+  ).toBe('```\nNM    40%  650  ▰▰▰▰▰▰▰\nHDHR   1%   21  ▰▱▱▱▱▱▱\n```');
 });

@@ -93,7 +93,8 @@ export type HourWindow = { start: number; end: number; share: number };
 
 /**
  * The shortest run of whole UTC hours that covers `least` of `hours`, earliest
- * start on a tie; `end` is exclusive. Null under three hours.
+ * start on a tie; `end` is exclusive and reads 24 at midnight. Null under
+ * three hours.
  */
 export const hourWindow = (hours: number[], least = 0.8): HourWindow | null => {
   if (hours.length < 3) {
@@ -114,7 +115,7 @@ export const hourWindow = (hours: number[], least = 0.8): HourWindow | null => {
       if (covered >= need) {
         return {
           start,
-          end: length === 24 ? 24 : (start + length) % 24,
+          end: ((start + length - 1) % 24) + 1,
           share: covered / hours.length,
         };
       }
@@ -176,12 +177,17 @@ export const histogram = (
 ) => {
   const top = Math.max(...rows.map((row) => row.count));
   return table(
-    rows.map((row) => [
-      row.label,
-      pct(row.share),
-      num(row.count),
-      bar(row.count / top, cells),
-    ]),
+    rows.map((row) => {
+      // A counted row always keeps one pip, however small its share.
+      const filled =
+        row.count > 0 ? Math.max(1, Math.round((row.count / top) * cells)) : 0;
+      return [
+        row.label,
+        pct(row.share),
+        num(row.count),
+        bar(filled / cells, cells),
+      ];
+    }),
     [false, true, true, false]
   );
 };

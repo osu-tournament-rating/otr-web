@@ -135,7 +135,7 @@ describe('player card', () => {
     );
   });
 
-  test('the major tier road reads the major fill', () => {
+  test('a jump into a new major tier reads its lowest subtier', () => {
     const progress = {
       ...playerStats.rating.tierProgress,
       nextTier: 'Master',
@@ -150,7 +150,26 @@ describe('player card', () => {
       ctx
     ).embeds;
     expect(embed.description).toContain(
-      '**258 TR** to `▰▱▱▱▱` <:tier_master3:1> Master'
+      '**258 TR** to `▰▱▱▱▱` <:tier_master3:1> Master III'
+    );
+  });
+
+  test('elite grandmaster as the next tier carries no numeral', () => {
+    const progress = {
+      ...playerStats.rating.tierProgress,
+      nextTier: 'Elite Grandmaster',
+      nextSubTier: null,
+      ratingForNextTier: 2500,
+      majorTierFillPercentage: 0.5,
+    };
+    const rating = { ...playerStats.rating, tierProgress: progress };
+    const [embed] = playerCard(
+      { ...playerStats, rating },
+      playerTournaments,
+      ctx
+    ).embeds;
+    expect(embed.description).toEndWith(
+      '**858 TR** to `▰▰▰▱▱` <:tier_elite_grandmaster:1> Elite Grandmaster'
     );
   });
 

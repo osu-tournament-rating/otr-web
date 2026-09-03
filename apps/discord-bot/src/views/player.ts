@@ -227,11 +227,9 @@ export function playerCard(
   }
 
   const progress = rating.tierProgress;
+  // A jump into a new major tier lands on its lowest subtier.
   const target = progress.nextTier
-    ? getTierString(
-        progress.nextTier as TierName,
-        progress.nextSubTier ?? undefined
-      )
+    ? getTierString(progress.nextTier as TierName, progress.nextSubTier ?? 3)
     : null;
   const fill =
     progress.nextSubTier === null
