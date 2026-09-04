@@ -39,9 +39,10 @@ describe('resolvePlayerKey', () => {
 describe('/player', () => {
   test('looks a username up exactly and renders the card', async () => {
     const stats = procedure(playerStats);
+    const tournaments = procedure(playerTournaments);
     const reply = await player.execute({
       options: options({ name: 'Stage' }),
-      api: fakeApi({ players: { stats } }),
+      api: fakeApi({ players: { stats, tournaments } }),
       ctx,
     });
     expect(stats).toHaveBeenCalledWith({
@@ -49,21 +50,28 @@ describe('/player', () => {
       keyType: 'username',
       ruleset: undefined,
     });
+    expect(tournaments).toHaveBeenCalledWith({
+      id: 1,
+      keyType: 'otr',
+      ruleset: 0,
+    });
     expect(reply.embeds[0]).toMatchObject({
       color: 0xaf57db,
-      url: `${siteUrl}/players/1`,
+      author: { name: 'Stage · osu!' },
       thumbnail: { url: 'https://a.ppy.sh/8000001' },
       image: { url: 'attachment://rating.png' },
     });
     expect(reply.embeds[0].footer?.text).toStartWith('o!TR · osu!');
-    expect(reply.files?.map((f) => f.name)).toEqual(['tier.png', 'rating.png']);
+    expect(reply.files?.map((f) => f.name)).toEqual(['rating.png']);
   });
 
   test('passes the ruleset choice and an osu! id', async () => {
     const stats = procedure(playerStats);
     await player.execute({
       options: options({ name: '4504101', ruleset: 1 }),
-      api: fakeApi({ players: { stats } }),
+      api: fakeApi({
+        players: { stats, tournaments: procedure(playerTournaments) },
+      }),
       ctx,
     });
     expect(stats).toHaveBeenCalledWith({
@@ -71,6 +79,22 @@ describe('/player', () => {
       keyType: 'osu',
       ruleset: 1,
     });
+  });
+
+  test('the overview reads the tournaments of the resolved ruleset', async () => {
+    const stats = procedure(playerStats);
+    const tournaments = procedure(playerTournaments);
+    const reply = await player.pages!.po({
+      id: { view: 'po', key: '1', ruleset: 0, page: 1 },
+      api: fakeApi({ players: { stats, tournaments } }),
+      ctx,
+    });
+    expect(tournaments).toHaveBeenCalledWith({
+      id: 1,
+      keyType: 'otr',
+      ruleset: 0,
+    });
+    expect(reply.embeds[0].fields?.at(-1)?.name).toBe('🏆 Last tournament');
   });
 
   test('the tournaments page fetches stats and tournaments by o!TR id', async () => {

@@ -8,6 +8,7 @@ import type {
 
 import type { Api } from './api';
 import type { CustomId } from './custom-id';
+import type { EmojiResolver } from './emojis';
 
 export type Reply = {
   embeds: APIEmbed[];
@@ -20,7 +21,7 @@ export type CommandOptions = {
   integer(name: string): number | null;
 };
 
-export type ViewContext = { siteUrl: string };
+export type ViewContext = { siteUrl: string; emoji: EmojiResolver };
 
 export type Page = (input: {
   id: CustomId;

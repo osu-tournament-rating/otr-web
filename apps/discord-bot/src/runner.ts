@@ -15,6 +15,7 @@ import { ApiError, type Api } from './api';
 import { ReplyError, type Command, type Reply } from './command';
 import { findPage } from './commands';
 import { parseCustomId } from './custom-id';
+import type { EmojiResolver } from './emojis';
 import { commandCalls, commandDuration } from './metrics';
 import { clip } from './views/format';
 import { grey } from './views/theme';
@@ -64,6 +65,7 @@ export type Deps = {
   commands: Command[];
   api(interactionId: string): Api;
   siteUrl: string;
+  emoji: EmojiResolver;
   logger: Logger;
 };
 
@@ -237,7 +239,7 @@ export async function handleSlash(interaction: SlashLike, deps: Deps) {
       command.execute({
         options,
         api: deps.api(interaction.id),
-        ctx: { siteUrl: deps.siteUrl },
+        ctx: { siteUrl: deps.siteUrl, emoji: deps.emoji },
       }),
     send: (payload) => interaction.editReply(payload),
     notFound: () => command.notFound(query),
@@ -310,7 +312,7 @@ export async function handleButton(interaction: ButtonLike, deps: Deps) {
       page({
         id,
         api: deps.api(interaction.id),
-        ctx: { siteUrl: deps.siteUrl },
+        ctx: { siteUrl: deps.siteUrl, emoji: deps.emoji },
       }),
     send: (payload) => interaction.editReply(payload),
     notFound: () => command.notFound(id.key),

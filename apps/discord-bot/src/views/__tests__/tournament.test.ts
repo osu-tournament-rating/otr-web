@@ -27,7 +27,7 @@ describe('tournament card', () => {
       url: `${siteUrl}/tournaments/512`,
       thumbnail: { url: 'attachment://logo.png' },
       author: { name: 'osu! · 4v4 · #1,000+ · Verified' },
-      footer: { text: 'o!TR · osu! · stats from verified matches' },
+      footer: { text: 'o!TR · osu!' },
     });
     expect(embed.description).toContain(
       '[Forum post](https://osu.ppy.sh/community/forums/topics/1900512) · lazer'

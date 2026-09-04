@@ -1,3 +1,5 @@
+import type { PlayerStats } from '@/lib/orpc/schema/playerStats';
+
 import type { Api } from '../api';
 import type { Command } from '../command';
 import type { CustomId } from '../custom-id';
@@ -10,6 +12,14 @@ const stats = (api: Api, id: CustomId) =>
     id: Number(id.key),
     keyType: 'otr',
     ruleset: id.ruleset ?? undefined,
+  });
+
+/** The tournaments of the ruleset the stats resolved to. */
+const tournamentsOf = (api: Api, response: PlayerStats) =>
+  api.players.tournaments({
+    id: response.playerInfo.id,
+    keyType: 'otr',
+    ruleset: response.ruleset,
   });
 
 export const player: Command = {
@@ -35,11 +45,14 @@ export const player: Command = {
       ...resolvePlayerKey(options.string('name') ?? ''),
       ruleset: ruleset ?? undefined,
     });
-    return playerCard(response, ctx);
+    return playerCard(response, await tournamentsOf(api, response), ctx);
   },
 
   pages: {
-    po: async ({ id, api, ctx }) => playerCard(await stats(api, id), ctx),
+    po: async ({ id, api, ctx }) => {
+      const response = await stats(api, id);
+      return playerCard(response, await tournamentsOf(api, response), ctx);
+    },
     pt: async ({ id, api, ctx }) => {
       const [response, tournaments] = await Promise.all([
         stats(api, id),

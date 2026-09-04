@@ -51,6 +51,7 @@ const deps = (c: Command, logger = quietLogger()): Deps => ({
   commands: [c],
   api: () => fakeApi({}),
   siteUrl: 'https://otr.example',
+  emoji: () => '',
   logger,
 });
 

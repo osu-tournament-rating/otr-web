@@ -30,7 +30,7 @@ describe('beatmap card', () => {
       image: {
         url: 'https://assets.ppy.sh/beatmaps/292301/covers/cover@2x.jpg',
       },
-      footer: { text: 'o!TR · osu! · stats from verified games only' },
+      footer: { text: 'o!TR · osu!' },
     });
     expect(embed.thumbnail).toBeUndefined();
     expect(embed.description).toContain(

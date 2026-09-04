@@ -10,6 +10,7 @@ import {
 
 import { createApi } from './api';
 import { commands } from './commands';
+import { noEmojis, syncEmojis, type EmojiResolver } from './emojis';
 import { env } from './env';
 import { logger } from './logger';
 import { gatewayConnected, startMetricsServer } from './metrics';
@@ -23,10 +24,13 @@ import {
 startMetricsServer(env.metricsPort);
 logger.info('Metrics server listening', { port: env.metricsPort });
 
+let emoji: EmojiResolver = noEmojis;
+
 const deps: Deps = {
   commands,
   api: (interactionId) => createApi(env.apiUrl, interactionId),
   siteUrl: env.siteUrl,
+  emoji: (name) => emoji(name),
   logger,
 };
 
@@ -56,6 +60,8 @@ if (!env.token) {
     } catch (error) {
       logger.error('Command registration failed', { error });
     }
+
+    emoji = await syncEmojis(ready.application, logger);
   });
   client.on(Events.ShardReady, () => gatewayConnected.set(1));
   client.on(Events.ShardResume, () => gatewayConnected.set(1));

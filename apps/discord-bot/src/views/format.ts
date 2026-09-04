@@ -12,8 +12,10 @@ const regions = new Intl.DisplayNames(['en'], { type: 'region' });
 
 export const num = (value: number) => numbers.format(Math.round(value));
 
-export const signed = (value: number) =>
-  `${value < 0 ? '-' : '+'}${num(Math.abs(value))}`;
+export const signed = (value: number) => {
+  const rounded = Math.round(value);
+  return `${rounded < 0 ? '−' : '+'}${num(Math.abs(rounded))}`;
+};
 
 export const pct = (fraction: number, digits = 0) =>
   `${(fraction * 100).toFixed(digits)}%`;
@@ -64,6 +66,76 @@ export const bar = (fraction: number, cells = 10) => {
   return '▰'.repeat(filled) + '▱'.repeat(cells - filled);
 };
 
+/** The UTC calendar day, as `2023-04-29`. */
+export const date = (iso: string) => new Date(iso).toISOString().slice(0, 10);
+
+const agoUnits: [seconds: number, suffix: string][] = [
+  [31_536_000, 'y'],
+  [2_592_000, 'mo'],
+  [86_400, 'd'],
+  [3_600, 'h'],
+  [60, 'm'],
+];
+
+/** The age of a time in its largest whole unit, as `3y ago`; `now` under a minute. */
+export const ago = (iso: string, now = Date.now()) => {
+  const seconds = Math.max(0, (now - Date.parse(iso)) / 1000);
+  for (const [size, suffix] of agoUnits) {
+    const value = Math.floor(seconds / size);
+    if (value >= 1) {
+      return `${value}${suffix} ago`;
+    }
+  }
+  return 'now';
+};
+
+export type HourWindow = { start: number; end: number; share: number };
+
+/** The shortest run of whole UTC hours covering `least` of them; `end` is exclusive. */
+export const hourWindow = (hours: number[], least = 0.8): HourWindow | null => {
+  if (hours.length < 3) {
+    return null;
+  }
+  const counts = Array.from({ length: 24 }, () => 0);
+  for (const hour of hours) {
+    counts[((hour % 24) + 24) % 24] += 1;
+  }
+  const need = hours.length * least;
+
+  for (let length = 1; length <= 24; length += 1) {
+    for (let start = 0; start < 24; start += 1) {
+      let covered = 0;
+      for (let step = 0; step < length; step += 1) {
+        covered += counts[(start + step) % 24];
+      }
+      if (covered >= need) {
+        return {
+          start,
+          end: ((start + length - 1) % 24) + 1,
+          share: covered / hours.length,
+        };
+      }
+    }
+  }
+  return null;
+};
+
+/** The rating a player gained or lost across one tournament. */
+export const tournamentDelta = (
+  adjustments: {
+    ratingDelta: number;
+    match: { tournamentId: number | null } | null;
+  }[],
+  tournamentId: number
+) =>
+  adjustments.reduce(
+    (sum, adjustment) =>
+      adjustment.match?.tournamentId === tournamentId
+        ? sum + adjustment.ratingDelta
+        : sum,
+    0
+  );
+
 /** A Discord timestamp: R relative, D long date, d short date. */
 export const when = (iso: string, style: 'R' | 'D' | 'd') =>
   `<t:${Math.floor(new Date(iso).getTime() / 1000)}:${style}>`;
@@ -92,6 +164,27 @@ export const table = (rows: string[][], right: boolean[] = []) => {
       .trimEnd()
   );
   return `\`\`\`\n${lines.join('\n')}\n\`\`\``;
+};
+
+/** A code block of `label pct count bar` rows; the bar scales to the top row. */
+export const histogram = (
+  rows: { label: string; count: number; share: number }[],
+  cells = 7
+) => {
+  const top = Math.max(...rows.map((row) => row.count));
+  return table(
+    rows.map((row) => {
+      const filled =
+        row.count > 0 ? Math.max(1, Math.round((row.count / top) * cells)) : 0;
+      return [
+        row.label,
+        pct(row.share),
+        num(row.count),
+        bar(filled / cells, cells),
+      ];
+    }),
+    [false, true, true, false]
+  );
 };
 
 export const plural = (
