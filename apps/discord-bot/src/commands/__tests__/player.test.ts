@@ -57,12 +57,12 @@ describe('/player', () => {
     });
     expect(reply.embeds[0]).toMatchObject({
       color: 0xaf57db,
-      url: `${siteUrl}/players/1`,
+      author: { name: 'Stage · osu!' },
       thumbnail: { url: 'https://a.ppy.sh/8000001' },
       image: { url: 'attachment://rating.png' },
     });
     expect(reply.embeds[0].footer?.text).toStartWith('o!TR · osu!');
-    expect(reply.files?.map((f) => f.name)).toEqual(['tier.png', 'rating.png']);
+    expect(reply.files?.map((f) => f.name)).toEqual(['rating.png']);
   });
 
   test('passes the ruleset choice and an osu! id', async () => {

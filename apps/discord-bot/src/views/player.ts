@@ -34,7 +34,6 @@ import {
   tier,
   tournamentDelta,
 } from './format';
-import { tierIcon } from './icons';
 import { grey, hex, tierColor } from './theme';
 
 type View = 'po' | 'pt' | 'pb';
@@ -45,31 +44,15 @@ const spacer = () => ({ name: '​', value: '​', inline: true });
 const joined = (...parts: (string | null | undefined | false)[]) =>
   parts.filter(Boolean).join(' ');
 
-const shell = (stats: PlayerStats, ctx: ViewContext) => {
+const shell = (stats: PlayerStats) => {
   const { playerInfo: player, rating } = stats;
   const files: NonNullable<Reply['files']> = [];
   const ruleset = rulesetName(stats.ruleset);
   const embed: APIEmbed = {
     color: rating ? tierColor(rating.tierProgress.currentTier) : grey,
-    author: { name: ruleset },
-    title: player.username,
-    url: `${ctx.siteUrl}/players/${player.id}`,
+    author: { name: `${player.username} · ${ruleset}` },
     thumbnail: { url: `https://a.ppy.sh/${player.osuId}` },
   };
-
-  if (rating) {
-    files.push({
-      name: 'tier.png',
-      data: tierIcon(
-        rating.tierProgress.currentTier,
-        rating.tierProgress.currentSubTier
-      ),
-    });
-    embed.author = {
-      name: `${ruleset} · ${tier(rating.tierProgress)}`,
-      icon_url: 'attachment://tier.png',
-    };
-  }
 
   return { embed, files, ruleset };
 };
@@ -208,7 +191,7 @@ export function playerCard(
   tournaments: PlayerTournamentListItem[],
   ctx: ViewContext
 ): Reply {
-  const { embed, files, ruleset } = shell(stats, ctx);
+  const { embed, files, ruleset } = shell(stats);
   const { playerInfo: player, rating, matchStats } = stats;
   const components = [nav(stats, 'po', ctx, 1)];
 
@@ -319,7 +302,7 @@ export function playerTournaments(
   id: CustomId,
   ctx: ViewContext
 ): Reply {
-  const { embed, files, ruleset } = shell(stats, ctx);
+  const { embed, files, ruleset } = shell(stats);
   const { pages, page, items } = paginate(byNewest(tournaments), id.page, 5);
   const { matchStats } = stats;
   const adjustments = stats.rating?.adjustments ?? [];
@@ -361,7 +344,7 @@ export function playerBeatmaps(
   id: CustomId,
   ctx: ViewContext
 ): Reply {
-  const { embed, files, ruleset } = shell(stats, ctx);
+  const { embed, files, ruleset } = shell(stats);
   const pages = Math.max(1, Math.ceil(response.totalCount / 5));
   const page = Math.min(id.page, pages);
   const description =

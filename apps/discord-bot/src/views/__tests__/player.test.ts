@@ -37,16 +37,18 @@ beforeAll(() => setSystemTime(new Date('2026-03-01T00:00:00Z')));
 afterAll(() => setSystemTime());
 
 describe('player card', () => {
-  test('carries the tier color, the site link, the avatar, the chart, and the footer', () => {
-    expect(card()).toMatchObject({
+  test('heads with the username and the ruleset, and keeps the color, avatar, chart, and footer', () => {
+    const embed = card();
+    expect(embed).toMatchObject({
       color: 0xaf57db,
-      title: 'Stage',
-      url: `${siteUrl}/players/1`,
       thumbnail: { url: 'https://a.ppy.sh/8000001' },
       image: { url: 'attachment://rating.png' },
-      author: { name: 'osu! · Diamond II', icon_url: 'attachment://tier.png' },
+      author: { name: 'Stage · osu!' },
       footer: { text: 'o!TR · osu!' },
     });
+    expect(embed.author?.icon_url).toBeUndefined();
+    expect(embed.title).toBeUndefined();
+    expect(embed.url).toBeUndefined();
   });
 
   test('the description reads the tier, the ranks, and the road to the next tier', () => {
@@ -243,12 +245,10 @@ describe('player card', () => {
     );
   });
 
-  test('the tier icon and the chart rasterize to PNG files', () => {
+  test('the chart rasterizes to a PNG file and no tier icon rides along', () => {
     const files = playerCard(playerStats, playerTournaments, ctx).files ?? [];
-    expect(files.map((f) => f.name)).toEqual(['tier.png', 'rating.png']);
-    for (const file of files) {
-      expect([...file.data.subarray(0, 4)]).toEqual(png);
-    }
+    expect(files.map((f) => f.name)).toEqual(['rating.png']);
+    expect([...files[0].data.subarray(0, 4)]).toEqual(png);
   });
 
   test('buttons link the overview, the pages, and the site', () => {
@@ -267,6 +267,7 @@ describe('player card', () => {
     );
     expect(reply.embeds[0]).toMatchObject({
       color: 0x8c8c8c,
+      author: { name: 'Stage · osu!taiko' },
       description:
         'No rating in osu!taiko yet. Ratings are separate per ruleset.',
       footer: { text: 'o!TR · osu!taiko' },
@@ -324,7 +325,10 @@ describe('player tournaments', () => {
       { view: 'pt', key: '1', ruleset: 0, page: 1 },
       ctx
     );
-    expect(reply.embeds[0]).toMatchObject({ color: 0xaf57db, title: 'Stage' });
+    expect(reply.embeds[0]).toMatchObject({
+      color: 0xaf57db,
+      author: { name: 'Stage · osu!' },
+    });
     expect(reply.embeds[0].description).toBe(
       [
         '🏆 **2** tournaments · **123–89** matches · **58%** won',

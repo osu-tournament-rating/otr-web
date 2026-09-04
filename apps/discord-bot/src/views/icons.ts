@@ -20,9 +20,6 @@ const tierFile = (tier: string, subTier: number | null) =>
     ? 'icons/tiers/Elite Grandmaster.svg'
     : `icons/tiers/${tier}${subTier ?? 3}.svg`;
 
-export const tierIcon = (tier: string, subTier: number | null) =>
-  rasterize(tierFile(tier, subTier));
-
 /** The tier icon at the size Discord wants for an application emoji. */
 export const tierEmojiPng = (tier: string, subTier: number | null) =>
   rasterize(tierFile(tier, subTier), 128);
