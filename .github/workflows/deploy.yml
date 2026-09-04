@@ -67,7 +67,7 @@ jobs:
           push: true
           tags: ${{ steps.tags.outputs.web }}
           cache-from: type=gha,scope=web
-          cache-to: type=gha,scope=web,mode=max
+          cache-to: type=gha,scope=web,mode=max,ignore-error=true
 
       - name: Build and push data worker image
         uses: docker/build-push-action@v6
@@ -77,7 +77,7 @@ jobs:
           push: true
           tags: ${{ steps.tags.outputs.data-worker }}
           cache-from: type=gha,scope=data-worker
-          cache-to: type=gha,scope=data-worker,mode=max
+          cache-to: type=gha,scope=data-worker,mode=max,ignore-error=true
 
       - name: Build and push discord bot image
         uses: docker/build-push-action@v6
@@ -87,7 +87,7 @@ jobs:
           push: true
           tags: ${{ steps.tags.outputs.discord-bot }}
           cache-from: type=gha,scope=discord-bot
-          cache-to: type=gha,scope=discord-bot,mode=max
+          cache-to: type=gha,scope=discord-bot,mode=max,ignore-error=true
 
   deploy:
     name: Copy assets & deploy
