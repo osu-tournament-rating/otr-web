@@ -292,7 +292,7 @@ jobs:
           cache-from: |
             type=gha,scope=web
             type=gha,scope=web-pr-${{ env.PR_NUMBER }}
-          cache-to: type=gha,scope=web-pr-${{ env.PR_NUMBER }},mode=min
+          cache-to: type=gha,scope=web-pr-${{ env.PR_NUMBER }},mode=min,ignore-error=true
 
       - name: Prepare the preview database
         id: database
