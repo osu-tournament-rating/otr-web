@@ -71,7 +71,7 @@ export const tournament: Command = {
     const query = (options.string('name') ?? '').trim();
     const id = /^\d+$/.test(query)
       ? Number(query)
-      : (await search(api, query, 25))[0]?.id;
+      : (await search(api, query, 1))[0]?.id;
     if (!id) {
       throw new ReplyError(notFound(query));
     }
