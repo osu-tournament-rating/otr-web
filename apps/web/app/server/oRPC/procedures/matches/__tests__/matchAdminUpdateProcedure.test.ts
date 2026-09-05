@@ -7,6 +7,7 @@ import {
 import * as schema from '@otr/core/db/schema';
 import { MatchWarningFlags, VerificationStatus } from '@otr/core/osu';
 import type { DatabaseClient } from '@/lib/db';
+import { isolateMaintenanceWindowEnv } from '@/lib/maintenance-window.test-utils';
 
 type RequireKeys<T, K extends keyof T> = Pick<T, K> & Partial<Omit<T, K>>;
 
@@ -132,6 +133,8 @@ class UpdateMatchTestTransaction {
 }
 
 describe('updateMatchAdminHandler', () => {
+  isolateMaintenanceWindowEnv();
+
   const baseInput: UpdateMatchAdminArgs['input'] = {
     id: 1,
     name: 'Test Match',
