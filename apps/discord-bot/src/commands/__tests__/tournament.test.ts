@@ -47,7 +47,7 @@ describe('/tournament', () => {
     expect(get).toHaveBeenCalledWith({ id: 512 });
   });
 
-  test('free text prefers a verified exact abbreviation, then a verified hit, then any exact abbreviation', async () => {
+  test('free text trusts the API order and opens a rejected first hit', async () => {
     const rejected = {
       ...tournamentList[0],
       id: 900,
@@ -55,34 +55,18 @@ describe('/tournament', () => {
       abbreviation: 'OWC',
       verificationStatus: VerificationStatus.Rejected,
     };
-    const worldCup = {
-      ...tournamentList[1],
-      id: 901,
-      name: 'osu! World Cup 2025',
-      abbreviation: 'OWC2025',
-    };
-    const verifiedExact = { ...worldCup, id: 902, abbreviation: 'OWC' };
     const get = procedure(tournamentDetail);
-    const run = async (query: string, hits: typeof tournamentList) => {
-      get.mockClear();
-      await tournament.execute({
-        options: options(query),
-        api: fakeApi({ tournaments: { list: procedure(hits), get } }),
-        ctx,
-      });
-      return get.mock.calls[0][0];
-    };
-    expect(await run('OWC', [rejected, worldCup])).toEqual({ id: 901 });
-    expect(await run('owc', [rejected, worldCup, verifiedExact])).toEqual({
-      id: 902,
+    await tournament.execute({
+      options: options('OWC'),
+      api: fakeApi({
+        tournaments: {
+          list: procedure([rejected, tournamentList[1]]),
+          get,
+        },
+      }),
+      ctx,
     });
-    expect(
-      await run('OWC', [
-        rejected,
-        { ...worldCup, verificationStatus: VerificationStatus.Rejected },
-      ])
-    ).toEqual({ id: 900 });
-    expect(await run('zzz', [rejected])).toEqual({ id: 900 });
+    expect(get).toHaveBeenCalledWith({ id: 900 });
   });
 
   test('no hit raises the not-found copy', async () => {

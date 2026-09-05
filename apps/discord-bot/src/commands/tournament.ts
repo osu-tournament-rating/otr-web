@@ -40,17 +40,6 @@ const year = (iso: string | null) => (iso ? ` (${iso.slice(0, 4)})` : '');
 const verified = (t: TournamentListItem) =>
   t.verificationStatus === VerificationStatus.Verified;
 
-const pick = (query: string, hits: TournamentListItem[]) => {
-  const exact = (t: TournamentListItem) =>
-    t.abbreviation.toLowerCase() === query.toLowerCase();
-  return (
-    hits.find((t) => verified(t) && exact(t)) ??
-    hits.find(verified) ??
-    hits.find(exact) ??
-    hits[0]
-  );
-};
-
 export const tournament: Command = {
   data: slash('tournament', 'Show a tournament card')
     .addStringOption((option) =>
@@ -82,7 +71,7 @@ export const tournament: Command = {
     const query = (options.string('name') ?? '').trim();
     const id = /^\d+$/.test(query)
       ? Number(query)
-      : pick(query, await search(api, query, 25))?.id;
+      : (await search(api, query, 25))[0]?.id;
     if (!id) {
       throw new ReplyError(notFound(query));
     }

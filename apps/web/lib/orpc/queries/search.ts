@@ -1,8 +1,9 @@
-import { eq, sql, type AnyColumn, type SQL } from 'drizzle-orm';
+import { desc, eq, sql, type AnyColumn, type SQL } from 'drizzle-orm';
 import { alias, QueryBuilder } from 'drizzle-orm/pg-core';
 import * as schema from '@otr/core/db/schema';
 import { searchableText } from '@otr/core/db/schema';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
+import { VerificationStatus } from '@otr/core/osu';
 
 // pg_trgm's own default, so `%>` and this recheck agree without the session GUC.
 export const WORD_SIMILARITY_THRESHOLD = 0.6;
@@ -431,4 +432,31 @@ export function buildMatchSearchExpressions(
     : sql<number>`greatest(ts_rank_cd(${matchVector}, ${parsed.tsQuery}), ${matchSimilarity})`;
 
   return { condition: buildMatchCandidateIds(parsed), rank };
+}
+
+const LIKE_ESCAPE_PATTERN = /[%_\\]/g;
+
+export const escapeLikePattern = (value: string) =>
+  value.replace(LIKE_ESCAPE_PATTERN, (match) => `\\${match}`);
+
+/**
+ * Order for the tournament list's relevance sort: verified tournaments first,
+ * then how closely the abbreviation or name matches. The caller adds its tiebreak.
+ */
+export function buildTournamentRelevanceOrder(term: string): SQL[] {
+  const exact = escapeLikePattern(term);
+  const prefix = `${exact}%`;
+
+  return [
+    desc(
+      sql`${schema.tournaments.verificationStatus} = ${VerificationStatus.Verified}`
+    ),
+    desc(sql<number>`CASE
+      WHEN ${schema.tournaments.abbreviation} ILIKE ${exact} THEN 4
+      WHEN ${schema.tournaments.name} ILIKE ${exact} THEN 3
+      WHEN ${schema.tournaments.abbreviation} ILIKE ${prefix} THEN 2
+      WHEN ${schema.tournaments.name} ILIKE ${prefix} THEN 1
+      ELSE 0
+    END`),
+  ];
 }
