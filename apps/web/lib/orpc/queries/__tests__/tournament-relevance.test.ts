@@ -5,7 +5,11 @@ import { Pool } from 'pg';
 
 import * as schema from '@otr/core/db/schema';
 import { Ruleset, VerificationStatus } from '@otr/core/osu';
-import { buildTournamentRelevanceOrder } from '../search';
+import {
+  buildTournamentRelevanceOrder,
+  buildTournamentSearchExpressions,
+  parseSearchTerm,
+} from '../search';
 
 // Point at a disposable database
 const url = process.env.SEARCH_TEST_DATABASE_URL;
@@ -82,6 +86,30 @@ describe.skipIf(!url)('tournament relevance order', () => {
       );
     return rows.map((row) => labels.get(row.id));
   };
+
+  // Mirrors the tournament query in the site-wide search procedure.
+  const siteSearch = async (term: string) => {
+    const { condition, order } = buildTournamentSearchExpressions(
+      parseSearchTerm(term)!,
+      term
+    );
+    const rows = await db
+      .select({ id: schema.tournaments.id })
+      .from(schema.tournaments)
+      .where(and(inArray(schema.tournaments.id, [...labels.keys()]), condition))
+      .orderBy(...order);
+    return rows.map((row) => labels.get(row.id));
+  };
+
+  it('orders the site-wide search like the list', async () => {
+    expect(await siteSearch('zzrc')).toEqual([
+      'verified exact',
+      'verified prefix',
+      'rejected exact',
+      'rejected abbreviation prefix',
+      'rejected name prefix',
+    ]);
+  });
 
   it('ranks verified tournaments first, then exact, prefix, and substring matches', async () => {
     expect(await search('zzrc')).toEqual([

@@ -223,6 +223,29 @@ test.describe('Global Website Search', () => {
       expect(page.url()).toContain('/tournaments/' + TEST_PUBLIC_TOURNAMENT_ID);
     });
 
+    test('tournament query "OWC" lists verified world cups first', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await openSearchViaButton(page);
+      await typeQuery(page, 'OWC');
+
+      const tournaments = page.locator(
+        '[data-testid="search-group-tournaments"]'
+      );
+      await expect(tournaments).toBeVisible({ timeout: 10000 });
+
+      const results = tournaments.locator('[data-value^="tournament-"]');
+      await expect(results.first()).toContainText(/osu! World Cup/, {
+        timeout: 10000,
+      });
+      await expect(results.nth(1)).toContainText(/osu! World Cup/, {
+        timeout: 10000,
+      });
+    });
+
     test('match query navigates to the match', async ({ page }) => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');

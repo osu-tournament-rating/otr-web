@@ -1,4 +1,4 @@
-import { desc, eq, sql, type AnyColumn, type SQL } from 'drizzle-orm';
+import { asc, desc, eq, sql, type AnyColumn, type SQL } from 'drizzle-orm';
 import { alias, QueryBuilder } from 'drizzle-orm/pg-core';
 import * as schema from '@otr/core/db/schema';
 import { searchableText } from '@otr/core/db/schema';
@@ -421,6 +421,43 @@ function buildMatchCandidateIds(parsed: ParsedSearchTerm): SQL {
   return buildCandidateFilter(schema.matches.id, branches);
 }
 
+export type TournamentSearchExpressions = SearchExpressions & {
+  /** The full site-wide order, from the best match down. */
+  order: SQL[];
+};
+
+/** The site-wide tournament criteria and order; `term` is the raw text for exact and prefix tiers. */
+export function buildTournamentSearchExpressions(
+  parsed: ParsedSearchTerm,
+  term: string
+): TournamentSearchExpressions {
+  const { tsQuery, prefixTsQuery } = parsed;
+  const vector = schema.tournaments.searchVector;
+  const similarity = sql`greatest(${buildSimilarity(schema.tournaments.name, parsed)}, ${buildSimilarity(schema.tournaments.abbreviation, parsed)})`;
+  const trigram = sql`((${buildTrigramMatch(schema.tournaments.name, parsed)} OR ${buildTrigramMatch(schema.tournaments.abbreviation, parsed)}) AND ${buildTrigramPrecision(
+    [schema.tournaments.name, schema.tournaments.abbreviation],
+    parsed
+  )})`;
+
+  const condition = prefixTsQuery
+    ? sql`(${vector} @@ ${tsQuery} OR ${vector} @@ ${prefixTsQuery} OR ${trigram})`
+    : sql`(${vector} @@ ${tsQuery} OR ${trigram})`;
+  const rank = prefixTsQuery
+    ? sql<number>`greatest(ts_rank_cd(${vector}, ${tsQuery}), ts_rank_cd(${vector}, ${prefixTsQuery}), ${similarity})`
+    : sql<number>`greatest(ts_rank_cd(${vector}, ${tsQuery}), ${similarity})`;
+
+  return {
+    condition,
+    rank,
+    order: [
+      ...buildTournamentRelevanceOrder(term),
+      desc(rank),
+      sql`${schema.tournaments.endTime} desc nulls last`,
+      asc(schema.tournaments.name),
+    ],
+  };
+}
+
 export function buildMatchSearchExpressions(
   parsed: ParsedSearchTerm
 ): SearchExpressions {
@@ -440,22 +477,26 @@ export const escapeLikePattern = (value: string) =>
   value.replace(LIKE_ESCAPE_PATTERN, (match) => `\\${match}`);
 
 /**
- * Order for the tournament list's relevance sort: verified tournaments first,
- * then how closely the abbreviation or name matches. The caller adds its tiebreak.
+ * Relevance order shared by the tournament list and the site-wide search:
+ * verified tournaments first, then how closely the abbreviation or name
+ * matches. The caller adds its tiebreak.
  */
 export function buildTournamentRelevanceOrder(term: string): SQL[] {
   const exact = escapeLikePattern(term);
   const prefix = `${exact}%`;
+  const substring = `%${exact}%`;
 
   return [
     desc(
       sql`${schema.tournaments.verificationStatus} = ${VerificationStatus.Verified}`
     ),
     desc(sql<number>`CASE
-      WHEN ${schema.tournaments.abbreviation} ILIKE ${exact} THEN 4
-      WHEN ${schema.tournaments.name} ILIKE ${exact} THEN 3
-      WHEN ${schema.tournaments.abbreviation} ILIKE ${prefix} THEN 2
-      WHEN ${schema.tournaments.name} ILIKE ${prefix} THEN 1
+      WHEN ${schema.tournaments.abbreviation} ILIKE ${exact} THEN 5
+      WHEN ${schema.tournaments.name} ILIKE ${exact} THEN 4
+      WHEN ${schema.tournaments.abbreviation} ILIKE ${prefix} THEN 3
+      WHEN ${schema.tournaments.name} ILIKE ${prefix} THEN 2
+      WHEN ${schema.tournaments.name} ILIKE ${substring} THEN 1
+      WHEN ${schema.tournaments.abbreviation} ILIKE ${substring} THEN 1
       ELSE 0
     END`),
   ];
