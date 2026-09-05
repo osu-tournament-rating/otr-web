@@ -355,6 +355,20 @@ test.describe('Tournaments', () => {
       await page.goto(ROUTES.tournaments);
       await page.waitForLoadState('networkidle');
       await sortSelect.click();
+      await page.getByRole('option', { name: 'Completion date' }).click();
+      await page.waitForURL(/sort=2/);
+      await search.fill('OWC');
+      await search.press('Enter');
+      await page.waitForURL(/searchQuery=OWC/);
+      expect(new URL(page.url()).searchParams.get('sort')).toBe('2');
+      await expect(sortSelect).toHaveText(/completion date/i);
+      await expect(items.first()).not.toContainText(/osu! World Cup 2025/, {
+        timeout: 10000,
+      });
+
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+      await sortSelect.click();
       await page.getByRole('option', { name: 'Submission date' }).click();
       await page.waitForURL(/sort=4/);
       await search.fill('OWC');

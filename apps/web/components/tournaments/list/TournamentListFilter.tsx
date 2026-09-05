@@ -93,6 +93,11 @@ const sortOptions: readonly {
   },
 ] as const;
 
+const sortLabel = (sort: TournamentQuerySortType) =>
+  sort === TournamentQuerySortType.SearchQueryRelevance
+    ? 'Search relevance'
+    : (sortOptions.find((option) => option.value === sort)?.label ?? 'Sort by');
+
 const verificationStatusOptions = [
   { value: VerificationStatus.None, label: 'Pending' },
   { value: VerificationStatus.PreRejected, label: 'Pre-rejected' },
@@ -200,12 +205,15 @@ function SortControls({
         name="sort"
         render={({ field }) => {
           const sort = resolveTournamentSort(field.value, searchQuery);
+          // An implied sort is a placeholder so that picking it still counts
+          // as a choice; Radix ignores a pick equal to the current value.
+          const chosen = field.value === sort ? String(sort) : '';
 
           return (
             <FormItem className="min-w-0">
               <FormLabel className="sr-only">Sort tournaments by</FormLabel>
               <Select
-                value={String(sort)}
+                value={chosen}
                 // Sorting applies at once, carrying any pending edit with it.
                 // Radix reports an empty value while its items change.
                 onValueChange={(value) => {
@@ -218,9 +226,9 @@ function SortControls({
                 <FormControl>
                   <SelectTrigger
                     data-testid="tournament-sort-select"
-                    className="h-10 w-full bg-background md:w-44 dark:bg-input/50 dark:shadow-none"
+                    className="h-10 w-full bg-background data-[placeholder]:text-foreground md:w-44 dark:bg-input/50 dark:shadow-none"
                   >
-                    <SelectValue placeholder="Sort by" />
+                    <SelectValue placeholder={sortLabel(sort)} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
