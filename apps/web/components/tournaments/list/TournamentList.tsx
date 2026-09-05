@@ -17,6 +17,7 @@ import {
 } from '@/lib/orpc/schema/tournament';
 import { type TournamentListFilter } from '@/lib/types';
 import { hasRankRangeFilter } from '@/lib/filters/tournament-rank';
+import { resolveTournamentSort } from '@/lib/filters/tournament-sort';
 
 const pageSize = 30;
 
@@ -49,7 +50,7 @@ const serializeFilter = (
       : undefined,
   minRankRange: filter.minRankRange,
   maxRankRange: filter.maxRankRange,
-  sort: filter.sort,
+  sort: resolveTournamentSort(filter.sort, filter.searchQuery),
   descending: filter.descending,
 });
 

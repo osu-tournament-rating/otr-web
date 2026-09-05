@@ -323,6 +323,47 @@ test.describe('Tournaments', () => {
         .toBe('9');
     });
 
+    test('search sorts by relevance unless a sort was chosen first', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+
+      const search = page.locator('[data-testid="tournament-search-input"]');
+      const sortSelect = page.locator('[data-testid="tournament-sort-select"]');
+      const direction = page.locator(
+        '[data-testid="tournament-sort-direction"]'
+      );
+      const items = page.locator('[data-testid="tournament-list-item"]');
+
+      await search.fill('OWC');
+      await search.press('Enter');
+      await page.waitForURL(/searchQuery=OWC/);
+      expect(new URL(page.url()).searchParams.has('sort')).toBe(false);
+      await expect(sortSelect).toHaveText(/search relevance/i);
+      await expect(direction).toBeDisabled();
+      await expect(items.first()).toContainText(/osu! World Cup/i, {
+        timeout: 10000,
+      });
+
+      await sortSelect.click();
+      await page.getByRole('option', { name: 'Start date' }).click();
+      await page.waitForURL(/sort=1/);
+      await expect(sortSelect).toHaveText(/start date/i);
+      await expect(direction).toBeEnabled();
+
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+      await sortSelect.click();
+      await page.getByRole('option', { name: 'Submission date' }).click();
+      await page.waitForURL(/sort=4/);
+      await search.fill('OWC');
+      await search.press('Enter');
+      await page.waitForURL(/searchQuery=OWC/);
+      expect(new URL(page.url()).searchParams.get('sort')).toBe('4');
+      await expect(sortSelect).toHaveText(/submission date/i);
+    });
+
     test('empty search offers a clear path back to the archive', async ({
       page,
     }) => {
