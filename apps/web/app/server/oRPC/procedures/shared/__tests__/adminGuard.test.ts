@@ -5,8 +5,11 @@ import {
   ensureAdminDataMutationAllowed,
   isAdminDataMutationFreezeWindow,
 } from '../adminGuard';
+import { isolateMaintenanceWindowEnv } from '@/lib/maintenance-window.test-utils';
 
 describe('admin data mutation freeze window', () => {
+  isolateMaintenanceWindowEnv();
+
   it('is active on Tuesdays from 11:45 UTC through 12:14 UTC', () => {
     expect(
       isAdminDataMutationFreezeWindow(new Date('2026-06-02T11:45:00.000Z'))
@@ -32,5 +35,16 @@ describe('admin data mutation freeze window', () => {
     expect(() =>
       ensureAdminDataMutationAllowed(new Date('2026-06-02T12:00:00.000Z'))
     ).toThrow(ADMIN_DATA_MUTATION_FREEZE_MESSAGE);
+  });
+
+  it('is inactive during the window when the feature flag is disabled', () => {
+    process.env.MAINTENANCE_WINDOW_ENABLED = 'false';
+
+    expect(
+      isAdminDataMutationFreezeWindow(new Date('2026-06-02T12:00:00.000Z'))
+    ).toBe(false);
+    expect(() =>
+      ensureAdminDataMutationAllowed(new Date('2026-06-02T12:00:00.000Z'))
+    ).not.toThrow();
   });
 });
