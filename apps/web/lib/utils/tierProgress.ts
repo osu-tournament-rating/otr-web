@@ -102,14 +102,18 @@ export const buildTierProgress = (rating: number) => {
   const majorRange = Math.max(nextBounds.min - currentBounds.min, 1);
   const subTierRange = majorRange / SUB_TIERS;
   const progressInTier = Math.max(0, rating - currentBounds.min);
-  const currentSubTier = SUB_TIERS - Math.floor(progressInTier / subTierRange);
+  // Sub-tiers count down: III is the lowest band and I is the highest.
+  const currentSubTier = Math.max(
+    1,
+    SUB_TIERS - Math.floor(progressInTier / subTierRange)
+  );
   const currentSubTierBase =
-    currentBounds.min + subTierRange * (currentSubTier - 1);
+    currentBounds.min + subTierRange * (SUB_TIERS - currentSubTier);
   const ratingForNextTier = Math.min(
     nextBounds.min,
     currentSubTierBase + subTierRange
   );
-  const nextSubTier = currentSubTier < SUB_TIERS ? currentSubTier + 1 : null;
+  const nextSubTier = currentSubTier > 1 ? currentSubTier - 1 : null;
   const nextMajorTierName = tierKeyToName[nextTierKey];
   const nextTierName = nextSubTier !== null ? tierName : nextMajorTierName;
 
