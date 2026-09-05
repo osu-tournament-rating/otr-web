@@ -8,6 +8,7 @@ let envLoaded = false;
 export function loadRootEnv(): void {
   if (envLoaded) return;
 
-  loadEnv({ path: join(projectRoot, '.env') });
+  // dotenv 17 logs an "injected env" banner to stdout unless quiet.
+  loadEnv({ path: join(projectRoot, '.env'), quiet: true });
   envLoaded = true;
 }
