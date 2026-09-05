@@ -193,7 +193,6 @@ export function playerCard(
 ): Reply {
   const { embed, files, ruleset } = shell(stats);
   const { playerInfo: player, rating, matchStats } = stats;
-  const components = [nav(stats, 'po', ctx, 1)];
 
   if (!rating) {
     return {
@@ -204,7 +203,6 @@ export function playerCard(
           footer: { text: `o!TR · ${ruleset}` },
         },
       ],
-      components,
       files,
     };
   }
@@ -291,7 +289,6 @@ export function playerCard(
         footer: { text: `o!TR · ${ruleset}` },
       },
     ],
-    components,
     files,
   };
 }

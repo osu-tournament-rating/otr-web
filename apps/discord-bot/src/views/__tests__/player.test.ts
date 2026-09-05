@@ -251,15 +251,13 @@ describe('player card', () => {
     expect([...files[0].data.subarray(0, 4)]).toEqual(png);
   });
 
-  test('buttons link the overview, the pages, and the site', () => {
-    const [row] =
-      playerCard(playerStats, playerTournaments, ctx).components ?? [];
-    expect(JSON.stringify(row)).toContain('"custom_id":"1:pt:1:0:1"');
-    expect(JSON.stringify(row)).toContain('"custom_id":"1:pb:1:0:1"');
-    expect(JSON.stringify(row)).toContain(`"url":"${siteUrl}/players/1"`);
+  test('the card has no buttons', () => {
+    expect(
+      playerCard(playerStats, playerTournaments, ctx).components
+    ).toBeUndefined();
   });
 
-  test('a player without a rating gets a grey card, no fields, no chart, and the buttons', () => {
+  test('a player without a rating gets a grey card, no fields, no chart, and no buttons', () => {
     const reply = playerCard(
       { ...playerStats, ruleset: 1, rating: null, matchStats: null },
       [],
@@ -274,7 +272,7 @@ describe('player card', () => {
     });
     expect(reply.embeds[0].fields).toBeUndefined();
     expect(reply.embeds[0].image).toBeUndefined();
-    expect(reply.components).toHaveLength(1);
+    expect(reply.components).toBeUndefined();
     expect(reply.files).toEqual([]);
   });
 

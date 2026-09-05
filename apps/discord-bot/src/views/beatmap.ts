@@ -150,7 +150,6 @@ export function beatmapCard(
 
   return {
     embeds: [{ ...embed, description: `${specs}\n${pooled}`, fields }],
-    components: [nav(stats, 'bo', 1)],
   };
 }
 
