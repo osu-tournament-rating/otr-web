@@ -117,9 +117,10 @@ can actually produce. Long names and narrow widths are design inputs. Do not add
 decorative empty states or repeated explanations that make a compact page harder
 to scan.
 
-## Designer and engineer handoff
+## Design direction
 
-Give the engineer one recommended direction with:
+The task owner records one direction. When a specialist is useful in explicitly
+requested lead mode, give the writer that direction with:
 
 - The user's job, affected surfaces, and observable acceptance criteria.
 - The specific reference patterns and any justified departures.
@@ -127,15 +128,13 @@ Give the engineer one recommended direction with:
 - Desktop and narrow-width hierarchy, controls, interactions, and visible copy.
 - Relevant states, fixtures, and local checks that establish completion.
 
-Explain consequential choices briefly so the engineer can preserve their intent.
-Let the designer and engineer resolve implementation details directly; copy scope,
-product, and approved-design decisions into the lead's task record. Material
-ambiguity goes back to the lead before it becomes implementation.
+Explain consequential choices briefly and record scope, product, and approved
+design decisions in the task record. Ask the user about unresolved product meaning.
 
-For substantial UI, the engineer builds the prototype under designer direction.
-The designer inspects it locally before the user evaluates its PR preview.
-Record the approved design and unfinished behavior separately. Reuse the same
-designer for continuity through implementation and the allowed review rounds.
+The owner can build and inspect a prototype directly. Use the user's existing
+authorization; when substantial visual direction remains unresolved, provide a
+concrete preview or local artifact for the decision. Record approved direction
+and unfinished behavior separately. A specialist handoff is optional.
 
 ## Evidence and maintenance
 

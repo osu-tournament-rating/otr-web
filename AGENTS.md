@@ -26,8 +26,8 @@ directory, then first read `$HOME/code/git/otr/AGENTS.md` and
 - From `apps/web`, `bun run dev --port <owned-port>` starts a task-owned local
   site. Do not reuse another worktree's process.
 - Playwright owns port `3001` and builds before it starts. Do not let
-  `reuseExistingServer` attach to an unrelated server. Write and run UI E2E only
-  at the shared workflow's clean-review gate.
+  `reuseExistingServer` attach to an unrelated server. Write and run applicable
+  UI E2E coverage during implementation before independent review.
 - Run a full build or full E2E suite only when its coverage is needed. Report an
   unavailable dependency as blocked.
 
@@ -58,7 +58,7 @@ hooks run against that worktree.
 ## Database and migrations
 
 - `packages/otr-core/src/db/schema.ts` is the model source of truth. Generate
-  with `bunx drizzle-kit generate` only after the lead records migration
+  with `bunx drizzle-kit generate` only after the task owner records migration
   ownership. Inspect generated SQL and metadata.
 - Never connect to port `5432`. Apply and verify migrations on a disposable
   database from `otr-scripts` on port `5434`.

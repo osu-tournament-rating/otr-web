@@ -24,9 +24,10 @@ permission state. Preserve accessible names, keyboard behavior, focus, DOM
 order, non-color cues, and stable dimensions. Use semantic chart and table
 colors for existing meanings in both themes.
 
-Engineers implement and self-check. The web designer directs substantial
-rendered changes and independently reviews the frozen commit. The user approves
-a substantial web prototype through its preview. Discord prototype artifacts
+The task owner implements and self-checks. A designer or tester can help with a
+concrete question in explicitly requested lead mode; neither is mandatory.
+Use existing design authorization and seek user input for a substantial unresolved
+visual decision through a concrete preview or local artifact. Discord prototype artifacts
 remain local, linked, and clearly approximate; do not post them to Discord
 without explicit authorization.
 
@@ -44,9 +45,9 @@ bun run dev --port <owned-port>
 ```
 
 Do not stop, reuse, or inspect another task's server. During iteration, the
-engineer can inspect uncommitted work. Before independent review, commit the
-source, restart the task-owned server at that SHA, and hand the unchanged
-environment to the reviewer, tester, and designer. Agent browser checks are
+owner can inspect uncommitted work. Before independent review, identify the
+source revision and ensure the task-owned server serves it. Restart when needed,
+and give the reviewer the unchanged environment. Agent browser checks are
 local; the preview belongs to user approval and final judgment.
 
 If browser automation is unavailable, use an installed Playwright-compatible
@@ -76,12 +77,11 @@ bun test <focused-test>
 git diff --check
 ```
 
-UI unit and component tests can follow implementation. Write and run UI
-end-to-end tests only after a clean application review. A clean review one is
-followed by E2E implementation and application review two. If application
-review two is already clean, make a test-and-fixture-only commit and run the one
-additional independent E2E review defined by the shared workflow. Do not start a
-test fix-and-review loop or make automatic application changes after review two.
+UI unit and component tests can follow implementation. Write and run applicable
+UI end-to-end tests during development. Substantive changes use one independent
+reviewer after self-checks; the original owner fixes findings and requests focused
+verification when needed. Follow the shared workflow without delayed E2E gates
+or separate test-only review phases.
 
 Playwright owns port `3001`, builds its app, and can reuse an unrelated existing
 server outside CI; prove the server belongs to this worktree and commit before

@@ -11,11 +11,12 @@ patterns to establish the intended design. Inspect the relevant local rendering.
 
 Choose the smallest coherent design that satisfies the user's job. Name the
 reference patterns, palette meanings, data constraints, and observable acceptance
-criteria in the handoff. Ask the lead about unresolved product meaning rather
-than inventing a display value or interaction.
+criteria in the task. Ask the user about unresolved product meaning rather than
+inventing a display value or interaction.
 
-The designer directs and reviews; engineers build prototypes and production code.
-Follow the shared workspace workflow for prototype approval, local review,
-test timing, the two application review phases, and the conditional E2E test review. Use
+The task owner designs, implements, and self-checks. A designer is an optional
+specialist in explicitly requested lead mode. Follow the shared workflow for
+existing design authorization, local checks, and one independent reviewer for
+substantive changes. Use
 [build-and-verify-otr-ui](../build-and-verify-otr-ui/SKILL.md) for web startup and
 verification commands. Do not use production or PR previews for agent review.

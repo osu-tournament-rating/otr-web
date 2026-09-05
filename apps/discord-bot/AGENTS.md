@@ -58,7 +58,7 @@ Do not conceal a failed API call behind invented empty data.
 
 Write tests before changing command logic, formatting behavior, custom-ID handling,
 or other non-UI logic. Pure presentation follows the workspace UI test policy;
-write and run new UI E2E coverage only after a clean agent review.
+write and run applicable UI E2E coverage during implementation before review.
 
 From this app, `bun test` runs its tests and `bun run lint` runs its linter. Format
 changed files with the repository formatter. Use `src/__tests__/fixtures.ts` and
