@@ -107,8 +107,11 @@ interface VerificationBadgeProps {
   strikethrough?: boolean;
   /**
    * Set where the badge renders inside a link, option, or other control, which
-   * cannot hold a nested tooltip trigger. The badge then names its own status
-   * for assistive technology and its tooltip is reachable by pointer only.
+   * cannot hold a nested tooltip trigger. The badge then carries its status as
+   * text and its tooltip is reachable by pointer only. An ancestor that sets
+   * its own `aria-label` replaces that text, so it has to name the status
+   * itself. Warning and rejection detail stays pointer-only either way, so do
+   * not pair this with `displayText` on an entity that has any.
    */
   insideControl?: boolean;
   warningFlags?: EntityWarningFlags;

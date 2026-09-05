@@ -137,6 +137,10 @@ function GamePips({
   games: MatchRow['games'];
   className?: string;
 }) {
+  if (games.length === 0) {
+    return null;
+  }
+
   const counts = new Map<VerificationStatus, number>();
   for (const game of games) {
     counts.set(

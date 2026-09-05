@@ -34,7 +34,7 @@ export default function TierIcon({
   const imageElement = (
     <Image
       src={`/icons/tiers/${fileName}.svg`}
-      alt={tier + subTier?.toString()}
+      alt={getTierString(tier, subTier)}
       {...rest}
     />
   );

@@ -15,50 +15,80 @@ import { STORAGE_STATE } from './fixtures/auth';
  * the type system says which, so the rendered pages assert it.
  *
  * The sweep covers page content and open dialogs. The site header is excluded:
- * its links wrap buttons, which predates any of this.
+ * its links wrap buttons, which predates any of this. It reports a button or a
+ * link inside any of those containers; a focusable `[tabindex]` that is neither
+ * is not reported, so a page that needs that covered asserts it directly.
  */
+const CONTAINER = 'button, a[href], [role="option"], [role="button"]';
+
 async function nestedControls(page: Page) {
-  return page.evaluate(() =>
-    [...document.querySelectorAll('main, [role="dialog"]')].flatMap((root) =>
-      [...root.querySelectorAll('button, a[href]')].flatMap((el) => {
-        const outer = el.parentElement?.closest('button, a[href]');
-        if (!outer || !root.contains(outer)) return [];
-        // Pre-existing: an audit row's collapsible trigger wraps the acting
-        // user's profile link. Tracked in #887. A nested *button* there is
-        // still a failure, which is what a tooltip trigger would add.
-        if (
-          el.tagName === 'A' &&
-          outer.getAttribute('data-slot') === 'collapsible-trigger'
-        )
-          return [];
-        const name = (node: Element) =>
-          node.getAttribute('aria-label') ??
-          node.textContent?.trim().slice(0, 40) ??
-          '';
-        return [
-          `${outer.tagName}[${name(outer)}] > ${el.tagName}[${name(el)}]`,
-        ];
-      })
-    )
+  return page.evaluate(
+    (container) =>
+      [...document.querySelectorAll('main, [role="dialog"]')].flatMap((root) =>
+        [...root.querySelectorAll('button, a[href]')].flatMap((el) => {
+          const outer = el.parentElement?.closest(container);
+          if (!outer || !root.contains(outer)) return [];
+          // Pre-existing: an audit row's collapsible trigger wraps the acting
+          // user's profile link. Tracked in #887. A nested *button* there is
+          // still a failure, which is what a tooltip trigger would add.
+          if (
+            el.tagName === 'A' &&
+            outer.getAttribute('data-slot') === 'collapsible-trigger'
+          )
+            return [];
+          const name = (node: Element) =>
+            node.getAttribute('aria-label') ??
+            node.textContent?.trim().slice(0, 40) ??
+            '';
+          return [
+            `${outer.tagName}[${name(outer)}] > ${el.tagName}[${name(el)}]`,
+          ];
+        })
+      ),
+    CONTAINER
   );
 }
 
+/** Each page names something it must have rendered, so the sweep cannot pass empty. */
 const PAGES = [
-  ['player profile', ROUTES.playerProfile(TEST_PLAYER_ID)],
-  ['leaderboard', ROUTES.leaderboard],
-  ['tournament list', ROUTES.tournaments],
-  ['tournament', ROUTES.tournament(TEST_PUBLIC_TOURNAMENT_ID)],
-  ['match', ROUTES.match(TEST_MATCH_ID)],
-  ['beatmap', ROUTES.beatmap(TEST_BEATMAP_OSU_ID)],
-  ['beatmap list', ROUTES.beatmaps],
-  ['audit log', ROUTES.auditMatch(TEST_AUDIT_MATCH_ID)],
+  [
+    'player profile',
+    ROUTES.playerProfile(TEST_PLAYER_ID),
+    '[data-testid="player-rating-chart"]',
+  ],
+  ['leaderboard', ROUTES.leaderboard, 'table tbody tr'],
+  [
+    'tournament list',
+    ROUTES.tournaments,
+    '[data-testid="tournament-list-item"]',
+  ],
+  [
+    'tournament',
+    ROUTES.tournament(TEST_PUBLIC_TOURNAMENT_ID),
+    '[data-testid="tab-content-matches"]',
+  ],
+  ['match', ROUTES.match(TEST_MATCH_ID), '[data-testid="match-tabs"]'],
+  [
+    'beatmap',
+    ROUTES.beatmap(TEST_BEATMAP_OSU_ID),
+    '[data-testid="beatmap-leaderboard"]',
+  ],
+  ['beatmap list', ROUTES.beatmaps, '[data-testid^="beatmap-list-row-"]'],
+  [
+    'audit log',
+    ROUTES.auditMatch(TEST_AUDIT_MATCH_ID),
+    '[data-testid="timeline-entry"]',
+  ],
 ] as const;
 
 test.describe('No nested interactive controls', () => {
-  for (const [name, url] of PAGES) {
+  for (const [name, url, sentinel] of PAGES) {
     test(name, async ({ page }) => {
       await page.goto(url);
       await page.waitForLoadState('networkidle');
+      await expect(page.locator(sentinel).first()).toBeVisible({
+        timeout: 10000,
+      });
 
       expect(await nestedControls(page), `nested controls on ${url}`).toEqual(
         []
