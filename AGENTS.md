@@ -1,8 +1,8 @@
 # otr-web agent guidance
 
-Run commands from the repository root. First read
-`/home/stage/code/git/otr/AGENTS.md` and
-`/home/stage/code/git/otr/.agents/WORKFLOW.md`.
+Run commands from the repository root. Expand `$HOME` to the current user's home
+directory, then first read `$HOME/code/git/otr/AGENTS.md` and
+`$HOME/code/git/otr/.agents/WORKFLOW.md`.
 
 - `packages/otr-core/` owns shared schema, relations, domain enums, queue names
   and messages, logging, and maintenance windows. Do not duplicate a contract in
