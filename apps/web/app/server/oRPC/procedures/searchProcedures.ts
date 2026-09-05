@@ -56,7 +56,7 @@ export const searchEntities = protectedProcedure
       } = buildPlayerSearchExpressions(parsed);
 
       const { condition: tournamentCondition, order: tournamentOrder } =
-        buildTournamentSearchExpressions(parsed, input.searchKey.trim());
+        buildTournamentSearchExpressions(parsed, input.searchKey);
 
       const { condition: matchCondition, rank: matchRank } =
         buildMatchSearchExpressions(parsed);
