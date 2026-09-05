@@ -126,14 +126,12 @@ function CustomXAxisTickWithData({
     <g transform={`translate(${x},${y})`}>
       <foreignObject x={-12} y={5} width={24} height={24}>
         <SimpleTooltip content={`${tier.tier} (${tier.baseRating} TR)`}>
-          <div>
-            <TierIcon
-              tier={tier.tier as TierName}
-              subTier={1}
-              width={24}
-              height={24}
-            />
-          </div>
+          <TierIcon
+            tier={tier.tier as TierName}
+            subTier={1}
+            width={24}
+            height={24}
+          />
         </SimpleTooltip>
       </foreignObject>
     </g>

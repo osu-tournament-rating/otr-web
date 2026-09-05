@@ -105,6 +105,15 @@ interface VerificationBadgeProps {
   minimal?: boolean;
   /** Strike the label; the icon is left alone. */
   strikethrough?: boolean;
+  /**
+   * Set where the badge renders inside a link, option, or other control, which
+   * cannot hold a nested tooltip trigger. The badge then carries its status as
+   * text and its tooltip is reachable by pointer only. An ancestor that sets
+   * its own `aria-label` replaces that text, so it has to name the status
+   * itself. Warning and rejection detail stays pointer-only either way, so do
+   * not pair this with `displayText` on an entity that has any.
+   */
+  insideControl?: boolean;
   warningFlags?: EntityWarningFlags;
   rejectionReason?: EntityRejectionReason;
   entityType?: ApiItemType;
@@ -267,6 +276,7 @@ export default function VerificationBadge({
   size = 'small',
   minimal = false,
   strikethrough = false,
+  insideControl = false,
   warningFlags,
   rejectionReason,
   entityType,
@@ -292,8 +302,11 @@ export default function VerificationBadge({
     minimal
   );
 
+  // A pip strip is summarised by its container, so it does not repeat itself.
+  const nameStatus = insideControl && !displayText && size !== 'pip';
+
   const badge = (
-    <div
+    <span
       className={cn(
         ...badgeStyles,
         sizeConfig.container,
@@ -301,6 +314,7 @@ export default function VerificationBadge({
       )}
     >
       <Icon className={cn(sizeConfig.icon, iconColor)} />
+      {nameStatus && <span className="sr-only">{statusText}</span>}
       {displayText && (
         <span
           className={cn(
@@ -312,7 +326,7 @@ export default function VerificationBadge({
           {statusText}
         </span>
       )}
-    </div>
+    </span>
   );
 
   const hasVerifier =
@@ -336,5 +350,15 @@ export default function VerificationBadge({
     verificationStatus
   );
 
-  return <SimpleTooltip content={tooltipContent}>{badge}</SimpleTooltip>;
+  return (
+    <SimpleTooltip
+      content={tooltipContent}
+      // A pip strip renders one badge per game and its container already
+      // summarises them, so pips stay out of the tab order.
+      asChild={insideControl || size === 'pip'}
+      triggerAriaLabel={displayText ? undefined : statusText}
+    >
+      {badge}
+    </SimpleTooltip>
+  );
 }

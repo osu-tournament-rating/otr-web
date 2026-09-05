@@ -21,7 +21,7 @@ export default function AuditButton({
   const href = `/audit/${slug}/${entityId}`;
 
   return (
-    <SimpleTooltip content="View audit history">
+    <SimpleTooltip asChild content="View audit history">
       <Button
         asChild
         variant="ghost"

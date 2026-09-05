@@ -462,6 +462,7 @@ export default function BeatmapListFilter({
             </Select>
 
             <SimpleTooltip
+              asChild
               content={
                 currentFilter.descending
                   ? 'Descending order'

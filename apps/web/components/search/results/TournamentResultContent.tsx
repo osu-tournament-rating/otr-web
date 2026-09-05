@@ -25,6 +25,7 @@ export function TournamentResultContent({
         verificationStatus={data.verificationStatus}
         rejectionReason={data.rejectionReason}
         entityType="tournament"
+        insideControl
       />
       <span className="min-w-0 flex-1 truncate font-medium">
         {highlightMatch(data.name, query)}
@@ -39,14 +40,23 @@ export function TournamentResultContent({
           </span>
         </div>
         <SimpleTooltip
+          asChild
           content={RulesetEnumHelper.getMetadata(data.ruleset).text}
         >
-          <RulesetIcon
-            ruleset={data.ruleset}
-            width={16}
-            height={16}
-            className="flex-shrink-0 fill-primary"
-          />
+          {/* A nested button is not allowed inside a command item, so the
+              ruleset is named for assistive technology instead. */}
+          <span className="inline-flex flex-shrink-0">
+            <RulesetIcon
+              ruleset={data.ruleset}
+              width={16}
+              height={16}
+              className="fill-primary"
+              aria-hidden="true"
+            />
+            <span className="sr-only">
+              {RulesetEnumHelper.getMetadata(data.ruleset).text}
+            </span>
+          </span>
         </SimpleTooltip>
       </div>
     </div>

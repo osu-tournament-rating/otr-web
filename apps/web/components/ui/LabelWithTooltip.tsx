@@ -14,7 +14,7 @@ export default function LabelWithTooltip({
   return (
     <div className="flex items-center gap-2">
       <FormLabel className="font-medium text-foreground">{label}</FormLabel>
-      <SimpleTooltip content={tooltip}>
+      <SimpleTooltip content={tooltip} triggerAriaLabel={`About ${label}`}>
         <HelpCircle className="h-4 w-4 text-primary/70" />
       </SimpleTooltip>
     </div>

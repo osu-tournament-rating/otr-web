@@ -245,6 +245,7 @@ function DifficultyNavigator({
 
     return (
       <SimpleTooltip
+        asChild
         key={difficulty.osuId}
         content={
           <div className="max-w-64 space-y-1.5 py-0.5">

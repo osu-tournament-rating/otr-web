@@ -14,7 +14,7 @@ import {
   SectionHeader,
 } from '@/components/beatmap/BeatmapSection';
 import TierIcon from '@/components/icons/TierIcon';
-import TapTooltip from '@/components/tap-tooltip';
+import SimpleTooltip from '@/components/simple-tooltip';
 import {
   formatAccuracyTick,
   formatScoreTick,
@@ -108,7 +108,9 @@ function TierScoreRow({
   const quartiles = toScoreQuartiles(summary);
 
   return (
-    <TapTooltip
+    <SimpleTooltip
+      side="bottom"
+      triggerClassName="block w-full"
       triggerAriaLabel={`${TIER_DISPLAY_NAME[summary.tier]} score: ${formatChartNumber(summary.scoreCount)} scores`}
       content={
         <BoxPlotTooltipContent
@@ -131,7 +133,7 @@ function TierScoreRow({
           gridPercents={gridPercents}
         />
       </div>
-    </TapTooltip>
+    </SimpleTooltip>
   );
 }
 
@@ -194,7 +196,9 @@ function TierAccuracyRow({
   const format = (value: number) => formatPercentage(value, 2);
 
   return (
-    <TapTooltip
+    <SimpleTooltip
+      side="bottom"
+      triggerClassName="block w-full"
       triggerAriaLabel={`${TIER_DISPLAY_NAME[summary.tier]} accuracy: median ${format(quartiles.median)}`}
       content={
         <BoxPlotTooltipContent
@@ -217,7 +221,7 @@ function TierAccuracyRow({
           gridPercents={gridPercents}
         />
       </div>
-    </TapTooltip>
+    </SimpleTooltip>
   );
 }
 

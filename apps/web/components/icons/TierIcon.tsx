@@ -34,7 +34,7 @@ export default function TierIcon({
   const imageElement = (
     <Image
       src={`/icons/tiers/${fileName}.svg`}
-      alt={tier + subTier?.toString()}
+      alt={getTierString(tier, subTier)}
       {...rest}
     />
   );
@@ -49,5 +49,9 @@ export default function TierIcon({
     subTier = undefined;
   }
 
-  return <SimpleTooltip content={tooltipContent}>{imageElement}</SimpleTooltip>;
+  return (
+    <SimpleTooltip asChild content={tooltipContent}>
+      {imageElement}
+    </SimpleTooltip>
+  );
 }

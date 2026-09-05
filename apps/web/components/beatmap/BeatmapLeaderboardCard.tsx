@@ -313,9 +313,14 @@ export default function BeatmapLeaderboardCard({
 
 function GradeIcon({ grade }: { grade: BeatmapTopPerformer['grade'] }) {
   if (grade === undefined) {
+    // The grade renders inside the score link, which cannot hold a nested
+    // trigger, so the reason is named for assistive technology instead.
     return (
-      <SimpleTooltip content="Grade unavailable">
-        <span className="text-xs text-muted-foreground">—</span>
+      <SimpleTooltip asChild content="Grade unavailable">
+        <span className="text-xs text-muted-foreground">
+          <span aria-hidden="true">—</span>
+          <span className="sr-only">Grade unavailable</span>
+        </span>
       </SimpleTooltip>
     );
   }

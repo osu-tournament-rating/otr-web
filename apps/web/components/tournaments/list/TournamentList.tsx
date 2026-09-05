@@ -10,6 +10,7 @@ import { type Fetcher } from 'swr';
 import TournamentListRow from '@/components/tournaments/TournamentListRow';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { VerificationStatusEnumHelper } from '@/lib/enum-helpers';
 import { orpc } from '@/lib/orpc/orpc';
 import {
   type TournamentListItem,
@@ -183,7 +184,9 @@ export default function TournamentList({
                   <Link
                     href={`/tournaments/${tournamentData[item.index].id}`}
                     data-testid="tournament-list-item"
-                    aria-label={`View ${tournamentData[item.index].name}`}
+                    aria-label={`View ${tournamentData[item.index].name}, ${VerificationStatusEnumHelper.getMetadata(
+                      tournamentData[item.index].verificationStatus
+                    ).text.toLowerCase()}`}
                     className="group block transition-colors hover:bg-muted/40 focus-visible:relative focus-visible:z-10 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset dark:hover:bg-secondary/70"
                   >
                     <TournamentListRow

@@ -47,7 +47,7 @@ export default function ProfileRoleBadge({
   return (
     <div>
       {roleBadges.map(({ label, tooltip, variant }) => (
-        <SimpleTooltip key={label} content={tooltip}>
+        <SimpleTooltip asChild key={label} content={tooltip}>
           <Badge
             variant={variant}
             className={`h-5 px-1.5 py-0 text-xs ${className}`}

@@ -36,14 +36,12 @@ export default function PlayerTierProgress({ rating }: TierProgressProps) {
           <SimpleTooltip
             content={getTierString(tierProgress.currentTier as TierName, 3)}
           >
-            <div>
-              <TierIcon
-                tier={(tierProgress.currentTier as TierName) || ''}
-                subTier={3}
-                width={32}
-                height={32}
-              />
-            </div>
+            <TierIcon
+              tier={(tierProgress.currentTier as TierName) || ''}
+              subTier={3}
+              width={32}
+              height={32}
+            />
           </SimpleTooltip>
         </div>
 
@@ -72,14 +70,12 @@ export default function PlayerTierProgress({ rating }: TierProgressProps) {
           <SimpleTooltip
             content={getTierString(tierProgress.nextMajorTier as TierName, 3)}
           >
-            <div>
-              <TierIcon
-                tier={tierProgress.nextMajorTier as TierName}
-                subTier={3}
-                width={32}
-                height={32}
-              />
-            </div>
+            <TierIcon
+              tier={tierProgress.nextMajorTier as TierName}
+              subTier={3}
+              width={32}
+              height={32}
+            />
           </SimpleTooltip>
         </div>
       </div>

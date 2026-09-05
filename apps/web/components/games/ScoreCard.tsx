@@ -90,7 +90,7 @@ export default function ScoreCard({
           />
         </div>
         <div className={iconSlotStyles}>
-          <SimpleTooltip content="View audit history">
+          <SimpleTooltip asChild content="View audit history">
             <Link
               href={`/audit/scores/${score.id}`}
               className="inline-flex h-4 w-4 items-center justify-center rounded-md bg-transparent hover:bg-neutral-200 dark:hover:bg-neutral-700"

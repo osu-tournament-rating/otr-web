@@ -2,7 +2,7 @@
 
 import { ShieldQuestion } from 'lucide-react';
 
-import TapTooltip from '@/components/tap-tooltip';
+import SimpleTooltip from '@/components/simple-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -16,10 +16,11 @@ export default function UnverifiedDataBadge({
   className?: string;
 }) {
   return (
-    <TapTooltip
+    <SimpleTooltip
+      side="bottom"
       content={TOOLTIP}
       triggerAriaLabel={LABEL}
-      triggerClassName="flex w-auto shrink-0 items-center"
+      triggerClassName="shrink-0"
     >
       <Badge
         variant="outline"
@@ -31,6 +32,6 @@ export default function UnverifiedDataBadge({
         <ShieldQuestion aria-hidden />
         {LABEL}
       </Badge>
-    </TapTooltip>
+    </SimpleTooltip>
   );
 }

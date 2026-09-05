@@ -7,7 +7,7 @@ import { FileCode } from 'lucide-react';
 export default function SpecButton() {
   return (
     <Link href="/spec" prefetch={false}>
-      <SimpleTooltip content="OpenAPI specification">
+      <SimpleTooltip asChild content="OpenAPI specification">
         <Button
           aria-label="API spec"
           className="cursor-pointer hover:text-primary"

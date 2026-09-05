@@ -270,27 +270,32 @@ export default function BeatmapAdminView({
         darkMode
       />
       <Dialog open={open} onOpenChange={requestClose}>
-        <SimpleTooltip
-          content={
-            isDeleted
-              ? 'Edit beatmap data'
-              : 'Only beatmaps the osu! API no longer serves can be edited by hand'
-          }
-        >
-          <span>
+        {isDeleted ? (
+          <SimpleTooltip asChild content="Edit beatmap data">
             <DialogTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                disabled={!isDeleted}
                 aria-label="Edit beatmap data"
                 className="size-6 rounded-full text-white/70 hover:bg-white/20 hover:text-white"
               >
                 <PencilLine className="size-3" />
               </Button>
             </DialogTrigger>
-          </span>
-        </SimpleTooltip>
+          </SimpleTooltip>
+        ) : (
+          // A disabled button takes no pointer or focus events, so the reason
+          // it is unavailable rides on the tooltip's own trigger instead. It is
+          // named apart from the real control and carries no hover affordance,
+          // because it explains rather than edits.
+          <SimpleTooltip
+            content="Only beatmaps the osu! API no longer serves can be edited by hand"
+            triggerAriaLabel="Why this beatmap cannot be edited"
+            triggerClassName="size-6 cursor-help justify-center rounded-full text-white/70 opacity-50"
+          >
+            <PencilLine className="size-3" />
+          </SimpleTooltip>
+        )}
         <DialogContent className="flex flex-col gap-0 overflow-y-hidden p-0 sm:max-w-2xl">
           <DialogHeader className="border-b px-5 py-4 pr-12">
             <DialogTitle>Edit beatmap</DialogTitle>
@@ -532,14 +537,12 @@ function FieldGroup({
         <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         <h3 className="text-sm font-medium">{title}</h3>
         {info ? (
-          <SimpleTooltip content={info}>
-            <button
-              type="button"
-              aria-label={`About ${title}`}
-              className="shrink-0 rounded-full text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <Info className="size-3.5" aria-hidden />
-            </button>
+          <SimpleTooltip
+            content={info}
+            triggerAriaLabel={`About ${title}`}
+            triggerClassName="shrink-0 rounded-full text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Info className="size-3.5" aria-hidden />
           </SimpleTooltip>
         ) : null}
       </div>

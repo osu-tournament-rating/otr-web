@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import type * as React from 'react';
 
-import TapTooltip from '@/components/tap-tooltip';
+import SimpleTooltip from '@/components/simple-tooltip';
 import { Toggle } from '@/components/ui/toggle';
 import type {
   BoxPlotMarks,
@@ -81,15 +81,15 @@ export function SectionHeader({
         <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         <h2 className="truncate font-semibold">{title}</h2>
         {infoText ? (
-          <TapTooltip
+          <SimpleTooltip
             side="bottom"
             align="start"
             triggerAriaLabel={`About ${title}`}
-            triggerClassName="flex w-auto shrink-0 items-center rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+            triggerClassName="shrink-0 rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
             content={<span className="block max-w-56">{infoText}</span>}
           >
             <Info className="size-4" aria-hidden />
-          </TapTooltip>
+          </SimpleTooltip>
         ) : null}
       </div>
       {meta ? (

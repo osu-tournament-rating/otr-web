@@ -24,10 +24,9 @@ function Scoreline({ match }: { match: MatchRow }) {
             ? 'No result yet — check back once stats are generated'
             : 'No result yet — the match is not verified'
         }
+        triggerClassName="w-14 shrink-0 justify-center text-center text-sm text-muted-foreground/60"
       >
-        <span className="w-14 shrink-0 text-center text-sm text-muted-foreground/60">
-          &mdash;
-        </span>
+        &mdash;
       </SimpleTooltip>
     );
   }
@@ -47,15 +46,12 @@ function Scoreline({ match }: { match: MatchRow }) {
           ? 'Draw — some games may not have been counted, so this result is not accurate'
           : 'Points won across the verified games'
       }
+      triggerClassName={cn(
+        'w-14 shrink-0 justify-center rounded-md py-0.5 text-center text-sm font-semibold tabular-nums',
+        tone
+      )}
     >
-      <span
-        className={cn(
-          'w-14 shrink-0 rounded-md py-0.5 text-center text-sm font-semibold tabular-nums',
-          tone
-        )}
-      >
-        {winRecord.winnerPoints}&ndash;{winRecord.loserPoints}
-      </span>
+      {winRecord.winnerPoints}&ndash;{winRecord.loserPoints}
     </SimpleTooltip>
   );
 }
@@ -127,6 +123,7 @@ function Notes({ match }: { match: MatchRow }) {
           )}
         </div>
       }
+      triggerAriaLabel="Admin notes"
     >
       <StickyNote className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
     </SimpleTooltip>
@@ -140,6 +137,10 @@ function GamePips({
   games: MatchRow['games'];
   className?: string;
 }) {
+  if (games.length === 0) {
+    return null;
+  }
+
   const counts = new Map<VerificationStatus, number>();
   for (const game of games) {
     counts.set(
@@ -157,6 +158,7 @@ function GamePips({
 
   return (
     <div
+      role="group"
       className={cn('flex flex-wrap items-center gap-0.5', className)}
       aria-label={`${games.length} ${games.length === 1 ? 'game' : 'games'}: ${summary}`}
     >

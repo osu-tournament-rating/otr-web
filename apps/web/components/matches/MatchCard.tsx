@@ -85,7 +85,7 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
               </span>
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
-              <SimpleTooltip content="View match on osu!">
+              <SimpleTooltip asChild content="View match on osu!">
                 <Button
                   asChild
                   variant="ghost"

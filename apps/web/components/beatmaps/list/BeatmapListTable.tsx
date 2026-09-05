@@ -248,7 +248,7 @@ export default function BeatmapListTable({
                 </TableCell>
 
                 <TableCell className={COLUMN.mode}>
-                  <SimpleTooltip content={rulesetLabel}>
+                  <SimpleTooltip asChild content={rulesetLabel}>
                     <span className="inline-flex text-muted-foreground">
                       <RulesetIcon
                         ruleset={ruleset}
