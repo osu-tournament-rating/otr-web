@@ -192,7 +192,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
           <h1 className="text-xl leading-tight font-bold sm:text-2xl md:text-3xl">
             {tournament.name}
           </h1>
-          <SimpleTooltip content="View tournament on osu! website">
+          <SimpleTooltip asChild content="View tournament on osu! website">
             <Button
               asChild
               variant="ghost"
@@ -243,13 +243,14 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
               </div>
 
               {tournament.submittedByUsername && (
-                <SimpleTooltip content="Submitter">
-                  <div className="hidden items-center gap-1.5 sm:flex">
-                    <UserPlus className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate text-xs sm:text-sm">
-                      {tournament.submittedByUsername}
-                    </span>
-                  </div>
+                <SimpleTooltip
+                  content="Submitter"
+                  triggerClassName="hidden gap-1.5 sm:inline-flex"
+                >
+                  <UserPlus className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate text-xs sm:text-sm">
+                    {tournament.submittedByUsername}
+                  </span>
                 </SimpleTooltip>
               )}
             </div>
@@ -266,13 +267,11 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
 
           {tournament.submittedByUsername && (
             <div className="flex flex-row flex-wrap items-center gap-2 sm:hidden">
-              <SimpleTooltip content="Submitter">
-                <div className="flex items-center gap-1.5">
-                  <UserPlus className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate text-xs sm:text-sm">
-                    {tournament.submittedByUsername}
-                  </span>
-                </div>
+              <SimpleTooltip content="Submitter" triggerClassName="gap-1.5">
+                <UserPlus className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate text-xs sm:text-sm">
+                  {tournament.submittedByUsername}
+                </span>
               </SimpleTooltip>
             </div>
           )}

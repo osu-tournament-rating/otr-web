@@ -15,7 +15,7 @@ import {
   SectionHeader,
   Swatch,
 } from '@/components/beatmap/BeatmapSection';
-import TapTooltip from '@/components/tap-tooltip';
+import SimpleTooltip from '@/components/simple-tooltip';
 import {
   ChartContainer,
   ChartTooltip,
@@ -77,7 +77,9 @@ function BoxPlotRow({
   const quartiles = toScoreQuartiles(group);
 
   return (
-    <TapTooltip
+    <SimpleTooltip
+      side="bottom"
+      triggerClassName="block w-full"
       triggerAriaLabel={`${label}: ${formatChartNumber(group.scoreCount)} scores`}
       content={
         <BoxPlotTooltipContent
@@ -103,7 +105,7 @@ function BoxPlotRow({
           gridPercents={gridPercents}
         />
       </div>
-    </TapTooltip>
+    </SimpleTooltip>
   );
 }
 

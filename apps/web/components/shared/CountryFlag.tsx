@@ -35,6 +35,8 @@ export default function CountryFlag({
   }
 
   return (
-    <SimpleTooltip content={tooltipContent || country}>{flag}</SimpleTooltip>
+    <SimpleTooltip asChild content={tooltipContent || country}>
+      {flag}
+    </SimpleTooltip>
   );
 }

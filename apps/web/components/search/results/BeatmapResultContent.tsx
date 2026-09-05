@@ -46,14 +46,23 @@ export function BeatmapResultContent({
           <span className="text-xs font-medium">{data.sr.toFixed(2)}</span>
         </div>
         <SimpleTooltip
+          asChild
           content={RulesetEnumHelper.getMetadata(data.ruleset).text}
         >
-          <RulesetIcon
-            ruleset={data.ruleset}
-            width={16}
-            height={16}
-            className="flex-shrink-0 fill-primary"
-          />
+          {/* A nested button is not allowed inside a command item, so the
+              ruleset is named for assistive technology instead. */}
+          <span className="inline-flex flex-shrink-0">
+            <RulesetIcon
+              ruleset={data.ruleset}
+              width={16}
+              height={16}
+              className="fill-primary"
+              aria-hidden="true"
+            />
+            <span className="sr-only">
+              {RulesetEnumHelper.getMetadata(data.ruleset).text}
+            </span>
+          </span>
         </SimpleTooltip>
         {data.gameCount > 0 && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">

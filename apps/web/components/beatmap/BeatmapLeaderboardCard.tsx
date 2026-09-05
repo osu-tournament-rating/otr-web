@@ -314,7 +314,10 @@ export default function BeatmapLeaderboardCard({
 function GradeIcon({ grade }: { grade: BeatmapTopPerformer['grade'] }) {
   if (grade === undefined) {
     return (
-      <SimpleTooltip content="Grade unavailable">
+      <SimpleTooltip
+        content="Grade unavailable"
+        triggerAriaLabel="Grade unavailable"
+      >
         <span className="text-xs text-muted-foreground">—</span>
       </SimpleTooltip>
     );

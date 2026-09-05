@@ -145,7 +145,7 @@ export default function ReportButton({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <SimpleTooltip content="Report an issue">
+      <SimpleTooltip asChild content="Report an issue">
         <DialogTrigger asChild>
           <Button
             aria-label={`Report an issue with ${entityDisplayName} (${entityMetadata.text})`}

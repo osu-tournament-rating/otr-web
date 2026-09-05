@@ -307,6 +307,7 @@ export default function TournamentBeatmapsAdminView({
     <div className="space-y-2">
       <div className="flex items-center justify-end gap-2">
         <SimpleTooltip
+          asChild
           content={isSelecting ? 'Done selecting' : 'Select beatmaps'}
         >
           <Button
@@ -324,6 +325,7 @@ export default function TournamentBeatmapsAdminView({
 
         {deletedBeatmapsCount > 0 && (
           <SimpleTooltip
+            asChild
             content={
               showDeleted
                 ? 'Hide deleted beatmaps'

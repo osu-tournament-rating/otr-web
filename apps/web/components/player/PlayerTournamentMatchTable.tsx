@@ -43,7 +43,10 @@ export default function PlayerTournamentMatchTable({
               <TableHead className="text-center">
                 <div className="flex items-center justify-center gap-1">
                   Games (W-L)
-                  <SimpleTooltip content="Win-loss record for games this player participated in, not the entire team">
+                  <SimpleTooltip
+                    content="Win-loss record for games this player participated in, not the entire team"
+                    triggerAriaLabel="About games (W-L)"
+                  >
                     <HelpCircle className="h-4 w-4" />
                   </SimpleTooltip>
                 </div>

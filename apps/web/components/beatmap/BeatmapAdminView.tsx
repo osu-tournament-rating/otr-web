@@ -55,12 +55,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { hasAdminScope } from '@/lib/auth/roles';
+import { cn } from '@/lib/utils';
 import { useSession } from '@/lib/hooks/useSession';
 import { orpc } from '@/lib/orpc/orpc';
 import type { BeatmapWithDetails } from '@/lib/orpc/schema/beatmapStats';
 import type { PlayerLookupResult } from '@/lib/orpc/schema/player';
 import { formatDuration, parseDuration } from '@/lib/utils/date';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
+
+const EDIT_BEATMAP_BUTTON_CLASS =
+  'size-6 rounded-full text-white/70 hover:bg-white/20 hover:text-white';
 
 const required = z.string().trim().min(1, 'Required');
 
@@ -270,27 +274,33 @@ export default function BeatmapAdminView({
         darkMode
       />
       <Dialog open={open} onOpenChange={requestClose}>
-        <SimpleTooltip
-          content={
-            isDeleted
-              ? 'Edit beatmap data'
-              : 'Only beatmaps the osu! API no longer serves can be edited by hand'
-          }
-        >
-          <span>
+        {isDeleted ? (
+          <SimpleTooltip asChild content="Edit beatmap data">
             <DialogTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                disabled={!isDeleted}
                 aria-label="Edit beatmap data"
-                className="size-6 rounded-full text-white/70 hover:bg-white/20 hover:text-white"
+                className={EDIT_BEATMAP_BUTTON_CLASS}
               >
                 <PencilLine className="size-3" />
               </Button>
             </DialogTrigger>
-          </span>
-        </SimpleTooltip>
+          </SimpleTooltip>
+        ) : (
+          // A disabled button takes no pointer or focus events, so the reason
+          // it is unavailable rides on the tooltip's own trigger instead.
+          <SimpleTooltip
+            content="Only beatmaps the osu! API no longer serves can be edited by hand"
+            triggerAriaLabel="Edit beatmap data"
+            triggerClassName={cn(
+              EDIT_BEATMAP_BUTTON_CLASS,
+              'justify-center opacity-50'
+            )}
+          >
+            <PencilLine className="size-3" />
+          </SimpleTooltip>
+        )}
         <DialogContent className="flex flex-col gap-0 overflow-y-hidden p-0 sm:max-w-2xl">
           <DialogHeader className="border-b px-5 py-4 pr-12">
             <DialogTitle>Edit beatmap</DialogTitle>
@@ -532,14 +542,12 @@ function FieldGroup({
         <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         <h3 className="text-sm font-medium">{title}</h3>
         {info ? (
-          <SimpleTooltip content={info}>
-            <button
-              type="button"
-              aria-label={`About ${title}`}
-              className="shrink-0 rounded-full text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <Info className="size-3.5" aria-hidden />
-            </button>
+          <SimpleTooltip
+            content={info}
+            triggerAriaLabel={`About ${title}`}
+            triggerClassName="shrink-0 rounded-full text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Info className="size-3.5" aria-hidden />
           </SimpleTooltip>
         ) : null}
       </div>

@@ -7,7 +7,7 @@ import SimpleTooltip from '../simple-tooltip';
 export default function DocsButton() {
   return (
     <Link href={'https://docs.otr.stagec.net'} target="_blank">
-      <SimpleTooltip content="Read the docs">
+      <SimpleTooltip asChild content="Read the docs">
         <Button
           aria-label="Docs"
           className="cursor-pointer hover:text-primary"

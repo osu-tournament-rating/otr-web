@@ -21,19 +21,19 @@ export function RulesetButton({
 }: RulesetButtonProps) {
   const tooltipText = RulesetEnumHelper.getMetadata(ruleset).text;
   return (
-    <button
-      data-testid={`ruleset-button-${ruleset}`}
-      aria-label={tooltipText}
-      onClick={onClick}
-      className={cn(
-        'cursor-pointer rounded-full p-2 transition-colors',
-        isSelected
-          ? 'bg-accent/30 text-accent-foreground'
-          : 'hover:bg-muted/80',
-        className
-      )}
-    >
-      <SimpleTooltip content={tooltipText}>
+    <SimpleTooltip asChild content={tooltipText}>
+      <button
+        data-testid={`ruleset-button-${ruleset}`}
+        aria-label={tooltipText}
+        onClick={onClick}
+        className={cn(
+          'cursor-pointer rounded-full p-2 transition-colors',
+          isSelected
+            ? 'bg-accent/30 text-accent-foreground'
+            : 'hover:bg-muted/80',
+          className
+        )}
+      >
         <RulesetIcon
           ruleset={ruleset}
           className={cn(
@@ -41,7 +41,7 @@ export function RulesetButton({
             isSelected ? 'fill-primary' : 'fill-muted-foreground'
           )}
         />
-      </SimpleTooltip>
-    </button>
+      </button>
+    </SimpleTooltip>
   );
 }

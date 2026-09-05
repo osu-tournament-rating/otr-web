@@ -74,7 +74,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
                 'Unknown'
               )}
             </span>
-            <SimpleTooltip content="View beatmap on osu!">
+            <SimpleTooltip asChild content="View beatmap on osu!">
               <Button
                 asChild
                 variant="ghost"

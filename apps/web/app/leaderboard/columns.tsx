@@ -81,16 +81,13 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
       return (
         <div className="flex justify-center rounded-lg">
           <SimpleTooltip content={getTierString(tier, subTier)}>
-            {/* Tooltipping TierIcon directly triggers 'Maximum update depth exceeded' */}
-            <div>
-              <TierIcon
-                tier={tier || 'Bronze'}
-                subTier={subTier}
-                tooltip={false}
-                width={28}
-                height={28}
-              />
-            </div>
+            <TierIcon
+              tier={tier || 'Bronze'}
+              subTier={subTier}
+              tooltip={false}
+              width={28}
+              height={28}
+            />
           </SimpleTooltip>
         </div>
       );
@@ -103,8 +100,11 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
       const rating = getValue<number>() ?? 0;
       return (
         <div className="flex min-w-[60px] justify-center">
-          <SimpleTooltip content={`${rating.toFixed(2)} TR`}>
-            <p className="font-medium text-foreground">{rating.toFixed(0)}</p>
+          <SimpleTooltip
+            content={`${rating.toFixed(2)} TR`}
+            triggerClassName="font-medium text-foreground"
+          >
+            {rating.toFixed(0)}
           </SimpleTooltip>
         </div>
       );

@@ -14,7 +14,7 @@ import {
   Swatch,
   Tile,
 } from '@/components/beatmap/BeatmapSection';
-import TapTooltip from '@/components/tap-tooltip';
+import SimpleTooltip from '@/components/simple-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import type { RankRangeBucketKey } from '@/lib/beatmaps/rankRange';
@@ -613,7 +613,7 @@ export default function BeatmapDistributionsCard({
                       >
                         {rankSlices.map((slice) => (
                           <li key={slice.key}>
-                            <TapTooltip
+                            <SimpleTooltip
                               side="top"
                               content={
                                 <RankBucketTooltipBody
@@ -621,7 +621,7 @@ export default function BeatmapDistributionsCard({
                                   bucketMods={modsByBucket.get(slice.key)}
                                 />
                               }
-                              triggerClassName="flex w-auto items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors hover:bg-accent"
+                              triggerClassName="gap-1.5 px-1 py-0.5 transition-colors hover:bg-accent"
                             >
                               <Swatch color={slice.fill} />
                               <span className="text-muted-foreground">
@@ -630,7 +630,7 @@ export default function BeatmapDistributionsCard({
                               <span className="font-medium text-foreground">
                                 {formatChartNumber(slice.count)}
                               </span>
-                            </TapTooltip>
+                            </SimpleTooltip>
                           </li>
                         ))}
                       </ul>

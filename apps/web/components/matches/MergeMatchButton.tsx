@@ -177,7 +177,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
         </p>
         <p className="flex items-center gap-2">
           <strong>Ruleset:</strong>
-          <SimpleTooltip content={rulesetLabel}>
+          <SimpleTooltip content={rulesetLabel} triggerAriaLabel={rulesetLabel}>
             <RulesetIcon ruleset={ruleset} className="h-4 w-4 fill-primary" />
           </SimpleTooltip>
         </p>

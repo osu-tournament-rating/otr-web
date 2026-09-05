@@ -54,14 +54,12 @@ export default function MatchStatsHighlightCard({
               {stat.label}
             </span>
             {stat.helpText && (
-              <SimpleTooltip content={stat.helpText}>
-                <button
-                  type="button"
-                  className="shrink-0 rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                  aria-label={`About ${stat.label}`}
-                >
-                  <HelpCircle className="size-3.5" aria-hidden="true" />
-                </button>
+              <SimpleTooltip
+                content={stat.helpText}
+                triggerAriaLabel={`About ${stat.label}`}
+                triggerClassName="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <HelpCircle className="size-3.5" aria-hidden="true" />
               </SimpleTooltip>
             )}
           </div>

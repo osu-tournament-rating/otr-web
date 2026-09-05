@@ -336,5 +336,15 @@ export default function VerificationBadge({
     verificationStatus
   );
 
-  return <SimpleTooltip content={tooltipContent}>{badge}</SimpleTooltip>;
+  return (
+    <SimpleTooltip
+      content={tooltipContent}
+      // A pip strip renders one badge per game and its container already
+      // summarises them, so pips stay out of the tab order.
+      asChild={size === 'pip'}
+      triggerAriaLabel={displayText ? undefined : statusText}
+    >
+      {badge}
+    </SimpleTooltip>
+  );
 }

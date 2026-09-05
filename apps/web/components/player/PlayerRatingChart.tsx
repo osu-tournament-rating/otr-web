@@ -222,7 +222,10 @@ export default function PlayerRatingChart({
           <div className="flex items-center gap-2">
             <LineChartIcon className="h-6 w-6 text-primary" />
             <h3 className="font-sans text-lg font-semibold">Rating History</h3>
-            <SimpleTooltip content="Shows your rating changes over time. Each entry represents a rating adjustment from a match or rating decay. The dashed line marks the all-time peak rating.">
+            <SimpleTooltip
+              content="Shows your rating changes over time. Each entry represents a rating adjustment from a match or rating decay. The dashed line marks the all-time peak rating."
+              triggerAriaLabel="About the rating history chart"
+            >
               <Info className="h-4 w-4 text-muted-foreground" />
             </SimpleTooltip>
 
@@ -232,27 +235,21 @@ export default function PlayerRatingChart({
                 <SimpleTooltip
                   side="bottom"
                   content="Highest rating ever reached"
+                  triggerAriaLabel={`Peak rating ${highestRating.toFixed(0)}`}
+                  triggerClassName="gap-2 rounded-md bg-popover px-2.5 py-1"
                 >
-                  <span
-                    className="inline-flex cursor-help items-center gap-2 rounded-md bg-popover px-2.5 py-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                    tabIndex={0}
-                    aria-label={`Peak rating ${highestRating.toFixed(0)}`}
-                  >
-                    <TierIcon
-                      tier={peakTier}
-                      subTier={peakSubTier}
-                      width={16}
-                      height={16}
-                    />
-                    <span className="flex items-baseline gap-1">
-                      <span className="text-sm font-semibold text-foreground">
-                        {highestRating.toFixed(0)}
-                      </span>
-                      <TRText />
-                      <span className="text-xs text-muted-foreground">
-                        peak
-                      </span>
+                  <TierIcon
+                    tier={peakTier}
+                    subTier={peakSubTier}
+                    width={16}
+                    height={16}
+                  />
+                  <span className="flex items-baseline gap-1">
+                    <span className="text-sm font-semibold text-foreground">
+                      {highestRating.toFixed(0)}
                     </span>
+                    <TRText />
+                    <span className="text-xs text-muted-foreground">peak</span>
                   </span>
                 </SimpleTooltip>
               </>

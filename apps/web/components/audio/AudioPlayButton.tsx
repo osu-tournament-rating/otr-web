@@ -65,5 +65,9 @@ export default function AudioPlayButton({
 
   if (!showTooltip) return button;
 
-  return <SimpleTooltip content={actionLabel}>{button}</SimpleTooltip>;
+  return (
+    <SimpleTooltip asChild content={actionLabel}>
+      {button}
+    </SimpleTooltip>
+  );
 }

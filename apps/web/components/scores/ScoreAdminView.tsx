@@ -699,7 +699,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                     onDeleted={() => router.refresh()}
                   />
 
-                  <SimpleTooltip content="Delete All Player Scores">
+                  <SimpleTooltip asChild content="Delete All Player Scores">
                     <Button
                       type="button"
                       variant="destructive"

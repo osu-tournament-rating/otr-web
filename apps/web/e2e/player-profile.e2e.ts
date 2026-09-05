@@ -164,6 +164,56 @@ test.describe('Player Profile Page', () => {
     });
   });
 
+  test.describe('Icon-only tooltips', () => {
+    const TRIGGER_NAME = 'About the rating history chart';
+    const TOOLTIP_TEXT = 'Shows your rating changes over time';
+
+    test('rating chart help icon is an exposed, named button', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
+      await page.waitForLoadState('networkidle');
+
+      await expect(
+        page.getByRole('button', { name: TRIGGER_NAME })
+      ).toBeVisible({ timeout: 10000 });
+    });
+
+    test('keyboard focus opens the rating chart tooltip', async ({ page }) => {
+      await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
+      await page.waitForLoadState('networkidle');
+
+      const trigger = page.getByRole('button', { name: TRIGGER_NAME });
+      await expect(trigger).toBeVisible({ timeout: 10000 });
+      await trigger.focus();
+
+      await expect(
+        page.locator('[data-slot="tooltip-content"]').first()
+      ).toContainText(TOOLTIP_TEXT);
+    });
+
+    test.describe('touch', () => {
+      test.use({ hasTouch: true });
+
+      test('tapping the rating chart help icon pins the content', async ({
+        page,
+      }) => {
+        await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
+        await page.waitForLoadState('networkidle');
+
+        const trigger = page.getByRole('button', { name: TRIGGER_NAME });
+        await expect(trigger).toBeVisible({ timeout: 10000 });
+        await trigger.tap();
+
+        const pinned = page.locator('[data-slot="popover-content"]');
+        await expect(pinned).toContainText(TOOLTIP_TEXT);
+
+        await page.keyboard.press('Escape');
+        await expect(pinned).toBeHidden();
+      });
+    });
+  });
+
   test.describe('Navigation and Links', () => {
     test('contains link to osu! profile', async ({ page }) => {
       await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));

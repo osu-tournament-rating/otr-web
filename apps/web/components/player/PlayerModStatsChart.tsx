@@ -132,7 +132,10 @@ export default function PlayerModStatsChart({
         <CardTitle className="flex items-center gap-2">
           <span>Mod Performance</span>
           {hasEasyMod && (
-            <SimpleTooltip content="All EZ scores are multiplied by 1.75x">
+            <SimpleTooltip
+              content="All EZ scores are multiplied by 1.75x"
+              triggerAriaLabel="About EZ scores"
+            >
               <InfoIcon className="h-4 w-4 text-muted-foreground" />
             </SimpleTooltip>
           )}

@@ -49,5 +49,9 @@ export default function TierIcon({
     subTier = undefined;
   }
 
-  return <SimpleTooltip content={tooltipContent}>{imageElement}</SimpleTooltip>;
+  return (
+    <SimpleTooltip asChild content={tooltipContent}>
+      {imageElement}
+    </SimpleTooltip>
+  );
 }
