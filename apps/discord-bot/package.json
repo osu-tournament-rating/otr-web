@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
-    "preview": "DOTENV_CONFIG_QUIET=true bun run scripts/preview.ts",
+    "preview": "bun run scripts/preview.ts",
     "lint": "bunx eslint src scripts --ext .ts --cache --cache-location node_modules/.cache/eslint/",
     "test": "bun test"
   },
