@@ -1,6 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { describe, expect, it } from 'bun:test';
 
 import { resolveMaintenanceWindowActive } from '../maintenance-window';
+import { useDefaultMaintenanceWindowEnv } from '../testing/maintenance-window-env';
 
 /** Tuesday inside the window, before the processor has committed. */
 const DURING_WINDOW = new Date('2026-01-06T11:50:00Z');
@@ -15,28 +16,7 @@ const headersWith = (override?: string): Pick<Headers, 'get'> => ({
 });
 
 describe('resolveMaintenanceWindowActive with rating timestamps', () => {
-  // Widened view: the app's env typings declare these vars as required, but
-  // the tests must be able to unset them.
-  const env = process.env as Record<string, string | undefined>;
-  const originalEnv = {
-    E2E_TEST_AUTH: env.E2E_TEST_AUTH,
-    MAINTENANCE_WINDOW_ENABLED: env.MAINTENANCE_WINDOW_ENABLED,
-  };
-
-  beforeEach(() => {
-    delete env.E2E_TEST_AUTH;
-    delete env.MAINTENANCE_WINDOW_ENABLED;
-  });
-
-  afterEach(() => {
-    for (const [key, value] of Object.entries(originalEnv)) {
-      if (value === undefined) {
-        delete env[key];
-      } else {
-        env[key] = value;
-      }
-    }
-  });
+  useDefaultMaintenanceWindowEnv();
 
   it('is active while a recalculation is pending', () => {
     expect(

@@ -5,8 +5,11 @@ import {
   ensureAdminDataMutationAllowed,
   isAdminDataMutationFreezeWindow,
 } from '../adminGuard';
+import { useDefaultMaintenanceWindowEnv } from '@/lib/testing/maintenance-window-env';
 
 describe('admin data mutation freeze window', () => {
+  useDefaultMaintenanceWindowEnv();
+
   it('is active on Tuesdays from 11:45 UTC through 12:14 UTC', () => {
     expect(
       isAdminDataMutationFreezeWindow(new Date('2026-06-02T11:45:00.000Z'))
