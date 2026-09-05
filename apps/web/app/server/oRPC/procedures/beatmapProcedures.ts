@@ -1019,7 +1019,7 @@ export const getBeatmapStats = publicProcedure
           },
           score: row.score,
           grade: row.grade,
-          accuracy: row.accuracy ?? null,
+          accuracy: toAccuracyFraction(row.accuracy),
           mods: row.mods,
           playedAt: row.playedAt,
           matchId: row.matchId,

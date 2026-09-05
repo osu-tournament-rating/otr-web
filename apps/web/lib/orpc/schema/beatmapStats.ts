@@ -56,7 +56,7 @@ export const BeatmapTopPerformerSchema = z.object({
   player: PlayerCompactSchema,
   score: z.number().int().nonnegative(),
   grade: ScoreGradeSchema.optional(),
-  accuracy: z.number().min(0).max(100).nullable(),
+  accuracy: z.number().min(0).max(1).nullable(),
   mods: z.number().int().nonnegative(),
   playedAt: z.string().nullable(),
   matchId: z.number().int().positive(),
