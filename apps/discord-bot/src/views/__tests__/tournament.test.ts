@@ -40,7 +40,7 @@ describe('tournament card', () => {
     expect(rows[1]).toMatch(/^#\s+Player\s+MC\s+W-L\s+ΔTR$/);
     expect(rows[2]).toMatch(/^1\s+Cytusine\s+1\.42\s+9-1\s+\+38$/);
     expect(rows).toHaveLength(8);
-    expect(reply.components![0].components).toHaveLength(5);
+    expect(reply.components).toBeUndefined();
     expect(reply.files?.[0].name).toBe('logo.png');
   });
 

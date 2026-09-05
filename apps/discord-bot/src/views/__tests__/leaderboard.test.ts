@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { ctx, customIds, leaderboard, siteUrl } from '../../__tests__/fixtures';
+import { ctx, leaderboard, siteUrl } from '../../__tests__/fixtures';
 import { finalize } from '../../runner';
 import { leaderboardPage } from '../leaderboard';
 
@@ -26,54 +26,23 @@ describe('leaderboard page', () => {
     expect(reply.files?.[0].name).toBe('logo.png');
   });
 
-  test('the country filter shows country ranks and passes through the buttons', () => {
+  test('the country filter shows country ranks without buttons', () => {
     const reply = leaderboardPage(leaderboard, { ...id, country: 'KR' }, ctx);
     expect(reply.embeds[0].title).toBe('osu! leaderboard · page 3 · KR');
     expect(reply.embeds[0].url).toBe(
       `${siteUrl}/leaderboard?page=3&ruleset=0&country=KR`
     );
     expect(reply.embeds[0].description!.split('\n')[0]).toStartWith('**#1** ');
-    const [previous, next] = reply.components![0].components as {
-      custom_id?: string;
-    }[];
-    expect(previous.custom_id).toBe('1:lb:-:0:2:KR');
-    expect(next.custom_id).toBe('1:lb:-:0:4:KR');
+    expect(reply.components).toBeUndefined();
   });
 
-  test('page buttons disable at the edges', () => {
-    const first = leaderboardPage(
-      { ...leaderboard, page: 1 },
-      { ...id, page: 1 },
+  test.each([1, 515])('page %i has no buttons', (page) => {
+    const reply = leaderboardPage(
+      { ...leaderboard, page },
+      { ...id, page },
       ctx
     );
-    const last = leaderboardPage(
-      { ...leaderboard, page: 515 },
-      { ...id, page: 515 },
-      ctx
-    );
-    const buttons = (reply: typeof first) =>
-      reply.components![0].components as { disabled?: boolean }[];
-    expect(buttons(first).map((b) => b.disabled)).toEqual([
-      true,
-      false,
-      undefined,
-    ]);
-    expect(buttons(last).map((b) => b.disabled)).toEqual([
-      false,
-      true,
-      undefined,
-    ]);
-  });
-
-  test('a single page gives every button a distinct id', () => {
-    const ids = customIds(
-      leaderboardPage(
-        { ...leaderboard, page: 1, pages: 1 },
-        { ...id, page: 1 },
-        ctx
-      )
-    );
-    expect(new Set(ids).size).toBe(ids.length);
+    expect(reply.components).toBeUndefined();
   });
 
   test('an empty page says so and stays within the limits', () => {

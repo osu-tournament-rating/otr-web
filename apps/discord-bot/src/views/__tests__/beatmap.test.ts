@@ -53,9 +53,7 @@ describe('beatmap card', () => {
     expect(embed.fields?.[2].value).toBe(
       `[Corsace Open 2025](${siteUrl}/tournaments/512) 4v4 #1,000+ · [osu! World Cup 2024](${siteUrl}/tournaments/513) 4v4 Open rank · [5 Digit World Cup](${siteUrl}/tournaments/514) 3v3 #1,000+`
     );
-    expect(
-      reply.components![0].components.map((c) => ('label' in c ? c.label : ''))
-    ).toEqual(['Overview', 'Scores', 'Tournaments', 'osu!']);
+    expect(reply.components).toBeUndefined();
   });
 
   test('a map without verified games is grey, says so, and hides the mods and scores', () => {
@@ -78,7 +76,7 @@ describe('beatmap card', () => {
       'Recent pools',
     ]);
     expect(reply.embeds[0].image?.url).toContain('cover@2x.jpg');
-    expect(reply.components![0].components).toHaveLength(3);
+    expect(reply.components).toBeUndefined();
   });
 
   test('a map without a fetched set falls back to its id and has no cover', () => {

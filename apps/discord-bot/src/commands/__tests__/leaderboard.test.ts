@@ -26,7 +26,7 @@ describe('/leaderboard', () => {
       pageSize: 20,
     });
     expect(reply.embeds[0].title).toBe('osu! leaderboard · page 3 · KR');
-    expect(JSON.stringify(reply.components)).toContain('1:lb:-:0:4:KR');
+    expect(reply.components).toBeUndefined();
   });
 
   test('defaults to page 1 with no filters', async () => {

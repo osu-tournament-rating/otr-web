@@ -2,7 +2,6 @@ import type { LeaderboardResponse } from '@/lib/orpc/schema/leaderboard';
 
 import type { Reply, ViewContext } from '../command';
 import type { CustomId } from '../custom-id';
-import { linkButton, pageButtons, row } from './buttons';
 import { flag, link, num, pct, plural, rulesetName, tier } from './format';
 import { logo } from './icons';
 import { primary } from './theme';
@@ -25,7 +24,6 @@ export function leaderboardPage(
     (entry) =>
       `**#${num(country ? entry.countryRank : entry.globalRank)}** ${flag(entry.player.country)} ${link(entry.player.username, `${ctx.siteUrl}/players/${entry.player.id}`)} · **${num(entry.rating)}** · ${tier(entry.tierProgress)} · ${num(entry.matchesPlayed)} m · ${pct(entry.winRate)}`
   );
-  const page: CustomId = { ...id, page: response.page };
 
   return {
     embeds: [
@@ -42,9 +40,6 @@ export function leaderboardPage(
           text: `o!TR · ${ruleset} · ${num(response.total)} rated ${plural(response.total, 'player')} · page ${response.page} of ${pages}`,
         },
       },
-    ],
-    components: [
-      row(...pageButtons(page, pages), linkButton('Open on o!TR', url)),
     ],
     files: [{ name: 'logo.png', data: logo() }],
   };

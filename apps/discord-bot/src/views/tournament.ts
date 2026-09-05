@@ -205,7 +205,6 @@ export function tournamentCard(
 
   return {
     embeds: [{ ...embed, description, fields }],
-    components: [nav(t, 'to', 1)],
     files,
   };
 }
