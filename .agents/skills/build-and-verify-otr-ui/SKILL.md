@@ -1,109 +1,91 @@
 ---
 name: build-and-verify-otr-ui
-description: Implement, refactor, debug, run, or visually verify user-facing UI and frontend data flows in otr-web. Use for Next.js routes and components, oRPC or SWR boundaries, Tailwind and shadcn styling, responsive or theme behavior, browser interaction checks, Playwright E2E, and preview-deployment verification.
+description: Build or verify rendered otr-web UI with its real data boundary, design system, task-owned local server, and disposable database.
 ---
 
 # Build and verify otr-web UI
 
-Use the current source as the authority. The design reference is `/beatmaps` and `/beatmaps/:id`; read `.agents/skills/otr-design-system/SKILL.md`.
+Read `otr-web/AGENTS.md`, `.agents/skills/otr-design-system/SKILL.md`, and
+`.agents/design/README.md`. Read `apps/discord-bot/AGENTS.md` for Discord work.
+Use the current route, affected components, and actual data boundary as source
+evidence. The beatmap pages are the primary visual quality reference; player
+pages are supporting polished references.
 
-## Work from the real feature boundary
+## Build the owning boundary
 
-1. Read the affected route and the specific components you are changing. Pull in anything else only when the change actually depends on it, and prefer a targeted grep over reading a whole file. E2E specs and `app/globals.css` are large; grep them for the symbol or token you need instead of reading them end to end, and read a spec in full only when you are editing it.
-2. Trace the data from its server procedure or query helper into the rendered component before choosing a client boundary.
-3. Reuse existing domain components, semantic theme tokens, icons, formatting helpers, and interaction patterns.
-4. Implement all states the boundary can produce: loading, empty, error, disabled, success, and permission-restricted states as applicable.
-5. Run focused static and behavior checks.
-6. Run the relevant Playwright spec when its prerequisites are available. The web designer and tester exercise the workflow on the preview deployment.
-7. Report what changed, commands and results, and any environment gap.
+Trace typed server data into the rendered component. Reuse shared domain
+components, semantic theme tokens, icons, formatting helpers, and interaction
+patterns. Use React Server Components for server-owned initial data. Use the
+established typed oRPC helpers and SWR patterns for reactive client data. Do not
+hand-roll request effects or duplicate response types.
 
-## Preserve frontend data boundaries
+Implement every applicable loading, empty, error, disabled, success, and
+permission state. Preserve accessible names, keyboard behavior, focus, DOM
+order, non-color cues, and stable dimensions. Use semantic chart and table
+colors for existing meanings in both themes.
 
-- Default URL-driven initial data and authenticated server reads to React Server Components.
-- Use the typed helpers under `apps/web/lib/orpc/queries/`, React cache, Zod schemas, and server helpers rather than duplicating request code.
-- Add `'use client'` only for browser interaction, state, or effects.
-- Use SWR or SWR Infinite for reactive and paginated client reads. Use direct typed oRPC calls for explicit actions.
-- Revalidate with the established SWR mutation or `router.refresh()` pattern after writes. Do not hand-roll data fetching in `useEffect`.
-- If the required response shape or server behavior must change, load the contract skill before editing the procedure or schema.
+The task owner implements and self-checks. A designer or tester can help with a
+concrete question in explicitly requested lead mode; neither is mandatory.
+Use existing design authorization and seek user input for a substantial unresolved
+visual decision through a concrete preview or local artifact. Discord prototype artifacts
+remain local, linked, and clearly approximate; do not post them to Discord
+without explicit authorization.
 
-## Preserve the visual system
+## Use an isolated local environment
 
-- Reuse shadcn/Radix primitives and Lucide icons. Use `cn` and existing utility functions instead of duplicating class or formatting logic.
-- Prefer semantic Tailwind tokens from `apps/web/app/globals.css`; do not hard-code colors when a semantic token exists.
-- Start mobile-first and keep text, controls, charts, tables, and navigation within stable responsive constraints.
-- Preserve accessible names, keyboard interaction, visible focus, sensible DOM order, and non-color status cues.
-- Keep fixed-format controls and charts dimensionally stable across loading, hover, and dynamic content.
-- Treat the beatmaps pages as the canonical pattern source; see `.agents/skills/otr-design-system/SKILL.md`.
+Never use the repository root `.env` as a blanket task configuration. Use only
+the ignored variables required for the task. Point a data-backed website to the
+assigned disposable `template-db` instance on port `5434`; offline bot artifacts
+need no database. Never connect to port `5432`.
 
-## Run the local application
-
-Engineers do not run the site or screenshot it to check their own work.
-
-The web designer runs the site in prototype mode, against a disposable database on port
-`5434` created with the `template-db` operation in `otr-scripts`. Never connect to the
-Postgres on `localhost:5432`. Use the repository's root `.env` without printing,
-replacing, or committing it.
+From `apps/web`, start an owned port with:
 
 ```bash
-bun run dev
+bun run dev --port <owned-port>
 ```
 
-The web app serves on `http://localhost:3000`. Poll `/` until it responds before you
-navigate. If another process owns the port, use a different port; do not stop that
-process. The data worker is not needed. If a page is empty or the database connection
-fails, report the environment problem; do not mutate shared data.
+Do not stop, reuse, or inspect another task's server. During iteration, the
+owner can inspect uncommitted work. Before independent review, identify the
+source revision and ensure the task-owned server serves it. Restart when needed,
+and give the reviewer the unchanged environment. Agent browser checks are
+local; the preview belongs to user approval and final judgment.
 
-## Verify the preview deployment
+If browser automation is unavailable, use an installed Playwright-compatible
+CLI or report browser verification blocked. Do not assume a named MCP server is
+configured.
 
-This section is for the web-designer and tester agents. An engineer stops after Checks.
+## Browser checks
 
-Use any available Playwright-compatible browser automation against the pull request's
-preview deployment. Do not commit auth state, traces, reports, logs, or intermediate
-screenshots.
+Always inspect the affected flow at desktop `1440x1000` and mobile `390x844`.
+Inspect light and dark themes when colors, elevation, charts, or tokens change.
+Check `767px` and `768px` only for shared breakpoint behavior.
 
-Screenshots are the default way to verify. Page snapshots and accessibility-tree dumps
-are expensive and stay in context for the rest of the session, so treat them as opt-in:
-reach for one only when you need accessible names, keyboard order, or DOM structure that
-a screenshot cannot show. When you do need one, scope it to the affected element. Never
-dump a whole-page tree when a scoped query answers the question.
-
-Inspect the affected workflow at:
-
-- Desktop `1440x1000` and mobile `390x844` — always.
-- Light and dark themes — only when the change affects color, elevation, charts, or
-  tokens.
-- `767px` and `768px` — only when the change affects shared navigation or breakpoint
-  behavior.
-
-Confirm:
-
-- No new uncaught page errors, console errors, or failed same-origin document, script,
-  stylesheet, or fetch requests.
-- `scrollWidth` does not exceed `clientWidth`; controls and text are not clipped or
-  overlapping.
-- Images have nonzero natural dimensions, fonts load, and charts contain nonblank
-  rendered pixels.
-- Keyboard controls, focus, loading and disabled behavior, and relevant URL state work
-  after reload.
-- Dynamic controls cannot double-submit, remain stuck, or resize the surrounding layout
-  unexpectedly.
-
-Never claim a visual pass without inspecting rendered output.
+Confirm relevant states, no new console or same-origin request failures, no
+horizontal overflow or clipping, loaded images and fonts, nonblank settled
+charts, keyboard and focus behavior, URL state after reload, and stable repeated
+actions. Never claim a visual pass without inspecting the render.
 
 ## Checks
 
-Run the checks relevant to the change:
+Use the smallest relevant set:
 
 ```bash
 bunx prettier <changed-files> --check
 bun run --filter web lint
-bunx tsc --noEmit
-bun test path/to/file.test.ts
-cd apps/web && bun run test:e2e -- <relevant-spec>.e2e.ts
+bunx tsc --noEmit -p apps/web/tsconfig.json
+bun test <focused-test>
+git diff --check
 ```
 
-`bun run --filter web build` is slow and is not part of ordinary UI verification. Run it only when asked.
+UI unit and component tests can follow implementation. Write and run applicable
+UI end-to-end tests during development. Substantive changes use one independent
+reviewer after self-checks; the original owner fixes findings and requests focused
+verification when needed. Follow the shared workflow without delayed E2E gates
+or separate test-only review phases.
 
-Playwright E2E builds and serves its own app on port 3001 and requires its configured database, RabbitMQ, and auth fixtures. Do not occupy that port with the interactive development server.
+Playwright owns port `3001`, builds its app, and can reuse an unrelated existing
+server outside CI; prove the server belongs to this worktree and commit before
+reuse. Run a full build or E2E suite only when its coverage is required.
 
-Do not run migrations, restore or drop databases, connect to production services, kill unrelated processes, or stop containers you did not start as part of UI verification.
+Report the commit, route, viewports and themes, scenarios, checks, and results.
+Keep local paths, database names, and localhost URLs in the private task record.
