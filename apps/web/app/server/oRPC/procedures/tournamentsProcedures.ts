@@ -47,14 +47,13 @@ import {
 } from '@otr/core/osu';
 
 import { deriveTournamentWinRecord } from './shared/winRecord';
+import {
+  buildTournamentRelevanceOrder,
+  escapeLikePattern,
+} from '@/lib/orpc/queries/search';
 
 const DEFAULT_PAGE_SIZE = 30;
 const MAX_PAGE_SIZE = 100;
-const LIKE_ESCAPE_PATTERN = /[%_\\]/g;
-
-const escapeLikePattern = (value: string) =>
-  value.replace(LIKE_ESCAPE_PATTERN, (match) => `\\${match}`);
-
 const normalizeStatNumber = (value: number) =>
   Number.isFinite(value) ? value : 0;
 
@@ -78,7 +77,6 @@ export const listTournaments = publicProcedure
 
       const filters: SQL<unknown>[] = [];
       let searchTerm: string | undefined;
-      let searchPattern: string | undefined;
 
       if (input.verified) {
         filters.push(
@@ -142,7 +140,7 @@ export const listTournaments = publicProcedure
       if (input.searchQuery) {
         searchTerm = input.searchQuery.trim();
         if (searchTerm.length > 0) {
-          searchPattern = `%${escapeLikePattern(searchTerm)}%`;
+          const searchPattern = `%${escapeLikePattern(searchTerm)}%`;
           const nameOrAbbreviation = or(
             ilike(schema.tournaments.name, searchPattern),
             ilike(schema.tournaments.abbreviation, searchPattern)
@@ -164,11 +162,6 @@ export const listTournaments = publicProcedure
         expr: T
       ): SQL<unknown> => (isDescending ? desc(expr) : asc(expr));
 
-      const searchPrefixPattern =
-        searchTerm && searchTerm.length > 0
-          ? `${escapeLikePattern(searchTerm)}%`
-          : undefined;
-
       switch (sortValue) {
         case TournamentQuerySortType.Id:
           orderBy.push(direction(schema.tournaments.id));
@@ -186,17 +179,8 @@ export const listTournaments = publicProcedure
           orderBy.push(direction(schema.tournaments.created));
           break;
         case TournamentQuerySortType.SearchQueryRelevance:
-          if (searchTerm && searchPattern && searchPrefixPattern) {
-            orderBy.push(
-              desc(
-                sql<number>`CASE
-                  WHEN ${schema.tournaments.name} ILIKE ${searchPrefixPattern} THEN 3
-                  WHEN ${schema.tournaments.abbreviation} ILIKE ${searchPrefixPattern} THEN 2
-                  WHEN ${schema.tournaments.name} ILIKE ${searchPattern} THEN 1
-                  ELSE 0
-                END`
-              )
-            );
+          if (searchTerm) {
+            orderBy.push(...buildTournamentRelevanceOrder(searchTerm));
           }
           orderBy.push(desc(schema.tournaments.created));
           break;

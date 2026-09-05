@@ -11,6 +11,7 @@ import {
   AdminUserApiKeysInputSchema,
 } from '@/lib/orpc/schema/user';
 import { ApiKeyMetadataSchema } from '@/lib/orpc/schema/apiKey';
+import { escapeLikePattern } from '@/lib/orpc/queries/search';
 
 import { protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
@@ -32,8 +33,6 @@ const normalizeTimestamp = (value: unknown) => {
   return null;
 };
 
-const sanitizeLikeInput = (value: string) => value.replace(/[%_\\]/g, '\\$&');
-
 export const searchPlayersAdmin = protectedProcedure
   .input(AdminPlayerSearchInputSchema)
   .output(AdminPlayerSearchResponseSchema)
@@ -46,7 +45,7 @@ export const searchPlayersAdmin = protectedProcedure
   .handler(async ({ context, input }) => {
     ensureAdminSession(context.session);
 
-    const sanitized = sanitizeLikeInput(input.query);
+    const sanitized = escapeLikePattern(input.query);
     const pattern = `%${sanitized}%`;
 
     const rows = await context.db

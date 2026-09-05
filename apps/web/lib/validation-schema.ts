@@ -72,7 +72,6 @@ export const tournamentEditFormSchema = z.object({
 
 export const defaultTournamentListFilter: Partial<TournamentListFilter> = {
   verified: false,
-  sort: TournamentQuerySortType.EndTime,
   descending: true,
   verificationStatus: [],
   lobbySize: [],
@@ -111,9 +110,10 @@ export const tournamentListFilterSchema = z
     ),
     minRankRange: z.coerce.number().min(1).optional(),
     maxRankRange: z.coerce.number().min(1).optional(),
-    sort: numericEnumValueSchema(TournamentQuerySortType).catch(
-      TournamentQuerySortType.EndTime
-    ),
+    // Unset until the user chooses; see `resolveTournamentSort`.
+    sort: numericEnumValueSchema(TournamentQuerySortType)
+      .optional()
+      .catch(undefined),
     descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
   })
   .transform((filter) => ({

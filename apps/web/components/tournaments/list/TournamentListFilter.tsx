@@ -10,7 +10,12 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react';
-import { type Control, type Resolver, useForm } from 'react-hook-form';
+import {
+  type Control,
+  type Resolver,
+  useForm,
+  useWatch,
+} from 'react-hook-form';
 import {
   Ruleset,
   TournamentQuerySortType,
@@ -64,6 +69,7 @@ import {
   toRankRangeFilter,
   tournamentRankScale,
 } from '@/lib/filters/tournament-rank';
+import { resolveTournamentSort } from '@/lib/filters/tournament-sort';
 
 const sortOptions: readonly {
   value: TournamentQuerySortType;
@@ -86,6 +92,11 @@ const sortOptions: readonly {
     label: 'Team size',
   },
 ] as const;
+
+const sortLabel = (sort: TournamentQuerySortType) =>
+  sort === TournamentQuerySortType.SearchQueryRelevance
+    ? 'Search relevance'
+    : (sortOptions.find((option) => option.value === sort)?.label ?? 'Sort by');
 
 const verificationStatusOptions = [
   { value: VerificationStatus.None, label: 'Pending' },
@@ -175,46 +186,68 @@ function SearchInput({
 
 function SortControls({
   control,
+  searchQuery,
   applyPatch,
 }: {
   control: Control<FilterFormData>;
+  searchQuery: string;
   applyPatch: ApplyFilterPatch;
 }) {
+  const searching = searchQuery.trim().length > 0;
+  const byRelevance =
+    resolveTournamentSort(useWatch({ control, name: 'sort' }), searchQuery) ===
+    TournamentQuerySortType.SearchQueryRelevance;
+
   return (
     <>
       <FormField
         control={control}
         name="sort"
-        render={({ field }) => (
-          <FormItem className="min-w-0">
-            <FormLabel className="sr-only">Sort tournaments by</FormLabel>
-            <Select
-              value={String(field.value)}
-              // Sorting applies at once, carrying any pending edit with it
-              onValueChange={(value) => {
-                const sort = Number(value) as TournamentQuerySortType;
-                field.onChange(sort);
-                applyPatch({ sort }, true);
-              }}
-            >
-              <FormControl>
-                <SelectTrigger
-                  data-testid="tournament-sort-select"
-                  className="h-10 w-full bg-background md:w-44 dark:bg-input/50 dark:shadow-none"
-                >
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {sortOptions.map(({ value, label }) => (
-                  <SelectItem key={value} value={String(value)}>
-                    {label}
+        render={({ field }) => {
+          const sort = resolveTournamentSort(field.value, searchQuery);
+          // An implied sort is a placeholder so that picking it still counts
+          // as a choice; Radix ignores a pick equal to the current value.
+          const chosen = field.value === sort ? String(sort) : '';
+
+          return (
+            <FormItem className="min-w-0">
+              <FormLabel className="sr-only">Sort tournaments by</FormLabel>
+              <Select
+                value={chosen}
+                // Sorting applies at once, carrying any pending edit with it.
+                // Radix reports an empty value while its items change.
+                onValueChange={(value) => {
+                  if (!value) return;
+                  const sort = Number(value) as TournamentQuerySortType;
+                  field.onChange(sort);
+                  applyPatch({ sort }, true);
+                }}
+              >
+                <FormControl>
+                  <SelectTrigger
+                    data-testid="tournament-sort-select"
+                    className="h-10 w-full bg-background data-[placeholder]:text-foreground md:w-44 dark:bg-input/50 dark:shadow-none"
+                  >
+                    <SelectValue placeholder={sortLabel(sort)} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem
+                    value={String(TournamentQuerySortType.SearchQueryRelevance)}
+                    disabled={!searching}
+                  >
+                    Search relevance
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FormItem>
-        )}
+                  {sortOptions.map(({ value, label }) => (
+                    <SelectItem key={value} value={String(value)}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormItem>
+          );
+        }}
       />
 
       <FormField
@@ -235,7 +268,12 @@ function SortControls({
                       size="icon"
                       className="size-10 bg-background dark:bg-input/50 dark:shadow-none"
                       data-testid="tournament-sort-direction"
-                      aria-label={`Sort order is ${currentDirection}. Switch to ${nextDirection}.`}
+                      disabled={byRelevance}
+                      aria-label={
+                        byRelevance
+                          ? 'Search relevance has no sort order.'
+                          : `Sort order is ${currentDirection}. Switch to ${nextDirection}.`
+                      }
                       onClick={() => {
                         const descending = !field.value;
                         field.onChange(descending);
@@ -685,7 +723,11 @@ export default function TournamentListFilter({
               aria-label="Tournament sorting"
               className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:flex"
             >
-              <SortControls control={form.control} applyPatch={applyPatch} />
+              <SortControls
+                control={form.control}
+                searchQuery={searchQuery}
+                applyPatch={applyPatch}
+              />
             </div>
 
             <div className="border-l pl-2 md:pl-4">
