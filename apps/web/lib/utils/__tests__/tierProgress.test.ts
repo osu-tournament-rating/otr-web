@@ -54,6 +54,25 @@ describe('buildTierProgress', () => {
     expect(tierProgress.subTierFillPercentage).toBeLessThan(1);
   });
 
+  test('bronze bands start at the bronze base rating', () => {
+    expect(buildTierProgress(150).tierProgress).toMatchObject({
+      currentTier: 'Bronze',
+      currentSubTier: 3,
+      nextSubTier: 2,
+      ratingForNextTier: 200,
+    });
+    expect(buildTierProgress(250).tierProgress).toMatchObject({
+      currentSubTier: 2,
+      ratingForNextTier: 300,
+    });
+    expect(buildTierProgress(50).tierProgress).toMatchObject({
+      currentSubTier: 3,
+      ratingForNextTier: 200,
+      subTierFillPercentage: 0,
+      majorTierFillPercentage: 0,
+    });
+  });
+
   test('elite grandmaster has no next tier', () => {
     const { tierProgress } = buildTierProgress(2600);
 

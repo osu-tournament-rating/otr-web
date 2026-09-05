@@ -29,7 +29,7 @@ const tierKeyToName: Record<LeaderboardTierKey, TierName> = {
 
 type TierBounds = Record<
   LeaderboardTierKey,
-  { min: number; max: number | null }
+  { min: number; max: number | null; base: number }
 >;
 
 const SUB_TIERS = 3;
@@ -48,9 +48,12 @@ const tierBounds: TierBounds = tierKeyOrder.reduce<TierBounds>(
       ? tierData.find((tier) => tier.tier === tierKeyToName[nextKey])
       : undefined;
 
+    // `min` is the filter floor (Bronze catches every rating), `base` is the
+    // rating the sub-tier bands are measured from, matching getTierFromRating.
     bounds[key] = {
       min: key === 'bronze' ? 0 : currentTier.baseRating,
       max: nextTier ? nextTier.baseRating : null,
+      base: currentTier.baseRating,
     };
 
     return bounds;
@@ -99,16 +102,16 @@ export const buildTierProgress = (rating: number) => {
     } as const;
   }
 
-  const majorRange = Math.max(nextBounds.min - currentBounds.min, 1);
+  const majorRange = Math.max(nextBounds.min - currentBounds.base, 1);
   const subTierRange = majorRange / SUB_TIERS;
-  const progressInTier = Math.max(0, rating - currentBounds.min);
+  const progressInTier = Math.max(0, rating - currentBounds.base);
   // Sub-tiers count down: III is the lowest band and I is the highest.
   const currentSubTier = Math.max(
     1,
     SUB_TIERS - Math.floor(progressInTier / subTierRange)
   );
   const currentSubTierBase =
-    currentBounds.min + subTierRange * (SUB_TIERS - currentSubTier);
+    currentBounds.base + subTierRange * (SUB_TIERS - currentSubTier);
   const ratingForNextTier = Math.min(
     nextBounds.min,
     currentSubTierBase + subTierRange
