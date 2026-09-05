@@ -25,6 +25,7 @@ export function TournamentResultContent({
         verificationStatus={data.verificationStatus}
         rejectionReason={data.rejectionReason}
         entityType="tournament"
+        insideControl
       />
       <span className="min-w-0 flex-1 truncate font-medium">
         {highlightMatch(data.name, query)}

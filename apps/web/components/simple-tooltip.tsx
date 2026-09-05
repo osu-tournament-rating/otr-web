@@ -30,13 +30,20 @@ interface SimpleTooltipProps {
   asChild?: boolean;
   /** Classes for the trigger button. Ignored when `asChild` is set. */
   triggerClassName?: string;
-  /** Accessible name for a trigger whose visible content is decorative. */
+  /**
+   * Accessible name for a trigger whose visible content is decorative. Ignored
+   * when `asChild` is set, where the child owns its own name.
+   */
   triggerAriaLabel?: string;
 }
 
 /**
  * Hover or focus shows a tooltip; tap or click pins the same content in a
  * popover so touch users can read it too.
+ *
+ * A component rendered in many places cannot tell whether an ancestor is a
+ * control, so it takes that from its call site rather than choosing here; see
+ * `VerificationBadge` and `RelativeTime` for the shape that takes.
  */
 export default function SimpleTooltip({
   content,

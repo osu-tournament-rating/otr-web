@@ -170,6 +170,7 @@ export default function AuditEntryRow({
             <RelativeTime
               dateString={entry.created}
               className="shrink-0 text-xs text-muted-foreground"
+              insideControl
             />
           </button>
         </CollapsibleTrigger>

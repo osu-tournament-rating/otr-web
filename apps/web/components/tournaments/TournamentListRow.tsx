@@ -141,6 +141,7 @@ export default function TournamentListRow({
             rejectionReason={tournament.rejectionReason}
             entityType="tournament"
             verifierUsername={tournament.verifiedByUsername ?? undefined}
+            insideControl
           />
           <h2 className="min-w-0 truncate text-base leading-snug font-semibold text-foreground transition-colors group-hover:text-primary sm:text-lg">
             {tournament.name}

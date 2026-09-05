@@ -55,16 +55,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { hasAdminScope } from '@/lib/auth/roles';
-import { cn } from '@/lib/utils';
 import { useSession } from '@/lib/hooks/useSession';
 import { orpc } from '@/lib/orpc/orpc';
 import type { BeatmapWithDetails } from '@/lib/orpc/schema/beatmapStats';
 import type { PlayerLookupResult } from '@/lib/orpc/schema/player';
 import { formatDuration, parseDuration } from '@/lib/utils/date';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
-
-const EDIT_BEATMAP_BUTTON_CLASS =
-  'size-6 rounded-full text-white/70 hover:bg-white/20 hover:text-white';
 
 const required = z.string().trim().min(1, 'Required');
 
@@ -281,7 +277,7 @@ export default function BeatmapAdminView({
                 variant="ghost"
                 size="icon"
                 aria-label="Edit beatmap data"
-                className={EDIT_BEATMAP_BUTTON_CLASS}
+                className="size-6 rounded-full text-white/70 hover:bg-white/20 hover:text-white"
               >
                 <PencilLine className="size-3" />
               </Button>
@@ -289,14 +285,13 @@ export default function BeatmapAdminView({
           </SimpleTooltip>
         ) : (
           // A disabled button takes no pointer or focus events, so the reason
-          // it is unavailable rides on the tooltip's own trigger instead.
+          // it is unavailable rides on the tooltip's own trigger instead. It is
+          // named apart from the real control and carries no hover affordance,
+          // because it explains rather than edits.
           <SimpleTooltip
             content="Only beatmaps the osu! API no longer serves can be edited by hand"
-            triggerAriaLabel="Edit beatmap data"
-            triggerClassName={cn(
-              EDIT_BEATMAP_BUTTON_CLASS,
-              'justify-center opacity-50'
-            )}
+            triggerAriaLabel="Why this beatmap cannot be edited"
+            triggerClassName="size-6 cursor-help justify-center rounded-full text-white/70 opacity-50"
           >
             <PencilLine className="size-3" />
           </SimpleTooltip>

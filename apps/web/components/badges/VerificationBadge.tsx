@@ -105,6 +105,12 @@ interface VerificationBadgeProps {
   minimal?: boolean;
   /** Strike the label; the icon is left alone. */
   strikethrough?: boolean;
+  /**
+   * Set where the badge renders inside a link, option, or other control, which
+   * cannot hold a nested tooltip trigger. The badge then names its own status
+   * for assistive technology and its tooltip is reachable by pointer only.
+   */
+  insideControl?: boolean;
   warningFlags?: EntityWarningFlags;
   rejectionReason?: EntityRejectionReason;
   entityType?: ApiItemType;
@@ -267,6 +273,7 @@ export default function VerificationBadge({
   size = 'small',
   minimal = false,
   strikethrough = false,
+  insideControl = false,
   warningFlags,
   rejectionReason,
   entityType,
@@ -292,8 +299,11 @@ export default function VerificationBadge({
     minimal
   );
 
+  // A pip strip is summarised by its container, so it does not repeat itself.
+  const nameStatus = insideControl && !displayText && size !== 'pip';
+
   const badge = (
-    <div
+    <span
       className={cn(
         ...badgeStyles,
         sizeConfig.container,
@@ -301,6 +311,7 @@ export default function VerificationBadge({
       )}
     >
       <Icon className={cn(sizeConfig.icon, iconColor)} />
+      {nameStatus && <span className="sr-only">{statusText}</span>}
       {displayText && (
         <span
           className={cn(
@@ -312,7 +323,7 @@ export default function VerificationBadge({
           {statusText}
         </span>
       )}
-    </div>
+    </span>
   );
 
   const hasVerifier =
@@ -341,7 +352,7 @@ export default function VerificationBadge({
       content={tooltipContent}
       // A pip strip renders one badge per game and its container already
       // summarises them, so pips stay out of the tab order.
-      asChild={size === 'pip'}
+      asChild={insideControl || size === 'pip'}
       triggerAriaLabel={displayText ? undefined : statusText}
     >
       {badge}

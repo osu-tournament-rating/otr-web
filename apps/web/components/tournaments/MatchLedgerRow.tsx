@@ -154,6 +154,7 @@ function GamePips({
 
   return (
     <div
+      role="group"
       className={cn('flex flex-wrap items-center gap-0.5', className)}
       aria-label={`${games.length} ${games.length === 1 ? 'game' : 'games'}: ${summary}`}
     >

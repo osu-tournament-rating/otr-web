@@ -80,7 +80,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
 
       return (
         <div className="flex justify-center rounded-lg">
-          <SimpleTooltip content={getTierString(tier, subTier)}>
+          <SimpleTooltip asChild content={getTierString(tier, subTier)}>
             <TierIcon
               tier={tier || 'Bronze'}
               subTier={subTier}
