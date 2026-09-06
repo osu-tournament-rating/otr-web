@@ -112,7 +112,7 @@ describe('tournament card', () => {
     const lines = reply.embeds[0].description!.split('\n');
     expect(lines).toHaveLength(8);
     expect(lines[0]).toMatch(
-      /^★\d\.\d\d · \d+ BPM · DT 61% · \[.+\]\(.+\/beatmaps\/\d+\)$/
+      /^\d\.\d\d★ · \d+ BPM · DT 61% · \[.+\]\(.+\/beatmaps\/\d+\)$/
     );
     expect(reply.embeds[0].footer?.text).toBe(
       'o!TR · osu! · 11 maps · page 1 of 2'

@@ -14,6 +14,7 @@ import {
   lobby,
   mapTitle,
   num,
+  starRating,
   paginate,
   plural,
   rankRange,
@@ -274,7 +275,7 @@ export const tournamentPool = (
           ? items
               .map(
                 (b) =>
-                  `★${b.sr.toFixed(2)} · ${Math.round(b.bpm)} BPM${b.topMod ? ` · ${b.topMod.mod} ${Math.round(b.topMod.percentage)}%` : ''} · ${link(clip(b.title, 80), `${ctx.siteUrl}/beatmaps/${b.osuId}`)}`
+                  `${starRating(b.sr)} · ${Math.round(b.bpm)} BPM${b.topMod ? ` · ${b.topMod.mod} ${Math.round(b.topMod.percentage)}%` : ''} · ${link(clip(b.title, 80), `${ctx.siteUrl}/beatmaps/${b.osuId}`)}`
               )
               .join('\n')
           : 'No pooled maps recorded.',

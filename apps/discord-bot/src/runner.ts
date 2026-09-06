@@ -28,6 +28,7 @@ export type Payload = {
   embeds: APIEmbed[];
   components?: Components;
   files?: AttachmentBuilder[];
+  attachments?: [];
 };
 
 export type SlashLike = {
@@ -294,9 +295,11 @@ export async function handleButton(interaction: ButtonLike, deps: Deps) {
   }
 
   const { command, page } = found;
+  const shared = command.sharedPages?.includes(id.view) ?? false;
+  const updateOriginal = owner || shared;
   const name = `${command.data.name}:${id.view}`;
   const acknowledged = await acknowledge(name, deps, () =>
-    owner
+    updateOriginal
       ? interaction.deferUpdate()
       : interaction.deferReply({ flags: MessageFlags.Ephemeral })
   );
@@ -314,8 +317,9 @@ export async function handleButton(interaction: ButtonLike, deps: Deps) {
         api: deps.api(interaction.id),
         ctx: { siteUrl: deps.siteUrl, emoji: deps.emoji },
       }),
-    send: (payload) => interaction.editReply(payload),
+    send: (payload) =>
+      interaction.editReply(shared ? { ...payload, attachments: [] } : payload),
     notFound: () => command.notFound(id.key),
-    keep: owner ? interaction.message.components : undefined,
+    keep: updateOriginal ? interaction.message.components : undefined,
   });
 }

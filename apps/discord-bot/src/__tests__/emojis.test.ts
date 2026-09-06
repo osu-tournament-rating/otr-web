@@ -6,7 +6,9 @@ import {
   noEmojis,
   syncEmojis,
   tierEmojiName,
+  groupTierEmojiName,
 } from '../emojis';
+import { difficultyEmojiPng } from '../views/icons';
 import { quietLogger } from './quiet-logger';
 
 const fakeApplication = (
@@ -99,13 +101,13 @@ test('a missing difficulty icon returns immediately and is created once in the b
   const { application } = fakeApplication([], create);
   const emoji = await syncEmojis(application, quietLogger());
   create.mockClear();
-  expect(emoji('difficulty_0_67')).toBe('');
-  expect(emoji('difficulty_0_67')).toBe('');
+  expect(emoji('difficulty_0_90')).toBe('');
+  expect(emoji('difficulty_0_90')).toBe('');
   await Bun.sleep(0);
   expect(create).toHaveBeenCalledTimes(1);
-  complete({ id: '321', name: 'difficulty_0_67' });
+  complete({ id: '321', name: 'difficulty_0_90' });
   await Bun.sleep(0);
-  expect(emoji('difficulty_0_67')).toBe('<:difficulty_0_67:321>');
+  expect(emoji('difficulty_0_90')).toBe('<:difficulty_0_90:321>');
 });
 
 describe('difficultyEmojiName', () => {
@@ -116,8 +118,13 @@ describe('difficultyEmojiName', () => {
     [0, 1.24, 'difficulty_0_10'],
     [0, 1.25, 'difficulty_0_15'],
     [0, 6.74, 'difficulty_0_65'],
-    [0, 6.75, 'difficulty_0_67'],
-    [0, 11, 'difficulty_0_67'],
+    [0, 6.75, 'difficulty_0_70'],
+    [0, 7.5, 'difficulty_0_75'],
+    [0, 8.74, 'difficulty_0_85'],
+    [0, 8.75, 'difficulty_0_90'],
+    [0, 9, 'difficulty_0_90'],
+    [0, 12, 'difficulty_0_90'],
+    [0, 11, 'difficulty_0_90'],
     [5, 4.5, 'difficulty_5_45'],
     [6, 4.5, ''],
     [0, NaN, ''],
@@ -135,6 +142,9 @@ test('unbounded or malformed difficulty requests cannot create emojis', async ()
   for (const name of [
     'difficulty_99_50',
     'difficulty_0_10000',
+    'difficulty_0_95',
+    'difficulty_0_120',
+    'difficulty_0_67',
     'difficulty_0_13',
     'difficulty_00_5',
     'star_pill_740',
@@ -155,15 +165,63 @@ test('failed lazy uploads back off and preserve a truthful empty fallback', asyn
     const { application } = fakeApplication([], create);
     const emoji = await syncEmojis(application, quietLogger(), 'statuses');
     create.mockClear();
-    expect(emoji('difficulty_0_67')).toBe('');
+    expect(emoji('difficulty_0_90')).toBe('');
     await Bun.sleep(0);
-    expect(emoji('difficulty_0_67')).toBe('');
+    expect(emoji('difficulty_0_90')).toBe('');
     expect(create).toHaveBeenCalledTimes(1);
     clock.mockReturnValue(601001);
-    emoji('difficulty_0_67');
+    emoji('difficulty_0_90');
     await Bun.sleep(0);
     expect(create).toHaveBeenCalledTimes(2);
   } finally {
     clock.mockRestore();
   }
 });
+
+test('broad tier representatives use I without changing individual sub-tiers', () => {
+  for (const tier of [
+    'Bronze',
+    'Silver',
+    'Gold',
+    'Platinum',
+    'Emerald',
+    'Diamond',
+    'Master',
+    'Grandmaster',
+  ]) {
+    expect(groupTierEmojiName(tier)).toBe(`tier_${tier.toLowerCase()}1`);
+    for (const subTier of [1, 2, 3])
+      expect(tierEmojiName(tier, subTier)).toBe(
+        `tier_${tier.toLowerCase()}${subTier}`
+      );
+  }
+  expect(groupTierEmojiName('Elite Grandmaster')).toBe(
+    'tier_elite_grandmaster'
+  );
+  expect(tierEmojiName('Elite Grandmaster', null)).toBe(
+    'tier_elite_grandmaster'
+  );
+});
+
+test.each([0, 1, 2, 3, 4, 5])(
+  'high-difficulty uploads retain a visible tint for ruleset %s',
+  async (ruleset) => {
+    const create = mock(
+      async ({ name }: { name: string; attachment?: Buffer }) => ({
+        id: '321',
+        name,
+      })
+    );
+    const { application } = fakeApplication([], create);
+    const emoji = await syncEmojis(application, quietLogger(), 'statuses');
+    create.mockClear();
+    const name = difficultyEmojiName(ruleset, 8.75);
+    expect(name).toBe(`difficulty_${ruleset}_90`);
+    emoji(name);
+    await Bun.sleep(0);
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create.mock.calls[0][0].attachment).toEqual(
+      Buffer.from(difficultyEmojiPng(ruleset, '#6563DE'))
+    );
+  }
+);

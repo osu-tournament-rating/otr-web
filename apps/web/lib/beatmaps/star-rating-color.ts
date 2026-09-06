@@ -1,8 +1,22 @@
 import { interpolateRgb } from 'd3-interpolate';
 import { scaleLinear } from 'd3-scale';
 
+export const STAR_RATING_SPECTRUM_MAX = 9;
+
 const difficultyColourSpectrum = scaleLinear<string>()
-  .domain([0.1, 1.25, 2, 2.5, 3.3, 4.2, 4.9, 5.8, 6.7, 7.7, 9])
+  .domain([
+    0.1,
+    1.25,
+    2,
+    2.5,
+    3.3,
+    4.2,
+    4.9,
+    5.8,
+    6.7,
+    7.7,
+    STAR_RATING_SPECTRUM_MAX,
+  ])
   .clamp(true)
   .range([
     '#4290FB',
@@ -62,7 +76,8 @@ export function getStarRatingColor(starRating: number): string {
   const normalizedRating = Number.isNaN(starRating) ? 0 : starRating;
 
   if (normalizedRating < 0.1) return LOWEST_DIFFICULTY_COLOR;
-  if (normalizedRating >= 9) return HIGHEST_DIFFICULTY_COLOR;
+  if (normalizedRating >= STAR_RATING_SPECTRUM_MAX)
+    return HIGHEST_DIFFICULTY_COLOR;
 
   return difficultyColourSpectrum(normalizedRating);
 }

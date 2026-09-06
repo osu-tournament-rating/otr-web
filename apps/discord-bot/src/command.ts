@@ -43,6 +43,8 @@ export type Command = {
   }): Promise<ApplicationCommandOptionChoiceData[]>;
   /** Button views keyed by the `custom_id` view segment. */
   pages?: Record<string, Page>;
+  /** Public views whose buttons update the shared message for every viewer. */
+  sharedPages?: readonly string[];
   notFound(query: string): string;
 };
 

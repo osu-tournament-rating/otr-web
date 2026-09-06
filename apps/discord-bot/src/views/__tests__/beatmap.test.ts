@@ -42,12 +42,12 @@ describe('beatmap card', () => {
     });
     expect(embed.fields?.map((f) => f.name)).toEqual([
       '🏆 Tournament usage',
-      '🎲 Mods · plays',
+      '🎲 Mods',
       '🕒 Recent pools',
-      '📊 Typical performance by tier',
+      '📊 Median performance by tier',
     ]);
     expect(embed.fields?.[0].value).toContain('**384** verified games');
-    expect(embed.fields?.[1].value).toContain('NM  78%');
+    expect(embed.fields?.[1].value).toContain('↳ **NM 78%**');
     expect(embed.fields?.[2].value.split('\n')).toHaveLength(4);
     expect(embed.fields?.[2].value).toStartWith('**[');
     expect(embed.fields?.[2].value).toMatch(/\*\* .*\n↳ 4v4/);
@@ -58,7 +58,7 @@ describe('beatmap card', () => {
     expect(reply.files).toBeUndefined();
     expect(embed.image).toBeUndefined();
     expect(embed.fields?.[3].value).toContain(
-      '<:tier_gold3:1> Gold · **600k** · **95.0%**'
+      '<:tier_gold1:1> Gold · **600k** · **95.0%**'
     );
     expect(embed.fields?.[3].value).not.toContain('middle 50%');
     expect(embed.fields?.[3].value).not.toContain('400,000');
@@ -110,8 +110,8 @@ describe('beatmap card', () => {
     );
     const rows = reply.embeds[0].fields!.at(-1)!.value.split('\n');
     expect(rows).toEqual([
-      '<:tier_grandmaster3:123> GM+ · **600k** · No accuracy',
-      '<:tier_gold3:123> Gold · **600k** · **0.0%**',
+      '<:tier_grandmaster1:123> GM+ · **600k** · No accuracy',
+      '<:tier_gold1:123> Gold · **600k** · **0.0%**',
     ]);
   });
 
@@ -203,7 +203,7 @@ describe('beatmap card', () => {
     };
     expect(
       beatmapCard({ ...beatmapStats, summary }, ctx).embeds[0].fields?.[0].value
-    ).toContain('**1** tournament · **1** verified\n**1** verified game');
+    ).toContain('**1** tournament · **1** verified game');
   });
 
   test('the card stays within the limits after finalize', () => {
@@ -273,7 +273,7 @@ test('main reply never substitutes mixed history for competitive data and escape
   ).toContain('Rejected');
   expect(JSON.stringify(reply)).not.toContain('987654321');
   expect(embed.description).not.toContain(' HP ');
-  expect(embed.description).toStartWith('★ **7.04**');
+  expect(embed.description).toStartWith('**7.04★**');
   expect(
     embed.fields!.find((f) => f.name.includes('Recent pools'))!.value
   ).toContain('\\*\\*bold\\*\\*');
@@ -303,7 +303,7 @@ test('status emoji names distinguish final and provisional pool decisions', () =
   }
 });
 
-test('dense mod distributions retain complete rows and fences through finalization', () => {
+test('dense mod distributions retain complete arrow entries through finalization', () => {
   const flags = [2, 8, 16, 32, 64, 256, 1024];
   const modDistribution = Array.from({ length: 100 }, (_, index) => ({
     mods: flags.reduce(
@@ -313,18 +313,51 @@ test('dense mod distributions retain complete rows and fences through finalizati
     scoreCount: 1,
     percentage: 1,
   }));
-  const reply = beatmapCard({ ...beatmapStats, modDistribution }, ctx);
+  const reply = beatmapCard(
+    { ...beatmapStats, modDistribution },
+    { ...ctx, emoji: (name) => `<:${name}:1234567890123456789>` }
+  );
   const value = reply.embeds[0].fields!.find((field) =>
     field.name.includes('Mods')
   )!.value;
   expect(value.length).toBeLessThanOrEqual(1024);
-  expect(value.split('\n')).toHaveLength(8);
-  expect(value).toStartWith('```');
-  expect(value).toEndWith('```');
+  expect(value.split('\n')).toHaveLength(6);
+  expect(value).toStartWith('↳ **');
+  expect(value).not.toContain('<:mod_');
+  expect(value).not.toContain('```');
   expect(value.match(/1%/g)).toHaveLength(6);
   expect(
     finalize(reply).embeds[0].fields!.find((field) =>
       field.name.includes('Mods')
     )!.value
   ).toBe(value);
+});
+
+test('difficulty icon uses bounded spectrum while numeric rating stays actual with trailing star', () => {
+  for (const sr of [7.5, 9, 12.34]) {
+    const reply = beatmapCard(
+      { ...beatmapStats, beatmap: { ...beatmapStats.beatmap, sr } },
+      ctx
+    );
+    expect(reply.embeds[0].description).toContain(`**${sr.toFixed(2)}★**`);
+  }
+});
+
+test('tournament usage keeps total pools and verified games together without verified pool detail', () => {
+  const reply = beatmapCard(
+    {
+      ...beatmapStats,
+      summary: {
+        ...beatmapStats.summary,
+        totalTournamentCount: 12,
+        verifiedTournamentCount: 7,
+        totalGameCount: 384,
+      },
+    },
+    ctx
+  );
+  const usage = reply.embeds[0].fields!.find((field) =>
+    field.name.includes('Tournament usage')
+  )!;
+  expect(usage.value).toBe('**12** tournaments · **384** verified games');
 });

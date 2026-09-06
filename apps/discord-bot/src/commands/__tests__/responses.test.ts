@@ -27,7 +27,7 @@ const api = () =>
 
 describe('slash responses', () => {
   test.each(commands)(
-    '/$data.name sends its embed and attachments without buttons',
+    '/$data.name sends its embed, attachments and intended navigation',
     async (command) => {
       const interaction = fakeSlash(command.data.name, {
         name: '512',
@@ -43,7 +43,24 @@ describe('slash responses', () => {
       });
       const payload = interaction.editReply.mock.calls[0][0];
       expect(payload.embeds).toHaveLength(1);
-      expect(payload.components).toEqual([]);
+      if (command.data.name === 'player') {
+        expect(payload.components).toEqual([
+          {
+            type: 1,
+            components: [
+              {
+                type: 2,
+                style: 2,
+                label: 'More details',
+                custom_id: '1:pd:1:0:1',
+              },
+            ],
+          },
+        ]);
+        expect(payload.embeds[0].url).toBe(`${ctx.siteUrl}/players/1`);
+      } else {
+        expect(payload.components).toEqual([]);
+      }
       const expected = await command.execute({
         options: {
           string: (name) => interaction.options.getString(name),

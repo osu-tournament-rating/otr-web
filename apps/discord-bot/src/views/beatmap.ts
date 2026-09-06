@@ -8,13 +8,18 @@ import { renderPng } from '../chart/png';
 import { percentileCurve } from '../chart/svg';
 import type { Reply, ViewContext } from '../command';
 import type { CustomId } from '../custom-id';
-import { difficultyEmojiName, statusEmojiName, tierEmojiName } from '../emojis';
+import {
+  difficultyEmojiName,
+  statusEmojiName,
+  groupTierEmojiName,
+} from '../emojis';
 import { linkButton, pager, tabs } from './buttons';
 import {
   clip,
   duration,
   tournamentAge,
-  histogram,
+  modList,
+  starRating,
   link,
   lobby,
   mapTitle,
@@ -59,7 +64,7 @@ const shell = (stats: BeatmapStatsResponse, ctx: ViewContext) => {
       : {}),
     footer: { text: `o!TR · ${ruleset}` },
   };
-  const specs = `★ **${b.sr.toFixed(2)}** · ${Math.round(b.bpm)} BPM · ${duration(b.totalLength)} · CS ${setting(b.cs)} · AR ${setting(b.ar)} · OD ${setting(b.od)} · HP ${setting(b.hp)} · ${link('osu!', `https://osu.ppy.sh/b/${b.osuId}`)}`;
+  const specs = `**${starRating(b.sr)}** · ${Math.round(b.bpm)} BPM · ${duration(b.totalLength)} · CS ${setting(b.cs)} · AR ${setting(b.ar)} · OD ${setting(b.od)} · HP ${setting(b.hp)} · ${link('osu!', `https://osu.ppy.sh/b/${b.osuId}`)}`;
   return { embed, specs, ruleset };
 };
 
@@ -106,8 +111,8 @@ export function beatmapCard(
 ): Reply {
   const { embed } = shell(stats, ctx);
   const { beatmap: b, summary, tierBreakdown } = stats;
-  const difficulty = ctx.emoji(difficultyEmojiName(b.ruleset, b.sr)) || '★';
-  const specs = `${difficulty} **${b.sr.toFixed(2)}** · ${Math.round(b.bpm)} BPM · ${duration(b.totalLength)}\nCS ${setting(b.cs)} · AR ${setting(b.ar)} · OD ${setting(b.od)} · ${link('osu!', `https://osu.ppy.sh/b/${b.osuId}`)}`;
+  const difficulty = ctx.emoji(difficultyEmojiName(b.ruleset, b.sr));
+  const specs = `${difficulty ? `${difficulty} ` : ''}**${starRating(b.sr)}** · ${Math.round(b.bpm)} BPM · ${duration(b.totalLength)}\nCS ${setting(b.cs)} · AR ${setting(b.ar)} · OD ${setting(b.od)} · ${link('osu!', `https://osu.ppy.sh/b/${b.osuId}`)}`;
   const { image: cover, ...identity } = embed;
   const tiers = summary.totalGameCount > 0 ? tierBreakdown.tiers : [];
   const distribution =
@@ -122,14 +127,14 @@ export function beatmapCard(
   const fields: NonNullable<APIEmbed['fields']> = [
     {
       name: '🏆 Tournament usage',
-      value: `**${num(summary.totalTournamentCount)}** ${plural(summary.totalTournamentCount, 'tournament')} · **${num(summary.verifiedTournamentCount)}** verified\n**${num(summary.totalGameCount)}** verified ${plural(summary.totalGameCount, 'game')}`,
+      value: `**${num(summary.totalTournamentCount)}** ${plural(summary.totalTournamentCount, 'tournament')} · **${num(summary.totalGameCount)}** verified ${plural(summary.totalGameCount, 'game')}`,
       inline: true,
     },
   ];
   if (distribution.length > 0) {
     fields.push({
-      name: '🎲 Mods · plays',
-      value: histogram(distribution),
+      name: '🎲 Mods',
+      value: modList(distribution),
       inline: false,
     });
   }
@@ -157,7 +162,7 @@ export function beatmapCard(
           : 'No tier has at least five plays yet.';
   const tierRows = tiers.map((t) => {
     const name = t.tier === 'Grandmaster' ? 'GM+' : t.tier;
-    const emoji = ctx.emoji(tierEmojiName(t.tier, null));
+    const emoji = ctx.emoji(groupTierEmojiName(t.tier));
     const accuracy =
       t.medianAccuracy === null
         ? 'No accuracy'
@@ -165,7 +170,7 @@ export function beatmapCard(
     return `${emoji ? `${emoji} ` : ''}${name} · **${scoreThousands(t.medianScore)}** · ${accuracy}`;
   });
   fields.push({
-    name: '📊 Typical performance by tier',
+    name: '📊 Median performance by tier',
     value: tiers.length > 0 ? tierRows.join('\n') : empty,
   });
   return {

@@ -26,6 +26,7 @@ import {
 import { buildTierProgress } from '@/lib/utils/tierProgress';
 
 import { publicProcedure } from './base';
+import { getPlayerModPerformance } from './playerModStats';
 import { KeyTypeSchema, resolvePlayerId } from './shared/keyType';
 
 export const getPlayer = publicProcedure
@@ -911,6 +912,12 @@ export const getPlayerStats = publicProcedure
       rating: ratingStats,
       matchStats,
       modStats,
+      modPerformance: await getPlayerModPerformance(
+        context.db,
+        player.id,
+        resolvedRuleset,
+        bounds
+      ),
       frequentTeammates,
       frequentOpponents,
       tournamentPerformanceStats: null,

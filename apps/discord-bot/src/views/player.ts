@@ -3,26 +3,26 @@ import type { APIEmbed } from 'discord.js';
 
 import type { PlayerBeatmapsResponse } from '@/lib/orpc/schema/playerBeatmaps';
 import type { PlayerStats } from '@/lib/orpc/schema/playerStats';
+import { getTierFromRating } from '@/lib/utils/tierData';
 import type { PlayerTournamentListItem } from '@/lib/orpc/schema/tournament';
-import { getTierString, type TierName } from '@/lib/utils/tierData';
 
 import { renderPng } from '../chart/png';
 import { ratingHistory } from '../chart/svg';
 import type { Reply, ViewContext } from '../command';
 import type { CustomId } from '../custom-id';
 import { tierEmojiName } from '../emojis';
-import { linkButton, pager, tabs } from './buttons';
+import { button, row, linkButton, pager, tabs } from './buttons';
 import {
+  wrapList,
   ago,
-  bar,
   date,
   flag,
-  histogram,
   hourWindow,
   inProgress,
   link,
   lobby,
-  modRows,
+  playerModList,
+  starRating,
   num,
   paginate,
   pct,
@@ -39,18 +39,18 @@ import { grey, hex, tierColor } from './theme';
 type View = 'po' | 'pt' | 'pb';
 type Adjustments = NonNullable<PlayerStats['rating']>['adjustments'];
 
-const spacer = () => ({ name: '​', value: '​', inline: true });
-
 const joined = (...parts: (string | null | undefined | false)[]) =>
   parts.filter(Boolean).join(' ');
 
-const shell = (stats: PlayerStats) => {
+const shell = (stats: PlayerStats, ctx: ViewContext) => {
   const { playerInfo: player, rating } = stats;
   const files: NonNullable<Reply['files']> = [];
   const ruleset = rulesetName(stats.ruleset);
   const embed: APIEmbed = {
     color: rating ? tierColor(rating.tierProgress.currentTier) : grey,
-    author: { name: `${player.username} · ${ruleset}` },
+    author: { name: ruleset },
+    title: player.username,
+    url: `${ctx.siteUrl}/players/${player.id}`,
     thumbnail: { url: `https://a.ppy.sh/${player.osuId}` },
   };
 
@@ -111,59 +111,67 @@ const tournamentLine = (
     .filter(Boolean)
     .join(' · ');
 
-type Fields = NonNullable<APIEmbed['fields']>;
+type Sections = { name: string; value: string }[];
 
 const company = (
   name: string,
   list: PlayerStats['frequentTeammates']
-): Fields => [
+): Sections => [
   {
     name,
     value:
       list.length > 0
-        ? list
-            .slice(0, 5)
-            .map((f) => `**${num(f.frequency)}** - ${f.player.username}`)
-            .join('\n')
+        ? wrapList(
+            list
+              .slice(0, 5)
+              .map((f) => `${f.player.username} (**${num(f.frequency)}**)`)
+          )
         : '—',
-    inline: true,
   },
 ];
 
-const lastMatchField = (
+const RECENT_MATCH_COUNT = 3;
+
+const recentMatchSection = (
   adjustments: Adjustments,
   tournaments: PlayerTournamentListItem[],
   ctx: ViewContext
-): Fields => {
-  const last = matchAdjustments(adjustments).at(-1);
-  if (!last) {
-    return [];
-  }
-
-  const score =
-    last.gamesWon !== null && last.gamesLost !== null
-      ? `${last.gamesWon}–${last.gamesLost}`
-      : null;
-  const outcome =
-    last.matchWon === null ? null : last.matchWon ? 'Won' : 'Lost';
-  const label = joined(outcome, score) || 'Match';
-  const result = last.matchId
-    ? link(label, `${ctx.siteUrl}/matches/${last.matchId}`)
-    : label;
-  const t = tournaments.find((item) => item.id === last.match?.tournamentId);
+): Sections => {
+  const seen = new Set<number>();
+  const recent = [...matchAdjustments(adjustments)]
+    .sort((a, b) => time(b.timestamp) - time(a.timestamp))
+    .filter((match) => {
+      if (match.matchId === null || seen.has(match.matchId)) return false;
+      seen.add(match.matchId);
+      return true;
+    })
+    .slice(0, RECENT_MATCH_COUNT);
+  if (!recent.length) return [];
 
   return [
     {
-      name: '🕒 Last match',
-      value: [
-        `**${result}**`,
-        `**${signed(last.ratingDelta)} TR**`,
-        ago(last.timestamp),
-        t ? tournamentLink(t, ctx) : null,
-      ]
-        .filter(Boolean)
-        .join(' · '),
-      inline: false,
+      name: '🕒 Recent matches',
+      value: recent
+        .map((match) => {
+          const score =
+            match.gamesWon !== null && match.gamesLost !== null
+              ? `${match.gamesWon}–${match.gamesLost}`
+              : null;
+          const outcome =
+            match.matchWon === null ? null : match.matchWon ? 'Won' : 'Lost';
+          const result = link(
+            joined(outcome, score) || 'Match',
+            `${ctx.siteUrl}/matches/${match.matchId}`
+          );
+          const tournament = tournaments.find(
+            (t) => t.id === match.match?.tournamentId
+          );
+          const heading = `**${result}** · **${signed(match.ratingDelta)} TR** · ${ago(match.timestamp)}`;
+          return tournament
+            ? `${heading}\n↳ ${link(tournament.name, `${ctx.siteUrl}/tournaments/${tournament.id}`)}`
+            : heading;
+        })
+        .join('\n'),
     },
   ];
 };
@@ -171,9 +179,10 @@ const lastMatchField = (
 export function playerCard(
   stats: PlayerStats,
   tournaments: PlayerTournamentListItem[],
-  ctx: ViewContext
+  ctx: ViewContext,
+  view: 'summary' | 'details' = 'summary'
 ): Reply {
-  const { embed, files, ruleset } = shell(stats);
+  const { embed, files, ruleset } = shell(stats, ctx);
   const { playerInfo: player, rating, matchStats } = stats;
 
   if (!rating) {
@@ -190,73 +199,80 @@ export function playerCard(
   }
 
   const progress = rating.tierProgress;
-  // A jump into a new major tier lands on its lowest subtier.
-  const target = progress.nextTier
-    ? getTierString(progress.nextTier as TierName, progress.nextSubTier ?? 3)
-    : null;
-  const fill =
-    progress.nextSubTier === null
-      ? progress.majorTierFillPercentage
-      : progress.subTierFillPercentage;
-  const road =
-    progress.nextTier && target
-      ? joined(
-          `**${num(progress.ratingForNextTier - rating.rating)} TR** to`,
-          `\`${bar(fill ?? 0, 5)}\``,
-          ctx.emoji(tierEmojiName(progress.nextTier, progress.nextSubTier)),
-          target
-        )
-      : `\`${bar(1, 5)}\` Top tier`;
   const home = flag(player.country);
   const description = [
     `${joined(ctx.emoji(tierEmojiName(progress.currentTier, progress.currentSubTier)), `**${tier(progress)}**`)} · **${num(rating.rating)} TR**`,
-    `**#${num(rating.globalRank)}** (#${num(rating.countryRank)}${home ? ` ${home}` : ''})`,
-    road,
+    `🌐 **#${num(rating.globalRank)}** (#${num(rating.countryRank)}${home ? ` ${home}` : ''})`,
   ].join('\n');
 
   const matches = matchAdjustments(rating.adjustments);
   const window = hourWindow(
     matches.map((a) => new Date(a.timestamp).getUTCHours())
   );
-  const mods = modRows(stats.modStats);
+  const mods = playerModList(stats.modPerformance ?? []);
   const [latest] = byNewest(tournaments);
 
-  const fields: Fields = [
-    {
-      name: '⚔️ Record',
-      value: matchStats
-        ? `**${num(matchStats.matchesWon)}–${num(matchStats.matchesLost)}** · ${pct(matchStats.matchWinRate)} won\n**${num(rating.tournamentsPlayed)}** ${plural(rating.tournamentsPlayed, 'tournament')} · peak **${num(matchStats.highestRating ?? rating.rating)} TR**`
-        : inProgress,
-      inline: true,
-    },
-    {
-      name: '🕑 Match times',
-      value: `${window ? `**${window.start}–${window.end} UTC** (${pct(window.share)})` : '—'}\n**${num(rating.matchesPlayed)}** ${plural(rating.matchesPlayed, 'match', 'matches')}`,
-      inline: true,
-    },
-    spacer(),
-    ...company('🤝 Often with', stats.frequentTeammates),
-    ...company('🎯 Often against', stats.frequentOpponents),
-    spacer(),
-    ...(mods.length > 0
-      ? [{ name: '🎲 Mods', value: histogram(mods), inline: false }]
-      : []),
-    ...lastMatchField(rating.adjustments, tournaments, ctx),
-    ...(latest
+  const peak = matchStats?.highestRating ?? rating.rating;
+  const peakTier = getTierFromRating(peak);
+  const peakLabel = joined(
+    `**${num(peak)} TR**`,
+    ctx.emoji(tierEmojiName(peakTier.tier, peakTier.subTier ?? null))
+  );
+  const sections: Sections =
+    view === 'details'
       ? [
           {
-            name: '🏆 Last tournament',
-            value: `${tournamentLine(latest, rating.adjustments)} · ${tournamentLink(latest, ctx)}`,
-            inline: false,
+            name: '🕑 Match times',
+            value: wrapList([
+              window
+                ? `**${window.start}–${window.end} UTC** (${pct(window.share)})`
+                : '—',
+              `**${num(rating.matchesPlayed)}** ${plural(rating.matchesPlayed, 'match', 'matches')}`,
+            ]),
           },
+          ...company('🤝 Often with', stats.frequentTeammates),
+          ...company('🎯 Often against', stats.frequentOpponents),
         ]
-      : []),
-  ];
+      : [
+          {
+            name: '⚔️ Record',
+            value: matchStats
+              ? [
+                  `↳ **${num(matchStats.matchesWon)}–${num(matchStats.matchesLost)}** · ${pct(matchStats.matchWinRate)} won`,
+                  `↳ **${num(rating.tournamentsPlayed)}** ${plural(rating.tournamentsPlayed, 'tournament')}`,
+                  `↳ peak ${peakLabel}`,
+                ].join('\n')
+              : inProgress,
+          },
+          ...(mods.length > 0
+            ? [
+                {
+                  name: '🎲 Mods',
+                  value: mods,
+                },
+              ]
+            : []),
+          ...recentMatchSection(rating.adjustments, tournaments, ctx),
+          ...(latest
+            ? [
+                {
+                  name: '🏆 Last tournament',
+                  value: wrapList([
+                    ...tournamentLine(latest, rating.adjustments).split(' · '),
+                    tournamentLink(latest, ctx),
+                  ]),
+                },
+              ]
+            : []),
+        ];
 
-  const chart = ratingHistory(chartPoints(stats), {
-    color: hex(embed.color ?? grey),
-    peak: matchStats?.highestRating,
-  });
+  const chart =
+    view === 'details'
+      ? null
+      : ratingHistory(chartPoints(stats), {
+          color: hex(embed.color ?? grey),
+          peak: matchStats?.highestRating,
+        });
   if (chart) {
     files.push({ name: 'rating.png', data: renderPng(chart) });
   }
@@ -265,11 +281,23 @@ export function playerCard(
     embeds: [
       {
         ...embed,
-        description,
-        fields,
+        description: [
+          description,
+          ...sections.map(({ name, value }) => `**${name}**\n${value}`),
+        ].join('\n\n'),
         ...(chart ? { image: { url: 'attachment://rating.png' } } : {}),
         footer: { text: `o!TR · ${ruleset}` },
       },
+    ],
+    components: [
+      row(
+        button(view === 'details' ? 'Back' : 'More details', {
+          view: view === 'details' ? 'po' : 'pd',
+          key: String(player.id),
+          ruleset: stats.ruleset,
+          page: 1,
+        })
+      ),
     ],
     files,
   };
@@ -281,7 +309,7 @@ export function playerTournaments(
   id: CustomId,
   ctx: ViewContext
 ): Reply {
-  const { embed, files, ruleset } = shell(stats);
+  const { embed, files, ruleset } = shell(stats, ctx);
   const { pages, page, items } = paginate(byNewest(tournaments), id.page, 5);
   const { matchStats } = stats;
   const adjustments = stats.rating?.adjustments ?? [];
@@ -323,7 +351,7 @@ export function playerBeatmaps(
   id: CustomId,
   ctx: ViewContext
 ): Reply {
-  const { embed, files, ruleset } = shell(stats);
+  const { embed, files, ruleset } = shell(stats, ctx);
   const pages = Math.max(1, Math.ceil(response.totalCount / 5));
   const page = Math.min(id.page, pages);
   const description =
@@ -331,7 +359,7 @@ export function playerBeatmaps(
       ? response.beatmaps
           .map(
             (b) =>
-              `★${b.sr.toFixed(2)} · ${Math.round(b.bpm)} BPM · ${link(`${b.artist} - ${b.title} [${b.diffName}]`, `${ctx.siteUrl}/beatmaps/${b.osuId}`)} · ${num(b.tournamentCount)} ${plural(b.tournamentCount, 'pool')}`
+              `${starRating(b.sr)} · ${Math.round(b.bpm)} BPM · ${link(`${b.artist} - ${b.title} [${b.diffName}]`, `${ctx.siteUrl}/beatmaps/${b.osuId}`)} · ${num(b.tournamentCount)} ${plural(b.tournamentCount, 'pool')}`
           )
           .join('\n')
       : `No pooled maps by ${stats.playerInfo.username} yet.`;
