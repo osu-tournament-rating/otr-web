@@ -9,6 +9,8 @@ import { deriveGameIsFreeMod, resolveGameDisplayMods } from '@/lib/utils/mods';
 import { tierData, tierNames, type TierName } from '@/lib/utils/tierData';
 import type {
   BeatmapFreemodPickSummary,
+  BeatmapTierBreakdown,
+  BeatmapTierScoreSummary,
   BeatmapRankRangeModDistribution,
 } from '@/lib/orpc/schema/beatmapStats';
 
@@ -235,4 +237,19 @@ export function tierBreakdownTierFromRating(rating: number): TierName {
   }
 
   return tierNames[Math.min(index, TIER_BREAKDOWN_MAX_TIER_INDEX)];
+}
+
+export const SCORE_DISTRIBUTION_MIN_GROUP_SIZE = 5;
+
+export function summarizeTierBreakdown(
+  tiers: BeatmapTierScoreSummary[],
+  totalScoreCount: number
+): BeatmapTierBreakdown {
+  return {
+    ratedScoreCount: tiers.reduce((total, tier) => total + tier.scoreCount, 0),
+    totalScoreCount,
+    tiers: tiers.filter(
+      (tier) => tier.scoreCount >= SCORE_DISTRIBUTION_MIN_GROUP_SIZE
+    ),
+  };
 }

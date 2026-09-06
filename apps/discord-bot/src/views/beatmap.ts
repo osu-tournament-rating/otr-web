@@ -1,25 +1,24 @@
 import { VerificationStatus } from '@otr/core/osu';
-import type { APIEmbed } from 'discord.js';
+import { escapeMarkdown, type APIEmbed } from 'discord.js';
 
 import type { BeatmapStatsResponse } from '@/lib/orpc/schema/beatmapStats';
-import {
-  calculateBeatmapModDistribution,
-  filterBeatmapModDistribution,
-  getBeatmapModLabel,
-} from '@/lib/utils/mods';
+import { getBeatmapModLabel } from '@/lib/utils/mods';
 
 import { renderPng } from '../chart/png';
 import { percentileCurve } from '../chart/svg';
 import type { Reply, ViewContext } from '../command';
 import type { CustomId } from '../custom-id';
+import { difficultyEmojiName, statusEmojiName, tierEmojiName } from '../emojis';
 import { linkButton, pager, tabs } from './buttons';
 import {
-  bar,
   clip,
   duration,
+  tournamentAge,
+  histogram,
   link,
   lobby,
   mapTitle,
+  modRows,
   num,
   paginate,
   pct,
@@ -27,6 +26,7 @@ import {
   rankRange,
   rulesetName,
   setting,
+  scoreThousands,
   statusName,
   table,
   time,
@@ -104,52 +104,79 @@ export function beatmapCard(
   stats: BeatmapStatsResponse,
   ctx: ViewContext
 ): Reply {
-  const { embed, specs } = shell(stats, ctx);
-  const { summary } = stats;
-  const fields: NonNullable<APIEmbed['fields']> = [];
-
-  const pooled =
+  const { embed } = shell(stats, ctx);
+  const { beatmap: b, summary, tierBreakdown } = stats;
+  const difficulty = ctx.emoji(difficultyEmojiName(b.ruleset, b.sr)) || '★';
+  const specs = `${difficulty} **${b.sr.toFixed(2)}** · ${Math.round(b.bpm)} BPM · ${duration(b.totalLength)}\nCS ${setting(b.cs)} · AR ${setting(b.ar)} · OD ${setting(b.od)} · ${link('osu!', `https://osu.ppy.sh/b/${b.osuId}`)}`;
+  const { image: cover, ...identity } = embed;
+  const tiers = summary.totalGameCount > 0 ? tierBreakdown.tiers : [];
+  const distribution =
     summary.totalGameCount > 0
-      ? `Pooled in **${num(summary.totalTournamentCount)}** ${plural(summary.totalTournamentCount, 'tournament')} (${num(summary.verifiedTournamentCount)} verified) · **${num(summary.totalGameCount)}** verified ${plural(summary.totalGameCount, 'game')}`
-      : `No verified games yet. Pooled in ${num(summary.totalTournamentCount)} ${plural(summary.totalTournamentCount, 'tournament')}.`;
-
-  if (summary.totalGameCount > 0) {
-    const distribution = filterBeatmapModDistribution(
-      calculateBeatmapModDistribution(stats.modDistribution)
-    ).slice(0, 6);
-    if (distribution.length > 0) {
-      fields.push({
-        name: 'Mods',
-        value: table(
-          distribution.map((m) => [
-            m.label,
-            bar(m.percentage / 100),
-            `${Math.round(m.percentage)}%`,
-          ]),
-          [false, false, true]
-        ),
-      });
-    }
-    if (stats.topPerformers.length > 0) {
-      fields.push({ name: 'Top scores', value: scoreTable(stats, 3) });
-    }
-  }
-
-  const recent = recentTournaments(stats).slice(0, 3);
-  if (recent.length > 0) {
-    fields.push({
-      name: 'Recent pools',
-      value: recent
-        .map(
-          (t) =>
-            `${link(clip(t.tournament.name, 40), `${ctx.siteUrl}/tournaments/${t.tournament.id}`)} ${lobby(t.lobbySize)} ${rankRange(t.rankRangeLowerBound)}`
+      ? modRows(
+          stats.modDistribution.map(({ mods, scoreCount }) => ({
+            mods,
+            count: scoreCount,
+          }))
         )
-        .join(' · '),
+      : [];
+  const fields: NonNullable<APIEmbed['fields']> = [
+    {
+      name: '🏆 Tournament usage',
+      value: `**${num(summary.totalTournamentCount)}** ${plural(summary.totalTournamentCount, 'tournament')} · **${num(summary.verifiedTournamentCount)}** verified\n**${num(summary.totalGameCount)}** verified ${plural(summary.totalGameCount, 'game')}`,
+      inline: true,
+    },
+  ];
+  if (distribution.length > 0) {
+    fields.push({
+      name: '🎲 Mods · plays',
+      value: histogram(distribution),
+      inline: false,
     });
   }
-
+  const recent = recentTournaments(stats).slice(0, 2);
+  if (recent.length > 0) {
+    fields.push({
+      name: '🕒 Recent pools',
+      value: recent
+        .map((t) => {
+          const name = statusEmojiName(t.verificationStatus);
+          const status =
+            (name ? ctx.emoji(name) : '') || statusName(t.verificationStatus);
+          return `**${link(escapeMarkdown(clip(t.tournament.name, 48)), `${ctx.siteUrl}/tournaments/${t.tournament.id}`)}** ${status}\n↳ ${lobby(t.lobbySize)} · ${rankRange(t.rankRangeLowerBound)} · ${tournamentAge(t.startTime)}`;
+        })
+        .join('\n'),
+    });
+  }
+  const empty =
+    summary.totalGameCount === 0
+      ? 'No verified games yet.'
+      : tierBreakdown.totalScoreCount === 0
+        ? 'No NM, HD, HR or DT plays yet.'
+        : tierBreakdown.ratedScoreCount === 0
+          ? 'No plays with pre-match ratings yet.'
+          : 'No tier has at least five plays yet.';
+  const tierRows = tiers.map((t) => {
+    const name = t.tier === 'Grandmaster' ? 'GM+' : t.tier;
+    const emoji = ctx.emoji(tierEmojiName(t.tier, null));
+    const accuracy =
+      t.medianAccuracy === null
+        ? 'No accuracy'
+        : `**${pct(t.medianAccuracy, 1)}**`;
+    return `${emoji ? `${emoji} ` : ''}${name} · **${scoreThousands(t.medianScore)}** · ${accuracy}`;
+  });
+  fields.push({
+    name: '📊 Typical performance by tier',
+    value: tiers.length > 0 ? tierRows.join('\n') : empty,
+  });
   return {
-    embeds: [{ ...embed, description: `${specs}\n${pooled}`, fields }],
+    embeds: [
+      {
+        ...identity,
+        description: specs,
+        fields,
+        ...(cover ? { thumbnail: cover } : {}),
+      },
+    ],
   };
 }
 

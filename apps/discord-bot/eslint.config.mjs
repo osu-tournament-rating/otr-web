@@ -45,10 +45,10 @@ const eslintConfig = [
           patterns: [
             {
               regex:
-                '^@/(?!lib/enum-helpers$|lib/utils/tierData$|lib/utils/mods$)',
+                '^@/(?!lib/enum-helpers$|lib/utils/tierData$|lib/utils/mods$|lib/beatmaps/star-rating-color$)',
               allowTypeImports: true,
               message:
-                'Only @/lib/enum-helpers, @/lib/utils/tierData, and @/lib/utils/mods run in the bot; import other web modules as types.',
+                'Only @/lib/enum-helpers, @/lib/utils/tierData, @/lib/utils/mods, and @/lib/beatmaps/star-rating-color run in the bot; import other web modules as types.',
             },
           ],
         },

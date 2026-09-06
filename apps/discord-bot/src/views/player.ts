@@ -4,7 +4,6 @@ import type { APIEmbed } from 'discord.js';
 import type { PlayerBeatmapsResponse } from '@/lib/orpc/schema/playerBeatmaps';
 import type { PlayerStats } from '@/lib/orpc/schema/playerStats';
 import type { PlayerTournamentListItem } from '@/lib/orpc/schema/tournament';
-import { getBeatmapModLabel } from '@/lib/utils/mods';
 import { getTierString, type TierName } from '@/lib/utils/tierData';
 
 import { renderPng } from '../chart/png';
@@ -23,6 +22,7 @@ import {
   inProgress,
   link,
   lobby,
+  modRows,
   num,
   paginate,
   pct,
@@ -110,24 +110,6 @@ const tournamentLine = (
   ]
     .filter(Boolean)
     .join(' · ');
-
-const modRows = (modStats: PlayerStats['modStats']) => {
-  const counts = new Map<string, number>();
-  let total = 0;
-  for (const entry of modStats) {
-    if (entry.count <= 0) {
-      continue;
-    }
-    const label = getBeatmapModLabel(entry.mods);
-    counts.set(label, (counts.get(label) ?? 0) + entry.count);
-    total += entry.count;
-  }
-
-  return [...counts]
-    .map(([label, count]) => ({ label, count, share: count / total }))
-    .filter((row) => row.share >= 0.01)
-    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
-};
 
 type Fields = NonNullable<APIEmbed['fields']>;
 
