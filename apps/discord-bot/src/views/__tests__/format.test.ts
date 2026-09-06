@@ -183,3 +183,14 @@ test.each([
     tournamentAge(new Date(now - days * 86400000).toISOString(), now)
   ).toBe(label);
 });
+
+test('mod rows select the six largest combinations after calculating shares', () => {
+  const rows = [0, 2, 8, 16, 64, 256, 1024, 24].map((mods, i) => ({
+    mods,
+    count: i + 1,
+  }));
+  const selected = modRows(rows);
+  expect(selected).toHaveLength(6);
+  expect(selected.map(({ count }) => count)).toEqual([8, 7, 6, 5, 4, 3]);
+  expect(selected[0].share).toBeCloseTo(8 / 36);
+});

@@ -239,16 +239,20 @@ export const tournamentAge = (iso: string | null, now = Date.now()): string => {
   return `${days}d ago`;
 };
 
+const MOD_HISTOGRAM_ROWS = 6;
+
 export const modRows = (rows: { mods: number; count: number }[]) =>
   filterBeatmapModDistribution(
     calculateBeatmapModDistribution(
       rows.map(({ mods, count }) => ({ mods, scoreCount: count }))
     )
-  ).map(({ label, scoreCount, percentage }) => ({
-    label,
-    count: scoreCount,
-    share: percentage / 100,
-  }));
+  )
+    .slice(0, MOD_HISTOGRAM_ROWS)
+    .map(({ label, scoreCount, percentage }) => ({
+      label,
+      count: scoreCount,
+      share: percentage / 100,
+    }));
 
 /** Score precision in whole thousands; keep sub-thousand scores exact. */
 export const scoreThousands = (value: number) =>

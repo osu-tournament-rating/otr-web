@@ -302,3 +302,29 @@ test('status emoji names distinguish final and provisional pool decisions', () =
     expect(text).toContain(label);
   }
 });
+
+test('dense mod distributions retain complete rows and fences through finalization', () => {
+  const flags = [2, 8, 16, 32, 64, 256, 1024];
+  const modDistribution = Array.from({ length: 100 }, (_, index) => ({
+    mods: flags.reduce(
+      (mods, flag, bit) => mods | (index & (1 << bit) ? flag : 0),
+      0
+    ),
+    scoreCount: 1,
+    percentage: 1,
+  }));
+  const reply = beatmapCard({ ...beatmapStats, modDistribution }, ctx);
+  const value = reply.embeds[0].fields!.find((field) =>
+    field.name.includes('Mods')
+  )!.value;
+  expect(value.length).toBeLessThanOrEqual(1024);
+  expect(value.split('\n')).toHaveLength(8);
+  expect(value).toStartWith('```');
+  expect(value).toEndWith('```');
+  expect(value.match(/1%/g)).toHaveLength(6);
+  expect(
+    finalize(reply).embeds[0].fields!.find((field) =>
+      field.name.includes('Mods')
+    )!.value
+  ).toBe(value);
+});
