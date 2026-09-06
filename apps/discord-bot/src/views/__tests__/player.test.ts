@@ -1,3 +1,6 @@
+import { RatingAdjustmentType } from '@otr/core/osu';
+import type { APIEmbed } from 'discord.js';
+
 import {
   afterAll,
   beforeAll,
@@ -22,6 +25,20 @@ import {
   playerTournaments as tournamentsPage,
 } from '../player';
 
+const sections = (embed: APIEmbed) =>
+  embed.description?.includes('\n\n**')
+    ? embed.description
+        .split('\n\n')
+        .slice(1)
+        .map((section) => {
+          const newline = section.indexOf('\n');
+          return {
+            name: section.slice(2, newline - 2),
+            value: section.slice(newline + 1),
+          };
+        })
+    : undefined;
+
 const png = [0x89, 0x50, 0x4e, 0x47];
 
 const many = Array.from({ length: 7 }, (_, i) => ({
@@ -43,64 +60,50 @@ describe('player card', () => {
       color: 0xaf57db,
       thumbnail: { url: 'https://a.ppy.sh/8000001' },
       image: { url: 'attachment://rating.png' },
-      author: { name: 'Stage · osu!' },
+      author: { name: 'osu!' },
+      title: 'Stage',
+      url: `${siteUrl}/players/1`,
       footer: { text: 'o!TR · osu!' },
     });
     expect(embed.author?.icon_url).toBeUndefined();
-    expect(embed.title).toBeUndefined();
-    expect(embed.url).toBeUndefined();
+    expect(embed.title).toBe('Stage');
+    expect(embed.url).toBe(`${siteUrl}/players/1`);
   });
 
-  test('the description reads the tier, the ranks, and the road to the next tier', () => {
-    expect(card().description).toBe(
+  test('the description shows only current tier, rating, and ranks', () => {
+    expect(card().description?.split('\n\n')[0]).toBe(
       [
         '<:tier_diamond2:1> **Diamond II** · **1,642 TR**',
-        '**#1,234** (#56 🇺🇸)',
-        '**58 TR** to `▰▰▰▱▱` <:tier_diamond1:1> Diamond I',
+        '🌐 **#1,234** (#56 🇺🇸)',
       ].join('\n')
     );
   });
 
-  test('the fields hold the record, the times, the company, the mods, and the last two entries', () => {
-    const fields = card().fields ?? [];
-    expect(fields.map((f) => f.name)).toEqual([
+  test('full-width description sections replace the grid', () => {
+    const embed = card();
+    expect(embed.fields).toBeUndefined();
+    expect(sections(embed)?.map((section) => section.name)).toEqual([
       '⚔️ Record',
-      '🕑 Match times',
-      '​',
-      '🤝 Often with',
-      '🎯 Often against',
-      '​',
       '🎲 Mods',
-      '🕒 Last match',
+      '🕒 Recent matches',
       '🏆 Last tournament',
     ]);
-    expect(fields.map((f) => f.inline)).toEqual([
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      false,
-      false,
-      false,
-    ]);
-    expect(fields[0].value).toBe(
-      '**123–89** · 58% won\n**43** tournaments · peak **1,701 TR**'
+    expect(embed.description).toContain(
+      '↳ **123–89** · 58% won\n↳ **43** tournaments\n↳ peak **1,701 TR**'
     );
-    expect(fields[1].value).toBe('**13–19 UTC** (87%)\n**212** matches');
-    expect(fields[3].value).toBe(
-      '**16** - Cytusine\n**14** - Zylice\n**12** - Aireu\n**10** - Kanjiro\n**8** - Rinna'
+    expect(embed.description).toContain(
+      '↳ **NM 59%** (400 plays) · median **600K**\n↳ **HD 33%** (220 plays) · median **640K**\n↳ **DT 7%** (50 plays) · median **610K**'
     );
-    expect(fields[6].value).toBe(
-      '```\nNM  59%  400  ▰▰▰▰▰▰▰\nHD  33%  220  ▰▰▰▰▱▱▱\nDT   7%   50  ▰▱▱▱▱▱▱\n```'
+    expect(embed.description).not.toContain('```');
+    expect(embed.description).toContain('**[Lost 4–2]');
+    expect(embed.description).toContain('Corsace Open 2025');
+    const lastMatch = sections(embed)?.find(
+      (section) => section.name === '🕒 Recent matches'
+    )?.value;
+    expect(lastMatch).toContain(
+      `[Corsace Open 2025](${siteUrl}/tournaments/512)`
     );
-    expect(fields[7].value).toBe(
-      `**[Lost 4–2](${siteUrl}/matches/523)** · **−11 TR** · 2mo ago · [Corsace Open 2025](${siteUrl}/tournaments/512) (CO25)`
-    );
-    expect(fields[8].value).toBe(
-      `**3–1** · **+166 TR** · 4v4 · #1,000+ · 2025-07-01 · [Corsace Open 2025](${siteUrl}/tournaments/512) (CO25)`
-    );
+    expect(lastMatch).not.toContain('(CO25)');
   });
 
   test('a missing emoji renders as empty text, never as a raw tag', () => {
@@ -108,16 +111,12 @@ describe('player card', () => {
       ...ctx,
       emoji: () => '',
     }).embeds[0].description;
-    expect(description).toBe(
-      [
-        '**Diamond II** · **1,642 TR**',
-        '**#1,234** (#56 🇺🇸)',
-        '**58 TR** to `▰▰▰▱▱` Diamond I',
-      ].join('\n')
+    expect(description?.split('\n\n')[0]).toBe(
+      ['**Diamond II** · **1,642 TR**', '🌐 **#1,234** (#56 🇺🇸)'].join('\n')
     );
   });
 
-  test('the top tier shows a full bar and no target', () => {
+  test('the top tier retains current tier without a progress line', () => {
     const progress = {
       ...playerStats.rating.tierProgress,
       currentTier: 'Elite Grandmaster',
@@ -131,47 +130,9 @@ describe('player card', () => {
       playerTournaments,
       ctx
     ).embeds;
-    expect(embed.description).toContain('`▰▰▰▰▰` Top tier');
+    expect(embed.description?.split('\n\n')[0].split('\n')).toHaveLength(2);
     expect(embed.description).toStartWith(
       '<:tier_elite_grandmaster:1> **Elite Grandmaster**'
-    );
-  });
-
-  test('a jump into a new major tier reads its lowest subtier', () => {
-    const progress = {
-      ...playerStats.rating.tierProgress,
-      nextTier: 'Master',
-      nextSubTier: null,
-      ratingForNextTier: 1900,
-      majorTierFillPercentage: 0.14,
-    };
-    const rating = { ...playerStats.rating, tierProgress: progress };
-    const [embed] = playerCard(
-      { ...playerStats, rating },
-      playerTournaments,
-      ctx
-    ).embeds;
-    expect(embed.description).toContain(
-      '**258 TR** to `▰▱▱▱▱` <:tier_master3:1> Master III'
-    );
-  });
-
-  test('elite grandmaster as the next tier carries no numeral', () => {
-    const progress = {
-      ...playerStats.rating.tierProgress,
-      nextTier: 'Elite Grandmaster',
-      nextSubTier: null,
-      ratingForNextTier: 2500,
-      majorTierFillPercentage: 0.5,
-    };
-    const rating = { ...playerStats.rating, tierProgress: progress };
-    const [embed] = playerCard(
-      { ...playerStats, rating },
-      playerTournaments,
-      ctx
-    ).embeds;
-    expect(embed.description).toEndWith(
-      '**858 TR** to `▰▰▰▱▱` <:tier_elite_grandmaster:1> Elite Grandmaster'
     );
   });
 
@@ -184,35 +145,37 @@ describe('player card', () => {
     const [embed] = playerCard(
       { ...playerStats, rating },
       playerTournaments,
-      ctx
+      ctx,
+      'details'
     ).embeds;
-    expect(embed.fields?.[1].value).toBe('—\n**2** matches');
+    expect(sections(embed)?.[0].value).toBe('— · **2** matches');
   });
 
   test('an empty company list reads as a dash', () => {
     const [embed] = playerCard(
       { ...playerStats, frequentTeammates: [], frequentOpponents: [] },
       playerTournaments,
-      ctx
+      ctx,
+      'details'
     ).embeds;
-    expect(embed.fields?.[3].value).toBe('—');
-    expect(embed.fields?.[4].value).toBe('—');
+    expect(sections(embed)?.[1].value).toBe('—');
+    expect(sections(embed)?.[2].value).toBe('—');
   });
 
   test('no mod counts drop the mods field', () => {
     const [embed] = playerCard(
-      { ...playerStats, modStats: [] },
+      { ...playerStats, modPerformance: [] },
       playerTournaments,
       ctx
     ).embeds;
-    expect(embed.fields?.map((f) => f.name)).not.toContain('🎲 Mods');
+    expect(sections(embed)?.map((f) => f.name)).not.toContain('🎲 Mods');
   });
 
   test('no tournaments drop the last tournament field', () => {
     const [embed] = playerCard(playerStats, [], ctx).embeds;
-    const names = embed.fields?.map((f) => f.name) ?? [];
+    const names = sections(embed)?.map((f) => f.name) ?? [];
     expect(names).not.toContain('🏆 Last tournament');
-    expect(embed.fields?.at(-1)?.value).not.toContain('/tournaments/');
+    expect(sections(embed)?.at(-1)?.value).not.toContain('/tournaments/');
   });
 
   test('the card carries no timestamp', () => {
@@ -230,10 +193,11 @@ describe('player card', () => {
       playerTournaments,
       ctx
     ).embeds;
-    expect(embed.fields?.[0].value).toEndWith(
-      '**1** tournament · peak **1,701 TR**'
+    expect(sections(embed)?.[0].value).toContain(
+      '**1** tournament\n↳ peak **1,701 TR**'
     );
-    expect(embed.fields?.[1].value).toEndWith('**1** match');
+    const details = playerCard({ ...playerStats, rating }, [], ctx, 'details');
+    expect(sections(details.embeds[0])?.[0].value).toEndWith('**1** match');
     const page = tournamentsPage(
       playerStats,
       playerTournaments.slice(0, 1),
@@ -251,10 +215,24 @@ describe('player card', () => {
     expect([...files[0].data.subarray(0, 4)]).toEqual(png);
   });
 
-  test('the card has no buttons', () => {
-    expect(
-      playerCard(playerStats, playerTournaments, ctx).components
-    ).toBeUndefined();
+  test('summary and details keep player identity, ruleset, and canonical profile link', () => {
+    const summary = playerCard(playerStats, playerTournaments, ctx);
+    const details = playerCard(playerStats, [], ctx, 'details');
+    expect(summary.components?.[0].components).toEqual([
+      { type: 2, style: 2, label: 'More details', custom_id: '1:pd:1:0:1' },
+    ]);
+    expect(details.components?.[0].components).toHaveLength(1);
+    expect(details.embeds[0].url).toBe(`${siteUrl}/players/1`);
+    expect(details.components?.[0].components[0]).toMatchObject({
+      label: 'Back',
+      custom_id: '1:po:1:0:1',
+    });
+    expect(sections(details.embeds[0])?.map((section) => section.name)).toEqual(
+      ['🕑 Match times', '🤝 Often with', '🎯 Often against']
+    );
+    expect(details.embeds[0].description).toContain('Cytusine (**16**)');
+    expect(details.embeds[0].image).toBeUndefined();
+    expect(finalize(details).embeds?.[0]).toEqual(details.embeds[0]);
   });
 
   test('a player without a rating gets a grey card, no fields, no chart, and no buttons', () => {
@@ -265,7 +243,7 @@ describe('player card', () => {
     );
     expect(reply.embeds[0]).toMatchObject({
       color: 0x8c8c8c,
-      author: { name: 'Stage · osu!taiko' },
+      author: { name: 'osu!taiko' },
       description:
         'No rating in osu!taiko yet. Ratings are separate per ruleset.',
       footer: { text: 'o!TR · osu!taiko' },
@@ -287,7 +265,7 @@ describe('player card', () => {
       playerTournaments,
       ctx
     ).embeds;
-    expect(embed.fields?.[0].value).toStartWith('**1,234–1,089** ·');
+    expect(sections(embed)?.[0].value).toStartWith('↳ **1,234–1,089** ·');
     const page = tournamentsPage(
       { ...playerStats, matchStats },
       playerTournaments,
@@ -303,7 +281,7 @@ describe('player card', () => {
       playerTournaments,
       ctx
     ).embeds;
-    expect(embed.fields?.[0].value).toBe(
+    expect(sections(embed)?.[0].value).toBe(
       'Stats are still in progress. Check back later.'
     );
   });
@@ -325,7 +303,9 @@ describe('player tournaments', () => {
     );
     expect(reply.embeds[0]).toMatchObject({
       color: 0xaf57db,
-      author: { name: 'Stage · osu!' },
+      author: { name: 'osu!' },
+      title: 'Stage',
+      url: `${siteUrl}/players/1`,
     });
     expect(reply.embeds[0].description).toBe(
       [
@@ -382,7 +362,7 @@ describe('player tournaments', () => {
       ctx
     );
     expect(reply.embeds[0].description).toContain(
-      `★6.42 · 200 BPM · [Camellia - Exit This Earth 0 [Extra]](${siteUrl}/beatmaps/658100) · 3 pools`
+      `6.42★ · 200 BPM · [Camellia - Exit This Earth 0 [Extra]](${siteUrl}/beatmaps/658100) · 3 pools`
     );
     expect(reply.embeds[0].footer?.text).toBe(
       'o!TR · osu! · 7 pooled maps · page 1 of 2'
@@ -411,4 +391,123 @@ describe('player tournaments', () => {
       expect(new Set(maps).size).toBe(maps.length);
     }
   });
+});
+
+test('dense full-width profile remains intact within Discord description limits', () => {
+  const company = Array.from({ length: 5 }, (_, i) => ({
+    ...playerStats.frequentTeammates[0],
+    frequency: 999999,
+    player: {
+      ...playerStats.frequentTeammates[0].player,
+      username: `Player ${i} ${'long name '.repeat(3)}`,
+    },
+  }));
+  const reply = playerCard(
+    { ...playerStats, frequentTeammates: company, frequentOpponents: company },
+    playerTournaments.map((t) => ({
+      ...t,
+      name: 'Long tournament name '.repeat(10),
+      abbreviation: 'LONG'.repeat(8),
+    })),
+    { ...ctx, emoji: (name) => `<:${name}:1234567890123456789>` }
+  );
+  const details = playerCard(
+    { ...playerStats, frequentTeammates: company, frequentOpponents: company },
+    [],
+    ctx,
+    'details'
+  );
+  expect(details.embeds[0].description!.length).toBeLessThanOrEqual(4096);
+  expect(finalize(details).embeds?.[0]).toEqual(details.embeds[0]);
+  expect(reply.embeds[0].description!.length).toBeLessThanOrEqual(4096);
+  expect(reply.embeds[0].fields).toBeUndefined();
+  expect(finalize(reply).embeds?.[0]).toEqual(reply.embeds[0]);
+});
+
+test('peak TR icon follows the peak tier rather than the current tier', () => {
+  const reply = playerCard(
+    {
+      ...playerStats,
+      matchStats: { ...playerStats.matchStats, highestRating: 1900 },
+    },
+    playerTournaments,
+    ctx
+  );
+  expect(reply.embeds[0].description).toContain(
+    'peak **1,900 TR** <:tier_master3:1>'
+  );
+  const withoutPeak = playerCard(
+    {
+      ...playerStats,
+      matchStats: { ...playerStats.matchStats, highestRating: null },
+    },
+    playerTournaments,
+    { ...ctx, emoji: () => '' }
+  );
+  expect(withoutPeak.embeds[0].description).toContain('peak **1,642 TR**');
+  expect(withoutPeak.embeds[0].description).not.toContain('<:');
+});
+
+test('recent matches select three distinct matches newest first from unsorted history', () => {
+  const base = playerStats.rating.adjustments.find((a) => a.matchId !== null)!;
+  const match = (id: number, day: number) => ({
+    ...base,
+    adjustmentType: RatingAdjustmentType.Match,
+    matchId: id,
+    timestamp: `2026-01-${String(day).padStart(2, '0')}T00:00:00Z`,
+  });
+  const adjustments = [
+    match(1, 1),
+    match(4, 4),
+    match(2, 2),
+    match(4, 4),
+    match(3, 3),
+  ];
+  const reply = playerCard(
+    { ...playerStats, rating: { ...playerStats.rating, adjustments } },
+    playerTournaments,
+    ctx
+  );
+  const text =
+    sections(reply.embeds[0])?.find((s) => s.name === '🕒 Recent matches')
+      ?.value ?? '';
+  expect(
+    [...text.matchAll(/\/matches\/(\d+)/g)].map((m) => Number(m[1]))
+  ).toEqual([4, 3, 2]);
+  expect(finalize(reply).embeds?.[0]).toEqual(reply.embeds[0]);
+});
+
+test('recent matches do not invent entries when fewer than three are available', () => {
+  const match = playerStats.rating.adjustments.find(
+    (a) => a.adjustmentType === RatingAdjustmentType.Match && a.matchId !== null
+  )!;
+  for (const count of [0, 1, 2]) {
+    const adjustments = Array.from({ length: count }, (_, i) => ({
+      ...match,
+      matchId: 900 + i,
+    }));
+    const reply = playerCard(
+      { ...playerStats, rating: { ...playerStats.rating, adjustments } },
+      playerTournaments,
+      ctx
+    );
+    const section = sections(reply.embeds[0])?.find(
+      (s) => s.name === '🕒 Recent matches'
+    );
+    expect([
+      ...(section?.value ?? '').matchAll(/\/matches\/(\d+)/g),
+    ]).toHaveLength(count);
+    if (!count) expect(section).toBeUndefined();
+  }
+});
+
+test('an older API without eligible mod performance never supplies legacy counts as fallback', () => {
+  const stats = { ...playerStats, modPerformance: undefined };
+  expect(
+    playerCard(stats, playerTournaments, ctx).embeds[0].description
+  ).not.toContain('🎲 Mods');
+});
+
+test('player mod rows stay text-only when mod emojis exist', () => {
+  expect(card().description).not.toContain('<:mod_');
 });

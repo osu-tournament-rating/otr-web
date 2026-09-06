@@ -6,6 +6,7 @@ import {
   VerificationStatusEnumHelper,
 } from '@/lib/enum-helpers';
 import {
+  BEATMAP_MOD_DISPLAY_THRESHOLD_PERCENTAGE,
   calculateBeatmapModDistribution,
   filterBeatmapModDistribution,
 } from '@/lib/utils/mods';
@@ -239,7 +240,7 @@ export const tournamentAge = (iso: string | null, now = Date.now()): string => {
   return `${days}d ago`;
 };
 
-const MOD_HISTOGRAM_ROWS = 6;
+const MOD_DISPLAY_ROWS = 6;
 
 export const modRows = (rows: { mods: number; count: number }[]) =>
   filterBeatmapModDistribution(
@@ -247,7 +248,7 @@ export const modRows = (rows: { mods: number; count: number }[]) =>
       rows.map(({ mods, count }) => ({ mods, scoreCount: count }))
     )
   )
-    .slice(0, MOD_HISTOGRAM_ROWS)
+    .slice(0, MOD_DISPLAY_ROWS)
     .map(({ label, scoreCount, percentage }) => ({
       label,
       count: scoreCount,
@@ -257,3 +258,76 @@ export const modRows = (rows: { mods: number; count: number }[]) =>
 /** Score precision in whole thousands; keep sub-thousand scores exact. */
 export const scoreThousands = (value: number) =>
   value < 1000 ? num(value) : `${Math.floor(value / 1000)}k`;
+
+const PLAYER_LIST_WIDTH = 50;
+const listSeparator = ' · ';
+const graphemes = new Intl.Segmenter('en', { granularity: 'grapheme' });
+
+const visibleListLength = (text: string) => {
+  const visible = text
+    .replace(/\[((?:\\.|[^\]\\])*)\]\((?:\\.|[^)\\])*\)/g, '$1')
+    .replace(/<a?:\w+:\d+>/g, '◉')
+    .replace(/\*\*|__|~~|`/g, '')
+    .replace(/\\([\\`*_{}[\]()#+.!|>-])/g, '$1');
+  return [...graphemes.segment(visible)].length;
+};
+
+/** Wrap whole list entries by rendered text length; never split a link or long entry. */
+export const wrapList = (
+  items: string[],
+  width = PLAYER_LIST_WIDTH
+): string => {
+  const lines: string[] = [];
+  let line = '';
+  let length = 0;
+  for (const item of items) {
+    const itemLength = visibleListLength(item);
+    if (line && length + listSeparator.length + itemLength > width) {
+      lines.push(line);
+      line = '';
+      length = 0;
+    }
+    if (line) {
+      line += listSeparator;
+      length += listSeparator.length;
+    }
+    line += item;
+    length += itemLength;
+  }
+  if (line) lines.push(line);
+  return lines.join('\n');
+};
+
+const modLine = (mod: { label: string; count: number; share: number }) =>
+  `↳ **${mod.label} ${pct(mod.share)}** (${num(mod.count)} ${plural(mod.count, 'play')})`;
+
+export const modList = (
+  rows: { label: string; count: number; share: number }[]
+): string => rows.map(modLine).join('\n');
+
+export const playerModList = (
+  rows: { label: string; count: number; medianScore: number }[]
+): string => {
+  const total = rows.reduce((sum, row) => sum + row.count, 0);
+  if (!total) return '';
+  return [...rows]
+    .filter(
+      (row) =>
+        (row.count / total) * 100 >= BEATMAP_MOD_DISPLAY_THRESHOLD_PERCENTAGE
+    )
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+    .slice(0, MOD_DISPLAY_ROWS)
+    .map((row) => {
+      const score =
+        row.medianScore < 1000
+          ? num(row.medianScore)
+          : `${num(row.medianScore / 1000)}K`;
+      return `${modLine({ ...row, share: row.count / total })} · median **${score}**`;
+    })
+    .join('\n');
+};
+
+export const starRating = (value: number | null | undefined): string =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? `${value.toFixed(2)}★`
+    : 'SR unknown';

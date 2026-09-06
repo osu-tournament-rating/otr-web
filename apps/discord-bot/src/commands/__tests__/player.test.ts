@@ -57,7 +57,9 @@ describe('/player', () => {
     });
     expect(reply.embeds[0]).toMatchObject({
       color: 0xaf57db,
-      author: { name: 'Stage · osu!' },
+      author: { name: 'osu!' },
+      title: 'Stage',
+      url: `${ctx.siteUrl}/players/1`,
       thumbnail: { url: 'https://a.ppy.sh/8000001' },
       image: { url: 'attachment://rating.png' },
     });
@@ -94,7 +96,7 @@ describe('/player', () => {
       keyType: 'otr',
       ruleset: 0,
     });
-    expect(reply.embeds[0].fields?.at(-1)?.name).toBe('🏆 Last tournament');
+    expect(reply.embeds[0].description).toContain('🏆 Last tournament');
   });
 
   test('the tournaments page fetches stats and tournaments by o!TR id', async () => {
@@ -152,4 +154,28 @@ describe('/player', () => {
       max_length: 100,
     });
   });
+});
+
+test('player offers supported rulesets without mania other', () => {
+  const option = player.data.options?.find(
+    (option) => option.name === 'ruleset'
+  );
+  expect(
+    option && 'choices' in option
+      ? option.choices?.map((choice) => choice.value)
+      : []
+  ).toEqual([0, 1, 2, 4, 5]);
+});
+
+test('details fetch the preserved player and resolved ruleset without tournament data', async () => {
+  const stats = procedure({ ...playerStats, ruleset: 4 });
+  expect(player.pages?.pd).toBeDefined();
+  const reply = await player.pages!.pd({
+    id: { view: 'pd', key: '42', ruleset: 4, page: 1 },
+    api: fakeApi({ players: { stats } }),
+    ctx,
+  });
+  expect(stats).toHaveBeenCalledWith({ id: 42, keyType: 'otr', ruleset: 4 });
+  expect(reply.embeds[0].description).toContain('Often with');
+  expect(JSON.stringify(reply.components)).toContain('1:po:1:4:1');
 });

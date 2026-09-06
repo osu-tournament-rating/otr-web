@@ -3,7 +3,7 @@ import { and, asc, desc, eq, ne, not, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import * as schema from '@otr/core/db/schema';
-import { Mods, Ruleset, TeamType, VerificationStatus } from '@otr/core/osu';
+import { Ruleset, TeamType, VerificationStatus } from '@otr/core/osu';
 import {
   BeatmapStatsResponseSchema,
   type BeatmapStatsResponse,
@@ -24,9 +24,9 @@ import { tierNames } from '@/lib/utils/tierData';
 import { getRelatedBeatmapDifficulties } from '@/lib/orpc/queries/relatedBeatmapDifficulties';
 
 import { publicProcedure } from './base';
+import { NORMALIZED_SCORE_MODS_SQL } from './shared/scoreMods';
 import {
   CHARTED_SCORE_MODS_MASK,
-  STRIPPED_SCORE_MODS_MASK,
   TIER_BREAKDOWN_MAX_TIER_INDEX,
   TIER_RATING_BOUNDARIES,
   summarizeFreemodPicks,
@@ -42,21 +42,8 @@ const TOP_PERFORMER_LIMIT = 25;
 
 const SCORE_SAMPLE_LIMIT = 1000;
 
-const NIGHTCORE_SQL = sql.raw(String(Mods.Nightcore));
-const DOUBLE_TIME_SQL = sql.raw(String(Mods.DoubleTime));
-const STRIPPED_MODS_SQL = sql.raw(String(STRIPPED_SCORE_MODS_MASK));
 const CHARTED_MODS_SQL = sql.raw(String(CHARTED_SCORE_MODS_MASK));
-
-// SQL mirror of isChartedScoreMods; the beatmapModNormalization test asserts parity
 const CHARTED_SCORE_MODS_FILTER = sql`(${schema.gameScores.mods} & ~${CHARTED_MODS_SQL}) = 0`;
-
-// SQL mirror of normalizeScoreModsArithmetic; the beatmapModNormalization test asserts parity
-const NORMALIZED_SCORE_MODS_SQL = sql<number>`
-  CASE
-    WHEN (${schema.gameScores.mods} & ${NIGHTCORE_SQL}) <> 0
-      THEN ((${schema.gameScores.mods} & ~(${NIGHTCORE_SQL} | ${STRIPPED_MODS_SQL})) | ${DOUBLE_TIME_SQL})
-    ELSE (${schema.gameScores.mods} & ~${STRIPPED_MODS_SQL})
-  END`;
 
 // Ascending boundaries, so width_bucket returns an index into tierNames
 const TIER_BOUNDARIES_SQL = sql.raw(

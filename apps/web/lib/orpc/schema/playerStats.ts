@@ -33,6 +33,12 @@ export const PlayerModStatsSchema = z.object({
   averageScore: z.number().nonnegative(),
 });
 
+export const PlayerModPerformanceSchema = z.object({
+  label: z.string().min(1),
+  count: z.number().int().positive(),
+  medianScore: z.number().nonnegative(),
+});
+
 export const PlayerMatchReferenceSchema = z.object({
   id: z.number().int().positive(),
   name: z.string(),
@@ -114,6 +120,11 @@ export const PlayerStatsSchema = z.object({
   rating: PlayerRatingStatsSchema.nullable(),
   matchStats: AggregatePlayerMatchStatsSchema.nullable(),
   modStats: PlayerModStatsSchema.array(),
+  modPerformance: PlayerModPerformanceSchema.array()
+    .optional()
+    .describe(
+      'ScoreV2 plays with verified score, game, match and tournament; grouped by display mod (NF/SO removed, NC folded into DT). Median of raw scores; counts use the same population and requested ruleset/time range.'
+    ),
   frequentTeammates: PlayerFrequencySchema.array(),
   frequentOpponents: PlayerFrequencySchema.array(),
   tournamentPerformanceStats: z.unknown().nullable().optional(),

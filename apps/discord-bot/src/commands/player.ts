@@ -1,3 +1,4 @@
+import { Ruleset } from '@otr/core/osu';
 import type { PlayerStats } from '@/lib/orpc/schema/playerStats';
 
 import type { Api } from '../api';
@@ -35,7 +36,9 @@ export const player: Command = {
       option
         .setName('ruleset')
         .setDescription('Ruleset; defaults to the player’s main ruleset')
-        .addChoices(...rulesetChoices)
+        .addChoices(
+          ...rulesetChoices.filter(({ value }) => value !== Ruleset.ManiaOther)
+        )
     )
     .toJSON(),
 
@@ -48,7 +51,10 @@ export const player: Command = {
     return playerCard(response, await tournamentsOf(api, response), ctx);
   },
 
+  sharedPages: ['po', 'pd'],
   pages: {
+    pd: async ({ id, api, ctx }) =>
+      playerCard(await stats(api, id), [], ctx, 'details'),
     po: async ({ id, api, ctx }) => {
       const response = await stats(api, id);
       return playerCard(response, await tournamentsOf(api, response), ctx);

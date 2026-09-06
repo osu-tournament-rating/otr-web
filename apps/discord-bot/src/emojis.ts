@@ -2,7 +2,10 @@ import { Ruleset, VerificationStatus } from '@otr/core/osu';
 import type { Logger } from '@otr/core/logging';
 import type { ClientApplication } from 'discord.js';
 
-import { getStarRatingIconColor } from '@/lib/beatmaps/star-rating-color';
+import {
+  getStarRatingColor,
+  STAR_RATING_SPECTRUM_MAX,
+} from '@/lib/beatmaps/star-rating-color';
 import { tierNames } from '@/lib/utils/tierData';
 
 import {
@@ -20,6 +23,9 @@ export const tierEmojiName = (tier: string, subTier: number | null) =>
   tier === 'Elite Grandmaster'
     ? 'tier_elite_grandmaster'
     : `tier_${tier.toLowerCase()}${subTier ?? 3}`;
+
+/** A broad tier group uses sub-tier I rather than an individual rating's sub-tier. */
+export const groupTierEmojiName = (tier: string) => tierEmojiName(tier, 1);
 
 export const statusEmojiName = (status: VerificationStatus) =>
   status === VerificationStatus.Verified
@@ -41,7 +47,9 @@ const tierEmojis = tierNames.flatMap((tier) => {
 const DIFFICULTY_RETRY_MS = 10 * 60 * 1000;
 
 const difficultyBucket = (sr: number) =>
-  sr < 0.1 ? 0 : Math.min(6.7, Math.max(0.5, Math.round(sr * 2) / 2));
+  sr < 0.1
+    ? 0
+    : Math.min(STAR_RATING_SPECTRUM_MAX, Math.max(0.5, Math.round(sr * 2) / 2));
 
 export const difficultyEmojiName = (ruleset: number, sr: number) =>
   Number.isInteger(ruleset) &&
@@ -56,10 +64,7 @@ const difficultyForName = (name: string) => {
   if (!match) return null;
   const ruleset = Number(match[1]);
   const rating = Number(match[2]) / 10;
-  const canonical =
-    rating === 6.7
-      ? difficultyEmojiName(ruleset, 7)
-      : difficultyEmojiName(ruleset, rating);
+  const canonical = difficultyEmojiName(ruleset, rating);
   return canonical === name ? { ruleset, rating } : null;
 };
 
@@ -131,7 +136,7 @@ export async function syncEmojis(
             attachment: Buffer.from(
               difficultyEmojiPng(
                 difficulty.ruleset,
-                getStarRatingIconColor(difficulty.rating)
+                getStarRatingColor(difficulty.rating)
               )
             ),
           });

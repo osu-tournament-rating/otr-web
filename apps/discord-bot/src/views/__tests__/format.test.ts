@@ -1,12 +1,16 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  wrapList,
   ago,
   date,
   tournamentAge,
   histogram,
   hourWindow,
   modRows,
+  modList,
+  starRating,
+  playerModList,
   signed,
   scoreThousands,
   tournamentDelta,
@@ -193,4 +197,107 @@ test('mod rows select the six largest combinations after calculating shares', ()
   expect(selected).toHaveLength(6);
   expect(selected.map(({ count }) => count)).toEqual([8, 7, 6, 5, 4, 3]);
   expect(selected[0].share).toBeCloseTo(8 / 36);
+});
+
+describe('wrapList', () => {
+  test('keeps an exact boundary and wraps the next complete item', () => {
+    expect(wrapList(['a'.repeat(25), 'b'.repeat(22), 'c'])).toBe(
+      'a'.repeat(25) + ' · ' + 'b'.repeat(22) + '\nc'
+    );
+    expect(wrapList(['a'.repeat(25), 'b'.repeat(23)])).toBe(
+      'a'.repeat(25) + '\n' + 'b'.repeat(23)
+    );
+  });
+  test('counts link labels and emoji rather than hidden markup', () => {
+    const item =
+      '**[Short](https://example.com/very/long/hidden/url)** <:tier_master3:1234567890123456789>';
+    expect(wrapList([item, 'b'.repeat(40)])).toBe(
+      item + ' · ' + 'b'.repeat(40)
+    );
+    expect(wrapList([item, 'b'.repeat(41)])).toBe(item + '\n' + 'b'.repeat(41));
+  });
+  test('preserves oversized items without splitting markdown', () => {
+    const item = '[' + 'a'.repeat(51) + '](https://example.com)';
+    expect(wrapList(['first', item, 'last'])).toBe('first\n' + item + '\nlast');
+    expect(wrapList([])).toBe('');
+  });
+  test('counts a composed emoji as one visible character', () => {
+    expect(wrapList(['🇺🇸', 'x'.repeat(46)])).toBe('🇺🇸 · ' + 'x'.repeat(46));
+  });
+});
+
+test('wrapList keeps the supplied player names and bold counts together', () => {
+  const items = [
+    'ASecretBox (**43**)',
+    'jixxi (**33**)',
+    'Vivace (**30**)',
+    'Jordan The Bear (**29**)',
+    'Dumii (**28**)',
+  ];
+  expect(wrapList(items)).toBe(
+    items.slice(0, 3).join(' · ') + '\n' + items.slice(3).join(' · ')
+  );
+  expect(
+    wrapList(items)
+      .split('\n')
+      .map((line) => line.replaceAll('**', '').length)
+  ).toEqual([42, 33]);
+});
+
+test('modList preserves order, rounded percentages, and singular play counts', () => {
+  expect(
+    modList([
+      { label: 'NM', count: 400, share: 0.594 },
+      { label: 'HD', count: 1, share: 0.006 },
+    ])
+  ).toBe('↳ **NM 59%** (400 plays)\n↳ **HD 1%** (1 play)');
+  expect(modList([])).toBe('');
+});
+
+test('player mods keep median and counts from the same eligible population', () => {
+  expect(
+    playerModList([
+      { label: 'HD', count: 2, medianScore: 300000 },
+      { label: 'NM', count: 7, medianScore: 200000 },
+      { label: 'DT', count: 1, medianScore: 0 },
+    ])
+  ).toBe(
+    '↳ **NM 70%** (7 plays) · median **200K**\n↳ **HD 20%** (2 plays) · median **300K**\n↳ **DT 10%** (1 play) · median **0**'
+  );
+  expect(playerModList([])).toBe('');
+  expect(
+    playerModList([
+      { label: 'NM', count: 1000, medianScore: 999.5 },
+      { label: 'HD', count: 1, medianScore: 123456 },
+    ])
+  ).toBe('↳ **NM 100%** (1,000 plays) · median **1,000**');
+  const rows = Array.from({ length: 8 }, (_, i) => ({
+    label: `Mod${i}`,
+    count: 8 - i,
+    medianScore: 234567,
+  }));
+  const lines = playerModList(rows).split('\n');
+  expect(lines).toHaveLength(6);
+  expect(lines[0]).toContain('22%');
+  expect(lines[0]).toContain('235K');
+});
+
+test('large mod combinations retain complete text-only rows', () => {
+  const rows = Array.from({ length: 6 }, () => ({
+    label: 'EZHDHRSDDTHTFL',
+    count: 1,
+    share: 1 / 6,
+  }));
+  const text = modList(rows);
+  expect(text.length).toBeLessThanOrEqual(1024);
+  expect(text).not.toContain('<:mod_');
+  expect(text.match(/EZHDHRSDDTHTFL/g)).toHaveLength(6);
+});
+
+test('star rating is two decimals with trailing filled star and no clamp', () => {
+  expect(starRating(7.5)).toBe('7.50★');
+  expect(starRating(12.34)).toBe('12.34★');
+  expect(starRating(0)).toBe('0.00★');
+  for (const value of [null, undefined, NaN, Infinity, -1])
+    expect(starRating(value)).toBe('SR unknown');
 });

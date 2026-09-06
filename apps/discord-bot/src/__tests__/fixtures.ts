@@ -154,6 +154,12 @@ export const playerStats = {
     periodStart: day(-400),
     periodEnd: day(220),
   },
+  modPerformance: [
+    { label: 'NM', count: 400, medianScore: 600000 },
+    { label: 'HD', count: 220, medianScore: 640000 },
+    { label: 'DT', count: 50, medianScore: 610000 },
+    { label: 'HR', count: 5, medianScore: 580000 },
+  ],
   modStats: [
     { mods: Mods.None, count: 400, averageScore: 600_000 },
     { mods: Mods.Hidden, count: 210, averageScore: 640_000 },

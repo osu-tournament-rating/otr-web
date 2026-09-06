@@ -278,3 +278,42 @@ describe('finalize', () => {
     ).toThrow('10');
   });
 });
+
+test('shared detail navigation edits the original for every viewer and clears old attachments', async () => {
+  for (const owner of [true, false]) {
+    const interaction = fakeButton('1:pd:1:4:1', { owner });
+    await handleButton(
+      interaction,
+      deps(command({ pages: { pd: async () => card }, sharedPages: ['pd'] }))
+    );
+    expect(interaction.deferUpdate).toHaveBeenCalledTimes(1);
+    expect(interaction.deferReply).not.toHaveBeenCalled();
+    expect(interaction.editReply.mock.calls[0][0]).toMatchObject({
+      embeds: card.embeds,
+      attachments: [],
+    });
+  }
+});
+
+test('shared detail failure edits the original and keeps navigation', async () => {
+  const interaction = fakeButton('1:pd:1:0:1', { owner: false });
+  await handleButton(
+    interaction,
+    deps(
+      command({
+        sharedPages: ['pd'],
+        pages: {
+          pd: async () => {
+            throw new Error('offline');
+          },
+        },
+      })
+    )
+  );
+  expect(interaction.deferUpdate).toHaveBeenCalledTimes(1);
+  expect(interaction.deferReply).not.toHaveBeenCalled();
+  expect(sentEmbed(interaction).description).toBe(GENERIC_ERROR);
+  expect(interaction.editReply.mock.calls[0][0].components).toEqual(
+    interaction.message.components
+  );
+});
