@@ -12,10 +12,6 @@ import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import type { DatabaseClient } from '../db';
 import type { Logger } from '../logging/logger';
 import type { QueuePublisher } from '@otr/core/queues';
-import {
-  setPlayerFetchStatusByOsuId,
-  setPlayerOsuTrackFetchStatusByOsuId,
-} from '../osu/player-store';
 
 type AutoRefetchConfig = {
   enabled: boolean;
@@ -30,6 +26,7 @@ type SchedulerConfig = {
 
 const MS_PER_MINUTE = 60_000;
 const MS_PER_DAY = 86_400_000;
+const FETCH_LEASE_DAYS = 7;
 
 // Ceilings on player_ratings.global_rank; `maxRank: null` matches any rank.
 const REFETCH_TIERS = {
@@ -171,16 +168,29 @@ export class PlayerRefetchScheduler {
       .select({
         osuPlayerId: schema.players.osuId,
         cadenceDays,
+        status: schema.players.dataFetchStatus,
+        lastFetch: schema.players.osuLastFetch,
       })
       .from(schema.players)
       .leftJoin(
         schema.playerRatings,
         eq(schema.playerRatings.playerId, schema.players.id)
       )
-      .where(ne(schema.players.dataFetchStatus, DataFetchStatus.Fetching))
       .groupBy(schema.players.id)
       .having(
-        sql`${schema.players.osuLastFetch} < now() - (${cadenceDays} * interval '1 day')`
+        or(
+          and(
+            ne(schema.players.dataFetchStatus, DataFetchStatus.Fetching),
+            sql`${schema.players.osuLastFetch} < now() - (${cadenceDays} * interval '1 day')`
+          ),
+          and(
+            eq(schema.players.dataFetchStatus, DataFetchStatus.Fetching),
+            lt(
+              schema.players.osuLastFetch,
+              this.calculateCutoff(FETCH_LEASE_DAYS)
+            )
+          )
+        )
       )
       .orderBy(asc(cadenceDays), asc(schema.players.osuLastFetch));
 
@@ -205,14 +215,7 @@ export class PlayerRefetchScheduler {
         );
       },
       logContext: 'osu!',
-      setFetchingStatus: async (osuPlayerId) => {
-        await setPlayerFetchStatusByOsuId(
-          this.db,
-          osuPlayerId,
-          DataFetchStatus.Fetching,
-          new Date().toISOString()
-        );
-      },
+      source: 'osu',
     });
 
     if (enqueued > 0) {
@@ -253,14 +256,34 @@ export class PlayerRefetchScheduler {
     const players = await this.db
       .select({
         osuPlayerId: schema.players.osuId,
+        status: schema.players.osuTrackDataFetchStatus,
+        lastFetch: schema.players.osuTrackLastFetch,
       })
       .from(schema.players)
       .where(
-        and(
-          ne(schema.players.osuTrackDataFetchStatus, DataFetchStatus.Fetching),
-          or(
-            isNull(schema.players.osuTrackLastFetch),
-            lt(schema.players.osuTrackLastFetch, cutoffIso)
+        or(
+          and(
+            ne(
+              schema.players.osuTrackDataFetchStatus,
+              DataFetchStatus.Fetching
+            ),
+            or(
+              isNull(schema.players.osuTrackLastFetch),
+              lt(schema.players.osuTrackLastFetch, cutoffIso)
+            )
+          ),
+          and(
+            eq(
+              schema.players.osuTrackDataFetchStatus,
+              DataFetchStatus.Fetching
+            ),
+            or(
+              isNull(schema.players.osuTrackLastFetch),
+              lt(
+                schema.players.osuTrackLastFetch,
+                this.calculateCutoff(FETCH_LEASE_DAYS)
+              )
+            )
           )
         )
       )
@@ -275,14 +298,7 @@ export class PlayerRefetchScheduler {
         );
       },
       logContext: 'osu!track',
-      setFetchingStatus: async (osuPlayerId) => {
-        await setPlayerOsuTrackFetchStatusByOsuId(
-          this.db,
-          osuPlayerId,
-          DataFetchStatus.Fetching,
-          new Date().toISOString()
-        );
-      },
+      source: 'osuTrack',
     });
 
     if (enqueued > 0) {
@@ -293,25 +309,79 @@ export class PlayerRefetchScheduler {
   }
 
   private async enqueuePlayers<
-    TPlayer extends { osuPlayerId: number },
+    TPlayer extends {
+      osuPlayerId: number;
+      status: number;
+      lastFetch: string | null;
+    },
   >(options: {
     players: Array<TPlayer>;
     publish: (osuPlayerId: number, player: TPlayer) => Promise<void>;
     logContext: string;
-    setFetchingStatus?: (osuPlayerId: number) => Promise<void>;
+    source: 'osu' | 'osuTrack';
   }): Promise<number> {
     let enqueued = 0;
+    const statusKey =
+      options.source === 'osu' ? 'dataFetchStatus' : 'osuTrackDataFetchStatus';
+    const fetchKey =
+      options.source === 'osu' ? 'osuLastFetch' : 'osuTrackLastFetch';
+    const statusColumn = schema.players[statusKey];
+    const fetchColumn = schema.players[fetchKey];
 
     for (const player of options.players) {
       const osuPlayerId = player.osuPlayerId;
 
+      const leaseIso = new Date().toISOString();
+      let claimed = false;
       try {
-        if (options.setFetchingStatus) {
-          await options.setFetchingStatus(osuPlayerId);
-        }
+        const rows = await this.db
+          .update(schema.players)
+          .set({
+            [statusKey]: DataFetchStatus.Fetching,
+            [fetchKey]: leaseIso,
+            updated: leaseIso,
+          })
+          .where(
+            and(
+              eq(schema.players.osuId, osuPlayerId),
+              eq(statusColumn, player.status),
+              player.lastFetch === null
+                ? isNull(fetchColumn)
+                : eq(fetchColumn, player.lastFetch)
+            )
+          )
+          .returning({ id: schema.players.id });
+        if (rows.length === 0) continue;
+        claimed = true;
         await options.publish(osuPlayerId, player);
         enqueued += 1;
       } catch (error) {
+        if (claimed) {
+          try {
+            // A publisher can report failure after delivery; preserve worker completion.
+            await this.db
+              .update(schema.players)
+              .set({
+                // Preserve eligibility, including reclaimed leases before their normal cadence.
+                [statusKey]: player.status,
+                [fetchKey]: player.lastFetch,
+                updated: new Date().toISOString(),
+              })
+              .where(
+                and(
+                  eq(schema.players.osuId, osuPlayerId),
+                  eq(statusColumn, DataFetchStatus.Fetching),
+                  eq(fetchColumn, leaseIso)
+                )
+              );
+          } catch (resetError) {
+            this.logger.error('Failed to release auto-refetch lease', {
+              osuPlayerId,
+              queue: options.logContext,
+              error: resetError,
+            });
+          }
+        }
         this.logger.error('Failed to publish auto-refetch player', {
           osuPlayerId,
           queue: options.logContext,

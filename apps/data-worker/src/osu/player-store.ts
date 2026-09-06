@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { DatabaseClient } from '../db';
 import * as schema from '@otr/core/db/schema';
+import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 type DbExecutor = Pick<DatabaseClient, 'query' | 'insert' | 'update'>;
 type UpdateExecutor = Pick<DatabaseClient, 'update'>;
@@ -76,6 +77,9 @@ export const ensurePlayerPlaceholder = async (
     .values({
       osuId: osuPlayerId,
       dataFetchStatus: status,
+      ...(status === DataFetchStatus.Fetching
+        ? { osuLastFetch: updatedIso }
+        : {}),
       updated: updatedIso,
     })
     .onConflictDoNothing()
@@ -143,6 +147,9 @@ export const setPlayerFetchStatusByOsuId = async (
     .update(schema.players)
     .set({
       dataFetchStatus: status,
+      ...(status === DataFetchStatus.Fetching
+        ? { osuLastFetch: updatedIso }
+        : {}),
       updated: updatedIso,
     })
     .where(eq(schema.players.osuId, osuPlayerId));
@@ -158,6 +165,9 @@ export const setPlayerOsuTrackFetchStatusByOsuId = async (
     .update(schema.players)
     .set({
       osuTrackDataFetchStatus: status,
+      ...(status === DataFetchStatus.Fetching
+        ? { osuTrackLastFetch: updatedIso }
+        : {}),
       updated: updatedIso,
     })
     .where(eq(schema.players.osuId, osuPlayerId));

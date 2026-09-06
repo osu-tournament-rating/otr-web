@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
@@ -12,6 +12,11 @@ import { Ruleset } from '@otr/core/osu';
 import type { DatabaseClient } from '../../db';
 import type { Logger } from '../../logging/logger';
 import { PlayerRefetchScheduler } from '../player-refetch-scheduler';
+import {
+  ensurePlayerPlaceholder,
+  setPlayerFetchStatusByOsuId,
+  setPlayerOsuTrackFetchStatusByOsuId,
+} from '../../osu/player-store';
 
 const url = process.env.SEARCH_TEST_DATABASE_URL;
 
@@ -99,7 +104,21 @@ const seed: SeededPlayer[] = [
     lastFetch: 20,
     ratings: [[Ruleset.Osu, 100]],
     fetching: true,
+    expected: 1,
+  },
+  {
+    osuId: 999_300_021,
+    lastFetch: 0.5,
+    ratings: [],
+    fetching: true,
     expected: null,
+  },
+  {
+    osuId: 999_300_022,
+    lastFetch: 8,
+    ratings: [],
+    fetching: true,
+    expected: FALLBACK_DAYS,
   },
   {
     osuId: 999_300_013,
@@ -152,7 +171,11 @@ const seed: SeededPlayer[] = [
 ];
 
 describe.skipIf(!url)('osu! auto-refetch tiers', () => {
-  const pool = new Pool({ connectionString: url });
+  const namespace = `refetch_tiers_${crypto.randomUUID().replaceAll('-', '')}`;
+  const pool = new Pool({
+    connectionString: url,
+    options: `-c search_path=${namespace}`,
+  });
   const db = drizzle(pool, { schema });
   const osuIds = seed.map((player) => player.osuId);
 
@@ -163,6 +186,9 @@ describe.skipIf(!url)('osu! auto-refetch tiers', () => {
     db.delete(schema.players).where(inArray(schema.players.osuId, osuIds));
 
   beforeAll(async () => {
+    await pool.query(`CREATE SCHEMA ${namespace};
+      CREATE TABLE ${namespace}.players (LIKE public.players INCLUDING DEFAULTS INCLUDING GENERATED INCLUDING IDENTITY INCLUDING CONSTRAINTS INCLUDING INDEXES);
+      CREATE TABLE ${namespace}.player_ratings (LIKE public.player_ratings INCLUDING DEFAULTS INCLUDING GENERATED INCLUDING IDENTITY INCLUDING CONSTRAINTS INCLUDING INDEXES);`);
     await remove();
 
     for (const player of seed) {
@@ -234,6 +260,7 @@ describe.skipIf(!url)('osu! auto-refetch tiers', () => {
 
   afterAll(async () => {
     await remove();
+    await pool.query(`DROP SCHEMA ${namespace} CASCADE`);
     await pool.end();
   });
 
@@ -275,3 +302,171 @@ describe.skipIf(!url)('osu! auto-refetch tiers', () => {
     expect(cadences).toEqual([...cadences].sort((a, b) => a - b));
   });
 });
+
+for (const source of ['osu', 'osuTrack'] as const) {
+  describe.skipIf(!url)(`${source} refetch recovery`, () => {
+    const namespace = `refetch_${source.toLowerCase()}_${crypto.randomUUID().replaceAll('-', '')}`;
+    const pool = new Pool({
+      connectionString: url,
+      options: `-c search_path=${namespace}`,
+    });
+    const db = drizzle(pool, { schema });
+    const status =
+      source === 'osu' ? 'dataFetchStatus' : 'osuTrackDataFetchStatus';
+    const lastFetch = source === 'osu' ? 'osuLastFetch' : 'osuTrackLastFetch';
+    let fail = false;
+    let completeBeforeFailure = false;
+    const published: number[] = [];
+    const scheduler = new PlayerRefetchScheduler({
+      db: db as unknown as DatabaseClient,
+      logger: { info() {}, error() {} } as unknown as Logger,
+      osuPublisher: {
+        async publish(message) {
+          await publish(message as { osuPlayerId: number });
+          return message as FetchOsuMessage;
+        },
+      },
+      osuTrackPublisher: {
+        async publish(message) {
+          await publish(message);
+          return message as FetchPlayerOsuTrackMessage;
+        },
+      },
+      config: {
+        osu: {
+          enabled: source === 'osu',
+          intervalMinutes: 30,
+          outdatedDays: 14,
+        },
+        osuTrack: {
+          enabled: source === 'osuTrack',
+          intervalMinutes: 30,
+          outdatedDays: 60,
+        },
+      },
+    });
+    async function publish(message: { osuPlayerId: number }) {
+      published.push(message.osuPlayerId);
+      if (completeBeforeFailure) {
+        await db
+          .update(schema.players)
+          .set({
+            [status]: DataFetchStatus.Fetched,
+            [lastFetch]: new Date().toISOString(),
+          })
+          .where(eq(schema.players.osuId, message.osuPlayerId));
+      }
+      if (fail) throw new Error('publish failed');
+      return message;
+    }
+    async function run() {
+      await scheduler.start();
+      await scheduler.stop();
+    }
+    async function seedPlayer(age: number | null, fetching = true) {
+      fail = false;
+      completeBeforeFailure = false;
+      await db.delete(schema.players);
+      published.length = 0;
+      await db.insert(schema.players).values({
+        osuId: 999_400_001,
+        [status]: fetching ? DataFetchStatus.Fetching : DataFetchStatus.Fetched,
+        [lastFetch]: age === null ? null : daysAgo(age),
+      });
+    }
+    beforeAll(async () => {
+      await pool.query(`CREATE SCHEMA ${namespace};
+        CREATE TABLE ${namespace}.players (LIKE public.players INCLUDING DEFAULTS INCLUDING GENERATED INCLUDING IDENTITY INCLUDING CONSTRAINTS INCLUDING INDEXES);
+        CREATE TABLE ${namespace}.player_ratings (LIKE public.player_ratings INCLUDING DEFAULTS INCLUDING GENERATED INCLUDING IDENTITY INCLUDING CONSTRAINTS INCLUDING INDEXES);`);
+    });
+    afterAll(async () => {
+      await scheduler.stop();
+      await pool.query(`DROP SCHEMA ${namespace} CASCADE`);
+      await pool.end();
+    });
+    it('recovers stale fetching before the normal cadence and renews its lease', async () => {
+      await seedPlayer(7.01);
+      await run();
+      expect(published).toEqual([999_400_001]);
+      await run();
+      expect(published).toHaveLength(1);
+    });
+    it('honors a lease started outside the scheduler', async () => {
+      await seedPlayer(90, false);
+      const markFetching =
+        source === 'osu'
+          ? setPlayerFetchStatusByOsuId
+          : setPlayerOsuTrackFetchStatusByOsuId;
+      await markFetching(
+        db as unknown as DatabaseClient,
+        999_400_001,
+        DataFetchStatus.Fetching,
+        new Date().toISOString()
+      );
+      await run();
+      expect(published).toHaveLength(0);
+    });
+    if (source === 'osu')
+      it('starts a lease for a newly fetching placeholder', async () => {
+        await db.delete(schema.players);
+        published.length = 0;
+        await ensurePlayerPlaceholder(
+          db as unknown as DatabaseClient,
+          999_400_001,
+          DataFetchStatus.Fetching,
+          new Date().toISOString()
+        );
+        await run();
+        expect(published).toHaveLength(0);
+      });
+    it('does not reclaim an active lease', async () => {
+      await seedPlayer(6.99);
+      await run();
+      expect(published).toHaveLength(0);
+    });
+    if (source === 'osuTrack')
+      it('recovers fetching with no previous fetch timestamp', async () => {
+        await seedPlayer(null);
+        await run();
+        expect(published).toHaveLength(1);
+        await run();
+        expect(published).toHaveLength(1);
+      });
+    it('restores a failed publication and allows a later retry', async () => {
+      await seedPlayer(90, false);
+      fail = true;
+      await run();
+      const player = await db.query.players.findFirst();
+      expect(player?.[status]).toBe(DataFetchStatus.Fetched);
+      fail = false;
+      await run();
+      expect(published).toHaveLength(2);
+    });
+    it('keeps a reclaimed lease eligible through repeated publication failures', async () => {
+      await seedPlayer(8);
+      const original = await db.query.players.findFirst();
+      fail = true;
+      await run();
+      await run();
+      expect(published).toHaveLength(2);
+      const player = await db.query.players.findFirst();
+      expect(player?.[status]).toBe(DataFetchStatus.Fetching);
+      expect(player?.[lastFetch]).toBe(original?.[lastFetch]);
+      fail = false;
+      await run();
+      expect(published).toHaveLength(3);
+      await run();
+      expect(published).toHaveLength(3);
+    });
+    it('does not overwrite completion when a publication reports failure', async () => {
+      await seedPlayer(90, false);
+      fail = true;
+      completeBeforeFailure = true;
+      await run();
+      const player = await db.query.players.findFirst();
+      expect(player?.[status]).toBe(DataFetchStatus.Fetched);
+      fail = false;
+      completeBeforeFailure = false;
+    });
+  });
+}
