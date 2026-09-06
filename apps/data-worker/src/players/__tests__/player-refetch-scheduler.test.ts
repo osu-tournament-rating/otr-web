@@ -432,15 +432,31 @@ for (const source of ['osu', 'osuTrack'] as const) {
         await run();
         expect(published).toHaveLength(1);
       });
-    it('resets a failed publication and allows a later retry', async () => {
+    it('restores a failed publication and allows a later retry', async () => {
       await seedPlayer(90, false);
       fail = true;
       await run();
       const player = await db.query.players.findFirst();
-      expect(player?.[status]).toBe(DataFetchStatus.Error);
+      expect(player?.[status]).toBe(DataFetchStatus.Fetched);
       fail = false;
       await run();
       expect(published).toHaveLength(2);
+    });
+    it('keeps a reclaimed lease eligible through repeated publication failures', async () => {
+      await seedPlayer(8);
+      const original = await db.query.players.findFirst();
+      fail = true;
+      await run();
+      await run();
+      expect(published).toHaveLength(2);
+      const player = await db.query.players.findFirst();
+      expect(player?.[status]).toBe(DataFetchStatus.Fetching);
+      expect(player?.[lastFetch]).toBe(original?.[lastFetch]);
+      fail = false;
+      await run();
+      expect(published).toHaveLength(3);
+      await run();
+      expect(published).toHaveLength(3);
     });
     it('does not overwrite completion when a publication reports failure', async () => {
       await seedPlayer(90, false);

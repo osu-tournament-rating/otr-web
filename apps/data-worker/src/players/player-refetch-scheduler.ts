@@ -362,7 +362,8 @@ export class PlayerRefetchScheduler {
             await this.db
               .update(schema.players)
               .set({
-                [statusKey]: DataFetchStatus.Error,
+                // Preserve eligibility, including reclaimed leases before their normal cadence.
+                [statusKey]: player.status,
                 [fetchKey]: player.lastFetch,
                 updated: new Date().toISOString(),
               })
