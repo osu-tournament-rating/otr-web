@@ -3,7 +3,7 @@ import type { Logger } from '@otr/core/logging';
 import type { ClientApplication } from 'discord.js';
 
 import {
-  getStarRatingColor,
+  getStarRatingIconColor,
   STAR_RATING_SPECTRUM_MAX,
 } from '@/lib/beatmaps/star-rating-color';
 import { tierNames } from '@/lib/utils/tierData';
@@ -136,7 +136,7 @@ export async function syncEmojis(
             attachment: Buffer.from(
               difficultyEmojiPng(
                 difficulty.ruleset,
-                getStarRatingColor(difficulty.rating)
+                getStarRatingIconColor(difficulty.rating)
               )
             ),
           });

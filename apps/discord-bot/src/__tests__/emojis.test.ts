@@ -8,6 +8,7 @@ import {
   tierEmojiName,
   groupTierEmojiName,
 } from '../emojis';
+import { difficultyEmojiPng } from '../views/icons';
 import { quietLogger } from './quiet-logger';
 
 const fakeApplication = (
@@ -201,3 +202,26 @@ test('broad tier representatives use I without changing individual sub-tiers', (
     'tier_elite_grandmaster'
   );
 });
+
+test.each([0, 1, 2, 3, 4, 5])(
+  'high-difficulty uploads retain a visible tint for ruleset %s',
+  async (ruleset) => {
+    const create = mock(
+      async ({ name }: { name: string; attachment?: Buffer }) => ({
+        id: '321',
+        name,
+      })
+    );
+    const { application } = fakeApplication([], create);
+    const emoji = await syncEmojis(application, quietLogger(), 'statuses');
+    create.mockClear();
+    const name = difficultyEmojiName(ruleset, 8.75);
+    expect(name).toBe(`difficulty_${ruleset}_90`);
+    emoji(name);
+    await Bun.sleep(0);
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create.mock.calls[0][0].attachment).toEqual(
+      Buffer.from(difficultyEmojiPng(ruleset, '#6563DE'))
+    );
+  }
+);
