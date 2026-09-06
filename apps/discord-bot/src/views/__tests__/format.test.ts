@@ -3,9 +3,12 @@ import { describe, expect, test } from 'bun:test';
 import {
   ago,
   date,
+  tournamentAge,
   histogram,
   hourWindow,
+  modRows,
   signed,
+  scoreThousands,
   tournamentDelta,
 } from '../format';
 
@@ -111,4 +114,72 @@ test('a counted row keeps one pip', () => {
       { label: 'HDHR', count: 21, share: 0.013 },
     ])
   ).toBe('```\nNM    40%  650  ▰▰▰▰▰▰▰\nHDHR   1%   21  ▰▱▱▱▱▱▱\n```');
+});
+
+describe('tournamentAge', () => {
+  test.each([
+    ['2026-02-28T00:00:00.001Z', '0d ago'],
+    ['2026-02-28T00:00:00Z', '1d ago'],
+    ['2026-02-03T00:00:00Z', '26d ago'],
+    ['2025-03-01T00:00:00Z', '1y ago'],
+    ['2026-03-01T00:00:00Z', '0d ago'],
+    ['2026-03-01T00:00:01Z', 'Not started'],
+    [null, 'Start date unknown'],
+    ['invalid', 'Start date unknown'],
+    ['2026-02-28T19:00:00-05:00', '0d ago'],
+  ])('%s reads %s', (iso, expected) => {
+    expect(tournamentAge(iso, now)).toBe(expected);
+  });
+});
+
+test('mod rows merge display-equivalent mods and keep shares against all plays', () => {
+  expect(
+    modRows([
+      { mods: 0, count: 60 },
+      { mods: 1, count: 39 },
+      { mods: 8, count: 1 },
+      { mods: 16, count: 0 },
+    ])
+  ).toEqual([
+    { label: 'NM', count: 99, share: 0.99 },
+    { label: 'HD', count: 1, share: 0.01 },
+  ]);
+  expect(
+    modRows([
+      { mods: 0, count: 199 },
+      { mods: 8, count: 1 },
+    ])
+  ).toEqual([{ label: 'NM', count: 199, share: 0.995 }]);
+  expect(modRows([])).toEqual([]);
+});
+
+describe('scoreThousands', () => {
+  test.each([
+    [0, '0'],
+    [1, '1'],
+    [999, '999'],
+    [1000, '1k'],
+    [1999, '1k'],
+    [456789, '456k'],
+    [999999, '999k'],
+    [1000000, '1000k'],
+    [1234567, '1234k'],
+  ])('%i reads %s', (value, expected) => {
+    expect(scoreThousands(value)).toBe(expected);
+  });
+});
+
+test.each([
+  [29, '29d ago'],
+  [30, '1mo ago'],
+  [59, '1mo ago'],
+  [60, '2mo ago'],
+  [364, '12mo ago'],
+  [365, '1y ago'],
+  [729, '1y ago'],
+  [730, '2y ago'],
+])('tournament age at %i elapsed days', (days, label) => {
+  expect(
+    tournamentAge(new Date(now - days * 86400000).toISOString(), now)
+  ).toBe(label);
 });

@@ -48,7 +48,7 @@ describe('/beatmap', () => {
     expect(reply.embeds[0]).toMatchObject({
       title: 'xi - Blue Zenith [FOUR DIMENSIONS]',
       url: `${siteUrl}/beatmaps/658127`,
-      image: {
+      thumbnail: {
         url: 'https://assets.ppy.sh/beatmaps/292301/covers/cover@2x.jpg',
       },
     });

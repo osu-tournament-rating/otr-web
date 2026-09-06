@@ -36,3 +36,7 @@ export const statusColor = (status: VerificationStatus) => {
 };
 
 export const hex = (color: number) => `#${color.toString(16).padStart(6, '0')}`;
+
+// VerificationBadge dark-theme green-400/red-500 converted from Tailwind OKLCH to sRGB.
+export const statusEmojiColor = (status: VerificationStatus) =>
+  status === VerificationStatus.Verified ? 0x05df72 : 0xfb2c36;

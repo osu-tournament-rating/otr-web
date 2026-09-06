@@ -5,6 +5,10 @@ import {
   RulesetEnumHelper,
   VerificationStatusEnumHelper,
 } from '@/lib/enum-helpers';
+import {
+  calculateBeatmapModDistribution,
+  filterBeatmapModDistribution,
+} from '@/lib/utils/mods';
 import { getTierString, type TierName } from '@/lib/utils/tierData';
 
 const numbers = new Intl.NumberFormat('en-US');
@@ -223,3 +227,29 @@ export const paginate = <T>(items: T[], page: number, size: number) => {
     items: items.slice((current - 1) * size, current * size),
   };
 };
+
+/** Compact elapsed tournament age; future dates are not elapsed. */
+export const tournamentAge = (iso: string | null, now = Date.now()): string => {
+  const start = iso ? Date.parse(iso) : NaN;
+  if (!Number.isFinite(start)) return 'Start date unknown';
+  if (start > now) return 'Not started';
+  const days = Math.floor((now - start) / 86_400_000);
+  if (days >= 365) return `${Math.floor(days / 365)}y ago`;
+  if (days >= 30) return `${Math.floor(days / 30)}mo ago`;
+  return `${days}d ago`;
+};
+
+export const modRows = (rows: { mods: number; count: number }[]) =>
+  filterBeatmapModDistribution(
+    calculateBeatmapModDistribution(
+      rows.map(({ mods, count }) => ({ mods, scoreCount: count }))
+    )
+  ).map(({ label, scoreCount, percentage }) => ({
+    label,
+    count: scoreCount,
+    share: percentage / 100,
+  }));
+
+/** Score precision in whole thousands; keep sub-thousand scores exact. */
+export const scoreThousands = (value: number) =>
+  value < 1000 ? num(value) : `${Math.floor(value / 1000)}k`;

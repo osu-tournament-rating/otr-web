@@ -15,7 +15,6 @@ import {
   type BeatmapScorePercentilePoint,
   type BeatmapScoreSample,
   type BeatmapClosenessSummary,
-  type BeatmapTierBreakdown,
   type BeatmapTierScoreSummary,
   type BeatmapTopPerformer,
 } from '@/lib/orpc/schema/beatmapStats';
@@ -33,6 +32,8 @@ import {
   summarizeFreemodPicks,
   summarizePoolDisplayMods,
   summarizeRankRangeMods,
+  SCORE_DISTRIBUTION_MIN_GROUP_SIZE,
+  summarizeTierBreakdown,
 } from './beatmapStatsHelpers';
 import { KeyTypeSchema, resolveBeatmapId } from './shared/keyType';
 
@@ -40,9 +41,6 @@ import { KeyTypeSchema, resolveBeatmapId } from './shared/keyType';
 const TOP_PERFORMER_LIMIT = 25;
 
 const SCORE_SAMPLE_LIMIT = 1000;
-
-/** Mod groups below this many verified scores are noise for a box plot. */
-const SCORE_DISTRIBUTION_MIN_GROUP_SIZE = 5;
 
 const NIGHTCORE_SQL = sql.raw(String(Mods.Nightcore));
 const DOUBLE_TIME_SQL = sql.raw(String(Mods.DoubleTime));
@@ -1099,15 +1097,9 @@ export const getBeatmapStats = publicProcedure
         }))
       );
 
-      // Sparse tiers are dropped from the rows but still counted in ratedScoreCount.
-      let ratedScoreCount = 0;
       const tiers: BeatmapTierScoreSummary[] = [];
       for (const row of tierBreakdownRows) {
         const scoreCount = Number(row.scoreCount);
-        ratedScoreCount += scoreCount;
-
-        if (scoreCount < SCORE_DISTRIBUTION_MIN_GROUP_SIZE) continue;
-
         const tier = tierNames[Number(row.tierIndex)];
         if (tier == null) continue;
 
@@ -1129,11 +1121,7 @@ export const getBeatmapStats = publicProcedure
         });
       }
 
-      const tierBreakdown: BeatmapTierBreakdown = {
-        ratedScoreCount,
-        totalScoreCount: chartedScoreCount,
-        tiers,
-      };
+      const tierBreakdown = summarizeTierBreakdown(tiers, chartedScoreCount);
 
       const closenessSummary = summarizeCloseness(
         closenessGameRows.map((row) => ({

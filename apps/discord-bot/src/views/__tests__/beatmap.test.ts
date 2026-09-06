@@ -1,7 +1,8 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test, spyOn } from 'bun:test';
 
 import {
   beatmapStats,
+  beatmapTierSummary,
   ctx,
   customIds,
   siteUrl,
@@ -19,64 +20,165 @@ const many = {
 };
 
 describe('beatmap card', () => {
-  test('carries the cover, the specs line, mod bars, top scores, and recent pools', () => {
-    const reply = beatmapCard(beatmapStats, ctx);
-    const [embed] = reply.embeds;
-    expect(embed).toMatchObject({
-      color: 0x5a8ff0,
-      author: { name: 'osu! · mapped by Asphyxia' },
-      title: 'xi - Blue Zenith [FOUR DIMENSIONS]',
-      url: `${siteUrl}/beatmaps/658127`,
-      image: {
-        url: 'https://assets.ppy.sh/beatmaps/292301/covers/cover@2x.jpg',
-      },
-      footer: { text: 'o!TR · osu!' },
-    });
-    expect(embed.thumbnail).toBeUndefined();
-    expect(embed.description).toContain(
-      '★ **7.04** · 200 BPM · 4:22 · CS 4 · AR 9.6 · OD 9 · HP 5 · [osu!](https://osu.ppy.sh/b/658127)'
-    );
-    expect(embed.description).toContain(
-      'Pooled in **12** tournaments (10 verified) · **384** verified games'
-    );
-    expect(embed.fields?.map((f) => f.name)).toEqual([
-      'Mods',
-      'Top scores',
-      'Recent pools',
-    ]);
-    expect(embed.fields?.[0].value).toContain('NM  ▰▰▰▰▰▰▰▰▱▱  78%');
-    expect(embed.fields?.[0].value).not.toContain('FL');
-    expect(embed.fields?.[1].value.split('\n')).toHaveLength(6);
-    expect(embed.fields?.[1].value).toContain(
-      '1,214,905  Cytusine  HDHR  99.1%  Corsace Open 2025'
-    );
-    expect(embed.fields?.[2].value).toBe(
-      `[Corsace Open 2025](${siteUrl}/tournaments/512) 4v4 #1,000+ · [osu! World Cup 2024](${siteUrl}/tournaments/513) 4v4 Open rank · [5 Digit World Cup](${siteUrl}/tournaments/514) 3v3 #1,000+`
-    );
-    expect(reply.components).toBeUndefined();
-  });
-
-  test('a map without verified games is grey, says so, and hides the mods and scores', () => {
+  test('groups map context and presents one compact median row per tier', () => {
     const reply = beatmapCard(
       {
         ...beatmapStats,
-        summary: {
-          ...beatmapStats.summary,
-          totalGameCount: 0,
-          totalTournamentCount: 2,
+        tierBreakdown: {
+          ...beatmapStats.tierBreakdown,
+          tiers: [beatmapTierSummary],
         },
       },
       ctx
     );
-    expect(reply.embeds[0].color).toBe(0x8c8c8c);
-    expect(reply.embeds[0].description).toContain(
-      'No verified games yet. Pooled in 2 tournaments.'
-    );
-    expect(reply.embeds[0].fields?.map((f) => f.name)).toEqual([
-      'Recent pools',
+    const [embed] = reply.embeds;
+    expect(embed).toMatchObject({
+      author: { name: 'osu! · mapped by Asphyxia' },
+      title: 'xi - Blue Zenith [FOUR DIMENSIONS]',
+      url: `${siteUrl}/beatmaps/658127`,
+      thumbnail: {
+        url: 'https://assets.ppy.sh/beatmaps/292301/covers/cover@2x.jpg',
+      },
+    });
+    expect(embed.fields?.map((f) => f.name)).toEqual([
+      '🏆 Tournament usage',
+      '🎲 Mods · plays',
+      '🕒 Recent pools',
+      '📊 Typical performance by tier',
     ]);
-    expect(reply.embeds[0].image?.url).toContain('cover@2x.jpg');
+    expect(embed.fields?.[0].value).toContain('**384** verified games');
+    expect(embed.fields?.[1].value).toContain('NM  78%');
+    expect(embed.fields?.[2].value.split('\n')).toHaveLength(4);
+    expect(embed.fields?.[2].value).toStartWith('**[');
+    expect(embed.fields?.[2].value).toMatch(/\*\* .*\n↳ 4v4/);
+    expect(embed.fields?.[2].value).not.toContain('\n\n');
+    expect(JSON.stringify(reply)).not.toContain(
+      'plays have a pre-match rating'
+    );
+    expect(reply.files).toBeUndefined();
+    expect(embed.image).toBeUndefined();
+    expect(embed.fields?.[3].value).toContain(
+      '<:tier_gold3:1> Gold · **600k** · **95.0%**'
+    );
+    expect(embed.fields?.[3].value).not.toContain('middle 50%');
+    expect(embed.fields?.[3].value).not.toContain('400,000');
     expect(reply.components).toBeUndefined();
+    expect(() => finalize(reply)).not.toThrow();
+  });
+
+  test('pool ages use tournament start dates and whole days', () => {
+    const clock = spyOn(Date, 'now').mockReturnValue(
+      Date.parse('2026-03-01T00:00:00Z')
+    );
+    try {
+      const tournaments = ['2026-02-03T00:00:00Z', null].map((startTime) => ({
+        ...beatmapStats.tournaments[0],
+        startTime,
+      }));
+      const fields = beatmapCard({ ...beatmapStats, tournaments }, ctx)
+        .embeds[0].fields!;
+      const pools = fields.find((f) => f.name.includes('Recent pools'))!.value;
+      expect(pools).toContain('26d ago');
+      expect(pools).toContain('Start date unknown');
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  test('missing accuracy is distinct from zero and tier emojis retain names', () => {
+    const tiers = [
+      {
+        ...beatmapTierSummary,
+        tier: 'Grandmaster' as const,
+        medianAccuracy: null,
+        p25Accuracy: null,
+        p75Accuracy: null,
+      },
+      {
+        ...beatmapTierSummary,
+        medianAccuracy: 0,
+        p25Accuracy: 0,
+        p75Accuracy: 0,
+      },
+    ];
+    const reply = beatmapCard(
+      {
+        ...beatmapStats,
+        tierBreakdown: { ...beatmapStats.tierBreakdown, tiers },
+      },
+      { ...ctx, emoji: (name) => `<:${name}:123>` }
+    );
+    const rows = reply.embeds[0].fields!.at(-1)!.value.split('\n');
+    expect(rows).toEqual([
+      '<:tier_grandmaster3:123> GM+ · **600k** · No accuracy',
+      '<:tier_gold3:123> Gold · **600k** · **0.0%**',
+    ]);
+  });
+
+  test('all eight tiers and large values fit without truncating rows', () => {
+    const tiers = [
+      'Bronze',
+      'Silver',
+      'Gold',
+      'Platinum',
+      'Emerald',
+      'Diamond',
+      'Master',
+      'Grandmaster',
+    ].map((tier) => ({
+      ...beatmapTierSummary,
+      tier: tier as typeof beatmapTierSummary.tier,
+      scoreCount: 999999,
+      medianScore: 12345678,
+    }));
+    const reply = beatmapCard(
+      {
+        ...beatmapStats,
+        tierBreakdown: { ...beatmapStats.tierBreakdown, tiers },
+      },
+      { ...ctx, emoji: (name) => `<:${name}:1234567890123456789>` }
+    );
+    expect(reply.embeds[0].fields).toHaveLength(4);
+    expect(reply.embeds[0].fields!.at(-1)!.value.split('\n')).toHaveLength(8);
+    expect(finalize(reply).embeds?.[0]).toEqual(reply.embeds[0]);
+  });
+
+  test('no verified games is distinct from insufficient tier samples', () => {
+    const reply = beatmapCard(
+      {
+        ...beatmapStats,
+        summary: { ...beatmapStats.summary, totalGameCount: 0 },
+      },
+      ctx
+    );
+    expect(reply.embeds[0].color).toBe(0x8c8c8c);
+    expect(reply.embeds[0].fields?.at(-1)?.value).toBe(
+      'No verified games yet.'
+    );
+    expect(reply.embeds[0].image).toBeUndefined();
+    expect(reply.files).toBeUndefined();
+    expect(reply.components).toBeUndefined();
+    const sparse = beatmapCard(beatmapStats, ctx);
+    expect(sparse.embeds[0].fields?.at(-1)?.value).toContain(
+      'No tier has at least five plays yet.'
+    );
+    expect(sparse.embeds[0].image).toBeUndefined();
+  });
+
+  test('missing ratings and no charted-mod samples have honest separate states', () => {
+    for (const [totalScoreCount, expected] of [
+      [10, 'No plays with pre-match ratings yet.'],
+      [0, 'No NM, HD, HR or DT plays yet.'],
+    ] as const) {
+      const reply = beatmapCard(
+        {
+          ...beatmapStats,
+          tierBreakdown: { ratedScoreCount: 0, totalScoreCount, tiers: [] },
+        },
+        ctx
+      );
+      expect(reply.embeds[0].fields?.at(-1)?.value).toBe(expected);
+    }
   });
 
   test('a map without a fetched set falls back to its id and has no cover', () => {
@@ -100,10 +202,8 @@ describe('beatmap card', () => {
       totalGameCount: 1,
     };
     expect(
-      beatmapCard({ ...beatmapStats, summary }, ctx).embeds[0].description
-    ).toContain(
-      'Pooled in **1** tournament (1 verified) · **1** verified game'
-    );
+      beatmapCard({ ...beatmapStats, summary }, ctx).embeds[0].fields?.[0].value
+    ).toContain('**1** tournament · **1** verified\n**1** verified game');
   });
 
   test('the card stays within the limits after finalize', () => {
@@ -148,4 +248,57 @@ describe('beatmap card', () => {
       expect(new Set(ids).size).toBe(ids.length);
     }
   });
+});
+
+test('main reply never substitutes mixed history for competitive data and escapes pool names', () => {
+  const stats = {
+    ...beatmapStats,
+    summary: { ...beatmapStats.summary, totalPlayedGameCount: 987654321 },
+    tournaments: [
+      {
+        ...beatmapStats.tournaments[0],
+        verificationStatus: 3,
+        tournament: {
+          id: 1,
+          name: 'Pool **bold** [link](https://example.com)',
+        },
+        gameCount: 987654321,
+      },
+    ],
+  };
+  const reply = beatmapCard(stats, { ...ctx, emoji: () => '' });
+  const embed = reply.embeds[0];
+  expect(
+    embed.fields!.find((f) => f.name.includes('Recent pools'))!.value
+  ).toContain('Rejected');
+  expect(JSON.stringify(reply)).not.toContain('987654321');
+  expect(embed.description).not.toContain(' HP ');
+  expect(embed.description).toStartWith('★ **7.04**');
+  expect(
+    embed.fields!.find((f) => f.name.includes('Recent pools'))!.value
+  ).toContain('\\*\\*bold\\*\\*');
+});
+
+test('status emoji names distinguish final and provisional pool decisions', () => {
+  for (const [status, label] of [
+    [0, 'Pending'],
+    [1, 'Pre-rejected'],
+    [2, 'Pre-verified'],
+    [3, 'Rejected'],
+    [4, 'Verified'],
+  ] as const) {
+    const reply = beatmapCard(
+      {
+        ...beatmapStats,
+        tournaments: [
+          { ...beatmapStats.tournaments[0], verificationStatus: status },
+        ],
+      },
+      { ...ctx, emoji: () => '' }
+    );
+    const text = reply.embeds[0].fields!.find((f) =>
+      f.name.includes('Recent pools')
+    )!.value;
+    expect(text).toContain(label);
+  }
 });

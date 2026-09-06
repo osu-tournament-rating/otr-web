@@ -10,7 +10,10 @@ import {
 } from '@otr/core/osu';
 
 import type { BeatmapListResponse } from '@/lib/orpc/schema/beatmapList';
-import type { BeatmapStatsResponse } from '@/lib/orpc/schema/beatmapStats';
+import type {
+  BeatmapStatsResponse,
+  BeatmapTierScoreSummary,
+} from '@/lib/orpc/schema/beatmapStats';
 import type { LeaderboardResponse } from '@/lib/orpc/schema/leaderboard';
 import type { Game, GameScore } from '@/lib/orpc/schema/match';
 import type { Player } from '@/lib/orpc/schema/player';
@@ -600,3 +603,20 @@ export const leaderboard = {
     };
   }),
 } satisfies LeaderboardResponse;
+
+export const beatmapTierSummary: BeatmapTierScoreSummary = {
+  tier: 'Gold',
+  scoreCount: 25,
+  minScore: 100000,
+  p20Score: 300000,
+  p25Score: 400000,
+  medianScore: 600000,
+  p75Score: 800000,
+  maxScore: 1000000,
+  minAccuracy: 0.8,
+  p20Accuracy: 0.85,
+  p25Accuracy: 0.9,
+  medianAccuracy: 0.95,
+  p75Accuracy: 0.98,
+  maxAccuracy: 1,
+};

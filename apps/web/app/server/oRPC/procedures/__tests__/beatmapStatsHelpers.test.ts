@@ -7,6 +7,7 @@ import {
   TIER_BREAKDOWN_MAX_TIER_INDEX,
   TIER_RATING_BOUNDARIES,
   summarizeFreemodPicks,
+  summarizeTierBreakdown,
   summarizePoolDisplayMods,
   summarizeRankRangeMods,
   tierBreakdownTierFromRating,
@@ -297,5 +298,40 @@ describe('tierBreakdownTierFromRating', () => {
         tierNameFromRatingArithmetic(rating)
       );
     }
+  });
+});
+
+test('tier summaries hide four samples, retain five, and preserve score/accuracy medians', () => {
+  const summary = {
+    tier: 'Gold' as const,
+    scoreCount: 4,
+    minScore: 0,
+    p20Score: 100,
+    p25Score: 200,
+    medianScore: 400,
+    p75Score: 600,
+    maxScore: 800,
+    minAccuracy: null,
+    p20Accuracy: null,
+    p25Accuracy: null,
+    medianAccuracy: null,
+    p75Accuracy: null,
+    maxAccuracy: null,
+  };
+  const eligible = {
+    ...summary,
+    tier: 'Silver' as const,
+    scoreCount: 5,
+    medianAccuracy: 0.95,
+  };
+  expect(summarizeTierBreakdown([summary, eligible], 12)).toEqual({
+    ratedScoreCount: 9,
+    totalScoreCount: 12,
+    tiers: [eligible],
+  });
+  expect(summarizeTierBreakdown([], 0)).toEqual({
+    ratedScoreCount: 0,
+    totalScoreCount: 0,
+    tiers: [],
   });
 });
