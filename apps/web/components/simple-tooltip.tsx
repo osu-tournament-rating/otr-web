@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { PointerEvent, ReactNode, useRef, useState } from 'react';
 import {
   Popover,
   PopoverContent,
@@ -12,6 +12,13 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+
+function handlePointerMove(event: PointerEvent<HTMLButtonElement>) {
+  // Touch browsers can emit compatibility mouse events without supporting hover.
+  if (!window.matchMedia('(any-hover: hover)').matches) {
+    event.preventDefault();
+  }
+}
 
 interface SimpleTooltipProps {
   content: ReactNode;
@@ -58,6 +65,7 @@ export default function SimpleTooltip({
 }: SimpleTooltipProps) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  const restoringPopoverFocus = useRef(false);
 
   const tooltipContent = (
     <TooltipContent
@@ -73,16 +81,29 @@ export default function SimpleTooltip({
   if (asChild) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipTrigger asChild onPointerMove={handlePointerMove}>
+          {children}
+        </TooltipTrigger>
         {tooltipContent}
       </Tooltip>
     );
   }
 
   return (
-    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-      <Tooltip open={tooltipOpen && !popoverOpen} onOpenChange={setTooltipOpen}>
-        <TooltipTrigger asChild>
+    <Popover
+      open={popoverOpen}
+      onOpenChange={(open) => {
+        setPopoverOpen(open);
+        setTooltipOpen(false);
+      }}
+    >
+      <Tooltip
+        open={tooltipOpen && !popoverOpen}
+        onOpenChange={(open) =>
+          setTooltipOpen(open && !popoverOpen && !restoringPopoverFocus.current)
+        }
+      >
+        <TooltipTrigger asChild onPointerMove={handlePointerMove}>
           <PopoverTrigger asChild>
             <button
               type="button"
@@ -108,6 +129,14 @@ export default function SimpleTooltip({
         sideOffset={sideOffset}
         collisionPadding={collisionPadding}
         className="w-auto max-w-[calc(100vw-2rem)] border-0 bg-accent p-3 text-xs text-accent-foreground"
+        onCloseAutoFocus={() => {
+          // Radix restores trigger focus synchronously after this callback.
+          // Preserve focus without replacing the dismissed popover with a tooltip.
+          restoringPopoverFocus.current = true;
+          queueMicrotask(() => {
+            restoringPopoverFocus.current = false;
+          });
+        }}
       >
         {content}
       </PopoverContent>
