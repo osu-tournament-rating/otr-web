@@ -243,13 +243,13 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
               </div>
 
               {tournament.submittedByUsername && (
-                <SimpleTooltip
-                  content="Submitter"
-                  triggerClassName="hidden gap-1.5 sm:inline-flex"
-                >
-                  <UserPlus className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate text-xs sm:text-sm">
-                    {tournament.submittedByUsername}
+                <SimpleTooltip asChild content="Submitter">
+                  <span className="hidden items-center gap-1.5 sm:inline-flex">
+                    <UserPlus className="h-4 w-4 flex-shrink-0" aria-hidden />
+                    <span className="sr-only">Submitter</span>
+                    <span className="truncate text-xs sm:text-sm">
+                      {tournament.submittedByUsername}
+                    </span>
                   </span>
                 </SimpleTooltip>
               )}
@@ -267,10 +267,13 @@ function TournamentHeader({ tournament }: { tournament: TournamentDetail }) {
 
           {tournament.submittedByUsername && (
             <div className="flex flex-row flex-wrap items-center gap-2 sm:hidden">
-              <SimpleTooltip content="Submitter" triggerClassName="gap-1.5">
-                <UserPlus className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate text-xs sm:text-sm">
-                  {tournament.submittedByUsername}
+              <SimpleTooltip asChild content="Submitter">
+                <span className="flex items-center gap-1.5">
+                  <UserPlus className="h-4 w-4 flex-shrink-0" aria-hidden />
+                  <span className="sr-only">Submitter</span>
+                  <span className="truncate text-xs sm:text-sm">
+                    {tournament.submittedByUsername}
+                  </span>
                 </span>
               </SimpleTooltip>
             </div>
