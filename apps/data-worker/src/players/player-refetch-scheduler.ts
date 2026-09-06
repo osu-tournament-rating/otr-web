@@ -26,7 +26,7 @@ type SchedulerConfig = {
 
 const MS_PER_MINUTE = 60_000;
 const MS_PER_DAY = 86_400_000;
-const FETCH_LEASE_DAYS = 1;
+const FETCH_LEASE_DAYS = 7;
 
 // Ceilings on player_ratings.global_rank; `maxRank: null` matches any rank.
 const REFETCH_TIERS = {

@@ -12,6 +12,11 @@ import { Ruleset } from '@otr/core/osu';
 import type { DatabaseClient } from '../../db';
 import type { Logger } from '../../logging/logger';
 import { PlayerRefetchScheduler } from '../player-refetch-scheduler';
+import {
+  ensurePlayerPlaceholder,
+  setPlayerFetchStatusByOsuId,
+  setPlayerOsuTrackFetchStatusByOsuId,
+} from '../../osu/player-store';
 
 const url = process.env.SEARCH_TEST_DATABASE_URL;
 
@@ -110,7 +115,7 @@ const seed: SeededPlayer[] = [
   },
   {
     osuId: 999_300_022,
-    lastFetch: 2,
+    lastFetch: 8,
     ratings: [],
     fetching: true,
     expected: FALLBACK_DAYS,
@@ -380,14 +385,42 @@ for (const source of ['osu', 'osuTrack'] as const) {
       await pool.end();
     });
     it('recovers stale fetching before the normal cadence and renews its lease', async () => {
-      await seedPlayer(2);
+      await seedPlayer(7.01);
       await run();
       expect(published).toEqual([999_400_001]);
       await run();
       expect(published).toHaveLength(1);
     });
+    it('honors a lease started outside the scheduler', async () => {
+      await seedPlayer(90, false);
+      const markFetching =
+        source === 'osu'
+          ? setPlayerFetchStatusByOsuId
+          : setPlayerOsuTrackFetchStatusByOsuId;
+      await markFetching(
+        db as unknown as DatabaseClient,
+        999_400_001,
+        DataFetchStatus.Fetching,
+        new Date().toISOString()
+      );
+      await run();
+      expect(published).toHaveLength(0);
+    });
+    if (source === 'osu')
+      it('starts a lease for a newly fetching placeholder', async () => {
+        await db.delete(schema.players);
+        published.length = 0;
+        await ensurePlayerPlaceholder(
+          db as unknown as DatabaseClient,
+          999_400_001,
+          DataFetchStatus.Fetching,
+          new Date().toISOString()
+        );
+        await run();
+        expect(published).toHaveLength(0);
+      });
     it('does not reclaim an active lease', async () => {
-      await seedPlayer(0.5);
+      await seedPlayer(6.99);
       await run();
       expect(published).toHaveLength(0);
     });
