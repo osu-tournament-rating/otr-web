@@ -1,11 +1,19 @@
 import { eq } from 'drizzle-orm';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { beatmaps, beatmapAttributeJobs as jobs } from '@otr/core/db/schema';
+import {
+  beatmaps,
+  beatmapAttributeJobs as jobs,
+  beatmapAttributes,
+} from '@otr/core/db/schema';
 import { ensureBeatmapPlaceholder } from '../osu/beatmap-store';
 import { createAttributesRuntime } from './runtime';
 import { scheduleBeatmapAttributes, getBeatmapAttribute } from './service';
-import { getDefaultCalculationSettings } from '@otr/core/osu/beatmap-attributes';
+import { CALCULATOR_VERSION } from './calculator-version';
+import {
+  CALCULATION_FORMAT_VERSION,
+  getDefaultCalculationSettings,
+} from '@otr/core/osu/beatmap-attributes';
 
 const runtime = await createAttributesRuntime();
 const assert = (condition: unknown, message: string) => {
@@ -27,6 +35,16 @@ const samples = [
   { osuId: 1638954, ruleset: 4 },
   { osuId: 763919, ruleset: 5 },
 ];
+const currentResults = <T extends typeof beatmapAttributes.$inferSelect>(
+  results: T[],
+  sourceFileId: number | null
+) =>
+  results.filter(
+    (a) =>
+      a.fileId === sourceFileId &&
+      a.calculatorVersion === CALCULATOR_VERSION &&
+      a.formatVersion === CALCULATION_FORMAT_VERSION
+  );
 const waitFor = async (id: number) => {
   const deadline = Date.now() + 180_000;
   while (Date.now() < deadline) {
@@ -66,20 +84,26 @@ try {
   for (const id of ids) {
     const row = await runtime.db.query.beatmaps.findFirst({
       where: eq(beatmaps.id, id),
-      with: { beatmapFiles: true, beatmapAttributes: { with: { file: true } } },
+      with: {
+        beatmapFiles: true,
+        beatmapAttributes: { with: { file: true } },
+        beatmapAttributeJobs: true,
+      },
     });
     assert(
       row?.beatmapFiles.length === 1,
       'Expected one shared source per sample'
     );
-    assert(
-      row?.beatmapAttributes.length === 6,
-      'Expected six persisted profile results'
+    const profiles = currentResults(
+      row!.beatmapAttributes,
+      row!.beatmapAttributeJobs[0].sourceFileId
     );
+    assert(profiles.length === 6, 'Expected six persisted profile results');
     summary.push({
       osuId: row!.osuId,
       source: row!.beatmapFiles[0],
-      profiles: row!.beatmapAttributes.map((a) => ({
+      historicalResultCount: row!.beatmapAttributes.length - profiles.length,
+      profiles: profiles.map((a) => ({
         id: a.id,
         ruleset: a.ruleset,
         mods: a.mods,
@@ -136,11 +160,17 @@ try {
   for (let i = 0; i < ids.length; i++) {
     const repeated = await runtime.db.query.beatmaps.findFirst({
       where: eq(beatmaps.id, ids[i]),
-      with: { beatmapAttributes: true },
+      with: { beatmapAttributes: true, beatmapAttributeJobs: true },
     });
     assert(
-      JSON.stringify(repeated!.beatmapAttributes.map((a) => a.id).sort()) ===
-        JSON.stringify(summary[i].profiles.map((a) => a.id).sort()),
+      JSON.stringify(
+        currentResults(
+          repeated!.beatmapAttributes,
+          repeated!.beatmapAttributeJobs[0].sourceFileId
+        )
+          .map((a) => a.id)
+          .sort()
+      ) === JSON.stringify(summary[i].profiles.map((a) => a.id).sort()),
       'Repeated processing changed result IDs'
     );
   }

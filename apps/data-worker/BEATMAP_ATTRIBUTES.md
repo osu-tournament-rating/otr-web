@@ -6,8 +6,9 @@ provenance, and calculates versioned attributes on the dedicated
 API ingestion worker. No public endpoint or frontend consumes these results yet.
 
 Attributes come from the source file and pinned `rosu-pp-js@4.0.1`, with a small
-worker-private duration binding. The osu! API attributes endpoint and API
-difficulty metadata are not calculation inputs. Existing metadata ingestion,
+worker-private duration binding at version `1.0.1`. The combined calculator
+identifier is `rosu-pp-js@4.0.1+duration@1.0.1`. The osu! API attributes endpoint
+and API difficulty metadata are not calculation inputs. Existing metadata ingestion,
 human verification, and tournament rating calculation remain independent.
 Score-specific performance points are outside this workflow.
 
@@ -58,8 +59,10 @@ calculator version. Repeat the enqueue command to check idempotency: unchanged
 requests reuse the job and stored results.
 
 The standalone commands need neither osu! OAuth credentials nor GCP credentials
-when local storage is selected. A missing beatmap record is created as a metadata
-placeholder; calculating attributes does not claim that API metadata was fetched.
+when local storage is selected. Scheduling validates the requested settings before
+creating a missing beatmap as a metadata placeholder; invalid settings do not
+create records. Inspection does not create a missing beatmap. Calculating
+attributes does not claim that API metadata was fetched.
 
 ## Configuration
 
@@ -76,7 +79,8 @@ placeholder; calculating attributes does not claim that API metadata was fetched
 
 With discovery enabled, reconciliation finds fetched beatmaps that have no
 attributes job and schedules batches of up to 25. It also schedules jobs whose
-desired calculator or format version is outdated. Enabling discovery can start
+desired versions can be upgraded to the running worker's versions. Jobs requesting
+newer or unrecognized versions are left unchanged. Enabling discovery can start
 a historical backfill. The normal ingestion worker schedules affected beatmaps
 after its metadata transaction commits; discovery repairs missed scheduling
 after interruption or a scheduling failure.
@@ -177,11 +181,28 @@ Result history is append-only for each source and calculation identity. The
 source and desired versions. Direct beatmap relationships also expose retained
 history, so future callers must select the intended source/version explicitly.
 
+For example, five beatmaps initially calculated with duration `1.0.0` and rebuilt
+with `1.0.1` have six current profiles each: 30 results at the current version,
+plus 30 retained results at the previous version. The full `beatmapAttributes`
+relationship includes all 60 versioned rows across those maps. Validate each
+map's six `resolved` profiles and their calculator version separately from the
+historical row count. Repeating the current calculation adds no duplicate results.
+
 When updating rosu or duration semantics, update the pinned calculator dependency
 and calculator-version identifier; change the calculation-format version when
-the stored interpretation or JSON format changes. Discovery rebuilds outdated
-jobs using their recorded requests. With discovery disabled, enqueue or
-recalculate the selected beatmaps explicitly. Old result identities are retained.
+the stored interpretation or JSON format changes. Version upgrades must move
+forward independently across the library release, duration release, and format
+version: none may decrease, and at least one must increase. Increasing the library
+version does not permit downgrading the duration or format version.
+
+An older worker cannot downgrade a job's desired versions during ordinary
+scheduling or explicit `--recalculate`. Those requests are rejected when the
+stored versions are newer or cannot be recognized; discovery skips those jobs.
+Use a worker that recognizes and meets all desired versions. Automatic discovery
+rebuilds eligible older jobs using their recorded requests. With discovery
+disabled, enqueue or recalculate selected beatmaps explicitly. A duration upgrade
+from `1.0.0` to `1.0.1` creates new calculation identities while retaining the old
+results and their provenance.
 
 ## Processing limits and recovery
 

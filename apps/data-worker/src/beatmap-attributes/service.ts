@@ -3,6 +3,7 @@ import {
   and,
   asc,
   eq,
+  gt,
   inArray,
   isNull,
   lt,
@@ -36,6 +37,7 @@ import {
 import { calculateInProcess } from './calculator-process';
 import {
   CALCULATOR_VERSION,
+  canUpgradeCalculationVersion,
   LEASE_MS,
   MAX_ATTEMPTS,
   PUBLISH_LEASE_MS,
@@ -64,6 +66,8 @@ export function isJobClaimable(
   );
 }
 
+class ObsoleteCalculatorError extends Error {}
+
 export async function scheduleBeatmapAttributes(
   db: DatabaseClient,
   beatmapId: number,
@@ -83,6 +87,22 @@ export async function scheduleBeatmapAttributes(
     const settings = options.settings
       ? normalizeCalculationRequests(options.settings)
       : getDefaultCalculationSettings(beatmap.ruleset);
+    const previous = await tx.query.beatmapAttributeJobs.findFirst({
+      where: eq(jobs.beatmapId, beatmapId),
+    });
+    if (
+      previous &&
+      (previous.desiredCalculatorVersion !== CALCULATOR_VERSION ||
+        previous.desiredFormatVersion !== CALCULATION_FORMAT_VERSION) &&
+      !canUpgradeCalculationVersion(
+        previous.desiredCalculatorVersion,
+        previous.desiredFormatVersion
+      )
+    ) {
+      throw new ObsoleteCalculatorError(
+        'Job requires a newer or unrecognized calculator release'
+      );
+    }
     const values = {
       beatmapId,
       requestedSettings: settings,
@@ -168,12 +188,45 @@ export async function scheduleBeatmapAttributes(
 }
 
 export class BeatmapAttributeService {
+  private versionCursor: string | undefined;
   constructor(
     private readonly db: DatabaseClient,
     private readonly storage: BeatmapFileStorage,
     private readonly downloader: BeatmapFileDownloader,
     private readonly calculate = calculateInProcess
   ) {}
+
+  async reconcileVersions(): Promise<void> {
+    const outdated = await this.db.query.beatmapAttributeJobs.findMany({
+      where: and(
+        this.versionCursor ? gt(jobs.id, this.versionCursor) : undefined,
+        or(
+          ne(jobs.desiredCalculatorVersion, CALCULATOR_VERSION),
+          ne(jobs.desiredFormatVersion, CALCULATION_FORMAT_VERSION)
+        )
+      ),
+      orderBy: asc(jobs.id),
+      limit: 25,
+    });
+    for (const row of outdated) {
+      if (
+        !canUpgradeCalculationVersion(
+          row.desiredCalculatorVersion,
+          row.desiredFormatVersion
+        )
+      )
+        continue;
+      try {
+        await scheduleBeatmapAttributes(this.db, row.beatmapId, {
+          settings: row.requestedSettings,
+        });
+      } catch (error) {
+        if (!(error instanceof ObsoleteCalculatorError)) throw error;
+      }
+    }
+    this.versionCursor =
+      outdated.length === 25 ? outdated.at(-1)!.id : undefined;
+  }
 
   async reconcile(
     publish: (payload: {
@@ -196,18 +249,7 @@ export class BeatmapAttributeService {
         .limit(25);
       for (const row of missing)
         await scheduleBeatmapAttributes(this.db, row.id);
-      const outdated = await this.db.query.beatmapAttributeJobs.findMany({
-        where: or(
-          ne(jobs.desiredCalculatorVersion, CALCULATOR_VERSION),
-          ne(jobs.desiredFormatVersion, CALCULATION_FORMAT_VERSION)
-        ),
-        limit: 25,
-      });
-      for (const row of outdated)
-        await scheduleBeatmapAttributes(this.db, row.beatmapId, {
-          settings: row.requestedSettings,
-          recalculate: true,
-        });
+      await this.reconcileVersions();
     }
     const now = new Date();
     await this.db
@@ -220,6 +262,8 @@ export class BeatmapAttributeService {
       })
       .where(
         and(
+          eq(jobs.desiredCalculatorVersion, CALCULATOR_VERSION),
+          eq(jobs.desiredFormatVersion, CALCULATION_FORMAT_VERSION),
           eq(jobs.status, 'processing'),
           lte(jobs.leaseExpiresAt, now.toISOString()),
           sql`${jobs.attempts} >= ${MAX_ATTEMPTS}`
@@ -227,6 +271,8 @@ export class BeatmapAttributeService {
       );
     const due = await this.db.query.beatmapAttributeJobs.findMany({
       where: and(
+        eq(jobs.desiredCalculatorVersion, CALCULATOR_VERSION),
+        eq(jobs.desiredFormatVersion, CALCULATION_FORMAT_VERSION),
         lte(jobs.nextAttemptAt, now.toISOString()),
         lt(jobs.attempts, MAX_ATTEMPTS),
         or(

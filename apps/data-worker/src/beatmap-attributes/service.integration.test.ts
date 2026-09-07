@@ -24,6 +24,7 @@ import {
 import { LocalBeatmapFileStorage, BeatmapFileDownloader } from './storage';
 import { calculateBeatmapAttributes, inspectBeatmap } from './calculator';
 import { CALCULATOR_VERSION } from './policy';
+import { prepareAttributeCommand } from './command';
 
 const url = process.env.BEATMAP_ATTRIBUTES_TEST_DATABASE_URL;
 if (url && new URL(url).port !== '5434')
@@ -290,6 +291,193 @@ suite('persisted beatmap attribute lifecycle', () => {
       })
     ).toHaveLength(2);
   }, 30_000);
+
+  test('older schedulers cannot downgrade newer completed work and newer schedulers can rebuild older work', async () => {
+    const t = await setup();
+    const job = await scheduleBeatmapAttributes(db, t.beatmap.id);
+    await db
+      .update(jobs)
+      .set({
+        desiredCalculatorVersion: 'rosu-pp-js@4.0.2+duration@1.0.1',
+        desiredFormatVersion: 2,
+        status: 'complete',
+      })
+      .where(eq(jobs.id, job!.id));
+    await expect(scheduleBeatmapAttributes(db, t.beatmap.id)).rejects.toThrow(
+      'newer'
+    );
+    await expect(
+      scheduleBeatmapAttributes(db, t.beatmap.id, { recalculate: true })
+    ).rejects.toThrow('newer');
+    await t.service.reconcileVersions();
+    const newer = await db.query.beatmapAttributeJobs.findFirst({
+      where: eq(jobs.id, job!.id),
+    });
+    expect(newer).toMatchObject({
+      generation: job!.generation,
+      status: 'complete',
+      desiredCalculatorVersion: 'rosu-pp-js@4.0.2+duration@1.0.1',
+      desiredFormatVersion: 2,
+    });
+    await db
+      .update(jobs)
+      .set({
+        desiredCalculatorVersion: 'rosu-pp-js@4.0.1+duration@1.0.0',
+        desiredFormatVersion: 1,
+      })
+      .where(eq(jobs.id, job!.id));
+    await t.service.reconcileVersions();
+    const upgraded = await db.query.beatmapAttributeJobs.findFirst({
+      where: eq(jobs.id, job!.id),
+    });
+    expect(upgraded).toMatchObject({
+      generation: job!.generation + 1,
+      status: 'pending',
+      desiredCalculatorVersion: CALCULATOR_VERSION,
+      desiredFormatVersion: 1,
+    });
+  });
+
+  test('CLI rejects invalid settings without rows and preserves concurrently created metadata', async () => {
+    const invalidId = nextId++;
+    try {
+      await expect(
+        prepareAttributeCommand(db, {
+          osuId: invalidId,
+          ruleset: 6,
+          lazer: false,
+          create: true,
+        })
+      ).rejects.toThrow();
+      expect(
+        await db.query.beatmaps.findFirst({
+          where: eq(beatmaps.osuId, invalidId),
+        })
+      ).toBeUndefined();
+    } finally {
+      await db.delete(beatmaps).where(eq(beatmaps.osuId, invalidId));
+    }
+    const t = await setup();
+    await db
+      .update(beatmaps)
+      .set({
+        ruleset: 1,
+        diffName: 'Concurrent fetched metadata',
+        dataFetchStatus: 2,
+      })
+      .where(eq(beatmaps.id, t.beatmap.id));
+    const stored = await db.query.beatmaps.findFirst({
+      where: eq(beatmaps.id, t.beatmap.id),
+    });
+    let first = true;
+    const racedQuery = new Proxy(db.query.beatmaps, {
+      get(target, property) {
+        if (property === 'findFirst')
+          return async (...args: Parameters<typeof target.findFirst>) => {
+            if (first) {
+              first = false;
+              return undefined;
+            }
+            return target.findFirst(...args);
+          };
+        return Reflect.get(target, property);
+      },
+    });
+    const racedDb = new Proxy(db, {
+      get(target, property) {
+        return property === 'query'
+          ? { ...target.query, beatmaps: racedQuery }
+          : Reflect.get(target, property);
+      },
+    });
+    const result = await prepareAttributeCommand(racedDb, {
+      osuId: stored!.osuId,
+      ruleset: 0,
+      lazer: false,
+      create: true,
+    });
+    expect(result.settings[0].ruleset).toBe(0);
+    expect(
+      await db.query.beatmaps.findFirst({
+        where: eq(beatmaps.id, t.beatmap.id),
+      })
+    ).toEqual(stored);
+  });
+
+  test('newer expired jobs remain untouched and version scanning reaches upgrades beyond its first page', async () => {
+    const t = await setup();
+    const future = [];
+    for (let i = 0; i < 25; i++) {
+      const map = await setup();
+      const job = await scheduleBeatmapAttributes(db, map.beatmap.id);
+      const id = `00000000-0000-0000-0000-${i.toString().padStart(12, '0')}`;
+      await db
+        .update(jobs)
+        .set({
+          id,
+          desiredCalculatorVersion: 'future',
+          status: 'processing',
+          attempts: 4,
+          leaseExpiresAt: new Date(0).toISOString(),
+        })
+        .where(eq(jobs.id, job!.id));
+      future.push(id);
+    }
+    const older = await scheduleBeatmapAttributes(db, t.beatmap.id);
+    await db
+      .update(jobs)
+      .set({
+        id: 'ffffffff-ffff-ffff-ffff-ffffffffffff',
+        desiredCalculatorVersion: 'rosu-pp-js@4.0.1+duration@1.0.0',
+      })
+      .where(eq(jobs.id, older!.id));
+    await t.service.reconcileVersions();
+    await t.service.reconcileVersions();
+    await t.service.reconcile(async () => undefined, false);
+    expect(
+      await db.query.beatmapAttributeJobs.findFirst({
+        where: eq(jobs.beatmapId, t.beatmap.id),
+      })
+    ).toMatchObject({
+      desiredCalculatorVersion: CALCULATOR_VERSION,
+      generation: older!.generation + 1,
+    });
+    for (const id of future)
+      expect(
+        await db.query.beatmapAttributeJobs.findFirst({
+          where: eq(jobs.id, id),
+        })
+      ).toMatchObject({
+        status: 'processing',
+        desiredCalculatorVersion: 'future',
+        generation: 1,
+      });
+  });
+
+  test('CLI inspection and invalid calculation arguments do not create absent beatmaps', async () => {
+    const osuId = nextId++;
+    for (const input of [
+      { create: false },
+      { create: true, mods: [128] },
+      { create: true, clockRate: Infinity },
+    ]) {
+      await expect(
+        prepareAttributeCommand(db, { osuId, lazer: false, ...input })
+      ).rejects.toThrow();
+      expect(
+        await db.query.beatmaps.findFirst({ where: eq(beatmaps.osuId, osuId) })
+      ).toBeUndefined();
+    }
+    const result = await prepareAttributeCommand(db, {
+      osuId,
+      ruleset: 5,
+      lazer: false,
+      create: true,
+    });
+    created.push(result.beatmap.id);
+    expect(result.beatmap.ruleset).toBe(5);
+    expect(result.settings).toHaveLength(6);
+  });
 
   test('a partial calculator response cannot complete or persist a job', async () => {
     const t = await setup();

@@ -1,4 +1,6 @@
 import { isAbsolute } from 'node:path';
+import { CALCULATION_FORMAT_VERSION } from '@otr/core/osu/beatmap-attributes';
+import { CALCULATOR_VERSION } from './calculator-version';
 
 export const MAX_ATTEMPTS = 4;
 export const LEASE_MS = 120_000;
@@ -40,4 +42,39 @@ export function readAttributesConfig(env: Record<string, string | undefined>) {
   if (enabled && provider === 'gcp' && !bucket)
     throw new Error('BEATMAP_ATTRIBUTES_GCP_BUCKET is required');
   return { enabled, concurrency, provider, directory, bucket };
+}
+
+const releasePattern =
+  /^rosu-pp-js@(\d+)\.(\d+)\.(\d+)\+duration@(\d+)\.(\d+)\.(\d+)$/;
+
+export function canUpgradeCalculationVersion(
+  version: string,
+  format: number
+): boolean {
+  const previous = version.match(releasePattern)?.slice(1).map(Number);
+  const current = CALCULATOR_VERSION.match(releasePattern)
+    ?.slice(1)
+    .map(Number);
+  if (
+    !previous ||
+    !current ||
+    !previous.every(Number.isSafeInteger) ||
+    !Number.isSafeInteger(format) ||
+    format < 1
+  )
+    return false;
+  const compare = (offset: number) => {
+    for (let i = offset; i < offset + 3; i++)
+      if (current[i] !== previous[i])
+        return Math.sign(current[i] - previous[i]);
+    return 0;
+  };
+  const library = compare(0);
+  const duration = compare(3);
+  return (
+    library >= 0 &&
+    duration >= 0 &&
+    CALCULATION_FORMAT_VERSION >= format &&
+    (library > 0 || duration > 0 || CALCULATION_FORMAT_VERSION > format)
+  );
 }
