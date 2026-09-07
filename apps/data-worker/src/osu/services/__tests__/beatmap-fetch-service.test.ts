@@ -292,7 +292,8 @@ const siblingBeatmap: BeatmapRow = {
 
 const createService = (
   db: BeatmapFetchTestDb,
-  api: { getBeatmap: unknown; getBeatmapset: unknown }
+  api: { getBeatmap: unknown; getBeatmapset: unknown },
+  scheduleAttributes?: (beatmapId: number) => Promise<void>
 ) => {
   const logs: Array<{ message: string; context?: unknown }> = [];
 
@@ -320,6 +321,7 @@ const createService = (
       logger,
     }),
     publishPlayerFetch: async () => {},
+    scheduleAttributes,
   });
 
   return { service, logs };
@@ -386,5 +388,20 @@ describe('BeatmapFetchService manual override', () => {
 
     expect(db.beatmaps.get(1)).toEqual(before);
     expect(db.beatmaps.get(2)?.dataFetchStatus).toBe(DataFetchStatus.Error);
+  });
+});
+
+describe('BeatmapFetchService attribute scheduling', () => {
+  it('schedules affected fetched siblings and isolates calculation scheduling failure', async () => {
+    const db = new BeatmapFetchTestDb([overriddenBeatmap, siblingBeatmap]);
+    const scheduled: number[] = [];
+    const { service } = createService(db, workingApi, async (id) => {
+      scheduled.push(id);
+      throw new Error('queue unavailable');
+    });
+    expect(await service.fetchAndPersist(111)).toBe(true);
+    expect(scheduled).toEqual([2]);
+    expect(db.beatmaps.get(2)?.dataFetchStatus).toBe(DataFetchStatus.Fetched);
+    expect(db.beatmaps.get(1)).toEqual(overriddenBeatmap);
   });
 });
