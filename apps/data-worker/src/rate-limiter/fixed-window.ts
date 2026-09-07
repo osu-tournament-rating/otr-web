@@ -77,12 +77,17 @@ export class FixedWindowRateLimiter implements RateLimiter {
   }
 
   acquire(options: AdmissionOptions = {}): Promise<void> {
-    return this.schedule(async () => {}, options);
+    return this.execute(async () => {}, options, false);
   }
 
-  async schedule<T>(
+  schedule<T>(task: () => Promise<T>): Promise<T> {
+    return this.execute(task, {}, true);
+  }
+
+  private async execute<T>(
     task: () => Promise<T>,
-    options: AdmissionOptions = {}
+    options: AdmissionOptions,
+    serializeTask: boolean
   ): Promise<T> {
     this.pendingTasks++;
     rateLimiterQueuedTasks
@@ -113,11 +118,14 @@ export class FixedWindowRateLimiter implements RateLimiter {
       }
     };
 
-    const execution = this.tail.then(run, run);
-    this.tail = execution.then(
-      () => undefined,
-      () => undefined
-    );
+    // Token checks are synchronous; independent admissions must not queue behind
+    // another caller's sleep or they can outlive their own deadline.
+    const execution = serializeTask ? this.tail.then(run, run) : run();
+    if (serializeTask)
+      this.tail = execution.then(
+        () => undefined,
+        () => undefined
+      );
 
     return execution;
   }

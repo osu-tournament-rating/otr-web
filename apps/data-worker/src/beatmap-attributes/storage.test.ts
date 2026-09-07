@@ -550,6 +550,81 @@ describe('shared beatmap download throttling', () => {
     expect(clock.waits).toEqual([]);
   });
 
+  test('expires an older download while a newer download waits for a later shared cooldown', async () => {
+    let now = 0;
+    const waits: Array<{ until: number; resolve: () => void }> = [];
+    const started: Array<[number, number]> = [];
+    let releaseEarlierResponse!: (response: Response) => void;
+    const earlierResponse = new Promise<Response>((resolve) => {
+      releaseEarlierResponse = resolve;
+    });
+    const downloader = new BeatmapFileDownloader({
+      now: () => now,
+      sleep: (delay) =>
+        new Promise<void>((resolve) =>
+          waits.push({ until: now + delay, resolve })
+        ),
+      concurrency: 2,
+      fetch: async (url) => {
+        const id = Number(url.split('/').at(-1));
+        started.push([id, now]);
+        const count = started.filter(([value]) => value === id).length;
+        if (id === 123 && count === 1)
+          return new Response('throttled', {
+            status: 429,
+            headers: { 'Retry-After': '170' },
+          });
+        if (id === 123) return earlierResponse;
+        return count === 1
+          ? new Response('throttled', {
+              status: 429,
+              headers: { 'Retry-After': '150' },
+            })
+          : new Response(bytesForId(id));
+      },
+    });
+    let earlierError: unknown;
+    let earlierSettledAt: number | undefined;
+    const earlier = downloader.download(123).catch((error) => {
+      earlierError = error;
+      earlierSettledAt = now;
+    });
+    for (let i = 0; i < 10 && waits.length === 0; i++) await Bun.sleep(0);
+    expect(waits.map(({ until }) => until)).toEqual([170_000]);
+    now = 160_000;
+    const later = downloader.download(124);
+    await Bun.sleep(0);
+    now = 170_000;
+    for (const wait of waits.splice(0)) wait.resolve();
+    for (let i = 0; i < 10 && waits.length === 0; i++) await Bun.sleep(0);
+    expect(waits.map(({ until }) => until)).toEqual([320_000]);
+    now = 171_000;
+    releaseEarlierResponse(new Response('throttled', { status: 429 }));
+    await Bun.sleep(0);
+    now = 181_000;
+    try {
+      expect(earlierError).toMatchObject({
+        code: 'rate_limited',
+        retryNotBefore: new Date(320_000),
+      });
+      expect(earlierSettledAt).toBe(171_000);
+      expect(started.filter(([id]) => id === 123)).toEqual([
+        [123, 0],
+        [123, 170_000],
+      ]);
+    } finally {
+      now = 320_000;
+      for (const wait of waits.splice(0)) wait.resolve();
+      await Promise.all([earlier, later]);
+    }
+    expect(started.filter(([id]) => id === 123)).toHaveLength(2);
+    expect(started.filter(([id]) => id === 124)).toEqual([
+      [124, 170_000],
+      [124, 320_000],
+    ]);
+    expect(waits).toEqual([]);
+  });
+
   test('shares a 429 cooldown across concurrent jobs while preserving download concurrency', async () => {
     let now = 0;
     const waits: Array<{ until: number; resolve: () => void }> = [];

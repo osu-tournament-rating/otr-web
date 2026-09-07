@@ -20,6 +20,30 @@ describe('fixed-window admission', () => {
     expect(waits).toEqual([60_000]);
   });
 
+  test('shares sixty tokens atomically across concurrent admissions', async () => {
+    let now = 0;
+    const waits: Array<() => void> = [];
+    const admitted: number[] = [];
+    const limiter = new FixedWindowRateLimiter({
+      requests: 60,
+      windowMs: 60_000,
+      now: () => now,
+      sleep: () => new Promise<void>((resolve) => waits.push(resolve)),
+    });
+    const acquisitions = Array.from({ length: 61 }, async () => {
+      await limiter.acquire();
+      admitted.push(now);
+    });
+    await Bun.sleep(0);
+    expect(admitted).toEqual(Array(60).fill(0));
+    expect(waits).toHaveLength(1);
+    now = 60_000;
+    for (const resolve of waits.splice(0)) resolve();
+    await Promise.all(acquisitions);
+    expect(admitted[60]).toBe(60_000);
+    expect(waits).toEqual([]);
+  });
+
   test('shares the longest cooldown and returns not-before when it exceeds an admission deadline', async () => {
     let now = 0;
     const limiter = new FixedWindowRateLimiter({
@@ -38,6 +62,34 @@ describe('fixed-window admission', () => {
     expect(now).toBe(0);
     await limiter.acquire({ deadlineAt: 30_000 });
     expect(now).toBe(20_000);
+  });
+
+  test('checks each admission deadline independently of another long admission wait', async () => {
+    let now = 170_000;
+    const waits: Array<() => void> = [];
+    const limiter = new FixedWindowRateLimiter({
+      requests: 60,
+      windowMs: 60_000,
+      now: () => now,
+      sleep: () => new Promise<void>((resolve) => waits.push(resolve)),
+    });
+    limiter.deferUntil(320_000);
+    const later = limiter.acquire({ deadlineAt: 350_000 });
+    await Bun.sleep(0);
+    let earlierError: unknown;
+    const earlier = limiter.acquire({ deadlineAt: 180_000 }).catch((error) => {
+      earlierError = error;
+    });
+    await Bun.sleep(0);
+    now = 181_000;
+    try {
+      expect(earlierError).toMatchObject({ retryNotBefore: 320_000 });
+    } finally {
+      now = 320_000;
+      for (const resolve of waits.splice(0)) resolve();
+      await Promise.all([earlier, later]);
+    }
+    expect(waits).toEqual([]);
   });
 
   test('retains serial task scheduling for existing API consumers', async () => {

@@ -487,7 +487,7 @@ export class BeatmapFileDownloader {
         attempt++
       ) {
         try {
-          // Admission is serialized; response bodies still use independent download slots.
+          // Shared admission limits requests; response bodies use independent download slots.
           await this.limiter.acquire({ deadlineAt });
           return await this.fetchAttempt(osuBeatmapId, attempt, deadlineAt);
         } catch (error) {
