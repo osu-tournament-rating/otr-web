@@ -160,6 +160,11 @@ SHA-256 checksum, byte length, upstream beatmap ID and URL, acquisition time,
 parsed mode, and applicable key count. It does not store the local directory or
 cloud credentials. All profiles reuse the same source bytes.
 
+When changing providers, the worker looks for the current source checksum under
+the selected provider. If it is unavailable there, the worker reacquires the
+source. An older file retained by that provider is not substituted for the
+current source.
+
 The local provider writes atomically and validates stored bytes against their
 checksum. Its directory persists only as long as the operator or host retains
 it. A directory under `/tmp` can disappear during host cleanup or reboot. Keep a
@@ -237,10 +242,18 @@ This is a sampled process limit, not a kernel memory reservation. Each child
 also has a 60-second deadline and a 1 MiB output limit. At the default concurrency,
 up to two calculator processes run at once, in addition to the parent worker.
 
-Downloads are capped at two concurrent requests per worker, or one when worker
-concurrency is one. Files and storage reads are bounded to 8 MiB and a 20-second
-deadline. Validation rejects HTML, redirects, invalid UTF-8, mismatched beatmap
-IDs, invalid parsed content, suspicious maps, more than 100,000 hit objects, and
+Downloads share one limiter using the existing `FixedWindowRateLimiter`, allowing
+up to 60 HTTP attempts per minute per worker process, including retries. Downloads remain
+capped at two concurrent requests, or one when worker concurrency is one. Files
+and storage reads are bounded to 8 MiB, with a 20-second deadline for each
+request or storage operation. Acquisition has a 180-second overall deadline.
+HTTP `429` responses allow up to five HTTP attempts, with retry delays of 8, 16,
+32, and 64 seconds within that deadline. A `Retry-After` header, expressed as
+seconds or an HTTP date, can extend the shared cooldown for all downloads in
+that process.
+
+Validation rejects HTML, redirects, invalid UTF-8, mismatched beatmap IDs,
+invalid parsed content, suspicious maps, more than 100,000 hit objects, and
 nonfinite calculator output. The database pool is limited to worker concurrency
 plus two connections, with a 10-second connection timeout and 30-second statement
 timeout. Limits apply per worker instance; additional instances multiply capacity.
@@ -273,8 +286,10 @@ and renews every 15 seconds. Expired attempts can be reclaimed after process
 interruption. Duplicate and obsolete messages are acknowledged without repeating
 completed calculations.
 
-Transient failures allow four total attempts, with retry delays of 15, 30, and
-60 seconds, plus reconciliation cadence. Terminal failures, such as a missing
+Transient failures allow four total job attempts, with retry delays of 15, 30,
+and 60 seconds, plus reconciliation cadence. When an upstream cooldown outlasts
+acquisition and the job has retries remaining, its longer wait is persisted in
+`nextAttemptAt` and survives worker restarts. Terminal failures, such as a missing
 upstream file or invalid calculation, stop immediately. Jobs retain a concise
 error code. After repairing the cause, use `--recalculate` to reset the attempt
 budget. Calculation failures do not change final verification decisions or block
@@ -286,7 +301,8 @@ The GCP provider is isolated behind the same storage interface. It uses an
 explicit existing bucket, checksum validation, bounded streams, and conditional
 object creation. The code does not provision resources and never falls back to
 local storage after a GCP failure. GCP coverage is limited to isolated tests with
-an injected client; no live GCP bucket or credentials were tested for this MVP.
+an injected client; provider-switch tests use a Map-backed storage double. No
+live GCP bucket or credentials were tested for this MVP.
 
 Apply migrations before deploying readers or workers, with processing flags
 disabled. Migration `0031` retains the accepted empty legacy attributes-table
