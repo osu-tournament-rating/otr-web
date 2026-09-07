@@ -16,7 +16,8 @@ jobs:
     env:
       # Dummy value needed so build-time imports that require DATABASE_URL do not throw.
       DATABASE_URL: postgresql://dummy:dummy@127.0.0.1:5432/dummy
-      SEARCH_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/otr_test
+      SEARCH_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5434/otr_test
+      BEATMAP_ATTRIBUTES_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5434/otr_test
     services:
       postgres:
         image: postgres:17
@@ -25,7 +26,7 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: otr_test
         ports:
-          - 5432:5432
+          - 5434:5432
         options: >-
           --health-cmd "pg_isready -U postgres -d otr_test"
           --health-interval 5s

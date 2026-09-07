@@ -21,7 +21,11 @@ import {
   BeatmapAttributeService,
   getBeatmapAttribute,
 } from './service';
-import { LocalBeatmapFileStorage, BeatmapFileDownloader } from './storage';
+import {
+  LocalBeatmapFileStorage,
+  BeatmapFileDownloader,
+  type BeatmapFileStorage,
+} from './storage';
 import { calculateBeatmapAttributes, inspectBeatmap } from './calculator';
 import { CALCULATOR_VERSION } from './policy';
 import { prepareAttributeCommand } from './command';
@@ -261,6 +265,70 @@ suite('persisted beatmap attribute lifecycle', () => {
     expect(current!.generation).toBe(2);
     expect(current!.status).toBe('pending');
   }, 30_000);
+  test.each(['recalculate', 'version upgrade', 'settings extension'] as const)(
+    'changing providers preserves the current checksum during %s',
+    async (trigger) => {
+      const t = await setup();
+      const objects = new Map<string, Uint8Array>();
+      const other: BeatmapFileStorage = {
+        provider: 'gcp',
+        get: async (key) => objects.get(key) ?? null,
+        put: async (key, bytes) => {
+          objects.set(key, bytes);
+        },
+      };
+      const otherService = new BeatmapAttributeService(
+        db,
+        other,
+        t.downloader,
+        t.calculate
+      );
+      const settings = [{ ruleset: 0, mods: 0, lazer: false }];
+      const run = async (
+        service: BeatmapAttributeService,
+        options: Parameters<typeof scheduleBeatmapAttributes>[2]
+      ) => {
+        const job = await scheduleBeatmapAttributes(db, t.beatmap.id, options);
+        expect(
+          await service.process({ jobId: job!.id, generation: job!.generation })
+        ).toBe('complete');
+        return (await getBeatmapAttribute(db, t.beatmap.id, settings[0]))!;
+      };
+      const original = await run(t.service, { settings });
+      t.sourceRevision('\n// current source revision\n');
+      const current = await run(otherService, {
+        settings,
+        refreshSource: true,
+      });
+      expect(current.checksum).not.toBe(original.checksum);
+      if (trigger === 'version upgrade') {
+        await db
+          .update(jobs)
+          .set({ desiredCalculatorVersion: 'rosu-pp-js@4.0.1+duration@1.0.0' })
+          .where(eq(jobs.beatmapId, t.beatmap.id));
+      }
+      const restored = await run(
+        t.service,
+        trigger === 'settings extension'
+          ? { settings: [{ ruleset: 0, mods: 64, lazer: false }] }
+          : trigger === 'recalculate'
+            ? { settings, recalculate: true }
+            : {}
+      );
+      expect(restored.checksum).toBe(current.checksum);
+      expect(restored.fileId).not.toBe(original.fileId);
+      expect(t.counts().downloads).toBe(3);
+      // Both providers now hold the current checksum, so another round trip reuses it.
+      expect(
+        (await run(otherService, { settings, recalculate: true })).checksum
+      ).toBe(current.checksum);
+      expect((await run(t.service, { settings, recalculate: true })).id).toBe(
+        restored.id
+      );
+      expect(t.counts().downloads).toBe(3);
+    }
+  );
+
   test('source A to B to A preserves history and keeps A current on later recalculation', async () => {
     const t = await setup();
     const settings = [{ ruleset: 0, mods: 0, lazer: false }];
@@ -666,6 +734,46 @@ suite('persisted beatmap attribute lifecycle', () => {
         where: eq(beatmapAttributes.beatmapId, t.beatmap.id),
       })
     ).toHaveLength(0);
+  });
+
+  test('persists a throttled downloader not-before time across worker restart', async () => {
+    const t = await setup();
+    const job = await scheduleBeatmapAttributes(db, t.beatmap.id, {
+      settings: [{ ruleset: 0, mods: 0, lazer: false }],
+    });
+    const retryNotBefore = new Date(Date.now() + 600_000);
+    const throttled = new BeatmapAttributeService(
+      db,
+      t.storage,
+      new BeatmapFileDownloader({
+        fetch: async () =>
+          new Response(null, {
+            status: 429,
+            headers: { 'Retry-After': '600' },
+          }),
+      }),
+      t.calculate
+    );
+    expect(
+      await throttled.process({ jobId: job!.id, generation: job!.generation })
+    ).toBe('retry');
+    const pending = (await db.query.beatmapAttributeJobs.findFirst({
+      where: eq(jobs.id, job!.id),
+    }))!;
+    expect(new Date(pending.nextAttemptAt).getTime()).toBeGreaterThanOrEqual(
+      retryNotBefore.getTime()
+    );
+    const restarted = new BeatmapAttributeService(
+      db,
+      t.storage,
+      t.downloader,
+      t.calculate
+    );
+    expect(
+      await restarted.process({ jobId: job!.id, generation: job!.generation })
+    ).toBe('obsolete');
+    expect(t.counts().downloads).toBe(0);
+    expect(pending.attempts).toBe(1);
   });
 
   test('retryable calculation errors stop, terminal maps fail immediately, old calculator jobs stay obsolete', async () => {

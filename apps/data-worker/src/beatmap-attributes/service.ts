@@ -382,20 +382,28 @@ export class BeatmapAttributeService {
         claimed.sourceFileId === null
           ? undefined
           : await this.db.query.beatmapFiles.findFirst({
-              where: and(
-                eq(beatmapFiles.id, claimed.sourceFileId),
-                eq(beatmapFiles.provider, this.storage.provider)
-              ),
+              where: eq(beatmapFiles.id, claimed.sourceFileId),
             });
       const existing =
-        currentSource ??
-        (await this.db.query.beatmapFiles.findFirst({
-          where: and(
-            eq(beatmapFiles.beatmapId, beatmap.id),
-            eq(beatmapFiles.provider, this.storage.provider)
-          ),
-          orderBy: (files, { desc }) => desc(files.acquiredAt),
-        }));
+        claimed.sourceFileId === null
+          ? await this.db.query.beatmapFiles.findFirst({
+              where: and(
+                eq(beatmapFiles.beatmapId, beatmap.id),
+                eq(beatmapFiles.provider, this.storage.provider)
+              ),
+              orderBy: (files, { desc }) => desc(files.acquiredAt),
+            })
+          : currentSource?.provider === this.storage.provider
+            ? currentSource
+            : currentSource
+              ? await this.db.query.beatmapFiles.findFirst({
+                  where: and(
+                    eq(beatmapFiles.beatmapId, beatmap.id),
+                    eq(beatmapFiles.provider, this.storage.provider),
+                    eq(beatmapFiles.checksum, currentSource.checksum)
+                  ),
+                })
+              : undefined;
       const file = await acquireBeatmapFile({
         osuBeatmapId: beatmap.osuId,
         storage: this.storage,
@@ -530,6 +538,18 @@ export class BeatmapAttributeService {
           ? error.retryable === true
           : true;
       const delay = retryable ? retryDelayMs(claimed.attempts) : null;
+      const retryNotBefore =
+        typeof error === 'object' &&
+        error !== null &&
+        'retryNotBefore' in error &&
+        error.retryNotBefore instanceof Date &&
+        Number.isFinite(error.retryNotBefore.getTime())
+          ? error.retryNotBefore.getTime()
+          : 0;
+      const nextAttemptAt = Math.max(
+        Date.now() + (delay ?? 0),
+        delay === null ? 0 : retryNotBefore
+      );
       const code =
         typeof error === 'object' &&
         error !== null &&
@@ -542,7 +562,7 @@ export class BeatmapAttributeService {
         .update(jobs)
         .set({
           status: delay === null ? 'failed' : 'pending',
-          nextAttemptAt: new Date(Date.now() + (delay ?? 0)).toISOString(),
+          nextAttemptAt: new Date(nextAttemptAt).toISOString(),
           leaseToken: null,
           leaseExpiresAt: null,
           publishedAt: null,
