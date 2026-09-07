@@ -1,321 +1,177 @@
 # Beatmap attributes
 
-The opt-in attributes worker downloads a beatmap's `.osu` file, stores its
-provenance, and calculates versioned attributes on the dedicated
-`processing.attributes.beatmaps` RabbitMQ queue. It runs separately from the osu!
-API ingestion worker. No public endpoint or frontend consumes these results yet.
+The opt-in attributes worker acquires `.osu` files and calculates versioned
+attributes with pinned `rosu-pp-js@4.0.1` on the dedicated
+`processing.attributes.beatmaps` queue. It runs separately from API ingestion.
+No frontend or public endpoint consumes these results yet.
 
-Attributes come from the source file and pinned `rosu-pp-js@4.0.1`, with a small
-worker-private duration binding at version `1.0.1`. The combined calculator
-identifier is `rosu-pp-js@4.0.1+duration@1.0.1`. The osu! API attributes endpoint
-and API difficulty metadata are not calculation inputs. Existing metadata ingestion,
-human verification, and tournament rating calculation remain independent.
-Score-specific performance points are outside this workflow.
+Difficulty attributes come from the file and calculator, not the osu! API
+attributes endpoint or API difficulty metadata. Total and drain lengths remain
+on the existing beatmap metadata record; `getBeatmapMetadataLengths` divides
+those values by the standard mod rate when needed. They are not recalculated
+from hit objects or duplicated in attribute results. Human verification and
+rating processing remain independent. Score-specific PP is outside this MVP.
 
-## Local workflow
+## Run locally
 
-Use Linux, Bun, installed repository dependencies, a task-owned RabbitMQ broker,
-and a disposable PostgreSQL database prepared by `otr-scripts template-db` on
-port `5434`. Apply the task checkout's migrations through that preparation
-workflow. Set `DATABASE_URL` to the connection string it supplies and
-`RABBITMQ_AMQP_URL` to the task-owned broker. Never use the development database
-on port `5432`.
+Use Linux, Bun with repository dependencies installed, a task-owned RabbitMQ
+broker, and a disposable PostgreSQL database created through `otr-scripts`
+`template-db` on port `5434`, using this checkout for migrations. Set
+`DATABASE_URL` to its supplied connection string and `RABBITMQ_AMQP_URL` to your
+broker. Local integration tests reject port `5432`; GitHub Actions uses its
+isolated service on that port.
 
-From the repository root, set the following environment variables in each shell
-that runs a command:
+Set these in each shell running a command:
 
 ```sh
 export BEATMAP_ATTRIBUTES_ENABLED=true
 export BEATMAP_ATTRIBUTES_STORAGE=local
 export BEATMAP_ATTRIBUTES_LOCAL_DIR=/tmp/beatmap-files
 export BEATMAP_ATTRIBUTES_CONCURRENCY=2
-export BEATMAP_ATTRIBUTES_DISCOVER=false
 ```
 
-Start the dedicated consumer in one shell:
+Start the consumer, then enqueue and inspect a map from another shell:
 
 ```sh
 bun run --cwd apps/data-worker attributes:worker
 ```
 
-Enqueue a real native osu! map in another shell:
-
 ```sh
 bun run --cwd apps/data-worker attributes --osu-id 2785319 --ruleset 0
+bun run --cwd apps/data-worker attributes --osu-id 2785319 --inspect
 ```
 
-The CLI prints the durable job ID, generation, and canonical profiles. It returns
-after scheduling; the consumer downloads and calculates asynchronously. Inspect
-the stored relationships and resolved profile results after processing:
-
-```sh
-bun run --cwd apps/data-worker attributes --osu-id 2785319 --ruleset 0 --inspect
-```
-
-Inspection includes `beatmapFiles`, `beatmapAttributes`, and
-`beatmapAttributeJobs`. A successful job has status `complete`, a source file,
-and six resolved profiles for this osu! example. Other rulesets use the default
-profiles listed below. Each stored result includes a source checksum and
-calculator version. Repeat the enqueue command to check idempotency: unchanged
-requests reuse the job and stored results.
-
-The standalone commands need neither osu! OAuth credentials nor GCP credentials
-when local storage is selected. Scheduling validates the requested settings before
-creating a missing beatmap as a metadata placeholder; invalid settings do not
-create records. Inspection does not create a missing beatmap. Calculating
-attributes does not claim that API metadata was fetched.
+The CLI returns after recording work. Inspection loads `beatmapFiles`,
+`beatmapAttributes`, and `beatmapAttributeJobs` through Drizzle relationships,
+along with resolved current results. Repeat scheduling to verify that the
+result IDs stay unchanged. Standalone commands need no osu! OAuth or GCP
+credentials with local storage. A missing map becomes a metadata placeholder;
+this does not mark API metadata fetched. Inspection never creates a map.
 
 ## Configuration
 
-| Variable                         | Behavior                                                                                                        |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `BEATMAP_ATTRIBUTES_ENABLED`     | Defaults to `false`. Set to `true` for ingestion scheduling and standalone attributes commands.                 |
-| `BEATMAP_ATTRIBUTES_STORAGE`     | Explicitly choose `local` or `gcp` when processing is enabled.                                                  |
-| `BEATMAP_ATTRIBUTES_LOCAL_DIR`   | Required absolute storage directory for `local`. Use a task-owned directory for local verification.             |
-| `BEATMAP_ATTRIBUTES_GCP_BUCKET`  | Required existing bucket name for `gcp`. Authentication uses the Cloud Storage client's configured credentials. |
-| `BEATMAP_ATTRIBUTES_CONCURRENCY` | Integer from `1` through `4`; defaults to `2`. Bounds active beatmap jobs and calculator processes per worker.  |
-| `BEATMAP_ATTRIBUTES_DISCOVER`    | Defaults to enabled. Set to `false` for a local run limited to explicitly scheduled jobs.                       |
-| `DATABASE_URL`                   | PostgreSQL connection string. Local verification uses the disposable database on port `5434`.                   |
-| `RABBITMQ_AMQP_URL`              | Broker connection used by the dedicated consumer and confirmed publisher.                                       |
+| Variable                         | Behavior                                                                    |
+| -------------------------------- | --------------------------------------------------------------------------- |
+| `BEATMAP_ATTRIBUTES_ENABLED`     | Defaults to `false`; enables ingestion scheduling and standalone commands.  |
+| `BEATMAP_ATTRIBUTES_STORAGE`     | Explicitly select `local` or `gcp`.                                         |
+| `BEATMAP_ATTRIBUTES_LOCAL_DIR`   | Required absolute directory for local storage.                              |
+| `BEATMAP_ATTRIBUTES_GCP_BUCKET`  | Required existing bucket for GCP; uses the client's configured credentials. |
+| `BEATMAP_ATTRIBUTES_CONCURRENCY` | Active jobs and calculator processes per worker: `1`–`4`, default `2`.      |
+| `METRICS_PORT`                   | Dedicated worker health and metrics listener, default `9092`.               |
 
-With discovery enabled, reconciliation finds fetched beatmaps that have no
-attributes job and schedules batches of up to 25. It also schedules jobs whose
-desired versions can be upgraded to the running worker's versions. Jobs requesting
-newer or unrecognized versions are left unchanged. Enabling discovery can start
-a historical backfill. The normal ingestion worker schedules affected beatmaps
-after its metadata transaction commits. When fetched, non-manual metadata changes,
-scheduling records a source refresh even for an already-complete job. Discovery
-also checks those metadata revisions, recovering a missed callback after
-interruption or a scheduling failure.
+Processing enablement does not automatically backfill history or upgrade
+calculator targets. Successful metadata ingestion records job intent in the
+same database transaction. The dedicated worker's recovery loop publishes that
+intent, including after a restart or failed publication.
 
-## Rulesets, profiles, and identity
+## Profiles and identity
 
-The MVP accepts six individual profiles: NM (`0`), HR (`16`), HD (`8`), EZ (`2`),
-FL (`1024`), and DT (`64`). Automatic scheduling and the CLI with `--mods` omitted
-use defaults selected by ruleset:
+| Native ruleset  | CLI ruleset | Default profiles       |
+| --------------- | ----------- | ---------------------- |
+| osu!            | `0`         | NM, HR, HD, EZ, FL, DT |
+| osu!taiko       | `1`         | NM, HR, EZ, DT         |
+| osu!catch       | `2`         | NM, HR, EZ, DT         |
+| osu!mania other | `3`         | NM, DT                 |
+| osu!mania 4K    | `4`         | NM, DT                 |
+| osu!mania 7K    | `5`         | NM, DT                 |
 
-| Ruleset                     | Default profiles       | Count |
-| --------------------------- | ---------------------- | ----- |
-| osu!                        | NM, HR, HD, EZ, FL, DT | 6     |
-| osu!taiko                   | NM, HR, EZ, DT         | 4     |
-| osu!catch                   | NM, HR, EZ, DT         | 4     |
-| osu!mania other, 4K, and 7K | NM, DT                 | 2     |
+HD/FL duplicate NM outside osu! for the pinned calculator. Mania HR/EZ can
+change OD/HP despite unchanged stars, but are omitted from defaults. All six
+individual profiles remain available explicitly via `--mods`: NM `0`, HR `16`,
+HD `8`, EZ `2`, FL `1024`, DT `64`. Combinations and custom rates/lazer requests
+are deferred. Each job targets one ruleset with at most six canonical profiles.
+Native mania uses library mode `3`; 4K/7K targets validate the parsed key count.
+Automatic conversion between native modes is unsupported.
 
-The pinned calculator returns the same full attributes for HD/FL as NM outside
-osu!, so those profiles are omitted from automatic defaults. Mania HR/EZ can
-still change effective OD and HP even when the star rating is unchanged. They
-remain distinct, valid explicit requests and are not aliases of NM. All six
-profiles remain available through `--mods` for every supported native ruleset.
-This changes default work selection without changing calculator math or identity.
-Unsupported combinations are rejected. Requests remain settings objects so later
-combinations can be added without changing the job envelope.
-
-| o!TR ruleset    | CLI value | Required native file                            |
-| --------------- | --------- | ----------------------------------------------- |
-| osu!            | `0`       | osu!                                            |
-| osu!taiko       | `1`       | osu!taiko                                       |
-| osu!catch       | `2`       | osu!catch                                       |
-| osu!mania other | `3`       | Native mania; the parsed key count is retained. |
-| osu!mania 4K    | `4`       | Native mania with four keys.                    |
-| osu!mania 7K    | `5`       | Native mania with seven keys.                   |
-
-All mania variants map explicitly to library mode `3`; o!TR ruleset values `4`
-and `5` are never passed as library modes. Standard maps are not automatically
-converted to another ruleset. Use `--ruleset` when creating a CLI placeholder or
-requesting a specific compatible target ruleset. API ingestion uses generic
-mania ruleset `3`, retaining the parsed key count. Explicit targets `4` and `5`
-validate that count and retain distinct calculation identities.
-
-NC (`512`) and NC with DT (`576`) canonicalize to DT before scheduling, cache
-lookup, calculation, and persistence. This schedules one profile:
+NC `512` and NC-with-DT `576` normalize to DT before scheduling, lookup,
+calculation, and storage. This requests one equivalent calculation:
 
 ```sh
 bun run --cwd apps/data-worker attributes --osu-id 2785319 --mods 64,512,576
 ```
 
-Stable behavior is the default. `--lazer` explicitly selects lazer behavior.
-`--clock-rate` supplies an effective speed from `0.01` through `100`; its value
-is preserved during NC normalization. Without an override, DT/NC uses `1.5` and
-the other profiles use `1`. Speed is applied once:
+DT/NC uses rate `1.5` once; other profiles use `1`. Identity includes checksum,
+calculator version, calculation-format version, target ruleset, explicit library
+mode, canonical mods, standard rate, and explicit stable behavior. Effective
+AR/OD preserve fractions and may exceed editor bounds. Inapplicable values are
+`null`. Common attributes use columns; a validated versioned JSON payload holds
+selected ruleset-specific difficulty components and object counts.
 
-```sh
-bun run --cwd apps/data-worker attributes --osu-id 2785319 --mods 512 --clock-rate 1.25 --lazer
-```
+## Files and failures
 
-Calculation identity includes the source checksum, calculator version,
-calculation-format version, target o!TR ruleset, explicit library mode, canonical
-mods, effective clock rate, and stable/lazer setting. Different speeds and
-stable/lazer behavior retain separate results. A job accepts between 1 and 64
-unique canonical requests. Ordinary CLI scheduling merges the selected profiles
-with existing requests. Automatic metadata refresh preserves the recorded set,
-including explicit mods, custom clock rates, and lazer settings. `--recalculate`
-replaces the requested set with the CLI selection; omitting `--mods` selects the
-ruleset defaults. Changing that set does not delete stored results.
+Before HTTP starts, a related file row has fetch status `Fetching` and records
+its provider, upstream ID/URL, and attempt time. Success checkpoints `Fetched`
+with storage key, SHA-256 checksum, byte length, and acquisition time before
+calculation. Failed downloads retain `NotFound` or `Error` with a safe error code.
+File fetch status is independent of metadata fetch, calculation, and verification.
+A calculation retry reuses a completed download.
 
-## Storage, provenance, and rebuilding
+Files use `sha256/<prefix>/<checksum>.osu` keys and are shared across profiles.
+The local provider writes atomically and verifies checksums. Its directory lasts
+only as long as the host/operator retains it: `/tmp` may be cleaned on reboot.
+Use a persistent mounted directory when retention is needed. There is no garbage
+collection in this MVP.
 
-Files use content-addressed keys of the form
-`sha256/<prefix>/<checksum>.osu`. The database stores the provider, relative key,
-SHA-256 checksum, byte length, upstream beatmap ID and URL, acquisition time,
-parsed mode, and applicable key count. It does not store the local directory or
-cloud credentials. All profiles reuse the same source bytes.
+A retry reacquires missing/corrupt files. Switching provider reuses only the
+current checksum under the selected provider; it does not substitute an older
+source. GCP failures never fall back to local storage. The GCP adapter and
+configuration path are implemented, but no live GCP operation was tested and no
+cloud resources were provisioned. Configure and validate an existing bucket
+before enabling GCP in an environment.
 
-When changing providers, the worker looks for the current source checksum under
-the selected provider. If it is unavailable there, the worker reacquires the
-source. An older file retained by that provider is not substituted for the
-current source.
+The job's acquisition pointer tracks its current file attempt; its completed
+source pointer changes only after results commit. Generation and lease checks
+prevent late attempts from publishing obsolete results or replacing that pointer.
+Prior results survive failed refreshes. Relationships include history;
+`getBeatmapAttribute` resolves the intended source and current target version.
 
-The local provider writes atomically and validates stored bytes against their
-checksum. Its directory persists only as long as the operator or host retains
-it. A directory under `/tmp` can disappear during host cleanup or reboot. Keep a
-persistent mounted directory when retained files are required. No automatic file
-garbage collection is provided.
+## Recalculation and recovery
 
-A processing attempt reacquires a missing or corrupted local file from
-`https://osu.ppy.sh/osu/<id>`. To repair storage for an already-complete job,
-reschedule it:
+Reschedule a completed/failed map to reset its retry budget or repair a missing
+file. Matching source/settings/version results are reused:
 
 ```sh
 bun run --cwd apps/data-worker attributes --osu-id 2785319 --recalculate
-```
-
-`--recalculate` starts a new job generation, replaces its requested profile set,
-and resets its retry budget. Matching source/settings/version results are reused,
-so unchanged work stays idempotent. Supply `--mods` and any custom settings again
-to retain them in this explicit replacement; otherwise the CLI uses the defaults.
-To check upstream bytes even when the stored file is available, use:
-
-```sh
 bun run --cwd apps/data-worker attributes --osu-id 2785319 --refresh-source
 ```
 
-A changed source checksum creates distinct provenance and result identities.
-An unchanged download reuses existing records. If upstream no longer serves a
-missing source file, acquisition fails without inventing source data; prior
-stored result history remains available.
+Recalculation selects the running calculator/format and replaces profiles with
+those requested (defaults when `--mods` is absent). Refresh explicitly checks
+upstream bytes. Ordinary ingestion preserves an existing calculator target and
+profile selection. Stop obsolete workers before an operator-initiated version
+rollout; update the pinned dependency and calculator identifier, and increment
+format version when stored interpretation or payload changes.
 
-Results retain common attributes in explicit columns and additional
-ruleset-specific results in validated, versioned JSON. Inapplicable values are
-`null`. Effective AR/OD and durations preserve fractional values. `created`
-records calculation time. `total_length` measures first object start through
-latest object end; `drain_length` subtracts the union of clipped break intervals.
-Slider repeats, inherited velocity, spinner ends, hold ends, and effective speed
-are included. Intro/outro audio is outside this interval. See the
-[duration binding](beatmap-duration/README.md) for definitions and regeneration.
+Catch up existing fetched beatmaps or rebuild after an update in bounded batches:
 
-Result history is append-only for each source and calculation identity. The
-`getBeatmapAttribute` service resolves canonical requests using the job's current
-source and desired versions. Direct beatmap relationships also expose retained
-history, so future callers must select the intended source/version explicitly.
+```sh
+bun run --cwd apps/data-worker attributes --batch-size 25 --recalculate
+bun run --cwd apps/data-worker attributes --batch-size 25 --after-id 100 --recalculate
+```
 
-A fresh run using one osu!, one taiko, one catch, one mania 4K, and one mania 7K
-map produces 18 default-profile results: 6 + 4 + 4 + 2 + 2. An existing database
-can also contain retained results from earlier calculator versions or broader
-profile selections. The full `beatmapAttributes` relationship includes those
-rows. Validate the `resolved` profiles against the defaults table and their
-calculator version separately from the historical row count. Repeating the same
-calculation adds no duplicate results. Applying the reduced defaults to an old
-job requires explicit `--recalculate`; ordinary scheduling preserves its requests.
+Use the returned `nextAfterId` as the next database-ID cursor, until `scheduled`
+is zero. A batch accepts at most 100 maps and uses ruleset defaults. Omit
+`--recalculate` for initial catch-up that preserves existing targets. These are
+explicit operator commands; there is no automatic version or history scan.
 
-When updating rosu or duration semantics, update the pinned calculator dependency
-and calculator-version identifier; change the calculation-format version when
-the stored interpretation or JSON format changes. Version upgrades must move
-forward independently across the library release, duration release, and format
-version: none may decrease, and at least one must increase. Increasing the library
-version does not permit downgrading the duration or format version.
+Jobs run in parallel within the configured bound; profiles share one parsed map
+inside an isolated child process. Each calculator attempt has a 60-second limit
+and 512 MiB RSS limit on Linux. Downloads are limited to 8 MiB, 20 seconds per
+HTTP request, two concurrent requests, and 60 attempts per minute per worker.
+An acquisition has a 180-second active budget. HTTP 429 uses exponential backoff
+starting at eight seconds and honors `Retry-After`; longer cooldowns are persisted
+for later attempts. These limits are per worker instance, so account for the
+number of instances before increasing deployment concurrency.
 
-An older worker cannot downgrade a job's desired versions during ordinary
-scheduling or explicit `--recalculate`. Those requests are rejected when the
-stored versions are newer or cannot be recognized; discovery skips those jobs.
-Use a worker that recognizes and meets all desired versions. Automatic discovery
-rebuilds eligible older jobs using their recorded requests. With discovery
-disabled, enqueue or recalculate selected beatmaps explicitly. A duration upgrade
-from `1.0.0` to `1.0.1` creates new calculation identities while retaining the old
-results and their provenance.
+The database pool is bounded to job concurrency plus two connections. The recovery
+loop runs every 15 seconds, republishes unclaimed intent after 60 seconds, and
+reclaims expired 120-second leases. Active attempts renew every 15 seconds.
+Retryable failures have four job attempts with bounded backoff; terminal invalid
+maps and unavailable sources remain inspectable. Calculator failures do not
+change final verification decisions or block unrelated API ingestion.
 
-## Processing limits and recovery
-
-Independent beatmap jobs run in parallel. Within one job, the missing profiles
-run sequentially in a separate Bun process. The Linux worker samples each child
-process's resident memory every 100 milliseconds and kills it above 512 MiB.
-This is a sampled process limit, not a kernel memory reservation. Each child
-also has a 60-second deadline and a 1 MiB output limit. At the default concurrency,
-up to two calculator processes run at once, in addition to the parent worker.
-
-Downloads share one limiter using the existing `FixedWindowRateLimiter`, allowing
-up to 60 HTTP attempts per minute per worker process, including retries. Downloads remain
-capped at two concurrent requests, or one when worker concurrency is one. Files
-and storage reads are bounded to 8 MiB, with a 20-second deadline for each
-request or storage operation. After obtaining a download slot, acquisition has a
-180-second deadline.
-HTTP `429` responses allow up to five HTTP attempts, with retry delays of 8, 16,
-32, and 64 seconds within that deadline. A `Retry-After` header, expressed as
-seconds or an HTTP date, can extend the shared cooldown for all downloads in
-that process.
-
-Validation rejects HTML, redirects, invalid UTF-8, mismatched beatmap IDs,
-invalid parsed content, suspicious maps, more than 100,000 hit objects, and
-nonfinite calculator output. The database pool is limited to worker concurrency
-plus two connections, with a 10-second connection timeout and 30-second statement
-timeout. Limits apply per worker instance; additional instances multiply capacity.
-
-Jobs store `pending`, `processing`, `complete`, or `failed` independently of
-metadata fetching and verification. The durable job generation and lease token
-own each attempt. Result insertion and completion occur together only while that
-ownership is still current; a late attempt cannot commit over a newer generation.
-
-The nullable job field `sourceMetadataUpdatedAt` records the metadata revision
-for which a source refresh has been durably queued. Scheduling compares it with
-the fetched beatmap's `updated` value, falling back to `created` when needed.
-Any distinct revision triggers refresh; timestamps need not increase because
-overlapping fetches can commit out of order. The marker and pending refresh flag
-are saved with the new generation. Unrelated profile additions or version upgrades
-preserve that pending refresh. Manually overridden metadata is excluded from
-these automatic source-revision checks.
-
-Source reconciliation scans bounded batches of 25 with pagination. A callback
-lost after metadata commits is recoverable because the stored revision differs
-from the marker. Existing fetched jobs with a null marker receive one initial
-refresh. An unchanged re-download reuses source/results without creating a
-permanent refresh loop. A failed refresh retains its marker and uses the bounded
-retry budget; discovery does not continually reset it for the same revision.
-
-Reconciliation runs on startup and every 15 seconds. Publication has a 60-second
-lease, allowing recovery when a database commit succeeds but publication fails,
-or the broker confirms delivery ambiguously. A processing lease lasts 120 seconds
-and renews every 15 seconds. Expired attempts can be reclaimed after process
-interruption. Duplicate and obsolete messages are acknowledged without repeating
-completed calculations.
-
-Transient failures allow four total job attempts, with retry delays of 15, 30,
-and 60 seconds, plus reconciliation cadence. When an upstream cooldown outlasts
-acquisition and the job has retries remaining, its longer wait is persisted in
-`nextAttemptAt` and survives worker restarts. Terminal failures, such as a missing
-upstream file or invalid calculation, stop immediately. Jobs retain a concise
-error code. After repairing the cause, use `--recalculate` to reset the attempt
-budget. Calculation failures do not change final verification decisions or block
-unrelated metadata ingestion.
-
-## GCP and rollout
-
-The GCP provider is isolated behind the same storage interface. It uses an
-explicit existing bucket, checksum validation, bounded streams, and conditional
-object creation. The code does not provision resources and never falls back to
-local storage after a GCP failure. GCP coverage is limited to isolated tests with
-an injected client; provider-switch tests use a Map-backed storage double. No
-live GCP bucket or credentials were tested for this MVP.
-
-Apply migrations before deploying readers or workers, with processing flags
-disabled. Migration `0031` retains the accepted empty legacy attributes-table
-premise. Additive migration `0032` adds the nullable source metadata marker without
-removing existing results; discovery performs the initial refresh described above.
-Unrelated records and contracts are preserved. Deploy the standalone consumer
-with explicit storage, then enable processing for the consumer and ingestion worker. Enable discovery
-only when the historical backfill is wanted. Disabling processing prevents new
-ingestion scheduling; stop the standalone consumer to stop consuming queued jobs.
-
-Public replicas already include `beatmap_attributes`. Coordinate the companion
-`otr-scripts` whitelist update to include public-safe `beatmap_files` provenance
-before exporting populated results. Job leases, retries, and scheduling state
-are operational records and are excluded from public replica data. No cloud
-deployment or resource provisioning is part of local validation.
+Run the existing data-worker image with the `attributes:worker` command as a
+separate service when deploying. Select storage, mount retained local files if
+used, configure queue/database access and health monitoring, and enable ingestion
+and the consumer together. Local validation does not provision that service or
+establish GCP readiness.

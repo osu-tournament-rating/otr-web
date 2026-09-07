@@ -11,7 +11,7 @@ import {
 
 import { db } from './db';
 import { attributesEnabled } from './beatmap-attributes/policy';
-import { scheduleBeatmapAttributes } from './beatmap-attributes/service';
+import { recordBeatmapAttributeIntent } from './beatmap-attributes/service';
 import { startMetricsServer } from './metrics';
 import { dataWorkerEnv } from './env';
 import { consoleLogger } from './logging/logger';
@@ -122,10 +122,9 @@ const bootstrap = async () => {
   });
 
   const beatmapService = new BeatmapFetchService({
-    scheduleAttributes: attributesEnabled(process.env)
-      ? async (id) => {
-          await scheduleBeatmapAttributes(db, id);
-        }
+    recordAttributeIntent: attributesEnabled(process.env)
+      ? (tx, id) =>
+          recordBeatmapAttributeIntent(tx, id, { refreshSource: true })
       : undefined,
     db,
     api: osuApiClient,

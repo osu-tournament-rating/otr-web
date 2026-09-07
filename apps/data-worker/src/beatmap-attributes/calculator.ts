@@ -8,17 +8,15 @@ import {
 } from 'rosu-pp-js';
 
 import {
+  CALCULATION_FORMAT_VERSION,
   CalculatedBeatmapAttributesSchema,
-  normalizeCalculationSettings,
+  normalizeCalculationRequests,
+  type CalculationSettings,
   type CalculatedBeatmapAttributes,
   type CalculationSettingsInput,
 } from '@otr/core/osu/beatmap-attributes';
 import { Ruleset } from '@otr/core/osu';
 
-import {
-  durations,
-  type Durations,
-} from '../../beatmap-duration/pkg/otr_beatmap_duration.cjs';
 import {
   MAX_BEATMAP_FILE_BYTES,
   MAX_BEATMAP_OBJECTS,
@@ -32,6 +30,7 @@ export interface BeatmapInspection {
   rulesets: Ruleset[];
 }
 
+// rosu tolerates malformed entries; reject fields that could silently use parser defaults.
 function validateSource(bytes: Uint8Array): number {
   if (bytes.byteLength === 0 || bytes.byteLength > MAX_BEATMAP_FILE_BYTES) {
     throw new Error('Beatmap file size is outside the supported range');
@@ -79,18 +78,6 @@ function validateSource(bytes: Uint8Array): number {
         ) {
           throw new Error('Invalid source difficulty');
         }
-      }
-    }
-    if (section === '[Events]' && /^(2|Break),/.test(line)) {
-      const [, start, end] = line.split(',');
-      if (
-        !start?.trim() ||
-        !end?.trim() ||
-        !Number.isFinite(Number(start)) ||
-        !Number.isFinite(Number(end)) ||
-        Number(end) < Number(start)
-      ) {
-        throw new Error('Invalid break interval');
       }
     }
     if (section === '[TimingPoints]') {
@@ -218,24 +205,76 @@ export function inspectBeatmap(bytes: Uint8Array): BeatmapInspection {
   }
 }
 
-export function calculateBeatmapAttributes(
-  bytes: Uint8Array,
-  input: CalculationSettingsInput
+export interface CalculationBatch {
+  sourceMode: GameMode;
+  keyCount: number | null;
+  results: Array<{
+    settings: CalculationSettings;
+    attributes: CalculatedBeatmapAttributes;
+  }>;
+}
+
+function difficultyPayload(
+  mode: GameMode,
+  keyCount: number | null,
+  attributes: DifficultyAttributes
+) {
+  const version = CALCULATION_FORMAT_VERSION;
+  switch (mode) {
+    case GameMode.Osu:
+      return {
+        version,
+        mode,
+        aim: attributes.aim,
+        speed: attributes.speed,
+        flashlight: attributes.flashlight,
+        nCircles: attributes.nCircles,
+        nSliders: attributes.nSliders,
+        nSpinners: attributes.nSpinners,
+      };
+    case GameMode.Taiko:
+      return {
+        version,
+        mode,
+        stamina: attributes.stamina,
+        rhythm: attributes.rhythm,
+        color: attributes.color,
+        reading: attributes.reading,
+      };
+    case GameMode.Catch:
+      return {
+        version,
+        mode,
+        nFruits: attributes.nFruits,
+        nDroplets: attributes.nDroplets,
+        nTinyDroplets: attributes.nTinyDroplets,
+      };
+    case GameMode.Mania:
+      return {
+        version,
+        mode,
+        keyCount,
+        nObjects: attributes.nObjects,
+        nHoldNotes: attributes.nHoldNotes,
+      };
+  }
+}
+
+function calculateProfile(
+  map: Beatmap,
+  inspection: BeatmapInspection,
+  settings: CalculationSettings
 ): CalculatedBeatmapAttributes {
-  const settings = normalizeCalculationSettings(input);
-  const map = parseBeatmap(bytes);
+  if (
+    !inspection.rulesets.includes(settings.ruleset) ||
+    inspection.mode !== settings.mode
+  ) {
+    throw new Error('Target ruleset does not match the native beatmap');
+  }
   let difficulty: Difficulty | undefined;
   let difficultyAttributes: DifficultyAttributes | undefined;
   let attributes: BeatmapAttributes | undefined;
-  let lengths: Durations | undefined;
   try {
-    const inspection = inspectParsedBeatmap(map);
-    if (
-      !inspection.rulesets.includes(settings.ruleset) ||
-      inspection.mode !== settings.mode
-    ) {
-      throw new Error('Target ruleset does not match the native beatmap');
-    }
     const mods = [
       ...(settings.mods & 2 ? ['EZ'] : []),
       ...(settings.mods & 8 ? ['HD'] : []),
@@ -243,20 +282,18 @@ export function calculateBeatmapAttributes(
       ...(settings.mods & 64 ? ['DT'] : []),
       ...(settings.mods & 1024 ? ['FL'] : []),
       // BeatmapAttributesBuilder has no lazer argument; CL selects stable mania windows.
-      ...(!settings.lazer ? ['CL'] : []),
+      'CL',
     ];
     const commonSettings = { mods, clockRate: settings.clockRate };
-    map.convert(settings.mode, mods);
-    difficulty = new Difficulty({ ...commonSettings, lazer: settings.lazer });
+    difficulty = new Difficulty({ ...commonSettings, lazer: false });
     difficultyAttributes = difficulty.calculate(map);
     // build() consumes the WASM builder, including when the call throws.
     attributes = new BeatmapAttributesBuilder({
       ...commonSettings,
       map,
       mode: settings.mode,
-      isConvert: map.isConvert,
+      isConvert: false,
     }).build();
-    lengths = durations(bytes, settings.clockRate);
     const hasApproachRate =
       settings.mode === GameMode.Osu || settings.mode === GameMode.Catch;
     return CalculatedBeatmapAttributesSchema.parse({
@@ -268,8 +305,6 @@ export function calculateBeatmapAttributes(
       bpm: map.bpm * settings.clockRate,
       maxCombo: difficultyAttributes.maxCombo,
       clockRate: attributes.clockRate,
-      totalLength: lengths.total_length,
-      drainLength: lengths.drain_length,
       hitWindows: {
         ar: attributes.arHitWindow ?? null,
         odPerfect: attributes.odPerfectHitWindow ?? null,
@@ -278,23 +313,43 @@ export function calculateBeatmapAttributes(
         odOk: attributes.odOkHitWindow ?? null,
         odMeh: attributes.odMehHitWindow ?? null,
       },
-      difficulty: {
-        version: 1,
-        mode: settings.mode,
-        isConvert: map.isConvert,
-        keyCount: inspection.keyCount,
-        attributes: Object.fromEntries(
-          Object.entries(difficultyAttributes.toJSON()).filter(
-            ([, value]) => value !== undefined
-          )
-        ),
-      },
+      difficulty: difficultyPayload(
+        settings.mode,
+        inspection.keyCount,
+        difficultyAttributes
+      ),
     });
   } finally {
-    lengths?.free();
     attributes?.free();
     difficultyAttributes?.free();
     difficulty?.free();
+  }
+}
+
+export function calculateBeatmapAttributesBatch(
+  bytes: Uint8Array,
+  inputs: readonly CalculationSettingsInput[]
+): CalculationBatch {
+  const settings = normalizeCalculationRequests(inputs);
+  const map = parseBeatmap(bytes);
+  try {
+    const inspection = inspectParsedBeatmap(map);
+    return {
+      sourceMode: inspection.mode,
+      keyCount: inspection.keyCount,
+      results: settings.map((setting) => ({
+        settings: setting,
+        attributes: calculateProfile(map, inspection, setting),
+      })),
+    };
+  } finally {
     map.free();
   }
+}
+
+export function calculateBeatmapAttributes(
+  bytes: Uint8Array,
+  input: CalculationSettingsInput
+): CalculatedBeatmapAttributes {
+  return calculateBeatmapAttributesBatch(bytes, [input]).results[0]!.attributes;
 }

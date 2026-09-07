@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { loadRootEnv } from '../../../../lib/env/load-root-env';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { dbSchema } from '@otr/core/db';
+import { instrumentPgPool } from '@otr/core/tracing';
 import { QueueConstants } from '@otr/core';
 import type { ProcessBeatmapAttributesMessage } from '@otr/core/messages/types';
 import { RabbitMqPublisher } from '@otr/core/queues';
@@ -18,12 +19,14 @@ export async function createAttributesRuntime() {
   const amqpUrl = process.env.RABBITMQ_AMQP_URL;
   if (!databaseUrl || !amqpUrl)
     throw new Error('DATABASE_URL and RABBITMQ_AMQP_URL are required');
-  const pool = new Pool({
-    connectionString: databaseUrl,
-    max: config.concurrency + 2,
-    connectionTimeoutMillis: 10_000,
-    statement_timeout: 30_000,
-  });
+  const pool = instrumentPgPool(
+    new Pool({
+      connectionString: databaseUrl,
+      max: config.concurrency + 2,
+      connectionTimeoutMillis: 10_000,
+      statement_timeout: 30_000,
+    })
+  );
   const db = drizzle(pool, { schema: dbSchema });
   const storage = await createBeatmapFileStorage(
     config.provider === 'local'
@@ -47,8 +50,11 @@ export async function createAttributesRuntime() {
     publisher,
     amqpUrl,
     close: async () => {
-      await publisher.close();
-      await pool.end();
+      try {
+        await publisher.close();
+      } finally {
+        await pool.end();
+      }
     },
   };
 }

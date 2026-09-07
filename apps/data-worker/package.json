@@ -9,8 +9,7 @@
     "lint": "bunx eslint src --ext .ts --cache --cache-location node_modules/.cache/eslint/",
     "test": "bun test",
     "attributes:worker": "bun run src/beatmap-attributes/worker.ts",
-    "attributes": "bun run src/beatmap-attributes/cli.ts",
-    "attributes:demo": "bun run src/beatmap-attributes/demo.ts"
+    "attributes": "bun run src/beatmap-attributes/cli.ts"
   },
   "dependencies": {
     "@google-cloud/storage": "7.19.0",

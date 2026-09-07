@@ -1,3 +1,4 @@
+import { parseArgs } from 'node:util';
 import { eq } from 'drizzle-orm';
 import { beatmaps } from '@otr/core/db/schema';
 import {
@@ -11,8 +12,6 @@ export interface AttributeCommandInput {
   osuId: number;
   ruleset?: number;
   mods?: number[];
-  clockRate?: number;
-  lazer: boolean;
   create: boolean;
 }
 
@@ -29,8 +28,7 @@ export async function prepareAttributeCommand(
       ).map((mods) => ({
         ruleset,
         mods,
-        clockRate: input.clockRate,
-        lazer: input.lazer,
+        lazer: false,
       }))
     );
   normalize(input.ruleset ?? 0);
@@ -53,4 +51,54 @@ export async function prepareAttributeCommand(
   }
   if (!beatmap) throw new Error('Unable to load beatmap');
   return { beatmap, settings: normalize(input.ruleset ?? beatmap.ruleset) };
+}
+
+export function parseAttributeArguments(args: string[]) {
+  const parsed = parseArgs({
+    args,
+    options: {
+      'osu-id': { type: 'string' },
+      ruleset: { type: 'string' },
+      mods: { type: 'string' },
+      'batch-size': { type: 'string' },
+      'after-id': { type: 'string' },
+      recalculate: { type: 'boolean' },
+      'refresh-source': { type: 'boolean' },
+      inspect: { type: 'boolean' },
+    },
+    strict: true,
+    allowPositionals: false,
+  });
+  const { values } = parsed;
+  if (values['batch-size'] !== undefined) {
+    const size = Number(values['batch-size']);
+    const afterId = Number(values['after-id'] ?? 0);
+    if (!Number.isInteger(size) || size < 1 || size > 100)
+      throw new Error('--batch-size must be an integer from 1 through 100');
+    if (!Number.isSafeInteger(afterId) || afterId < 0)
+      throw new Error('--after-id must be a nonnegative database beatmap ID');
+    if (
+      values['osu-id'] !== undefined ||
+      values.ruleset !== undefined ||
+      values.mods !== undefined ||
+      values.inspect
+    )
+      throw new Error(
+        'Batch scheduling uses fetched beatmaps and their default profiles'
+      );
+  } else {
+    const osuId = Number(values['osu-id']);
+    if (!Number.isSafeInteger(osuId) || osuId < 1)
+      throw new Error('--osu-id must be a positive beatmap ID');
+    if (values['after-id'] !== undefined)
+      throw new Error('--after-id requires --batch-size');
+    if (values.inspect && (values.recalculate || values['refresh-source']))
+      throw new Error('--inspect cannot schedule work');
+    if (
+      values.mods !== undefined &&
+      values.mods.split(',').some((value) => !/^\d+$/.test(value))
+    )
+      throw new Error('--mods must be comma-separated integer bitmasks');
+  }
+  return parsed;
 }

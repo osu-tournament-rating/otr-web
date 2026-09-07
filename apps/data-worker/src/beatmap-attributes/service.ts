@@ -1,17 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import {
-  and,
-  asc,
-  eq,
-  gt,
-  inArray,
-  isNull,
-  lt,
-  lte,
-  ne,
-  or,
-  sql,
-} from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import {
   beatmapAttributes,
   beatmapAttributeJobs as jobs,
@@ -37,7 +25,6 @@ import {
 import { calculateInProcess } from './calculator-process';
 import {
   CALCULATOR_VERSION,
-  canUpgradeCalculationVersion,
   LEASE_MS,
   MAX_ATTEMPTS,
   PUBLISH_LEASE_MS,
@@ -66,117 +53,161 @@ export function isJobClaimable(
   );
 }
 
-class ObsoleteCalculatorError extends Error {}
+class ObsoleteJobError extends Error {}
+
+export type AttributeIntentExecutor = Pick<
+  DatabaseClient,
+  'select' | 'query' | 'insert' | 'update'
+>;
+
+interface AttributeIntentOptions {
+  settings?: CalculationSettingsInput[];
+  recalculate?: boolean;
+  refreshSource?: boolean;
+}
 
 export async function scheduleBeatmapAttributes(
   db: DatabaseClient,
   beatmapId: number,
-  options: {
-    settings?: CalculationSettingsInput[];
-    recalculate?: boolean;
-    refreshSource?: boolean;
-  } = {}
+  options: AttributeIntentOptions = {}
 ) {
-  return db.transaction(async (tx) => {
-    const [beatmap] = await tx
-      .select()
-      .from(beatmaps)
-      .where(eq(beatmaps.id, beatmapId))
-      .for('update');
-    if (!beatmap) throw new Error('Beatmap does not exist');
-    const previous = await tx.query.beatmapAttributeJobs.findFirst({
-      where: eq(jobs.beatmapId, beatmapId),
-    });
-    const versionChanged =
-      previous &&
-      (previous.desiredCalculatorVersion !== CALCULATOR_VERSION ||
-        previous.desiredFormatVersion !== CALCULATION_FORMAT_VERSION);
-    if (
-      versionChanged &&
-      !canUpgradeCalculationVersion(
-        previous.desiredCalculatorVersion,
-        previous.desiredFormatVersion
-      )
-    )
-      throw new ObsoleteCalculatorError(
-        'Job requires a newer or unrecognized calculator release'
-      );
-    const requested = options.settings
-      ? normalizeCalculationRequests(options.settings)
-      : previous && !options.recalculate
-        ? normalizeCalculationRequests(previous.requestedSettings)
-        : getDefaultCalculationSettings(beatmap.ruleset);
-    const settings =
+  return db.transaction((tx) =>
+    recordBeatmapAttributeIntent(tx, beatmapId, options)
+  );
+}
+
+/** Call inside the metadata transaction so queue publication can recover from its durable intent. */
+export async function recordBeatmapAttributeIntent(
+  tx: AttributeIntentExecutor,
+  beatmapId: number,
+  options: AttributeIntentOptions = {}
+) {
+  const [beatmap] = await tx
+    .select()
+    .from(beatmaps)
+    .where(eq(beatmaps.id, beatmapId))
+    .for('update');
+  if (!beatmap) throw new Error('Beatmap does not exist');
+  const [previous] = await tx
+    .select()
+    .from(jobs)
+    .where(eq(jobs.beatmapId, beatmapId))
+    .for('update');
+  const differentVersion =
+    previous &&
+    (previous.desiredCalculatorVersion !== CALCULATOR_VERSION ||
+      previous.desiredFormatVersion !== CALCULATION_FORMAT_VERSION);
+  if (differentVersion && options.settings && !options.recalculate)
+    throw new Error(
+      'Explicit recalculation is required to change calculator version'
+    );
+  const requested = options.settings
+    ? normalizeCalculationRequests(options.settings)
+    : previous && !options.recalculate
+      ? previous.requestedSettings
+      : getDefaultCalculationSettings(beatmap.ruleset);
+  const settings =
+    previous &&
+    options.settings &&
+    !options.recalculate &&
+    previous.requestedSettings[0]?.ruleset === requested[0]?.ruleset
+      ? normalizeCalculationRequests([
+          ...previous.requestedSettings,
+          ...requested,
+        ])
+      : requested;
+  const values = {
+    beatmapId,
+    requestedSettings: settings,
+    refreshSource: Boolean(options.refreshSource || previous?.refreshSource),
+    desiredCalculatorVersion:
       previous && !options.recalculate
-        ? normalizeCalculationRequests([
-            ...previous.requestedSettings,
-            ...requested,
-          ])
-        : requested;
-    const metadataRevision =
-      beatmap.dataFetchStatus === DataFetchStatus.Fetched &&
-      !beatmap.manualOverride
-        ? (beatmap.updated ?? beatmap.created)
-        : null;
-    const metadataChanged =
-      metadataRevision !== null &&
-      metadataRevision !== previous?.sourceMetadataUpdatedAt;
-    const values = {
-      beatmapId,
-      requestedSettings: settings,
-      refreshSource: Boolean(
-        options.refreshSource || previous?.refreshSource || metadataChanged
-      ),
-      // This records durable refresh intent, not the immutable file's acquisition time.
-      sourceMetadataUpdatedAt: metadataChanged
-        ? metadataRevision
-        : (previous?.sourceMetadataUpdatedAt ?? null),
-      desiredCalculatorVersion: CALCULATOR_VERSION,
-      desiredFormatVersion: CALCULATION_FORMAT_VERSION,
-    };
-    if (!previous) {
-      await tx.insert(jobs).values({ id: randomUUID(), ...values });
-    } else if (
-      options.recalculate ||
-      options.refreshSource ||
-      metadataChanged ||
-      versionChanged ||
-      JSON.stringify(
-        normalizeCalculationRequests(previous.requestedSettings)
-      ) !== JSON.stringify(settings)
-    ) {
-      const now = new Date().toISOString();
-      await tx
-        .update(jobs)
+        ? previous.desiredCalculatorVersion
+        : CALCULATOR_VERSION,
+    desiredFormatVersion:
+      previous && !options.recalculate
+        ? previous.desiredFormatVersion
+        : CALCULATION_FORMAT_VERSION,
+  };
+  if (!previous) {
+    await tx.insert(jobs).values({ id: randomUUID(), ...values });
+  } else if (
+    options.recalculate ||
+    options.refreshSource ||
+    JSON.stringify(settings) !== JSON.stringify(previous.requestedSettings)
+  ) {
+    let acquiredFileId = previous.acquiredFileId;
+    if (acquiredFileId !== null) {
+      const abandoned = await tx
+        .update(beatmapFiles)
         .set({
-          ...values,
-          generation: sql`${jobs.generation}+1`,
-          status: 'pending',
-          attempts: 0,
-          leaseToken: null,
-          leaseExpiresAt: null,
-          publishedAt: null,
-          nextAttemptAt: now,
-          requestedAt: now,
-          errorCode: null,
+          fetchStatus: DataFetchStatus.Error,
+          errorCode: 'obsolete_generation',
         })
         .where(
           and(
-            eq(jobs.id, previous.id),
-            eq(jobs.generation, previous.generation)
+            eq(beatmapFiles.id, acquiredFileId),
+            eq(beatmapFiles.fetchStatus, DataFetchStatus.Fetching)
           )
-        );
+        )
+        .returning({ id: beatmapFiles.id });
+      if (options.refreshSource || abandoned.length) acquiredFileId = null;
     }
-
-    return tx.query.beatmapAttributeJobs.findFirst({
-      where: eq(jobs.beatmapId, beatmapId),
-    });
+    const now = new Date().toISOString();
+    await tx
+      .update(jobs)
+      .set({
+        ...values,
+        acquiredFileId,
+        generation: sql`${jobs.generation}+1`,
+        status: 'pending',
+        attempts: 0,
+        leaseToken: null,
+        leaseExpiresAt: null,
+        publishedAt: null,
+        nextAttemptAt: now,
+        requestedAt: now,
+        errorCode: null,
+      })
+      .where(
+        and(eq(jobs.id, previous.id), eq(jobs.generation, previous.generation))
+      );
+  }
+  return tx.query.beatmapAttributeJobs.findFirst({
+    where: eq(jobs.beatmapId, beatmapId),
   });
 }
 
+type FileRecord = typeof beatmapFiles.$inferSelect;
+type FetchedFile = FileRecord & {
+  checksum: string;
+  storageKey: string;
+  byteLength: number;
+  acquiredAt: string;
+};
+
+function isFetchedFile(file: FileRecord | undefined): file is FetchedFile {
+  return Boolean(
+    file &&
+    file.fetchStatus === DataFetchStatus.Fetched &&
+    file.checksum &&
+    file.storageKey &&
+    file.byteLength !== null &&
+    file.acquiredAt
+  );
+}
+
+function errorCode(error: unknown): string {
+  return typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string' &&
+    /^[a-z_]{1,80}$/.test(error.code)
+    ? error.code
+    : 'processing_failed';
+}
+
 export class BeatmapAttributeService {
-  private versionCursor: string | undefined;
-  private sourceCursor: number | undefined;
   constructor(
     private readonly db: DatabaseClient,
     private readonly storage: BeatmapFileStorage,
@@ -184,105 +215,49 @@ export class BeatmapAttributeService {
     private readonly calculate = calculateInProcess
   ) {}
 
-  async reconcileVersions(): Promise<void> {
-    const outdated = await this.db.query.beatmapAttributeJobs.findMany({
-      where: and(
-        this.versionCursor ? gt(jobs.id, this.versionCursor) : undefined,
-        or(
-          ne(jobs.desiredCalculatorVersion, CALCULATOR_VERSION),
-          ne(jobs.desiredFormatVersion, CALCULATION_FORMAT_VERSION)
-        )
-      ),
-      orderBy: asc(jobs.id),
-      limit: 25,
-    });
-    for (const row of outdated) {
-      if (
-        !canUpgradeCalculationVersion(
-          row.desiredCalculatorVersion,
-          row.desiredFormatVersion
-        )
-      )
-        continue;
-      try {
-        await scheduleBeatmapAttributes(this.db, row.beatmapId, {
-          settings: row.requestedSettings,
-        });
-      } catch (error) {
-        if (!(error instanceof ObsoleteCalculatorError)) throw error;
-      }
-    }
-    this.versionCursor =
-      outdated.length === 25 ? outdated.at(-1)!.id : undefined;
-  }
-
-  async reconcileSources(): Promise<void> {
-    const stale = await this.db
-      .select({ id: beatmaps.id })
-      .from(beatmaps)
-      .innerJoin(jobs, eq(jobs.beatmapId, beatmaps.id))
-      .where(
-        and(
-          this.sourceCursor ? gt(beatmaps.id, this.sourceCursor) : undefined,
-          eq(beatmaps.dataFetchStatus, DataFetchStatus.Fetched),
-          eq(beatmaps.manualOverride, false),
-          sql`${jobs.sourceMetadataUpdatedAt} is distinct from coalesce(${beatmaps.updated}, ${beatmaps.created})`
-        )
-      )
-      .orderBy(asc(beatmaps.id))
-      .limit(25);
-    for (const row of stale) {
-      try {
-        await scheduleBeatmapAttributes(this.db, row.id);
-      } catch (error) {
-        if (!(error instanceof ObsoleteCalculatorError)) throw error;
-      }
-    }
-    this.sourceCursor = stale.length === 25 ? stale.at(-1)!.id : undefined;
-  }
-
   async reconcile(
     publish: (payload: {
       jobId: string;
       generation: number;
-    }) => Promise<unknown>,
-    discover = true
+    }) => Promise<unknown>
   ): Promise<number> {
-    if (discover) {
-      const missing = await this.db
-        .select({ id: beatmaps.id })
-        .from(beatmaps)
-        .leftJoin(jobs, eq(jobs.beatmapId, beatmaps.id))
+    const now = new Date();
+    await this.db.transaction(async (tx) => {
+      const exhausted = await tx
+        .update(jobs)
+        .set({
+          status: 'failed',
+          leaseToken: null,
+          leaseExpiresAt: null,
+          errorCode: 'attempt_budget_exhausted',
+        })
         .where(
           and(
-            eq(beatmaps.dataFetchStatus, DataFetchStatus.Fetched),
-            isNull(jobs.id)
+            eq(jobs.desiredCalculatorVersion, CALCULATOR_VERSION),
+            eq(jobs.desiredFormatVersion, CALCULATION_FORMAT_VERSION),
+            eq(jobs.status, 'processing'),
+            lte(jobs.leaseExpiresAt, now.toISOString()),
+            sql`${jobs.attempts} >= ${MAX_ATTEMPTS}`
           )
         )
-        .limit(25);
-      for (const row of missing)
-        await scheduleBeatmapAttributes(this.db, row.id);
-      await this.reconcileVersions();
-      await this.reconcileSources();
-    }
-    const now = new Date();
-    await this.db
-      .update(jobs)
-      .set({
-        status: 'failed',
-        leaseToken: null,
-        leaseExpiresAt: null,
-        errorCode: 'attempt_budget_exhausted',
-      })
-      .where(
-        and(
-          eq(jobs.desiredCalculatorVersion, CALCULATOR_VERSION),
-          eq(jobs.desiredFormatVersion, CALCULATION_FORMAT_VERSION),
-          eq(jobs.status, 'processing'),
-          lte(jobs.leaseExpiresAt, now.toISOString()),
-          sql`${jobs.attempts} >= ${MAX_ATTEMPTS}`
-        )
+        .returning({ acquiredFileId: jobs.acquiredFileId });
+      const fileIds = exhausted.flatMap((row) =>
+        row.acquiredFileId === null ? [] : [row.acquiredFileId]
       );
+      if (fileIds.length)
+        await tx
+          .update(beatmapFiles)
+          .set({
+            fetchStatus: DataFetchStatus.Error,
+            errorCode: 'attempt_budget_exhausted',
+          })
+          .where(
+            and(
+              inArray(beatmapFiles.id, fileIds),
+              eq(beatmapFiles.fetchStatus, DataFetchStatus.Fetching)
+            )
+          );
+    });
     const due = await this.db.query.beatmapAttributeJobs.findMany({
       where: and(
         eq(jobs.desiredCalculatorVersion, CALCULATOR_VERSION),
@@ -373,42 +348,131 @@ export class BeatmapAttributeService {
         .where(owns)
         .catch(() => undefined);
     }, 15_000);
+    let attemptFileId: number | undefined;
+    let lastFetchAttempt: string | undefined;
     try {
       const beatmap = await this.db.query.beatmaps.findFirst({
         where: eq(beatmaps.id, claimed.beatmapId),
       });
       if (!beatmap) return 'obsolete';
-      const currentSource =
-        claimed.sourceFileId === null
+      const boundId =
+        claimed.acquiredFileId ??
+        (claimed.refreshSource ? null : claimed.sourceFileId);
+      const bound =
+        boundId === null
           ? undefined
           : await this.db.query.beatmapFiles.findFirst({
-              where: eq(beatmapFiles.id, claimed.sourceFileId),
+              where: eq(beatmapFiles.id, boundId),
             });
-      const existing =
-        claimed.sourceFileId === null
-          ? await this.db.query.beatmapFiles.findFirst({
-              where: and(
-                eq(beatmapFiles.beatmapId, beatmap.id),
-                eq(beatmapFiles.provider, this.storage.provider)
-              ),
-              orderBy: (files, { desc }) => desc(files.acquiredAt),
-            })
-          : currentSource?.provider === this.storage.provider
-            ? currentSource
-            : currentSource
-              ? await this.db.query.beatmapFiles.findFirst({
-                  where: and(
-                    eq(beatmapFiles.beatmapId, beatmap.id),
-                    eq(beatmapFiles.provider, this.storage.provider),
-                    eq(beatmapFiles.checksum, currentSource.checksum)
-                  ),
-                })
-              : undefined;
+      const candidate =
+        bound?.provider === this.storage.provider
+          ? bound
+          : isFetchedFile(bound)
+            ? await this.db.query.beatmapFiles.findFirst({
+                where: and(
+                  eq(beatmapFiles.beatmapId, beatmap.id),
+                  eq(beatmapFiles.provider, this.storage.provider),
+                  eq(beatmapFiles.checksum, bound.checksum),
+                  eq(beatmapFiles.fetchStatus, DataFetchStatus.Fetched)
+                ),
+              })
+            : undefined;
+      const existing = isFetchedFile(candidate) ? candidate : undefined;
       const file = await acquireBeatmapFile({
         osuBeatmapId: beatmap.osuId,
         storage: this.storage,
         downloader: this.downloader,
-        existing: claimed.refreshSource ? undefined : (existing ?? undefined),
+        existing,
+        beforeDownload: async () => {
+          await this.db.transaction(async (tx) => {
+            const [current] = await tx
+              .select()
+              .from(jobs)
+              .where(owns)
+              .for('update');
+            if (!current) throw new ObsoleteJobError();
+            lastFetchAttempt = new Date().toISOString();
+            const values = {
+              fetchStatus: DataFetchStatus.Fetching,
+              lastFetchAttempt,
+              errorCode: null,
+            };
+            if (candidate && !isFetchedFile(candidate)) {
+              attemptFileId = candidate.id;
+              await tx
+                .update(beatmapFiles)
+                .set(values)
+                .where(eq(beatmapFiles.id, candidate.id));
+            } else {
+              const [attempt] = await tx
+                .insert(beatmapFiles)
+                .values({
+                  ...values,
+                  beatmapId: beatmap.id,
+                  osuBeatmapId: beatmap.osuId,
+                  provider: this.storage.provider,
+                  sourceUrl: `https://osu.ppy.sh/osu/${beatmap.osuId}`,
+                })
+                .returning();
+              attemptFileId = attempt.id;
+            }
+            await tx
+              .update(jobs)
+              .set({ acquiredFileId: attemptFileId })
+              .where(owns);
+          });
+        },
+      });
+      const source = await this.db.transaction(async (tx) => {
+        const [current] = await tx
+          .select()
+          .from(jobs)
+          .where(owns)
+          .for('update');
+        if (!current) throw new ObsoleteJobError();
+        let stored = await tx.query.beatmapFiles.findFirst({
+          where: and(
+            eq(beatmapFiles.beatmapId, beatmap.id),
+            eq(beatmapFiles.provider, this.storage.provider),
+            eq(beatmapFiles.checksum, file.checksum),
+            eq(beatmapFiles.fetchStatus, DataFetchStatus.Fetched)
+          ),
+        });
+        if (stored) {
+          if (attemptFileId !== undefined) {
+            await tx
+              .update(beatmapFiles)
+              .set({ lastFetchAttempt })
+              .where(eq(beatmapFiles.id, stored.id));
+            await tx
+              .update(jobs)
+              .set({ acquiredFileId: stored.id })
+              .where(owns);
+            await tx
+              .delete(beatmapFiles)
+              .where(eq(beatmapFiles.id, attemptFileId));
+            attemptFileId = undefined;
+          }
+        } else {
+          if (attemptFileId === undefined)
+            throw new Error('Missing file acquisition attempt');
+          [stored] = await tx
+            .update(beatmapFiles)
+            .set({
+              fetchStatus: DataFetchStatus.Fetched,
+              checksum: file.checksum,
+              storageKey: file.storageKey,
+              byteLength: file.byteLength,
+              acquiredAt: new Date().toISOString(),
+              errorCode: null,
+            })
+            .where(eq(beatmapFiles.id, attemptFileId))
+            .returning();
+        }
+        if (!isFetchedFile(stored))
+          throw new Error('Missing fetched file provenance');
+        await tx.update(jobs).set({ acquiredFileId: stored.id }).where(owns);
+        return stored;
       });
       const settings = normalizeCalculationRequests(claimed.requestedSettings);
       const identity = (setting: (typeof settings)[number]) =>
@@ -418,26 +482,14 @@ export class BeatmapAttributeService {
           calculatorVersion: claimed.desiredCalculatorVersion,
           formatVersion: claimed.desiredFormatVersion,
         });
-      const matchingSource =
-        existing?.checksum === file.checksum
-          ? existing
-          : await this.db.query.beatmapFiles.findFirst({
-              where: and(
-                eq(beatmapFiles.beatmapId, beatmap.id),
-                eq(beatmapFiles.provider, this.storage.provider),
-                eq(beatmapFiles.checksum, file.checksum)
-              ),
-            });
-      const cached = matchingSource
-        ? await this.db.query.beatmapAttributes.findMany({
-            where: and(
-              eq(beatmapAttributes.beatmapId, beatmap.id),
-              eq(beatmapAttributes.fileId, matchingSource.id),
-              eq(beatmapAttributes.checksum, file.checksum),
-              inArray(beatmapAttributes.identity, settings.map(identity))
-            ),
-          })
-        : [];
+      const cached = await this.db.query.beatmapAttributes.findMany({
+        where: and(
+          eq(beatmapAttributes.beatmapId, beatmap.id),
+          eq(beatmapAttributes.fileId, source.id),
+          eq(beatmapAttributes.checksum, file.checksum),
+          inArray(beatmapAttributes.identity, settings.map(identity))
+        ),
+      });
       const pending = settings.filter(
         (setting) => !cached.some((row) => row.identity === identity(setting))
       );
@@ -458,9 +510,9 @@ export class BeatmapAttributeService {
           CalculatedBeatmapAttributesSchema.parse(value.attributes);
           if (
             value.attributes.clockRate !== value.settings.clockRate ||
-            value.attributes.difficulty.mode !== value.settings.mode ||
             calculated.sourceMode !== value.settings.mode ||
-            calculated.keyCount !== value.attributes.difficulty.keyCount
+            (value.settings.ruleset === 4 && calculated.keyCount !== 4) ||
+            (value.settings.ruleset === 5 && calculated.keyCount !== 7)
           ) {
             throw new Error(
               'Calculator settings do not match the requested source and profile'
@@ -475,32 +527,14 @@ export class BeatmapAttributeService {
           .where(owns)
           .for('update');
         if (!current) return 'obsolete' as const;
-        const sourceValues = {
-          beatmapId: beatmap.id,
-          provider: this.storage.provider,
-          storageKey: file.storageKey,
-          checksum: file.checksum,
-          byteLength: file.byteLength,
-          osuBeatmapId: beatmap.osuId,
-          sourceUrl: `https://osu.ppy.sh/osu/${beatmap.osuId}`,
-          sourceMode:
-            calculated?.sourceMode ??
-            matchingSource?.sourceMode ??
-            settings[0].mode,
-          keyCount: calculated?.keyCount ?? matchingSource?.keyCount ?? null,
-        };
-        await tx
-          .insert(beatmapFiles)
-          .values(sourceValues)
-          .onConflictDoNothing();
-        const source = await tx.query.beatmapFiles.findFirst({
-          where: and(
-            eq(beatmapFiles.beatmapId, beatmap.id),
-            eq(beatmapFiles.provider, this.storage.provider),
-            eq(beatmapFiles.checksum, file.checksum)
-          ),
-        });
-        if (!source) throw new Error('Missing acquired file record');
+        if (calculated)
+          await tx
+            .update(beatmapFiles)
+            .set({
+              sourceMode: calculated.sourceMode,
+              keyCount: calculated.keyCount,
+            })
+            .where(eq(beatmapFiles.id, source.id));
         for (const value of calculated?.results ?? []) {
           await tx
             .insert(beatmapAttributes)
@@ -533,6 +567,7 @@ export class BeatmapAttributeService {
       });
       return result;
     } catch (error) {
+      if (error instanceof ObsoleteJobError) return 'obsolete';
       const retryable =
         typeof error === 'object' && error !== null && 'retryable' in error
           ? error.retryable === true
@@ -550,29 +585,46 @@ export class BeatmapAttributeService {
         Date.now() + (delay ?? 0),
         delay === null ? 0 : retryNotBefore
       );
-      const code =
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        typeof error.code === 'string' &&
-        /^[a-z_]{1,80}$/.test(error.code)
-          ? error.code
-          : 'processing_failed';
-      await this.db
-        .update(jobs)
-        .set({
-          status: delay === null ? 'failed' : 'pending',
-          // PostgreSQL accepts extended positive years without JavaScript's leading '+'.
-          nextAttemptAt: new Date(nextAttemptAt)
-            .toISOString()
-            .replace(/^\+/, ''),
-          leaseToken: null,
-          leaseExpiresAt: null,
-          publishedAt: null,
-          errorCode: code,
-        })
-        .where(owns);
-      return delay === null ? 'failed' : 'retry';
+      const code = errorCode(error);
+      return this.db.transaction(async (tx) => {
+        const [current] = await tx
+          .select()
+          .from(jobs)
+          .where(owns)
+          .for('update');
+        if (!current) return 'obsolete' as const;
+        if (attemptFileId !== undefined)
+          await tx
+            .update(beatmapFiles)
+            .set({
+              fetchStatus:
+                code === 'not_found'
+                  ? DataFetchStatus.NotFound
+                  : DataFetchStatus.Error,
+              errorCode: code,
+            })
+            .where(
+              and(
+                eq(beatmapFiles.id, attemptFileId),
+                eq(beatmapFiles.fetchStatus, DataFetchStatus.Fetching)
+              )
+            );
+        await tx
+          .update(jobs)
+          .set({
+            status: delay === null ? 'failed' : 'pending',
+            // PostgreSQL accepts extended positive years without JavaScript's leading '+'.
+            nextAttemptAt: new Date(nextAttemptAt)
+              .toISOString()
+              .replace(/^\+/, ''),
+            leaseToken: null,
+            leaseExpiresAt: null,
+            publishedAt: null,
+            errorCode: code,
+          })
+          .where(owns);
+        return delay === null ? ('failed' as const) : ('retry' as const);
+      });
     } finally {
       clearInterval(heartbeat);
     }
@@ -588,17 +640,18 @@ export async function getBeatmapAttribute(
     where: eq(jobs.beatmapId, beatmapId),
     with: { sourceFile: true },
   });
-  if (!job?.sourceFile) return undefined;
+  const source = job?.sourceFile;
+  if (!job || !source || !isFetchedFile(source)) return undefined;
   const identity = createCalculationIdentity({
     settings: normalizeCalculationSettings(input),
-    checksum: job.sourceFile.checksum,
+    checksum: source.checksum,
     calculatorVersion: job.desiredCalculatorVersion,
     formatVersion: job.desiredFormatVersion,
   });
   return db.query.beatmapAttributes.findFirst({
     where: and(
       eq(beatmapAttributes.beatmapId, beatmapId),
-      eq(beatmapAttributes.fileId, job.sourceFile.id),
+      eq(beatmapAttributes.fileId, source.id),
       eq(beatmapAttributes.identity, identity)
     ),
   });

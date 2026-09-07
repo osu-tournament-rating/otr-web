@@ -4,12 +4,19 @@ import { ProcessBeatmapAttributesPayloadSchema } from '@otr/core/messages/beatma
 import { RabbitMqConsumer } from '../queue/rabbitmq-consumer';
 import { createAttributesRuntime } from './runtime';
 import { RECONCILE_MS } from './policy';
+import { consoleLogger } from '../logging/logger';
+import { startMetricsServer } from '../metrics';
 
 const runtime = await createAttributesRuntime();
+const logger = consoleLogger.child({ component: 'beatmap-attributes' });
+const metricsServer = startMetricsServer(
+  Number(process.env.METRICS_PORT ?? 9092)
+);
 const consumer = new RabbitMqConsumer<{ jobId: string; generation: number }>({
   url: runtime.amqpUrl,
   queue: QueueConstants.beatmapAttributes,
   prefetch: runtime.config.concurrency,
+  logger,
 });
 const active = new Set<Promise<void>>();
 let stopping = false;
@@ -17,14 +24,11 @@ let reconciliation: Promise<void> | null = null;
 const reconcile = () => {
   if (stopping || reconciliation) return;
   reconciliation = runtime.service
-    .reconcile(
-      (payload) => runtime.publisher.publish(payload),
-      process.env.BEATMAP_ATTRIBUTES_DISCOVER !== 'false'
-    )
+    .reconcile((payload) => runtime.publisher.publish(payload))
     .then(() => undefined)
     .catch(() => {
-      console.error(
-        'Beatmap attribute reconciliation failed; retrying on next interval'
+      logger.error(
+        'Beatmap attribute recovery failed; retrying on next interval'
       );
     })
     .finally(() => {
@@ -40,7 +44,12 @@ await consumer.start(async (message) => {
       await message.nack(false);
       return;
     }
-    await runtime.service.process(parsed.data);
+    const outcome = await runtime.service.process(parsed.data);
+    logger.info('Beatmap attribute job processed', {
+      jobId: parsed.data.jobId,
+      generation: parsed.data.generation,
+      outcome,
+    });
     await message.ack();
   })();
   active.add(task);
@@ -59,6 +68,7 @@ const stop = async () => {
   await consumer.stop();
   await Promise.allSettled([...active, reconciliation]);
   await runtime.close();
+  await metricsServer.stop();
 };
 process.on('SIGTERM', () => void stop());
 process.on('SIGINT', () => void stop());

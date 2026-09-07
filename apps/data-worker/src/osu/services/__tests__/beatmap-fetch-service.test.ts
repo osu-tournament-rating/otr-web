@@ -72,6 +72,7 @@ class BeatmapFetchTestDb {
     creatorsId: number;
   }> = [];
 
+  inTransaction = false;
   private nextId = 1000;
 
   constructor(beatmaps: BeatmapRow[]) {
@@ -158,7 +159,12 @@ class BeatmapFetchTestDb {
   }
 
   async transaction<T>(callback: (tx: this) => Promise<T>): Promise<T> {
-    return callback(this);
+    this.inTransaction = true;
+    try {
+      return await callback(this);
+    } finally {
+      this.inTransaction = false;
+    }
   }
 
   private write(
@@ -321,7 +327,12 @@ const createService = (
       logger,
     }),
     publishPlayerFetch: async () => {},
-    scheduleAttributes,
+    recordAttributeIntent: scheduleAttributes
+      ? async (tx, id) => {
+          expect(tx).toBe(client);
+          await scheduleAttributes(id);
+        }
+      : undefined,
   });
 
   return { service, logs };
@@ -392,12 +403,12 @@ describe('BeatmapFetchService manual override', () => {
 });
 
 describe('BeatmapFetchService attribute scheduling', () => {
-  it('schedules affected fetched siblings and isolates calculation scheduling failure', async () => {
+  it('records attribute intent in the metadata transaction', async () => {
     const db = new BeatmapFetchTestDb([overriddenBeatmap, siblingBeatmap]);
     const scheduled: number[] = [];
     const { service } = createService(db, workingApi, async (id) => {
+      expect(db.inTransaction).toBe(true);
       scheduled.push(id);
-      throw new Error('queue unavailable');
     });
     expect(await service.fetchAndPersist(111)).toBe(true);
     expect(scheduled).toEqual([2]);

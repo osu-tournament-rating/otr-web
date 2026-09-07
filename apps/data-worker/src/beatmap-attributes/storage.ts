@@ -616,6 +616,7 @@ export async function acquireBeatmapFile(options: {
   osuBeatmapId: number;
   storage: BeatmapFileStorage;
   downloader: Pick<BeatmapFileDownloader, 'download'>;
+  beforeDownload?: () => Promise<void>;
   existing?: {
     provider: BeatmapFileStorage['provider'];
     storageKey: string;
@@ -652,6 +653,7 @@ export async function acquireBeatmapFile(options: {
         throw error;
     }
   }
+  await options.beforeDownload?.();
   const bytes = await downloader.download(osuBeatmapId);
   validateBeatmapFile(bytes, osuBeatmapId);
   const checksum = beatmapFileChecksum(bytes);

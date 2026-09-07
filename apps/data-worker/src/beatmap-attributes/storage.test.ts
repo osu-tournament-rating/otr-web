@@ -224,6 +224,47 @@ describe('file validation and recovery', () => {
     expect(updated.storageKey).not.toBe(first.storageKey);
   });
 
+  test('records an acquisition intent before network and skips the intent for cached bytes', async () => {
+    const storage = await createStorage();
+    let intents = 0;
+    let requests = 0;
+    const downloader = mockDownloader(() => {
+      expect(intents).toBe(1);
+      requests++;
+      return new Response(fileBytes);
+    });
+    const first = await acquireBeatmapFile({
+      osuBeatmapId: 123,
+      storage,
+      downloader,
+      beforeDownload: async () => {
+        intents++;
+      },
+    });
+    await acquireBeatmapFile({
+      osuBeatmapId: 123,
+      storage,
+      downloader,
+      existing: first,
+      beforeDownload: async () => {
+        intents++;
+      },
+    });
+    expect(intents).toBe(1);
+    expect(requests).toBe(1);
+    await expect(
+      acquireBeatmapFile({
+        osuBeatmapId: 123,
+        storage,
+        downloader,
+        beforeDownload: async () => {
+          throw new Error('intent transaction failed');
+        },
+      })
+    ).rejects.toThrow('intent transaction failed');
+    expect(requests).toBe(1);
+  });
+
   test('does not download on an unavailable storage provider or use a mismatched provider cache', async () => {
     let downloads = 0;
     const downloader = mockDownloader(() => {

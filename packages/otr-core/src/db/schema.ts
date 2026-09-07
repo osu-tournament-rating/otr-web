@@ -17,6 +17,7 @@ import {
   unique,
 } from 'drizzle-orm/pg-core';
 import { sql, type SQL } from 'drizzle-orm';
+import { DataFetchStatus } from './data-fetch-status';
 import type {
   BeatmapAttributeJobStatus,
   BeatmapDifficultyPayload,
@@ -1902,15 +1903,25 @@ export const beatmapFiles = pgTable(
       .notNull()
       .references(() => beatmaps.id, { onDelete: 'cascade' }),
     provider: text().$type<BeatmapStorageProvider>().notNull(),
-    storageKey: text('storage_key').notNull(),
-    checksum: varchar({ length: 64 }).notNull(),
-    byteLength: integer('byte_length').notNull(),
+    storageKey: text('storage_key'),
+    checksum: varchar({ length: 64 }),
+    byteLength: integer('byte_length'),
     osuBeatmapId: bigint('osu_beatmap_id', { mode: 'number' }).notNull(),
     sourceUrl: text('source_url').notNull(),
-    acquiredAt: timestamp('acquired_at', { withTimezone: true, mode: 'string' })
-      .defaultNow()
-      .notNull(),
-    sourceMode: integer('source_mode').notNull(),
+    fetchStatus: integer('fetch_status')
+      .$type<DataFetchStatus>()
+      .notNull()
+      .default(DataFetchStatus.NotFetched),
+    lastFetchAttempt: timestamp('last_fetch_attempt', {
+      withTimezone: true,
+      mode: 'string',
+    }),
+    errorCode: text('error_code'),
+    acquiredAt: timestamp('acquired_at', {
+      withTimezone: true,
+      mode: 'string',
+    }),
+    sourceMode: integer('source_mode'),
     keyCount: integer('key_count'),
   },
   (table) => [
@@ -1936,8 +1947,16 @@ export const beatmapFiles = pgTable(
     check('beatmap_files_byte_length_check', sql`${table.byteLength} > 0`),
     check('beatmap_files_osu_id_check', sql`${table.osuBeatmapId} > 0`),
     check(
+      'beatmap_files_fetch_status_check',
+      sql`${table.fetchStatus} between 0 and 4`
+    ),
+    check(
+      'beatmap_files_fetched_check',
+      sql`${table.fetchStatus} != 2 or (${table.checksum} is not null and ${table.storageKey} is not null and ${table.storageKey} ~ '^sha256/[a-f0-9]{2}/[a-f0-9]{64}[.]osu$' and ${table.byteLength} is not null and ${table.byteLength} > 0 and ${table.acquiredAt} is not null)`
+    ),
+    check(
       'beatmap_files_mode_keys_check',
-      sql`(${table.sourceMode} in (0, 1, 2) and ${table.keyCount} is null) or (${table.sourceMode} = 3 and ${table.keyCount} is not null and ${table.keyCount} > 0)`
+      sql`coalesce((${table.sourceMode} is null and ${table.keyCount} is null) or (${table.sourceMode} in (0, 1, 2) and ${table.keyCount} is null) or (${table.sourceMode} = 3 and ${table.keyCount} is not null and ${table.keyCount} > 0), false)`
     ),
   ]
 );
@@ -1961,10 +1980,7 @@ export const beatmapAttributeJobs = pgTable(
       .$type<CalculationSettings[]>()
       .notNull(),
     refreshSource: boolean('refresh_source').notNull().default(false),
-    sourceMetadataUpdatedAt: timestamp('source_metadata_updated_at', {
-      withTimezone: true,
-      mode: 'string',
-    }),
+    acquiredFileId: integer('acquired_file_id'),
     sourceFileId: integer('source_file_id'),
     leaseToken: text('lease_token'),
     leaseExpiresAt: timestamp('lease_expires_at', {
@@ -2003,6 +2019,11 @@ export const beatmapAttributeJobs = pgTable(
       foreignColumns: [beatmapFiles.id, beatmapFiles.beatmapId],
       name: 'beatmap_attribute_jobs_source_beatmap_fk',
     }).onDelete('cascade'),
+    foreignKey({
+      columns: [table.acquiredFileId, table.beatmapId],
+      foreignColumns: [beatmapFiles.id, beatmapFiles.beatmapId],
+      name: 'beatmap_attribute_jobs_acquired_beatmap_fk',
+    }).onDelete('cascade'),
     check(
       'beatmap_attribute_jobs_status_check',
       sql`${table.status} in ('pending', 'processing', 'complete', 'failed')`
@@ -2013,7 +2034,7 @@ export const beatmapAttributeJobs = pgTable(
     ),
     check(
       'beatmap_attribute_jobs_requests_check',
-      sql`jsonb_typeof(${table.requestedSettings}) = 'array' and jsonb_array_length(${table.requestedSettings}) between 1 and 64`
+      sql`jsonb_typeof(${table.requestedSettings}) = 'array' and jsonb_array_length(${table.requestedSettings}) between 1 and 6`
     ),
   ]
 );
@@ -2046,8 +2067,6 @@ export const beatmapAttributes = pgTable(
     bpm: doublePrecision(),
     maxCombo: integer('max_combo'),
     clockRate: doublePrecision('clock_rate').notNull(),
-    totalLength: doublePrecision('total_length'),
-    drainLength: doublePrecision('drain_length'),
     hitWindows: jsonb('hit_windows').$type<BeatmapHitWindows>().notNull(),
     difficulty: jsonb().$type<BeatmapDifficultyPayload>().notNull(),
     created: timestamp({ withTimezone: true, mode: 'string' })
@@ -2091,10 +2110,6 @@ export const beatmapAttributes = pgTable(
     check(
       'beatmap_attributes_values_check',
       sql`${table.sr} >= 0 and ${table.sr} < 'Infinity'::float8 and ${table.clockRate} between 0.01 and 100 and (${table.maxCombo} is null or ${table.maxCombo} >= 0)`
-    ),
-    check(
-      'beatmap_attributes_duration_check',
-      sql`(${table.totalLength} is null or (${table.totalLength} >= 0 and ${table.totalLength} < 'Infinity'::float8)) and (${table.drainLength} is null or (${table.drainLength} >= 0 and ${table.drainLength} < 'Infinity'::float8)) and (${table.totalLength} is null or ${table.drainLength} is null or ${table.drainLength} <= ${table.totalLength})`
     ),
   ]
 );

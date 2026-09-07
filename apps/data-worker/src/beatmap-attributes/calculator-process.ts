@@ -1,15 +1,10 @@
 import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import type { CalculationSettings } from '@otr/core/osu/beatmap-attributes';
-import type { calculateBeatmapAttributes } from './calculator';
+import type { CalculationBatch } from './calculator';
 import { CALCULATOR_MEMORY_BYTES, CALCULATOR_TIMEOUT_MS } from './policy';
 
-type Calculated = ReturnType<typeof calculateBeatmapAttributes>;
-export interface CalculationBatch {
-  sourceMode: number;
-  keyCount: number | null;
-  results: Array<{ settings: CalculationSettings; attributes: Calculated }>;
-}
+export type { CalculationBatch } from './calculator';
 
 export class CalculatorProcessError extends Error {
   constructor(

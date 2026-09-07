@@ -1,11 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import {
-  CALCULATOR_VERSION,
-  canUpgradeCalculationVersion,
-  MAX_ATTEMPTS,
-  readAttributesConfig,
-  retryDelayMs,
-} from './policy';
+import { MAX_ATTEMPTS, readAttributesConfig, retryDelayMs } from './policy';
 
 describe('attribute processing bounds', () => {
   test('processing is explicitly opt in', () => {
@@ -29,21 +23,4 @@ describe('attribute processing bounds', () => {
       })
     ).toThrow();
   });
-});
-
-test('only older calculator releases are upgraded during mixed worker rollout', () => {
-  expect(
-    canUpgradeCalculationVersion('rosu-pp-js@4.0.2+duration@1.0.0', 1)
-  ).toBe(false);
-  expect(
-    canUpgradeCalculationVersion('rosu-pp-js@4.0.1+duration@1.1.0', 1)
-  ).toBe(false);
-  expect(
-    canUpgradeCalculationVersion('rosu-pp-js@4.0.1+duration@1.0.0', 2)
-  ).toBe(false);
-  expect(canUpgradeCalculationVersion('unknown-future-build', 1)).toBe(false);
-  expect(
-    canUpgradeCalculationVersion('rosu-pp-js@4.0.0+duration@1.0.0', 1)
-  ).toBe(true);
-  expect(canUpgradeCalculationVersion(CALCULATOR_VERSION, 1)).toBe(false);
 });

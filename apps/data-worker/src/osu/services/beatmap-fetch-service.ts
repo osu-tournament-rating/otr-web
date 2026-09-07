@@ -1,4 +1,5 @@
 import { not } from 'drizzle-orm';
+import type { AttributeIntentExecutor } from '../../beatmap-attributes/service';
 import type { API } from 'osu-api-v2-js';
 
 import { withApiErrorHandling, withApiMetrics } from '../api-helpers';
@@ -24,7 +25,10 @@ import * as schema from '@otr/core/db/schema';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 interface BeatmapFetchServiceOptions {
-  scheduleAttributes?: (beatmapId: number) => Promise<void>;
+  recordAttributeIntent?: (
+    tx: AttributeIntentExecutor,
+    beatmapId: number
+  ) => Promise<unknown>;
   db: DatabaseClient;
   api: API;
   rateLimiter: RateLimiter;
@@ -34,7 +38,10 @@ interface BeatmapFetchServiceOptions {
 }
 
 export class BeatmapFetchService {
-  private readonly scheduleAttributes?: (beatmapId: number) => Promise<void>;
+  private readonly recordAttributeIntent?: (
+    tx: AttributeIntentExecutor,
+    beatmapId: number
+  ) => Promise<unknown>;
   private readonly db: DatabaseClient;
   private readonly api: API;
   private readonly rateLimiter: RateLimiter;
@@ -43,7 +50,7 @@ export class BeatmapFetchService {
   private readonly publishPlayerFetch: (osuPlayerId: number) => Promise<void>;
 
   constructor(options: BeatmapFetchServiceOptions) {
-    this.scheduleAttributes = options.scheduleAttributes;
+    this.recordAttributeIntent = options.recordAttributeIntent;
     this.db = options.db;
     this.api = options.api;
     this.rateLimiter = options.rateLimiter;
@@ -261,6 +268,7 @@ export class BeatmapFetchService {
           continue;
         }
 
+        await this.recordAttributeIntent?.(tx, row.id);
         affectedBeatmapIds.push(row.id);
 
         if (beatmap.user_id) {
@@ -300,17 +308,6 @@ export class BeatmapFetchService {
         DataFetchStatus.Fetched,
         { skipAutomationChecks: options?.skipAutomationChecks }
       );
-    }
-
-    for (const id of result.affectedBeatmapIds) {
-      try {
-        await this.scheduleAttributes?.(id);
-      } catch {
-        this.logger.error(
-          'Attribute scheduling failed; reconciliation will recover',
-          { beatmapId: id }
-        );
-      }
     }
 
     return true;

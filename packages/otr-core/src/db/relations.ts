@@ -525,7 +525,12 @@ export const beatmapFilesRelations = relations(
       references: [beatmaps.id],
     }),
     attributes: many(beatmapAttributes),
-    jobs: many(beatmapAttributeJobs),
+    jobs: many(beatmapAttributeJobs, {
+      relationName: 'beatmapAttributeSource',
+    }),
+    acquisitionJobs: many(beatmapAttributeJobs, {
+      relationName: 'beatmapAttributeAcquisition',
+    }),
   })
 );
 
@@ -539,6 +544,12 @@ export const beatmapAttributeJobsRelations = relations(
     sourceFile: one(beatmapFiles, {
       fields: [beatmapAttributeJobs.sourceFileId],
       references: [beatmapFiles.id],
+      relationName: 'beatmapAttributeSource',
+    }),
+    acquiredFile: one(beatmapFiles, {
+      fields: [beatmapAttributeJobs.acquiredFileId],
+      references: [beatmapFiles.id],
+      relationName: 'beatmapAttributeAcquisition',
     }),
   })
 );

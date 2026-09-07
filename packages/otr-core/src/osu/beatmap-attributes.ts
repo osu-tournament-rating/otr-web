@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 import { Mods, Ruleset } from './enums';
 
-export const CALCULATION_FORMAT_VERSION = 1;
-export const MAX_CALCULATION_REQUESTS = 64;
+export const CALCULATION_FORMAT_VERSION = 2;
+export const MAX_CALCULATION_REQUESTS = 6;
 export const BEATMAP_ATTRIBUTE_PROFILES = [
   Mods.None,
   Mods.HardRock,
@@ -34,6 +34,7 @@ const modeSchema = z.union([
   z.literal(3),
 ]);
 const rulesetSchema = z.enum(Ruleset);
+const standardClockRate = z.union([z.literal(1), z.literal(1.5)]);
 export const BeatmapChecksumSchema = z.string().regex(/^[a-f0-9]{64}$/);
 export const BeatmapStorageProviderSchema = z.enum(['local', 'gcp']);
 export const BeatmapAttributeJobStatusSchema = z.enum([
@@ -56,15 +57,14 @@ export const CalculationSettingsInputSchema = z
   .object({
     ruleset: rulesetSchema,
     mods: count.max(2_147_483_647),
-    // rosu clamps outside this range; reject instead of aliasing distinct requests.
-    clockRate: finite.min(0.01).max(100).optional(),
-    lazer: z.boolean(),
+    clockRate: standardClockRate.optional(),
+    lazer: z.literal(false),
   })
   .strict();
 
 export const CalculationSettingsSchema = CalculationSettingsInputSchema.extend({
   mode: modeSchema,
-  clockRate: finite.min(0.01).max(100),
+  clockRate: standardClockRate,
 }).superRefine((settings, ctx) => {
   if (libraryModes[settings.ruleset] !== settings.mode) {
     ctx.addIssue({
@@ -82,6 +82,13 @@ export const CalculationSettingsSchema = CalculationSettingsInputSchema.extend({
       path: ['mods'],
     });
   }
+  if (settings.clockRate !== (settings.mods === Mods.DoubleTime ? 1.5 : 1)) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'Expected the standard clock rate for this profile',
+      path: ['clockRate'],
+    });
+  }
 });
 
 export type CalculationSettingsInput = z.infer<
@@ -97,7 +104,14 @@ export type BeatmapAttributeJobStatus = z.infer<
 export const RequestedCalculationSettingsSchema = z
   .array(CalculationSettingsSchema)
   .min(1)
-  .max(MAX_CALCULATION_REQUESTS);
+  .max(MAX_CALCULATION_REQUESTS)
+  .refine(
+    (settings) =>
+      settings.every((setting) => setting.ruleset === settings[0]?.ruleset),
+    {
+      message: 'A calculation job must use one target ruleset',
+    }
+  );
 
 export function normalizeCalculationSettings(
   input: CalculationSettingsInput
@@ -138,16 +152,33 @@ export function normalizeCalculationRequests(
 }
 
 export function getDefaultCalculationSettings(
-  ruleset: Ruleset,
-  lazer = false
+  ruleset: Ruleset
 ): CalculationSettings[] {
   return normalizeCalculationRequests(
     defaultProfiles[rulesetSchema.parse(ruleset)].map((mods) => ({
       ruleset,
       mods,
-      lazer,
+      lazer: false,
     }))
   );
+}
+
+/** Adjusts existing metadata lengths; these are not calculated from the source file. */
+export function getBeatmapMetadataLengths(
+  metadata: { totalLength: number | null; drainLength: number | null },
+  mods: number
+) {
+  const { clockRate } = normalizeCalculationSettings({
+    ruleset: Ruleset.Osu,
+    mods,
+    lazer: false,
+  });
+  const adjust = (length: number | null) =>
+    length === null ? null : nonnegative.parse(length) / clockRate;
+  return {
+    totalLength: adjust(metadata.totalLength),
+    drainLength: adjust(metadata.drainLength),
+  };
 }
 
 export function createCalculationIdentity(input: {
@@ -183,109 +214,58 @@ export const BeatmapHitWindowsSchema = z
   })
   .strict();
 
-const difficultyCommon = {
-  stars: nonnegative,
-  isConvert: z.boolean(),
-  maxCombo: count,
-};
+const difficultyVersion = z.literal(CALCULATION_FORMAT_VERSION);
 
 const OsuDifficultySchema = z
   .object({
-    ...difficultyCommon,
+    version: difficultyVersion,
     mode: z.literal(0),
     aim: nonnegative,
-    aimDifficultSliderCount: nonnegative,
     speed: nonnegative,
     flashlight: nonnegative,
-    sliderFactor: nonnegative,
-    aimTopWeightedSliderFactor: nonnegative,
-    speedTopWeightedSliderFactor: nonnegative,
-    speedNoteCount: nonnegative,
-    aimDifficultStrainCount: nonnegative,
-    speedDifficultStrainCount: nonnegative,
-    nestedScorePerObject: nonnegative,
-    legacyScoreBaseMultiplier: nonnegative,
-    maximumLegacyComboScore: nonnegative,
-    hp: finite,
     nCircles: count,
     nSliders: count,
-    nLargeTicks: count,
     nSpinners: count,
-    ar: finite,
-    greatHitWindow: nonnegative,
-    okHitWindow: nonnegative,
-    mehHitWindow: nonnegative,
   })
   .strict();
 
 const TaikoDifficultySchema = z
   .object({
-    ...difficultyCommon,
+    version: difficultyVersion,
     mode: z.literal(1),
     stamina: nonnegative,
     rhythm: nonnegative,
     color: nonnegative,
     reading: nonnegative,
-    greatHitWindow: nonnegative,
-    okHitWindow: nonnegative,
-    monoStaminaFactor: nonnegative,
-    mechanicalDifficulty: nonnegative,
-    consistencyFactor: nonnegative,
   })
   .strict();
 
 const CatchDifficultySchema = z
   .object({
-    ...difficultyCommon,
+    version: difficultyVersion,
     mode: z.literal(2),
     nFruits: count,
     nDroplets: count,
     nTinyDroplets: count,
-    preempt: nonnegative,
   })
   .strict();
 
 const ManiaDifficultySchema = z
   .object({
-    ...difficultyCommon,
+    version: difficultyVersion,
     mode: z.literal(3),
+    keyCount: count.positive(),
     nObjects: count,
     nHoldNotes: count,
   })
   .strict();
 
-export const BeatmapDifficultyPayloadSchema = z
-  .object({
-    version: z.literal(CALCULATION_FORMAT_VERSION),
-    mode: modeSchema,
-    isConvert: z.boolean(),
-    keyCount: count.positive().nullable(),
-    attributes: z.discriminatedUnion('mode', [
-      OsuDifficultySchema,
-      TaikoDifficultySchema,
-      CatchDifficultySchema,
-      ManiaDifficultySchema,
-    ]),
-  })
-  .strict()
-  .superRefine((payload, ctx) => {
-    if (
-      payload.mode !== payload.attributes.mode ||
-      payload.isConvert !== payload.attributes.isConvert
-    ) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Difficulty metadata does not match its attributes',
-      });
-    }
-    if ((payload.mode === 3) !== (payload.keyCount !== null)) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Only mania difficulty has a key count',
-        path: ['keyCount'],
-      });
-    }
-  });
+export const BeatmapDifficultyPayloadSchema = z.discriminatedUnion('mode', [
+  OsuDifficultySchema,
+  TaikoDifficultySchema,
+  CatchDifficultySchema,
+  ManiaDifficultySchema,
+]);
 
 export const CalculatedBeatmapAttributesSchema = z
   .object({
@@ -296,33 +276,11 @@ export const CalculatedBeatmapAttributesSchema = z
     sr: nonnegative,
     bpm: nonnegative.nullable(),
     maxCombo: count.nullable(),
-    clockRate: finite.min(0.01).max(100),
-    totalLength: nonnegative.nullable(),
-    drainLength: nonnegative.nullable(),
+    clockRate: standardClockRate,
     hitWindows: BeatmapHitWindowsSchema,
     difficulty: BeatmapDifficultyPayloadSchema,
   })
-  .strict()
-  .superRefine((attributes, ctx) => {
-    if (
-      attributes.totalLength !== null &&
-      attributes.drainLength !== null &&
-      attributes.drainLength > attributes.totalLength
-    ) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Drain length cannot exceed total length',
-        path: ['drainLength'],
-      });
-    }
-    if (attributes.sr !== attributes.difficulty.attributes.stars) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Star rating must match the difficulty result',
-        path: ['sr'],
-      });
-    }
-  });
+  .strict();
 
 export type BeatmapHitWindows = z.infer<typeof BeatmapHitWindowsSchema>;
 export type BeatmapDifficultyPayload = z.infer<

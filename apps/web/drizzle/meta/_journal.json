@@ -232,6 +232,20 @@
       "when": 1788795119727,
       "tag": "0032_beatmap_attribute_source_revision",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1788819899675,
+      "tag": "0033_beatmap_file_fetch_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1788819900204,
+      "tag": "0034_backfill_downloaded_beatmap_files",
+      "breakpoints": true
     }
   ]
 }
