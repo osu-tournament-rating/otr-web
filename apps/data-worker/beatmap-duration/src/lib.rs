@@ -1,4 +1,7 @@
-use rosu_map::section::hit_objects::{Curve, CurveBuffers};
+use rosu_map::section::{
+    general::GameMode,
+    hit_objects::{Curve, CurveBuffers},
+};
 use rosu_pp::{
     Beatmap,
     model::{
@@ -53,24 +56,52 @@ fn calculate(bytes: &[u8], clock_rate: f64) -> Result<Durations, String> {
                     .map_or(DifficultyPoint::DEFAULT_SLIDER_VELOCITY, |point| {
                         point.slider_velocity
                     });
-                let curve = Curve::new(
-                    map.mode,
-                    &slider.control_points,
-                    slider.expected_dist,
-                    &mut curves,
-                );
-                // Match rosu-pp 4.0.1 OsuSlider/Catch JuiceStream, including its f32 SV rounding.
                 let inherited_beat_len = -100.0 / slider_velocity;
                 let bpm_multiplier = if inherited_beat_len < 0.0 {
                     f64::from(((-inherited_beat_len) as f32).clamp(10.0, 10_000.0)) / 100.0
                 } else {
                     1.0
                 };
-                let velocity = 100.0 * map.slider_multiplier / (beat_len * bpm_multiplier);
-                if !velocity.is_finite() || velocity <= 0.0 {
-                    return Err("Invalid slider velocity".into());
-                }
-                start + slider.span_count() as f64 * curve.dist() / velocity
+                let duration = match map.mode {
+                    GameMode::Taiko => {
+                        // TaikoBeatmapConverter retains encoded distance and this exact operation order.
+                        const VELOCITY_MULTIPLIER: f64 = 1.4_f32 as f64;
+                        let mut distance = slider.expected_dist.unwrap_or(0.0);
+                        distance *= VELOCITY_MULTIPLIER;
+                        distance *= slider.span_count() as f64;
+                        let scoring_point_distance = 100.0
+                            * (map.slider_multiplier * VELOCITY_MULTIPLIER)
+                            / map.slider_tick_rate;
+                        let velocity = scoring_point_distance * map.slider_tick_rate;
+                        let duration = distance / velocity * (beat_len * bpm_multiplier);
+                        if !duration.is_finite() || !(0.0..=f64::from(i32::MAX)).contains(&duration)
+                        {
+                            return Err("Invalid taiko drum roll duration".into());
+                        }
+                        // Native rolls remain rolls; only converted maps can split them into hits.
+                        duration.trunc()
+                    }
+                    GameMode::Osu | GameMode::Catch | GameMode::Mania => {
+                        let curve = Curve::new(
+                            map.mode,
+                            &slider.control_points,
+                            slider.expected_dist,
+                            &mut curves,
+                        );
+                        let velocity = if map.mode == GameMode::Mania {
+                            // Match rosu-pp 4.0.1 ManiaObject's direct SV multiplication.
+                            100.0 * map.slider_multiplier * slider_velocity / beat_len
+                        } else {
+                            // OsuSlider/Catch JuiceStream use the f32-adjusted beat length.
+                            100.0 * map.slider_multiplier / (beat_len * bpm_multiplier)
+                        };
+                        if !velocity.is_finite() || velocity <= 0.0 {
+                            return Err("Invalid slider velocity".into());
+                        }
+                        slider.span_count() as f64 * curve.dist() / velocity
+                    }
+                };
+                start + duration
             }
         };
         if !start.is_finite() || !end.is_finite() || end < start {
@@ -172,6 +203,87 @@ mod tests {
             "0,500,4,1,0,100,1,0",
             1.0,
         );
+        assert_eq!(result.total_length, 1.0);
+    }
+
+    #[test]
+    fn native_taiko_drum_rolls_use_encoded_distance_instead_of_curve_geometry() {
+        let source = map(
+            "64,64,1000,1,0,0:0:0:0:\n64,64,2000,2,0,L|64:64,3,280",
+            "",
+            "0,500,4,1,0,100,1,0\n1500,-50,4,1,0,100,0,0",
+        )
+        .replace("Mode:0", "Mode:1");
+        for (clock, expected) in [(1.0, 2.5), (1.5, 2.5 / 1.5)] {
+            let result = calculate(source.as_bytes(), clock).unwrap();
+            assert_eq!(result.total_length, expected);
+            assert_eq!(result.drain_length, expected);
+        }
+    }
+
+    #[test]
+    fn native_taiko_duration_truncates_before_clock_rate() {
+        let source = map(
+            "64,64,1000,1,0,0:0:0:0:\n64,64,2000,2,0,L|344:64,1,280.2",
+            "",
+            "0,500,4,1,0,100,1,0",
+        )
+        .replace("Mode:0", "Mode:1");
+        for clock in [1.0, 1.5, 1.1] {
+            let result = calculate(source.as_bytes(), clock).unwrap();
+            assert!((result.total_length - 2.0 / clock).abs() < 1e-12);
+        }
+    }
+
+    #[test]
+    fn native_taiko_retains_legacy_floating_point_operation_order() {
+        let source = map(
+            "64,64,1000,1,0,0:0:0:0:\n64,64,2000,2,0,L|344:64,1,280.28",
+            "",
+            "0,500,4,1,0,100,1,0",
+        )
+        .replace("Mode:0", "Mode:1")
+        .replace("SliderMultiplier:1.4", "SliderMultiplier:0.7")
+        .replace("SliderTickRate:1", "SliderTickRate:0.5");
+        let result = calculate(source.as_bytes(), 1.0).unwrap();
+        assert_eq!(result.total_length, 3.002);
+    }
+
+    #[test]
+    fn short_native_taiko_rolls_are_not_converted_to_hits_in_either_file_version() {
+        let source = map(
+            "64,64,1000,1,0,0:0:0:0:\n64,64,2000,2,0,L|64:64,1,28",
+            "",
+            "0,500,4,1,0,100,1,0",
+        )
+        .replace("Mode:0", "Mode:1");
+        for version in ["v7", "v14"] {
+            let result = calculate(source.replace("v14", version).as_bytes(), 1.0).unwrap();
+            assert_eq!(result.total_length, 1.1);
+        }
+    }
+
+    #[test]
+    fn native_mania_legacy_sliders_use_direct_slider_velocity() {
+        let source = map(
+            "64,64,1000,1,0,0:0:0:0:\n64,64,2000,2,0,L|344:64,1,280",
+            "",
+            "0,500,4,1,0,100,1,0\n1500,-33.33333,4,1,0,100,0,0",
+        )
+        .replace("Mode:0", "Mode:3");
+        let result = calculate(source.as_bytes(), 1.0).unwrap();
+        assert!((result.total_length - 1.3333333).abs() < 1e-12);
+    }
+
+    #[test]
+    fn catch_preserves_curve_geometry_for_degenerate_sliders() {
+        let source = map(
+            "64,64,1000,1,0,0:0:0:0:\n64,64,2000,2,0,L|64:64,1,280",
+            "",
+            "0,500,4,1,0,100,1,0",
+        )
+        .replace("Mode:0", "Mode:2");
+        let result = calculate(source.as_bytes(), 1.0).unwrap();
         assert_eq!(result.total_length, 1.0);
     }
 

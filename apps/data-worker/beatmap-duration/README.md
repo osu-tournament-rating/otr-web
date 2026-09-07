@@ -6,9 +6,13 @@ It uses the same pinned Rust parser (`rosu-pp=4.0.1`) and slider curve library
 (`rosu-map=0.2.1`). It does not read osu! API metadata.
 
 `total_length` is the interval from the first object start to the latest object
-end, in seconds. Slider ends use the parsed curve distance, all spans, active
-timing and inherited slider velocity, and the same precision adjustment as
-rosu-pp. Spinner and hold ends include their full duration. `drain_length`
+end, in seconds. Osu! and catch slider ends use the parsed curve distance, all
+spans, active timing and inherited slider velocity, and the same precision
+adjustment as rosu-pp. Mania legacy slider objects use their parsed curve with
+rosu-pp's direct slider-velocity multiplication. Native taiko drum rolls use
+encoded expected distance with the converter's exact velocity operation order
+and truncate duration to integer milliseconds before clock-rate adjustment;
+short native rolls remain rolls. Spinner and hold ends include their full duration. `drain_length`
 subtracts the union of break intervals clipped to that play interval. Both
 lengths divide by the supplied effective clock rate exactly once. Intro/outro
 audio outside the object interval is not included. Empty maps are rejected.
@@ -26,6 +30,8 @@ and control-point selection follow these exact upstream sources:
 
 - [rosu-pp 4.0.1 slider construction](https://github.com/MaxOhn/rosu-pp/blob/v4.0.1/src/osu/object.rs)
 - [rosu-pp precision adjustment](https://github.com/MaxOhn/rosu-pp/blob/v4.0.1/src/util/mod.rs)
+- [Pinned taiko drum-roll conversion](https://github.com/ppy/osu/blob/28c846b4d9366484792e27f4729cd1afa2cdeb66/osu.Game.Rulesets.Taiko/Beatmaps/TaikoBeatmapConverter.cs)
+- [rosu-pp 4.0.1 mania object ends](https://github.com/MaxOhn/rosu-pp/blob/v4.0.1/src/mania/object.rs)
 - [rosu-pp control points](https://github.com/MaxOhn/rosu-pp/tree/v4.0.1/src/model/control_point)
 - [rosu-pp-js 4.0.1 binding surface](https://github.com/MaxOhn/rosu-pp-js/blob/v4.0.1/rosu_pp_js.d.ts)
 
@@ -46,5 +52,8 @@ The native Rust suite covers object ends, slider repeats and inherited velocity,
 long objects extending beyond later starts, break clipping and overlap,
 clock-rate scaling, and invalid input. The TypeScript calculator suite also
 executes this generated WASM against real files for every base library mode.
+Version `1.0.1` corrects native taiko drum-roll duration and mania legacy slider
+velocity. Its calculation identity differs from `1.0.0` so corrected results
+can be rebuilt while prior results remain attributable to their original version.
 Changes to duration semantics require a binding version increase, regeneration,
 and a new calculation identity so retained results remain reproducible.

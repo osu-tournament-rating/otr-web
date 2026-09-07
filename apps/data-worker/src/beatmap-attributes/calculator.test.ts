@@ -59,6 +59,22 @@ describe('real rosu calculator', () => {
     expect(fast.clockRate).toBe(1.2);
     expect(slow.sr).not.toBe(fast.sr);
   });
+  test('a final native taiko drum roll includes its encoded duration for NM and DT', () => {
+    const content =
+      fixture(1028484)
+        .toString()
+        .replace(
+          /\[TimingPoints\][\s\S]*?\[HitObjects\]/,
+          '[TimingPoints]\n0,500,4,1,0,100,1,0\n\n[HitObjects]'
+        ) + '\n256,192,90000,2,0,L|256:192,1,280\n';
+    const bytes = new TextEncoder().encode(content);
+    const nm = calculateBeatmapAttributes(bytes, settings(1));
+    const dt = calculateBeatmapAttributes(bytes, settings(1, 64, 1.5));
+    expect(nm.totalLength).toBeCloseTo(90.31, 12);
+    expect(nm.drainLength).toBeCloseTo(90.31, 12);
+    expect(dt.totalLength).toBeCloseTo(90.31 / 1.5, 12);
+    expect(dt.drainLength).toBeCloseTo(90.31 / 1.5, 12);
+  });
   test('inapplicable attributes and windows are null', () => {
     const taiko = calculateBeatmapAttributes(fixture(1028484), settings(1));
     expect(taiko.ar).toBeNull();
