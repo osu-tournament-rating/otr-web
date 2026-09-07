@@ -54,7 +54,8 @@ bun run --cwd apps/data-worker attributes --osu-id 2785319 --ruleset 0 --inspect
 
 Inspection includes `beatmapFiles`, `beatmapAttributes`, and
 `beatmapAttributeJobs`. A successful job has status `complete`, a source file,
-and six resolved profiles. Each stored result includes a source checksum and
+and six resolved profiles for this osu! example. Other rulesets use the default
+profiles listed below. Each stored result includes a source checksum and
 calculator version. Repeat the enqueue command to check idempotency: unchanged
 requests reuse the job and stored results.
 
@@ -82,16 +83,32 @@ attributes job and schedules batches of up to 25. It also schedules jobs whose
 desired versions can be upgraded to the running worker's versions. Jobs requesting
 newer or unrecognized versions are left unchanged. Enabling discovery can start
 a historical backfill. The normal ingestion worker schedules affected beatmaps
-after its metadata transaction commits; discovery repairs missed scheduling
-after interruption or a scheduling failure.
+after its metadata transaction commits. When fetched, non-manual metadata changes,
+scheduling records a source refresh even for an already-complete job. Discovery
+also checks those metadata revisions, recovering a missed callback after
+interruption or a scheduling failure.
 
 ## Rulesets, profiles, and identity
 
-The MVP supports six individual profiles: NM (`0`), HR (`16`), HD (`8`), EZ (`2`),
-FL (`1024`), and DT (`64`). A profile can produce the same star rating as NM when
-it does not change that ruleset's difficulty calculation. Unsupported combinations
-are rejected. Requests are represented as settings objects so later combinations
-can be added without changing the job envelope.
+The MVP accepts six individual profiles: NM (`0`), HR (`16`), HD (`8`), EZ (`2`),
+FL (`1024`), and DT (`64`). Automatic scheduling and the CLI with `--mods` omitted
+use defaults selected by ruleset:
+
+| Ruleset                     | Default profiles       | Count |
+| --------------------------- | ---------------------- | ----- |
+| osu!                        | NM, HR, HD, EZ, FL, DT | 6     |
+| osu!taiko                   | NM, HR, EZ, DT         | 4     |
+| osu!catch                   | NM, HR, EZ, DT         | 4     |
+| osu!mania other, 4K, and 7K | NM, DT                 | 2     |
+
+The pinned calculator returns the same full attributes for HD/FL as NM outside
+osu!, so those profiles are omitted from automatic defaults. Mania HR/EZ can
+still change effective OD and HP even when the star rating is unchanged. They
+remain distinct, valid explicit requests and are not aliases of NM. All six
+profiles remain available through `--mods` for every supported native ruleset.
+This changes default work selection without changing calculator math or identity.
+Unsupported combinations are rejected. Requests remain settings objects so later
+combinations can be added without changing the job envelope.
 
 | o!TR ruleset    | CLI value | Required native file                            |
 | --------------- | --------- | ----------------------------------------------- |
@@ -129,8 +146,11 @@ Calculation identity includes the source checksum, calculator version,
 calculation-format version, target o!TR ruleset, explicit library mode, canonical
 mods, effective clock rate, and stable/lazer setting. Different speeds and
 stable/lazer behavior retain separate results. A job accepts between 1 and 64
-unique canonical requests. Ordinary scheduling merges additional requests;
-explicit recalculation replaces the job's requested set.
+unique canonical requests. Ordinary CLI scheduling merges the selected profiles
+with existing requests. Automatic metadata refresh preserves the recorded set,
+including explicit mods, custom clock rates, and lazer settings. `--recalculate`
+replaces the requested set with the CLI selection; omitting `--mods` selects the
+ruleset defaults. Changing that set does not delete stored results.
 
 ## Storage, provenance, and rebuilding
 
@@ -154,8 +174,10 @@ reschedule it:
 bun run --cwd apps/data-worker attributes --osu-id 2785319 --recalculate
 ```
 
-`--recalculate` starts a new job generation and resets its retry budget. Matching
-source/settings/version results are reused, so unchanged work stays idempotent.
+`--recalculate` starts a new job generation, replaces its requested profile set,
+and resets its retry budget. Matching source/settings/version results are reused,
+so unchanged work stays idempotent. Supply `--mods` and any custom settings again
+to retain them in this explicit replacement; otherwise the CLI uses the defaults.
 To check upstream bytes even when the stored file is available, use:
 
 ```sh
@@ -181,12 +203,14 @@ Result history is append-only for each source and calculation identity. The
 source and desired versions. Direct beatmap relationships also expose retained
 history, so future callers must select the intended source/version explicitly.
 
-For example, five beatmaps initially calculated with duration `1.0.0` and rebuilt
-with `1.0.1` have six current profiles each: 30 results at the current version,
-plus 30 retained results at the previous version. The full `beatmapAttributes`
-relationship includes all 60 versioned rows across those maps. Validate each
-map's six `resolved` profiles and their calculator version separately from the
-historical row count. Repeating the current calculation adds no duplicate results.
+A fresh run using one osu!, one taiko, one catch, one mania 4K, and one mania 7K
+map produces 18 default-profile results: 6 + 4 + 4 + 2 + 2. An existing database
+can also contain retained results from earlier calculator versions or broader
+profile selections. The full `beatmapAttributes` relationship includes those
+rows. Validate the `resolved` profiles against the defaults table and their
+calculator version separately from the historical row count. Repeating the same
+calculation adds no duplicate results. Applying the reduced defaults to an old
+job requires explicit `--recalculate`; ordinary scheduling preserves its requests.
 
 When updating rosu or duration semantics, update the pinned calculator dependency
 and calculator-version identifier; change the calculation-format version when
@@ -226,6 +250,22 @@ metadata fetching and verification. The durable job generation and lease token
 own each attempt. Result insertion and completion occur together only while that
 ownership is still current; a late attempt cannot commit over a newer generation.
 
+The nullable job field `sourceMetadataUpdatedAt` records the metadata revision
+for which a source refresh has been durably queued. Scheduling compares it with
+the fetched beatmap's `updated` value, falling back to `created` when needed.
+Any distinct revision triggers refresh; timestamps need not increase because
+overlapping fetches can commit out of order. The marker and pending refresh flag
+are saved with the new generation. Unrelated profile additions or version upgrades
+preserve that pending refresh. Manually overridden metadata is excluded from
+these automatic source-revision checks.
+
+Source reconciliation scans bounded batches of 25 with pagination. A callback
+lost after metadata commits is recoverable because the stored revision differs
+from the marker. Existing fetched jobs with a null marker receive one initial
+refresh. An unchanged re-download reuses source/results without creating a
+permanent refresh loop. A failed refresh retains its marker and uses the bounded
+retry budget; discovery does not continually reset it for the same revision.
+
 Reconciliation runs on startup and every 15 seconds. Publication has a 60-second
 lease, allowing recovery when a database commit succeeds but publication fails,
 or the broker confirms delivery ambiguously. A processing lease lasts 120 seconds
@@ -248,10 +288,12 @@ object creation. The code does not provision resources and never falls back to
 local storage after a GCP failure. GCP coverage is limited to isolated tests with
 an injected client; no live GCP bucket or credentials were tested for this MVP.
 
-Apply the migration before deploying readers or workers, with processing flags
-disabled. The existing attributes table is assumed empty; unrelated records and
-contracts are preserved. Deploy the standalone consumer with explicit storage,
-then enable processing for the consumer and ingestion worker. Enable discovery
+Apply migrations before deploying readers or workers, with processing flags
+disabled. Migration `0031` retains the accepted empty legacy attributes-table
+premise. Additive migration `0032` adds the nullable source metadata marker without
+removing existing results; discovery performs the initial refresh described above.
+Unrelated records and contracts are preserved. Deploy the standalone consumer
+with explicit storage, then enable processing for the consumer and ingestion worker. Enable discovery
 only when the historical backfill is wanted. Disabling processing prevents new
 ingestion scheduling; stop the standalone consumer to stop consuming queued jobs.
 

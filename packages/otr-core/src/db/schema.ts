@@ -1961,6 +1961,10 @@ export const beatmapAttributeJobs = pgTable(
       .$type<CalculationSettings[]>()
       .notNull(),
     refreshSource: boolean('refresh_source').notNull().default(false),
+    sourceMetadataUpdatedAt: timestamp('source_metadata_updated_at', {
+      withTimezone: true,
+      mode: 'string',
+    }),
     sourceFileId: integer('source_file_id'),
     leaseToken: text('lease_token'),
     leaseExpiresAt: timestamp('lease_expires_at', {

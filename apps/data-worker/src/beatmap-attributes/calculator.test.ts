@@ -37,6 +37,37 @@ describe('real rosu calculator', () => {
       }
     });
   }
+  test('HD and FL duplicate the entire non-osu result, while mania HR/EZ retain distinct effective attributes', () => {
+    for (const [id, ruleset] of [
+      [1028484, 1],
+      [2118524, 2],
+      [1638954, 3],
+      [1638954, 4],
+      [763919, 5],
+    ] as const) {
+      for (const lazer of [false, true]) {
+        const bytes = fixture(id);
+        const nm = calculateBeatmapAttributes(
+          bytes,
+          settings(ruleset, 0, 1, lazer)
+        );
+        for (const mods of [8, 1024])
+          expect(
+            calculateBeatmapAttributes(bytes, settings(ruleset, mods, 1, lazer))
+          ).toEqual(nm);
+        if (ruleset >= 3)
+          for (const mods of [16, 2]) {
+            const result = calculateBeatmapAttributes(
+              bytes,
+              settings(ruleset, mods, 1, lazer)
+            );
+            expect(result.sr).toBe(nm.sr);
+            expect(result.od).not.toBe(nm.od);
+            expect(result.hpDrain).not.toBe(nm.hpDrain);
+          }
+      }
+    }
+  });
   test('NC, DT and NC-with-DT produce one clock rate and identical output', () => {
     const bytes = fixture(2785319);
     const dt = calculateBeatmapAttributes(bytes, settings(0, 64, 1.5));

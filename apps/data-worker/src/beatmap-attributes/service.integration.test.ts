@@ -476,7 +476,177 @@ suite('persisted beatmap attribute lifecycle', () => {
     });
     created.push(result.beatmap.id);
     expect(result.beatmap.ruleset).toBe(5);
-    expect(result.settings).toHaveLength(6);
+    expect(result.settings.map((setting) => setting.mods)).toEqual([0, 64]);
+  });
+
+  test('metadata refetch refreshes the source without losing custom settings or resetting a pending refresh', async () => {
+    const t = await setup();
+    const custom = [{ ruleset: 0, mods: 512, clockRate: 1.25, lazer: true }];
+    const first = await scheduleBeatmapAttributes(db, t.beatmap.id, {
+      settings: custom,
+    });
+    await t.service.process({
+      jobId: first!.id,
+      generation: first!.generation,
+    });
+    t.sourceRevision('\n// revised source\n');
+    await db
+      .update(beatmaps)
+      .set({ dataFetchStatus: 2, updated: new Date().toISOString() })
+      .where(eq(beatmaps.id, t.beatmap.id));
+    const refreshed = await scheduleBeatmapAttributes(db, t.beatmap.id);
+    expect(refreshed!.refreshSource).toBe(true);
+    expect(refreshed!.requestedSettings).toEqual(first!.requestedSettings);
+    const duplicate = await scheduleBeatmapAttributes(db, t.beatmap.id);
+    expect(duplicate!.generation).toBe(refreshed!.generation);
+    const extended = await scheduleBeatmapAttributes(db, t.beatmap.id, {
+      settings: [{ ruleset: 0, mods: 0, lazer: false }],
+    });
+    expect(extended!.refreshSource).toBe(true);
+    expect(extended!.requestedSettings).toContainEqual(
+      first!.requestedSettings[0]
+    );
+    expect(
+      await t.service.process({
+        jobId: extended!.id,
+        generation: extended!.generation,
+      })
+    ).toBe('complete');
+    expect(t.counts()).toEqual({ downloads: 2, calculations: 2 });
+    const result = await getBeatmapAttribute(db, t.beatmap.id, custom[0]);
+    expect(result!.clockRate).toBe(1.25);
+    expect(result!.settings.lazer).toBe(true);
+    expect(
+      await db.query.beatmapAttributes.findMany({
+        where: eq(beatmapAttributes.beatmapId, t.beatmap.id),
+      })
+    ).toHaveLength(3);
+  });
+
+  test('reconciliation recovers missed metadata callbacks once, including backwards or null timestamps', async () => {
+    const t = await setup();
+    const initial = await scheduleBeatmapAttributes(db, t.beatmap.id, {
+      settings: [{ ruleset: 0, mods: 0, lazer: false }],
+    });
+    await t.service.process({
+      jobId: initial!.id,
+      generation: initial!.generation,
+    });
+    t.sourceRevision('\n// missed callback source revision\n');
+    for (const updated of [
+      '2026-01-02T00:00:00.000Z',
+      '2026-01-01T00:00:00.000Z',
+      null,
+    ]) {
+      await db
+        .update(beatmaps)
+        .set({ dataFetchStatus: 2, updated })
+        .where(eq(beatmaps.id, t.beatmap.id));
+      // Metadata committed but its scheduling callback never ran.
+      await t.service.reconcileSources();
+      const refreshed = (await db.query.beatmapAttributeJobs.findFirst({
+        where: eq(jobs.id, initial!.id),
+      }))!;
+      expect(refreshed.refreshSource).toBe(true);
+      expect(refreshed.sourceMetadataUpdatedAt).not.toBeNull();
+      expect(
+        await t.service.process({
+          jobId: refreshed.id,
+          generation: refreshed.generation,
+        })
+      ).toBe('complete');
+      await t.service.reconcileSources();
+      const repeated = (await db.query.beatmapAttributeJobs.findFirst({
+        where: eq(jobs.id, initial!.id),
+      }))!;
+      expect(repeated).toMatchObject({
+        status: 'complete',
+        generation: refreshed.generation,
+        refreshSource: false,
+      });
+    }
+    expect(t.counts()).toEqual({ downloads: 4, calculations: 2 });
+    expect(
+      await db.query.beatmapAttributes.findMany({
+        where: eq(beatmapAttributes.beatmapId, t.beatmap.id),
+      })
+    ).toHaveLength(2);
+    await db
+      .update(beatmaps)
+      .set({ manualOverride: true, updated: new Date().toISOString() })
+      .where(eq(beatmaps.id, t.beatmap.id));
+    await t.service.reconcileSources();
+    expect(
+      (await db.query.beatmapAttributeJobs.findFirst({
+        where: eq(jobs.id, initial!.id),
+      }))!.refreshSource
+    ).toBe(false);
+  });
+
+  test('failed metadata refreshes retain their retry budget and late calculations cannot clear newer refresh intent', async () => {
+    const t = await setup();
+    const initial = await scheduleBeatmapAttributes(db, t.beatmap.id, {
+      settings: [{ ruleset: 0, mods: 0, lazer: false }],
+    });
+    const racing = new BeatmapAttributeService(
+      db,
+      t.storage,
+      t.downloader,
+      async (bytes, settings) => {
+        await db
+          .update(beatmaps)
+          .set({ dataFetchStatus: 2, updated: '2026-01-02T00:00:00.000Z' })
+          .where(eq(beatmaps.id, t.beatmap.id));
+        await t.service.reconcileSources();
+        return t.calculate(bytes, settings);
+      }
+    );
+    expect(
+      await racing.process({
+        jobId: initial!.id,
+        generation: initial!.generation,
+      })
+    ).toBe('obsolete');
+    let current = (await db.query.beatmapAttributeJobs.findFirst({
+      where: eq(jobs.id, initial!.id),
+    }))!;
+    expect(current).toMatchObject({
+      generation: initial!.generation + 1,
+      refreshSource: true,
+      status: 'pending',
+    });
+    expect(
+      await db.query.beatmapAttributes.findMany({
+        where: eq(beatmapAttributes.beatmapId, t.beatmap.id),
+      })
+    ).toHaveLength(0);
+    const failing = new BeatmapAttributeService(
+      db,
+      t.storage,
+      t.downloader,
+      async () => {
+        throw Object.assign(new Error('timeout'), { retryable: true });
+      }
+    );
+    for (let attempt = 1; attempt <= 4; attempt++) {
+      await db
+        .update(jobs)
+        .set({ nextAttemptAt: new Date(0).toISOString() })
+        .where(eq(jobs.id, current.id));
+      expect(
+        await failing.process({
+          jobId: current.id,
+          generation: current.generation,
+        })
+      ).toBe(attempt === 4 ? 'failed' : 'retry');
+      await t.service.reconcileSources();
+      current = (await db.query.beatmapAttributeJobs.findFirst({
+        where: eq(jobs.id, initial!.id),
+      }))!;
+      expect(current.attempts).toBe(attempt);
+      expect(current.generation).toBe(initial!.generation + 1);
+    }
+    expect(current.status).toBe('failed');
   });
 
   test('a partial calculator response cannot complete or persist a job', async () => {

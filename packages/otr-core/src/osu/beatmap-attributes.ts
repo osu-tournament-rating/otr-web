@@ -13,6 +13,16 @@ export const BEATMAP_ATTRIBUTE_PROFILES = [
   Mods.DoubleTime,
 ] as const;
 
+const defaultProfiles: Record<Ruleset, readonly number[]> = {
+  [Ruleset.Osu]: BEATMAP_ATTRIBUTE_PROFILES,
+  [Ruleset.Taiko]: [Mods.None, Mods.HardRock, Mods.Easy, Mods.DoubleTime],
+  [Ruleset.Catch]: [Mods.None, Mods.HardRock, Mods.Easy, Mods.DoubleTime],
+  // HR/EZ still change effective OD/HP; keep them available for explicit requests.
+  [Ruleset.ManiaOther]: [Mods.None, Mods.DoubleTime],
+  [Ruleset.Mania4k]: [Mods.None, Mods.DoubleTime],
+  [Ruleset.Mania7k]: [Mods.None, Mods.DoubleTime],
+};
+
 const finite = z.number().finite();
 const nonnegative = finite.nonnegative();
 const count = nonnegative.int();
@@ -132,7 +142,11 @@ export function getDefaultCalculationSettings(
   lazer = false
 ): CalculationSettings[] {
   return normalizeCalculationRequests(
-    BEATMAP_ATTRIBUTE_PROFILES.map((mods) => ({ ruleset, mods, lazer }))
+    defaultProfiles[rulesetSchema.parse(ruleset)].map((mods) => ({
+      ruleset,
+      mods,
+      lazer,
+    }))
   );
 }
 

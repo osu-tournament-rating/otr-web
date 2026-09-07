@@ -84,103 +84,90 @@ export async function scheduleBeatmapAttributes(
       .where(eq(beatmaps.id, beatmapId))
       .for('update');
     if (!beatmap) throw new Error('Beatmap does not exist');
-    const settings = options.settings
-      ? normalizeCalculationRequests(options.settings)
-      : getDefaultCalculationSettings(beatmap.ruleset);
     const previous = await tx.query.beatmapAttributeJobs.findFirst({
       where: eq(jobs.beatmapId, beatmapId),
     });
-    if (
+    const versionChanged =
       previous &&
       (previous.desiredCalculatorVersion !== CALCULATOR_VERSION ||
-        previous.desiredFormatVersion !== CALCULATION_FORMAT_VERSION) &&
+        previous.desiredFormatVersion !== CALCULATION_FORMAT_VERSION);
+    if (
+      versionChanged &&
       !canUpgradeCalculationVersion(
         previous.desiredCalculatorVersion,
         previous.desiredFormatVersion
       )
-    ) {
+    )
       throw new ObsoleteCalculatorError(
         'Job requires a newer or unrecognized calculator release'
       );
-    }
+    const requested = options.settings
+      ? normalizeCalculationRequests(options.settings)
+      : previous && !options.recalculate
+        ? normalizeCalculationRequests(previous.requestedSettings)
+        : getDefaultCalculationSettings(beatmap.ruleset);
+    const settings =
+      previous && !options.recalculate
+        ? normalizeCalculationRequests([
+            ...previous.requestedSettings,
+            ...requested,
+          ])
+        : requested;
+    const metadataRevision =
+      beatmap.dataFetchStatus === DataFetchStatus.Fetched &&
+      !beatmap.manualOverride
+        ? (beatmap.updated ?? beatmap.created)
+        : null;
+    const metadataChanged =
+      metadataRevision !== null &&
+      metadataRevision !== previous?.sourceMetadataUpdatedAt;
     const values = {
       beatmapId,
       requestedSettings: settings,
-      refreshSource: options.refreshSource ?? false,
+      refreshSource: Boolean(
+        options.refreshSource || previous?.refreshSource || metadataChanged
+      ),
+      // This records durable refresh intent, not the immutable file's acquisition time.
+      sourceMetadataUpdatedAt: metadataChanged
+        ? metadataRevision
+        : (previous?.sourceMetadataUpdatedAt ?? null),
       desiredCalculatorVersion: CALCULATOR_VERSION,
       desiredFormatVersion: CALCULATION_FORMAT_VERSION,
     };
-    if (options.recalculate || options.refreshSource) {
+    if (!previous) {
+      await tx.insert(jobs).values({ id: randomUUID(), ...values });
+    } else if (
+      options.recalculate ||
+      options.refreshSource ||
+      metadataChanged ||
+      versionChanged ||
+      JSON.stringify(
+        normalizeCalculationRequests(previous.requestedSettings)
+      ) !== JSON.stringify(settings)
+    ) {
+      const now = new Date().toISOString();
       await tx
-        .insert(jobs)
-        .values({ id: randomUUID(), ...values })
-        .onConflictDoUpdate({
-          target: jobs.beatmapId,
-          set: {
-            ...values,
-            generation: sql`${jobs.generation}+1`,
-            status: 'pending',
-            attempts: 0,
-            leaseToken: null,
-            leaseExpiresAt: null,
-            publishedAt: null,
-            nextAttemptAt: new Date().toISOString(),
-            requestedAt: new Date().toISOString(),
-            errorCode: null,
-          },
-        });
-    } else {
-      await tx
-        .insert(jobs)
-        .values({ id: randomUUID(), ...values })
-        .onConflictDoNothing();
-      const existing = await tx.query.beatmapAttributeJobs.findFirst({
-        where: eq(jobs.beatmapId, beatmapId),
-      });
-      if (
-        existing &&
-        (JSON.stringify(
-          normalizeCalculationRequests(existing.requestedSettings)
-        ) !== JSON.stringify(settings) ||
-          existing.desiredCalculatorVersion !== CALCULATOR_VERSION ||
-          existing.desiredFormatVersion !== CALCULATION_FORMAT_VERSION)
-      ) {
-        const merged = normalizeCalculationRequests([
-          ...existing.requestedSettings,
-          ...settings,
-        ]);
-        if (
-          JSON.stringify(merged) !==
-            JSON.stringify(
-              normalizeCalculationRequests(existing.requestedSettings)
-            ) ||
-          existing.desiredCalculatorVersion !== CALCULATOR_VERSION ||
-          existing.desiredFormatVersion !== CALCULATION_FORMAT_VERSION
-        ) {
-          await tx
-            .update(jobs)
-            .set({
-              requestedSettings: merged,
-              desiredCalculatorVersion: CALCULATOR_VERSION,
-              desiredFormatVersion: CALCULATION_FORMAT_VERSION,
-              generation: sql`${jobs.generation}+1`,
-              status: 'pending',
-              attempts: 0,
-              leaseToken: null,
-              leaseExpiresAt: null,
-              publishedAt: null,
-              nextAttemptAt: new Date().toISOString(),
-              errorCode: null,
-            })
-            .where(
-              and(
-                eq(jobs.id, existing.id),
-                eq(jobs.generation, existing.generation)
-              )
-            );
-        }
-      }
+        .update(jobs)
+        .set({
+          ...values,
+          generation: sql`${jobs.generation}+1`,
+          status: 'pending',
+          attempts: 0,
+          leaseToken: null,
+          leaseExpiresAt: null,
+          publishedAt: null,
+          nextAttemptAt: now,
+          requestedAt: now,
+          errorCode: null,
+        })
+        .where(
+          and(
+            eq(jobs.id, previous.id),
+            eq(jobs.generation, previous.generation)
+          )
+        );
     }
+
     return tx.query.beatmapAttributeJobs.findFirst({
       where: eq(jobs.beatmapId, beatmapId),
     });
@@ -189,6 +176,7 @@ export async function scheduleBeatmapAttributes(
 
 export class BeatmapAttributeService {
   private versionCursor: string | undefined;
+  private sourceCursor: number | undefined;
   constructor(
     private readonly db: DatabaseClient,
     private readonly storage: BeatmapFileStorage,
@@ -228,6 +216,31 @@ export class BeatmapAttributeService {
       outdated.length === 25 ? outdated.at(-1)!.id : undefined;
   }
 
+  async reconcileSources(): Promise<void> {
+    const stale = await this.db
+      .select({ id: beatmaps.id })
+      .from(beatmaps)
+      .innerJoin(jobs, eq(jobs.beatmapId, beatmaps.id))
+      .where(
+        and(
+          this.sourceCursor ? gt(beatmaps.id, this.sourceCursor) : undefined,
+          eq(beatmaps.dataFetchStatus, DataFetchStatus.Fetched),
+          eq(beatmaps.manualOverride, false),
+          sql`${jobs.sourceMetadataUpdatedAt} is distinct from coalesce(${beatmaps.updated}, ${beatmaps.created})`
+        )
+      )
+      .orderBy(asc(beatmaps.id))
+      .limit(25);
+    for (const row of stale) {
+      try {
+        await scheduleBeatmapAttributes(this.db, row.id);
+      } catch (error) {
+        if (!(error instanceof ObsoleteCalculatorError)) throw error;
+      }
+    }
+    this.sourceCursor = stale.length === 25 ? stale.at(-1)!.id : undefined;
+  }
+
   async reconcile(
     publish: (payload: {
       jobId: string;
@@ -250,6 +263,7 @@ export class BeatmapAttributeService {
       for (const row of missing)
         await scheduleBeatmapAttributes(this.db, row.id);
       await this.reconcileVersions();
+      await this.reconcileSources();
     }
     const now = new Date();
     await this.db

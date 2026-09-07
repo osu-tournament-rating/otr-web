@@ -98,7 +98,13 @@ try {
       row!.beatmapAttributes,
       row!.beatmapAttributeJobs[0].sourceFileId
     );
-    assert(profiles.length === 6, 'Expected six persisted profile results');
+    assert(
+      profiles.length ===
+        getDefaultCalculationSettings(
+          samples.find((sample) => sample.osuId === row!.osuId)!.ruleset
+        ).length,
+      'Expected only the ruleset default profile results'
+    );
     summary.push({
       osuId: row!.osuId,
       source: row!.beatmapFiles[0],

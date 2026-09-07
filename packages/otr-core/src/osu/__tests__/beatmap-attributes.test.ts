@@ -91,7 +91,7 @@ describe('beatmap calculation contracts', () => {
     }
   });
 
-  it('provides exactly six independent profiles with an explicit mode and stable default for every ruleset', () => {
+  it('provides ruleset-specific defaults while keeping all six profiles explicitly available', () => {
     for (const ruleset of [
       Ruleset.Osu,
       Ruleset.Taiko,
@@ -100,9 +100,17 @@ describe('beatmap calculation contracts', () => {
       Ruleset.Mania4k,
       Ruleset.Mania7k,
     ]) {
+      for (const mods of [0, 2, 8, 16, 64, 1024])
+        expect(
+          normalizeCalculationSettings({ ruleset, mods, lazer: false }).mods
+        ).toBe(mods);
       const settings = getDefaultCalculationSettings(ruleset);
       expect(settings.map((entry) => entry.mods).sort((a, b) => a - b)).toEqual(
-        [0, 2, 8, 16, 64, 1024]
+        ruleset === Ruleset.Osu
+          ? [0, 2, 8, 16, 64, 1024]
+          : ruleset >= Ruleset.ManiaOther
+            ? [0, 64]
+            : [0, 2, 16, 64]
       );
       expect(
         settings.every(
