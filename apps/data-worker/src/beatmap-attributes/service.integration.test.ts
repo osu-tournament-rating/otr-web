@@ -736,45 +736,50 @@ suite('persisted beatmap attribute lifecycle', () => {
     ).toHaveLength(0);
   });
 
-  test('persists a throttled downloader not-before time across worker restart', async () => {
-    const t = await setup();
-    const job = await scheduleBeatmapAttributes(db, t.beatmap.id, {
-      settings: [{ ruleset: 0, mods: 0, lazer: false }],
-    });
-    const retryNotBefore = new Date(Date.now() + 600_000);
-    const throttled = new BeatmapAttributeService(
-      db,
-      t.storage,
-      new BeatmapFileDownloader({
-        fetch: async () =>
-          new Response(null, {
-            status: 429,
-            headers: { 'Retry-After': '600' },
-          }),
-      }),
-      t.calculate
-    );
-    expect(
-      await throttled.process({ jobId: job!.id, generation: job!.generation })
-    ).toBe('retry');
-    const pending = (await db.query.beatmapAttributeJobs.findFirst({
-      where: eq(jobs.id, job!.id),
-    }))!;
-    expect(new Date(pending.nextAttemptAt).getTime()).toBeGreaterThanOrEqual(
-      retryNotBefore.getTime()
-    );
-    const restarted = new BeatmapAttributeService(
-      db,
-      t.storage,
-      t.downloader,
-      t.calculate
-    );
-    expect(
-      await restarted.process({ jobId: job!.id, generation: job!.generation })
-    ).toBe('obsolete');
-    expect(t.counts().downloads).toBe(0);
-    expect(pending.attempts).toBe(1);
-  });
+  test.each(['600', '864000000000000000'])(
+    'persists a throttled downloader not-before time across worker restart (%s)',
+    async (retryAfter) => {
+      const t = await setup();
+      const job = await scheduleBeatmapAttributes(db, t.beatmap.id, {
+        settings: [{ ruleset: 0, mods: 0, lazer: false }],
+      });
+      const retryNotBefore = new Date(
+        retryAfter === '600' ? Date.now() + 600_000 : 8_640_000_000_000_000
+      );
+      const throttled = new BeatmapAttributeService(
+        db,
+        t.storage,
+        new BeatmapFileDownloader({
+          fetch: async () =>
+            new Response(null, {
+              status: 429,
+              headers: { 'Retry-After': retryAfter },
+            }),
+        }),
+        t.calculate
+      );
+      expect(
+        await throttled.process({ jobId: job!.id, generation: job!.generation })
+      ).toBe('retry');
+      const pending = (await db.query.beatmapAttributeJobs.findFirst({
+        where: eq(jobs.id, job!.id),
+      }))!;
+      expect(new Date(pending.nextAttemptAt).getTime()).toBeGreaterThanOrEqual(
+        retryNotBefore.getTime()
+      );
+      const restarted = new BeatmapAttributeService(
+        db,
+        t.storage,
+        t.downloader,
+        t.calculate
+      );
+      expect(
+        await restarted.process({ jobId: job!.id, generation: job!.generation })
+      ).toBe('obsolete');
+      expect(t.counts().downloads).toBe(0);
+      expect(pending.attempts).toBe(1);
+    }
+  );
 
   test('retryable calculation errors stop, terminal maps fail immediately, old calculator jobs stay obsolete', async () => {
     const t = await setup();

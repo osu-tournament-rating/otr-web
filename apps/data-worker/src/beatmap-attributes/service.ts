@@ -562,7 +562,10 @@ export class BeatmapAttributeService {
         .update(jobs)
         .set({
           status: delay === null ? 'failed' : 'pending',
-          nextAttemptAt: new Date(nextAttemptAt).toISOString(),
+          // PostgreSQL accepts extended positive years without JavaScript's leading '+'.
+          nextAttemptAt: new Date(nextAttemptAt)
+            .toISOString()
+            .replace(/^\+/, ''),
           leaseToken: null,
           leaseExpiresAt: null,
           publishedAt: null,

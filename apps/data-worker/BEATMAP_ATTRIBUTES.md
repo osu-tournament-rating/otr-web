@@ -246,7 +246,8 @@ Downloads share one limiter using the existing `FixedWindowRateLimiter`, allowin
 up to 60 HTTP attempts per minute per worker process, including retries. Downloads remain
 capped at two concurrent requests, or one when worker concurrency is one. Files
 and storage reads are bounded to 8 MiB, with a 20-second deadline for each
-request or storage operation. Acquisition has a 180-second overall deadline.
+request or storage operation. After obtaining a download slot, acquisition has a
+180-second deadline.
 HTTP `429` responses allow up to five HTTP attempts, with retry delays of 8, 16,
 32, and 64 seconds within that deadline. A `Retry-After` header, expressed as
 seconds or an HTTP date, can extend the shared cooldown for all downloads in
