@@ -4,9 +4,18 @@ import { mkdir, open, rename, rm } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { Readable } from 'node:stream';
 import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
+import {
+  FixedWindowRateLimiter,
+  RateLimiterDeadlineError,
+} from '../rate-limiter/fixed-window';
 
 export const MAX_BEATMAP_FILE_BYTES = 8 * 1024 * 1024;
 export const BEATMAP_FILE_TIMEOUT_MS = 20_000;
+export const BEATMAP_DOWNLOAD_REQUESTS_PER_MINUTE = 60;
+export const BEATMAP_DOWNLOAD_MAX_ATTEMPTS = 5;
+export const BEATMAP_DOWNLOAD_DEADLINE_MS = 180_000;
+const RATE_LIMIT_BACKOFF_MS = 8_000;
+const MAX_DATE_TIMESTAMP = 8_640_000_000_000_000;
 const DEFAULT_DOWNLOAD_CONCURRENCY = 2;
 const MAX_DOWNLOAD_CONCURRENCY = 8;
 const MAX_PENDING_DOWNLOADS = 256;
@@ -20,19 +29,31 @@ export type BeatmapFileErrorCode =
   | 'too_large'
   | 'not_found'
   | 'download_unavailable'
+  | 'rate_limited'
   | 'storage_unavailable'
   | 'timeout'
   | 'busy';
 
+interface BeatmapFileErrorOptions extends ErrorOptions {
+  retryNotBefore?: Date;
+}
+
 export class BeatmapFileAcquisitionError extends Error {
+  readonly retryNotBefore?: Date;
   constructor(
     readonly code: BeatmapFileErrorCode,
     readonly retryable: boolean,
     message: string,
-    options?: ErrorOptions
+    options?: BeatmapFileErrorOptions
   ) {
     super(message, options);
     this.name = 'BeatmapFileAcquisitionError';
+    const notBefore =
+      options?.retryNotBefore instanceof Date
+        ? options.retryNotBefore.getTime()
+        : undefined;
+    if (retryable && notBefore !== undefined && Number.isFinite(notBefore))
+      this.retryNotBefore = new Date(notBefore);
   }
 }
 
@@ -40,7 +61,7 @@ export class TerminalBeatmapFileError extends BeatmapFileAcquisitionError {
   constructor(
     code: BeatmapFileErrorCode,
     message: string,
-    options?: ErrorOptions
+    options?: BeatmapFileErrorOptions
   ) {
     super(code, false, message, options);
     this.name = 'TerminalBeatmapFileError';
@@ -51,7 +72,7 @@ export class TransientBeatmapFileError extends BeatmapFileAcquisitionError {
   constructor(
     code: BeatmapFileErrorCode,
     message: string,
-    options?: ErrorOptions
+    options?: BeatmapFileErrorOptions
   ) {
     super(code, true, message, options);
     this.name = 'TransientBeatmapFileError';
@@ -382,10 +403,20 @@ type BeatmapFileFetch = (
   options?: RequestInit
 ) => Promise<Response>;
 
+function retryAfterTimestamp(header: string | null, now: number): number {
+  const value = header?.trim() ?? '';
+  if (/^\d+$/.test(value))
+    return Math.min(MAX_DATE_TIMESTAMP, now + Number(value) * 1000);
+  const timestamp = /^[A-Za-z]{3}/.test(value) ? Date.parse(value) : NaN;
+  return Number.isFinite(timestamp) ? timestamp : now;
+}
+
 export class BeatmapFileDownloader {
   private readonly fetchFile: BeatmapFileFetch;
   private readonly concurrency: number;
   private readonly timeoutMs: number;
+  private readonly now: () => number;
+  private readonly limiter: FixedWindowRateLimiter;
   private active = 0;
   private readonly waiting: Array<() => void> = [];
   private readonly pending = new Map<number, Promise<Uint8Array>>();
@@ -395,9 +426,19 @@ export class BeatmapFileDownloader {
       fetch?: BeatmapFileFetch;
       concurrency?: number;
       timeoutMs?: number;
+      now?: () => number;
+      sleep?: (durationMs: number) => Promise<void>;
     } = {}
   ) {
     this.fetchFile = options.fetch ?? fetch;
+    this.now = options.now ?? Date.now;
+    this.limiter = new FixedWindowRateLimiter({
+      requests: BEATMAP_DOWNLOAD_REQUESTS_PER_MINUTE,
+      windowMs: 60_000,
+      now: this.now,
+      sleep: options.sleep,
+      label: 'beatmap-files',
+    });
     this.concurrency = options.concurrency ?? DEFAULT_DOWNLOAD_CONCURRENCY;
     this.timeoutMs = options.timeoutMs ?? BEATMAP_FILE_TIMEOUT_MS;
     if (
@@ -438,13 +479,78 @@ export class BeatmapFileDownloader {
     if (this.active >= this.concurrency)
       await new Promise<void>((resolve) => this.waiting.push(resolve));
     else this.active++;
+    const deadlineAt = this.now() + BEATMAP_DOWNLOAD_DEADLINE_MS;
     try {
-      return await withBeatmapFileDeadline(async (signal) => {
+      for (
+        let attempt = 0;
+        attempt < BEATMAP_DOWNLOAD_MAX_ATTEMPTS;
+        attempt++
+      ) {
+        try {
+          // Admission is serialized; response bodies still use independent download slots.
+          await this.limiter.acquire({ deadlineAt });
+          return await this.fetchAttempt(osuBeatmapId, attempt, deadlineAt);
+        } catch (error) {
+          if (error instanceof RateLimiterDeadlineError)
+            throw new TransientBeatmapFileError(
+              'rate_limited',
+              'Beatmap download admission exceeds its deadline',
+              { retryNotBefore: new Date(error.retryNotBefore) }
+            );
+          if (
+            !(error instanceof BeatmapFileAcquisitionError) ||
+            error.code !== 'rate_limited' ||
+            attempt + 1 === BEATMAP_DOWNLOAD_MAX_ATTEMPTS
+          )
+            throw error;
+        }
+      }
+      throw new Error('Beatmap download attempts exhausted');
+    } catch (cause) {
+      if (cause instanceof BeatmapFileAcquisitionError) throw cause;
+      throw new TransientBeatmapFileError(
+        'download_unavailable',
+        'Beatmap download failed',
+        { cause }
+      );
+    } finally {
+      const next = this.waiting.shift();
+      if (next) next();
+      else this.active--;
+    }
+  }
+
+  private async fetchAttempt(
+    osuBeatmapId: number,
+    attempt: number,
+    deadlineAt: number
+  ): Promise<Uint8Array> {
+    const remaining = deadlineAt - this.now();
+    if (remaining <= 0)
+      throw new TransientBeatmapFileError(
+        'timeout',
+        'Beatmap download exceeded its acquisition deadline'
+      );
+    return withBeatmapFileDeadline(
+      async (signal) => {
         const response = await this.fetchFile(
           `https://osu.ppy.sh/osu/${osuBeatmapId}`,
           { redirect: 'manual', signal }
         );
         try {
+          if (response.status === 429) {
+            const now = this.now();
+            const retryNotBefore = Math.max(
+              now + RATE_LIMIT_BACKOFF_MS * 2 ** attempt,
+              retryAfterTimestamp(response.headers.get('retry-after'), now)
+            );
+            this.limiter.deferUntil(retryNotBefore);
+            throw new TransientBeatmapFileError(
+              'rate_limited',
+              'Beatmap source rate limit requires a cooldown',
+              { retryNotBefore: new Date(retryNotBefore) }
+            );
+          }
           if (response.status === 404 || response.status === 410)
             throw new TerminalBeatmapFileError(
               'not_found',
@@ -454,7 +560,6 @@ export class BeatmapFileDownloader {
             const retryable =
               response.status === 403 ||
               response.status === 408 ||
-              response.status === 429 ||
               response.status >= 500;
             throw new BeatmapFileAcquisitionError(
               'download_unavailable',
@@ -492,25 +597,15 @@ export class BeatmapFileDownloader {
           if (!response.body?.locked)
             void response.body?.cancel().catch(() => {});
         }
-      }, this.timeoutMs);
-    } catch (cause) {
-      if (cause instanceof BeatmapFileAcquisitionError) throw cause;
-      throw new TransientBeatmapFileError(
-        'download_unavailable',
-        'Beatmap download failed',
-        { cause }
-      );
-    } finally {
-      const next = this.waiting.shift();
-      if (next) next();
-      else this.active--;
-    }
+      },
+      Math.min(this.timeoutMs, remaining)
+    );
   }
 }
 
 export interface AcquiredBeatmapFile {
   bytes: Uint8Array;
-  storageProvider: BeatmapFileStorage['provider'];
+  provider: BeatmapFileStorage['provider'];
   storageKey: string;
   checksum: string;
   byteLength: number;
@@ -522,17 +617,14 @@ export async function acquireBeatmapFile(options: {
   storage: BeatmapFileStorage;
   downloader: Pick<BeatmapFileDownloader, 'download'>;
   existing?: {
-    storageProvider?: BeatmapFileStorage['provider'];
+    provider: BeatmapFileStorage['provider'];
     storageKey: string;
     checksum: string;
   } | null;
 }): Promise<AcquiredBeatmapFile> {
   const { osuBeatmapId, storage, downloader, existing } = options;
   validateOsuBeatmapId(osuBeatmapId);
-  if (
-    existing &&
-    (!existing.storageProvider || existing.storageProvider === storage.provider)
-  ) {
+  if (existing && existing.provider === storage.provider) {
     try {
       const bytes = await storage.get(existing.storageKey);
       if (bytes) {
@@ -545,7 +637,7 @@ export async function acquireBeatmapFile(options: {
           );
         return {
           bytes,
-          storageProvider: storage.provider,
+          provider: storage.provider,
           storageKey: existing.storageKey,
           checksum: existing.checksum,
           byteLength: bytes.byteLength,
@@ -567,7 +659,7 @@ export async function acquireBeatmapFile(options: {
   await storage.put(storageKey, bytes);
   return {
     bytes,
-    storageProvider: storage.provider,
+    provider: storage.provider,
     storageKey,
     checksum,
     byteLength: bytes.byteLength,

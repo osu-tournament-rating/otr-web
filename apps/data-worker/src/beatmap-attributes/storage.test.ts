@@ -17,6 +17,7 @@ import { GcpBeatmapFileStorage } from './gcp-storage';
 import {
   acquireBeatmapFile,
   BeatmapFileDownloader,
+  BeatmapFileAcquisitionError,
   beatmapFileChecksum,
   beatmapFileStorageKey,
   createBeatmapFileStorage,
@@ -170,7 +171,7 @@ describe('file validation and recovery', () => {
       downloader,
     });
     expect(first).toMatchObject({
-      storageProvider: 'local',
+      provider: 'local',
       checksum: beatmapFileChecksum(fileBytes),
       byteLength: fileBytes.length,
       reused: false,
@@ -242,12 +243,16 @@ describe('file validation and recovery', () => {
         existing: {
           checksum: beatmapFileChecksum(fileBytes),
           storageKey: beatmapFileStorageKey(beatmapFileChecksum(fileBytes)),
-          storageProvider: 'local',
+          provider: 'local',
         },
       })
     ).rejects.toThrow('provider unavailable');
     expect(downloads).toBe(0);
     storage.get = original;
+    await storage.put(
+      beatmapFileStorageKey(beatmapFileChecksum(fileBytes)),
+      fileBytes
+    );
     const result = await acquireBeatmapFile({
       osuBeatmapId: 123,
       storage,
@@ -255,10 +260,10 @@ describe('file validation and recovery', () => {
       existing: {
         checksum: beatmapFileChecksum(fileBytes),
         storageKey: beatmapFileStorageKey(beatmapFileChecksum(fileBytes)),
-        storageProvider: 'gcp',
+        provider: 'gcp',
       },
     });
-    expect(result.storageProvider).toBe('local');
+    expect(result.provider).toBe('local');
     expect(result.reused).toBe(false);
     expect(downloads).toBe(1);
   });
@@ -292,7 +297,6 @@ describe('beatmap downloads', () => {
     [301, false],
     [404, false],
     [403, true],
-    [429, true],
     [500, true],
   ])(
     'classifies HTTP %i for bounded caller retries',
@@ -388,6 +392,194 @@ describe('beatmap downloads', () => {
     );
     expect(peak).toBe(2);
     expect(calls).toBe(4);
+  });
+});
+
+function virtualClock(start = 0) {
+  let time = start;
+  const waits: number[] = [];
+  return {
+    now: () => time,
+    waits,
+    sleep: async (milliseconds: number) => {
+      waits.push(milliseconds);
+      time += milliseconds;
+    },
+  };
+}
+
+function bytesForId(id: number) {
+  return new TextEncoder().encode(
+    new TextDecoder()
+      .decode(fileBytes)
+      .replace('BeatmapID:123', `BeatmapID:${id}`)
+  );
+}
+
+describe('shared beatmap download throttling', () => {
+  test('admits only sixty requests before the next minute', async () => {
+    const clock = virtualClock();
+    const started: number[] = [];
+    const downloader = new BeatmapFileDownloader({
+      ...clock,
+      fetch: async (url) => {
+        started.push(clock.now());
+        return new Response(bytesForId(Number(url.split('/').at(-1))));
+      },
+    });
+    for (let id = 1; id <= 61; id++) await downloader.download(id);
+    expect(started.slice(0, 60)).toEqual(Array(60).fill(0));
+    expect(started[60]).toBe(60_000);
+    expect(clock.waits).toEqual([60_000]);
+  });
+
+  test.each([
+    [null, 8_000],
+    ['3', 8_000],
+    ['20', 20_000],
+    ['Mon, 07 Sep 2026 12:00:30 GMT', 30_000],
+    ['Mon, 07 Sep 2026 11:59:30 GMT', 8_000],
+    ['invalid', 8_000],
+  ])(
+    'honors exponential delay and Retry-After %s',
+    async (header, expected) => {
+      const start = Date.parse('2026-09-07T12:00:00Z');
+      const clock = virtualClock(start);
+      const started: number[] = [];
+      const downloader = new BeatmapFileDownloader({
+        ...clock,
+        fetch: async () => {
+          started.push(clock.now() - start);
+          if (started.length === 1)
+            return new Response('throttled', {
+              status: 429,
+              headers: header === null ? undefined : { 'Retry-After': header },
+            });
+          return new Response(fileBytes);
+        },
+      });
+      expect(await downloader.download(123)).toEqual(fileBytes);
+      expect(started).toEqual([0, expected]);
+    }
+  );
+
+  test('exhausts five HTTP attempts with exponential cooldown retained for a later job attempt', async () => {
+    const clock = virtualClock();
+    const started: number[] = [];
+    const downloader = new BeatmapFileDownloader({
+      ...clock,
+      fetch: async () => {
+        started.push(clock.now());
+        return new Response('throttled', { status: 429 });
+      },
+    });
+    await expect(downloader.download(123)).rejects.toMatchObject({
+      code: 'rate_limited',
+      retryable: true,
+      retryNotBefore: new Date(248_000),
+    });
+    expect(started).toEqual([0, 8_000, 24_000, 56_000, 120_000]);
+  });
+
+  test('bounds total acquisition time when slow responses consume the retry budget', async () => {
+    const clock = virtualClock();
+    const started: number[] = [];
+    const downloader = new BeatmapFileDownloader({
+      ...clock,
+      fetch: async () => {
+        started.push(clock.now());
+        await clock.sleep(19_000);
+        return new Response('throttled', { status: 429 });
+      },
+    });
+    await expect(downloader.download(123)).rejects.toMatchObject({
+      code: 'rate_limited',
+      retryNotBefore: new Date(196_000),
+    });
+    expect(started).toEqual([0, 27_000, 62_000, 113_000]);
+    expect(clock.now()).toBe(132_000);
+  });
+
+  test('returns only valid durable retry dates and never carries one on terminal errors', async () => {
+    for (const retryNotBefore of [new Date(NaN), 'invalid' as never]) {
+      expect(
+        new BeatmapFileAcquisitionError('rate_limited', true, 'throttled', {
+          retryNotBefore,
+        }).retryNotBefore
+      ).toBeUndefined();
+    }
+    expect(
+      new BeatmapFileAcquisitionError('not_found', false, 'missing', {
+        retryNotBefore: new Date(0),
+      }).retryNotBefore
+    ).toBeUndefined();
+    const clock = virtualClock();
+    const downloader = new BeatmapFileDownloader({
+      ...clock,
+      fetch: async () =>
+        new Response('throttled', {
+          status: 429,
+          headers: { 'Retry-After': '9'.repeat(400) },
+        }),
+    });
+    await expect(downloader.download(123)).rejects.toMatchObject({
+      retryNotBefore: new Date(8_640_000_000_000_000),
+    });
+    expect(clock.waits).toEqual([]);
+  });
+
+  test('preserves an enormous Retry-After and defers every job without early HTTP requests', async () => {
+    const clock = virtualClock();
+    let calls = 0;
+    const downloader = new BeatmapFileDownloader({
+      ...clock,
+      fetch: async () => {
+        calls++;
+        return new Response('throttled', {
+          status: 429,
+          headers: { 'Retry-After': '86400' },
+        });
+      },
+    });
+    for (const id of [123, 124])
+      await expect(downloader.download(id)).rejects.toMatchObject({
+        code: 'rate_limited',
+        retryNotBefore: new Date(86_400_000),
+      });
+    expect(calls).toBe(1);
+    expect(clock.waits).toEqual([]);
+  });
+
+  test('shares a 429 cooldown across concurrent jobs while preserving download concurrency', async () => {
+    let now = 0;
+    const waits: Array<{ until: number; resolve: () => void }> = [];
+    const started: Array<[number, number]> = [];
+    const downloader = new BeatmapFileDownloader({
+      now: () => now,
+      sleep: (delay) =>
+        new Promise<void>((resolve) =>
+          waits.push({ until: now + delay, resolve })
+        ),
+      concurrency: 2,
+      fetch: async (url) => {
+        const id = Number(url.split('/').at(-1));
+        started.push([id, now]);
+        return id === 123 &&
+          started.filter(([value]) => value === id).length === 1
+          ? new Response('throttled', { status: 429 })
+          : new Response(bytesForId(id));
+      },
+    });
+    const first = downloader.download(123);
+    for (let i = 0; i < 10 && waits.length === 0; i++) await Bun.sleep(0);
+    expect(waits.map(({ until }) => until)).toEqual([8_000]);
+    const second = downloader.download(124);
+    await Bun.sleep(0);
+    expect(started).toEqual([[123, 0]]);
+    now = 8_000;
+    for (const wait of waits.splice(0)) wait.resolve();
+    await Promise.all([first, second]);
+    expect(started.slice(1).map(([, time]) => time)).toEqual([8_000, 8_000]);
   });
 });
 
