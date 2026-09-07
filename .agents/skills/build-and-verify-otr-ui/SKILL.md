@@ -60,6 +60,13 @@ Always inspect the affected flow at desktop `1440x1000` and mobile `390x844`.
 Inspect light and dark themes when colors, elevation, charts, or tokens change.
 Check `767px` and `768px` only for shared breakpoint behavior.
 
+For shared interaction changes, list each affected trigger variant and the
+information it exposes in the task record. Test each variant with mouse,
+keyboard, and simulated touch. For accessibility-only work, compare the opened
+content, surface, and anchoring with the approved behavior. Keep missing detail
+and failing variants in the acceptance criteria; summaries and follow-up notes
+do not establish equivalent access.
+
 Confirm relevant states, no new console or same-origin request failures, no
 horizontal overflow or clipping, loaded images and fonts, nonblank settled
 charts, keyboard and focus behavior, URL state after reload, and stable repeated
