@@ -419,7 +419,7 @@ export class BeatmapFileDownloader {
   private readonly limiter: FixedWindowRateLimiter;
   private active = 0;
   private readonly waiting: Array<() => void> = [];
-  private readonly pending = new Map<number, Promise<Uint8Array>>();
+  private pending = 0;
 
   constructor(
     options: {
@@ -459,19 +459,16 @@ export class BeatmapFileDownloader {
 
   async download(osuBeatmapId: number): Promise<Uint8Array> {
     validateOsuBeatmapId(osuBeatmapId);
-    const existing = this.pending.get(osuBeatmapId);
-    if (existing) return existing;
-    if (this.pending.size >= MAX_PENDING_DOWNLOADS)
+    if (this.pending >= MAX_PENDING_DOWNLOADS)
       throw new TransientBeatmapFileError(
         'busy',
         'Beatmap download capacity is full'
       );
-    const job = this.downloadOnce(osuBeatmapId);
-    this.pending.set(osuBeatmapId, job);
+    this.pending++;
     try {
-      return await job;
+      return await this.downloadOnce(osuBeatmapId);
     } finally {
-      this.pending.delete(osuBeatmapId);
+      this.pending--;
     }
   }
 

@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Pool } from 'pg';
+import { Beatmap, Difficulty } from 'rosu-pp-js';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
 import { dbSchema } from '@otr/core/db';
@@ -30,7 +31,10 @@ import {
 } from './storage';
 import { calculateBeatmapAttributes, inspectBeatmap } from './calculator';
 import { CALCULATOR_VERSION } from './policy';
-import { CALCULATION_FORMAT_VERSION } from '@otr/core/osu/beatmap-attributes';
+import {
+  CALCULATION_FORMAT_VERSION,
+  createCalculationIdentity,
+} from '@otr/core/osu/beatmap-attributes';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 import { prepareAttributeCommand } from './command';
 
@@ -935,5 +939,160 @@ suite('persisted beatmap attribute lifecycle', () => {
       holder.release();
       checkpoint.release();
     }
+  }, 10_000);
+  test('legacy results remain in history until explicit recalculation supplies the supported format', async () => {
+    const t = await setup();
+    const settings = { ruleset: 0, mods: 0, lazer: false as const };
+    const job = await scheduleBeatmapAttributes(db, t.beatmap.id, {
+      settings: [settings],
+    });
+    expect(
+      await t.service.process({ jobId: job!.id, generation: job!.generation })
+    ).toBe('complete');
+    const current = (await getBeatmapAttribute(db, t.beatmap.id, settings))!;
+    const file = (await db.query.beatmapFiles.findFirst({
+      where: eq(beatmapFiles.id, current.fileId),
+    }))!;
+    const map = new Beatmap((await t.storage.get(file.storageKey!))!);
+    const difficulty = new Difficulty({ mods: 0, clockRate: 1, lazer: false });
+    const legacyVersion = 'rosu-pp-js@4.0.1+duration@1.0.1';
+    try {
+      await db
+        .update(beatmapAttributes)
+        .set({
+          formatVersion: 1,
+          calculatorVersion: legacyVersion,
+          identity: createCalculationIdentity({
+            settings,
+            checksum: current.checksum,
+            calculatorVersion: legacyVersion,
+            formatVersion: 1,
+          }),
+          difficulty: {
+            version: 1,
+            mode: 0,
+            isConvert: false,
+            keyCount: null,
+            attributes: difficulty.calculate(map),
+          } as never,
+        })
+        .where(eq(beatmapAttributes.id, current.id));
+    } finally {
+      difficulty.free();
+      map.free();
+    }
+    await db
+      .update(jobs)
+      .set({ desiredFormatVersion: 1, desiredCalculatorVersion: legacyVersion })
+      .where(eq(jobs.id, job!.id));
+    expect(
+      await getBeatmapAttribute(db, t.beatmap.id, settings)
+    ).toBeUndefined();
+    const before = (await db.query.beatmaps.findFirst({
+      where: eq(beatmaps.id, t.beatmap.id),
+      with: { beatmapAttributes: true, beatmapAttributeJobs: true },
+    }))!;
+    expect(before.beatmapAttributes.map((row) => row.id)).toEqual([current.id]);
+    expect(before.beatmapAttributeJobs[0].sourceFileId).toBe(current.fileId);
+    const rebuilt = await scheduleBeatmapAttributes(db, t.beatmap.id, {
+      settings: [settings],
+      recalculate: true,
+    });
+    expect(
+      await t.service.process({
+        jobId: rebuilt!.id,
+        generation: rebuilt!.generation,
+      })
+    ).toBe('complete');
+    expect(
+      BeatmapAttributeResultSchema.parse(
+        await getBeatmapAttribute(db, t.beatmap.id, settings)
+      ).formatVersion
+    ).toBe(CALCULATION_FORMAT_VERSION);
+    const history = await db.query.beatmapAttributes.findMany({
+      where: eq(beatmapAttributes.beatmapId, t.beatmap.id),
+    });
+    expect(history.map((row) => row.formatVersion).sort()).toEqual([1, 2]);
+    expect(history.find((row) => row.formatVersion === 1)?.id).toBe(current.id);
+    expect(t.counts().downloads).toBe(1);
+  });
+
+  test('a refreshed generation downloads its own source while an obsolete download is in flight', async () => {
+    const t = await setup();
+    const oldBytes = new TextEncoder().encode(
+      new TextDecoder()
+        .decode(fixture)
+        .replace(/BeatmapID:\s*\d+/, `BeatmapID:${t.beatmap.osuId}`)
+    );
+    const newBytes = new TextEncoder().encode(
+      new TextDecoder().decode(oldBytes) + '\n// refreshed source\n'
+    );
+    let release!: () => void;
+    let started!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const firstStarted = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    let requests = 0;
+    const downloader = new BeatmapFileDownloader({
+      concurrency: 2,
+      fetch: async () => {
+        requests++;
+        if (requests === 1) {
+          started();
+          await held;
+          return new Response(oldBytes);
+        }
+        return new Response(newBytes);
+      },
+    });
+    const service = new BeatmapAttributeService(
+      db,
+      t.storage,
+      downloader,
+      t.calculate
+    );
+    const first = await scheduleBeatmapAttributes(db, t.beatmap.id, {
+      settings: [{ ruleset: 0, mods: 0, lazer: false }],
+    });
+    const oldWork = service.process({
+      jobId: first!.id,
+      generation: first!.generation,
+    });
+    await firstStarted;
+    const second = await scheduleBeatmapAttributes(db, t.beatmap.id, {
+      refreshSource: true,
+    });
+    const newWork = service.process({
+      jobId: second!.id,
+      generation: second!.generation,
+    });
+    try {
+      const deadline = Date.now() + 3000;
+      while (Date.now() < deadline) {
+        const rows = await db.query.beatmapFiles.findMany({
+          where: eq(beatmapFiles.beatmapId, t.beatmap.id),
+        });
+        if (rows.length === 2) break;
+        await Bun.sleep(10);
+      }
+      await Bun.sleep(25);
+    } finally {
+      release();
+    }
+    expect(await Promise.all([oldWork, newWork])).toEqual([
+      'obsolete',
+      'complete',
+    ]);
+    expect(requests).toBe(2);
+    const completed = (await db.query.beatmapAttributeJobs.findFirst({
+      where: eq(jobs.id, second!.id),
+      with: { sourceFile: true },
+    }))!;
+    const bytes = await t.storage.get(completed.sourceFile!.storageKey!);
+    expect(bytes).toEqual(newBytes);
+    expect(completed.sourceFile!.fetchStatus).toBe(DataFetchStatus.Fetched);
   }, 10_000);
 });

@@ -408,7 +408,79 @@ describe('beatmap downloads', () => {
     expect(await downloader.download(123)).toEqual(fileBytes);
   });
 
-  test('bounds simultaneous downloads and shares duplicate in-flight source requests', async () => {
+  test('a refreshed request does not share bytes from an older in-flight request', async () => {
+    let releaseOlder!: () => void;
+    const olderGate = new Promise<void>((resolve) => {
+      releaseOlder = resolve;
+    });
+    const newerBytes = new TextEncoder().encode(
+      new TextDecoder().decode(fileBytes) + '\n// refreshed source\n'
+    );
+    let requests = 0;
+    const downloader = new BeatmapFileDownloader({
+      concurrency: 2,
+      fetch: async () => {
+        requests++;
+        if (requests === 1) {
+          await olderGate;
+          return new Response(fileBytes);
+        }
+        return new Response(newerBytes);
+      },
+    });
+    const older = downloader.download(123);
+    await Bun.sleep(0);
+    let refreshedBytes: Uint8Array | undefined;
+    const refreshed = downloader.download(123).then((bytes) => {
+      refreshedBytes = bytes;
+    });
+    await Bun.sleep(0);
+    try {
+      expect(refreshedBytes).toEqual(newerBytes);
+      expect(requests).toBe(2);
+    } finally {
+      releaseOlder();
+      await Promise.all([older, refreshed]);
+    }
+    expect(await older).toEqual(fileBytes);
+    expect(refreshedBytes).toEqual(newerBytes);
+  });
+
+  test('bounds all pending requests, including repeated IDs, and frees capacity after completion', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const clock = virtualClock();
+    let requests = 0;
+    const downloader = new BeatmapFileDownloader({
+      ...clock,
+      concurrency: 2,
+      fetch: async () => {
+        requests++;
+        await gate;
+        return new Response(fileBytes);
+      },
+    });
+    const pending = Array.from({ length: 256 }, () => downloader.download(123));
+    let overflowError: unknown;
+    const overflow = downloader.download(123).catch((error) => {
+      overflowError = error;
+    });
+    await Bun.sleep(0);
+    try {
+      expect(overflowError).toMatchObject({ code: 'busy', retryable: true });
+      expect(requests).toBe(2);
+    } finally {
+      release();
+      await Promise.all([...pending, overflow]);
+    }
+    expect(requests).toBe(256);
+    expect(await downloader.download(123)).toEqual(fileBytes);
+    expect(requests).toBe(257);
+  });
+
+  test('bounds simultaneous downloads while issuing independent requests for the same source', async () => {
     let active = 0;
     let peak = 0;
     let calls = 0;
@@ -432,7 +504,7 @@ describe('beatmap downloads', () => {
       [123, 123, 123, 124, 125, 126].map((id) => downloader.download(id))
     );
     expect(peak).toBe(2);
-    expect(calls).toBe(4);
+    expect(calls).toBe(6);
   });
 });
 

@@ -123,7 +123,9 @@ The job's acquisition pointer tracks its current file attempt; its completed
 source pointer changes only after results commit. Generation and lease checks
 prevent late attempts from publishing obsolete results or replacing that pointer.
 Prior results survive failed refreshes. Relationships include history;
-`getBeatmapAttribute` resolves the intended source and current target version.
+`getBeatmapAttribute` resolves the intended source and supported format. Older
+formats remain available through history relationships; explicit recalculation
+is required before current lookup returns a result for those jobs.
 
 ## Recalculation and recovery
 

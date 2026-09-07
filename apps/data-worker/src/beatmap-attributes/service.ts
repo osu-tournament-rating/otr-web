@@ -641,7 +641,13 @@ export async function getBeatmapAttribute(
     with: { sourceFile: true },
   });
   const source = job?.sourceFile;
-  if (!job || !source || !isFetchedFile(source)) return undefined;
+  if (
+    !job ||
+    job.desiredFormatVersion !== CALCULATION_FORMAT_VERSION ||
+    !source ||
+    !isFetchedFile(source)
+  )
+    return undefined;
   const identity = createCalculationIdentity({
     settings: normalizeCalculationSettings(input),
     checksum: source.checksum,
