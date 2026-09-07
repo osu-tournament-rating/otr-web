@@ -38,6 +38,8 @@ import {
   tournamentAudits,
   userSettings,
   beatmapAttributes,
+  beatmapFiles,
+  beatmapAttributeJobs,
   oAuthClientAdminNote,
   joinBeatmapCreators,
   joinPooledBeatmaps,
@@ -244,6 +246,8 @@ export const beatmapsRelations = relations(beatmaps, ({ one, many }) => ({
   }),
   games: many(games),
   beatmapAttributes: many(beatmapAttributes),
+  beatmapFiles: many(beatmapFiles),
+  beatmapAttributeJobs: many(beatmapAttributeJobs),
   beatmapAudits: many(beatmapAudits),
   beatmapAdminNotes: many(beatmapAdminNotes),
   joinBeatmapCreators: many(joinBeatmapCreators),
@@ -505,6 +509,36 @@ export const beatmapAttributesRelations = relations(
     beatmap: one(beatmaps, {
       fields: [beatmapAttributes.beatmapId],
       references: [beatmaps.id],
+    }),
+    file: one(beatmapFiles, {
+      fields: [beatmapAttributes.fileId],
+      references: [beatmapFiles.id],
+    }),
+  })
+);
+
+export const beatmapFilesRelations = relations(
+  beatmapFiles,
+  ({ one, many }) => ({
+    beatmap: one(beatmaps, {
+      fields: [beatmapFiles.beatmapId],
+      references: [beatmaps.id],
+    }),
+    attributes: many(beatmapAttributes),
+    jobs: many(beatmapAttributeJobs),
+  })
+);
+
+export const beatmapAttributeJobsRelations = relations(
+  beatmapAttributeJobs,
+  ({ one }) => ({
+    beatmap: one(beatmaps, {
+      fields: [beatmapAttributeJobs.beatmapId],
+      references: [beatmaps.id],
+    }),
+    sourceFile: one(beatmapFiles, {
+      fields: [beatmapAttributeJobs.sourceFileId],
+      references: [beatmapFiles.id],
     }),
   })
 );
