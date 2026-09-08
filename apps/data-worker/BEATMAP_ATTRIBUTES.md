@@ -860,63 +860,56 @@ assert real `rosu-pp-js` values, so a library upgrade can change them.
 
 ### Deployment
 
-The attributes worker is a separate service from the same
-`otr-data-worker` image. The image contains the source, so the CLI also runs
-inside the container. Add a Compose service next to `data-worker`:
+The attributes worker is the `beatmap-attributes-worker` service in
+`docker-compose.yml` and `docker-compose-staging.yml`. It runs the same
+`otr-data-worker` image as `data-worker` with the `attributes:worker` command,
+so the CLI also runs inside its container. The service belongs to the
+`beatmap-attributes` Compose profile and does not start with the default stack.
 
-```yaml
-attributes-worker:
-  image: stagecodes/otr-data-worker:latest
-  command: ['bun', 'run', '--cwd', 'apps/data-worker', 'attributes:worker']
-  restart: unless-stopped
-  depends_on:
-    db:
-      condition: service_healthy
-    rabbitmq:
-      condition: service_healthy
-  env_file:
-    - ./.env
-  environment:
-    DATABASE_URL: ${DOCKER_DATABASE_URL}
-    RABBITMQ_AMQP_URL: ${DOCKER_RABBITMQ_AMQP_URL}
-    METRICS_PORT: '9092'
-    BEATMAP_ATTRIBUTES_LOCAL_DIR: /data/beatmap-files
-    OTEL_SERVICE_NAME: otr-beatmap-attributes
-  volumes:
-    - beatmap-files:/data/beatmap-files
-  healthcheck:
-    test:
-      [
-        'CMD-SHELL',
-        'bun -e "fetch(\"http://localhost:9092/health\").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
-      ]
-    interval: 10s
-    timeout: 5s
-    retries: 3
-    start_period: 10s
-```
+The service reads the shared `.env` with `env_file`, so the storage provider,
+the bucket, and the concurrency come from that file. The service sets these
+values itself:
 
-Declare the volume in the top-level `volumes` block of the same file:
+| Setting                        | Value                                                                                             |
+| ------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `METRICS_PORT`                 | `9092`                                                                                            |
+| `BEATMAP_ATTRIBUTES_LOCAL_DIR` | `/var/lib/otr/beatmap-files`, on the `beatmap-files` named volume. Ignored for `gcp`.             |
+| `OTEL_SERVICE_NAME`            | `otr-beatmap-attributes-worker`                                                                   |
+| Container name                 | `otr-beatmap-attributes-worker` in production, `otr-staging-beatmap-attributes-worker` in staging |
 
-```yaml
-volumes:
-  beatmap-files:
-```
+The deploy workflow decides whether the profile runs. It reads the last
+`BEATMAP_ATTRIBUTES_ENABLED` line in the deployed `.env`. When the value is
+`true`, bare or quoted, the workflow pulls and starts the worker with the rest
+of the stack. For any other value, or when the line is absent, the workflow
+removes the worker's container. The ingestion worker reads the same flag to
+record intent, so intent and the consumer switch together.
 
-Then:
+To enable the pipeline in an environment:
 
-1. Apply the migrations before you start the new worker.
-2. Set `BEATMAP_ATTRIBUTES_ENABLED=true` in the shared `.env` so that the
-   ingestion worker records intent. Intent rows accumulate without harm while
-   the attributes worker is down.
-3. Start the attributes worker.
+1. Set `BEATMAP_ATTRIBUTES_ENABLED=true`, `BEATMAP_ATTRIBUTES_STORAGE`, and the
+   variable of the selected provider in the deployed `.env`.
+2. Deploy. The migrate step applies the migrations before the stack starts.
+   Intent rows accumulate without harm while the attributes worker is down.
+3. Restart Prometheus one time after the deploy that adds the
+   `beatmap-attributes-worker` scrape job:
+
+   ```sh
+   docker compose restart prometheus
+   ```
+
 4. Backfill existing beatmaps with the batch command when you want historical
    results. Nothing starts this for you.
+
+To start the worker by hand between deploys:
+
+```sh
+docker compose --profile beatmap-attributes up -d beatmap-attributes-worker
+```
 
 Run operator commands inside the container:
 
 ```sh
-docker exec <container> bun run --cwd apps/data-worker attributes --osu-id 2785319 --inspect
+docker exec otr-beatmap-attributes-worker bun run --cwd apps/data-worker attributes --osu-id 2785319 --inspect
 ```
 
 ### Limits and capacity
@@ -949,7 +942,10 @@ million result rows. In a small sample, one stored file was about 25 KB.
 
 ### Monitoring
 
-The worker serves `/health` and `/metrics` on `METRICS_PORT`. Useful series:
+The worker serves `/health` and `/metrics` on `METRICS_PORT`. In Compose,
+Prometheus scrapes it through the `beatmap-attributes-worker` job on
+`otr-beatmap-attributes-worker:9092`. While the profile is off, that target
+stays down. Useful series:
 
 | Series                                       | Labels                                             |
 | -------------------------------------------- | -------------------------------------------------- |
@@ -991,7 +987,9 @@ messages carry trace context.
 - The local provider writes each file one time, atomically. A file that
   already exists with the correct checksum is not written again.
 - The local directory must survive restarts when you want to avoid downloads
-  again. `/tmp` can be cleared on reboot. Mount a persistent volume.
+  again. `/tmp` can be cleared on reboot. Mount a persistent volume. The Compose
+  service uses the `beatmap-files` named volume. The volume has no retention,
+  so watch host disk space.
 - A provider switch reuses only files with the same checksum under the new
   provider, which means a new download for every beatmap.
 - GCP errors never fall back to local storage.
