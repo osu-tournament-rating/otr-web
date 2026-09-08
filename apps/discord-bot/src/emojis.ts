@@ -68,7 +68,28 @@ const difficultyForName = (name: string) => {
   return canonical === name ? { ruleset, rating } : null;
 };
 
-/** Syncs named static icons; missing bounded difficulty icons are queued without delaying replies. */
+const difficultyPng = (ruleset: number, rating: number) =>
+  difficultyEmojiPng(ruleset, getStarRatingIconColor(rating));
+
+const difficultyBuckets = [
+  0,
+  ...Array.from(
+    { length: STAR_RATING_SPECTRUM_MAX * 2 },
+    (_, i) => (i + 1) / 2
+  ),
+];
+
+const difficultyEmojis = Object.values(Ruleset)
+  .filter((value): value is Ruleset => typeof value === 'number')
+  .flatMap((ruleset) =>
+    difficultyBuckets.map((rating) => ({
+      name: difficultyEmojiName(ruleset, rating),
+      ruleset,
+      rating,
+    }))
+  );
+
+/** Syncs every static icon at startup; a difficulty icon that is still missing is queued without delaying replies. */
 export async function syncEmojis(
   application: ClientApplication,
   logger: Logger,
@@ -99,6 +120,12 @@ export async function syncEmojis(
             png: () => statusEmojiPng(status),
           })
         )),
+    ...(scope === 'all'
+      ? difficultyEmojis.map(({ name, ruleset, rating }) => ({
+          name,
+          png: () => difficultyPng(ruleset, rating),
+        }))
+      : []),
   ];
   let created = 0;
   for (const { name, png } of entries) {
@@ -134,10 +161,7 @@ export async function syncEmojis(
           const emoji = await application.emojis.create({
             name,
             attachment: Buffer.from(
-              difficultyEmojiPng(
-                difficulty.ruleset,
-                getStarRatingIconColor(difficulty.rating)
-              )
+              difficultyPng(difficulty.ruleset, difficulty.rating)
             ),
           });
           ids.set(name, emoji.id);

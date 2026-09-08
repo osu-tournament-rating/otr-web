@@ -44,7 +44,7 @@ describe('syncEmojis', () => {
     const emoji = await syncEmojis(application, quietLogger());
 
     expect(emoji('tier_bronze1')).toBe('<:tier_bronze1:100>');
-    expect(create).toHaveBeenCalledTimes(26);
+    expect(create).toHaveBeenCalledTimes(26 + 6 * 19);
     expect(emoji('tier_elite_grandmaster')).toBe(
       '<:tier_elite_grandmaster:222>'
     );
@@ -78,6 +78,24 @@ describe('syncEmojis', () => {
   });
 });
 
+test('normal startup uploads every difficulty icon for every ruleset', async () => {
+  const { application, create } = fakeApplication([]);
+  const emoji = await syncEmojis(application, quietLogger());
+  const uploaded = create.mock.calls
+    .map(([{ name }]) => name)
+    .filter((name) => name.startsWith('difficulty_'));
+  expect(uploaded).toHaveLength(6 * 19);
+  expect(new Set(uploaded).size).toBe(uploaded.length);
+  create.mockClear();
+  for (const ruleset of [0, 1, 2, 3, 4, 5])
+    for (const sr of [0, 0.5, 4.5, 8.75, 12])
+      expect(emoji(difficultyEmojiName(ruleset, sr))).toMatch(
+        /^<:difficulty_\d_\d+:\d+>$/
+      );
+  await Bun.sleep(0);
+  expect(create).not.toHaveBeenCalled();
+});
+
 test('noEmojis resolves to empty text', () => {
   expect(noEmojis('tier_bronze1')).toBe('');
 });
@@ -99,7 +117,7 @@ test('a missing difficulty icon returns immediately and is created once in the b
       : Promise.resolve({ id: '1', name })
   );
   const { application } = fakeApplication([], create);
-  const emoji = await syncEmojis(application, quietLogger());
+  const emoji = await syncEmojis(application, quietLogger(), 'statuses');
   create.mockClear();
   expect(emoji('difficulty_0_90')).toBe('');
   expect(emoji('difficulty_0_90')).toBe('');
