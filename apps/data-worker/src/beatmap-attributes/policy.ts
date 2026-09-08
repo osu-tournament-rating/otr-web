@@ -79,3 +79,14 @@ export function parseGcpCredentials(
     throw invalid();
   return { client_email, private_key };
 }
+
+export type AttributesConfig = ReturnType<typeof readAttributesConfig>;
+
+/** The configuration that callers may keep or log. The credential stays with the storage client. */
+export function publicAttributesConfig(
+  config: AttributesConfig
+): Omit<AttributesConfig, 'credentials'> {
+  const shared: Partial<AttributesConfig> = { ...config };
+  delete shared.credentials;
+  return shared as Omit<AttributesConfig, 'credentials'>;
+}

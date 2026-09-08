@@ -8,7 +8,7 @@ import type { ProcessBeatmapAttributesMessage } from '@otr/core/messages/types';
 import { RabbitMqPublisher } from '@otr/core/queues';
 import { createBeatmapFileStorage, BeatmapFileDownloader } from './storage';
 import { BeatmapAttributeService } from './service';
-import { readAttributesConfig } from './policy';
+import { publicAttributesConfig, readAttributesConfig } from './policy';
 
 export async function createAttributesRuntime() {
   loadRootEnv();
@@ -19,14 +19,13 @@ export async function createAttributesRuntime() {
   const amqpUrl = process.env.RABBITMQ_AMQP_URL;
   if (!databaseUrl || !amqpUrl)
     throw new Error('DATABASE_URL and RABBITMQ_AMQP_URL are required');
-  const { credentials, ...publicConfig } = config;
   const storage = await createBeatmapFileStorage(
     config.provider === 'local'
       ? { provider: 'local', directory: config.directory! }
       : {
           provider: 'gcp',
           bucket: config.bucket!,
-          credentials,
+          credentials: config.credentials,
         }
   );
   await storage.verifyAccess();
@@ -48,7 +47,7 @@ export async function createAttributesRuntime() {
     queue: QueueConstants.beatmapAttributes,
   });
   return {
-    config: publicConfig,
+    config: publicAttributesConfig(config),
     db,
     pool,
     storage,

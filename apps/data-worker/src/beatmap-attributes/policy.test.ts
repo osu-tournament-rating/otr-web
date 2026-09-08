@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { MAX_ATTEMPTS, readAttributesConfig, retryDelayMs } from './policy';
+import {
+  MAX_ATTEMPTS,
+  publicAttributesConfig,
+  readAttributesConfig,
+  retryDelayMs,
+} from './policy';
 
 describe('attribute processing bounds', () => {
   test('processing is explicitly opt in', () => {
@@ -77,6 +82,16 @@ describe('gcp credential configuration', () => {
       expect(message).not.toContain('PRIVATE KEY');
       expect(message).not.toContain(key.client_email);
     }
+  });
+  test('the public configuration omits the credential', () => {
+    const config = readAttributesConfig(gcp(JSON.stringify(key)));
+    expect(config.credentials).toEqual(expected);
+    const shared = publicAttributesConfig(config);
+    expect('credentials' in shared).toBe(false);
+    expect(shared).toMatchObject({
+      provider: 'gcp',
+      bucket: 'otr-beatmap-files',
+    });
   });
   test('the local provider ignores gcp credentials', () => {
     expect(

@@ -897,7 +897,9 @@ describe('storage access checks at startup', () => {
       /"otr-files" does not exist/
     );
     failure = Object.assign(new Error('Forbidden'), { code: 403 });
-    await expect(storage.verifyAccess()).rejects.toThrow(/denied access/);
+    await expect(storage.verifyAccess()).rejects.toThrow(
+      'denied access; grant the service account object read, create, and list permissions'
+    );
     failure = new Error('Could not load the default credentials');
     await expect(storage.verifyAccess()).rejects.toThrow(
       /"otr-files" check failed: Could not load the default credentials/
