@@ -72,6 +72,7 @@ class BeatmapFetchTestDb {
     creatorsId: number;
   }> = [];
 
+  inTransaction = false;
   private nextId = 1000;
 
   constructor(beatmaps: BeatmapRow[]) {
@@ -158,7 +159,12 @@ class BeatmapFetchTestDb {
   }
 
   async transaction<T>(callback: (tx: this) => Promise<T>): Promise<T> {
-    return callback(this);
+    this.inTransaction = true;
+    try {
+      return await callback(this);
+    } finally {
+      this.inTransaction = false;
+    }
   }
 
   private write(
@@ -292,7 +298,8 @@ const siblingBeatmap: BeatmapRow = {
 
 const createService = (
   db: BeatmapFetchTestDb,
-  api: { getBeatmap: unknown; getBeatmapset: unknown }
+  api: { getBeatmap: unknown; getBeatmapset: unknown },
+  scheduleAttributes?: (beatmapId: number) => Promise<void>
 ) => {
   const logs: Array<{ message: string; context?: unknown }> = [];
 
@@ -320,6 +327,12 @@ const createService = (
       logger,
     }),
     publishPlayerFetch: async () => {},
+    recordAttributeIntent: scheduleAttributes
+      ? async (tx, id) => {
+          expect(tx).toBe(client);
+          await scheduleAttributes(id);
+        }
+      : undefined,
   });
 
   return { service, logs };
@@ -386,5 +399,20 @@ describe('BeatmapFetchService manual override', () => {
 
     expect(db.beatmaps.get(1)).toEqual(before);
     expect(db.beatmaps.get(2)?.dataFetchStatus).toBe(DataFetchStatus.Error);
+  });
+});
+
+describe('BeatmapFetchService attribute scheduling', () => {
+  it('records attribute intent in the metadata transaction', async () => {
+    const db = new BeatmapFetchTestDb([overriddenBeatmap, siblingBeatmap]);
+    const scheduled: number[] = [];
+    const { service } = createService(db, workingApi, async (id) => {
+      expect(db.inTransaction).toBe(true);
+      scheduled.push(id);
+    });
+    expect(await service.fetchAndPersist(111)).toBe(true);
+    expect(scheduled).toEqual([2]);
+    expect(db.beatmaps.get(2)?.dataFetchStatus).toBe(DataFetchStatus.Fetched);
+    expect(db.beatmaps.get(1)).toEqual(overriddenBeatmap);
   });
 });

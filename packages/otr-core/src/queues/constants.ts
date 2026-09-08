@@ -1,6 +1,7 @@
 import { MessagePriority } from '../messages/values';
 
 type QueueMap = {
+  beatmapAttributes: 'processing.attributes.beatmaps';
   automatedChecks: {
     tournaments: 'processing.checks.tournaments';
   };
@@ -12,6 +13,7 @@ type QueueMap = {
 };
 
 export const QueueConstants: QueueMap = {
+  beatmapAttributes: 'processing.attributes.beatmaps',
   automatedChecks: {
     tournaments: 'processing.checks.tournaments',
   },
@@ -24,6 +26,7 @@ export const QueueConstants: QueueMap = {
 
 export type QueueGroup = keyof QueueMap;
 export type QueueName =
+  | QueueMap['beatmapAttributes']
   | QueueMap['automatedChecks']['tournaments']
   | QueueMap['osu']
   | QueueMap['osuTrack']

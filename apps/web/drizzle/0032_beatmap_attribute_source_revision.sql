@@ -1,0 +1,1 @@
+ALTER TABLE "beatmap_attribute_jobs" ADD COLUMN "source_metadata_updated_at" timestamp with time zone;

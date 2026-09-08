@@ -34,6 +34,10 @@ scrape_configs:
     static_configs:
       - targets: ['otr-data-worker:9091']
 
+  - job_name: 'beatmap-attributes-worker'
+    static_configs:
+      - targets: ['otr-beatmap-attributes-worker:9092']
+
   - job_name: 'discord-bot'
     static_configs:
       - targets: ['otr-discord-bot:9091']
