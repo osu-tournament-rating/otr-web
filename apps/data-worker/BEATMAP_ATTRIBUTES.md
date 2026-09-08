@@ -596,10 +596,10 @@ new version and does not rebuild by itself.
 9. Deploy the new worker image. No migration is necessary.
 10. Recalculate every fetched beatmap in batches:
 
-```sh
-bun run --cwd apps/data-worker attributes --batch-size 100 --recalculate
-bun run --cwd apps/data-worker attributes --batch-size 100 --after-id <nextAfterId> --recalculate
-```
+    ```sh
+    bun run --cwd apps/data-worker attributes --batch-size 100 --recalculate
+    bun run --cwd apps/data-worker attributes --batch-size 100 --after-id <nextAfterId> --recalculate
+    ```
 
     Repeat with the returned `nextAfterId` until `scheduled` is 0.
 
