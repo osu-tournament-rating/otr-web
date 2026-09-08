@@ -64,15 +64,13 @@ export class GcpBeatmapFileStorage implements BeatmapFileStorage {
       );
     } catch (cause) {
       const bucket = `GCP beatmap bucket "${this.bucketName}"`;
-      if (hasStatus(cause, 404))
-        throw new Error(`${bucket} does not exist`, { cause });
+      if (hasStatus(cause, 404)) throw new Error(`${bucket} does not exist`);
       if (hasStatus(cause, 403))
         throw new Error(
-          `${bucket} denied access; grant the service account object read, create, and list permissions`,
-          { cause }
+          `${bucket} denied access; grant the service account object read, create, and list permissions`
         );
       const reason = cause instanceof Error ? cause.message : String(cause);
-      throw new Error(`${bucket} check failed: ${reason}`, { cause });
+      throw new Error(`${bucket} check failed: ${reason}`);
     }
   }
 

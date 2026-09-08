@@ -19,13 +19,14 @@ export async function createAttributesRuntime() {
   const amqpUrl = process.env.RABBITMQ_AMQP_URL;
   if (!databaseUrl || !amqpUrl)
     throw new Error('DATABASE_URL and RABBITMQ_AMQP_URL are required');
+  const { credentials, ...publicConfig } = config;
   const storage = await createBeatmapFileStorage(
     config.provider === 'local'
       ? { provider: 'local', directory: config.directory! }
       : {
           provider: 'gcp',
           bucket: config.bucket!,
-          credentials: config.credentials,
+          credentials,
         }
   );
   await storage.verifyAccess();
@@ -47,7 +48,7 @@ export async function createAttributesRuntime() {
     queue: QueueConstants.beatmapAttributes,
   });
   return {
-    config,
+    config: publicConfig,
     db,
     pool,
     storage,

@@ -650,15 +650,17 @@ the database. The `local` provider creates the directory and checks that it is
 writable. The `gcp` provider lists one object under `sha256/` in the bucket.
 The process stops with one of these messages when the check fails:
 
-| Message                                                         | Cause                                                                       |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `GCP beatmap bucket "<name>" does not exist`                    | The bucket name is wrong.                                                   |
-| `GCP beatmap bucket "<name>" denied access`                     | The service account lacks a permission.                                     |
-| `GCP beatmap bucket "<name>" check failed: <reason>`            | The credentials could not be loaded or used, or the service is unreachable. |
-| `Local beatmap storage path <path> is not a writable directory` | The directory cannot be created or written.                                 |
+| Message                                                                                                          | Cause                                                                       |
+| ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `GCP beatmap bucket "<name>" does not exist`                                                                     | The bucket name is wrong.                                                   |
+| `GCP beatmap bucket "<name>" denied access; grant the service account object read, create, and list permissions` | The service account cannot list the bucket.                                 |
+| `GCP beatmap bucket "<name>" check failed: <reason>`                                                             | The credentials could not be loaded or used, or the service is unreachable. |
+| `Local beatmap storage path <path> is not a writable directory`                                                  | The directory cannot be created or written.                                 |
 
-In Compose, the container restarts until the configuration is fixed. The
-messages never contain the credential value.
+The GCP check proves list access only. A service account that can list but
+not read or create objects passes the check, and its jobs then fail with
+`storage_unavailable`. In Compose, the container restarts until the
+configuration is fixed. The messages never contain the credential value.
 
 ## Run and test locally
 
@@ -953,9 +955,10 @@ To use a bucket instead of the local volume:
 
 1. Create a bucket with uniform bucket-level access and no public access. The
    pipeline needs no lifecycle rule, versioning, or retention policy.
-2. Create a service account. Grant it `roles/storage.objectUser` on the bucket
-   only. The worker needs `storage.objects.get`, `storage.objects.create`, and
-   `storage.objects.list`.
+2. Create a service account. Grant it `roles/storage.objectViewer` and
+   `roles/storage.objectCreator` on the bucket only, or a custom role with
+   exactly `storage.objects.get`, `storage.objects.create`, and
+   `storage.objects.list`. Do not grant delete. The store is append-only.
 3. Create a JSON key for the service account and encode it:
 
    ```sh
