@@ -334,7 +334,7 @@ export function deriveGameIsFreeMod(
   );
 }
 
-/** Admin mod multi-select options: every named mod as `Full name (CODE)`. */
+/** Admin mod multi-select options, `Full name (CODE)` sorted by name. */
 export function getModSelectOptions(): { label: string; value: string }[] {
   return Object.entries(ModsEnumHelper.metadata)
     .filter(([value, { text }]) => !!text && value !== Mods.None.toString())
