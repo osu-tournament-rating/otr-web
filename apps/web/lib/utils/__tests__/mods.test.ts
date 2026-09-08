@@ -11,6 +11,7 @@ import {
   getBeatmapModLabel,
   getModColor,
   getModForegroundColor,
+  getModSelectOptions,
   normalizeBeatmapDisplayMods,
   resolveGameDisplayMods,
   selectBeatmapListModGroups,
@@ -308,5 +309,18 @@ describe('deriveGameIsFreeMod', () => {
     expect(deriveGameIsFreeMod(Mods.HardRock, [{ mods: Mods.HardRock }])).toBe(
       false
     );
+  });
+});
+
+describe('getModSelectOptions', () => {
+  it('labels every mod with its full name and code', () => {
+    const labels = new Map(
+      getModSelectOptions().map(({ value, label }) => [Number(value), label])
+    );
+
+    expect(labels.get(Mods.Mirror)).toBe('Mirror (MR)');
+    expect(labels.get(Mods.ScoreV2)).toBe('ScoreV2 (V2)');
+    expect(labels.get(Mods.HardRock)).toBe('Hard rock (HR)');
+    expect(labels.has(Mods.None)).toBe(false);
   });
 });

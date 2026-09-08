@@ -38,13 +38,13 @@ import SimpleSelectContent from '@/components/select/SimpleSelectContent';
 import {
   GameRejectionReasonEnumHelper,
   GameWarningFlagsEnumHelper,
-  ModsEnumHelper,
   ScoringTypeEnumHelper,
   TeamTypeEnumHelper,
   getEnumFlags,
 } from '@/lib/enum-helpers';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { orpc } from '@/lib/orpc/orpc';
+import { getModSelectOptions } from '@/lib/utils/mods';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import { hasAdminScope } from '@/lib/auth/roles';
 import type {
@@ -64,15 +64,7 @@ const inputChangedStyle = (fieldState: ControllerFieldState) =>
       'border-warning ring-warning focus-visible:border-warning focus-visible:ring-warning/20'
   );
 
-const modOptions = Object.entries(ModsEnumHelper.metadata)
-  .filter(([value, { text }]) => !!text && value !== Mods.None.toString())
-  .map(([value, { text, description }]) => ({
-    label: description
-      ? `${description.charAt(0).toUpperCase() + description.slice(1)} (${text})`
-      : text,
-    value,
-  }))
-  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
+const modOptions = getModSelectOptions();
 
 const warningFlagOptions = Object.entries(GameWarningFlagsEnumHelper.metadata)
   .map(([value, { text }]) => ({
