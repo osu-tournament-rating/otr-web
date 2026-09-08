@@ -69,25 +69,25 @@ records the osu! ID that was downloaded.
 
 ### `beatmap_attribute_jobs`
 
-| Column                       | Type        | Meaning                                                                                                                                                                                                       |
-| ---------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`                         | text        | A UUID. Queue messages carry this value.                                                                                                                                                                      |
-| `beatmap_id`                 | integer     | The `beatmaps.id`. Unique. A beatmap delete cascades to this row.                                                                                                                                             |
-| `generation`                 | integer     | Starts at 1. Increases by 1 each time a reschedule changes the request. A queue message carries the generation it was published for. The worker rejects a message whose generation is different from the row. |
-| `status`                     | text        | `pending`, `processing`, `complete`, or `failed`. See [Job status](#job-status).                                                                                                                              |
-| `attempts`                   | integer     | The number of claims in the current generation. Reset to 0 when the generation changes. The limit is 4.                                                                                                       |
-| `requested_settings`         | jsonb       | An array of 1 to 6 normalized profiles. All entries have the same `ruleset`. See [Profiles and settings](#profiles-and-settings).                                                                             |
-| `refresh_source`             | boolean     | `true` means that the next attempt must download the file again and must not reuse a stored file. Set to `false` when the job completes.                                                                      |
-| `acquired_file_id`           | integer     | The `beatmap_files` row of the current or last attempt. Set before the HTTP request starts, so a download in progress is visible. Null when no attempt has started in this generation.                        |
-| `source_file_id`             | integer     | The file that the committed results came from. Changes only when a generation completes. A failed refresh keeps the previous value.                                                                           |
-| `lease_token`                | text        | A random token that identifies the worker that holds the claim. Null when the status is not `processing`.                                                                                                     |
-| `lease_expires_at`           | timestamptz | The time the claim expires. The worker renews it every 15 seconds while it processes. The recovery loop can republish the job after this time.                                                                |
-| `next_attempt_at`            | timestamptz | The earliest time that a worker can claim the job. A retryable failure moves it into the future.                                                                                                              |
-| `published_at`               | timestamptz | The last time the recovery loop published this generation. The loop publishes again if the job is still claimable 60 seconds later.                                                                           |
-| `desired_calculator_version` | text        | The calculator that must process this job, for example `rosu-pp-js@4.0.1`. A worker claims only jobs that match its own `CALCULATOR_VERSION`.                                                                 |
-| `desired_format_version`     | integer     | The result format that this job must produce. A worker claims only jobs that match its own `CALCULATION_FORMAT_VERSION`.                                                                                      |
-| `requested_at`               | timestamptz | The time the current generation was requested. The recovery loop publishes jobs in this order.                                                                                                                |
-| `error_code`                 | text        | The last error code. Null after a success. See [Error codes](#error-codes).                                                                                                                                   |
+| Column                       | Type        | Meaning                                                                                                                                                                                                                                                                          |
+| ---------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                         | text        | A UUID. Queue messages carry this value.                                                                                                                                                                                                                                         |
+| `beatmap_id`                 | integer     | The `beatmaps.id`. Unique. A beatmap delete cascades to this row.                                                                                                                                                                                                                |
+| `generation`                 | integer     | Starts at 1. Increases by 1 each time a reschedule changes the request. A queue message carries the generation it was published for. The worker rejects a message whose generation is different from the row.                                                                    |
+| `status`                     | text        | `pending`, `processing`, `complete`, or `failed`. See [Job status](#job-status).                                                                                                                                                                                                 |
+| `attempts`                   | integer     | The number of claims in the current generation. Reset to 0 when the generation changes. The limit is 4.                                                                                                                                                                          |
+| `requested_settings`         | jsonb       | An array of 1 to 6 normalized profiles. All entries have the same `ruleset`. See [Profiles and settings](#profiles-and-settings).                                                                                                                                                |
+| `refresh_source`             | boolean     | `true` means that the next attempt must download the file again and must not reuse a stored file. Set to `false` when the job completes.                                                                                                                                         |
+| `acquired_file_id`           | integer     | The `beatmap_files` row of the current or last attempt. Set before the HTTP request starts, so a download in progress is visible. The pointer survives a reschedule unless `--refresh-source` is used or the previous attempt was abandoned. Null only before the first attempt. |
+| `source_file_id`             | integer     | The file that the committed results came from. Changes only when a generation completes. A failed refresh keeps the previous value.                                                                                                                                              |
+| `lease_token`                | text        | A random token that identifies the worker that holds the claim. Null when the status is not `processing`.                                                                                                                                                                        |
+| `lease_expires_at`           | timestamptz | The time the claim expires. The worker renews it every 15 seconds while it processes. The recovery loop can republish the job after this time.                                                                                                                                   |
+| `next_attempt_at`            | timestamptz | The earliest time that a worker can claim the job. A retryable failure moves it into the future.                                                                                                                                                                                 |
+| `published_at`               | timestamptz | The last time the recovery loop published this generation. The loop publishes again if the job is still claimable 60 seconds later.                                                                                                                                              |
+| `desired_calculator_version` | text        | The calculator that must process this job, for example `rosu-pp-js@4.0.1`. A worker claims only jobs that match its own `CALCULATOR_VERSION`.                                                                                                                                    |
+| `desired_format_version`     | integer     | The result format that this job must produce. A worker claims only jobs that match its own `CALCULATION_FORMAT_VERSION`.                                                                                                                                                         |
+| `requested_at`               | timestamptz | The time the current generation was requested. The recovery loop publishes jobs in this order.                                                                                                                                                                                   |
+| `error_code`                 | text        | The last error code. Null after a success. See [Error codes](#error-codes).                                                                                                                                                                                                      |
 
 ### `beatmap_files`
 
@@ -138,7 +138,8 @@ and `acquired_at`. A check constraint enforces this rule.
 | `created`            | timestamptz      | The insert time.                                                                                                                         |
 
 Effective AR and OD keep their fractions and can be outside the editor range.
-For example, HR on AR 10 stores a value above 10.
+HR clamps AR, OD, CS, and HP at 10. DT does not clamp. For example, DT on AR 9.3
+stores an AR above 10.
 
 The `difficulty` payload always has `version` (the format version) and `mode`.
 The other members depend on the mode:
@@ -154,17 +155,17 @@ The other members depend on the mode:
 
 Drizzle exposes these relations:
 
-| From                   | Relation               | To                       | Note                                       |
-| ---------------------- | ---------------------- | ------------------------ | ------------------------------------------ |
-| `beatmaps`             | `beatmapFiles`         | `beatmap_files`          | Many.                                      |
-| `beatmaps`             | `beatmapAttributes`    | `beatmap_attributes`     | Many.                                      |
-| `beatmaps`             | `beatmapAttributeJobs` | `beatmap_attribute_jobs` | At most one row.                           |
-| `beatmapAttributeJobs` | `sourceFile`           | `beatmap_files`          | Through `source_file_id`.                  |
-| `beatmapAttributeJobs` | `acquiredFile`         | `beatmap_files`          | Through `acquired_file_id`.                |
-| `beatmapFiles`         | `attributes`           | `beatmap_attributes`     | Results calculated from this file.         |
-| `beatmapFiles`         | `jobs`                 | `beatmap_attribute_jobs` | Jobs whose results came from this file.    |
-| `beatmapFiles`         | `acquisitionJobs`      | `beatmap_attribute_jobs` | Jobs whose current attempt uses this file. |
-| `beatmapAttributes`    | `file`                 | `beatmap_files`          |                                            |
+| From                   | Relation               | To                       | Note                                                      |
+| ---------------------- | ---------------------- | ------------------------ | --------------------------------------------------------- |
+| `beatmaps`             | `beatmapFiles`         | `beatmap_files`          | Many.                                                     |
+| `beatmaps`             | `beatmapAttributes`    | `beatmap_attributes`     | Many.                                                     |
+| `beatmaps`             | `beatmapAttributeJobs` | `beatmap_attribute_jobs` | Many in Drizzle. The unique index allows at most one row. |
+| `beatmapAttributeJobs` | `sourceFile`           | `beatmap_files`          | Through `source_file_id`.                                 |
+| `beatmapAttributeJobs` | `acquiredFile`         | `beatmap_files`          | Through `acquired_file_id`.                               |
+| `beatmapFiles`         | `attributes`           | `beatmap_attributes`     | Results calculated from this file.                        |
+| `beatmapFiles`         | `jobs`                 | `beatmap_attribute_jobs` | Jobs whose results came from this file.                   |
+| `beatmapFiles`         | `acquisitionJobs`      | `beatmap_attribute_jobs` | Jobs whose current attempt uses this file.                |
+| `beatmapAttributes`    | `file`                 | `beatmap_files`          |                                                           |
 
 All foreign keys use `ON DELETE CASCADE`:
 
@@ -255,7 +256,7 @@ Download and storage codes from `storage.ts`:
 | `rate_limited`         | Yes       | osu! returned HTTP 429, or the local limiter could not admit the request before the 180-second deadline. `next_attempt_at` honors the cooldown.                                                                                                                                                       |
 | `storage_unavailable`  | Yes       | A local read or write failed, or the GCP request failed.                                                                                                                                                                                                                                              |
 | `timeout`              | Yes       | One request took longer than 20 seconds, or the acquisition took longer than 180 seconds.                                                                                                                                                                                                             |
-| `busy`                 | Yes       | More than 256 downloads are pending in this worker process.                                                                                                                                                                                                                                           |
+| `busy`                 | Yes       | 256 downloads are already pending in this worker process.                                                                                                                                                                                                                                             |
 
 When a stored file fails with `invalid_file`, `checksum_mismatch`, or
 `too_large`, the worker treats the file as missing and downloads it again. The
@@ -455,7 +456,8 @@ The previous `source_file_id` and its results are not changed by a failure.
 ### Recovery loop
 
 `BeatmapAttributeService.reconcile` runs every 15 seconds in the worker, and
-one time at the end of each CLI command. Each pass:
+one time at the end of each CLI command that schedules work. `--inspect` does
+not run it. Each pass:
 
 1. Sets every `processing` job with an expired lease and 4 attempts to `failed`
    with `attempt_budget_exhausted`. Sets its `Fetching` file row to `Error`
@@ -555,14 +557,14 @@ that exists in `beatmaps`, not only the requested one. A beatmap with
 
 These paths publish a beatmap metadata fetch:
 
-| Trigger                                                            | Which beatmaps                                                                               |
-| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| Match ingestion (`match-fetch-service.ts`)                         | Beatmaps of the match games whose `data_fetch_status` is `NotFetched`. Usually new beatmaps. |
-| Multiplayer room ingestion (`room-fetch-service.ts`)               | Same rule.                                                                                   |
-| Tournament submission (`tournamentSubmissionProcedure.ts`)         | Pooled beatmaps in the submission.                                                           |
-| Admin pooled beatmap edits (`beatmapAdminProcedures.ts`)           | Beatmaps added to the pool.                                                                  |
-| Admin refetch beatmap data for a tournament (`adminProcedures.ts`) | Every beatmap of the tournament that is not `NotFound`.                                      |
-| Admin mass enqueue (`massEnqueueProcedures.ts`)                    | Every selected beatmap.                                                                      |
+| Trigger                                                                        | Which beatmaps                                                                               |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Match ingestion (`match-fetch-service.ts`)                                     | Beatmaps of the match games whose `data_fetch_status` is `NotFetched`. Usually new beatmaps. |
+| Multiplayer room ingestion (`room-fetch-service.ts`)                           | Same rule.                                                                                   |
+| Tournament submission (`tournamentSubmissionProcedure.ts`)                     | Pooled beatmaps of the submission that do not exist in `beatmaps` yet.                       |
+| Admin pooled beatmap edits (`beatmapAdminProcedures.ts`)                       | Added beatmaps that do not exist in `beatmaps`, or whose status is `NotFetched` or `Error`.  |
+| Admin refetch beatmap data for a tournament (`tournaments/adminProcedures.ts`) | Every pooled beatmap of the tournament that is not `NotFound`.                               |
+| Admin mass enqueue (`massEnqueueProcedures.ts`)                                | Selected beatmaps that exist in `beatmaps` and are not `NotFound`.                           |
 
 An admin refetch of a tournament with 200 pooled beatmaps therefore causes up
 to 200 downloads plus the other difficulties of those beatmapsets. It causes no
@@ -577,29 +579,29 @@ new version and does not rebuild by itself.
 
 1. Stop every attributes worker. A worker claims only jobs that match its
    versions, but a mixed fleet makes the backfill hard to reason about.
-2. Change the version pin in `apps/data-worker/package.json`. Run
-   `bun install` to update `bun.lock`.
-3. Set `CALCULATOR_VERSION` in
+2. Change the version pin in `apps/data-worker/package.json`.
+3. Run `bun install` to update `bun.lock`.
+4. Set `CALCULATOR_VERSION` in
    `apps/data-worker/src/beatmap-attributes/calculator-version.ts` to
    `rosu-pp-js@<new version>`.
-4. Decide whether the format version changes. Increase
-   `CALCULATION_FORMAT_VERSION` in
-   `packages/otr-core/src/osu/beatmap-attributes.ts` when the meaning of a
-   stored column changes, or when the shape of `hit_windows` or `difficulty`
-   changes. Update the difficulty schemas and `difficultyPayload` in
-   `calculator.ts` for a shape change. Keep the format version when only the
-   numbers change.
-5. Run the tests. Update the expected values in `calculator.test.ts` and
+5. Decide whether the format version changes. Keep it when only the numbers
+   change. Change it when the meaning of a stored column changes, or when the
+   shape of `hit_windows` or `difficulty` changes.
+6. For a format change, increase `CALCULATION_FORMAT_VERSION` in
+   `packages/otr-core/src/osu/beatmap-attributes.ts`.
+7. For a shape change, update the difficulty schemas in the same file and
+   `difficultyPayload` in `calculator.ts`.
+8. Run the tests. Update the expected values in `calculator.test.ts` and
    `service.integration.test.ts` when the library changed its results.
-6. Deploy the new worker image. No migration is necessary.
-7. Recalculate every fetched beatmap in batches:
+9. Deploy the new worker image. No migration is necessary.
+10. Recalculate every fetched beatmap in batches:
 
-   ```sh
-   bun run --cwd apps/data-worker attributes --batch-size 100 --recalculate
-   bun run --cwd apps/data-worker attributes --batch-size 100 --after-id <nextAfterId> --recalculate
-   ```
+```sh
+bun run --cwd apps/data-worker attributes --batch-size 100 --recalculate
+bun run --cwd apps/data-worker attributes --batch-size 100 --after-id <nextAfterId> --recalculate
+```
 
-   Repeat with the returned `nextAfterId` until `scheduled` is 0.
+    Repeat with the returned `nextAfterId` until `scheduled` is 0.
 
 ### Effects on existing data
 
@@ -654,25 +656,35 @@ the storage variables. The CLI and the attributes worker need all of them.
 
 ### Set up
 
-1. Create the database clone, then apply the migrations of this checkout from
-   the repository root:
+1. Create the database clone from the `otr-scripts` root. Give it this
+   checkout so that the clone gets the migrations of this branch:
 
    ```sh
-   bunx drizzle-kit migrate
+   uv run python src/main.py --script template-db --template-action create --template-name <name> --template-web-dir <this checkout>
    ```
 
-2. Put these values in the `.env` file at the repository root:
+2. Put these values in the `.env` file at the repository root. `METRICS_PORT`
+   must differ from the ingestion worker's port when both run on one host:
 
    ```sh
    DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5434/<name>
    RABBITMQ_AMQP_URL=amqp://<user>:<password>@127.0.0.1:<port>/
+   METRICS_PORT=9092
    BEATMAP_ATTRIBUTES_ENABLED=true
    BEATMAP_ATTRIBUTES_STORAGE=local
    BEATMAP_ATTRIBUTES_LOCAL_DIR=/tmp/beatmap-files
    BEATMAP_ATTRIBUTES_CONCURRENCY=2
    ```
 
-3. Confirm that the migrations created the tables and that `beatmap_attributes`
+3. If the clone's migrations are behind this checkout, apply them from the
+   repository root. `drizzle-kit` reads `DATABASE_URL` from the same `.env`
+   file, so confirm that the value points to port `5434` before you run it:
+
+   ```sh
+   bunx drizzle-kit migrate
+   ```
+
+4. Confirm that the migrations created the tables and that `beatmap_attributes`
    is empty:
 
    ```sh
@@ -875,6 +887,13 @@ attributes-worker:
     timeout: 5s
     retries: 3
     start_period: 10s
+```
+
+Declare the volume in the top-level `volumes` block of the same file:
+
+```yaml
+volumes:
+  beatmap-files:
 ```
 
 Then:
