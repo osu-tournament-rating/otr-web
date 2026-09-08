@@ -160,6 +160,9 @@ services:
     # BEATMAP_ATTRIBUTES_ENABLED=true and removes its container otherwise.
     profiles:
       - beatmap-attributes
+    build:
+      context: .
+      dockerfile: apps/data-worker/Dockerfile
     image: stagecodes/otr-data-worker:latest
     container_name: otr-beatmap-attributes-worker
     restart: unless-stopped

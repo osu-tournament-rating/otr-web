@@ -168,16 +168,20 @@ jobs:
           set -euo pipefail
           ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s -- "$REMOTE_PATH" <<'EOF'
             cd "$1"
-            # The attributes worker is opt-in. The deployed .env decides whether
-            # its Compose profile runs, so ingestion intent and the consumer
-            # switch together.
+            # The attributes worker is opt-in. The last BEATMAP_ATTRIBUTES_ENABLED
+            # line in the deployed .env decides whether its Compose profile runs,
+            # so ingestion intent and the consumer switch together. The match
+            # accepts the forms Compose reads as true: bare or quoted, with an
+            # optional export prefix, surrounding whitespace, or a trailing comment.
+            # The migrate && up list stays last so its status remains the step's.
             ATTRIBUTES_PROFILE=""
-            if grep -Eq '^BEATMAP_ATTRIBUTES_ENABLED=true[[:space:]]*$' .env; then
+            if grep -E "^[[:space:]]*(export[[:space:]]+)?BEATMAP_ATTRIBUTES_ENABLED=" .env \
+              | tail -n 1 \
+              | grep -Eq "=[[:space:]]*[\"']?true[\"']?([[:space:]]+#.*)?[[:space:]]*\$"; then
               ATTRIBUTES_PROFILE="--profile beatmap-attributes"
+            else
+              docker compose --profile beatmap-attributes rm -sf beatmap-attributes-worker
             fi
             docker compose $ATTRIBUTES_PROFILE pull
             docker compose --profile migrate run --rm migrate && docker compose --profile node-exporter $ATTRIBUTES_PROFILE up -d --remove-orphans
-            if [ -z "$ATTRIBUTES_PROFILE" ]; then
-              docker compose --profile beatmap-attributes rm -sf beatmap-attributes-worker
-            fi
           EOF

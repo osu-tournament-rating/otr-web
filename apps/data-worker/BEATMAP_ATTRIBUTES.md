@@ -176,9 +176,13 @@ The `beatmap-attributes-worker` service in `docker-compose.yml` and
 `docker-compose-staging.yml` runs the data-worker image with the
 `attributes:worker` command, keeps local files on the `beatmap-files` volume,
 and serves health and metrics on port `9092`. It belongs to the
-`beatmap-attributes` Compose profile. The deploy workflow reads
-`BEATMAP_ATTRIBUTES_ENABLED` from the deployed `.env`: `true` pulls and starts
-the worker with each deploy, and any other value removes its container. The
-same flag makes ingestion record intent, so both switch together. Start it by
-hand with `docker compose --profile beatmap-attributes up -d
-beatmap-attributes-worker`. Local validation does not establish GCP readiness.
+`beatmap-attributes` Compose profile. The deploy workflow reads the last
+`BEATMAP_ATTRIBUTES_ENABLED` line in the deployed `.env`: a bare or quoted
+`true` pulls and starts the worker with each deploy, and any other value
+removes its container. The same flag makes ingestion record intent, so both
+switch together. Start it by hand with `docker compose --profile
+beatmap-attributes up -d beatmap-attributes-worker`. Prometheus scrapes the
+worker on port `9092` after `docker compose restart prometheus` picks up the
+new job; while the profile is off, that target stays down. Local storage on
+the `beatmap-files` volume has no retention, so watch host disk space. Local
+validation does not establish GCP readiness.
