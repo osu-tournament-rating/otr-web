@@ -61,6 +61,7 @@ const playerCompactColumns = {
   username: schema.players.username,
   country: schema.players.country,
   defaultRuleset: schema.players.defaultRuleset,
+  osuRestricted: schema.players.osuRestricted,
 } as const;
 
 /** Clamps a stored accuracy aggregate into the 0–1 the response schema allows. */
@@ -193,6 +194,7 @@ export const getBeatmapStats = publicProcedure
             creatorUsername: schema.players.username,
             creatorCountry: schema.players.country,
             creatorDefaultRuleset: schema.players.defaultRuleset,
+            creatorOsuRestricted: schema.players.osuRestricted,
           })
           .from(schema.beatmaps)
           .leftJoin(
@@ -460,6 +462,7 @@ export const getBeatmapStats = publicProcedure
             playerUsername: schema.players.username,
             playerCountry: schema.players.country,
             playerDefaultRuleset: schema.players.defaultRuleset,
+            playerOsuRestricted: schema.players.osuRestricted,
             score: schema.gameScores.score,
             grade: schema.gameScores.grade,
             accuracy: schema.gameScores.accuracy,
@@ -823,6 +826,7 @@ export const getBeatmapStats = publicProcedure
               username: schema.players.username,
               country: schema.players.country,
               defaultRuleset: schema.players.defaultRuleset,
+              osuRestricted: schema.players.osuRestricted,
             })
             .from(schema.players)
             .where(eq(schema.players.id, beatmap.setOwnerIdOverride))
@@ -836,6 +840,7 @@ export const getBeatmapStats = publicProcedure
             username: setOwnerOverrideRows[0].username,
             country: setOwnerOverrideRows[0].country,
             defaultRuleset: setOwnerOverrideRows[0].defaultRuleset as Ruleset,
+            osuRestricted: setOwnerOverrideRows[0].osuRestricted,
           }
         : null;
 
@@ -845,6 +850,7 @@ export const getBeatmapStats = publicProcedure
         username: row.username,
         country: row.country,
         defaultRuleset: row.defaultRuleset as Ruleset,
+        osuRestricted: row.osuRestricted,
       }));
 
       const summary = {
@@ -1001,6 +1007,7 @@ export const getBeatmapStats = publicProcedure
             username: row.playerUsername,
             country: row.playerCountry,
             defaultRuleset: row.playerDefaultRuleset as Ruleset,
+            osuRestricted: row.playerOsuRestricted,
           },
           score: row.score,
           grade: row.grade,
@@ -1183,6 +1190,7 @@ export const getBeatmapStats = publicProcedure
                         country: beatmap.creatorCountry ?? '',
                         defaultRuleset: (beatmap.creatorDefaultRuleset ??
                           Ruleset.Osu) as Ruleset,
+                        osuRestricted: beatmap.creatorOsuRestricted ?? false,
                       }
                     : null,
               }

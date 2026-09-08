@@ -34,6 +34,7 @@ describe('UserDetailSchema', () => {
         osuTrackLastFetch: null,
         osuTrackDataFetchStatus: 0,
         dataFetchStatus: 0,
+        osuRestricted: false,
         created: '2026-08-01 00:00:00+00',
         updated: null,
       },

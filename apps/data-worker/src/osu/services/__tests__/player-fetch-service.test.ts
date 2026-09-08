@@ -11,6 +11,7 @@ mock.module('../../client', () => ({
   APIError: class APIError extends Error {},
 }));
 
+const { APIError } = await import('../../client');
 const { PlayerFetchService } = await import('../player-fetch-service');
 
 type PlayerUpdate = Record<string, unknown>;
@@ -29,7 +30,10 @@ const createLogger = (): Logger => {
   return logger;
 };
 
-const createHarness = (apiUser: Record<string, unknown>) => {
+const createHarness = (
+  apiUser: Record<string, unknown>,
+  getUser: () => Promise<unknown> = async () => apiUser
+) => {
   const updates: PlayerUpdate[] = [];
 
   const db = {
@@ -54,9 +58,7 @@ const createHarness = (apiUser: Record<string, unknown>) => {
     }),
   } as unknown as DatabaseClient;
 
-  const api = {
-    getUser: async () => apiUser,
-  } as unknown as API;
+  const api = { getUser } as unknown as API;
 
   const rateLimiter = {
     schedule: <T>(task: () => Promise<T>) => task(),
@@ -141,5 +143,38 @@ describe('PlayerFetchService previous usernames', () => {
     await service.fetchAndPersist(OSU_ID);
 
     expect(previousUsernamesOf(updates)).toEqual([]);
+  });
+});
+
+const rejectNotFound = () =>
+  Promise.reject(
+    Object.assign(Object.create(APIError.prototype) as Error, {
+      response: { status_code: 404 },
+    })
+  );
+
+describe('PlayerFetchService restriction', () => {
+  it('marks the player restricted when the osu! API returns 404', async () => {
+    const { service, updates } = createHarness(
+      buildApiUser({}),
+      rejectNotFound
+    );
+
+    expect(await service.fetchAndPersist(OSU_ID)).toBe(false);
+
+    expect(updates.at(-1)).toMatchObject({
+      dataFetchStatus: DataFetchStatus.NotFound,
+      osuRestricted: true,
+    });
+  });
+
+  it('clears the restriction after a successful fetch', async () => {
+    const { service, updates } = createHarness(buildApiUser({}));
+
+    await service.fetchAndPersist(OSU_ID);
+
+    expect(updates.find((update) => 'username' in update)).toMatchObject({
+      osuRestricted: false,
+    });
   });
 });

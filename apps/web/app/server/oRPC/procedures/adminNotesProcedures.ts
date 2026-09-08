@@ -46,6 +46,7 @@ const FALLBACK_PLAYER = {
   osuTrackLastFetch: '2007-09-17 00:00:00',
   osuTrackDataFetchStatus: 0,
   dataFetchStatus: 0,
+  osuRestricted: false,
   userId: null as number | null,
 };
 
@@ -83,6 +84,7 @@ export type AdminNoteRow = {
   playerOsuTrackLastFetch: string | null;
   playerOsuTrackDataFetchStatus: number | null;
   playerDataFetchStatus: number | null;
+  playerOsuRestricted: boolean | null;
 };
 
 export const selectAdminNoteFields = (table: AdminNoteTable) => ({
@@ -102,6 +104,7 @@ export const selectAdminNoteFields = (table: AdminNoteTable) => ({
   playerOsuTrackLastFetch: schema.players.osuTrackLastFetch,
   playerOsuTrackDataFetchStatus: schema.players.osuTrackDataFetchStatus,
   playerDataFetchStatus: schema.players.dataFetchStatus,
+  playerOsuRestricted: schema.players.osuRestricted,
 });
 
 export const mapAdminNoteRow = (note: AdminNoteRow): AdminNote => {
@@ -133,6 +136,7 @@ export const mapAdminNoteRow = (note: AdminNoteRow): AdminNote => {
             note.playerOsuTrackLastFetch ?? '2007-09-17 00:00:00',
           osuTrackDataFetchStatus: note.playerOsuTrackDataFetchStatus ?? 0,
           dataFetchStatus: note.playerDataFetchStatus ?? 0,
+          osuRestricted: note.playerOsuRestricted ?? false,
           userId: note.userId,
         },
       },

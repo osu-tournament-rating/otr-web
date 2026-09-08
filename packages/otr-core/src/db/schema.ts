@@ -1435,6 +1435,8 @@ export const players = pgTable(
       .default(0)
       .notNull(),
     dataFetchStatus: integer('data_fetch_status').default(0).notNull(),
+    // osu! hides restricted profiles behind a 404, the only signal the API gives
+    osuRestricted: boolean('osu_restricted').default(false).notNull(),
     created: timestamp({ withTimezone: true, mode: 'string' })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),

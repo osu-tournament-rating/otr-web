@@ -15,6 +15,7 @@ const playerCompactBaseSchema = playerSelectSchema
     username: true,
     country: true,
     defaultRuleset: true,
+    osuRestricted: true,
   })
   .extend({
     defaultRuleset: RulesetSchema,
