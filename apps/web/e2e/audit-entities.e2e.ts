@@ -117,30 +117,25 @@ for (const entity of ENTITY_CASES) {
         const entryList = page.locator('[data-testid="timeline-entry-list"]');
         await expect(entryList).toBeVisible({ timeout: 15000 });
 
-        const entries = page.locator('[data-testid="timeline-entry"]');
-        const entryCount = await entries.count();
+        // Only an entry with changes renders a toggle.
+        const entry = page
+          .locator('[data-testid="timeline-entry"]', {
+            has: page.locator('[data-testid="timeline-entry-toggle"]'),
+          })
+          .first();
+        if ((await entry.count()) === 0) return;
 
-        for (let i = 0; i < entryCount; i++) {
-          const entry = entries.nth(i);
-          const trigger = entry.locator('button').first();
-          const isDisabled = (await trigger.getAttribute('disabled')) !== null;
-
-          if (!isDisabled) {
-            // Entry may already be open (auto-expands when changeCount > 0 && < 10)
-            const state = await entry.getAttribute('data-state');
-            if (state !== 'open') {
-              await trigger.click();
-            }
-
-            const diff = entry.locator('[data-testid="timeline-entry-diff"]');
-            await expect(diff).toBeVisible({ timeout: 5000 });
-
-            const diffRows = entry.locator('[data-testid="audit-diff-row"]');
-            const rowCount = await diffRows.count();
-            expect(rowCount).toBeGreaterThan(0);
-            break;
-          }
+        // Entry may already be open (auto-expands when changeCount > 0 && < 10)
+        if ((await entry.getAttribute('data-state')) !== 'open') {
+          await entry.locator('[data-testid="timeline-entry-toggle"]').click();
         }
+
+        const diff = entry.locator('[data-testid="timeline-entry-diff"]');
+        await expect(diff).toBeVisible({ timeout: 5000 });
+
+        const diffRows = entry.locator('[data-testid="audit-diff-row"]');
+        const rowCount = await diffRows.count();
+        expect(rowCount).toBeGreaterThan(0);
       });
 
       test('timeline entries display timestamps', async ({ page }) => {
@@ -159,3 +154,65 @@ for (const entity of ENTITY_CASES) {
     });
   });
 }
+
+test.describe('Timeline row controls', () => {
+  /** The first match timeline row that names an acting user and holds changes. */
+  const rowWithLinkAndToggle = (page: Page) =>
+    page
+      .locator('[data-testid="timeline-entry"]', {
+        has: page.locator('a[href^="/players/"]'),
+      })
+      .filter({ has: page.locator('[data-testid="timeline-entry-toggle"]') })
+      .first();
+
+  test.beforeEach(async ({ page }) => {
+    await gotoAudit(page, ROUTES.auditMatch(TEST_AUDIT_MATCH_ID));
+    await expect(
+      page.locator('[data-testid="timeline-entry-list"]')
+    ).toBeVisible({ timeout: 15000 });
+  });
+
+  test('no control nests inside another', async ({ page }) => {
+    const entries = page.locator('[data-testid="timeline-entry"]');
+    await expect(entries.locator('a[href^="/players/"]').first()).toBeVisible();
+    await expect(
+      entries.locator('[data-testid="timeline-entry-toggle"]').first()
+    ).toBeVisible();
+
+    expect(
+      await entries
+        .locator('button a[href], a[href] button, button button')
+        .count()
+    ).toBe(0);
+  });
+
+  test('the acting user link opens the profile', async ({ page }) => {
+    const link = rowWithLinkAndToggle(page).locator('a[href^="/players/"]');
+    const href = await link.getAttribute('href');
+    expect(href).not.toBeNull();
+
+    await link.click();
+    await page.waitForURL(`**${href}`, { timeout: 10000 });
+  });
+
+  test('the toggle is its own tab stop and toggles the row', async ({
+    page,
+  }) => {
+    const entry = rowWithLinkAndToggle(page);
+    const toggle = entry.locator('[data-testid="timeline-entry-toggle"]');
+    const before = await entry.getAttribute('data-state');
+
+    await entry.locator('a[href^="/players/"]').focus();
+    await page.keyboard.press('Tab');
+    await expect(toggle).toBeFocused();
+
+    await page.keyboard.press('Enter');
+    await expect(entry).toHaveAttribute(
+      'data-state',
+      before === 'open' ? 'closed' : 'open'
+    );
+    await expect(page).toHaveURL(
+      new RegExp(`/audit/matches/${TEST_AUDIT_MATCH_ID}$`)
+    );
+  });
+});
