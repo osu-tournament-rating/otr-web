@@ -44,7 +44,7 @@ describe('syncEmojis', () => {
     const emoji = await syncEmojis(application, quietLogger());
 
     expect(emoji('tier_bronze1')).toBe('<:tier_bronze1:100>');
-    expect(create).toHaveBeenCalledTimes(26 + 6 * 19);
+    expect(create).toHaveBeenCalledTimes(26 + 4 * 19);
     expect(emoji('tier_elite_grandmaster')).toBe(
       '<:tier_elite_grandmaster:222>'
     );
@@ -78,22 +78,40 @@ describe('syncEmojis', () => {
   });
 });
 
-test('normal startup uploads every difficulty icon for every ruleset', async () => {
+test('normal startup uploads every difficulty icon for every beatmap ruleset', async () => {
   const { application, create } = fakeApplication([]);
   const emoji = await syncEmojis(application, quietLogger());
   const uploaded = create.mock.calls
     .map(([{ name }]) => name)
     .filter((name) => name.startsWith('difficulty_'));
-  expect(uploaded).toHaveLength(6 * 19);
+  expect(uploaded).toHaveLength(4 * 19);
   expect(new Set(uploaded).size).toBe(uploaded.length);
   create.mockClear();
-  for (const ruleset of [0, 1, 2, 3, 4, 5])
+  for (const ruleset of [0, 1, 2, 3])
     for (const sr of [0, 0.5, 4.5, 8.75, 12])
       expect(emoji(difficultyEmojiName(ruleset, sr))).toMatch(
         /^<:difficulty_\d_\d+:\d+>$/
       );
   await Bun.sleep(0);
   expect(create).not.toHaveBeenCalled();
+});
+
+test('a difficulty icon that failed at startup is recreated lazily on first use', async () => {
+  let failOnce = true;
+  const create = mock(async ({ name }: { name: string }) => {
+    if (name === 'difficulty_1_45' && failOnce) {
+      failOnce = false;
+      throw new Error('rate limited');
+    }
+    return { id: '777', name };
+  });
+  const { application } = fakeApplication([], create);
+  const emoji = await syncEmojis(application, quietLogger());
+  create.mockClear();
+  expect(emoji('difficulty_1_45')).toBe('');
+  await Bun.sleep(0);
+  expect(create).toHaveBeenCalledTimes(1);
+  expect(emoji('difficulty_1_45')).toBe('<:difficulty_1_45:777>');
 });
 
 test('noEmojis resolves to empty text', () => {

@@ -79,15 +79,21 @@ const difficultyBuckets = [
   ),
 ];
 
-const difficultyEmojis = Object.values(Ruleset)
-  .filter((value): value is Ruleset => typeof value === 'number')
-  .flatMap((ruleset) =>
-    difficultyBuckets.map((rating) => ({
-      name: difficultyEmojiName(ruleset, rating),
-      ruleset,
-      rating,
-    }))
-  );
+// Beatmaps store the osu! API play mode, so the mania key-count rulesets never reach the beatmap view.
+const beatmapRulesets = [
+  Ruleset.Osu,
+  Ruleset.Taiko,
+  Ruleset.Catch,
+  Ruleset.ManiaOther,
+];
+
+const difficultyEmojis = beatmapRulesets.flatMap((ruleset) =>
+  difficultyBuckets.map((rating) => ({
+    name: difficultyEmojiName(ruleset, rating),
+    ruleset,
+    rating,
+  }))
+);
 
 /** Syncs every static icon at startup; a difficulty icon that is still missing is queued without delaying replies. */
 export async function syncEmojis(
