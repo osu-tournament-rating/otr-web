@@ -69,25 +69,25 @@ records the osu! ID that was downloaded.
 
 ### `beatmap_attribute_jobs`
 
-| Column                       | Type        | Meaning                                                                                                                                                                                                                                                                          |
-| ---------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`                         | text        | A UUID. Queue messages carry this value.                                                                                                                                                                                                                                         |
-| `beatmap_id`                 | integer     | The `beatmaps.id`. Unique. A beatmap delete cascades to this row.                                                                                                                                                                                                                |
-| `generation`                 | integer     | Starts at 1. Increases by 1 each time a reschedule changes the request. A queue message carries the generation it was published for. The worker rejects a message whose generation is different from the row.                                                                    |
-| `status`                     | text        | `pending`, `processing`, `complete`, or `failed`. See [Job status](#job-status).                                                                                                                                                                                                 |
-| `attempts`                   | integer     | The number of claims in the current generation. Reset to 0 when the generation changes. The limit is 4.                                                                                                                                                                          |
-| `requested_settings`         | jsonb       | An array of 1 to 6 normalized profiles. All entries have the same `ruleset`. See [Profiles and settings](#profiles-and-settings).                                                                                                                                                |
-| `refresh_source`             | boolean     | `true` means that the next attempt must download the file again and must not reuse a stored file. Set to `false` when the job completes.                                                                                                                                         |
-| `acquired_file_id`           | integer     | The `beatmap_files` row of the current or last attempt. Set before the HTTP request starts, so a download in progress is visible. The pointer survives a reschedule unless `--refresh-source` is used or the previous attempt was abandoned. Null only before the first attempt. |
-| `source_file_id`             | integer     | The file that the committed results came from. Changes only when a generation completes. A failed refresh keeps the previous value.                                                                                                                                              |
-| `lease_token`                | text        | A random token that identifies the worker that holds the claim. Null when the status is not `processing`.                                                                                                                                                                        |
-| `lease_expires_at`           | timestamptz | The time the claim expires. The worker renews it every 15 seconds while it processes. The recovery loop can republish the job after this time.                                                                                                                                   |
-| `next_attempt_at`            | timestamptz | The earliest time that a worker can claim the job. A retryable failure moves it into the future.                                                                                                                                                                                 |
-| `published_at`               | timestamptz | The last time the recovery loop published this generation. The loop publishes again if the job is still claimable 60 seconds later.                                                                                                                                              |
-| `desired_calculator_version` | text        | The calculator that must process this job, for example `rosu-pp-js@4.0.1`. A worker claims only jobs that match its own `CALCULATOR_VERSION`.                                                                                                                                    |
-| `desired_format_version`     | integer     | The result format that this job must produce. A worker claims only jobs that match its own `CALCULATION_FORMAT_VERSION`.                                                                                                                                                         |
-| `requested_at`               | timestamptz | The time the current generation was requested. The recovery loop publishes jobs in this order.                                                                                                                                                                                   |
-| `error_code`                 | text        | The last error code. Null after a success. See [Error codes](#error-codes).                                                                                                                                                                                                      |
+| Column                       | Type        | Meaning                                                                                                                                                                                                                                                                                                                             |
+| ---------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                         | text        | A UUID. Queue messages carry this value.                                                                                                                                                                                                                                                                                            |
+| `beatmap_id`                 | integer     | The `beatmaps.id`. Unique. A beatmap delete cascades to this row.                                                                                                                                                                                                                                                                   |
+| `generation`                 | integer     | Starts at 1. Increases by 1 each time a reschedule changes the request. A queue message carries the generation it was published for. The worker rejects a message whose generation is different from the row.                                                                                                                       |
+| `status`                     | text        | `pending`, `processing`, `complete`, or `failed`. See [Job status](#job-status).                                                                                                                                                                                                                                                    |
+| `attempts`                   | integer     | The number of claims in the current generation. Reset to 0 when the generation changes. The limit is 4.                                                                                                                                                                                                                             |
+| `requested_settings`         | jsonb       | An array of 1 to 6 normalized profiles. All entries have the same `ruleset`. See [Profiles and settings](#profiles-and-settings).                                                                                                                                                                                                   |
+| `refresh_source`             | boolean     | `true` means that the next attempt must download the file again and must not reuse a stored file. Set to `false` when the job completes.                                                                                                                                                                                            |
+| `acquired_file_id`           | integer     | The `beatmap_files` row of the current or last attempt. Set before the HTTP request starts, so a download in progress is visible. The pointer survives a reschedule unless `--refresh-source` is used or the previous attempt was abandoned. Also null after a reschedule that sets `refresh_source`, including metadata ingestion. |
+| `source_file_id`             | integer     | The file that the committed results came from. Changes only when a generation completes. A failed refresh keeps the previous value.                                                                                                                                                                                                 |
+| `lease_token`                | text        | A random token that identifies the worker that holds the claim. Null when the status is not `processing`.                                                                                                                                                                                                                           |
+| `lease_expires_at`           | timestamptz | The time the claim expires. The worker renews it every 15 seconds while it processes. The recovery loop can republish the job after this time.                                                                                                                                                                                      |
+| `next_attempt_at`            | timestamptz | The earliest time that a worker can claim the job. A retryable failure moves it into the future.                                                                                                                                                                                                                                    |
+| `published_at`               | timestamptz | The last time the recovery loop published this generation. The loop publishes again if the job is still claimable 60 seconds later.                                                                                                                                                                                                 |
+| `desired_calculator_version` | text        | The calculator that must process this job, for example `rosu-pp-js@4.0.1`. A worker claims only jobs that match its own `CALCULATOR_VERSION`.                                                                                                                                                                                       |
+| `desired_format_version`     | integer     | The result format that this job must produce. A worker claims only jobs that match its own `CALCULATION_FORMAT_VERSION`.                                                                                                                                                                                                            |
+| `requested_at`               | timestamptz | The time the current generation was requested. The recovery loop publishes jobs in this order.                                                                                                                                                                                                                                      |
+| `error_code`                 | text        | The last error code. Null after a success. See [Error codes](#error-codes).                                                                                                                                                                                                                                                         |
 
 ### `beatmap_files`
 
@@ -621,17 +621,17 @@ new version and does not rebuild by itself.
 The CLI and the worker call `loadRootEnv`, which reads the `.env` file in the
 repository root. Docker Compose passes the same file with `env_file`.
 
-| Variable                               | Required             | Meaning                                                                                                                                 |
-| -------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `BEATMAP_ATTRIBUTES_ENABLED`           | No. Default `false`. | `true` makes the ingestion worker record intent and lets the CLI and the attributes worker start. Only `true` and `false` are accepted. |
-| `BEATMAP_ATTRIBUTES_STORAGE`           | When enabled         | `local` or `gcp`. There is no fallback between providers.                                                                               |
-| `BEATMAP_ATTRIBUTES_LOCAL_DIR`         | For `local`          | An absolute directory. Files are written with mode 0600 in directories with mode 0700.                                                  |
-| `BEATMAP_ATTRIBUTES_GCP_BUCKET`        | For `gcp`            | An existing bucket. The client uses its ambient credentials. The GCP adapter was not tested against a live bucket.                      |
-| `BEATMAP_ATTRIBUTES_CONCURRENCY`       | No. Default `2`.     | Active jobs and calculator processes for each worker, 1 to 4. Also the queue prefetch. Downloads use at most 2.                         |
-| `METRICS_PORT`                         | No. Default `9092`.  | The attributes worker's `/health` and `/metrics` port. The ingestion worker defaults to `9091`.                                         |
-| `DATABASE_URL`                         | Yes                  | The PostgreSQL connection string. The pool size is concurrency plus 2, with a 30-second statement timeout.                              |
-| `RABBITMQ_AMQP_URL`                    | Yes                  | The broker URL.                                                                                                                         |
-| `BEATMAP_ATTRIBUTES_TEST_DATABASE_URL` | Tests only           | Enables `service.integration.test.ts`. Port `5432` is rejected outside GitHub Actions.                                                  |
+| Variable                               | Required             | Meaning                                                                                                                                                              |
+| -------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BEATMAP_ATTRIBUTES_ENABLED`           | No. Default `false`. | `true` makes the ingestion worker record intent and lets the CLI and the attributes worker start. Only `true` and `false` are accepted.                              |
+| `BEATMAP_ATTRIBUTES_STORAGE`           | When enabled         | `local` or `gcp`. There is no fallback between providers.                                                                                                            |
+| `BEATMAP_ATTRIBUTES_LOCAL_DIR`         | For `local`          | An absolute directory. Files are written with mode 0600 in directories with mode 0700.                                                                               |
+| `BEATMAP_ATTRIBUTES_GCP_BUCKET`        | For `gcp`            | An existing bucket. The client uses its ambient credentials. The GCP adapter was not tested against a live bucket.                                                   |
+| `BEATMAP_ATTRIBUTES_CONCURRENCY`       | No. Default `2`.     | Active jobs and calculator processes for each worker, 1 to 4. Also the queue prefetch. Downloads use at most 2.                                                      |
+| `METRICS_PORT`                         | No. Default `9092`.  | The attributes worker's `/health` and `/metrics` port. The ingestion worker reads the same variable with default `9091`, so do not set it when both run on one host. |
+| `DATABASE_URL`                         | Yes                  | The PostgreSQL connection string. The pool size is concurrency plus 2, with a 30-second statement timeout.                                                           |
+| `RABBITMQ_AMQP_URL`                    | Yes                  | The broker URL.                                                                                                                                                      |
+| `BEATMAP_ATTRIBUTES_TEST_DATABASE_URL` | Tests only           | Enables `service.integration.test.ts`. Port `5432` is rejected outside GitHub Actions.                                                                               |
 
 Caution: A blank value such as `BEATMAP_ATTRIBUTES_ENABLED=` is not the same as
 an absent variable. `attributesEnabled` rejects it, and the ingestion worker
@@ -663,24 +663,31 @@ the storage variables. The CLI and the attributes worker need all of them.
    uv run python src/main.py --script template-db --template-action create --template-name <name> --template-web-dir <this checkout>
    ```
 
-2. Put these values in the `.env` file at the repository root. `METRICS_PORT`
-   must differ from the ingestion worker's port when both run on one host:
+2. Put these values in the `.env` file at the repository root:
 
    ```sh
    DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5434/<name>
    RABBITMQ_AMQP_URL=amqp://<user>:<password>@127.0.0.1:<port>/
-   METRICS_PORT=9092
    BEATMAP_ATTRIBUTES_ENABLED=true
    BEATMAP_ATTRIBUTES_STORAGE=local
    BEATMAP_ATTRIBUTES_LOCAL_DIR=/tmp/beatmap-files
    BEATMAP_ATTRIBUTES_CONCURRENCY=2
    ```
 
+   Do not set `METRICS_PORT` in this file when both workers run on one host.
+   Both workers read the same variable. Without it, the ingestion worker
+   listens on `9091` and the attributes worker on `9092`. `.env.example` ships
+   `METRICS_PORT=9091`, so remove that line, or start the attributes worker
+   with `METRICS_PORT=9092 bun run --cwd apps/data-worker attributes:worker`.
+
 3. If the clone's migrations are behind this checkout, apply them from the
-   repository root. `drizzle-kit` reads `DATABASE_URL` from the same `.env`
-   file, so confirm that the value points to port `5434` before you run it:
+   repository root. `drizzle-kit` uses the `DATABASE_URL` exported in your
+   shell when there is one, and the `.env` value otherwise. Print the
+   effective value and confirm that it points to port `5434` before you run
+   the migration:
 
    ```sh
+   echo "${DATABASE_URL:-<.env value>}"
    bunx drizzle-kit migrate
    ```
 
@@ -688,7 +695,7 @@ the storage variables. The CLI and the attributes worker need all of them.
    is empty:
 
    ```sh
-   psql "$DATABASE_URL" -c "select count(*) from beatmap_attributes" -c "\d beatmap_files"
+   psql postgresql://postgres:postgres@127.0.0.1:5434/<name> -c "select count(*) from beatmap_attributes" -c "\d beatmap_files"
    ```
 
 ### Start the worker
