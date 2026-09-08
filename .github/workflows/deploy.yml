@@ -168,6 +168,16 @@ jobs:
           set -euo pipefail
           ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s -- "$REMOTE_PATH" <<'EOF'
             cd "$1"
-            docker compose pull
-            docker compose --profile migrate run --rm migrate && docker compose --profile node-exporter up -d --remove-orphans
+            # The attributes worker is opt-in. The deployed .env decides whether
+            # its Compose profile runs, so ingestion intent and the consumer
+            # switch together.
+            ATTRIBUTES_PROFILE=""
+            if grep -Eq '^BEATMAP_ATTRIBUTES_ENABLED=true[[:space:]]*$' .env; then
+              ATTRIBUTES_PROFILE="--profile beatmap-attributes"
+            fi
+            docker compose $ATTRIBUTES_PROFILE pull
+            docker compose --profile migrate run --rm migrate && docker compose --profile node-exporter $ATTRIBUTES_PROFILE up -d --remove-orphans
+            if [ -z "$ATTRIBUTES_PROFILE" ]; then
+              docker compose --profile beatmap-attributes rm -sf beatmap-attributes-worker
+            fi
           EOF

@@ -172,8 +172,13 @@ Retryable failures have four job attempts with bounded backoff; terminal invalid
 maps and unavailable sources remain inspectable. Calculator failures do not
 change final verification decisions or block unrelated API ingestion.
 
-Run the existing data-worker image with the `attributes:worker` command as a
-separate service when deploying. Select storage, mount retained local files if
-used, configure queue/database access and health monitoring, and enable ingestion
-and the consumer together. Local validation does not provision that service or
-establish GCP readiness.
+The `beatmap-attributes-worker` service in `docker-compose.yml` and
+`docker-compose-staging.yml` runs the data-worker image with the
+`attributes:worker` command, keeps local files on the `beatmap-files` volume,
+and serves health and metrics on port `9092`. It belongs to the
+`beatmap-attributes` Compose profile. The deploy workflow reads
+`BEATMAP_ATTRIBUTES_ENABLED` from the deployed `.env`: `true` pulls and starts
+the worker with each deploy, and any other value removes its container. The
+same flag makes ingestion record intent, so both switch together. Start it by
+hand with `docker compose --profile beatmap-attributes up -d
+beatmap-attributes-worker`. Local validation does not establish GCP readiness.
