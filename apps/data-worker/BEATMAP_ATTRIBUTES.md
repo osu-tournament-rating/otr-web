@@ -35,9 +35,9 @@ retry reuses the stored file and the stored results.
 | Attributes worker      | `apps/data-worker/src/beatmap-attributes/worker.ts`                                                                                                                                      | Consumes the attribute queue, runs the recovery loop, and serves `/health` and `/metrics` on `METRICS_PORT`.                                                                                    |
 | CLI                    | `apps/data-worker/src/beatmap-attributes/cli.ts`, `command.ts`                                                                                                                           | Operator commands: schedule, inspect, recalculate, refresh, and batch catch-up.                                                                                                                 |
 | Service                | `apps/data-worker/src/beatmap-attributes/service.ts`                                                                                                                                     | Intent recording, the recovery loop, job processing, and result lookup.                                                                                                                         |
-| Storage and downloader | `apps/data-worker/src/beatmap-attributes/storage.ts`, `gcp-storage.ts`                                                                                                                   | File validation, the `local` and `gcp` providers, and the rate-limited downloader.                                                                                                              |
+| Storage and downloader | `apps/data-worker/src/beatmap-attributes/storage.ts`, `gcp-storage.ts`                                                                                                                   | File validation, the `local` and `gcp` providers, the startup access check, and the rate-limited downloader.                                                                                    |
 | Calculator             | `apps/data-worker/src/beatmap-attributes/calculator.ts`, `calculator-process.ts`, `calculator-child.ts`, `calculator-version.ts`                                                         | Source validation and `rosu-pp-js` calculation in an isolated child process.                                                                                                                    |
-| Policy                 | `apps/data-worker/src/beatmap-attributes/policy.ts`                                                                                                                                      | Limits, timings, retry delays, and configuration parsing.                                                                                                                                       |
+| Policy                 | `apps/data-worker/src/beatmap-attributes/policy.ts`                                                                                                                                      | Limits, timings, retry delays, configuration parsing, and credential parsing.                                                                                                                   |
 | Shared contracts       | `packages/otr-core/src/osu/beatmap-attributes.ts`, `packages/otr-core/src/db/schema.ts`, `packages/otr-core/src/db/relations.ts`, `packages/otr-core/src/messages/beatmap-attributes.ts` | Profiles, settings normalization, result identity, result schemas, table definitions, Drizzle relations, and the queue message schema.                                                          |
 | Fixtures               | `apps/data-worker/src/beatmap-attributes/calculator-fixtures/`                                                                                                                           | Five real `.osu` files that cover each native mode and the 4K and 7K mania identities.                                                                                                          |
 
@@ -621,17 +621,19 @@ new version and does not rebuild by itself.
 The CLI and the worker call `loadRootEnv`, which reads the `.env` file in the
 repository root. Docker Compose passes the same file with `env_file`.
 
-| Variable                               | Required             | Meaning                                                                                                                                                              |
-| -------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BEATMAP_ATTRIBUTES_ENABLED`           | No. Default `false`. | `true` makes the ingestion worker record intent and lets the CLI and the attributes worker start. Only `true` and `false` are accepted.                              |
-| `BEATMAP_ATTRIBUTES_STORAGE`           | When enabled         | `local` or `gcp`. There is no fallback between providers.                                                                                                            |
-| `BEATMAP_ATTRIBUTES_LOCAL_DIR`         | For `local`          | An absolute directory. Files are written with mode 0600 in directories with mode 0700.                                                                               |
-| `BEATMAP_ATTRIBUTES_GCP_BUCKET`        | For `gcp`            | An existing bucket. The client uses its ambient credentials. The GCP adapter was not tested against a live bucket.                                                   |
-| `BEATMAP_ATTRIBUTES_CONCURRENCY`       | No. Default `2`.     | Active jobs and calculator processes for each worker, 1 to 4. Also the queue prefetch. Downloads use at most 2.                                                      |
-| `METRICS_PORT`                         | No. Default `9092`.  | The attributes worker's `/health` and `/metrics` port. The ingestion worker reads the same variable with default `9091`, so do not set it when both run on one host. |
-| `DATABASE_URL`                         | Yes                  | The PostgreSQL connection string. The pool size is concurrency plus 2, with a 30-second statement timeout.                                                           |
-| `RABBITMQ_AMQP_URL`                    | Yes                  | The broker URL.                                                                                                                                                      |
-| `BEATMAP_ATTRIBUTES_TEST_DATABASE_URL` | Tests only           | Enables `service.integration.test.ts`. Port `5432` is rejected outside GitHub Actions.                                                                               |
+| Variable                               | Required             | Meaning                                                                                                                                                                                                          |
+| -------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BEATMAP_ATTRIBUTES_ENABLED`           | No. Default `false`. | `true` makes the ingestion worker record intent and lets the CLI and the attributes worker start. Only `true` and `false` are accepted.                                                                          |
+| `BEATMAP_ATTRIBUTES_STORAGE`           | When enabled         | `local` or `gcp`. There is no fallback between providers.                                                                                                                                                        |
+| `BEATMAP_ATTRIBUTES_LOCAL_DIR`         | For `local`          | An absolute directory. Files are written with mode 0600 in directories with mode 0700.                                                                                                                           |
+| `BEATMAP_ATTRIBUTES_GCP_BUCKET`        | For `gcp`            | An existing bucket. The worker checks at startup that it can list objects in it.                                                                                                                                 |
+| `BEATMAP_ATTRIBUTES_GCP_CREDENTIALS`   | No                   | A service account key for `gcp`, as the JSON file content or its base64 encoding. Blank uses ambient credentials: `GOOGLE_APPLICATION_CREDENTIALS`, or the identity of a Google Cloud host. Ignored for `local`. |
+| `BEATMAP_ATTRIBUTES_CONCURRENCY`       | No. Default `2`.     | Active jobs and calculator processes for each worker, 1 to 4. Also the queue prefetch. Downloads use at most 2.                                                                                                  |
+| `METRICS_PORT`                         | No. Default `9092`.  | The attributes worker's `/health` and `/metrics` port. The ingestion worker reads the same variable with default `9091`, so do not set it when both run on one host.                                             |
+| `DATABASE_URL`                         | Yes                  | The PostgreSQL connection string. The pool size is concurrency plus 2, with a 30-second statement timeout.                                                                                                       |
+| `RABBITMQ_AMQP_URL`                    | Yes                  | The broker URL.                                                                                                                                                                                                  |
+| `BEATMAP_ATTRIBUTES_TEST_DATABASE_URL` | Tests only           | Enables `service.integration.test.ts`. Port `5432` is rejected outside GitHub Actions.                                                                                                                           |
+| `BEATMAP_ATTRIBUTES_TEST_GCS_ENDPOINT` | Tests only           | Enables `gcp-storage.integration.test.ts` against a local emulator, for example `http://127.0.0.1:4443`. Only `127.0.0.1` and `localhost` are accepted.                                                          |
 
 Caution: A blank value such as `BEATMAP_ATTRIBUTES_ENABLED=` is not the same as
 an absent variable. `attributesEnabled` rejects it, and the ingestion worker
@@ -640,6 +642,23 @@ stops at startup. Remove the line or set `false`. See
 
 The ingestion worker needs only `BEATMAP_ATTRIBUTES_ENABLED`. It does not read
 the storage variables. The CLI and the attributes worker need all of them.
+
+### Startup checks
+
+The CLI and the attributes worker check the storage before they connect to
+the database. The `local` provider creates the directory and checks that it is
+writable. The `gcp` provider lists one object under `sha256/` in the bucket.
+The process stops with one of these messages when the check fails:
+
+| Message                                                         | Cause                                                                       |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `GCP beatmap bucket "<name>" does not exist`                    | The bucket name is wrong.                                                   |
+| `GCP beatmap bucket "<name>" denied access`                     | The service account lacks a permission.                                     |
+| `GCP beatmap bucket "<name>" check failed: <reason>`            | The credentials could not be loaded or used, or the service is unreachable. |
+| `Local beatmap storage path <path> is not a writable directory` | The directory cannot be created or written.                                 |
+
+In Compose, the container restarts until the configuration is fixed. The
+messages never contain the credential value.
 
 ## Run and test locally
 
@@ -651,8 +670,8 @@ the storage variables. The CLI and the attributes worker need all of them.
   broker.
 - A disposable PostgreSQL database from `otr-scripts` `template-db` on port
   `5434`, migrated with this checkout. Never use port `5432`.
-- No osu! OAuth credentials and no GCP credentials. The `.osu` download is
-  unauthenticated.
+- No osu! OAuth credentials. The `.osu` download is unauthenticated. The
+  `local` provider needs no GCP credentials.
 
 ### Set up
 
@@ -856,6 +875,22 @@ BEATMAP_ATTRIBUTES_TEST_DATABASE_URL="$DATABASE_URL" bun test apps/data-worker/s
 The calculator tests use the five fixtures in `calculator-fixtures/`. They
 assert real `rosu-pp-js` values, so a library upgrade can change them.
 
+### Test the GCP provider with an emulator
+
+The GCP provider test uses the `fake-gcs-server` emulator. Start it, run the
+test with its endpoint, then stop it:
+
+```sh
+docker run --rm -d --name otr-fake-gcs -p 127.0.0.1:4443:4443 fsouza/fake-gcs-server -scheme http -port 4443 -external-url http://127.0.0.1:4443 -public-host 127.0.0.1:4443
+BEATMAP_ATTRIBUTES_TEST_GCS_ENDPOINT=http://127.0.0.1:4443 bun test apps/data-worker/src/beatmap-attributes/gcp-storage.integration.test.ts
+docker stop otr-fake-gcs
+```
+
+The test creates its own bucket and deletes it at the end. It covers the
+startup check, an upload and a read, the immutability precondition, a corrupted
+object, an oversized object, and a missing bucket. Do not set
+`STORAGE_EMULATOR_HOST`. The SDK builds wrong request paths with it.
+
 ## Deploy and operate
 
 ### Deployment
@@ -911,6 +946,47 @@ Run operator commands inside the container:
 ```sh
 docker exec otr-beatmap-attributes-worker bun run --cwd apps/data-worker attributes --osu-id 2785319 --inspect
 ```
+
+### GCP storage
+
+To use a bucket instead of the local volume:
+
+1. Create a bucket with uniform bucket-level access and no public access. The
+   pipeline needs no lifecycle rule, versioning, or retention policy.
+2. Create a service account. Grant it `roles/storage.objectUser` on the bucket
+   only. The worker needs `storage.objects.get`, `storage.objects.create`, and
+   `storage.objects.list`.
+3. Create a JSON key for the service account and encode it:
+
+   ```sh
+   base64 -w0 key.json
+   ```
+
+4. Put these values in the deployed `.env`:
+
+   ```sh
+   BEATMAP_ATTRIBUTES_STORAGE=gcp
+   BEATMAP_ATTRIBUTES_GCP_BUCKET=<bucket>
+   BEATMAP_ATTRIBUTES_GCP_CREDENTIALS=<base64 output>
+   ```
+
+5. Deploy. The worker checks bucket access at startup. See
+   [Startup checks](#startup-checks).
+
+A blank `BEATMAP_ATTRIBUTES_GCP_CREDENTIALS` uses ambient credentials. That
+works with `GOOGLE_APPLICATION_CREDENTIALS` when the container can read the
+key file, or on a Google Cloud host. The Compose services do not mount a key
+file.
+
+Objects are stored at `sha256/<xx>/<checksum>.osu` with content type
+`text/plain; charset=utf-8` and a `sha256` metadata entry. An upload sets
+`ifGenerationMatch: 0`, so an existing object is never overwritten. A concurrent
+upload of the same key gets HTTP 412. The worker then reads the existing object
+and verifies its checksum. The client does not retry a request. The worker
+retries a failed job through the database.
+
+The provider was verified against the `fake-gcs-server` emulator. It has not
+been run against a live bucket.
 
 ### Limits and capacity
 
@@ -1001,6 +1077,8 @@ messages carry trace context.
 - Deleting a `beatmap_files` row deletes the job and the results of that
   beatmap.
 - A blank `BEATMAP_ATTRIBUTES_ENABLED=` stops the ingestion worker at startup.
+- A missing bucket, denied access, or an unwritable local directory stops the
+  CLI and the attributes worker at startup.
 - Every metadata refetch of an existing beatmap downloads its file again. Plan
   admin mass refetches with the download rate in mind.
 - After a calculator upgrade, run the recalculation batch soon. Until then,

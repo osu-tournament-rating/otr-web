@@ -19,6 +19,16 @@ export async function createAttributesRuntime() {
   const amqpUrl = process.env.RABBITMQ_AMQP_URL;
   if (!databaseUrl || !amqpUrl)
     throw new Error('DATABASE_URL and RABBITMQ_AMQP_URL are required');
+  const storage = await createBeatmapFileStorage(
+    config.provider === 'local'
+      ? { provider: 'local', directory: config.directory! }
+      : {
+          provider: 'gcp',
+          bucket: config.bucket!,
+          credentials: config.credentials,
+        }
+  );
+  await storage.verifyAccess();
   const pool = instrumentPgPool(
     new Pool({
       connectionString: databaseUrl,
@@ -28,11 +38,6 @@ export async function createAttributesRuntime() {
     })
   );
   const db = drizzle(pool, { schema: dbSchema });
-  const storage = await createBeatmapFileStorage(
-    config.provider === 'local'
-      ? { provider: 'local', directory: config.directory! }
-      : { provider: 'gcp', bucket: config.bucket! }
-  );
   const downloader = new BeatmapFileDownloader({
     concurrency: Math.min(config.concurrency, 2),
   });
