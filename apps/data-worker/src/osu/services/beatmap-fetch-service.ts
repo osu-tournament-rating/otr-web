@@ -1,4 +1,4 @@
-import { not } from 'drizzle-orm';
+import { and, eq, not, notInArray } from 'drizzle-orm';
 import type { AttributeIntentExecutor } from '../../beatmap-attributes/service';
 import type { API } from 'osu-api-v2-js';
 
@@ -23,6 +23,25 @@ import type { Logger } from '../../logging/logger';
 import type { RateLimiter } from '../../rate-limiter';
 import * as schema from '@otr/core/db/schema';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
+
+// osu! substitutes this username for owners whose account is no longer visible.
+const DELETED_OSU_USERNAME = '[deleted user]';
+
+interface DifficultyOwner {
+  id: number;
+  username: string | null;
+}
+
+const difficultyOwners = (beatmap: {
+  user_id?: number | null;
+  owners?: DifficultyOwner[] | null;
+}): DifficultyOwner[] => {
+  if (beatmap.owners?.length) {
+    return beatmap.owners.filter((owner) => owner.id);
+  }
+
+  return beatmap.user_id ? [{ id: beatmap.user_id, username: null }] : [];
+};
 
 interface BeatmapFetchServiceOptions {
   recordAttributeIntent?: (
@@ -191,8 +210,8 @@ export class BeatmapFetchService {
 
       const userIds = new Set<number>();
       for (const beatmap of beatmapRows) {
-        if (beatmap.user_id) {
-          userIds.add(beatmap.user_id);
+        for (const owner of difficultyOwners(beatmap)) {
+          userIds.add(owner.id);
         }
       }
 
@@ -271,19 +290,36 @@ export class BeatmapFetchService {
         await this.recordAttributeIntent?.(tx, row.id);
         affectedBeatmapIds.push(row.id);
 
-        if (beatmap.user_id) {
-          const beatmapCreatorId = await getOrCreatePlayerId(
-            tx,
-            beatmap.user_id
+        const creatorIds: number[] = [];
+        for (const owner of difficultyOwners(beatmap)) {
+          const username =
+            owner.username && owner.username !== DELETED_OSU_USERNAME
+              ? owner.username
+              : undefined;
+          creatorIds.push(
+            await getOrCreatePlayerId(tx, owner.id, { username })
           );
+        }
 
+        if (creatorIds.length > 0) {
           await tx
             .insert(schema.joinBeatmapCreators)
-            .values({
-              createdBeatmapsId: row.id,
-              creatorsId: beatmapCreatorId,
-            })
+            .values(
+              creatorIds.map((creatorsId) => ({
+                createdBeatmapsId: row.id,
+                creatorsId,
+              }))
+            )
             .onConflictDoNothing();
+
+          await tx
+            .delete(schema.joinBeatmapCreators)
+            .where(
+              and(
+                eq(schema.joinBeatmapCreators.createdBeatmapsId, row.id),
+                notInArray(schema.joinBeatmapCreators.creatorsId, creatorIds)
+              )
+            );
         }
       }
 

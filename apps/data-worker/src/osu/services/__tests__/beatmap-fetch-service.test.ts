@@ -105,7 +105,7 @@ class BeatmapFetchTestDb {
 
   insert(table: unknown) {
     return {
-      values: (values: Record<string, unknown>) => {
+      values: (values: Record<string, unknown> | Record<string, unknown>[]) => {
         const write = (conflict?: {
           set: Record<string, unknown>;
           setWhere?: unknown;
@@ -148,6 +148,26 @@ class BeatmapFetchTestDb {
     };
   }
 
+  delete(table: unknown) {
+    return {
+      where: (condition: unknown) =>
+        thenable(() => {
+          if (table !== schema.joinBeatmapCreators) {
+            throw new Error('Unsupported delete table in test database');
+          }
+
+          const [beatmapId, ...keptCreatorIds] = conditionValues(condition);
+          const remaining = this.creatorJoins.filter(
+            (join) =>
+              join.createdBeatmapsId !== beatmapId ||
+              keptCreatorIds.includes(join.creatorsId)
+          );
+          this.creatorJoins.splice(0, this.creatorJoins.length, ...remaining);
+          return [];
+        }),
+    };
+  }
+
   select() {
     const builder = {
       from: () => builder,
@@ -169,13 +189,25 @@ class BeatmapFetchTestDb {
 
   private write(
     table: unknown,
-    values: Record<string, unknown>,
+    values: Record<string, unknown> | Record<string, unknown>[],
     conflict?: { set: Record<string, unknown>; setWhere?: unknown }
   ) {
     if (table === schema.joinBeatmapCreators) {
-      this.creatorJoins.push(
-        values as { createdBeatmapsId: number; creatorsId: number }
-      );
+      const joins = (Array.isArray(values) ? values : [values]) as Array<{
+        createdBeatmapsId: number;
+        creatorsId: number;
+      }>;
+      for (const join of joins) {
+        if (
+          !this.creatorJoins.some(
+            (existing) =>
+              existing.createdBeatmapsId === join.createdBeatmapsId &&
+              existing.creatorsId === join.creatorsId
+          )
+        ) {
+          this.creatorJoins.push(join);
+        }
+      }
       return [];
     }
 
@@ -190,6 +222,10 @@ class BeatmapFetchTestDb {
 
     if (!store) {
       throw new Error('Unsupported insert table in test database');
+    }
+
+    if (Array.isArray(values)) {
+      throw new Error('Unsupported multi-row insert in test database');
     }
 
     const existing = Array.from(store.values()).find(
@@ -414,5 +450,74 @@ describe('BeatmapFetchService attribute scheduling', () => {
     expect(scheduled).toEqual([2]);
     expect(db.beatmaps.get(2)?.dataFetchStatus).toBe(DataFetchStatus.Fetched);
     expect(db.beatmaps.get(1)).toEqual(overriddenBeatmap);
+  });
+});
+
+describe('BeatmapFetchService difficulty creators', () => {
+  const withOwners = (
+    owners: Array<{ id: number; username: string }> | undefined
+  ) => ({
+    ...apiBeatmapset,
+    beatmaps: apiBeatmapset.beatmaps.map((beatmap) =>
+      beatmap.id === 222 ? { ...beatmap, owners } : beatmap
+    ),
+  });
+
+  const creatorOsuIds = (db: BeatmapFetchTestDb, beatmapId: number) =>
+    db.creatorJoins
+      .filter((join) => join.createdBeatmapsId === beatmapId)
+      .map((join) => db.players.get(join.creatorsId)?.osuId)
+      .sort();
+
+  it('stores every owner and drops a creator osu! no longer lists', async () => {
+    const db = new BeatmapFetchTestDb([siblingBeatmap]);
+    db.players.set(5, { id: 5, osuId: 99, username: 'Stale' });
+    db.creatorJoins.push({ createdBeatmapsId: 2, creatorsId: 5 });
+    const { service } = createService(db, {
+      ...workingApi,
+      getBeatmapset: async () =>
+        withOwners([
+          { id: 55, username: 'Mapper' },
+          { id: 77, username: 'Guest' },
+        ]),
+    });
+
+    expect(await service.fetchAndPersist(222)).toBe(true);
+
+    expect(creatorOsuIds(db, 2)).toEqual([55, 77]);
+    expect(
+      Array.from(db.players.values()).find((row) => row.osuId === 77)
+    ).toMatchObject({ username: 'Guest' });
+  });
+
+  it('keeps an empty username for a deleted owner', async () => {
+    const db = new BeatmapFetchTestDb([siblingBeatmap]);
+    const { service } = createService(db, {
+      ...workingApi,
+      getBeatmapset: async () =>
+        withOwners([
+          { id: 55, username: 'Mapper' },
+          { id: 88, username: '[deleted user]' },
+        ]),
+    });
+
+    expect(await service.fetchAndPersist(222)).toBe(true);
+
+    expect(creatorOsuIds(db, 2)).toEqual([55, 88]);
+    expect(
+      Array.from(db.players.values()).find((row) => row.osuId === 88)
+    ).toMatchObject({ username: '' });
+  });
+
+  it('falls back to the difficulty user when owners are missing', async () => {
+    const db = new BeatmapFetchTestDb([siblingBeatmap]);
+    const { service } = createService(db, {
+      ...workingApi,
+      getBeatmapset: async () => withOwners(undefined),
+    });
+
+    expect(await service.fetchAndPersist(222)).toBe(true);
+
+    expect(creatorOsuIds(db, 2)).toEqual([55]);
   });
 });
