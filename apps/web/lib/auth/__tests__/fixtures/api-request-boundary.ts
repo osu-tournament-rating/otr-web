@@ -3,6 +3,13 @@ import { EventEmitter } from 'node:events';
 import { call, ORPCError } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 
+const [scenario = 'parallel'] = process.argv.slice(2);
+const keyState = {
+  referenceId: 'owner',
+  enabled: true,
+  expiresAt: null as string | null,
+};
+let ownerLookups = 0;
 const held = new Set<string>();
 class FakeClient extends EventEmitter {
   async query(_text: string, parameters: string[]) {
@@ -45,7 +52,8 @@ mock.module('@/lib/auth/auth', () => ({
           key: {
             id: body.key,
             referenceId: 'owner',
-            enabled: true,
+            enabled: keyState.enabled,
+            expiresAt: keyState.expiresAt,
             name: null,
           },
         };
@@ -56,7 +64,26 @@ mock.module('@/lib/auth/auth', () => ({
 mock.module('@/lib/db', () => ({
   db: {
     query: {
-      apiKeys: { findFirst: async () => ({ referenceId: 'owner' }) },
+      apiKeys: {
+        findFirst: async () => {
+          ownerLookups++;
+          if (
+            ownerLookups === 2 &&
+            (scenario === 'reenabled' || scenario === 'expiry-extended')
+          ) {
+            keyState.enabled = scenario !== 'reenabled';
+            keyState.expiresAt =
+              scenario === 'expiry-extended' ? '2000-01-01T00:00:00Z' : null;
+            const snapshot = { ...keyState };
+            // Model an authorized update after the preflight read and before
+            // Better Auth rereads the key during verification.
+            keyState.enabled = true;
+            keyState.expiresAt = null;
+            return snapshot;
+          }
+          return { ...keyState };
+        },
+      },
       auth_users: { findFirst: async () => null },
     },
   },
@@ -72,7 +99,6 @@ mock.module('@/lib/metrics', () => ({
   orpcProcedureDuration: metric,
 }));
 const { publicProcedure } = await import('@/app/server/oRPC/procedures/base');
-const [scenario = 'parallel'] = process.argv.slice(2);
 const makeHeaders = (value: string) =>
   new Headers(
     scenario === 'x-api-key' ? { 'x-api-key': value } : { authorization: value }

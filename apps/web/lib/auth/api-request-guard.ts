@@ -32,7 +32,7 @@ export async function withApiKeyRequest<T>(
   let owner;
   try {
     owner = await db.query.apiKeys.findFirst({
-      columns: { referenceId: true, enabled: true, expiresAt: true },
+      columns: { referenceId: true },
       where: and(
         eq(apiKeys.key, await defaultKeyHasher(candidate)),
         eq(apiKeys.configId, 'default')
@@ -42,12 +42,9 @@ export async function withApiKeyRequest<T>(
     throw createApiRequestUnavailableError();
   }
 
-  // Better Auth remains responsible for authentication and its existing errors.
-  if (
-    !owner ||
-    owner.enabled === false ||
-    (owner.expiresAt && new Date(owner.expiresAt).getTime() < Date.now())
-  ) {
+  // Key validity can change before verification. Lock every known owner and
+  // let Better Auth evaluate the current state under that lock.
+  if (!owner) {
     return operation();
   }
   return requestLock.run(owner.referenceId, operation);

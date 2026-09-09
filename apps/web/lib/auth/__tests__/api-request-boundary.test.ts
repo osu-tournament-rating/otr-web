@@ -21,6 +21,17 @@ const run = async (scenario: string) => {
 };
 
 describe('API key request boundary', () => {
+  test.each(['reenabled', 'expiry-extended'])(
+    'locks known keys whose validity changes between preflight and verification: %s',
+    async (scenario) => {
+      expect(await run(scenario)).toEqual({
+        status: 429,
+        completedHandlers: 1,
+        handlers: 2,
+        verifications: 2,
+      });
+    }
+  );
   test('shares ownership across both HTTP transports and retains it until aborted work settles', async () => {
     expect(await run('transports')).toEqual({
       parallel: 429,
