@@ -78,7 +78,10 @@ import {
   updateScoreAdminNote,
   updateTournamentAdminNote,
 } from './procedures/adminNotesProcedures';
-import { getPlatformStats } from './procedures/statsProcedures';
+import {
+  getPlatformStats,
+  getPlayerStats as getPlatformPlayerStats,
+} from './procedures/statsProcedures';
 import {
   filterRegistrants,
   getFilterReport,
@@ -216,6 +219,7 @@ export const router = base.router({
   },
   stats: {
     platform: getPlatformStats,
+    players: getPlatformPlayerStats,
   },
   filtering: {
     filter: filterRegistrants,

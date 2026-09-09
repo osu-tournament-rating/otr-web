@@ -4,11 +4,14 @@ import * as schema from '@otr/core/db/schema';
 import { publicProcedure } from './base';
 import {
   PlatformStatsSchema,
+  PlayerStatsRequestSchema,
+  PlayerStatsResponseSchema,
   rulesetKeys,
   verificationStatusKeys,
   RulesetKey,
   VerificationStatusKey,
 } from '@/lib/orpc/schema/stats';
+import { PlayerStatsSchema } from '@otr/core/stats/player-stats';
 import { CHART_CONSTANTS } from '@/lib/utils/chart';
 import { VerificationStatus } from '@otr/core/osu';
 
@@ -214,4 +217,36 @@ export const getPlatformStats = publicProcedure
       console.error('Failed to compute platform stats', error);
       throw error;
     }
+  });
+
+export const getPlayerStats = publicProcedure
+  .input(PlayerStatsRequestSchema)
+  .output(PlayerStatsResponseSchema)
+  .route({
+    summary: 'Get player statistics',
+    tags: ['public'],
+    method: 'GET',
+    path: '/stats/players',
+  })
+  .handler(async ({ context, input }) => {
+    const [row] = await context.db
+      .select({
+        generatedAt: schema.platformPlayerStats.generatedAt,
+        payload: schema.platformPlayerStats.payload,
+      })
+      .from(schema.platformPlayerStats)
+      .where(eq(schema.platformPlayerStats.ruleset, input.ruleset))
+      .limit(1);
+
+    if (!row) {
+      return { ruleset: input.ruleset, generatedAt: null, stats: null };
+    }
+
+    return {
+      ruleset: input.ruleset,
+      // The driver returns Postgres' own timestamp text; publish RFC 3339
+      generatedAt: new Date(row.generatedAt).toISOString(),
+      // A snapshot that drifted from the contract is a defect, not an empty page
+      stats: PlayerStatsSchema.parse(row.payload),
+    };
   });
