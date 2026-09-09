@@ -1,12 +1,9 @@
 'use client';
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  SectionCard,
+  SectionHeader,
+} from '@/components/beatmap/BeatmapSection';
 import {
   Bar,
   BarChart,
@@ -108,15 +105,16 @@ export default function TournamentsByRulesetChart({
   }, [data]);
 
   return (
-    <Card data-testid="chart-tournaments-by-ruleset" className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Gamepad2 className="h-6 w-6 text-primary" />
-          Tournaments by Ruleset
-        </CardTitle>
-        <CardDescription>Verified tournaments by ruleset</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <SectionCard
+      data-testid="chart-tournaments-by-ruleset"
+      className={className}
+    >
+      <SectionHeader
+        icon={Gamepad2}
+        title="Tournaments by ruleset"
+        meta="Verified"
+      />
+      <div className="px-4 py-4">
         <ResponsiveContainer
           width="100%"
           height={CHART_CONSTANTS.DEFAULT_HEIGHT}
@@ -143,7 +141,7 @@ export default function TournamentsByRulesetChart({
             />
           </BarChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+      </div>
+    </SectionCard>
   );
 }

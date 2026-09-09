@@ -10,6 +10,8 @@ export interface FilterChipProps {
   selected: boolean;
   onClick: () => void;
   icon?: ReactNode;
+  /** Shows the icon alone and keeps `label` as the accessible name. */
+  iconOnly?: boolean;
   className?: string;
   'data-testid'?: string;
 }
@@ -19,6 +21,7 @@ export default function FilterChip({
   selected,
   onClick,
   icon,
+  iconOnly = false,
   className,
   ...props
 }: FilterChipProps) {
@@ -28,6 +31,7 @@ export default function FilterChip({
       variant="outline"
       size="sm"
       aria-pressed={selected}
+      aria-label={iconOnly ? label : undefined}
       onClick={onClick}
       data-testid={props['data-testid']}
       className={cn(
@@ -38,7 +42,7 @@ export default function FilterChip({
       )}
     >
       {icon}
-      {label}
+      {iconOnly ? null : label}
     </Button>
   );
 }
