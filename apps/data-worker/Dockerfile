@@ -4,7 +4,7 @@ WORKDIR /app
 # Copy only manifests first so `bun install` is cached independently of source
 # changes. All workspace manifests are needed for --frozen-lockfile to resolve
 # the workspace graph.
-COPY package.json bun.lock ./
+COPY package.json bun.lock bunfig.toml ./
 COPY apps/web/package.json apps/web/
 COPY apps/data-worker/package.json apps/data-worker/
 COPY apps/discord-bot/package.json apps/discord-bot/
