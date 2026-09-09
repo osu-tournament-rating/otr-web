@@ -11,6 +11,7 @@ import {
   getBeatmapModLabel,
   getModColor,
   getModForegroundColor,
+  getModSelectOptions,
   normalizeBeatmapDisplayMods,
   resolveGameDisplayMods,
   selectBeatmapListModGroups,
@@ -308,5 +309,27 @@ describe('deriveGameIsFreeMod', () => {
     expect(deriveGameIsFreeMod(Mods.HardRock, [{ mods: Mods.HardRock }])).toBe(
       false
     );
+  });
+});
+
+describe('getModSelectOptions', () => {
+  it('labels every mod with its full name and code', () => {
+    const options = getModSelectOptions();
+    const labels = new Map(
+      options.map(({ value, label }) => [Number(value), label])
+    );
+
+    expect(labels.get(Mods.Mirror)).toBe('Mirror (MR)');
+    expect(labels.get(Mods.ScoreV2)).toBe('ScoreV2 (V2)');
+    expect(labels.get(Mods.HardRock)).toBe('Hard rock (HR)');
+    expect(labels.has(Mods.None)).toBe(false);
+
+    // InvalidMods is a flag mask, not a mod, and keeps its plain text label.
+    const bareCodes = options
+      .filter(({ value }) => Number(value) !== Mods.InvalidMods)
+      .filter(({ label }) => !/^\S.* \([A-Z0-9]+\)$/.test(label))
+      .map(({ label }) => label);
+
+    expect(bareCodes).toEqual([]);
   });
 });

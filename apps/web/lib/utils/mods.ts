@@ -333,3 +333,16 @@ export function deriveGameIsFreeMod(
     hasModsVaryingFromGame(gameMods, scores)
   );
 }
+
+/** Admin mod multi-select options, `Full name (CODE)` sorted by name. */
+export function getModSelectOptions(): { label: string; value: string }[] {
+  return Object.entries(ModsEnumHelper.metadata)
+    .filter(([value, { text }]) => !!text && value !== Mods.None.toString())
+    .map(([value, { text, description }]) => ({
+      label: description
+        ? `${description.charAt(0).toUpperCase() + description.slice(1)} (${text})`
+        : text,
+      value,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}

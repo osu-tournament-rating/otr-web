@@ -37,11 +37,11 @@ import SimpleSelectContent from '@/components/select/SimpleSelectContent';
 import {
   RulesetEnumHelper,
   TeamEnumHelper,
-  ModsEnumHelper,
   ScoreGradeEnumHelper,
   ScoreRejectionReasonEnumHelper,
   getEnumFlags,
 } from '@/lib/enum-helpers';
+import { getModSelectOptions } from '@/lib/utils/mods';
 import { errorSaveToast } from '@/lib/utils/toasts';
 import { MultipleSelect, Option } from '@/components/select/multiple-select';
 import { useState } from 'react';
@@ -75,15 +75,7 @@ const inputChangedStyle = (fieldState: ControllerFieldState) =>
       'border-warning ring-warning focus-visible:border-warning focus-visible:ring-warning/20'
   );
 
-const modOptions = Object.entries(ModsEnumHelper.metadata)
-  .filter(([value, { text }]) => !!text && value !== Mods.None.toString())
-  .map(([value, { text, description }]) => ({
-    label: description
-      ? `${description.charAt(0).toUpperCase() + description.slice(1)} (${text})`
-      : text,
-    value,
-  }))
-  .sort((a, b) => a.label.localeCompare(b.label)) satisfies Option[];
+const modOptions = getModSelectOptions();
 
 const scoreRejectionReasonOptions = Object.entries(
   ScoreRejectionReasonEnumHelper.metadata

@@ -676,11 +676,11 @@ export const ModsEnumHelper: IBitwiseEnumHelper<Mods> = {
     },
     [Mods.ScoreV2]: {
       text: 'V2',
-      description: '',
+      description: 'ScoreV2',
     },
     [Mods.Mirror]: {
       text: 'MR',
-      description: '',
+      description: 'Mirror',
     },
   },
 };
