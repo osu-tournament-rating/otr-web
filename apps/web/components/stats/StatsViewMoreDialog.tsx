@@ -38,6 +38,15 @@ export type StatsDialogColumn<T> = {
   cell: (item: T, index: number) => ReactNode;
 };
 
+/** The `#` column every paged list starts with. */
+export const rankColumn: StatsDialogColumn<unknown> = {
+  key: 'rank',
+  className: 'w-11 pl-4',
+  cellClassName: 'text-xs text-muted-foreground tabular-nums',
+  header: '#',
+  cell: (_item, index) => index + 1,
+};
+
 /** The "View more" footer of a statistics card and the paged table it opens. */
 export default function StatsViewMoreDialog<T>({
   title,

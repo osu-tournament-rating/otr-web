@@ -12,7 +12,9 @@ import {
   StatPlayerName,
   StatRow,
 } from '@/components/stats/PlayerStatsRow';
-import StatsViewMoreDialog from '@/components/stats/StatsViewMoreDialog';
+import StatsViewMoreDialog, {
+  rankColumn,
+} from '@/components/stats/StatsViewMoreDialog';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
 import type { Ruleset } from '@otr/core/osu';
 import type { PlayerStatsDuo } from '@otr/core/stats/player-stats';
@@ -121,13 +123,7 @@ export default function PlayerStatsDuosCard({
           rowKey={duoKey}
           data-testid="stats-dialog-duos"
           columns={[
-            {
-              key: 'rank',
-              className: 'w-11 pl-4',
-              cellClassName: 'text-xs text-muted-foreground tabular-nums',
-              header: '#',
-              cell: (_duo, index) => index + 1,
-            },
+            rankColumn,
             {
               key: 'players',
               header: 'Players',

@@ -56,7 +56,9 @@ export default async function StatsPage(props: {
       <StatsTabs tab={tab} ruleset={ruleset} />
 
       {tab === 'players' ? (
+        // A new ruleset is a new view: remount so per-card selections do not carry over
         <PlayersTab
+          key={ruleset}
           ruleset={ruleset}
           ratings={stats.ratingStats.ratingsByRuleset[`${ruleset}`] ?? {}}
           stats={playerStats?.stats ?? null}

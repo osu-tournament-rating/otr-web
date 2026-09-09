@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-import { Ruleset } from '@otr/core/osu';
+import { Mods, Ruleset } from '@otr/core/osu';
 import { clearPlayerStats, seedPlayerStats } from './fixtures/player-stats';
 import { ROUTES } from './fixtures/test-config';
 
@@ -115,6 +115,14 @@ test.describe('Statistics Page', () => {
       await expect(
         page.getByTestId(`chart-rating-distribution-${Ruleset.Osu}`)
       ).toBeHidden();
+
+      // Per-card selections reset with the ruleset: taiko has no EZ chip
+      await expect(
+        page.getByTestId(`stats-mod-chip-${Mods.HardRock}`)
+      ).toHaveAttribute('aria-pressed', 'true');
+      await expect(
+        page.getByTestId('stats-card-mods').getByTestId('stats-row').first()
+      ).toContainText('305');
     });
 
     test('drops the mod card and fills the row for mania 4K', async ({

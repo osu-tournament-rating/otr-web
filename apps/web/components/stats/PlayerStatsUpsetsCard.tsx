@@ -15,7 +15,9 @@ import {
   StatRow,
 } from '@/components/stats/PlayerStatsRow';
 import StatsSegmentedControl from '@/components/stats/StatsSegmentedControl';
-import StatsViewMoreDialog from '@/components/stats/StatsViewMoreDialog';
+import StatsViewMoreDialog, {
+  rankColumn,
+} from '@/components/stats/StatsViewMoreDialog';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
 import type { Ruleset } from '@otr/core/osu';
 import type {
@@ -146,13 +148,7 @@ export default function PlayerStatsUpsetsCard({
           rowKey={upsetKey}
           data-testid="stats-dialog-upsets"
           columns={[
-            {
-              key: 'rank',
-              className: 'w-11 pl-4',
-              cellClassName: 'text-xs text-muted-foreground tabular-nums',
-              header: '#',
-              cell: (_upset, index) => index + 1,
-            },
+            rankColumn,
             {
               key: 'winner',
               header: 'Winner',

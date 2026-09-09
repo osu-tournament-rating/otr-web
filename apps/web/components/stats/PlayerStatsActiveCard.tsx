@@ -15,7 +15,9 @@ import {
   StatRow,
   StatValue,
 } from '@/components/stats/PlayerStatsRow';
-import StatsViewMoreDialog from '@/components/stats/StatsViewMoreDialog';
+import StatsViewMoreDialog, {
+  rankColumn,
+} from '@/components/stats/StatsViewMoreDialog';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
 import type { Ruleset } from '@otr/core/osu';
 import type { PlayerStatsActive } from '@otr/core/stats/player-stats';
@@ -74,13 +76,7 @@ export default function PlayerStatsActiveCard({
           rowKey={(entry) => `${entry.id}`}
           data-testid="stats-dialog-active"
           columns={[
-            {
-              key: 'rank',
-              className: 'w-11 pl-4',
-              cellClassName: 'text-xs text-muted-foreground tabular-nums',
-              header: '#',
-              cell: (_entry, index) => index + 1,
-            },
+            rankColumn,
             {
               key: 'player',
               header: 'Player',
