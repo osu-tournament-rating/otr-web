@@ -59,14 +59,23 @@ export const player = (
   osuTrackLastFetch: null,
   osuTrackDataFetchStatus: 0,
   dataFetchStatus: 2,
+  osuRestricted: false,
 });
 
-const compact = ({ id, osuId, username, country, defaultRuleset }: Player) => ({
+const compact = ({
   id,
   osuId,
   username,
   country,
   defaultRuleset,
+  osuRestricted,
+}: Player) => ({
+  id,
+  osuId,
+  username,
+  country,
+  defaultRuleset,
+  osuRestricted,
 });
 
 const names = ['Cytusine', 'Zylice', 'Aireu', 'Kanjiro', 'Rinna', 'Vanta'];

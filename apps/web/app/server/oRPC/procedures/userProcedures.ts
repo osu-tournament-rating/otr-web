@@ -121,30 +121,11 @@ export const deleteMyFriends = protectedProcedure
     path: '/users/me/friends',
   })
   .handler(async ({ context }) => {
-    const { user } = context.session;
-
-    if (!user?.id) {
-      throw new ORPCError('UNAUTHORIZED', {
-        message: 'No authenticated user found',
-      });
-    }
-
-    const authUser = await context.db.query.auth_users.findFirst({
-      where: eq(schema.auth_users.id, user.id),
-      columns: {
-        playerId: true,
-      },
-    });
-
-    if (!authUser?.playerId) {
-      throw new ORPCError('NOT_FOUND', {
-        message: 'User not found',
-      });
-    }
+    const { dbPlayer } = context.session;
 
     await db
       .delete(schema.playerFriends)
-      .where(eq(schema.playerFriends.playerId, authUser.playerId));
+      .where(eq(schema.playerFriends.playerId, dbPlayer.id));
 
     return { success: true };
   });

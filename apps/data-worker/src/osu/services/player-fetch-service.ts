@@ -123,7 +123,8 @@ export class PlayerFetchService {
           this.db,
           playerId,
           DataFetchStatus.NotFound,
-          nowIso
+          nowIso,
+          { osuRestricted: true }
         );
         return false;
       }
@@ -184,6 +185,7 @@ export class PlayerFetchService {
         ),
         country: updatedCountry,
         defaultRuleset,
+        osuRestricted: false,
         osuLastFetch: nowIso,
         updated: nowIso,
       })

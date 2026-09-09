@@ -14,6 +14,7 @@ import {
 import { ac, admin, superadmin, ADMIN_ROLES } from './auth-roles';
 import { authDatabaseAdapter } from './database-adapter';
 import { e2eTestAuthPlugin, isE2eAuthEnabled } from './e2e-test-auth-plugin';
+import { getVerifiedPlayer, OSU_PROVIDER_ID } from './player-identity';
 import { nextCookies } from 'better-auth/next-js';
 import * as schema from '@otr/core/db/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
@@ -21,7 +22,6 @@ import { Ruleset } from '@otr/core/osu';
 import { API as OsuApi } from 'osu-api-v2-js';
 import type { User } from 'osu-api-v2-js';
 
-const OSU_PROVIDER_ID = 'osu';
 const OSU_PROFILE_URL = 'https://osu.ppy.sh/api/v2/me';
 // The account create hook runs before defaults are coerced, so fields the
 // Drizzle type has as null arrive undefined.
@@ -508,7 +508,7 @@ export const auth = betterAuth({
       playerId: {
         type: 'number',
         required: true,
-        input: true,
+        input: false,
         // No `references`: Better Auth 1.6 resolves it against its own model
         // registry, which has no `players`, and throws during get-session.
       },
@@ -516,15 +516,19 @@ export const auth = betterAuth({
     deleteUser: {
       enabled: true,
       beforeDelete: async (user) => {
-        const authUser = user as AuthUserRecord;
-        if (authUser.playerId) {
-          await db
-            .delete(schema.playerFriends)
-            .where(eq(schema.playerFriends.playerId, authUser.playerId));
-          await db
-            .delete(schema.users)
-            .where(eq(schema.users.playerId, authUser.playerId));
+        const player = await getVerifiedPlayer(user.id);
+        if (!player) {
+          throw new APIError('UNAUTHORIZED', {
+            message: 'Unable to verify the linked osu! account',
+          });
         }
+
+        await db
+          .delete(schema.playerFriends)
+          .where(eq(schema.playerFriends.playerId, player.id));
+        await db
+          .delete(schema.users)
+          .where(eq(schema.users.playerId, player.id));
       },
     },
   },
@@ -606,60 +610,22 @@ export const auth = betterAuth({
     // Test-only: present only when running the e2e suite (never in production).
     ...(isE2eAuthEnabled() ? [e2eTestAuthPlugin()] : []),
     customSession(async ({ user, session }) => {
-      const account = await db.query.auth_accounts.findFirst({
-        where: and(
-          eq(schema.auth_accounts.userId, user.id),
-          eq(schema.auth_accounts.providerId, OSU_PROVIDER_ID)
-        ),
-      });
-
-      const baseAuthUser = user as AuthUserRecord & typeof user;
-      let authUser = baseAuthUser;
-      let playerId: number | null = authUser.playerId ?? null;
-
-      if (!playerId && account) {
-        playerId = await ensureOsuAccountLink(account);
-        if (playerId) {
-          authUser = {
-            ...authUser,
-            playerId,
-          };
-        }
-      }
-
-      let dbPlayer = null;
-      if (playerId) {
-        dbPlayer = await db.query.players.findFirst({
-          where: eq(schema.players.id, playerId),
+      const dbPlayer = await getVerifiedPlayer(user.id);
+      if (!dbPlayer) {
+        throw new APIError('UNAUTHORIZED', {
+          message: 'Unable to verify the linked osu! account',
         });
-      } else if (account) {
-        const parsedOsuId = parseOsuId(account.accountId);
-        if (parsedOsuId !== null) {
-          dbPlayer = await db.query.players.findFirst({
-            where: eq(schema.players.osuId, parsedOsuId),
-          });
-
-          if (dbPlayer && !authUser.playerId) {
-            authUser = {
-              ...authUser,
-              playerId: dbPlayer.id,
-            };
-          }
-        }
       }
 
-      const dbUser = dbPlayer
-        ? await db.query.users.findFirst({
-            where: eq(schema.users.playerId, dbPlayer.id),
-          })
-        : null;
-
-      const osuId = dbPlayer?.osuId ?? parseOsuId(account?.accountId);
+      const dbUser = await db.query.users.findFirst({
+        where: eq(schema.users.playerId, dbPlayer.id),
+      });
 
       return {
         user: {
-          ...authUser,
-          osuId,
+          ...user,
+          playerId: dbPlayer.id,
+          osuId: dbPlayer.osuId,
         },
         session,
         dbPlayer,

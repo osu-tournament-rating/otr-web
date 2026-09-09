@@ -11,6 +11,7 @@ mock.module('../../client', () => ({
   APIError: class APIError extends Error {},
 }));
 
+const { APIError } = await import('../../client');
 const { PlayerFetchService } = await import('../player-fetch-service');
 
 type PlayerUpdate = Record<string, unknown>;
@@ -29,22 +30,33 @@ const createLogger = (): Logger => {
   return logger;
 };
 
-const createHarness = (apiUser: Record<string, unknown>) => {
+const createHarness = (
+  apiUser: Record<string, unknown>,
+  getUser: () => Promise<unknown> = async () => apiUser,
+  initialPlayer: PlayerUpdate = {}
+) => {
   const updates: PlayerUpdate[] = [];
+  const player: {
+    id: number;
+    dataFetchStatus: number;
+    osuRestricted: boolean;
+  } = {
+    id: PLAYER_ID,
+    dataFetchStatus: DataFetchStatus.Fetching,
+    osuRestricted: false,
+    ...initialPlayer,
+  };
 
   const db = {
     query: {
       players: {
-        findFirst: async () => ({
-          id: PLAYER_ID,
-          dataFetchStatus: DataFetchStatus.Fetching,
-        }),
+        findFirst: async () => player,
       },
     },
     update: () => ({
       set: (values: PlayerUpdate) => {
         updates.push(values);
-        return { where: async () => undefined };
+        return { where: async () => Object.assign(player, values) };
       },
     }),
     insert: () => ({
@@ -54,9 +66,7 @@ const createHarness = (apiUser: Record<string, unknown>) => {
     }),
   } as unknown as DatabaseClient;
 
-  const api = {
-    getUser: async () => apiUser,
-  } as unknown as API;
+  const api = { getUser } as unknown as API;
 
   const rateLimiter = {
     schedule: <T>(task: () => Promise<T>) => task(),
@@ -69,7 +79,7 @@ const createHarness = (apiUser: Record<string, unknown>) => {
     logger: createLogger(),
   });
 
-  return { service, updates };
+  return { service, updates, player };
 };
 
 const previousUsernamesOf = (updates: PlayerUpdate[]) =>
@@ -141,5 +151,87 @@ describe('PlayerFetchService previous usernames', () => {
     await service.fetchAndPersist(OSU_ID);
 
     expect(previousUsernamesOf(updates)).toEqual([]);
+  });
+});
+
+const rejectNotFound = () =>
+  Promise.reject(
+    Object.assign(Object.create(APIError.prototype) as Error, {
+      response: { status_code: 404 },
+    })
+  );
+
+describe('PlayerFetchService restriction', () => {
+  it.each([401, 403, 429, 500])(
+    'preserves a known restriction through a retry returning %i',
+    async (status) => {
+      const error = Object.assign(Object.create(APIError.prototype) as Error, {
+        response: { status_code: status },
+      });
+      const { service, updates, player } = createHarness(
+        buildApiUser({}),
+        async () => {
+          throw error;
+        },
+        { dataFetchStatus: DataFetchStatus.NotFound, osuRestricted: true }
+      );
+
+      if (status === 401 || status === 403) {
+        expect(await service.fetchAndPersist(OSU_ID)).toBe(false);
+        expect(player.dataFetchStatus).toBe(DataFetchStatus.Error);
+      } else {
+        await expect(service.fetchAndPersist(OSU_ID)).rejects.toBe(error);
+      }
+
+      expect(updates[0]).toMatchObject({
+        dataFetchStatus: DataFetchStatus.Fetching,
+      });
+      expect(updates.every((update) => !('osuRestricted' in update))).toBe(
+        true
+      );
+      expect(player.osuRestricted).toBe(true);
+    }
+  );
+
+  it('sets restriction when a later ruleset fetch returns 404', async () => {
+    let calls = 0;
+    const { service, player } = createHarness(buildApiUser({}), async () => {
+      calls += 1;
+      return calls === 1 ? buildApiUser({}) : rejectNotFound();
+    });
+
+    expect(await service.fetchAndPersist(OSU_ID)).toBe(false);
+    expect(calls).toBe(2);
+    expect(player).toMatchObject({
+      dataFetchStatus: DataFetchStatus.NotFound,
+      osuRestricted: true,
+    });
+  });
+
+  it('marks the player restricted when the osu! API returns 404', async () => {
+    const { service, updates } = createHarness(
+      buildApiUser({}),
+      rejectNotFound
+    );
+
+    expect(await service.fetchAndPersist(OSU_ID)).toBe(false);
+
+    expect(updates.at(-1)).toMatchObject({
+      dataFetchStatus: DataFetchStatus.NotFound,
+      osuRestricted: true,
+    });
+  });
+
+  it('clears the restriction after a successful fetch', async () => {
+    const { service, player } = createHarness(buildApiUser({}), undefined, {
+      dataFetchStatus: DataFetchStatus.NotFound,
+      osuRestricted: true,
+    });
+
+    expect(await service.fetchAndPersist(OSU_ID)).toBe(true);
+    expect(player).toMatchObject({
+      dataFetchStatus: DataFetchStatus.Fetched,
+      osuRestricted: false,
+    });
   });
 });

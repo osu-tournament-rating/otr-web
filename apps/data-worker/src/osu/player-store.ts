@@ -111,7 +111,8 @@ export const updatePlayerStatus = async (
   db: UpdateExecutor,
   playerId: number,
   status: number,
-  updatedIso: string
+  updatedIso: string,
+  extra: Partial<Pick<typeof schema.players.$inferInsert, 'osuRestricted'>> = {}
 ) => {
   await db
     .update(schema.players)
@@ -119,6 +120,7 @@ export const updatePlayerStatus = async (
       dataFetchStatus: status,
       osuLastFetch: updatedIso,
       updated: updatedIso,
+      ...extra,
     })
     .where(eq(schema.players.id, playerId));
 };
