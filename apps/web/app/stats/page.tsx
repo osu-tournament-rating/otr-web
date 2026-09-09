@@ -9,7 +9,7 @@ import { orpc } from '@/lib/orpc/orpc';
 import { parseStatsRuleset, parseStatsTab } from '@/lib/stats/params';
 
 export const metadata: Metadata = {
-  title: 'Platform Statistics | o!TR',
+  title: 'Platform Statistics',
   description: 'View platform-wide statistics and insights for o!TR',
 };
 
