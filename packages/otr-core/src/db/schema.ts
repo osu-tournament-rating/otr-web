@@ -18,6 +18,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { sql, type SQL } from 'drizzle-orm';
 import { DataFetchStatus } from './data-fetch-status';
+import type { PlayerStats } from '../stats/player-stats';
 import type {
   BeatmapAttributeJobStatus,
   BeatmapDifficultyPayload,
@@ -1626,6 +1627,18 @@ export const playerRatings = pgTable(
     }).onDelete('cascade'),
   ]
 );
+
+/** One worker-built snapshot of the public player statistics per ruleset. */
+export const platformPlayerStats = pgTable('platform_player_stats', {
+  ruleset: integer().primaryKey(),
+  generatedAt: timestamp('generated_at', {
+    withTimezone: true,
+    mode: 'string',
+  }).notNull(),
+  /** Watermark of the inputs the snapshot was built from; a change triggers a rebuild. */
+  sourceKey: text('source_key').notNull(),
+  payload: jsonb().$type<PlayerStats>().notNull(),
+});
 
 export const playerTournamentStats = pgTable(
   'player_tournament_stats',
