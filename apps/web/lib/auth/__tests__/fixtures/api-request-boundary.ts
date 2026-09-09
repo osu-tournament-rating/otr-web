@@ -1,9 +1,46 @@
 import { mock } from 'bun:test';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { EventEmitter } from 'node:events';
+import {
+  trace,
+  type Span,
+  type SpanOptions,
+  type Tracer,
+} from '@opentelemetry/api';
 import { call, ORPCError } from '@orpc/server';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 
 const [scenario = 'parallel'] = process.argv.slice(2);
+const sqlSpans: { statement: unknown; parentSystem: unknown }[] = [];
+if (scenario === 'tracing') {
+  const active = new AsyncLocalStorage<SpanOptions>();
+  trace.setGlobalTracerProvider({
+    getTracer: () =>
+      ({
+        startActiveSpan: (
+          _name: string,
+          options: SpanOptions,
+          run: (span: Span) => unknown
+        ) => {
+          const statement = options.attributes?.['db.query.text'];
+          if (statement) {
+            sqlSpans.push({
+              statement,
+              parentSystem: active.getStore()?.attributes?.['rpc.system'],
+            });
+          }
+          return active.run(options, () =>
+            run({
+              setAttribute() {},
+              recordException() {},
+              setStatus() {},
+              end() {},
+            } as unknown as Span)
+          );
+        },
+      }) as Tracer,
+  });
+}
 const keyState = {
   referenceId: 'owner',
   enabled: true,
@@ -24,6 +61,9 @@ class FakeClient extends EventEmitter {
   release() {}
 }
 class FakePool extends EventEmitter {
+  async query() {
+    throw new Error('Coordination queries must use the checked-out client');
+  }
   async connect() {
     return new FakeClient();
   }
@@ -88,11 +128,6 @@ mock.module('@/lib/db', () => ({
     },
   },
 }));
-mock.module('@otr/core/tracing', () => ({
-  withSpan: async (_name: unknown, _options: unknown, run: () => unknown) =>
-    run(),
-  setActiveSpanAttributes: () => {},
-}));
 const metric = { labels: () => ({ inc() {}, observe() {} }) };
 mock.module('@/lib/metrics', () => ({
   orpcProcedureCalls: metric,
@@ -103,7 +138,13 @@ const makeHeaders = (value: string) =>
   new Headers(
     scenario === 'x-api-key' ? { 'x-api-key': value } : { authorization: value }
   );
-if (scenario === 'transports') {
+if (scenario === 'tracing') {
+  const procedure = publicProcedure.handler(() => 'ok');
+  await call(procedure, undefined, {
+    context: { headers: new Headers({ authorization: 'Bearer key-one' }) },
+  });
+  console.log(JSON.stringify(sqlSpans));
+} else if (scenario === 'transports') {
   let started!: () => void;
   const entered = new Promise<void>((resolve) => {
     started = resolve;

@@ -21,6 +21,18 @@ const run = async (scenario: string) => {
 };
 
 describe('API key request boundary', () => {
+  test('traces lock acquisition and release inside the procedure', async () => {
+    expect(await run('tracing')).toEqual([
+      {
+        statement: 'SELECT pg_try_advisory_lock($1::bigint) AS acquired',
+        parentSystem: 'orpc',
+      },
+      {
+        statement: 'SELECT pg_advisory_unlock($1::bigint) AS released',
+        parentSystem: 'orpc',
+      },
+    ]);
+  });
   test.each(['reenabled', 'expiry-extended'])(
     'locks known keys whose validity changes between preflight and verification: %s',
     async (scenario) => {
