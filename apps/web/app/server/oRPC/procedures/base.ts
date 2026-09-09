@@ -12,6 +12,8 @@ import { setActiveSpanAttributes, withSpan } from '@otr/core/tracing';
 import { SpanKind } from '@opentelemetry/api';
 
 import { auth } from '@/lib/auth/auth';
+import { extractApiKey } from '@/lib/auth/api-key-header';
+import { withApiKeyRequest } from '@/lib/auth/api-request-guard';
 import { db } from '@/lib/db';
 import { orpcProcedureCalls, orpcProcedureDuration } from '@/lib/metrics';
 
@@ -350,20 +352,6 @@ const describeError = (error: ProcedureError) => {
   }
 };
 
-const extractApiKey = (headers?: Headers) => {
-  if (!headers) {
-    return null;
-  }
-
-  const authorization = headers.get('authorization');
-  if (authorization?.startsWith('Bearer ')) {
-    const token = authorization.slice('Bearer '.length).trim();
-    return token.length > 0 ? token : null;
-  }
-
-  return null;
-};
-
 const withOptionalApiKey = base.middleware(async ({ context, next }) => {
   const candidate = extractApiKey(context.headers);
 
@@ -377,104 +365,107 @@ const withOptionalApiKey = base.middleware(async ({ context, next }) => {
     });
   }
 
-  try {
-    const verification = await auth.api.verifyApiKey({
-      headers: context.headers,
-      body: {
-        key: candidate,
-      },
-    });
-
-    const verifiedKey = verification?.key ?? null;
-
-    if (!verification?.valid || !verifiedKey) {
-      handleInvalidApiKeyVerification(
-        verification as unknown as ApiKeyVerificationResponse
-      );
-    }
-
-    const activeKey = verifiedKey as NonNullable<typeof verifiedKey>;
-
-    if (activeKey.enabled === false) {
-      throw new ORPCError('FORBIDDEN', {
-        status: 403,
-        message: 'API key disabled',
-        data: { code: 'KEY_DISABLED' },
-      });
-    }
-
-    // Better Auth's API key plugin (v1.6+) renamed `userId` to `referenceId`.
-    const { id, referenceId, name, enabled } = activeKey;
-    const userId = referenceId;
-    let apiKeyActor: ApiKeyActor | null = null;
-
+  return withApiKeyRequest(candidate, async () => {
     try {
-      const authUser = await db.query.auth_users.findFirst({
-        columns: {
-          id: true,
-          name: true,
-          playerId: true,
+      const verification = await auth.api.verifyApiKey({
+        headers: context.headers,
+        body: {
+          key: candidate,
         },
-        where: eq(schema.auth_users.id, userId),
-        with: {
-          player: {
-            columns: {
-              id: true,
-              osuId: true,
-              username: true,
+      });
+
+      const verifiedKey = verification?.key ?? null;
+
+      if (!verification?.valid || !verifiedKey) {
+        handleInvalidApiKeyVerification(
+          verification as unknown as ApiKeyVerificationResponse
+        );
+      }
+
+      const activeKey = verifiedKey as NonNullable<typeof verifiedKey>;
+
+      if (activeKey.enabled === false) {
+        throw new ORPCError('FORBIDDEN', {
+          status: 403,
+          message: 'API key disabled',
+          data: { code: 'KEY_DISABLED' },
+        });
+      }
+
+      // Better Auth's API key plugin (v1.6+) renamed `userId` to `referenceId`.
+      const { id, referenceId, name, enabled } = activeKey;
+      const userId = referenceId;
+      let apiKeyActor: ApiKeyActor | null = null;
+
+      try {
+        const authUser = await db.query.auth_users.findFirst({
+          columns: {
+            id: true,
+            name: true,
+            playerId: true,
+          },
+          where: eq(schema.auth_users.id, userId),
+          with: {
+            player: {
+              columns: {
+                id: true,
+                osuId: true,
+                username: true,
+              },
             },
           },
-        },
-      });
+        });
 
-      if (authUser) {
-        const playerId = authUser.player?.id ?? authUser.playerId ?? null;
+        if (authUser) {
+          const playerId = authUser.player?.id ?? authUser.playerId ?? null;
 
-        apiKeyActor = {
-          userId,
-          playerId,
-          osuId: authUser.player?.osuId ?? null,
-          osuUsername:
-            authUser.player?.username ?? (authUser.name ? authUser.name : null),
-        };
+          apiKeyActor = {
+            userId,
+            playerId,
+            osuId: authUser.player?.osuId ?? null,
+            osuUsername:
+              authUser.player?.username ??
+              (authUser.name ? authUser.name : null),
+          };
+        }
+      } catch (apiKeyActorError) {
+        const timestamp = new Date().toISOString();
+        const description = describeError(apiKeyActorError as ProcedureError);
+        console.error(
+          `${timestamp} [oRPC]: api-key-owner-lookup-failed apiKey=${maskApiKey(
+            id
+          )} error=${description}`
+        );
       }
-    } catch (apiKeyActorError) {
-      const timestamp = new Date().toISOString();
-      const description = describeError(apiKeyActorError as ProcedureError);
-      console.error(
-        `${timestamp} [oRPC]: api-key-owner-lookup-failed apiKey=${maskApiKey(
-          id
-        )} error=${description}`
-      );
-    }
 
-    return next({
-      context: {
-        ...context,
-        apiKey: {
-          id,
-          userId,
-          name: name ?? null,
-          enabled,
-        },
-        apiKeyActor,
-      } as typeof context & VerifiedApiKeyContext,
-    });
-  } catch (error) {
-    if (error instanceof ORPCError) {
-      throw error;
-    }
+      return next({
+        context: {
+          ...context,
+          apiKey: {
+            id,
+            userId,
+            name: name ?? null,
+            enabled,
+          },
+          apiKeyActor,
+        } as typeof context & VerifiedApiKeyContext,
+      });
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        throw error;
+      }
 
-    if (error instanceof APIError) {
-      throw toOrpcErrorFromBetterAuth(error);
-    }
+      if (error instanceof APIError) {
+        throw toOrpcErrorFromBetterAuth(error);
+      }
 
-    throw new ORPCError('UNAUTHORIZED', {
-      status: 401,
-      message: 'Invalid API key provided',
-      cause: error instanceof Error ? error : undefined,
-    });
-  }
+      throw new ORPCError('UNAUTHORIZED', {
+        status: 401,
+        message: 'Invalid API key provided',
+        cause: error instanceof Error ? error : undefined,
+      });
+    }
+  });
 });
 
 const withDatabase = base.middleware(async ({ context, next }) => {

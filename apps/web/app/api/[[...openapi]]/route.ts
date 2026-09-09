@@ -1,14 +1,6 @@
 import { openAPIHandler } from '@/app/server/openapi';
-
-const BEARER_PREFIX = 'Bearer ';
-
-type NormalizedRequest = {
-  request: Request;
-};
-
-type UnauthorizedResult = {
-  response: Response;
-};
+import { extractApiKey } from '@/lib/auth/api-key-header';
+import { ORPCError } from '@orpc/server';
 
 const createUnauthorizedResponse = (message: string): Response => {
   return new Response(JSON.stringify({ error: message }), {
@@ -20,63 +12,20 @@ const createUnauthorizedResponse = (message: string): Response => {
   });
 };
 
-const normalizeAuthorizationHeader = (
-  request: Request
-): NormalizedRequest | UnauthorizedResult => {
-  const authorization = request.headers.get('authorization');
-
-  if (authorization) {
-    const trimmed = authorization.trim();
-
-    if (!trimmed.toLowerCase().startsWith(BEARER_PREFIX.toLowerCase())) {
-      return {
-        response: createUnauthorizedResponse(
-          'Provide the API key using the Authorization: Bearer <key> header.'
-        ),
-      };
-    }
-
-    const token = trimmed.slice(BEARER_PREFIX.length).trim();
-
-    if (!token) {
-      return {
-        response: createUnauthorizedResponse('API key is missing.'),
-      };
-    }
-
-    return { request };
-  }
-
-  const rawApiKey = request.headers.get('x-api-key');
-  const candidate = rawApiKey?.trim();
-
-  if (!candidate) {
-    return {
-      response: createUnauthorizedResponse(
-        'An API key is required to access this endpoint.'
-      ),
-    };
-  }
-
-  const forwardedHeaders = new Headers(request.headers);
-  forwardedHeaders.set('authorization', `${BEARER_PREFIX}${candidate}`);
-
-  return {
-    request: new Request(request, { headers: forwardedHeaders }),
-  };
-};
-
-async function handle(initialRequest: Request) {
-  let request = initialRequest;
-
+async function handle(request: Request) {
   if (request.method !== 'OPTIONS') {
-    const normalization = normalizeAuthorizationHeader(request);
-
-    if ('response' in normalization) {
-      return normalization.response;
+    try {
+      if (!extractApiKey(request.headers)) {
+        return createUnauthorizedResponse(
+          'An API key is required to access this endpoint.'
+        );
+      }
+    } catch (error) {
+      if (error instanceof ORPCError) {
+        return createUnauthorizedResponse(error.message);
+      }
+      throw error;
     }
-
-    request = normalization.request;
   }
 
   const result = await openAPIHandler.handle(request, {
