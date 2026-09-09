@@ -3,13 +3,15 @@
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
+
+import { getSafeCallbackRedirect } from '@/lib/auth-redirect';
 // TODO: This page should be removed
 export default function Page() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const redirectTo = searchParams.get('redirectTo') || '/';
+    const redirectTo = getSafeCallbackRedirect(searchParams.get('redirectTo'));
 
     const timer = window.setTimeout(() => {
       router.replace(redirectTo);
