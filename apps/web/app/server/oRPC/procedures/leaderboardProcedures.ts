@@ -138,9 +138,11 @@ async function runLeaderboard({
       scopedPlayerIds && scopedPlayerIds.length > 0
         ? inArray(schema.players.id, scopedPlayerIds)
         : undefined;
-    const baseWhere = playerScopeFilter
-      ? and(playerScopeFilter, ratingRulesetFilter)
-      : ratingRulesetFilter;
+    const baseWhere = and(
+      ratingRulesetFilter,
+      eq(schema.players.osuRestricted, false),
+      playerScopeFilter
+    );
     const groupByColumns = [
       schema.playerRatings.id,
       schema.playerRatings.rating,

@@ -1,7 +1,5 @@
 import { ORPCError, os } from '@orpc/server';
 import { APIError } from 'better-auth/api';
-import * as schema from '@otr/core/db/schema';
-import { eq } from 'drizzle-orm';
 import {
   CLIENT_HEADER,
   createLogger,
@@ -12,6 +10,7 @@ import { setActiveSpanAttributes, withSpan } from '@otr/core/tracing';
 import { SpanKind } from '@opentelemetry/api';
 
 import { auth } from '@/lib/auth/auth';
+import { getVerifiedPlayer } from '@/lib/auth/player-identity';
 import { extractApiKey } from '@/lib/auth/api-key-header';
 import { withApiKeyRequest } from '@/lib/auth/api-request-guard';
 import { db } from '@/lib/db';
@@ -398,36 +397,14 @@ const withOptionalApiKey = base.middleware(async ({ context, next }) => {
       let apiKeyActor: ApiKeyActor | null = null;
 
       try {
-        const authUser = await db.query.auth_users.findFirst({
-          columns: {
-            id: true,
-            name: true,
-            playerId: true,
-          },
-          where: eq(schema.auth_users.id, userId),
-          with: {
-            player: {
-              columns: {
-                id: true,
-                osuId: true,
-                username: true,
-              },
-            },
-          },
-        });
+        const player = await getVerifiedPlayer(userId);
 
-        if (authUser) {
-          const playerId = authUser.player?.id ?? authUser.playerId ?? null;
-
-          apiKeyActor = {
-            userId,
-            playerId,
-            osuId: authUser.player?.osuId ?? null,
-            osuUsername:
-              authUser.player?.username ??
-              (authUser.name ? authUser.name : null),
-          };
-        }
+        apiKeyActor = {
+          userId,
+          playerId: player?.id ?? null,
+          osuId: player?.osuId ?? null,
+          osuUsername: player?.username ?? null,
+        };
       } catch (apiKeyActorError) {
         const timestamp = new Date().toISOString();
         const description = describeError(apiKeyActorError as ProcedureError);

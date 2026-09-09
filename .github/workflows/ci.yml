@@ -19,6 +19,7 @@ jobs:
       SEARCH_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/otr_test
       API_REQUEST_CONCURRENCY_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/otr_test
       BEATMAP_ATTRIBUTES_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/otr_test
+      AUTH_IDENTITY_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/otr_test
     services:
       postgres:
         image: postgres:17

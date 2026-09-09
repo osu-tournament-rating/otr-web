@@ -15,7 +15,7 @@ function fixture(level?: string, status = 4) {
  games AS (SELECT id,id match_id,1 beatmap_id,game_status verification_status,0 mods,'2026-01-01'::timestamptz start_time FROM chain),
  game_scores AS (SELECT c.id*10+n id,c.id game_id,c.id player_id,c.score_status verification_status,0 mods,CASE WHEN c.id=1 THEN 100000*n ELSE 10000000 END score,CASE WHEN c.id=1 THEN 0.9 ELSE 0.1 END accuracy,0 stat_miss,3 grade FROM chain c CROSS JOIN generate_series(1,5) n),
  rating_adjustments AS (SELECT id player_id,id match_id,800::float8 rating_before FROM chain),
- players AS (SELECT id,id osu_id,'Player '||id username,'US' country,0 default_ruleset FROM chain),
+ players AS (SELECT id,id osu_id,'Player '||id username,'US' country,0 default_ruleset,false osu_restricted FROM chain),
  join_pooled_beatmaps AS (SELECT id tournaments_pooled_in_id,1 pooled_beatmaps_id FROM chain) `;
 }
 

@@ -35,6 +35,8 @@ import {
   type AdminNoteRow,
 } from './adminNotesProcedures';
 
+import type { Player } from '@/lib/orpc/schema/player';
+
 import { publicProcedure } from './base';
 import {
   Mods,
@@ -401,6 +403,7 @@ export const getTournament = publicProcedure
           beatmapsetCreatorOsuTrackDataFetchStatus:
             beatmapsetCreator.osuTrackDataFetchStatus,
           beatmapsetCreatorDataFetchStatus: beatmapsetCreator.dataFetchStatus,
+          beatmapsetCreatorOsuRestricted: beatmapsetCreator.osuRestricted,
         })
         .from(schema.joinPooledBeatmaps)
         .innerJoin(
@@ -473,6 +476,7 @@ export const getTournament = publicProcedure
               osuTrackLastFetch: schema.players.osuTrackLastFetch,
               osuTrackDataFetchStatus: schema.players.osuTrackDataFetchStatus,
               dataFetchStatus: schema.players.dataFetchStatus,
+              osuRestricted: schema.players.osuRestricted,
             })
             .from(schema.joinBeatmapCreators)
             .innerJoin(
@@ -484,20 +488,7 @@ export const getTournament = publicProcedure
             )
         : [];
 
-      const creatorsByBeatmapId = new Map<
-        number,
-        {
-          id: number;
-          osuId: number;
-          username: string;
-          country: string;
-          defaultRuleset: Ruleset;
-          osuLastFetch: string;
-          osuTrackLastFetch: string;
-          osuTrackDataFetchStatus: number;
-          dataFetchStatus: number;
-        }[]
-      >();
+      const creatorsByBeatmapId = new Map<number, Player[]>();
 
       for (const creator of beatmapCreatorsRows) {
         const beatmapId = creator.beatmapId;
@@ -512,6 +503,7 @@ export const getTournament = publicProcedure
           osuTrackLastFetch: creator.osuTrackLastFetch ?? '2007-09-17 00:00:00',
           osuTrackDataFetchStatus: creator.osuTrackDataFetchStatus ?? 0,
           dataFetchStatus: creator.dataFetchStatus ?? 0,
+          osuRestricted: creator.osuRestricted,
         });
         creatorsByBeatmapId.set(beatmapId, current);
       }
@@ -786,6 +778,7 @@ export const getTournament = publicProcedure
           statsPlayerOsuLastFetch: schema.players.osuLastFetch,
           statsPlayerOsuTrackLastFetch: schema.players.osuTrackLastFetch,
           statsPlayerDataFetchStatus: schema.players.dataFetchStatus,
+          statsPlayerOsuRestricted: schema.players.osuRestricted,
           statsPlayerOsuTrackDataFetchStatus:
             schema.players.osuTrackDataFetchStatus,
 
@@ -855,6 +848,7 @@ export const getTournament = publicProcedure
                 osuTrackDataFetchStatus:
                   stat.statsPlayerOsuTrackDataFetchStatus ?? 0,
                 dataFetchStatus: stat.statsPlayerDataFetchStatus ?? 0,
+                osuRestricted: stat.statsPlayerOsuRestricted ?? false,
               }
             : {
                 id: -1,
@@ -866,6 +860,7 @@ export const getTournament = publicProcedure
                 osuTrackLastFetch: '2007-09-17 00:00:00',
                 osuTrackDataFetchStatus: 0,
                 dataFetchStatus: 0,
+                osuRestricted: false,
               },
       }));
 
@@ -889,6 +884,7 @@ export const getTournament = publicProcedure
                 osuTrackDataFetchStatus:
                   beatmap.beatmapsetCreatorOsuTrackDataFetchStatus ?? 0,
                 dataFetchStatus: beatmap.beatmapsetCreatorDataFetchStatus ?? 0,
+                osuRestricted: beatmap.beatmapsetCreatorOsuRestricted ?? false,
               };
 
         const beatmapset =
@@ -906,20 +902,7 @@ export const getTournament = publicProcedure
                 creator: beatmapsetCreator,
               };
 
-        const creators = (creatorsByBeatmapId.get(beatmap.beatmapId) ?? []).map(
-          (creator) => ({
-            id: creator.id,
-            osuId: creator.osuId,
-            username: creator.username,
-            country: creator.country,
-            defaultRuleset: (creator.defaultRuleset ?? Ruleset.Osu) as Ruleset,
-            osuLastFetch: creator.osuLastFetch,
-            osuTrackLastFetch:
-              creator.osuTrackLastFetch ?? '2007-09-17 00:00:00',
-            osuTrackDataFetchStatus: creator.osuTrackDataFetchStatus ?? 0,
-            dataFetchStatus: creator.dataFetchStatus ?? 0,
-          })
-        );
+        const creators = creatorsByBeatmapId.get(beatmap.beatmapId) ?? [];
 
         return {
           id: beatmap.beatmapId,
