@@ -44,6 +44,7 @@ interface AdminNoteRow {
   playerOsuTrackLastFetch: string | null;
   playerOsuTrackDataFetchStatus: number | null;
   playerDataFetchStatus: number | null;
+  playerOsuRestricted: boolean | null;
 }
 
 const FALLBACK_PLAYER = {
@@ -56,6 +57,7 @@ const FALLBACK_PLAYER = {
   osuTrackLastFetch: '2007-09-17 00:00:00',
   osuTrackDataFetchStatus: 0,
   dataFetchStatus: 0,
+  osuRestricted: false,
   userId: null as number | null,
 };
 
@@ -94,6 +96,7 @@ function mapAdminNote(row: AdminNoteRow): AdminNote {
             row.playerOsuTrackLastFetch ?? '2007-09-17 00:00:00',
           osuTrackDataFetchStatus: row.playerOsuTrackDataFetchStatus ?? 0,
           dataFetchStatus: row.playerDataFetchStatus ?? 0,
+          osuRestricted: row.playerOsuRestricted ?? false,
           userId: row.userId,
         }),
       }),
@@ -236,6 +239,7 @@ export const getMatch = publicProcedure
         beatmapsetCreatorOsuTrackDataFetchStatus:
           schema.players.osuTrackDataFetchStatus,
         beatmapsetCreatorDataFetchStatus: schema.players.dataFetchStatus,
+        beatmapsetCreatorOsuRestricted: schema.players.osuRestricted,
       })
       .from(schema.games)
       .leftJoin(schema.beatmaps, eq(schema.beatmaps.id, schema.games.beatmapId))
@@ -271,6 +275,7 @@ export const getMatch = publicProcedure
             osuTrackLastFetch: schema.players.osuTrackLastFetch,
             osuTrackDataFetchStatus: schema.players.osuTrackDataFetchStatus,
             dataFetchStatus: schema.players.dataFetchStatus,
+            osuRestricted: schema.players.osuRestricted,
             userId: schema.users.id,
           })
           .from(schema.joinBeatmapCreators)
@@ -302,6 +307,7 @@ export const getMatch = publicProcedure
           osuTrackLastFetch: creator.osuTrackLastFetch,
           osuTrackDataFetchStatus: creator.osuTrackDataFetchStatus ?? 0,
           dataFetchStatus: creator.dataFetchStatus ?? 0,
+          osuRestricted: creator.osuRestricted,
           userId: creator.userId ?? null,
         })
       );
@@ -330,6 +336,7 @@ export const getMatch = publicProcedure
             playerOsuTrackDataFetchStatus:
               schema.players.osuTrackDataFetchStatus,
             playerDataFetchStatus: schema.players.dataFetchStatus,
+            playerOsuRestricted: schema.players.osuRestricted,
           })
           .from(schema.gameAdminNotes)
           .leftJoin(
@@ -451,6 +458,7 @@ export const getMatch = publicProcedure
         playerOsuTrackLastFetch: schema.players.osuTrackLastFetch,
         playerOsuTrackDataFetchStatus: schema.players.osuTrackDataFetchStatus,
         playerDataFetchStatus: schema.players.dataFetchStatus,
+        playerOsuRestricted: schema.players.osuRestricted,
       })
       .from(schema.matchAdminNotes)
       .leftJoin(
@@ -508,6 +516,7 @@ export const getMatch = publicProcedure
             playerOsuTrackDataFetchStatus:
               schema.players.osuTrackDataFetchStatus,
             playerDataFetchStatus: schema.players.dataFetchStatus,
+            playerOsuRestricted: schema.players.osuRestricted,
           })
           .from(schema.gameScoreAdminNotes)
           .leftJoin(
@@ -566,6 +575,7 @@ export const getMatch = publicProcedure
             osuTrackLastFetch: schema.players.osuTrackLastFetch,
             osuTrackDataFetchStatus: schema.players.osuTrackDataFetchStatus,
             dataFetchStatus: schema.players.dataFetchStatus,
+            osuRestricted: schema.players.osuRestricted,
             userId: schema.users.id,
           })
           .from(schema.players)
@@ -590,6 +600,7 @@ export const getMatch = publicProcedure
           osuTrackLastFetch: player.osuTrackLastFetch,
           osuTrackDataFetchStatus: player.osuTrackDataFetchStatus ?? 0,
           dataFetchStatus: player.dataFetchStatus ?? 0,
+          osuRestricted: player.osuRestricted,
           userId: player.userId ?? null,
         })
       );
@@ -655,6 +666,8 @@ export const getMatch = publicProcedure
                                 0,
                               dataFetchStatus:
                                 game.beatmapsetCreatorDataFetchStatus ?? 0,
+                              osuRestricted:
+                                game.beatmapsetCreatorOsuRestricted ?? false,
                               userId: null,
                             })
                           : null,

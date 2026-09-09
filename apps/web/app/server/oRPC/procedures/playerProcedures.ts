@@ -92,6 +92,7 @@ const playerCompactColumns = {
   username: schema.players.username,
   country: schema.players.country,
   defaultRuleset: schema.players.defaultRuleset,
+  osuRestricted: schema.players.osuRestricted,
 } as const;
 
 type RatingAdjustmentSummary = Pick<
@@ -889,6 +890,7 @@ export const getPlayerStats = publicProcedure
               username: player.username,
               country: player.country,
               defaultRuleset: playerDefaultRuleset,
+              osuRestricted: player.osuRestricted,
             },
             tournamentsPlayed,
             matchesPlayed,
@@ -907,6 +909,7 @@ export const getPlayerStats = publicProcedure
         username: player.username,
         country: player.country,
         defaultRuleset: playerDefaultRuleset,
+        osuRestricted: player.osuRestricted,
       },
       ruleset: resolvedRuleset,
       rating: ratingStats,
