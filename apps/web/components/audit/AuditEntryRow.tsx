@@ -93,86 +93,82 @@ export default function AuditEntryRow({
           </div>
         )}
 
-        <CollapsibleTrigger asChild disabled={changeCount === 0}>
-          <button
+        <div className="flex items-center gap-3 px-3 py-2.5">
+          <ActionIcon
+            className={cn('h-4 w-4 shrink-0', ACTION_TEXT_COLORS[action])}
+          />
+
+          <Badge
+            data-testid="timeline-action-badge"
+            variant="outline"
             className={cn(
-              'flex w-full items-center gap-3 px-3 py-2.5 text-left',
-              changeCount === 0 && 'cursor-default'
+              'shrink-0 text-xs',
+              ACTION_TEXT_COLORS[action],
+              ACTION_BADGE_COLORS[action]
             )}
           >
-            <ActionIcon
-              className={cn('h-4 w-4 shrink-0', ACTION_TEXT_COLORS[action])}
-            />
+            {actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)}
+          </Badge>
 
-            <Badge
-              data-testid="timeline-action-badge"
-              variant="outline"
-              className={cn(
-                'shrink-0 text-xs',
-                ACTION_TEXT_COLORS[action],
-                ACTION_BADGE_COLORS[action]
-              )}
-            >
-              {actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)}
-            </Badge>
+          <span className="flex items-center gap-1.5 text-sm">
+            {entry.actionUser ? (
+              <>
+                {entry.actionUser.osuId ? (
+                  <OsuAvatar
+                    osuId={entry.actionUser.osuId}
+                    username={entry.actionUser.username}
+                    size={20}
+                  />
+                ) : (
+                  <Avatar className="h-5 w-5">
+                    <AvatarFallback className="text-xs">
+                      {entry.actionUser.username?.[0]?.toUpperCase() ?? '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+                {entry.actionUser.playerId ? (
+                  <Link
+                    href={`/players/${entry.actionUser.playerId}`}
+                    className="text-primary hover:underline"
+                  >
+                    {entry.actionUser.username ?? `User ${entry.actionUser.id}`}
+                  </Link>
+                ) : (
+                  <span className="text-foreground">
+                    {entry.actionUser.username ?? `User ${entry.actionUser.id}`}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-muted-foreground italic">System</span>
+            )}
+          </span>
 
-            <span className="flex items-center gap-1.5 text-sm">
-              {entry.actionUser ? (
-                <>
-                  {entry.actionUser.osuId ? (
-                    <OsuAvatar
-                      osuId={entry.actionUser.osuId}
-                      username={entry.actionUser.username}
-                      size={20}
-                    />
-                  ) : (
-                    <Avatar className="h-5 w-5">
-                      <AvatarFallback className="text-xs">
-                        {entry.actionUser.username?.[0]?.toUpperCase() ?? '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  {entry.actionUser.playerId ? (
-                    <Link
-                      href={`/players/${entry.actionUser.playerId}`}
-                      className="text-primary hover:underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {entry.actionUser.username ??
-                        `User ${entry.actionUser.id}`}
-                    </Link>
-                  ) : (
-                    <span className="text-foreground">
-                      {entry.actionUser.username ??
-                        `User ${entry.actionUser.id}`}
-                    </span>
-                  )}
-                </>
-              ) : (
-                <span className="text-muted-foreground italic">System</span>
-              )}
-            </span>
+          <span className="flex-1" />
 
-            <span className="flex-1" />
-
-            {changeCount > 0 && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+          {changeCount > 0 && (
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                data-testid="timeline-entry-toggle"
+                className="-mx-1.5 flex cursor-pointer items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground"
+              >
                 <ChevronRight
                   className={cn(
-                    'h-3.5 w-3.5 transition-transform',
+                    'h-3.5 w-3.5 shrink-0 transition-transform',
                     isOpen && 'rotate-90'
                   )}
                 />
                 {changeCount} field{changeCount !== 1 ? 's' : ''} changed
-              </span>
-            )}
+              </button>
+            </CollapsibleTrigger>
+          )}
 
-            <RelativeTime
-              dateString={entry.created}
-              className="shrink-0 text-xs text-muted-foreground"
-            />
-          </button>
-        </CollapsibleTrigger>
+          <RelativeTime
+            dateString={entry.created}
+            className="shrink-0 text-xs text-muted-foreground"
+          />
+        </div>
 
         <CollapsibleContent data-testid="timeline-entry-diff">
           {changes && changeCount > 0 && (

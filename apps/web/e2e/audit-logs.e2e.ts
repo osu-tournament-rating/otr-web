@@ -309,30 +309,25 @@ test.describe('Entity Audit Timeline Page', () => {
       const entryList = page.locator('[data-testid="timeline-entry-list"]');
       await expect(entryList).toBeVisible({ timeout: 15000 });
 
-      const entries = page.locator('[data-testid="timeline-entry"]');
-      const entryCount = await entries.count();
+      // Only an entry with changes renders a toggle.
+      const entry = page
+        .locator('[data-testid="timeline-entry"]', {
+          has: page.locator('[data-testid="timeline-entry-toggle"]'),
+        })
+        .first();
+      if ((await entry.count()) === 0) return;
 
-      for (let i = 0; i < entryCount; i++) {
-        const entry = entries.nth(i);
-        const trigger = entry.locator('button').first();
-        const isDisabled = (await trigger.getAttribute('disabled')) !== null;
-
-        if (!isDisabled) {
-          // Entry may already be open (auto-expands when changeCount > 0 && < 10)
-          const state = await entry.getAttribute('data-state');
-          if (state !== 'open') {
-            await trigger.click();
-          }
-
-          const diff = entry.locator('[data-testid="timeline-entry-diff"]');
-          await expect(diff).toBeVisible({ timeout: 5000 });
-
-          const diffRows = entry.locator('[data-testid="audit-diff-row"]');
-          const rowCount = await diffRows.count();
-          expect(rowCount).toBeGreaterThan(0);
-          break;
-        }
+      // Entry may already be open (auto-expands when changeCount > 0 && < 10)
+      if ((await entry.getAttribute('data-state')) !== 'open') {
+        await entry.locator('[data-testid="timeline-entry-toggle"]').click();
       }
+
+      const diff = entry.locator('[data-testid="timeline-entry-diff"]');
+      await expect(diff).toBeVisible({ timeout: 5000 });
+
+      const diffRows = entry.locator('[data-testid="audit-diff-row"]');
+      const rowCount = await diffRows.count();
+      expect(rowCount).toBeGreaterThan(0);
     });
 
     test('timeline entries display timestamps', async ({ page }) => {
