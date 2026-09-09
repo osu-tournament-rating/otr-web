@@ -96,10 +96,7 @@ suite('platform player statistics queries', () => {
   const db = drizzle(pool, { schema: dbSchema });
 
   afterAll(async () => {
-    // Scenarios roll back; this only clears the committed rows of the refresh test.
-    await db
-      .delete(schema.platformPlayerStats)
-      .where(eq(schema.platformPlayerStats.ruleset, RULESET));
+    // Scenarios roll back; this only clears fixture players a failed scenario left behind.
     await db
       .delete(schema.players)
       .where(gt(schema.players.osuId, OSU_ID_FLOOR));
