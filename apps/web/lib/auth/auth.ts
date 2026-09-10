@@ -5,7 +5,6 @@ import {
   type Session,
 } from 'better-auth';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { apiKey } from '@better-auth/api-key';
 import {
   admin as adminPlugin,
@@ -13,6 +12,7 @@ import {
   genericOAuth,
 } from 'better-auth/plugins';
 import { ac, admin, superadmin, ADMIN_ROLES } from './auth-roles';
+import { authDatabaseAdapter } from './database-adapter';
 import { e2eTestAuthPlugin, isE2eAuthEnabled } from './e2e-test-auth-plugin';
 import { getVerifiedPlayer, OSU_PROVIDER_ID } from './player-identity';
 import { nextCookies } from 'better-auth/next-js';
@@ -488,18 +488,7 @@ const ensureOsuAccountLink = async (
 };
 
 export const auth = betterAuth({
-  database: drizzleAdapter(db, {
-    provider: 'pg',
-    usePlural: true,
-    schema: {
-      ...schema,
-      user: schema.auth_users,
-      account: schema.auth_accounts,
-      verification: schema.auth_verifications,
-      session: schema.auth_sessions,
-      apikeys: schema.apiKeys,
-    },
-  }),
+  database: authDatabaseAdapter(db),
   session: {
     modelName: 'auth_session',
     expiresIn: 60 * 60 * 24 * 30, // 30 days
