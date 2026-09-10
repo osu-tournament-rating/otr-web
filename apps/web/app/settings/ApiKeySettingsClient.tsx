@@ -39,6 +39,7 @@ import {
 import type { ApiKeyMetadataWithKey } from '@/lib/orpc/schema/apiKey';
 import { orpc } from '@/lib/orpc/orpc';
 import { getApiKeyPreview } from '@/lib/utils/apiKey';
+import { MAX_API_KEYS_PER_USER } from '@/lib/auth/api-key-policy';
 
 interface ApiKeySettingsClientProps {
   initialKeys: ApiKeyMetadataWithKey[];
@@ -48,7 +49,6 @@ interface ApiKeySettingsClientProps {
   };
 }
 
-const MAX_API_KEYS = 3;
 const FALLBACK_KEY_NAME = 'API key';
 
 const formatDateTime = (value: string) =>
@@ -100,13 +100,13 @@ export default function ApiKeySettingsClient({
     [keys]
   );
 
-  const remainingSlots = Math.max(MAX_API_KEYS - keys.length, 0);
+  const remainingSlots = Math.max(MAX_API_KEYS_PER_USER - keys.length, 0);
 
   const handleGenerate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (keys.length >= MAX_API_KEYS) {
-      const message = `You can create up to ${MAX_API_KEYS} API keys. Remove an existing key before creating another.`;
+    if (keys.length >= MAX_API_KEYS_PER_USER) {
+      const message = `You can create up to ${MAX_API_KEYS_PER_USER} API keys. Remove an existing key before creating another.`;
       setError(message);
       toast.error(message);
       return;
@@ -363,7 +363,7 @@ export default function ApiKeySettingsClient({
             by mistake.
           </span>
           <span className="text-sm font-medium">
-            {remainingSlots} of {MAX_API_KEYS} slots available
+            {remainingSlots} of {MAX_API_KEYS_PER_USER} slots available
           </span>
         </CardFooter>
       </Card>
