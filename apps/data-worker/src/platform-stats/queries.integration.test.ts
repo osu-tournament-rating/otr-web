@@ -1051,31 +1051,7 @@ suite('platform player statistics queries', () => {
   });
 });
 
-const snapshotTable = await (async () => {
-  if (!url) {
-    return false;
-  }
-
-  const pool = new Pool({ connectionString: url, max: 1 });
-  try {
-    const { rows } = await pool.query<{ present: boolean }>(
-      "select to_regclass('platform_player_stats') is not null as present"
-    );
-    return rows[0]?.present ?? false;
-  } finally {
-    await pool.end();
-  }
-})();
-
-const refreshSuite = url && snapshotTable ? describe : describe.skip;
-
-if (url && !snapshotTable) {
-  console.warn(
-    'Skipping platform_player_stats refresh tests: the table does not exist yet on this database'
-  );
-}
-
-refreshSuite('platform player statistics refresh', () => {
+suite('platform player statistics refresh', () => {
   const pool = new Pool({ connectionString: url, max: 2 });
   const db = drizzle(pool, { schema: dbSchema });
   const first = new Date('2026-09-09T00:00:00.000Z');

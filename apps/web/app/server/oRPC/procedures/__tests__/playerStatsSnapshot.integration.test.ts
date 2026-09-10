@@ -14,23 +14,6 @@ import { getPlayerStats } from '../statsProcedures';
 // The procedure reads through `@/lib/db`, so DATABASE_URL must name the same database.
 const url = process.env.SEARCH_TEST_DATABASE_URL;
 
-// The platform_player_stats migration ships separately; skip until the table exists.
-const snapshotTable = await (async () => {
-  if (!url) {
-    return false;
-  }
-
-  const pool = new Pool({ connectionString: url, max: 1 });
-  try {
-    const { rows } = await pool.query<{ present: boolean }>(
-      "select to_regclass('platform_player_stats') is not null as present"
-    );
-    return rows[0]?.present ?? false;
-  } finally {
-    await pool.end();
-  }
-})();
-
 // mania 7K keeps the fixture away from the rulesets the page fixtures use
 const RULESET = Ruleset.Mania7k;
 
@@ -58,7 +41,7 @@ const stats: PlayerStats = {
   participation: [{ month: '2026-08', players: 3 }],
 };
 
-describe.skipIf(!snapshotTable)('stats.players snapshot', () => {
+describe.skipIf(!url)('stats.players snapshot', () => {
   const pool = new Pool({ connectionString: url });
   const db = drizzle(pool, { schema });
   const context = { headers: new Headers() };
