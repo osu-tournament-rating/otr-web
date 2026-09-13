@@ -2,10 +2,8 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import {
   mkdtemp,
-  mkdir,
   readdir,
   rm,
-  stat,
   symlink,
   truncate,
   writeFile,
@@ -777,9 +775,7 @@ describe('GCP storage boundary with mocked SDK streams', () => {
   test('bounds and validates reads without fallback, and reports missing objects', async () => {
     let stream = () => Readable.from([fileBytes]);
     const storage = new GcpBeatmapFileStorage('test-only', {
-      bucket: {
-        file: () => ({ createReadStream: () => stream() }),
-      } as never,
+      file: (() => ({ createReadStream: () => stream() })) as never,
     });
     const key = beatmapFileStorageKey(beatmapFileChecksum(fileBytes));
     expect(await storage.get(key)).toEqual(fileBytes);
@@ -813,32 +809,30 @@ describe('GCP storage boundary with mocked SDK streams', () => {
     let duplicate = false;
     let current = fileBytes;
     const storage = new GcpBeatmapFileStorage('test-only', {
-      bucket: {
-        file: () => ({
-          createReadStream: () => Readable.from([current]),
-          createWriteStream: (options: {
-            preconditionOpts: { ifGenerationMatch: number };
-            resumable: boolean;
-            validation: string;
-          }) => {
-            expect(options.preconditionOpts.ifGenerationMatch).toBe(0);
-            expect(options.resumable).toBe(false);
-            expect(options.validation).toBe('crc32c');
-            return new Writable({
-              write(chunk, _encoding, callback) {
-                if (duplicate)
-                  callback(
-                    Object.assign(new Error('already exists'), { code: 412 })
-                  );
-                else {
-                  stored.push(new Uint8Array(chunk));
-                  callback();
-                }
-              },
-            });
-          },
-        }),
-      } as never,
+      file: (() => ({
+        createReadStream: () => Readable.from([current]),
+        createWriteStream: (options: {
+          preconditionOpts: { ifGenerationMatch: number };
+          resumable: boolean;
+          validation: string;
+        }) => {
+          expect(options.preconditionOpts.ifGenerationMatch).toBe(0);
+          expect(options.resumable).toBe(false);
+          expect(options.validation).toBe('crc32c');
+          return new Writable({
+            write(chunk, _encoding, callback) {
+              if (duplicate)
+                callback(
+                  Object.assign(new Error('already exists'), { code: 412 })
+                );
+              else {
+                stored.push(new Uint8Array(chunk));
+                callback();
+              }
+            },
+          });
+        },
+      })) as never,
     });
     await storage.put(key, fileBytes);
     expect(stored).toEqual([fileBytes]);
@@ -850,59 +844,5 @@ describe('GCP storage boundary with mocked SDK streams', () => {
       code: 'checksum_mismatch',
       retryable: false,
     });
-  });
-});
-
-describe('storage access checks at startup', () => {
-  test('local storage creates its directory and rejects an unwritable path', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'otr-beatmap-storage-'));
-    directories.push(root);
-    const storage = new LocalBeatmapFileStorage(join(root, 'nested', 'files'));
-    await storage.verifyAccess();
-    expect((await stat(storage.directory)).isDirectory()).toBe(true);
-    const file = join(root, 'file');
-    await writeFile(file, 'x');
-    await expect(
-      new LocalBeatmapFileStorage(file).verifyAccess()
-    ).rejects.toThrow(/writable directory/);
-    const readOnly = join(root, 'read-only');
-    await mkdir(readOnly, { mode: 0o500 });
-    if (process.getuid?.() !== 0)
-      await expect(
-        new LocalBeatmapFileStorage(readOnly).verifyAccess()
-      ).rejects.toThrow(/writable directory/);
-  });
-
-  test('gcp storage lists one object and explains a missing bucket, denied access, or an unreachable service', async () => {
-    const queries: unknown[] = [];
-    let failure: unknown = null;
-    const storage = new GcpBeatmapFileStorage('otr-files', {
-      bucket: {
-        file: () => {
-          throw new Error('unexpected');
-        },
-        getFiles: async (query: unknown) => {
-          queries.push(query);
-          if (failure) throw failure;
-          return [[], {}, {}];
-        },
-      } as never,
-    });
-    await storage.verifyAccess();
-    expect(queries).toEqual([
-      { prefix: 'sha256/', maxResults: 1, autoPaginate: false },
-    ]);
-    failure = Object.assign(new Error('Not Found'), { code: 404 });
-    await expect(storage.verifyAccess()).rejects.toThrow(
-      /"otr-files" does not exist/
-    );
-    failure = Object.assign(new Error('Forbidden'), { code: 403 });
-    await expect(storage.verifyAccess()).rejects.toThrow(
-      'denied access; grant the service account object read, create, and list permissions'
-    );
-    failure = new Error('Could not load the default credentials');
-    await expect(storage.verifyAccess()).rejects.toThrow(
-      /"otr-files" check failed: Could not load the default credentials/
-    );
   });
 });

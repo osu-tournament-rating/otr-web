@@ -1,5 +1,4 @@
 import { isAbsolute } from 'node:path';
-import type { GcpServiceAccountCredentials } from './storage';
 
 export const MAX_ATTEMPTS = 4;
 export const LEASE_MS = 120_000;
@@ -40,53 +39,5 @@ export function readAttributesConfig(env: Record<string, string | undefined>) {
     );
   if (enabled && provider === 'gcp' && !bucket)
     throw new Error('BEATMAP_ATTRIBUTES_GCP_BUCKET is required');
-  const credentials =
-    enabled && provider === 'gcp'
-      ? parseGcpCredentials(env.BEATMAP_ATTRIBUTES_GCP_CREDENTIALS)
-      : undefined;
-  return { enabled, concurrency, provider, directory, bucket, credentials };
-}
-
-export function parseGcpCredentials(
-  raw: string | undefined
-): GcpServiceAccountCredentials | undefined {
-  const value = raw?.trim();
-  if (!value) return undefined;
-  // The value is a secret; error messages must describe the shape only.
-  const invalid = () =>
-    new Error(
-      'BEATMAP_ATTRIBUTES_GCP_CREDENTIALS must be a service account key as JSON or base64-encoded JSON with client_email and private_key'
-    );
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(
-      value.startsWith('{')
-        ? value
-        : Buffer.from(value, 'base64').toString('utf8')
-    );
-  } catch {
-    throw invalid();
-  }
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
-    throw invalid();
-  const { client_email, private_key } = parsed as Record<string, unknown>;
-  if (
-    typeof client_email !== 'string' ||
-    !client_email ||
-    typeof private_key !== 'string' ||
-    !private_key
-  )
-    throw invalid();
-  return { client_email, private_key };
-}
-
-export type AttributesConfig = ReturnType<typeof readAttributesConfig>;
-
-/** The configuration that callers may keep or log. The credential stays with the storage client. */
-export function publicAttributesConfig(
-  config: AttributesConfig
-): Omit<AttributesConfig, 'credentials'> {
-  const shared: Partial<AttributesConfig> = { ...config };
-  delete shared.credentials;
-  return shared as Omit<AttributesConfig, 'credentials'>;
+  return { enabled, concurrency, provider, directory, bucket };
 }

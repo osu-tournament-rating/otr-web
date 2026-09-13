@@ -8,7 +8,6 @@ import {
   BeatmapFileAcquisitionError,
   type BeatmapFileStorage,
   checksumFromStorageKey,
-  type GcpServiceAccountCredentials,
   readBoundedBeatmapBytes,
   TransientBeatmapFileError,
   validateStoredBeatmapBytes,
@@ -24,54 +23,16 @@ function hasStatus(error: unknown, status: number): boolean {
   );
 }
 
-export type GcpBucketClient = Pick<Bucket, 'file' | 'getFiles'>;
-
-export interface GcpBeatmapFileStorageOptions {
-  /** Service account key. Absent means ambient credentials. */
-  credentials?: GcpServiceAccountCredentials;
-  /** Custom API endpoint for a local emulator in tests. */
-  endpoint?: string;
-  bucket?: GcpBucketClient;
-}
-
 export class GcpBeatmapFileStorage implements BeatmapFileStorage {
   readonly provider = 'gcp' as const;
-  private readonly bucket: GcpBucketClient;
+  private readonly bucket: Pick<Bucket, 'file'>;
 
-  constructor(
-    private readonly bucketName: string,
-    options: GcpBeatmapFileStorageOptions = {}
-  ) {
+  constructor(bucketName: string, bucket?: Pick<Bucket, 'file'>) {
     if (!bucketName.trim())
       throw new Error('GCP beatmap storage requires a bucket');
     this.bucket =
-      options.bucket ??
-      new Storage({
-        retryOptions: { autoRetry: false },
-        ...(options.credentials ? { credentials: options.credentials } : {}),
-        ...(options.endpoint ? { apiEndpoint: options.endpoint } : {}),
-      }).bucket(bucketName);
-  }
-
-  async verifyAccess(): Promise<void> {
-    try {
-      await withBeatmapFileDeadline(() =>
-        this.bucket.getFiles({
-          prefix: 'sha256/',
-          maxResults: 1,
-          autoPaginate: false,
-        })
-      );
-    } catch (cause) {
-      const bucket = `GCP beatmap bucket "${this.bucketName}"`;
-      if (hasStatus(cause, 404)) throw new Error(`${bucket} does not exist`);
-      if (hasStatus(cause, 403))
-        throw new Error(
-          `${bucket} denied access; grant the service account object read, create, and list permissions`
-        );
-      const reason = cause instanceof Error ? cause.message : String(cause);
-      throw new Error(`${bucket} check failed: ${reason}`);
-    }
+      bucket ??
+      new Storage({ retryOptions: { autoRetry: false } }).bucket(bucketName);
   }
 
   async get(key: string): Promise<Uint8Array | null> {

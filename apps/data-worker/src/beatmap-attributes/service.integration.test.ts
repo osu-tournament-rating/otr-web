@@ -396,7 +396,6 @@ suite('persisted beatmap attribute lifecycle', () => {
       const objects = new Map<string, Uint8Array>();
       const other: BeatmapFileStorage = {
         provider: 'gcp',
-        verifyAccess: async () => {},
         get: async (key) => objects.get(key) ?? null,
         put: async (key, bytes) => {
           objects.set(key, bytes);

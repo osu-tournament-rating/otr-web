@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { constants, createReadStream } from 'node:fs';
-import { access, mkdir, open, rename, rm } from 'node:fs/promises';
+import { mkdir, open, rename, rm } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { Readable } from 'node:stream';
 import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
@@ -79,15 +79,8 @@ export class TransientBeatmapFileError extends BeatmapFileAcquisitionError {
   }
 }
 
-export interface GcpServiceAccountCredentials {
-  client_email: string;
-  private_key: string;
-}
-
 export interface BeatmapFileStorage {
   readonly provider: 'local' | 'gcp';
-  /** Fails startup when the backing store is missing or not writable. */
-  verifyAccess(): Promise<void>;
   get(key: string): Promise<Uint8Array | null>;
   put(key: string, bytes: Uint8Array): Promise<void>;
 }
@@ -293,21 +286,6 @@ export class LocalBeatmapFileStorage implements BeatmapFileStorage {
     this.directory = resolve(directory);
   }
 
-  async verifyAccess(): Promise<void> {
-    try {
-      await mkdir(this.directory, { recursive: true, mode: 0o700 });
-      await access(
-        this.directory,
-        constants.R_OK | constants.W_OK | constants.X_OK
-      );
-    } catch (cause) {
-      throw new Error(
-        `Local beatmap storage path ${this.directory} is not a writable directory`,
-        { cause }
-      );
-    }
-  }
-
   async get(key: string): Promise<Uint8Array | null> {
     checksumFromStorageKey(key);
     try {
@@ -404,11 +382,7 @@ export class LocalBeatmapFileStorage implements BeatmapFileStorage {
 
 export type BeatmapFileStorageConfiguration =
   | { provider: 'local'; directory: string }
-  | {
-      provider: 'gcp';
-      bucket: string;
-      credentials?: GcpServiceAccountCredentials;
-    };
+  | { provider: 'gcp'; bucket: string };
 
 export async function createBeatmapFileStorage(
   configuration: BeatmapFileStorageConfiguration
@@ -419,9 +393,7 @@ export async function createBeatmapFileStorage(
     if (!configuration.bucket.trim())
       throw new Error('GCP beatmap storage requires a bucket');
     const { GcpBeatmapFileStorage } = await import('./gcp-storage');
-    return new GcpBeatmapFileStorage(configuration.bucket, {
-      credentials: configuration.credentials,
-    });
+    return new GcpBeatmapFileStorage(configuration.bucket);
   }
   throw new Error('Beatmap storage provider must be local or gcp');
 }
