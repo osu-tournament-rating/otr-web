@@ -75,8 +75,7 @@ export class RabbitMqPublisher<
     const channel = await this.channelPromise?.catch(() => null);
     const connection = this.connection;
 
-    await channel?.close().catch(() => undefined);
-    await connection?.close().catch(() => undefined);
+    await Promise.allSettled([channel?.close(), connection?.close()]);
 
     this.channelPromise = null;
     this.connection = null;

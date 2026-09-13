@@ -16,8 +16,7 @@ export const ensureBeatmapPlaceholder = async (
   db: QueryExecutor,
   osuBeatmapId: number,
   status: number,
-  updatedIso: string,
-  ruleset: Ruleset = Ruleset.Osu
+  updatedIso: string
 ): Promise<BeatmapRecord> => {
   const existing = await db.query.beatmaps.findFirst({
     where: eq(schema.beatmaps.osuId, osuBeatmapId),
@@ -35,7 +34,7 @@ export const ensureBeatmapPlaceholder = async (
     .insert(schema.beatmaps)
     .values({
       osuId: osuBeatmapId,
-      ruleset,
+      ruleset: Ruleset.Osu,
       rankedStatus: 0,
       diffName: 'Pending fetch',
       totalLength: 0,

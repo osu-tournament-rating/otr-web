@@ -10,8 +10,6 @@ import {
 } from '@otr/core';
 
 import { db } from './db';
-import { attributesEnabled } from './beatmap-attributes/policy';
-import { recordBeatmapAttributeIntent } from './beatmap-attributes/service';
 import { startMetricsServer } from './metrics';
 import { dataWorkerEnv } from './env';
 import { consoleLogger } from './logging/logger';
@@ -122,10 +120,6 @@ const bootstrap = async () => {
   });
 
   const beatmapService = new BeatmapFetchService({
-    recordAttributeIntent: attributesEnabled(process.env)
-      ? (tx, id) =>
-          recordBeatmapAttributeIntent(tx, id, { refreshSource: true })
-      : undefined,
     db,
     api: osuApiClient,
     rateLimiter: osuApiRateLimiter,
