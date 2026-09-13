@@ -6,7 +6,7 @@ description: Build or verify rendered otr-web UI with its real data boundary, de
 # Build and verify otr-web UI
 
 Read `otr-web/AGENTS.md`, `.agents/skills/otr-design-system/SKILL.md`, and
-`.agents/design/README.md`. Read `apps/discord-bot/AGENTS.md` for Discord work.
+`.agents/design/README.md`.
 Use the current route, affected components, and actual data boundary as source
 evidence. The beatmap pages are the primary visual quality reference; player
 pages are supporting polished references.
@@ -27,16 +27,14 @@ colors for existing meanings in both themes.
 The task owner implements and self-checks. A designer or tester can help with a
 concrete question in explicitly requested lead mode; neither is mandatory.
 Use existing design authorization and seek user input for a substantial unresolved
-visual decision through a concrete preview or local artifact. Discord prototype artifacts
-remain local, linked, and clearly approximate; do not post them to Discord
-without explicit authorization.
+visual decision through a concrete preview or local artifact.
 
 ## Use an isolated local environment
 
 Never use the repository root `.env` as a blanket task configuration. Use only
 the ignored variables required for the task. Point a data-backed website to the
-assigned disposable `template-db` instance on port `5434`; offline bot artifacts
-need no database. Never connect to port `5432`.
+assigned disposable `template-db` instance on port `5434`. Never connect to port
+`5432`.
 
 From `apps/web`, start an owned port with:
 

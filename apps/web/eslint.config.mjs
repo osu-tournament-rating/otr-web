@@ -29,7 +29,7 @@ const eslintConfig = [
       'react-hooks/refs': 'off',
       'react-hooks/incompatible-library': 'off',
       // A leading underscore marks an intentionally unused binding, matching
-      // the data-worker and discord-bot configs.
+      // the data-worker config.
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {

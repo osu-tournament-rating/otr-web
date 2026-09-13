@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test';
-import { DISCORD_BOT_CLIENT } from '@otr/core/logging';
 
 import { resolveActor } from '../helpers';
 
@@ -23,36 +22,39 @@ const apiKeyActor = {
 };
 
 describe('resolveActor', () => {
-  test('labels an anonymous call with the bot header discord-bot', () => {
-    expect(resolveActor({ client: DISCORD_BOT_CLIENT })).toMatchObject({
-      accessMethod: 'discord-bot',
+  test('labels a request without credentials anonymous', () => {
+    expect(resolveActor({})).toEqual({
+      accessMethod: 'anonymous',
       userId: null,
       playerId: null,
+      osuId: null,
+      osuUsername: null,
+      apiKeyId: null,
+      apiKeyName: null,
     });
   });
 
-  test('keeps a session identity when the bot header is present', () => {
-    expect(resolveActor({ session, client: DISCORD_BOT_CLIENT })).toMatchObject(
-      {
-        accessMethod: 'session',
-        playerId: 440,
-        osuUsername: 'Stage',
-      }
-    );
+  test('treats a retired bot client as anonymous', () => {
+    const context = { session: null, client: 'discord-bot' };
+    expect(resolveActor(context).accessMethod).toBe('anonymous');
   });
 
-  test('keeps an api-key identity when the bot header is present', () => {
-    expect(
-      resolveActor({ apiKey, apiKeyActor, client: DISCORD_BOT_CLIENT })
-    ).toMatchObject({
-      accessMethod: 'api-key',
+  test('resolves a session identity', () => {
+    expect(resolveActor({ session })).toMatchObject({
+      accessMethod: 'session',
+      userId: '1',
       playerId: 440,
+      osuId: '8191845',
+      osuUsername: 'Stage',
     });
   });
 
-  test('ignores an unknown client value', () => {
-    expect(resolveActor({ client: 'someone-else' }).accessMethod).toBe(
-      'anonymous'
-    );
+  test('resolves an api-key identity ahead of a session', () => {
+    expect(resolveActor({ apiKey, apiKeyActor, session })).toMatchObject({
+      accessMethod: 'api-key',
+      userId: 'user-1',
+      playerId: 440,
+      apiKeyId: 'key_1...',
+    });
   });
 });
