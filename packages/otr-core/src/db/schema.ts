@@ -24,7 +24,7 @@ import type {
   BeatmapHitWindows,
   BeatmapStorageProvider,
   CalculationSettings,
-} from '../osu/beatmap-attributes';
+} from './retained-beatmap-attribute-types';
 
 const tsVector = customType<{ data: string }>({
   dataType() {
@@ -1897,6 +1897,7 @@ export const userSettings = pgTable(
   ]
 );
 
+// Retained for deployed migrations 0031-0034; the attribute pipeline is retired.
 export const beatmapFiles = pgTable(
   'beatmap_files',
   {

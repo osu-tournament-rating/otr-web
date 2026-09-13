@@ -1,6 +1,4 @@
 import type { MessageMetadata } from './values';
-import type { z } from 'zod';
-import type { ProcessBeatmapAttributesPayloadSchema } from './beatmap-attributes';
 
 /** Metadata plus a message-specific payload. */
 export type MessageEnvelope<TPayload> = MessageMetadata & TPayload;
@@ -47,12 +45,7 @@ export type ProcessTournamentStatsMessage = MessageEnvelope<{
   tournamentId: number;
 }>;
 
-export type ProcessBeatmapAttributesMessage = MessageEnvelope<
-  z.infer<typeof ProcessBeatmapAttributesPayloadSchema>
->;
-
 export type KnownQueueMessage =
-  | ProcessBeatmapAttributesMessage
   | FetchOsuMessage
   | FetchPlayerOsuTrackMessage
   | ProcessTournamentAutomationCheckMessage

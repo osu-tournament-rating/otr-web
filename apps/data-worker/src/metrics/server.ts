@@ -1,10 +1,10 @@
 import { metricsRegistry } from './registry';
 
-export const startMetricsServer = (
-  port = Number(process.env.METRICS_PORT ?? 9091)
-) => {
+const METRICS_PORT = Number(process.env.METRICS_PORT ?? 9091);
+
+export const startMetricsServer = () => {
   const server = Bun.serve({
-    port,
+    port: METRICS_PORT,
     async fetch(req) {
       const url = new URL(req.url);
       if (url.pathname === '/metrics') {
@@ -24,6 +24,6 @@ export const startMetricsServer = (
       return new Response('Not Found', { status: 404 });
     },
   });
-  console.log(`Metrics server listening on port ${port}`);
+  console.log(`Metrics server listening on port ${METRICS_PORT}`);
   return server;
 };
