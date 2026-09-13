@@ -33,6 +33,7 @@ interface RatingDistributionChartProps {
   ruleset: Ruleset;
   className?: string;
   userRating?: number;
+  height?: number;
 }
 
 type ChartDataItem = {
@@ -145,6 +146,7 @@ export default function RatingDistributionChart({
   ruleset,
   className,
   userRating,
+  height = CHART_CONSTANTS.DEFAULT_HEIGHT,
 }: RatingDistributionChartProps) {
   const { chartData, tierData, isEmpty } = useRatingDistribution({ ratings });
 
@@ -152,7 +154,8 @@ export default function RatingDistributionChart({
     return (
       <div
         data-testid={`chart-rating-distribution-${ruleset}`}
-        className={cn('flex h-[250px] items-center justify-center', className)}
+        className={cn('flex items-center justify-center', className)}
+        style={{ height }}
       >
         <p className="text-muted-foreground">
           No data available for this ruleset.
@@ -166,7 +169,7 @@ export default function RatingDistributionChart({
       data-testid={`chart-rating-distribution-${ruleset}`}
       className={className}
     >
-      <ResponsiveContainer width="100%" height={CHART_CONSTANTS.DEFAULT_HEIGHT}>
+      <ResponsiveContainer width="100%" height={height}>
         <ComposedChart data={chartData} margin={CHART_CONSTANTS.DEFAULT_MARGIN}>
           <CartesianGrid
             strokeDasharray="3 3"
@@ -178,7 +181,7 @@ export default function RatingDistributionChart({
             tick={<CustomXAxisTickWithData tierData={tierData} />}
             tickLine={false}
             axisLine={{ stroke: CHART_COLORS.mutedForeground }}
-            interval="preserveStartEnd"
+            interval={0}
             ticks={tierData.map((t) => t.baseRating)}
           />
           <YAxis

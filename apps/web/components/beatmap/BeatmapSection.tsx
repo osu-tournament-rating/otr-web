@@ -93,7 +93,7 @@ export function SectionHeader({
         ) : null}
       </div>
       {meta ? (
-        <span className="shrink-0 text-xs text-muted-foreground">{meta}</span>
+        <div className="shrink-0 text-xs text-muted-foreground">{meta}</div>
       ) : null}
     </div>
   );

@@ -1,12 +1,9 @@
 'use client';
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  SectionCard,
+  SectionHeader,
+} from '@/components/beatmap/BeatmapSection';
 import {
   Bar,
   BarChart,
@@ -76,15 +73,16 @@ export default function TournamentsByLobbySizeChart({
   }, [data]);
 
   return (
-    <Card data-testid="chart-tournaments-by-lobby-size" className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-6 w-6 text-primary" />
-          Tournaments by Team Size
-        </CardTitle>
-        <CardDescription>Verified tournaments by team size</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <SectionCard
+      data-testid="chart-tournaments-by-lobby-size"
+      className={className}
+    >
+      <SectionHeader
+        icon={Users}
+        title="Tournaments by lobby size"
+        meta="Verified"
+      />
+      <div className="px-4 py-4">
         <ResponsiveContainer
           width="100%"
           height={CHART_CONSTANTS.DEFAULT_HEIGHT}
@@ -109,7 +107,7 @@ export default function TournamentsByLobbySizeChart({
             />
           </BarChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+      </div>
+    </SectionCard>
   );
 }

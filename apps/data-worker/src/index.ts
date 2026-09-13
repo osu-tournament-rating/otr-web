@@ -43,6 +43,7 @@ import {
   TournamentStatsWorker,
 } from './stats';
 import { PlayerRefetchScheduler } from './players/player-refetch-scheduler';
+import { PlayerStatsScheduler } from './platform-stats/scheduler';
 
 const logger = consoleLogger;
 
@@ -162,6 +163,12 @@ const bootstrap = async () => {
     config: dataWorkerEnv.playerAutoRefetch,
   });
 
+  const playerStatsScheduler = new PlayerStatsScheduler({
+    db,
+    logger,
+    maintenanceWindowEnabled: dataWorkerEnv.maintenanceWindowEnabled,
+  });
+
   const automationService = new TournamentAutomationCheckService({
     db,
     logger,
@@ -229,6 +236,7 @@ const bootstrap = async () => {
   ]);
 
   await playerRefetchScheduler.start();
+  playerStatsScheduler.start();
 
   const shutdown = async () => {
     logger.info('Shutting down data worker services');
@@ -238,6 +246,7 @@ const bootstrap = async () => {
       automationWorker.stop(),
       statsWorker.stop(),
       playerRefetchScheduler.stop(),
+      playerStatsScheduler.stop(),
       osuPublisher.close(),
       automationPublisher.close(),
       osuTrackPublisher.close(),

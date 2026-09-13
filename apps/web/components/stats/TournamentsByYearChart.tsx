@@ -1,12 +1,9 @@
 'use client';
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  SectionCard,
+  SectionHeader,
+} from '@/components/beatmap/BeatmapSection';
 import {
   Bar,
   BarChart,
@@ -79,17 +76,13 @@ export default function TournamentsByYearChart({
   }, [data]);
 
   return (
-    <Card data-testid="chart-tournaments-by-year" className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-6 w-6 text-primary" />
-          Tournaments by Year
-        </CardTitle>
-        <CardDescription>
-          Number of verified tournaments by year
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <SectionCard data-testid="chart-tournaments-by-year" className={className}>
+      <SectionHeader
+        icon={Calendar}
+        title="Tournaments by year"
+        meta="Verified"
+      />
+      <div className="px-4 py-4">
         <ResponsiveContainer
           width="100%"
           height={CHART_CONSTANTS.DEFAULT_HEIGHT}
@@ -113,7 +106,7 @@ export default function TournamentsByYearChart({
             />
           </BarChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+      </div>
+    </SectionCard>
   );
 }

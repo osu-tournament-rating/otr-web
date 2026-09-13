@@ -13,6 +13,7 @@
     "./maintenance": "./src/maintenance/window.ts",
     "./maintenance/*": "./src/maintenance/*",
     "./queues": "./src/queues/index.ts",
+    "./stats/*": "./src/stats/*",
     "./queues/*": "./src/queues/*",
     "./messages/*": "./src/messages/*",
     "./logging": "./src/logging/index.ts",

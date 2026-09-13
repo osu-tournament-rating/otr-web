@@ -253,6 +253,13 @@
       "when": 1788910941389,
       "tag": "0035_player_osu_restricted",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1789073846056,
+      "tag": "0036_platform_player_stats",
+      "breakpoints": true
     }
   ]
 }

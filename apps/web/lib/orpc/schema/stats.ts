@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
 import { Ruleset, VerificationStatus } from '@otr/core/osu';
+import {
+  PLAYER_STATS_RULESETS,
+  PlayerStatsSchema,
+} from '@otr/core/stats/player-stats';
 
 const verificationStatusKeyOptions = [
   `${VerificationStatus.None}`,
@@ -58,3 +62,21 @@ export type PlatformStats = z.infer<typeof PlatformStatsSchema>;
 
 export const verificationStatusKeys = verificationStatusKeyOptions;
 export const rulesetKeys = rulesetKeyOptions;
+
+export const PlayerStatsRulesetSchema = z
+  .literal(PLAYER_STATS_RULESETS)
+  .describe('Ruleset with a player statistics snapshot');
+
+export const PlayerStatsRequestSchema = z.object({
+  ruleset: PlayerStatsRulesetSchema,
+});
+
+export const PlayerStatsResponseSchema = z.object({
+  ruleset: PlayerStatsRulesetSchema,
+  /** When the snapshot was built, or `null` while none exists yet. */
+  generatedAt: z.string().nullable(),
+  stats: PlayerStatsSchema.nullable(),
+});
+
+export type PlayerStatsRulesetValue = z.infer<typeof PlayerStatsRulesetSchema>;
+export type PlayerStatsResponse = z.infer<typeof PlayerStatsResponseSchema>;
