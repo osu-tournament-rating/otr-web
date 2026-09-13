@@ -1,7 +1,6 @@
 import { ORPCError, os } from '@orpc/server';
 import { APIError } from 'better-auth/api';
 import {
-  CLIENT_HEADER,
   createLogger,
   generateCorrelationId,
   extractCorrelationId,
@@ -548,10 +547,7 @@ const withLoggingContext = base.middleware(async ({ context, path, next }) => {
   const correlationId =
     extractCorrelationId(context.headers) ?? generateCorrelationId();
   const procedurePath = formatProcedurePath(path);
-  const actor = resolveActor({
-    ...context,
-    client: context.headers.get(CLIENT_HEADER),
-  });
+  const actor = resolveActor(context);
   const requestPath = extractRequestPath(context.requestUrl);
 
   setActiveSpanAttributes({

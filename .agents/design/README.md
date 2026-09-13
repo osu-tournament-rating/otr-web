@@ -13,21 +13,17 @@ and tournament history. Match the polished patterns in these pages when
 modernizing another surface. Do not preserve a legacy pattern merely because
 it appears elsewhere on the site.
 
-| Reference         | Use it for                                                           | Source                                                             |
-| ----------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `/beatmaps/:id`   | Section hierarchy, metric density, chart treatment, score tables     | `apps/web/components/beatmap/`                                     |
-| `/beatmaps`       | Page shell, filtering, layout controls, list/table alternatives      | `apps/web/components/beatmaps/` and `apps/web/app/beatmaps/`       |
-| `/players/:id`    | Profile metrics, rating history, contextual controls, history tables | `apps/web/components/player/`                                      |
-| Discord `/player` | Compact message hierarchy and efficient navigation                   | `apps/discord-bot/src/views/player.ts`; read the app's `AGENTS.md` |
+| Reference       | Use it for                                                           | Source                                                       |
+| --------------- | -------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `/beatmaps/:id` | Section hierarchy, metric density, chart treatment, score tables     | `apps/web/components/beatmap/`                               |
+| `/beatmaps`     | Page shell, filtering, layout controls, list/table alternatives      | `apps/web/components/beatmaps/` and `apps/web/app/beatmaps/` |
+| `/players/:id`  | Profile metrics, rating history, contextual controls, history tables | `apps/web/components/player/`                                |
 
 The web references were inspected locally at commit
 `9a06df45faaf88a8747288bb6a4cdb46f67d4248`, using snapshot data with current
 migrations. Representative records were `/beatmaps/667843` and `/players/440`.
-Those IDs are examples, not required fixtures in every database. The Discord
-reference was inspected as source, fixture payload, and rendered chart at
-`2cfe904f8427356e94054ea941dac8579b0d62de`; that is not an inspection of Discord's
-actual message layout. Locate the current branch when an app or pattern is absent
-from the checkout.
+Those IDs are examples, not required fixtures in every database. Locate the
+current branch when a pattern is absent from the checkout.
 
 ## What to preserve
 

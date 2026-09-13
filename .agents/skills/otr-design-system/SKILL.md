@@ -1,6 +1,6 @@
 ---
 name: otr-design-system
-description: Choose and review o!TR interface patterns using the polished beatmap and player pages. Use for new UI, modernization, charts, tables, and design direction; Discord work also reads its app guidance.
+description: Choose and review o!TR interface patterns using the polished beatmap and player pages. Use for new UI, modernization, charts, tables, and design direction.
 ---
 
 # o!TR interface design

@@ -34,10 +34,6 @@ scrape_configs:
     static_configs:
       - targets: ['otr-staging-beatmap-attributes-worker:9092']
 
-  - job_name: 'discord-bot'
-    static_configs:
-      - targets: ['otr-staging-discord-bot:9091']
-
   - job_name: 'tempo'
     static_configs:
       - targets: ['otr-staging-tempo:3200']

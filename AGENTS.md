@@ -12,7 +12,6 @@ directory, then first read `$HOME/code/git/otr/AGENTS.md` and
   UI.
 - Read `.agents/skills/change-otr-contracts/SKILL.md` before changing a schema,
   migration, queue, message, persisted enum, oRPC/OpenAPI shape, or auth boundary.
-- Read `apps/discord-bot/AGENTS.md` before bot work.
 - Do not invoke anything under `scripts/` or `monitoring/` during ordinary
   development.
 
