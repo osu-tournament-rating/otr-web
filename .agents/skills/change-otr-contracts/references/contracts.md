@@ -103,7 +103,9 @@ Every JSON message is flat:
 }
 ```
 
-TypeScript publishers use the default exchange via `sendToQueue`, durable queues, publisher confirms, persistent delivery, and `x-max-priority=10`. Consumers assert the same durable queue/priority arguments, manually acknowledge success, and normally negative-ack exceptions with requeue enabled.
+TypeScript publishers use the default exchange via `sendToQueue`, durable queues, publisher confirms, persistent delivery, and `x-max-priority=10`. Consumers assert the same durable queue/priority arguments and manually acknowledge success. Maintenance-window deferral negative-acks with requeue enabled.
+
+Handler failures follow `QueueRetryPolicy` in the same constants module. The data worker republishes the failed message, with its original properties and an incremented `x-otr-attempt` header, to `<queue>.retry` (durable, `x-message-ttl`, dead-lettered back to `<queue>` through the default exchange). The fifth failure goes to the durable `<queue>.failed` parking queue instead. The original is acked only after the broker confirms the republish; an unconfirmed republish falls back to requeue. Only the data worker declares or reads these derived queues, and a message without the header counts as attempt 0, so producers and the existing queue arguments are unchanged. Parked messages need manual inspection and a shovel or move back to `<queue>`.
 
 The stats path is intentionally asymmetric: the Rust publisher declares a durable fanout exchange and a same-named durable queue, binds them, and publishes to that exchange. The TypeScript worker consumes the same-named queue directly. Preserve exchange, queue, binding, routing name, camelCase serialization, top-level metadata, priority, and delivery mode together.
 

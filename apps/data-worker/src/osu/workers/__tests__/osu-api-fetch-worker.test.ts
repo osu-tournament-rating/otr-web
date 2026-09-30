@@ -164,7 +164,7 @@ describe('OsuApiFetchWorker', () => {
   });
 
   describe('error handling', () => {
-    it('nacks message on service error', async () => {
+    it('leaves a service error to the consumer retry policy', async () => {
       const consumer = createMockConsumer();
       const logger = createMockLogger();
       const fetchAndPersistBeatmap = mock(() =>
@@ -183,9 +183,9 @@ describe('OsuApiFetchWorker', () => {
       await worker.start();
 
       const message = createMockMessage({ type: 'beatmap', beatmapId: 999 });
-      await consumer.emit(message);
+      await expect(consumer.emit(message)).rejects.toThrow('API error');
 
-      expect(message.nack).toHaveBeenCalledWith(true);
+      expect(message.nack).not.toHaveBeenCalled();
       expect(message.ack).not.toHaveBeenCalled();
     });
   });

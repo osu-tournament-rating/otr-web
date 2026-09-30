@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'bun:test';
 import { type FetchPlayerOsuTrackMessage, MessagePriority } from '@otr/core';
+import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
 import { OsuTrackClient } from '../client';
 import { OsuTrackPlayerWorker } from '../worker';
@@ -157,5 +158,59 @@ describe('OsuTrackPlayerWorker', () => {
     ]);
 
     await worker.stop();
+  });
+
+  it('marks the player fetch as failed and leaves the error to the consumer retry policy', async () => {
+    const queue = new TestQueue();
+    const client = new OsuTrackClient({
+      fetchImpl: async () => new Response('unavailable', { status: 503 }),
+    });
+
+    const updates: Array<Record<string, unknown>> = [];
+    const db = {
+      update: () => ({
+        set: (values: Record<string, unknown>) => {
+          updates.push(values);
+          return { where: async () => {} };
+        },
+      }),
+    } as unknown as DatabaseClient;
+
+    const worker = new OsuTrackPlayerWorker({
+      queue,
+      client,
+      rateLimiter: new StubRateLimiter(),
+      logger: noopLogger,
+      db,
+      maintenanceWindowEnabled: false,
+    });
+
+    await worker.start();
+
+    let acked = 0;
+    let nacked = 0;
+    const metadata = {
+      requestedAt: '2024-03-15T12:00:00.000Z',
+      correlationId: 'test-correlation',
+      priority: MessagePriority.Normal,
+    };
+
+    await expect(
+      queue.emit({
+        payload: { ...metadata, osuPlayerId: 7654321 },
+        metadata,
+        ack: async () => {
+          acked += 1;
+        },
+        nack: async () => {
+          nacked += 1;
+        },
+      })
+    ).rejects.toThrow();
+
+    expect(updates).toHaveLength(1);
+    expect(updates[0]?.osuTrackDataFetchStatus).toBe(DataFetchStatus.Error);
+    expect(acked).toBe(0);
+    expect(nacked).toBe(0);
   });
 });

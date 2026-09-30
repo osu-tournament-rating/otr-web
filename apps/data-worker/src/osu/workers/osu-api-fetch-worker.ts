@@ -61,7 +61,7 @@ export class OsuApiFetchWorker {
         await message.ack();
       } catch (error) {
         msgLogger.error('failed to process osu! API fetch', { error });
-        await message.nack(true);
+        throw error;
       }
     });
   }

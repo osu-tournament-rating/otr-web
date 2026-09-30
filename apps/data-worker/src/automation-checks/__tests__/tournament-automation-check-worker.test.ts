@@ -108,7 +108,7 @@ describe('TournamentAutomationCheckWorker', () => {
     expect(clearedId === 123).toBe(true);
   });
 
-  it('requeues on failure and clears pending state', async () => {
+  it('leaves a thrown failure to the consumer retry policy and clears pending state', async () => {
     const queue = new StubQueue<ProcessTournamentAutomationCheckMessage>();
 
     const service: Pick<
@@ -142,18 +142,20 @@ describe('TournamentAutomationCheckWorker', () => {
 
     await worker.start();
 
-    await queue.emit({
-      ...baseMessage,
-      ack: async () => {
-        acked += 1;
-      },
-      nack: async () => {
-        nacked += 1;
-      },
-    });
+    await expect(
+      queue.emit({
+        ...baseMessage,
+        ack: async () => {
+          acked += 1;
+        },
+        nack: async () => {
+          nacked += 1;
+        },
+      })
+    ).rejects.toThrow('boom');
 
     expect(acked).toBe(0);
-    expect(nacked).toBe(1);
+    expect(nacked).toBe(0);
     expect(cleared).toBe(1);
   });
 });
