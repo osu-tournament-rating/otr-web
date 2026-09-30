@@ -519,7 +519,9 @@ export const auth = betterAuth({
       playerId: {
         type: 'number',
         required: true,
-        input: true,
+        // Server-owned: the OAuth flow sets it, and sessions and admin
+        // scopes resolve through it.
+        input: false,
         // No `references`: Better Auth 1.6 resolves it against its own model
         // registry, which has no `players`, and throws during get-session.
       },
