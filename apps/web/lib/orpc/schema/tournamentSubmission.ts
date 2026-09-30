@@ -37,8 +37,13 @@ const forumUrlSchema = z
   )
   .transform((value) => value.split('?')[0]);
 
+export const MAX_SUBMISSION_IDS = 1000;
+
 const matchIdSchema = z.number().int().positive();
 const beatmapIdSchema = z.number().int().positive().max(20_000_000);
+
+const MAX_MATCH_IDS_MESSAGE = `Submit at most ${MAX_SUBMISSION_IDS} matches`;
+const MAX_BEATMAP_IDS_MESSAGE = `Submit at most ${MAX_SUBMISSION_IDS} beatmaps`;
 
 const baseSubmissionSchema = z.object({
   name: z.string().min(1, 'Tournament name is required'),
@@ -58,8 +63,14 @@ const baseSubmissionSchema = z.object({
     TournamentRejectionReason.None
   ),
   isLazer: z.boolean().default(false),
-  ids: z.array(matchIdSchema).min(1, 'At least one match ID is required'),
-  beatmapIds: z.array(beatmapIdSchema).default([]),
+  ids: z
+    .array(matchIdSchema)
+    .min(1, 'At least one match ID is required')
+    .max(MAX_SUBMISSION_IDS, MAX_MATCH_IDS_MESSAGE),
+  beatmapIds: z
+    .array(beatmapIdSchema)
+    .max(MAX_SUBMISSION_IDS, MAX_BEATMAP_IDS_MESSAGE)
+    .default([]),
 });
 
 export const TournamentSubmissionInputSchema = baseSubmissionSchema.check(
@@ -122,6 +133,7 @@ const parseMatchIds = z.preprocess(
   z
     .array(matchIdSchema)
     .min(1, 'At least one valid match link is required')
+    .max(MAX_SUBMISSION_IDS, MAX_MATCH_IDS_MESSAGE)
     .refine(
       (val) => val.every((id) => id > 0),
       'All match links must be valid osu! match IDs or URLs'
@@ -157,6 +169,7 @@ const parseBeatmapIds = z.preprocess(
   },
   z
     .array(beatmapIdSchema)
+    .max(MAX_SUBMISSION_IDS, MAX_BEATMAP_IDS_MESSAGE)
     .refine(
       (val) => val.every((id) => id > 0),
       'All beatmap links must be valid osu! beatmap IDs or URLs'
