@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     shm_size: '256m'
     ports:
-      - '5532:5432'
+      - '127.0.0.1:5532:5432'
     environment:
       POSTGRES_USER: ${DOCKER_POSTGRES_USER}
       POSTGRES_PASSWORD: ${DOCKER_POSTGRES_PASSWORD}
@@ -28,8 +28,8 @@ services:
     container_name: otr-staging-rabbitmq
     restart: unless-stopped
     ports:
-      - '5772:5672'
-      - '15772:15672'
+      - '127.0.0.1:5772:5672'
+      - '127.0.0.1:15772:15672'
     environment:
       RABBITMQ_DEFAULT_USER: ${DOCKER_RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${DOCKER_RABBITMQ_PASSWORD}
@@ -201,7 +201,7 @@ services:
     container_name: otr-staging-grafana
     restart: unless-stopped
     ports:
-      - '${GRAFANA_PORT:-3101}:3000'
+      - '127.0.0.1:${GRAFANA_PORT:-3101}:3000'
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}

@@ -10,7 +10,7 @@ services:
     # This was seen in production as well.
     shm_size: '1g'
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     environment:
       POSTGRES_USER: ${DOCKER_POSTGRES_USER}
       POSTGRES_PASSWORD: ${DOCKER_POSTGRES_PASSWORD}
@@ -51,8 +51,8 @@ services:
     container_name: otr-rabbitmq
     restart: unless-stopped
     ports:
-      - '5672:5672'
-      - '15672:15672'
+      - '127.0.0.1:5672:5672'
+      - '127.0.0.1:15672:15672'
     environment:
       RABBITMQ_DEFAULT_USER: ${DOCKER_RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${DOCKER_RABBITMQ_PASSWORD}
@@ -229,7 +229,7 @@ services:
     container_name: otr-grafana
     restart: unless-stopped
     ports:
-      - '${GRAFANA_PORT:-3001}:3000'
+      - '127.0.0.1:${GRAFANA_PORT:-3001}:3000'
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
