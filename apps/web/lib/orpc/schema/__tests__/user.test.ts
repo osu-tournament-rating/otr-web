@@ -1,17 +1,17 @@
 import { describe, expect, test } from 'bun:test';
 
-import { UserDetailSchema } from '../user';
+import { PublicUserSchema } from '../user';
 
-describe('UserDetailSchema', () => {
-  test('drops internal player columns', () => {
-    const parsed = UserDetailSchema.parse({
+describe('PublicUserSchema', () => {
+  test('keeps only public profile fields', () => {
+    const parsed = PublicUserSchema.parse({
       id: 1,
       lastLogin: '2026-08-01 00:00:00+00',
-      scopes: ['user'],
+      scopes: ['admin'],
       playerId: 2,
       created: '2026-08-01 00:00:00+00',
       updated: null,
-      lastViewedReportsAt: null,
+      lastViewedReportsAt: '2026-08-02 00:00:00+00',
       userSettings: [
         {
           id: 3,
@@ -39,7 +39,9 @@ describe('UserDetailSchema', () => {
       },
     });
 
-    expect(Object.keys(parsed.player ?? {})).not.toContain('searchVector');
-    expect(Object.keys(parsed.player ?? {})).not.toContain('previousUsernames');
+    expect(parsed).toEqual({
+      id: 1,
+      player: { id: 2, osuId: 4, username: 'peppy', country: 'AU' },
+    });
   });
 });

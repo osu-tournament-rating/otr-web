@@ -2,18 +2,20 @@ import { users } from '@otr/core/db/schema';
 import { createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
-import {
-  playerSelectSchema,
-  userSelectSchema,
-  userSettingsSelectSchema,
-} from './base';
 import { CreatedUpdatedOmit } from './constants';
 
 export const UserSchema = createSelectSchema(users).omit(CreatedUpdatedOmit);
 
-export const UserDetailSchema = userSelectSchema.extend({
-  userSettings: userSettingsSelectSchema.array(),
-  player: playerSelectSchema.nullable(),
+export const PublicUserSchema = z.object({
+  id: z.number().int(),
+  player: z
+    .object({
+      id: z.number().int(),
+      osuId: z.number().int(),
+      username: z.string(),
+      country: z.string(),
+    })
+    .nullable(),
 });
 
 export const CurrentUserSchema = z.object({
