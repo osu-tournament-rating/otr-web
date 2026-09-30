@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import * as schema from '@otr/core/db/schema';
-import { CurrentUserSchema, UserDetailSchema } from '@/lib/orpc/schema/user';
+import { CurrentUserSchema, PublicUserSchema } from '@/lib/orpc/schema/user';
 import { auth } from '@/lib/auth/auth';
 import { db } from '@/lib/db';
 
@@ -15,7 +15,7 @@ export const getUser = protectedProcedure
       id: z.number().int().positive(),
     })
   )
-  .output(UserDetailSchema)
+  .output(PublicUserSchema)
   .route({
     summary: 'Get user details',
     tags: ['authenticated'],
@@ -24,10 +24,12 @@ export const getUser = protectedProcedure
   })
   .handler(async ({ input, context }) => {
     const user = await context.db.query.users.findFirst({
+      columns: { id: true },
       where: eq(schema.users.id, input.id),
       with: {
-        userSettings: true,
-        player: true,
+        player: {
+          columns: { id: true, osuId: true, username: true, country: true },
+        },
       },
     });
 
