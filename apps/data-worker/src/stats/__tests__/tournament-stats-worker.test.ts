@@ -126,7 +126,7 @@ describe('TournamentStatsWorker', () => {
     expect(nacked).toBe(0);
   });
 
-  it('requeues the message when processing throws', async () => {
+  it('leaves a thrown failure to the consumer retry policy', async () => {
     const queue = new StubQueue();
     const service: Pick<TournamentStatsService, 'processTournamentStats'> = {
       async processTournamentStats() {
@@ -145,17 +145,19 @@ describe('TournamentStatsWorker', () => {
 
     await worker.start();
 
-    await queue.emit({
-      ...baseMessage,
-      ack: async () => {
-        acked += 1;
-      },
-      nack: async () => {
-        nacked += 1;
-      },
-    });
+    await expect(
+      queue.emit({
+        ...baseMessage,
+        ack: async () => {
+          acked += 1;
+        },
+        nack: async () => {
+          nacked += 1;
+        },
+      })
+    ).rejects.toThrow('boom');
 
     expect(acked).toBe(0);
-    expect(nacked).toBe(1);
+    expect(nacked).toBe(0);
   });
 });

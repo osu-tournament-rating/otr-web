@@ -111,7 +111,7 @@ export class OsuTrackPlayerWorker {
           })
           .where(eq(schema.players.osuId, envelope.osuPlayerId));
 
-        await message.nack(true);
+        throw error;
       }
     });
   }

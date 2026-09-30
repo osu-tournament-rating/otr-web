@@ -52,7 +52,7 @@ export class TournamentAutomationCheckWorker {
         msgLogger.error('failed to process tournament automation checks', {
           error,
         });
-        await message.nack(true);
+        throw error;
       } finally {
         this.dataCompletion.clearPendingAutomationCheck(tournamentId);
       }

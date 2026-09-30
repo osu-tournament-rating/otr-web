@@ -50,7 +50,7 @@ export class TournamentStatsWorker {
       await message.ack();
     } catch (error) {
       msgLogger.error('failed to process tournament statistics', { error });
-      await message.nack(true);
+      throw error;
     }
   }
 }
