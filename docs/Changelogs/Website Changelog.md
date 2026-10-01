@@ -5,14 +5,14 @@ This page records changes to the [otr-web](https://github.com/osu-tournament-rat
 
 ## Unreleased
 
-### Added
+### Breaking API Changes
 
-- Added the o!TR Discord bot with `/player`, `/tournament`, `/beatmap`, and `/leaderboard` commands.
+- `GET /users/{id}` returns only the user ID and the linked player's ID, osu! ID, username, and country. It no longer returns account settings, scopes, or activity times.
 
 ### Fixed
 
-- Fixed tournament search ranking to list `Verified` tournaments first, then prioritize exact abbreviation and name matches over partial matches in site-wide search and `GET /tournaments` with `sort=3`. The hidden `sort=3` option sorts by search relevance and should only be used with a search query.
-- Fixed the [tournament list](https://otr.stagec.net/tournaments) to use `Search relevance` while searching unless a sort was explicitly selected, and to preserve that selection during searches.
+- Fixed signed-in users being able to change the player linked to their account.
+- Fixed tournament submissions accepting any number of match and beatmap IDs. A submission accepts at most 1,000 of each, and the submission form shows the error under the field.
 - Fixed incorrect next sub-tier targets in player statistics, leaderboard, and search API responses.
 - Fixed API responses reporting higher Bronze sub-tiers than rating charts for some players. Bronze II now starts at 200 TR instead of about 133 TR, and Bronze I at 300 TR instead of about 267 TR.
 - Fixed `topPerformers[].accuracy` in the `GET /beatmaps/{id}/stats` schema to use a fraction from 0 to 1 instead of a percentage from 0 to 100.
@@ -20,8 +20,9 @@ This page records changes to the [otr-web](https://github.com/osu-tournament-rat
 ### Other
 
 - Improved release and preview image builds to continue when exporting the build cache fails.
-- Removed the `dotenv` startup banner from worker and Discord bot logs.
-- Improved lint rules and test reliability.
+- Changed failed data worker messages to retry after 30 seconds, up to 5 attempts, and then move to a `<queue>.failed` parking queue. Before, a message that always failed stalled its queue.
+- Changed internal service ports to listen on loopback only.
+- Removed the unused authentication callback page.
 
 ## [2026.09.01](https://github.com/osu-tournament-rating/otr-web/compare/2026.08.16...2026.09.01)
 
