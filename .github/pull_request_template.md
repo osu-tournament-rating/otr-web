@@ -6,11 +6,14 @@
 
 <!-- How you checked it. -->
 
-## Release notes
+## Changelog
 
 <!--
-Merging deploys to production, and this section becomes the release notes.
-Describe what changed for users in the past tense, and link the pages it
-touches. List API endpoints as sub-bullets. Write "None" if nothing
-user-facing changed.
+Merging deploys to production, and these bullets become the release notes.
+Write one bullet per user-facing change in the past tense, linking the pages
+it touches. Nest details and API endpoints as sub-bullets. Write "- None" if
+nothing user-facing changed. Only bullets are allowed, and the release stops
+at the end marker below, so keep it.
 -->
+
+<!-- changelog:end -->

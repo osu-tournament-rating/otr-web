@@ -1,7 +1,7 @@
 name: Deploy
 
 # Every merge to master ships to production once CI passes, then becomes a
-# GitHub release whose notes come from the merged pull requests. Running this
+# GitHub release that links the merged pull request above its changelog. Running this
 # workflow by hand redeploys an existing release, which is how a bad release
 # is rolled back.
 #
