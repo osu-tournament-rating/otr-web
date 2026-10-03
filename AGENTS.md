@@ -18,6 +18,23 @@ Run commands from the repository root unless noted.
 - Do not run the site or screenshot it to check your own work; the web
   designer and tester verify the preview deployment.
 
+## Pull requests
+
+- Every merge to `master` deploys to production once CI passes and is published
+  as a GitHub release. There is no staging environment; try risky changes on a
+  PR preview.
+- The title is a [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+  header, `type(scope)!: description`, because the squash merge uses it as the
+  commit message. Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`,
+  `build`, `ci`, `chore`, `style`, `revert`. The squash message body is blank,
+  so a breaking change to the public API or a shared contract is marked with `!`
+  in the title, not a `BREAKING CHANGE:` footer.
+- The description follows `.github/pull_request_template.md`. Its
+  `## Release notes` section becomes the release notes: user-facing changes in
+  the past tense, with links to the pages they touch and API endpoints as
+  sub-bullets. Write `None` when nothing user-facing changed.
+- `.github/scripts/release-notes.ts` checks both and writes the release notes.
+
 ## Tracing
 
 - Spans go to Alloy over OTLP, then to Tempo; read them in Grafana under
@@ -62,9 +79,9 @@ Run commands from the repository root unless noted.
 
 - `packages/otr-core/src/db/schema.ts` is the model source of truth. Generate
   with `bunx drizzle-kit generate` from the root and read the emitted SQL.
-- Migrations and metadata present in the latest release tag are immutable: never
-  rewrite, rename, reorder, or delete released SQL, snapshots, or journal
-  entries.
+- Migrations and metadata on `master` are immutable, since every merge deploys
+  to production: never rewrite, rename, reorder, or delete merged SQL,
+  snapshots, or journal entries.
 - Commit the schema change, generated SQL, snapshot, and journal update together.
 - Apply migrations only to a disposable local database. Start one with
   `docker compose up -d db` if nothing is running at `localhost:5432`.

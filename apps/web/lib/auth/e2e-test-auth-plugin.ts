@@ -12,7 +12,7 @@ import { db } from '@/lib/db';
  * signed session for an existing player, provisioning its `users`/`auth_users` rows
  * if the local database has none. Gated on {@link isE2eAuthEnabled}, which the
  * endpoint rechecks per request — Playwright runs a production build, so the gate
- * cannot key off NODE_ENV, and the flag must stay unset in staging and prod.
+ * cannot key off NODE_ENV, and the flag must stay unset in production.
  */
 export const isE2eAuthEnabled = () => process.env.E2E_TEST_AUTH === 'true';
 
