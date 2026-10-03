@@ -2,7 +2,9 @@
 //
 // A squash merge uses the pull request title as the commit message, so titles
 // are Conventional Commits headers. The pull request body carries a
-// `## Release notes` section, which becomes the release body once it ships.
+// `## Changelog` of bullets ending at CHANGELOG_END, and the release body is
+// the pull request link followed by those bullets. Anything after the marker,
+// such as a signature, never reaches the release.
 //
 //   bun .github/scripts/release-notes.ts check   validates PR_TITLE and PR_BODY
 //   bun .github/scripts/release-notes.ts render  prints notes for TARGET_SHA,
@@ -25,6 +27,8 @@ export const TYPES = [
   'revert',
 ] as const;
 
+export const CHANGELOG_END = '<!-- changelog:end -->';
+
 export interface Header {
   type: string;
   scope?: string;
@@ -37,6 +41,10 @@ const HEADER =
 
 /** The number GitHub appends to a squash-merged title, e.g. `(#930)`. */
 const PULL_NUMBER = /\s*\(#(\d+)\)$/;
+
+const BULLET = /^\s*[-*] \S/;
+const TOP_LEVEL_BULLET = /^[-*] \S/;
+const NONE = /^[-*] none\.?$/i;
 
 export function parseHeader(title: string): Header | null {
   const groups = HEADER.exec(title.trim())?.groups;
@@ -52,28 +60,77 @@ export function parseHeader(title: string): Header | null {
   };
 }
 
-/**
- * The text under `## Release notes`, without template comments. Null when the
- * body has no such section.
- */
-export function extractReleaseNotes(body: string | null): string | null {
-  const lines = (body ?? '').replace(/\r\n/g, '\n').split('\n');
-  const start = lines.findIndex((line) =>
-    /^##\s+release notes\s*$/i.test(line.trim())
-  );
-  if (start === -1) {
-    return null;
-  }
-
-  const rest = lines.slice(start + 1);
-  const end = rest.findIndex((line) => /^#{1,2}\s/.test(line));
-  const section = (end === -1 ? rest : rest.slice(0, end)).join('\n');
-
-  return section.replace(/<!--[\s\S]*?-->/g, '').trim();
+export interface Changelog {
+  /** Bullet lines as written, without comments or blank lines. */
+  lines: string[];
+  errors: string[];
 }
 
-export function isNone(notes: string): boolean {
-  return /^_?none\.?_?$/i.test(notes.trim());
+/** Reads the bullets between `## Changelog` and CHANGELOG_END. */
+export function parseChangelog(body: string | null): Changelog {
+  const lines = (body ?? '').replace(/\r\n/g, '\n').split('\n');
+
+  const start = lines.findIndex((line) =>
+    /^##\s+changelog\s*$/i.test(line.trim())
+  );
+  if (start === -1) {
+    return {
+      lines: [],
+      errors: ['The description needs a `## Changelog` section.'],
+    };
+  }
+
+  const length = lines
+    .slice(start + 1)
+    .findIndex((line) => line.trim() === CHANGELOG_END);
+  if (length === -1) {
+    return {
+      lines: [],
+      errors: [
+        `The changelog must end with \`${CHANGELOG_END}\` on its own line.`,
+      ],
+    };
+  }
+
+  const section = lines.slice(start + 1, start + 1 + length);
+  if (section.some((line) => /^#{1,2}\s/.test(line))) {
+    return {
+      lines: [],
+      errors: [
+        `Another section starts before \`${CHANGELOG_END}\`. Keep the marker directly after the changelog bullets.`,
+      ],
+    };
+  }
+
+  const bullets = section
+    .join('\n')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .split('\n')
+    .filter((line) => line.trim() !== '');
+
+  const errors: string[] = [];
+  if (bullets.length === 0) {
+    errors.push(
+      'The changelog is empty. Write `- None` if nothing user-facing changed.'
+    );
+  } else if (!TOP_LEVEL_BULLET.test(bullets[0])) {
+    errors.push('The changelog must start with a top-level bullet.');
+  }
+
+  const loose = bullets.filter((line) => !BULLET.test(line));
+  if (loose.length > 0) {
+    errors.push(
+      `Every changelog line must be a bullet. Not a bullet: ${loose
+        .map((line) => `\`${line.trim()}\``)
+        .join(', ')}`
+    );
+  }
+
+  if (bullets.length > 1 && bullets.some((line) => NONE.test(line))) {
+    errors.push('`- None` must be the only changelog bullet.');
+  }
+
+  return { lines: bullets, errors };
 }
 
 export function checkPullRequest(title: string, body: string | null): string[] {
@@ -90,84 +147,40 @@ export function checkPullRequest(title: string, body: string | null): string[] {
     );
   }
 
-  const notes = extractReleaseNotes(body);
-  if (notes === null) {
-    errors.push('The description needs a `## Release notes` section.');
-  } else if (notes === '') {
-    errors.push(
-      'The `## Release notes` section is empty. Write `None` if nothing user-facing changed.'
-    );
-  }
-
-  return errors;
+  return [...errors, ...parseChangelog(body).errors];
 }
 
 export interface MergedChange {
-  /** The squash commit subject, e.g. `fix: lookup is public (#928)`. */
-  subject: string;
-  sha: string;
-  /** Present when the commit came from a pull request. */
+  /** The pull request, or the commit when it was pushed directly. */
+  url: string;
+  /** The pull request description; absent for a direct push. */
   body?: string | null;
 }
 
-const SECTIONS = ['Breaking changes', 'Added', 'Fixed', 'Changed'] as const;
-
-function sectionOf(header: Header | null): (typeof SECTIONS)[number] {
-  if (header?.breaking) {
-    return 'Breaking changes';
-  }
-  if (header?.type === 'feat') {
-    return 'Added';
-  }
-  if (header?.type === 'fix') {
-    return 'Fixed';
-  }
-  return 'Changed';
-}
-
-/** Changes are listed oldest first. */
+/**
+ * The links to what shipped, then the changelog bullets. Changes are listed
+ * oldest first; a deploy covers more than one only when merges queued up.
+ */
 export function renderRelease(changes: MergedChange[]): string {
-  const sections = new Map<string, string[]>();
-
-  for (const change of changes) {
-    const notes = extractReleaseNotes(change.body ?? null);
-    if (!notes || isNone(notes)) {
-      continue;
+  const bullets = changes.flatMap((change) => {
+    const changelog = parseChangelog(change.body ?? null);
+    if (changelog.errors.length > 0) {
+      return [];
     }
+    return changelog.lines.filter((line) => !NONE.test(line));
+  });
 
-    const title = change.subject.replace(PULL_NUMBER, '');
-    const section = sectionOf(parseHeader(title));
-    sections.set(section, [...(sections.get(section) ?? []), notes]);
-  }
+  const links = changes.map((change) => change.url).join('\n');
+  const changelog = bullets.length > 0 ? bullets.join('\n') : '- None';
 
-  const parts: string[] = [];
-  for (const section of SECTIONS) {
-    const notes = sections.get(section);
-    if (notes) {
-      parts.push(`### ${section}\n\n${notes.join('\n\n')}`);
-    }
-  }
-
-  if (parts.length === 0) {
-    parts.push('No user-facing changes.');
-  }
-
-  const merged = changes.map((change) =>
-    PULL_NUMBER.test(change.subject)
-      ? `- ${change.subject}`
-      : `- ${change.subject} (${change.sha.slice(0, 7)})`
-  );
-  if (merged.length > 0) {
-    parts.push(`### Merged\n\n${merged.join('\n')}`);
-  }
-
-  return `${parts.join('\n\n')}\n`;
+  return `${links}\n\n\n## Changelog\n\n${changelog}\n`;
 }
 
 async function render(target: string): Promise<string> {
   const previous =
     process.env.PREVIOUS_TAG ||
     (await $`gh release view --json tagName --jq .tagName`.text()).trim();
+  const repository = (await $`gh repo view --json url --jq .url`.text()).trim();
   const log =
     await $`git log --reverse --format=%H%x09%s ${`${previous}..${target}`}`.text();
 
@@ -175,10 +188,12 @@ async function render(target: string): Promise<string> {
   for (const line of log.split('\n').filter(Boolean)) {
     const [sha, subject] = line.split('\t');
     const number = PULL_NUMBER.exec(subject)?.[1];
-    const body = number
-      ? (await $`gh pr view ${number} --json body --jq .body`.text()).trim()
-      : undefined;
-    changes.push({ sha, subject, body });
+    if (number) {
+      const body = await $`gh pr view ${number} --json body --jq .body`.text();
+      changes.push({ url: `${repository}/pull/${number}`, body });
+    } else {
+      changes.push({ url: `${repository}/commit/${sha}` });
+    }
   }
 
   return renderRelease(changes);

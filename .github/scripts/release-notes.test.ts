@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'bun:test';
 import {
+  CHANGELOG_END,
   checkPullRequest,
-  extractReleaseNotes,
+  parseChangelog,
   parseHeader,
   renderRelease,
 } from './release-notes';
 
-const body = (notes: string) =>
-  `## Summary\n\nWhy.\n\n## Release notes\n\n<!-- Guidance. -->\n\n${notes}\n\n## Verification\n\n- bun test\n`;
+const body = (changelog: string) =>
+  `## Summary\n\nWhy.\n\n## Changelog\n\n<!-- Guidance. -->\n\n${changelog}\n\n${CHANGELOG_END}\n\n^claude\n`;
 
 describe('parseHeader', () => {
   it('reads type, scope, and the breaking marker', () => {
@@ -26,29 +27,56 @@ describe('parseHeader', () => {
   });
 });
 
-describe('extractReleaseNotes', () => {
-  it('stops at the next section and drops comments', () => {
-    expect(extractReleaseNotes(body('- Added a thing.\n  - Detail.'))).toBe(
-      '- Added a thing.\n  - Detail.'
+describe('parseChangelog', () => {
+  it('stops at the end marker and drops comments and blank lines', () => {
+    expect(
+      parseChangelog(body('- Added a.\n  - Detail.\n\n- Fixed b.'))
+    ).toEqual({
+      lines: ['- Added a.', '  - Detail.', '- Fixed b.'],
+      errors: [],
+    });
+  });
+
+  it('handles CRLF', () => {
+    expect(
+      parseChangelog(`## Changelog\r\n\r\n- Changed.\r\n${CHANGELOG_END}\r\n`)
+        .lines
+    ).toEqual(['- Changed.']);
+  });
+
+  it('requires the section and the marker', () => {
+    expect(parseChangelog('## Summary\n\nWhy.').errors).toHaveLength(1);
+    expect(parseChangelog(null).errors).toHaveLength(1);
+    expect(parseChangelog('## Changelog\n\n- A.').errors[0]).toContain(
+      CHANGELOG_END
     );
   });
 
-  it('keeps subheadings and handles CRLF', () => {
+  it('rejects a marker placed after another section', () => {
     expect(
-      extractReleaseNotes('## Release notes\r\n\r\n### API\r\n\r\n- Changed.')
-    ).toBe('### API\n\n- Changed.');
+      parseChangelog(
+        `## Changelog\n\n- A.\n\n## Notes\n\nB.\n\n${CHANGELOG_END}`
+      ).errors
+    ).toHaveLength(1);
   });
 
-  it('is null without the section', () => {
-    expect(extractReleaseNotes('## Summary\n\nWhy.')).toBeNull();
-    expect(extractReleaseNotes(null)).toBeNull();
+  it('accepts only bullets', () => {
+    expect(parseChangelog(body('Added a thing.')).errors).toHaveLength(2);
+    expect(parseChangelog(body('- A.\n\nSome prose.')).errors).toHaveLength(1);
+    expect(parseChangelog(body('  - Indented first.')).errors).toHaveLength(1);
+    expect(parseChangelog(body('')).errors).toHaveLength(1);
+  });
+
+  it('allows None only on its own', () => {
+    expect(parseChangelog(body('- None')).errors).toEqual([]);
+    expect(parseChangelog(body('- None\n- Added a.')).errors).toHaveLength(1);
   });
 });
 
 describe('checkPullRequest', () => {
-  it('accepts a conventional title with notes or None', () => {
+  it('accepts a conventional title with a changelog', () => {
     expect(checkPullRequest('fix: x', body('- Fixed x.'))).toEqual([]);
-    expect(checkPullRequest('ci: x', body('None'))).toEqual([]);
+    expect(checkPullRequest('ci: x', body('- None'))).toEqual([]);
   });
 
   it('reports each problem', () => {
@@ -58,54 +86,42 @@ describe('checkPullRequest', () => {
 });
 
 describe('renderRelease', () => {
-  it('groups notes by type and lists every merge', () => {
-    const notes = renderRelease([
-      { sha: 'a'.repeat(40), subject: 'fix: b (#2)', body: body('- Fixed b.') },
-      { sha: 'b'.repeat(40), subject: 'ci: c (#3)', body: body('None') },
-      {
-        sha: 'c'.repeat(40),
-        subject: 'feat: a (#1)',
-        body: body('- Added a.'),
-      },
-      {
-        sha: 'd'.repeat(40),
-        subject: 'feat(api)!: d (#4)',
-        body: body('- Removed d.'),
-      },
-      { sha: 'e'.repeat(40), subject: 'direct push' },
-    ]);
+  const url = 'https://github.com/o/r/pull/1';
 
-    expect(notes).toBe(
+  it('links the pull request above its changelog', () => {
+    expect(
+      renderRelease([{ url, body: body('- Added a.\n  - Detail.') }])
+    ).toBe(`${url}\n\n\n## Changelog\n\n- Added a.\n  - Detail.\n`);
+  });
+
+  it('combines merges that deployed together', () => {
+    expect(
+      renderRelease([
+        { url, body: body('- Added a.') },
+        { url: 'https://github.com/o/r/pull/2', body: body('- None') },
+        { url: 'https://github.com/o/r/commit/abc' },
+        { url: 'https://github.com/o/r/pull/3', body: body('- Fixed c.') },
+      ])
+    ).toBe(
       [
-        '### Breaking changes',
+        url,
+        'https://github.com/o/r/pull/2',
+        'https://github.com/o/r/commit/abc',
+        'https://github.com/o/r/pull/3',
         '',
-        '- Removed d.',
         '',
-        '### Added',
+        '## Changelog',
         '',
         '- Added a.',
-        '',
-        '### Fixed',
-        '',
-        '- Fixed b.',
-        '',
-        '### Merged',
-        '',
-        '- fix: b (#2)',
-        '- ci: c (#3)',
-        '- feat: a (#1)',
-        '- feat(api)!: d (#4)',
-        '- direct push (eeeeeee)',
+        '- Fixed c.',
         '',
       ].join('\n')
     );
   });
 
-  it('says so when nothing is user-facing', () => {
-    expect(
-      renderRelease([
-        { sha: 'a'.repeat(40), subject: 'ci: a (#1)', body: body('None') },
-      ])
-    ).toStartWith('No user-facing changes.\n\n### Merged');
+  it('writes None when nothing is user-facing', () => {
+    expect(renderRelease([{ url, body: body('- None') }])).toBe(
+      `${url}\n\n\n## Changelog\n\n- None\n`
+    );
   });
 });

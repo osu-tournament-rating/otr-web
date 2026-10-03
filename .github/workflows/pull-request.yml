@@ -1,7 +1,7 @@
 name: Pull request
 
-# The title becomes the squash commit on master, and the release notes become
-# the GitHub release when the merge deploys, so both are checked before merge.
+# The title becomes the squash commit on master, and the changelog becomes the
+# GitHub release when the merge deploys, so both are checked before merge.
 
 on:
   pull_request:
@@ -16,15 +16,19 @@ jobs:
     name: conventions
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      # The base branch's checker, so a pull request cannot loosen its own check.
+      - name: Checkout base branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: .github/scripts
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.x
 
-      - name: Check title and release notes
+      - name: Check title and changelog
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
