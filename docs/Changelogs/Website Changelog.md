@@ -9,6 +9,13 @@ This page records changes to the [otr-web](https://github.com/osu-tournament-rat
 
 - `GET /users/{id}` returns only the user ID and the linked player's ID, osu! ID, username, and country. It no longer returns account settings, scopes, or activity times.
 
+### Added
+
+- Added a `Submitted` entry to the audit page of tournaments submitted before October 2025, when submissions were not yet audited. It shows the submitter and submission time recorded on the tournament.
+    - `GET /audit/timeline` returns them as `unauditedSubmission`.
+- Updated deletion entries in audit logs to no longer list every field of the deleted entity.
+- Updated verified entries on audit pages to start collapsed.
+
 ### Fixed
 
 - Fixed signed-in users being able to change the player linked to their account.
@@ -16,6 +23,10 @@ This page records changes to the [otr-web](https://github.com/osu-tournament-rat
 - Fixed incorrect next sub-tier targets in player statistics, leaderboard, and search API responses.
 - Fixed API responses reporting higher Bronze sub-tiers than rating charts for some players. Bronze II now starts at 200 TR instead of about 133 TR, and Bronze I at 300 TR instead of about 267 TR.
 - Fixed `topPerformers[].accuracy` in the `GET /beatmaps/{id}/stats` schema to use a fraction from 0 to 1 instead of a percentage from 0 to 100.
+- Fixed matches deleted from a tournament disappearing from the tournament's audit page, along with their history. The `Matches` tab now lists a deleted match's history, ending with its deletion.
+    - `GET /audit/descendants` and `GET /audit/descendant-counts` include these matches.
+    - Matches deleted before October 2025 are not included, because their deletions did not record a tournament.
+- Fixed deleted matches showing only their ID in audit logs. They now show the name recorded when they were deleted.
 
 ### Other
 
