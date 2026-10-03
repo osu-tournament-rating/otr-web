@@ -26,6 +26,15 @@ the document that owns the topic; create a page only for a distinct navigation
 destination. Preserve `[[wikilinks]]` and callouts such as
 `[!note]`.
 
-Changelog entries go under `## Unreleased` in `docs/Changelogs/`, in the format
-of the `2026.08.16` release in `Website Changelog.md`. Never add a version or
-date. Name a changelog branch `changelog/<repo>-<pr>`.
+Processor changelog entries go under `## Unreleased` in
+`Processor Changelog.md`, in the format of the `2026.08.16` release in
+`Website Changelog.md`. Never add a version or date. Name a changelog branch
+`changelog/<repo>-<pr>`.
+
+Every otr-web merge ships as its own GitHub release, whose body is the merged
+pull request's `## Changelog` bullets. Do not add website entries per pull
+request. Every two weeks, alongside the Discord announcement, those releases
+are collected into one `Website Changelog.md` section in the same format. Its
+heading is the latest release tag, compare-linked from the previous section's
+tag, and the release is added to Full Changelogs. Name that branch
+`changelog/otr-web-<tag>`.

@@ -1,5 +1,7 @@
 This page records changes to the [otr-web](https://github.com/osu-tournament-rating/otr-web) project. Changelog format is based on [keep a changelog](https://keepachangelog.com/en/1.1.0/).
 
+Each merged change deploys as its own [otr-web release](https://github.com/osu-tournament-rating/otr-web/releases). This page collects those releases every two weeks.
+
 > [!note]
 > This changelog began tracking releases on 2026.08.16. Changes made before that date are not recorded on this page.
 
