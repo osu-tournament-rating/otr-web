@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'bun:test';
-import { AuditEntityType } from '@otr/core/osu';
+import { PgDialect } from 'drizzle-orm/pg-core';
+import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 
-import { getAncestryJoinInfo } from '../ancestry';
+import { buildScopedAuditRows, getAncestryJoinInfo } from '../ancestry';
+
+const dialect = new PgDialect();
 
 describe('getAncestryJoinInfo', () => {
   it('scopes match audits to a tournament', () => {
@@ -63,5 +66,67 @@ describe('getAncestryJoinInfo', () => {
     );
     expect(info!.fromClause).toContain('JOIN games g ON g.id = gs.game_id');
     expect(info!.fromClause).toContain('JOIN matches m ON m.id = g.match_id');
+  });
+});
+
+describe('buildScopedAuditRows', () => {
+  const render = (
+    descendantType: AuditEntityType,
+    ancestorType: AuditEntityType,
+    showSystem = false
+  ) =>
+    dialect.sqlToQuery(
+      buildScopedAuditRows(
+        getAncestryJoinInfo(descendantType, ancestorType)!,
+        42,
+        showSystem
+      )
+    );
+
+  it('keeps matches deleted from the tournament', () => {
+    const { sql, params } = render(
+      AuditEntityType.Match,
+      AuditEntityType.Tournament
+    );
+
+    expect(sql).toContain('UNION ALL');
+    expect(sql).toContain(
+      'match_audits a JOIN match_audits d ON d.reference_id_lock = a.reference_id_lock'
+    );
+    expect(params).toEqual([
+      42,
+      AuditActionType.Deleted,
+      JSON.stringify({ tournament_id: { originalValue: 42 } }),
+    ]);
+  });
+
+  it('hides system rows of deleted matches too', () => {
+    const { sql } = render(AuditEntityType.Match, AuditEntityType.Tournament);
+    const [live, deleted] = sql.split('UNION ALL');
+
+    expect(live).toContain('a.action_user_id IS NOT NULL');
+    expect(deleted).toContain('a.action_user_id IS NOT NULL');
+  });
+
+  it('shows system rows when asked', () => {
+    const { sql } = render(
+      AuditEntityType.Match,
+      AuditEntityType.Tournament,
+      true
+    );
+
+    expect(sql).not.toContain('action_user_id IS NOT NULL');
+  });
+
+  it('only reads live rows below the match level', () => {
+    const { sql, params } = render(
+      AuditEntityType.Score,
+      AuditEntityType.Tournament
+    );
+
+    expect(sql).not.toContain('UNION ALL');
+    expect(sql).toContain('g.match_id AS path_1');
+    expect(sql).toContain('gs.game_id AS path_2');
+    expect(params).toEqual([42]);
   });
 });

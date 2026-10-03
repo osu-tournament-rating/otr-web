@@ -47,6 +47,16 @@ export const EntityAuditInputSchema = z.object({
   showSystem: z.boolean().optional(),
 });
 
+export const AuditEntityNameInputSchema = z.object({
+  entityType: z.nativeEnum(AuditEntityType),
+  entityId: z.number().int().positive(),
+});
+
+export const AuditEntityNameResponseSchema = z.object({
+  /** Null for unnamed entity types, unknown ids, and deletions that recorded no name. */
+  entityName: z.string().nullable(),
+});
+
 export const FieldFilterSchema = z.object({
   entityType: z.nativeEnum(AuditEntityType),
   fieldName: z.string(),
@@ -215,12 +225,22 @@ export const EntityTimelineItemSchema = z.discriminatedUnion('type', [
 
 export type EntityTimelineItem = z.infer<typeof EntityTimelineItemSchema>;
 
+/** A tournament's submission as the tournament itself records it. */
+export const UnauditedSubmissionSchema = z.object({
+  created: z.string(),
+  submittedBy: AuditActionUserSchema.nullable(),
+});
+
+export type UnauditedSubmission = z.infer<typeof UnauditedSubmissionSchema>;
+
 export const EntityTimelineResponseSchema = z.object({
   page: z.number().int().min(1),
   pageSize: z.number().int().min(1),
   pages: z.number().int().min(0),
   total: z.number().int().nonnegative(),
   items: z.array(EntityTimelineItemSchema),
+  /** Tournaments only: set when no audit entry recorded the tournament's creation. */
+  unauditedSubmission: UnauditedSubmissionSchema.nullable(),
 });
 
 export const DescendantAuditInputSchema = z.object({

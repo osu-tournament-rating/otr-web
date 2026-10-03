@@ -1,4 +1,5 @@
-import { AuditEntityType } from '@otr/core/osu';
+import { sql, type SQL } from 'drizzle-orm';
+import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 import { getDescendantTypes } from '@/lib/audit-entity-types';
 
 type AncestryInfo = {
@@ -49,6 +50,40 @@ const ANCESTRY: Record<AuditEntityType, AncestryInfo> = {
   },
 };
 
+export type DeletedDescendantInfo = {
+  /** FROM clause aliasing the audit table as `a` and the descendant's deletion as `d`. */
+  fromClause: string;
+  /** Limits `d` to deletions made while the descendant sat under the ancestor. */
+  ancestorScope: (ancestorId: number) => SQL;
+  nameExpr: string;
+};
+
+/**
+ * A deleted row drops out of the joins in {@link ANCESTRY}, taking its history
+ * with it. Its deletion audit still records the parent it was deleted from.
+ */
+const DELETED_ANCESTRY: Partial<
+  Record<
+    AuditEntityType,
+    Partial<Record<AuditEntityType, DeletedDescendantInfo>>
+  >
+> = {
+  [AuditEntityType.Match]: {
+    [AuditEntityType.Tournament]: {
+      fromClause:
+        'match_audits a JOIN match_audits d ON d.reference_id_lock = a.reference_id_lock',
+      ancestorScope: (tournamentId) => {
+        const deletedFrom = { tournament_id: { originalValue: tournamentId } };
+        // Containment so ix_match_audits_changes_gin finds the deletions.
+        return sql`d.action_type = ${AuditActionType.Deleted}
+          AND d.changes @> ${JSON.stringify(deletedFrom)}::jsonb`;
+      },
+      // Matches deleted before their data was fetched have an empty name.
+      nameExpr: "NULLIF(d.changes -> 'name' ->> 'originalValue', '')",
+    },
+  },
+};
+
 const PATH_EXPRESSIONS: Partial<
   Record<AuditEntityType, Partial<Record<AuditEntityType, string>>>
 > = {
@@ -65,6 +100,8 @@ export type AncestryJoinInfo = {
   nameExpr: string | null;
   /** Levels between the ancestor and the descendant, outermost first. */
   pathExprs: { entityType: AuditEntityType; expr: string }[];
+  /** Only set for a direct child, so its rows need no path. */
+  deleted: DeletedDescendantInfo | null;
 };
 
 /** Null when `descendantType` is not below `ancestorType`. */
@@ -88,5 +125,57 @@ export function getAncestryJoinInfo(
     ancestorIdExpr,
     nameExpr: info.nameExpr,
     pathExprs,
+    deleted: DELETED_ANCESTRY[descendantType]?.[ancestorType] ?? null,
   };
+}
+
+const AUDIT_COLUMNS = [
+  sql`a.id`,
+  sql`a.created`,
+  sql`a.reference_id_lock`,
+  sql`a.reference_id`,
+  sql`a.action_user_id`,
+  sql`a.action_type`,
+  sql`a.changes`,
+];
+
+export function pathColumn(entityType: AuditEntityType): string {
+  return `path_${entityType}`;
+}
+
+/** Audit rows under the entity, each with its descendant's name and path ids. */
+export function buildScopedAuditRows(
+  info: AncestryJoinInfo,
+  entityId: number,
+  showSystem: boolean | undefined
+): SQL {
+  // System rows carry no action user; they are noise unless explicitly requested.
+  const userFilter = showSystem
+    ? sql``
+    : sql` AND a.action_user_id IS NOT NULL`;
+
+  const nameSelection = info.nameExpr
+    ? sql`${sql.raw(info.nameExpr)} AS entity_name`
+    : sql`NULL::text AS entity_name`;
+  const pathSelections = info.pathExprs.map(
+    ({ entityType: pathType, expr }) =>
+      sql`${sql.raw(expr)} AS ${sql.raw(pathColumn(pathType))}`
+  );
+
+  const live = sql`
+    SELECT ${sql.join([...AUDIT_COLUMNS, nameSelection, ...pathSelections], sql`, `)}
+    FROM ${sql.raw(info.fromClause)}
+    WHERE ${sql.raw(info.ancestorIdExpr)} = ${entityId}${userFilter}
+  `;
+
+  if (!info.deleted) return live;
+
+  const { deleted } = info;
+  return sql`
+    ${live}
+    UNION ALL
+    SELECT ${sql.join(AUDIT_COLUMNS, sql`, `)}, ${sql.raw(deleted.nameExpr)} AS entity_name
+    FROM ${sql.raw(deleted.fromClause)}
+    WHERE ${deleted.ancestorScope(entityId)}${userFilter}
+  `;
 }

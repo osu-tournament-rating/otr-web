@@ -1,4 +1,4 @@
-import { eq, inArray, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, inArray, notExists, sql, type SQL } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
 import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 import type {
@@ -6,6 +6,7 @@ import type {
   AuditEventAction,
   AuditEventActionCount,
   EntityTimelineItem,
+  UnauditedSubmission,
 } from '@/lib/orpc/schema/audit';
 import {
   ENTITY_TYPE_LABELS,
@@ -810,7 +811,13 @@ export async function resolveEntityNames(
       .select({ id: schema.matches.id, name: schema.matches.name })
       .from(schema.matches)
       .where(inArray(schema.matches.id, entityIds));
-    return new Map(rows.map((r) => [r.id, r.name]));
+    const names = new Map(rows.map((r) => [r.id, r.name]));
+
+    const deletedIds = entityIds.filter((id) => !names.has(id));
+    for (const [id, name] of await resolveDeletedMatchNames(db, deletedIds)) {
+      names.set(id, name);
+    }
+    return names;
   }
 
   if (entityType === AuditEntityType.Beatmap) {
@@ -822,6 +829,33 @@ export async function resolveEntityNames(
   }
 
   return new Map();
+}
+
+/** A deleted match keeps its name only in its deletion audit. */
+async function resolveDeletedMatchNames(
+  db: DatabaseClient,
+  matchIds: number[]
+): Promise<Map<number, string>> {
+  if (matchIds.length === 0) return new Map();
+
+  const deletedName = sql<string>`${schema.matchAudits.changes} -> 'name' ->> 'originalValue'`;
+  const rows = await db
+    .selectDistinctOn([schema.matchAudits.referenceIdLock], {
+      id: schema.matchAudits.referenceIdLock,
+      name: deletedName,
+    })
+    .from(schema.matchAudits)
+    .where(
+      and(
+        inArray(schema.matchAudits.referenceIdLock, matchIds),
+        eq(schema.matchAudits.actionType, AuditActionType.Deleted),
+        // Matches deleted before their data was fetched have an empty name.
+        sql`${deletedName} <> ''`
+      )
+    )
+    .orderBy(schema.matchAudits.referenceIdLock, desc(schema.matchAudits.id));
+
+  return new Map(rows.map((r) => [r.id, r.name]));
 }
 
 export async function resolveTournamentNames(
@@ -892,4 +926,44 @@ export async function resolveUserIds(
     });
   }
   return map;
+}
+
+/** Creations were not audited before October 2025, so older tournaments only record their submission on themselves. */
+export async function getUnauditedSubmission(
+  db: DatabaseClient,
+  tournamentId: number
+): Promise<UnauditedSubmission | null> {
+  const [tournament] = await db
+    .select({
+      created: schema.tournaments.created,
+      submittedByUserId: schema.tournaments.submittedByUserId,
+    })
+    .from(schema.tournaments)
+    .where(
+      and(
+        eq(schema.tournaments.id, tournamentId),
+        notExists(
+          db
+            .select({ id: schema.tournamentAudits.id })
+            .from(schema.tournamentAudits)
+            .where(
+              and(
+                eq(
+                  schema.tournamentAudits.referenceIdLock,
+                  schema.tournaments.id
+                ),
+                eq(schema.tournamentAudits.actionType, AuditActionType.Created)
+              )
+            )
+        )
+      )
+    );
+
+  if (!tournament) return null;
+
+  const { created, submittedByUserId } = tournament;
+  if (submittedByUserId === null) return { created, submittedBy: null };
+
+  const users = await resolveUserIds(db, [submittedByUserId]);
+  return { created, submittedBy: users.get(submittedByUserId) ?? null };
 }

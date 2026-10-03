@@ -33,6 +33,7 @@ import {
   EntityTimelineEventSchema,
   EntityTimelineItemSchema,
   EntityTimelineResponseSchema,
+  UnauditedSubmissionSchema,
 } from '@/lib/orpc/schema/audit';
 import {
   RatingAdjustmentTypeSchema,
@@ -319,6 +320,7 @@ export const generatePublicOpenAPISpec = async () => {
       EntityTimelineEvent: { schema: EntityTimelineEventSchema },
       EntityTimelineItem: { schema: EntityTimelineItemSchema },
       EntityTimelineResponse: { schema: EntityTimelineResponseSchema },
+      UnauditedSubmission: { schema: UnauditedSubmissionSchema },
       DescendantAuditItem: { schema: DescendantAuditItemSchema },
       DescendantAuditResponse: { schema: DescendantAuditResponseSchema },
       DescendantAuditCountsResponse: {
