@@ -64,8 +64,8 @@ LOCK_FILE="${DEV_DB_LOCK_FILE:-$PWD/.dev-db.lock}"
 LOCK_WAIT="${DEV_DB_LOCK_WAIT:-1800}"
 CLONE_MAX_AGE_DAYS="${DEV_DB_CLONE_MAX_AGE_DAYS:-14}"
 REAP_LIMIT="${DEV_DB_REAP_LIMIT:-10}"
-# staging-latest is rebuilt on every push to the default branch.
-MIGRATION_IMAGE="${DEV_MIGRATION_IMAGE:-stagecodes/otr-web:staging-latest}"
+# latest is what production runs, and every merge to the default branch ships.
+MIGRATION_IMAGE="${DEV_MIGRATION_IMAGE:-stagecodes/otr-web:latest}"
 NETWORK="${DEV_NETWORK:-otr-dev}"
 
 # Minimum rows for the replica to be considered intact, set near half of

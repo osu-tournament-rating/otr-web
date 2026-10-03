@@ -1,38 +1,105 @@
 name: Deploy
 
+# Every merge to master ships to production once CI passes, then becomes a
+# GitHub release whose notes come from the merged pull requests. Running this
+# workflow by hand redeploys an existing release, which is how a bad release
+# is rolled back.
+#
+# Images are built while CI runs, under the release tag only. `latest`, which
+# production's compose file pulls, moves to them once CI has passed.
+
 on:
-  workflow_call:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
     inputs:
-      target:
-        type: string
-        description: 'GitHub environment to deploy to (e.g. staging or production)'
+      tag:
+        description: 'Release tag to redeploy, e.g. 2026.10.03'
         required: true
-      deploy_tag:
         type: string
-        description: 'Docker image tag to deploy'
-        required: true
-      source_ref:
-        type: string
-        description: 'Git ref (branch, tag, or commit) to deploy'
-        required: true
-      skip_build:
-        type: boolean
-        description: 'Skip Docker image build and publish'
-        required: false
-        default: false
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
+  resolve:
+    name: Resolve release
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      ref: ${{ steps.resolve.outputs.ref }}
+      new: ${{ steps.resolve.outputs.new }}
+    steps:
+      - name: Resolve tag and source
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            if [[ ! "$INPUT_TAG" =~ ^[A-Za-z0-9._-]+$ ]] ||
+              ! gh release view "$INPUT_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null; then
+              echo "::error::No release is tagged '$INPUT_TAG'." >&2
+              exit 1
+            fi
+
+            {
+              echo "tag=$INPUT_TAG"
+              echo "ref=refs/tags/$INPUT_TAG"
+              echo "new=false"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # The first release of a day is YYYY.MM.DD, later ones add .1, .2, ...
+          day="$(date -u +%Y.%m.%d)"
+          last=-1
+          while read -r ref; do
+            name="${ref#refs/tags/}"
+            if [[ "$name" == "$day" ]]; then
+              if (( last < 0 )); then last=0; fi
+            elif [[ "$name" =~ ^${day//./\\.}\.([0-9]+)$ ]]; then
+              if (( BASH_REMATCH[1] > last )); then last="${BASH_REMATCH[1]}"; fi
+            fi
+          done < <(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/$day" --jq '.[].ref')
+
+          if (( last < 0 )); then tag="$day"; else tag="$day.$(( last + 1 ))"; fi
+          echo "Releasing $SHA as $tag"
+
+          {
+            echo "tag=$tag"
+            echo "ref=$SHA"
+            echo "new=true"
+          } >> "$GITHUB_OUTPUT"
+
+  checks:
+    name: CI
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/ci.yml
+    with:
+      build: false
+
   build:
     name: Build & push Docker images
-    if: ${{ !inputs.skip_build }}
+    needs: resolve
+    if: needs.resolve.outputs.new == 'true'
     runs-on: ubuntu-latest
-    environment: ${{ inputs.target }}
+    environment: production
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_ref }}
+          ref: ${{ needs.resolve.outputs.ref }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -43,26 +110,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Resolve image tags
-        id: tags
-        run: |
-          set -euo pipefail
-          WEB_TAGS="stagecodes/otr-web:${{ inputs.deploy_tag }}"
-          DW_TAGS="stagecodes/otr-data-worker:${{ inputs.deploy_tag }}"
-          if [[ "${{ inputs.target }}" == "production" ]]; then
-            WEB_TAGS="${WEB_TAGS},stagecodes/otr-web:latest"
-            DW_TAGS="${DW_TAGS},stagecodes/otr-data-worker:latest"
-          fi
-          echo "web=${WEB_TAGS}" >> "$GITHUB_OUTPUT"
-          echo "data-worker=${DW_TAGS}" >> "$GITHUB_OUTPUT"
-
       - name: Build and push web image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/web/Dockerfile
           push: true
-          tags: ${{ steps.tags.outputs.web }}
+          tags: stagecodes/otr-web:${{ needs.resolve.outputs.tag }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max,ignore-error=true
 
@@ -72,30 +126,48 @@ jobs:
           context: .
           file: apps/data-worker/Dockerfile
           push: true
-          tags: ${{ steps.tags.outputs.data-worker }}
+          tags: stagecodes/otr-data-worker:${{ needs.resolve.outputs.tag }}
           cache-from: type=gha,scope=data-worker
           cache-to: type=gha,scope=data-worker,mode=max,ignore-error=true
 
   deploy:
-    name: Copy assets & deploy
-    needs: build # dependency...
-    if: | # but, still run when build was skipped
-      always() && (
-        needs.build.result == 'success' ||
-        needs.build.result == 'skipped'
-      )
+    name: Deploy to production
+    needs: [resolve, checks, build]
+    # A redeploy skips CI and the build; a new release needs both to pass.
+    if: >-
+      !cancelled() &&
+      needs.resolve.result == 'success' &&
+      (needs.resolve.outputs.new != 'true' ||
+       (needs.checks.result == 'success' && needs.build.result == 'success'))
     runs-on: ubuntu-latest
-    environment: ${{ inputs.target }}
+    environment: production
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_ref }}
+          ref: ${{ needs.resolve.outputs.ref }}
           sparse-checkout: |
             docker-compose.yml
-            docker-compose-staging.yml
             monitoring
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Point latest at the release images
+        env:
+          TAG: ${{ needs.resolve.outputs.tag }}
+        run: |
+          set -euo pipefail
+          for image in stagecodes/otr-web stagecodes/otr-data-worker; do
+            docker buildx imagetools create --tag "$image:latest" "$image:$TAG"
+          done
 
       - name: Connect to tailscale
         uses: tailscale/github-action@v4
@@ -116,33 +188,15 @@ jobs:
             mkdir -p "$1"
           EOF
 
-      - name: Create & upload deployment assets
+      - name: Upload deployment assets
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
           REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
           ENV_CONTENT: ${{ secrets.ENV }}
-          TARGET: ${{ inputs.target }}
         run: |
           set -euo pipefail
           printf '%s\n' "$ENV_CONTENT" > .env
-
-          case "$TARGET" in
-            staging)
-              SOURCE_COMPOSE="docker-compose-staging.yml"
-              cp "$SOURCE_COMPOSE" docker-compose.yml
-              ;;
-            production)
-              SOURCE_COMPOSE="docker-compose.yml"
-              ;;
-            *)
-              echo "::error::Invalid environment: $TARGET"
-              exit 1
-              ;;
-          esac
-
-          echo "Source compose file: $SOURCE_COMPOSE"
-          echo "Remote destination: $REMOTE_PATH/docker-compose.yml"
           scp -o StrictHostKeyChecking=no -r .env docker-compose.yml monitoring \
           "$SSH_USER@$SSH_HOST:$REMOTE_PATH/"
 
@@ -158,3 +212,39 @@ jobs:
             docker compose pull
             docker compose --profile migrate run --rm migrate && docker compose --profile node-exporter up -d --remove-orphans
           EOF
+
+  release:
+    name: Publish release
+    needs: [resolve, deploy]
+    if: needs.resolve.outputs.new == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.ref }}
+          fetch-depth: 0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.x
+
+      - name: Write release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ needs.resolve.outputs.ref }}
+        run: bun .github/scripts/release-notes.ts render > release-notes.md
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.resolve.outputs.tag }}
+          TARGET_SHA: ${{ needs.resolve.outputs.ref }}
+        run: |
+          gh release create "$TAG" --target "$TARGET_SHA" --title "$TAG" \
+            --notes-file release-notes.md --latest

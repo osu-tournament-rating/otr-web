@@ -23,13 +23,8 @@ export interface StartTracingOptions {
 
 let provider: NodeTracerProvider | null = null;
 
-const resolveEnvironment = (): string => {
-  if (process.env.NEXT_PUBLIC_IS_STAGING === 'true') {
-    return 'staging';
-  }
-
-  return process.env.NODE_ENV === 'production' ? 'production' : 'development';
-};
+const resolveEnvironment = (): string =>
+  process.env.NODE_ENV === 'production' ? 'production' : 'development';
 
 /**
  * Registers the global tracer provider. Tracing stays off until
