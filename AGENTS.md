@@ -30,9 +30,11 @@ Run commands from the repository root unless noted.
   so a breaking change to the public API or a shared contract is marked with `!`
   in the title, not a `BREAKING CHANGE:` footer.
 - The description follows `.github/pull_request_template.md`. Its
-  `## Release notes` section becomes the release notes: user-facing changes in
-  the past tense, with links to the pages they touch and API endpoints as
-  sub-bullets. Write `None` when nothing user-facing changed.
+  `## Changelog` becomes the release notes, ending at `<!-- changelog:end -->`.
+  It holds only bullets: user-facing changes in the past tense, with links to
+  the pages they touch and details or API endpoints as sub-bullets. Write
+  `- None` when nothing user-facing changed. Keep any text that is not release
+  notes, such as a signature, after the end marker.
 - `.github/scripts/release-notes.ts` checks both and writes the release notes.
 
 ## Tracing
