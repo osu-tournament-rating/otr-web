@@ -3,7 +3,7 @@ This page records changes to the [otr-web](https://github.com/osu-tournament-rat
 > [!note]
 > This changelog began tracking releases on 2026.08.16. Changes made before that date are not recorded on this page.
 
-## Unreleased
+## [2026.10.03](https://github.com/osu-tournament-rating/otr-web/compare/2026.09.01...2026.10.03)
 
 ### Breaking API Changes
 
@@ -151,5 +151,6 @@ This page records changes to the [otr-web](https://github.com/osu-tournament-rat
 
 ## Full Changelogs
 
+- [2026.10.03](https://github.com/osu-tournament-rating/otr-web/compare/2026.09.01...2026.10.03)
 - [2026.09.01](https://github.com/osu-tournament-rating/otr-web/compare/2026.08.16...2026.09.01)
 - [2026.08.16](https://github.com/osu-tournament-rating/otr-web/compare/2026.06.16...2026.08.16)
