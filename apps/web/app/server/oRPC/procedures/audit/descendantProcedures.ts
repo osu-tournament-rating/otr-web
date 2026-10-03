@@ -13,7 +13,11 @@ import {
 import { getDescendantTypes } from '@/lib/audit-entity-types';
 
 import { publicProcedure } from '../base';
-import { getAncestryJoinInfo } from './ancestry';
+import {
+  buildScopedAuditRows,
+  getAncestryJoinInfo,
+  pathColumn,
+} from './ancestry';
 import {
   buildReferencedUsers,
   camelizeChangesKeys,
@@ -27,20 +31,6 @@ const COUNT_CAP = 5000;
 
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 100;
-
-function pathColumn(entityType: AuditEntityType): string {
-  return `path_${entityType}`;
-}
-
-/** System rows carry no action user; they are noise unless explicitly requested. */
-function buildWhereClause(
-  ancestorIdExpr: string,
-  entityId: number,
-  showSystem: boolean | undefined
-) {
-  const scope = sql`${sql.raw(ancestorIdExpr)} = ${entityId}`;
-  return showSystem ? scope : sql`${scope} AND a.action_user_id IS NOT NULL`;
-}
 
 export const getDescendantAuditCounts = publicProcedure
   .input(DescendantAuditCountsInputSchema)
@@ -80,8 +70,7 @@ export const getDescendantAuditCounts = publicProcedure
           SELECT ${descendantType}::int AS entity_type, count(*)::int AS cnt
           FROM (
             SELECT 1
-            FROM ${sql.raw(info.fromClause)}
-            WHERE ${buildWhereClause(info.ancestorIdExpr, entityId, showSystem)}
+            FROM (${buildScopedAuditRows(info, entityId, showSystem)}) a
             LIMIT ${COUNT_CAP + 1}
           ) capped
         `,
@@ -119,6 +108,9 @@ export const getDescendantAuditTimeline = publicProcedure
       'Each item carries the descendant it belongs to, plus the intermediate entities between it',
       'and the requested entity, so the result can be linked back to each child’s own audit page.',
       '',
+      'Matches deleted from a tournament keep their history under it, ending with the deletion.',
+      'Games and scores are listed only while they still exist.',
+      '',
       '**Pagination** — offset-based with `page` and `pageSize`.',
       `\`total\` stops counting at ${COUNT_CAP}; \`totalCapped\` marks it as a lower bound.`,
       '',
@@ -148,18 +140,13 @@ export const getDescendantAuditTimeline = publicProcedure
       Math.min(input.pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
     );
 
-    const whereClause = buildWhereClause(
-      info.ancestorIdExpr,
-      entityId,
-      showSystem
-    );
+    const scopedRows = buildScopedAuditRows(info, entityId, showSystem);
 
     const countResult = await context.db.execute(sql`
       SELECT count(*)::int AS cnt
       FROM (
         SELECT 1
-        FROM ${sql.raw(info.fromClause)}
-        WHERE ${whereClause}
+        FROM (${scopedRows}) a
         LIMIT ${COUNT_CAP + 1}
       ) capped
     `);
@@ -182,36 +169,11 @@ export const getDescendantAuditTimeline = publicProcedure
       };
     }
 
-    const nameSelection = info.nameExpr
-      ? sql`${sql.raw(info.nameExpr)} AS entity_name`
-      : sql`NULL::text AS entity_name`;
-    const pathSelections = info.pathExprs.map(
-      ({ entityType: pathType, expr }) =>
-        sql`${sql.raw(expr)} AS ${sql.raw(pathColumn(pathType))}`
-    );
-
-    const selections = [
-      sql`a.id`,
-      sql`a.created`,
-      sql`a.reference_id_lock`,
-      sql`a.reference_id`,
-      sql`a.action_user_id`,
-      sql`a.action_type`,
-      sql`a.changes`,
-      nameSelection,
-      sql`u.id AS user_id`,
-      sql`p.id AS player_id`,
-      sql`p.osu_id`,
-      sql`p.username`,
-      ...pathSelections,
-    ];
-
     const result = await context.db.execute(sql`
-      SELECT ${sql.join(selections, sql`, `)}
-      FROM ${sql.raw(info.fromClause)}
+      SELECT a.*, u.id AS user_id, p.id AS player_id, p.osu_id, p.username
+      FROM (${scopedRows}) a
       LEFT JOIN users u ON u.id = a.action_user_id
       LEFT JOIN players p ON p.id = u.player_id
-      WHERE ${whereClause}
       ORDER BY a.created DESC, a.id DESC
       LIMIT ${pageSize} OFFSET ${offset}
     `);

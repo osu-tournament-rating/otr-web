@@ -8,7 +8,7 @@ import type { EntityTimelineItem } from '@/lib/orpc/schema/audit';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { orpc } from '@/lib/orpc/orpc';
-import AuditEntryRow from './AuditEntryRow';
+import AuditEntryRow, { AuditSubmissionRow } from './AuditEntryRow';
 import AuditNoteItem from './AuditNoteItem';
 import RelativeTime from './RelativeTime';
 
@@ -163,7 +163,9 @@ export default function AuditEntityTimeline({
   const allItems = responsePages.flatMap((p) => p.items);
   const totalPages = responsePages[0]?.pages ?? 0;
   const hasMore = size < totalPages;
-  const isEmpty = !isLoading && allItems.length === 0;
+  const unauditedSubmission = responsePages[0]?.unauditedSubmission ?? null;
+  const isEmpty =
+    !isLoading && allItems.length === 0 && unauditedSubmission === null;
   const totalCount = responsePages[0]?.total ?? allItems.length;
 
   const firstItem = allItems[0] ?? null;
@@ -215,11 +217,13 @@ export default function AuditEntityTimeline({
 
   return (
     <div data-testid="audit-timeline" className="space-y-4">
-      <TimelineSummary
-        total={totalCount}
-        hasMore={hasMore}
-        latestChange={latestChange}
-      />
+      {allItems.length > 0 && (
+        <TimelineSummary
+          total={totalCount}
+          hasMore={hasMore}
+          latestChange={latestChange}
+        />
+      )}
 
       <div
         data-testid="timeline-entry-list"
@@ -238,6 +242,10 @@ export default function AuditEntityTimeline({
           }
           return <AuditNoteItem key={`n-${item.data.id}`} note={item.data} />;
         })}
+        {/* Every tournament without a creation entry predates its other history. */}
+        {!hasMore && unauditedSubmission && (
+          <AuditSubmissionRow submission={unauditedSubmission} />
+        )}
       </div>
 
       {hasMore && (

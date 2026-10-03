@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import useSWRInfinite from 'swr/infinite';
 import { ChevronRight, Loader2 } from 'lucide-react';
-import { AuditEntityType } from '@otr/core/osu';
+import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 import type {
   AuditEntry,
   AuditEvent,
@@ -328,10 +328,13 @@ function EventEntityEntries({
         )}
 
         {entries.map((entry) => {
-          const changes = entry.changes as Record<
-            string,
-            { originalValue: unknown; newValue: unknown }
-          > | null;
+          const deleted = entry.actionType === AuditActionType.Deleted;
+          const changes = deleted
+            ? null
+            : (entry.changes as Record<
+                string,
+                { originalValue: unknown; newValue: unknown }
+              > | null);
           const entryLabel =
             entry.entityName ??
             `${entityLabel.charAt(0).toUpperCase() + entityLabel.slice(1)} #${entry.referenceId ?? entry.referenceIdLock}`;
@@ -359,9 +362,7 @@ function EventEntityEntries({
                 </div>
               ) : (
                 <span className="pl-3 text-xs text-muted-foreground italic">
-                  {event.action === 'deletion'
-                    ? '(deleted)'
-                    : '(no field changes)'}
+                  {deleted ? '(deleted)' : '(no field changes)'}
                 </span>
               )}
             </div>
@@ -389,10 +390,14 @@ function EventEntityEntries({
 export default function AuditEventCard({
   event,
 }: AuditEventCardProps): React.JSX.Element {
-  const changes = event.sampleChanges as Record<
-    string,
-    { originalValue: unknown; newValue: unknown }
-  > | null;
+  // A deletion's changes only restate the removed row.
+  const changes =
+    event.action === 'deletion'
+      ? null
+      : (event.sampleChanges as Record<
+          string,
+          { originalValue: unknown; newValue: unknown }
+        > | null);
   const changeCount = changes ? Object.keys(changes).length : 0;
   const hasExpandableContent =
     changeCount > 0 || event.isCascade || event.topEntity.entryCount > 1;

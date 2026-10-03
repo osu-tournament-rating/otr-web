@@ -4,6 +4,8 @@ import * as schema from '@otr/core/db/schema';
 import { AuditEntityType, AuditActionType } from '@otr/core/osu';
 
 import {
+  AuditEntityNameInputSchema,
+  AuditEntityNameResponseSchema,
   EntityAuditInputSchema,
   EntityTimelineResponseSchema,
   EventFeedInputSchema,
@@ -28,6 +30,7 @@ import {
   getParentEntityJoinInfo,
   buildAuditEventKeyExpression,
   getTableNameString,
+  getUnauditedSubmission,
   ALL_AUDIT_TABLES,
   LIGHT_AUDIT_TABLES,
   camelizeChangesKeys,
@@ -41,6 +44,7 @@ import {
   buildFieldChangeConditions,
   buildReferencedUsers,
   extractUserIdsFromChanges,
+  resolveEntityNames,
   resolveEntityNamesBatched,
   resolveUserIds,
   resolveTournamentNames,
@@ -386,6 +390,9 @@ export const getEntityAuditTimeline = publicProcedure
       'Audit entries that were part of a bulk cascade operation include a `cascadeContext` object describing',
       'the top-level entity that triggered the change and a human-readable child summary (e.g. "also affected 85 of 118 matches").',
       '',
+      'Creations were not audited before October 2025. For a tournament with no audit entry for its creation,',
+      '`unauditedSubmission` carries its submission time and submitter from the tournament itself; otherwise it is null.',
+      '',
       '**Pagination** — offset-based with `page` and `pageSize` parameters.',
       'The response includes `page`, `pageSize`, `pages` (total page count), and `total` (total item count).',
       '',
@@ -456,7 +463,7 @@ export const getEntityAuditTimeline = publicProcedure
       .filter((r) => r.item_type === 'note')
       .map((r) => r.item_id);
 
-    const [trimmedEntries, noteRows] = await Promise.all([
+    const [trimmedEntries, noteRows, unauditedSubmission] = await Promise.all([
       auditIds.length > 0
         ? queryAuditEntries(context.db, entityType, {
             ids: auditIds,
@@ -489,6 +496,9 @@ export const getEntityAuditTimeline = publicProcedure
               .where(inArray(notesTable.id, noteIds));
           })()
         : Promise.resolve([] as AdminNoteRow[]),
+      entityType === AuditEntityType.Tournament
+        ? getUnauditedSubmission(context.db, entityId)
+        : Promise.resolve(null),
     ]);
 
     const cascadePairs = new Map<
@@ -736,7 +746,14 @@ export const getEntityAuditTimeline = publicProcedure
 
     const items = mergeTimelineItems(auditItems, noteItems);
 
-    return { page: currentPage, pageSize, pages, total, items };
+    return {
+      page: currentPage,
+      pageSize,
+      pages,
+      total,
+      items,
+      unauditedSubmission,
+    };
   });
 
 export const getAuditEventFeed = publicProcedure
@@ -1332,4 +1349,19 @@ export const getEventDetails = publicProcedure
         : null;
 
     return { entries, nextCursor, hasMore };
+  });
+
+export const getAuditEntityName = publicProcedure
+  .input(AuditEntityNameInputSchema)
+  .output(AuditEntityNameResponseSchema)
+  .route({
+    summary: 'Get the name of an audited entity, including a deleted match',
+    tags: ['audit'],
+    method: 'GET',
+    path: '/audit/entity-name',
+  })
+  .handler(async ({ input, context }) => {
+    const { entityType, entityId } = input;
+    const names = await resolveEntityNames(context.db, entityType, [entityId]);
+    return { entityName: names.get(entityId) ?? null };
   });

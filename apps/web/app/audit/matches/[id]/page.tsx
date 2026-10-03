@@ -8,6 +8,7 @@ import {
   parseParamsOrNotFound,
 } from '@/lib/orpc/server-helpers';
 import { getMatchCached } from '@/lib/orpc/queries/match';
+import { getAuditEntityNameCached } from '@/lib/orpc/queries/audit';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -17,30 +18,39 @@ const paramsSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
 
+/** A deleted match is only named by its deletion audit. */
+async function getMatchName(id: number): Promise<string | null> {
+  const match = await fetchOrpcOptional(() => getMatchCached(id));
+  if (match) return match.name;
+
+  const deleted = await getAuditEntityNameCached(AuditEntityType.Match, id);
+  return deleted.entityName;
+}
+
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const parsed = paramsSchema.safeParse(await params);
   if (!parsed.success) return { title: 'Audit History' };
 
-  const match = await fetchOrpcOptional(() => getMatchCached(parsed.data.id));
+  const name = await getMatchName(parsed.data.id);
 
   return {
-    title: match ? `Audit: ${match.name}` : `Match #${parsed.data.id} Audit`,
+    title: name ? `Audit: ${name}` : `Match #${parsed.data.id} Audit`,
   };
 }
 
 export default async function MatchAuditPage({ params }: PageProps) {
   const { id } = parseParamsOrNotFound(paramsSchema, await params);
 
-  const match = await fetchOrpcOptional(() => getMatchCached(id));
+  const name = await getMatchName(id);
 
   return (
     <>
       <AuditPageHeader
         entityType={AuditEntityType.Match}
         entityId={id}
-        entityName={match?.name}
+        entityName={name ?? undefined}
       />
       <AuditEntityView entityType={AuditEntityType.Match} entityId={id} />
     </>

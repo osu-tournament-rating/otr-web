@@ -103,6 +103,7 @@ import {
   resolveReport,
 } from './procedures/reports/reportProcedures';
 import {
+  getAuditEntityName,
   getEntityAuditTimeline,
   getAuditEventFeed,
   getEventDetails,
@@ -232,6 +233,7 @@ export const router = base.router({
     eventDetails: getEventDetails,
     descendants: getDescendantAuditTimeline,
     descendantCounts: getDescendantAuditCounts,
+    entityName: getAuditEntityName,
   },
   tournaments: {
     list: listTournaments,

@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { ChevronRight, PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 import type {
+  AuditActionUser,
   AuditEntry,
   AuditEventAction,
   CascadeContext,
+  UnauditedSubmission,
 } from '@/lib/orpc/schema/audit';
 import {
   ACTION_LABELS,
@@ -43,6 +45,88 @@ const ACTION_BADGE_COLORS: Record<AuditEventAction, string> = {
   deletion: 'bg-destructive/5 border-destructive/15',
 };
 
+function ActionUserLabel({
+  user,
+  fallback,
+}: {
+  user: AuditActionUser | null;
+  fallback: string;
+}): React.JSX.Element {
+  return (
+    <span className="flex items-center gap-1.5 text-sm">
+      {user ? (
+        <>
+          {user.osuId ? (
+            <OsuAvatar osuId={user.osuId} username={user.username} size={20} />
+          ) : (
+            <Avatar className="h-5 w-5">
+              <AvatarFallback className="text-xs">
+                {user.username?.[0]?.toUpperCase() ?? '?'}
+              </AvatarFallback>
+            </Avatar>
+          )}
+          {user.playerId ? (
+            <Link
+              href={`/players/${user.playerId}`}
+              className="text-primary hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {user.username ?? `User ${user.id}`}
+            </Link>
+          ) : (
+            <span className="text-foreground">
+              {user.username ?? `User ${user.id}`}
+            </span>
+          )}
+        </>
+      ) : (
+        <span className="text-muted-foreground italic">{fallback}</span>
+      )}
+    </span>
+  );
+}
+
+/** A submission the audit log never recorded, read from the tournament itself. */
+export function AuditSubmissionRow({
+  submission,
+}: {
+  submission: UnauditedSubmission;
+}): React.JSX.Element {
+  return (
+    <div data-testid="timeline-submission" className="border-b border-border">
+      <div className="flex items-center gap-3 px-3 pt-2.5 pb-1">
+        <PlusCircle
+          className={cn('h-4 w-4 shrink-0', ACTION_TEXT_COLORS.submission)}
+        />
+
+        <Badge
+          variant="outline"
+          className={cn(
+            'shrink-0 text-xs',
+            ACTION_TEXT_COLORS.submission,
+            ACTION_BADGE_COLORS.submission
+          )}
+        >
+          Submitted
+        </Badge>
+
+        <ActionUserLabel user={submission.submittedBy} fallback="Unknown" />
+
+        <span className="flex-1" />
+
+        <RelativeTime
+          dateString={submission.created}
+          className="shrink-0 text-xs text-muted-foreground"
+        />
+      </div>
+
+      <p className="pr-3 pb-2.5 pl-10 text-xs text-muted-foreground">
+        From the tournament record. Submissions were not audited at the time.
+      </p>
+    </div>
+  );
+}
+
 type AuditEntryRowProps = {
   entry: AuditEntry;
   cascadeContext?: CascadeContext | null;
@@ -58,14 +142,21 @@ export default function AuditEntryRow({
   viewedEntity,
   heading,
 }: AuditEntryRowProps): React.JSX.Element {
-  const changes = entry.changes as Record<
-    string,
-    { originalValue: unknown; newValue: unknown }
-  > | null;
+  // A deletion's changes only restate the removed row.
+  const changes =
+    entry.actionType === AuditActionType.Deleted
+      ? null
+      : (entry.changes as Record<
+          string,
+          { originalValue: unknown; newValue: unknown }
+        > | null);
   const changeCount = changes ? Object.keys(changes).length : 0;
-  const [isOpen, setIsOpen] = useState(changeCount > 0 && changeCount < 10);
-
   const action = classifyAction(entry.actionType, entry.changes);
+  // The verified badge already says what changed.
+  const [isOpen, setIsOpen] = useState(
+    action !== 'verification' && changeCount > 0 && changeCount < 10
+  );
+
   const actionLabel = ACTION_LABELS[action];
   const ActionIcon = ACTION_ICONS[entry.actionType];
 
@@ -116,42 +207,7 @@ export default function AuditEntryRow({
               {actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)}
             </Badge>
 
-            <span className="flex items-center gap-1.5 text-sm">
-              {entry.actionUser ? (
-                <>
-                  {entry.actionUser.osuId ? (
-                    <OsuAvatar
-                      osuId={entry.actionUser.osuId}
-                      username={entry.actionUser.username}
-                      size={20}
-                    />
-                  ) : (
-                    <Avatar className="h-5 w-5">
-                      <AvatarFallback className="text-xs">
-                        {entry.actionUser.username?.[0]?.toUpperCase() ?? '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  {entry.actionUser.playerId ? (
-                    <Link
-                      href={`/players/${entry.actionUser.playerId}`}
-                      className="text-primary hover:underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {entry.actionUser.username ??
-                        `User ${entry.actionUser.id}`}
-                    </Link>
-                  ) : (
-                    <span className="text-foreground">
-                      {entry.actionUser.username ??
-                        `User ${entry.actionUser.id}`}
-                    </span>
-                  )}
-                </>
-              ) : (
-                <span className="text-muted-foreground italic">System</span>
-              )}
-            </span>
+            <ActionUserLabel user={entry.actionUser} fallback="System" />
 
             <span className="flex-1" />
 
