@@ -12,12 +12,8 @@ import {
 } from '@/lib/orpc/schema/admin';
 import type { DatabaseClient } from '@/lib/db';
 
-import { protectedProcedure } from '../base';
-import {
-  ensureAdminDataMutationAllowed,
-  ensureAdminSession,
-  type AdminDataMutationClockContext,
-} from '../shared/adminGuard';
+import { adminMutationProcedure } from '../base';
+import { ensureAdminSession } from '../shared/adminGuard';
 import { getCorrelationId } from '../logging/helpers';
 import {
   publishFetchBeatmapMessage,
@@ -29,7 +25,7 @@ const REFETCH_QUEUE_WARNING = 'Failed to enqueue match or beatmap fetches';
 const BATCH_SIZE = 500;
 const BATCH_DELAY_MS = 100;
 
-interface MassEnqueueContext extends AdminDataMutationClockContext {
+interface MassEnqueueContext {
   db: DatabaseClient;
   session: {
     dbUser?: {
@@ -59,7 +55,6 @@ function delay(ms: number): Promise<void> {
 /** Mass-enqueues beatmaps and matches for refetch, yielding progress events. */
 export async function* massEnqueueHandler({ input, context }: MassEnqueueArgs) {
   const { adminUserId } = ensureAdminSession(context.session);
-  ensureAdminDataMutationAllowed(context);
 
   const { beatmapIds, matchIds, priority } = input;
 
@@ -293,7 +288,7 @@ export async function* massEnqueueHandler({ input, context }: MassEnqueueArgs) {
   };
 }
 
-export const massEnqueue = protectedProcedure
+export const massEnqueue = adminMutationProcedure
   .input(AdminMassEnqueueInputSchema)
   .output(eventIterator(AdminMassEnqueueProgressEventSchema))
   .route({

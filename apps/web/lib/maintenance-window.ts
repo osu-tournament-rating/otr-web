@@ -1,6 +1,6 @@
 import {
   isRatingRecalculationPending,
-  isWithinMaintenanceWindow,
+  type RatingRecalculationTracker,
 } from '@otr/core/maintenance';
 
 /** Forces the window on or off for the e2e suite; honored only when E2E_TEST_AUTH=true. */
@@ -22,14 +22,12 @@ export type RatingTimestamps = {
 };
 
 /**
- * Whether the maintenance window is active, after the e2e override header and
- * `MAINTENANCE_WINDOW_ENABLED`. Tracks the recalculation when given rating
- * timestamps, the wall clock without them.
+ * The window state forced by the e2e override header or
+ * `MAINTENANCE_WINDOW_ENABLED=false`, or null when the ratings decide.
  */
-export const resolveMaintenanceWindowActive = (
-  headers: HeadersLike,
-  ratingTimestamps?: RatingTimestamps
-): boolean => {
+const resolveMaintenanceWindowOverride = (
+  headers: HeadersLike
+): boolean | null => {
   if (isE2eMaintenanceOverrideEnabled()) {
     const override = headers.get(E2E_OVERRIDE_HEADER);
     if (override === 'active') {
@@ -44,12 +42,29 @@ export const resolveMaintenanceWindowActive = (
     return false;
   }
 
-  if (ratingTimestamps) {
-    return isRatingRecalculationPending(
-      ratingTimestamps.now,
-      ratingTimestamps.latestRatingCreated
-    );
-  }
-
-  return isWithinMaintenanceWindow(new Date());
+  return null;
 };
+
+/**
+ * Whether the maintenance window is active for rating timestamps read in the
+ * caller's own query or transaction, after the overrides.
+ */
+export const resolveMaintenanceWindowActive = (
+  headers: HeadersLike,
+  ratingTimestamps: RatingTimestamps
+): boolean =>
+  resolveMaintenanceWindowOverride(headers) ??
+  isRatingRecalculationPending(
+    ratingTimestamps.now,
+    ratingTimestamps.latestRatingCreated
+  );
+
+/**
+ * Whether the maintenance window is active, after the overrides. Asks the
+ * tracker only when no override applies, so a disabled window reads nothing.
+ */
+export const isMaintenanceWindowActive = async (
+  headers: HeadersLike,
+  tracker: Pick<RatingRecalculationTracker, 'isPending'>
+): Promise<boolean> =>
+  resolveMaintenanceWindowOverride(headers) ?? (await tracker.isPending());

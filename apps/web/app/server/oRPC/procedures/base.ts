@@ -12,6 +12,7 @@ import { SpanKind } from '@opentelemetry/api';
 
 import { auth } from '@/lib/auth/auth';
 import { db } from '@/lib/db';
+import { ratingRecalculationTracker } from '@/lib/db/rating-recalculation';
 import { orpcProcedureCalls, orpcProcedureDuration } from '@/lib/metrics';
 
 import type { RequestLoggingContext } from './logging/types';
@@ -20,7 +21,7 @@ import {
   formatUserDescriptor,
   formatProcedurePath,
 } from './logging/helpers';
-import { assertOutsideMaintenanceWindow } from './shared/maintenanceWindow';
+import { assertAdminDataMutationsAllowed } from './shared/maintenanceWindow';
 
 type ApiKeyActor = {
   userId: string;
@@ -767,10 +768,14 @@ export const protectedProcedure = base
   .use(withRequestLogging)
   .use(withErrorBoundary);
 
-// Keeps the public archives consistent with what the processor runs against (#763)
+// The one maintenance check for admin data edits: keeps the archives consistent
+// with what the processor runs against, until new ratings are published (#763)
 const withMaintenanceWindowGuard = base.middleware(
   async ({ context, next }) => {
-    await assertOutsideMaintenanceWindow(context.headers);
+    await assertAdminDataMutationsAllowed(
+      context.headers,
+      ratingRecalculationTracker
+    );
     return next();
   }
 );

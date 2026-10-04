@@ -11,3 +11,4 @@ export * from './rejection-cascade';
 export * from './verification-cascade';
 export { syncTournamentDateRange } from './sync-tournament-date-range';
 export { setAuditUserId, withAuditUserId } from './audit';
+export { readLatestRatingCreated, type LatestRatingDb } from './latest-rating';

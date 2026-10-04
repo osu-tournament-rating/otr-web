@@ -11,10 +11,7 @@ import {
 import { publishFetchMatchMessage } from '@/lib/queue/publishers';
 
 import { adminMutationProcedure } from '../base';
-import {
-  ensureAdminDataMutationAllowed,
-  ensureAdminSession,
-} from '../shared/adminGuard';
+import { ensureAdminSession } from '../shared/adminGuard';
 import { getCorrelationId } from '../logging/helpers';
 
 const QUEUE_FAILURE_WARNING =
@@ -31,7 +28,6 @@ export const manageTournamentMatchesAdmin = adminMutationProcedure
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
-    ensureAdminDataMutationAllowed(context);
 
     const tournament = await context.db.query.tournaments.findFirst({
       columns: { id: true },

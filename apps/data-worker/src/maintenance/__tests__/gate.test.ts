@@ -11,20 +11,20 @@ const noopLogger: Logger = {
   child: () => noopLogger,
 };
 
-const insideWindow = new Date('2026-06-02T12:00:00.000Z');
-const outsideWindow = new Date('2026-06-02T12:15:00.000Z');
+const trackerReporting = (pending: boolean) => ({
+  isPending: mock(async () => pending),
+});
 
 const createMessage = () => ({ nack: mock(() => Promise.resolve()) });
 
 describe('deferIfMaintenanceWindow', () => {
-  it('requeues a message that arrives inside the window', async () => {
+  it('requeues a message while new ratings are pending', async () => {
     const message = createMessage();
 
     const deferred = await deferIfMaintenanceWindow({
-      enabled: true,
+      tracker: trackerReporting(true),
       message,
       logger: noopLogger,
-      now: insideWindow,
       delayMs: 0,
     });
 
@@ -32,14 +32,13 @@ describe('deferIfMaintenanceWindow', () => {
     expect(message.nack).toHaveBeenCalledWith(true);
   });
 
-  it('passes a message through outside the window', async () => {
+  it('passes a message through once new ratings are published', async () => {
     const message = createMessage();
 
     const deferred = await deferIfMaintenanceWindow({
-      enabled: true,
+      tracker: trackerReporting(false),
       message,
       logger: noopLogger,
-      now: outsideWindow,
       delayMs: 0,
     });
 
@@ -47,14 +46,13 @@ describe('deferIfMaintenanceWindow', () => {
     expect(message.nack).not.toHaveBeenCalled();
   });
 
-  it('passes a message through when disabled inside the window', async () => {
+  it('passes a message through when the window is disabled', async () => {
     const message = createMessage();
 
     const deferred = await deferIfMaintenanceWindow({
-      enabled: false,
+      tracker: null,
       message,
       logger: noopLogger,
-      now: insideWindow,
       delayMs: 0,
     });
 

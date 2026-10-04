@@ -1,4 +1,4 @@
-import { isWithinMaintenanceWindow } from '@otr/core/maintenance';
+import type { RatingRecalculationTracker } from '@otr/core/maintenance';
 
 import type { Logger } from '../logging/logger';
 
@@ -12,23 +12,31 @@ interface DeferrableMessage {
   nack: (requeue?: boolean) => Promise<void>;
 }
 
+/** Whether the maintenance window is active; see `createRatingRecalculationTracker`. */
+export type MaintenanceWindowTracker = Pick<
+  RatingRecalculationTracker,
+  'isPending'
+>;
+
 interface DeferOptions {
-  enabled: boolean;
+  /** Null when `MAINTENANCE_WINDOW_ENABLED=false`. */
+  tracker: MaintenanceWindowTracker | null;
   message: DeferrableMessage;
   logger: Logger;
-  now?: Date;
   delayMs?: number;
 }
 
-/** Requeues the message during the maintenance window; returns whether it deferred. */
+/**
+ * Requeues the message during the maintenance window, which lasts until the
+ * processor publishes new ratings; returns whether it deferred.
+ */
 export const deferIfMaintenanceWindow = async ({
-  enabled,
+  tracker,
   message,
   logger,
-  now = new Date(),
   delayMs = MAINTENANCE_REQUEUE_DELAY_MS,
 }: DeferOptions): Promise<boolean> => {
-  if (!enabled || !isWithinMaintenanceWindow(now)) {
+  if (!tracker || !(await tracker.isPending())) {
     return false;
   }
 

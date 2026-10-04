@@ -165,7 +165,6 @@ const createContext = (
 ): UpdateBeatmapAdminArgs['context'] => ({
   db: db as unknown as DatabaseClient,
   session: { dbUser: { id: 1, scopes: ['admin'] } },
-  adminDataMutationDate: new Date('2026-06-05T12:00:00.000Z'),
 });
 
 describe('updateBeatmapAdminHandler', () => {

@@ -263,10 +263,9 @@ describe('RabbitMqConsumer', () => {
   it('requeues a maintenance deferral without consuming an attempt', async () => {
     const channel = await startConsumer('test.maintenance', async (message) => {
       await deferIfMaintenanceWindow({
-        enabled: true,
+        tracker: { isPending: async () => true },
         message,
         logger: noopLogger,
-        now: new Date('2026-06-02T12:00:00.000Z'),
         delayMs: 0,
       });
     });

@@ -106,7 +106,7 @@ describe('OsuTrackPlayerWorker', () => {
       rateLimiter,
       logger: noopLogger,
       db: stubDb,
-      maintenanceWindowEnabled: false,
+      maintenanceWindow: null,
       onPlayer: async ({ message, results }) => {
         received.push({
           message,
@@ -182,7 +182,7 @@ describe('OsuTrackPlayerWorker', () => {
       rateLimiter: new StubRateLimiter(),
       logger: noopLogger,
       db,
-      maintenanceWindowEnabled: false,
+      maintenanceWindow: null,
     });
 
     await worker.start();

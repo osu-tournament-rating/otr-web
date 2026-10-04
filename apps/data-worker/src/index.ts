@@ -9,6 +9,9 @@ import {
   type ProcessTournamentStatsMessage,
 } from '@otr/core';
 
+import { readLatestRatingCreated } from '@otr/core/db';
+import { createRatingRecalculationTracker } from '@otr/core/maintenance';
+
 import { db } from './db';
 import { startMetricsServer } from './metrics';
 import { dataWorkerEnv } from './env';
@@ -172,13 +175,21 @@ const bootstrap = async () => {
     calculator: statsCalculator,
   });
 
+  const maintenanceWindow = dataWorkerEnv.maintenanceWindowEnabled
+    ? createRatingRecalculationTracker({
+        readLatestRatingCreated: () => readLatestRatingCreated(db),
+        onRecheckError: (error) =>
+          logger.warn('failed to read the latest rating', { error }),
+      })
+    : null;
+
   const osuWorker = new OsuApiFetchWorker({
     queue: osuConsumer,
     beatmapService,
     matchService,
     playerService,
     logger,
-    maintenanceWindowEnabled: dataWorkerEnv.maintenanceWindowEnabled,
+    maintenanceWindow,
   });
 
   const osuTrackClient = new OsuTrackClient({});
@@ -189,7 +200,7 @@ const bootstrap = async () => {
     rateLimiter: osuTrackRateLimiter,
     db,
     logger,
-    maintenanceWindowEnabled: dataWorkerEnv.maintenanceWindowEnabled,
+    maintenanceWindow,
     onPlayer: async ({ message, results }) => {
       await processOsuTrackPlayerResults({
         db,
