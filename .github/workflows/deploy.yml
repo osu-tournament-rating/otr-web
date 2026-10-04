@@ -1,12 +1,16 @@
 name: Deploy
 
-# Every merge to master ships to production once CI passes, then becomes a
-# GitHub release that links the merged pull request above its changelog. Running this
-# workflow by hand redeploys an existing release, which is how a bad release
-# is rolled back.
+# Every merge to master becomes a GitHub release that links the merged pull
+# request above its changelog, then ships to production. Running this workflow
+# by hand redeploys an existing release, which is how a bad release is rolled
+# back.
 #
-# Images are built while CI runs, under the release tag only. `latest`, which
-# production's compose file pulls, moves to them once CI has passed.
+# Images are built while CI runs, under the commit's `sha-` tag. Once CI has
+# passed, the release job reserves the next date tag on GitHub, gives the images
+# that tag, and publishes the release. All of that happens before production
+# changes, so a GitHub outage fails the deploy instead of shipping a build that
+# GitHub has no tag for. `latest`, which production's compose file pulls, moves
+# last, and only to images built from the commit the release tag points at.
 
 on:
   push:
@@ -60,26 +64,8 @@ jobs:
             exit 0
           fi
 
-          # The first release of a day is YYYY.MM.DD, later ones add .1, .2, ...
-          day="$(date -u +%Y.%m.%d)"
-          # Captured first: a failed lookup inside the loop's process
-          # substitution went unnoticed and reused an existing tag.
-          refs="$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/$day" --jq '.[].ref')"
-          last=-1
-          while read -r ref; do
-            name="${ref#refs/tags/}"
-            if [[ "$name" == "$day" ]]; then
-              if (( last < 0 )); then last=0; fi
-            elif [[ "$name" =~ ^${day//./\\.}\.([0-9]+)$ ]]; then
-              if (( BASH_REMATCH[1] > last )); then last="${BASH_REMATCH[1]}"; fi
-            fi
-          done <<< "$refs"
-
-          if (( last < 0 )); then tag="$day"; else tag="$day.$(( last + 1 ))"; fi
-          echo "Releasing $SHA as $tag"
-
+          # The release job picks the tag once CI has passed.
           {
-            echo "tag=$tag"
             echo "ref=$SHA"
             echo "new=true"
           } >> "$GITHUB_OUTPUT"
@@ -97,6 +83,9 @@ jobs:
     if: needs.resolve.outputs.new == 'true'
     runs-on: ubuntu-latest
     environment: production
+    outputs:
+      web: ${{ steps.web.outputs.digest }}
+      data-worker: ${{ steps.data-worker.outputs.digest }}
 
     steps:
       - name: Checkout repository
@@ -113,35 +102,140 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # The provenance records the commit, which the deploy checks against the
+      # release tag.
       - name: Build and push web image
+        id: web
         uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/web/Dockerfile
           push: true
-          tags: stagecodes/otr-web:${{ needs.resolve.outputs.tag }}
+          provenance: mode=max
+          tags: stagecodes/otr-web:sha-${{ needs.resolve.outputs.ref }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max,ignore-error=true
 
       - name: Build and push data worker image
+        id: data-worker
         uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/data-worker/Dockerfile
           push: true
-          tags: stagecodes/otr-data-worker:${{ needs.resolve.outputs.tag }}
+          provenance: mode=max
+          tags: stagecodes/otr-data-worker:sha-${{ needs.resolve.outputs.ref }}
           cache-from: type=gha,scope=data-worker
           cache-to: type=gha,scope=data-worker,mode=max,ignore-error=true
 
+  release:
+    name: Publish release
+    needs: [resolve, checks, build]
+    if: needs.resolve.outputs.new == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    outputs:
+      tag: ${{ steps.reserve.outputs.tag }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.ref }}
+          fetch-depth: 0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.x
+
+      # Only reads, so it runs before anything is written.
+      - name: Write release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ needs.resolve.outputs.ref }}
+        run: bun .github/scripts/release-notes.ts render > release-notes.md
+
+      - name: Reserve release tag
+        id: reserve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ needs.resolve.outputs.ref }}
+        run: |
+          set -euo pipefail
+
+          # The first release of a day is YYYY.MM.DD, later ones add .1, .2, ...
+          day="$(date -u +%Y.%m.%d)"
+          # Captured first: a failed lookup inside the loop's process
+          # substitution went unnoticed and reused an existing tag.
+          refs="$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/$day" \
+            --jq '.[] | [.ref, .object.sha] | @tsv')"
+          last=-1
+          tag=
+          while IFS=$'\t' read -r ref sha; do
+            name="${ref#refs/tags/}"
+            if [[ "$name" == "$day" ]]; then
+              n=0
+            elif [[ "$name" =~ ^${day//./\\.}\.([0-9]+)$ ]]; then
+              n="${BASH_REMATCH[1]}"
+            else
+              continue
+            fi
+            if (( n > last )); then last="$n"; fi
+            # A re-run keeps the tag it already reserved for this commit.
+            if [[ "$sha" == "$SHA" ]]; then tag="$name"; fi
+          done <<< "$refs"
+
+          if [[ -z "$tag" ]]; then
+            if (( last < 0 )); then tag="$day"; else tag="$day.$(( last + 1 ))"; fi
+            # Creating a tag that already exists fails, so a stale lookup
+            # cannot hand out a tag twice.
+            gh api "repos/$GITHUB_REPOSITORY/git/refs" \
+              -f "ref=refs/tags/$tag" -f "sha=$SHA" >/dev/null
+          fi
+
+          echo "Releasing $SHA as $tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # By digest, so the tag lands on exactly the images this run built.
+      - name: Tag images with the release
+        env:
+          TAG: ${{ steps.reserve.outputs.tag }}
+          WEB: stagecodes/otr-web@${{ needs.build.outputs.web }}
+          DATA_WORKER: stagecodes/otr-data-worker@${{ needs.build.outputs.data-worker }}
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create --tag "stagecodes/otr-web:$TAG" "$WEB"
+          docker buildx imagetools create --tag "stagecodes/otr-data-worker:$TAG" "$DATA_WORKER"
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.reserve.outputs.tag }}
+        run: |
+          gh release create "$TAG" --verify-tag --title "$TAG" \
+            --notes-file release-notes.md --latest
+
   deploy:
     name: Deploy to production
-    needs: [resolve, checks, build]
-    # A redeploy skips CI and the build; a new release needs both to pass.
+    needs: [resolve, release]
+    # A redeploy skips CI, the build, and the release; a new release needs all
+    # three to pass.
     if: >-
       !cancelled() &&
       needs.resolve.result == 'success' &&
-      (needs.resolve.outputs.new != 'true' ||
-       (needs.checks.result == 'success' && needs.build.result == 'success'))
+      (needs.resolve.outputs.new != 'true' || needs.release.result == 'success')
     runs-on: ubuntu-latest
     environment: production
 
@@ -163,13 +257,29 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Point latest at the release images
+      # An image whose provenance does not name the release's commit, such as
+      # one pushed by hand, is refused.
+      - name: Verify release images
+        id: images
         env:
-          TAG: ${{ needs.resolve.outputs.tag }}
+          TAG: ${{ needs.resolve.outputs.tag || needs.release.outputs.tag }}
         run: |
           set -euo pipefail
-          for image in stagecodes/otr-web stagecodes/otr-data-worker; do
-            docker buildx imagetools create --tag "$image:latest" "$image:$TAG"
+          commit="$(git rev-parse HEAD)"
+          for image in otr-web otr-data-worker; do
+            digest="$(docker buildx imagetools inspect "stagecodes/$image:$TAG" \
+              --format '{{json .Manifest}}' | jq -r .digest)"
+            # Older images carry SLSA v0.2 provenance, newer ones v1.
+            built="$(docker buildx imagetools inspect "stagecodes/$image@$digest" \
+              --format '{{json .Provenance}}' | jq -r '
+                .SLSA.runDetails.metadata.buildkit_metadata.vcs.revision //
+                .SLSA.metadata["https://mobyproject.org/buildkit@v1#metadata"].vcs.revision //
+                empty')"
+            if [[ "$built" != "$commit" ]]; then
+              echo "::error::stagecodes/$image:$TAG was built from ${built:-an unrecorded commit}, not $TAG ($commit)." >&2
+              exit 1
+            fi
+            echo "$image=stagecodes/$image@$digest" >> "$GITHUB_OUTPUT"
           done
 
       - name: Connect to tailscale
@@ -203,6 +313,17 @@ jobs:
           scp -o StrictHostKeyChecking=no -r .env docker-compose.yml monitoring \
           "$SSH_USER@$SSH_HOST:$REMOTE_PATH/"
 
+      # Moved only once the host is reachable, so an unreachable host leaves
+      # `latest` where production is.
+      - name: Point latest at the release images
+        env:
+          WEB: ${{ steps.images.outputs.otr-web }}
+          DATA_WORKER: ${{ steps.images.outputs.otr-data-worker }}
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create --tag stagecodes/otr-web:latest "$WEB"
+          docker buildx imagetools create --tag stagecodes/otr-data-worker:latest "$DATA_WORKER"
+
       - name: Deploy stack via docker compose
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
@@ -215,39 +336,3 @@ jobs:
             docker compose pull
             docker compose --profile migrate run --rm migrate && docker compose --profile node-exporter up -d --remove-orphans
           EOF
-
-  release:
-    name: Publish release
-    needs: [resolve, deploy]
-    if: needs.resolve.outputs.new == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: read
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.resolve.outputs.ref }}
-          fetch-depth: 0
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.3.x
-
-      - name: Write release notes
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TARGET_SHA: ${{ needs.resolve.outputs.ref }}
-        run: bun .github/scripts/release-notes.ts render > release-notes.md
-
-      - name: Create release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.resolve.outputs.tag }}
-          TARGET_SHA: ${{ needs.resolve.outputs.ref }}
-        run: |
-          gh release create "$TAG" --target "$TARGET_SHA" --title "$TAG" \
-            --notes-file release-notes.md --latest
