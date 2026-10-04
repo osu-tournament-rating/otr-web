@@ -62,4 +62,3 @@ monitoring/loki/data/
 
 # top-level images (playwright mcp)
 *.png
-!/.agents/skills/build-and-verify-otr-ui/assets/references/*.png
