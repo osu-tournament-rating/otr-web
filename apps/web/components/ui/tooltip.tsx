@@ -24,9 +24,25 @@ function Tooltip({
 }
 
 function TooltipTrigger({
+  onFocus,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
+  return (
+    <TooltipPrimitive.Trigger
+      data-slot="tooltip-trigger"
+      onFocus={(event) => {
+        onFocus?.(event);
+        // Open on keyboard focus only. A dialog returns focus to its trigger
+        // on close, which would otherwise pop the tooltip open for mouse users
+        // (https://github.com/radix-ui/primitives/issues/2248). Radix skips
+        // its open handler when the event is default-prevented.
+        if (!(event.target as Element).matches(':focus-visible')) {
+          event.preventDefault();
+        }
+      }}
+      {...props}
+    />
+  );
 }
 
 function TooltipContent({
