@@ -2,11 +2,6 @@ name: Processor deploy
 
 on:
   workflow_call:
-    inputs:
-      target:
-        required: true
-        type: string
-        description: "Environment to deploy to"
 
 jobs:
   publish:
@@ -24,22 +19,17 @@ jobs:
       - name: Set Docker Tags
         id: set-tag
         run: |
-          image_prefix="${{ secrets.DOCKERHUB_USERNAME }}/otr-processor"
-          if [[ "${{ inputs.target }}" == "staging" ]]; then
-            echo "PRIMARY_TAG=staging-latest" >> $GITHUB_OUTPUT
-            echo "TAGS=${image_prefix}:staging-latest" >> $GITHUB_OUTPUT
-          elif [[ "${{ inputs.target }}" == "production" && "${{ github.ref_type }}" == "tag" ]]; then
-            echo "PRIMARY_TAG=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-            {
-              echo 'TAGS<<EOF'
-              echo "${image_prefix}:${{ github.ref_name }}"
-              echo "${image_prefix}:latest"
-              echo 'EOF'
-            } >> "$GITHUB_OUTPUT"
-          else
-            echo "Invalid target: ${{ inputs.target }}"
+          if [[ ! "${{ github.ref }}" =~ ^refs/tags/[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$ ]]; then
+            echo "Production deploys require a release tag, got: ${{ github.ref }}"
             exit 1
           fi
+          image_prefix="${{ secrets.DOCKERHUB_USERNAME }}/otr-processor"
+          {
+            echo 'TAGS<<EOF'
+            echo "${image_prefix}:${{ github.ref_name }}"
+            echo "${image_prefix}:latest"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5

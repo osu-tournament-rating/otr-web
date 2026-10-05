@@ -9,11 +9,10 @@ schema and migrations. Treat the boundary as a contract. Start task
 configuration from `.env.example`; never copy credentials, commit `.env`, or log
 a credentialed PostgreSQL or RabbitMQ URL.
 
-Running the binary changes its target database. Never use production, staging,
-the user's database, or a shared database for verification. `--ignore-constraints`
-is not a dry run. Use the assigned disposable database on port `5434` for manual
-runs. Existing isolated Testcontainers tests can use their assigned dynamic
-ports. Never connect to the user's port `5432`.
+Running the binary changes its target database. Never use production or a
+shared database for verification. `--ignore-constraints` is not a dry run. Use
+the assigned disposable database on port `5434` for manual runs. Existing
+isolated Testcontainers tests can use their assigned dynamic ports.
 
 ## Commands
 
