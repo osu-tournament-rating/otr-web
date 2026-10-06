@@ -3,7 +3,10 @@
 .vscode
 .husky
 .agents
-node_modules
+# `**/` is required: a bare `node_modules` strips only the root folder, and the
+# workspace copies under apps/* and packages/* hold bun symlinks that collide
+# with the real directories `bun install` creates in the image.
+**/node_modules
 .bun
 .bun_tmp
 .tmp
