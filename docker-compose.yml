@@ -71,6 +71,10 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     image: stagecodes/otr-web:latest
+    # The published images are amd64 only. Without this, an arm64 host (Apple
+    # Silicon) finds no matching manifest and silently builds from the local
+    # checkout instead of running the deployed image.
+    platform: linux/amd64
     container_name: otr-migrate
     profiles:
       - migrate
@@ -90,6 +94,10 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     image: stagecodes/otr-web:latest
+    # The published images are amd64 only. Without this, an arm64 host (Apple
+    # Silicon) finds no matching manifest and silently builds from the local
+    # checkout instead of running the deployed image.
+    platform: linux/amd64
     container_name: otr-web
     restart: unless-stopped
     ports:
@@ -128,6 +136,10 @@ services:
       context: .
       dockerfile: apps/data-worker/Dockerfile
     image: stagecodes/otr-data-worker:latest
+    # The published images are amd64 only. Without this, an arm64 host (Apple
+    # Silicon) finds no matching manifest and silently builds from the local
+    # checkout instead of running the deployed image.
+    platform: linux/amd64
     container_name: otr-data-worker
     restart: unless-stopped
     depends_on:
