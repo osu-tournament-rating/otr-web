@@ -1,4 +1,4 @@
-use crate::messaging::config::RabbitMqConfig;
+use crate::messaging::config::{parse_amqp_uri, RabbitMqConfig};
 use chrono::{DateTime, Utc};
 use lapin::{
     options::{BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions},
@@ -90,7 +90,8 @@ impl RabbitMqPublisher {
 
     /// Connects to RabbitMQ and initializes the publisher
     pub async fn connect(&mut self, rabbitmq_url: &str) -> Result<(), PublisherError> {
-        let connection = Connection::connect(rabbitmq_url, ConnectionProperties::default()).await?;
+        let uri = parse_amqp_uri(rabbitmq_url).map_err(|e| lapin::Error::from(std::io::Error::other(e)))?;
+        let connection = Connection::connect_uri(uri, ConnectionProperties::default()).await?;
         let connection = Arc::new(connection);
 
         let channel = connection.create_channel().await?;

@@ -27,9 +27,11 @@ async fn simulate_crash_during_processing(test_db: &TestDatabase, crash_after_ms
         "target/release/otr-processor"
     };
 
-    // Start the processor in a subprocess
+    // Start the processor in a subprocess. Both URLs are set because dotenv
+    // would otherwise load otr-web's root .env and reach the local services.
     let mut child = Command::new(binary_path)
-        .env("CONNECTION_STRING", &test_db.connection_string)
+        .env("DATABASE_URL", &test_db.connection_string)
+        .env("RABBITMQ_AMQP_URL", "amqp://127.0.0.1:1")
         .env("RUST_LOG", "warn")
         .spawn()
         .expect("Failed to start processor");

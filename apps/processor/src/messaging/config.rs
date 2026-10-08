@@ -1,3 +1,5 @@
+use crate::args::{first_env, RABBITMQ_URL_VARS};
+use lapin::uri::AMQPUri;
 use serde::{Deserialize, Serialize};
 use std::{env, time::Duration};
 
@@ -33,8 +35,8 @@ pub struct RabbitMqConfig {
 impl RabbitMqConfig {
     /// Creates a new RabbitMQ configuration from environment variables
     pub fn from_env() -> Result<Self, env::VarError> {
-        // Try RABBITMQ_URL first for backward compatibility
-        if let Ok(url) = env::var("RABBITMQ_URL") {
+        // A URL wins over the individual variables, preferring otr-web's RABBITMQ_AMQP_URL
+        if let Some(url) = first_env(&RABBITMQ_URL_VARS) {
             return Self::from_url(&url);
         }
 
@@ -148,6 +150,20 @@ impl RabbitMqConfig {
     pub fn broker_address(&self) -> String {
         format!("rabbitmq://{}", self.host)
     }
+}
+
+/// Parses an AMQP URL, reading an empty vhost as RabbitMQ's default `/`.
+///
+/// By the AMQP URI spec, `amqp://host:5672/` names the empty vhost `""`, which
+/// lapin sends as is and RabbitMQ refuses. otr-web's shared `RABBITMQ_AMQP_URL`
+/// is written with that trailing slash, which its Node client reads as `/`.
+/// The error never repeats the URL, since it can carry credentials.
+pub fn parse_amqp_uri(url: &str) -> Result<AMQPUri, String> {
+    let mut uri: AMQPUri = url.parse().map_err(|e: String| e.replace(url, "<redacted>"))?;
+    if uri.vhost.is_empty() {
+        uri.vhost = "/".to_string();
+    }
+    Ok(uri)
 }
 
 impl Default for RabbitMqConfig {
@@ -271,6 +287,45 @@ mod tests {
         assert_eq!(config.password, "mypass");
         assert_eq!(config.port, 5673);
         assert_eq!(config.vhost, "/myvhost");
+    }
+
+    #[test]
+    fn test_from_url_trailing_slash_is_default_vhost() {
+        let config = RabbitMqConfig::from_url("amqp://admin:admin@localhost:5672/").unwrap();
+
+        assert_eq!(config.host, "localhost");
+        assert_eq!(config.username, "admin");
+        assert_eq!(config.password, "admin");
+        assert_eq!(config.port, 5672);
+        assert_eq!(config.vhost, "/");
+    }
+
+    #[test]
+    fn test_parse_amqp_uri_vhost() {
+        let vhost = |url: &str| parse_amqp_uri(url).unwrap().vhost;
+
+        assert_eq!(vhost("amqp://admin:admin@localhost:5672/"), "/");
+        assert_eq!(vhost("amqp://admin:admin@localhost:5672"), "/");
+        assert_eq!(vhost("amqp://admin:admin@localhost:5672/%2f"), "/");
+        assert_eq!(vhost("amqp://admin:admin@localhost:5672/myvhost"), "myvhost");
+    }
+
+    #[test]
+    fn test_parse_amqp_uri_keeps_the_rest() {
+        let uri = parse_amqp_uri("amqp://user:p%40ss@rabbitmq:5673/?heartbeat=30").unwrap();
+
+        assert_eq!(uri.authority.userinfo.username, "user");
+        assert_eq!(uri.authority.userinfo.password, "p@ss");
+        assert_eq!(uri.authority.host, "rabbitmq");
+        assert_eq!(uri.authority.port, 5673);
+        assert_eq!(uri.query.heartbeat, Some(30));
+    }
+
+    #[test]
+    fn test_parse_amqp_uri_error_hides_the_url() {
+        let error = parse_amqp_uri("amqp:user:secret@localhost").unwrap_err();
+
+        assert!(!error.contains("secret"), "{error}");
     }
 
     #[test]

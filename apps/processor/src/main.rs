@@ -1,6 +1,6 @@
 use clap::Parser;
 use otr_processor::{
-    args::Args,
+    args::{first_env, Args, DATABASE_URL_VARS, RABBITMQ_URL_VARS},
     database::db::DbClient,
     messaging::RabbitMqPublisher,
     model::{otr_model::OtrModel, rating_utils::create_initial_ratings},
@@ -203,7 +203,7 @@ async fn main() {
 
 async fn client(args: &Args) -> DbClient {
     let connection_string =
-        std::env::var("CONNECTION_STRING").expect("CONNECTION_STRING environment variable must be set");
+        first_env(&DATABASE_URL_VARS).expect("DATABASE_URL or CONNECTION_STRING environment variable must be set");
 
     match DbClient::connect(&connection_string, args.ignore_constraints).await {
         Ok(client) => client,
@@ -216,8 +216,7 @@ async fn client(args: &Args) -> DbClient {
 }
 
 async fn initialize_rabbitmq() -> Result<RabbitMqPublisher, Box<dyn std::error::Error>> {
-    let rabbitmq_url =
-        std::env::var("RABBITMQ_URL").unwrap_or_else(|_| "amqp://admin:admin@localhost:5672".to_string());
+    let rabbitmq_url = first_env(&RABBITMQ_URL_VARS).unwrap_or_else(|| "amqp://admin:admin@localhost:5672".to_string());
 
     let routing_key =
         std::env::var("RABBITMQ_ROUTING_KEY").unwrap_or_else(|_| "processing.stats.tournaments".to_string());

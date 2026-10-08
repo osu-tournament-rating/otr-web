@@ -30,10 +30,11 @@ fn test_application_exits_on_connection_failure() {
         "target/release/otr-processor"
     };
 
-    // Run with invalid connection string
+    // Run with invalid connection string. DATABASE_URL is set because it outranks
+    // CONNECTION_STRING, and dotenv would otherwise load it from otr-web's root .env.
     let output = Command::new(binary_path)
         .env(
-            "CONNECTION_STRING",
+            "DATABASE_URL",
             "host=invalid_host port=5432 user=postgres password=wrong dbname=nonexistent"
         )
         .env("RUST_LOG", "warn")
@@ -54,7 +55,7 @@ fn test_application_exits_on_connection_failure() {
     );
 }
 
-/// Test that the application handles missing CONNECTION_STRING environment variable
+/// Test that the application handles missing DATABASE_URL and CONNECTION_STRING environment variables
 #[test]
 #[serial]
 fn test_application_exits_on_missing_connection_string() {
@@ -84,7 +85,7 @@ fn test_application_exits_on_missing_connection_string() {
     let temp_dir = std::env::temp_dir().join("otr_processor_test");
     std::fs::create_dir_all(&temp_dir).ok();
 
-    // Run without CONNECTION_STRING and from a directory without .env
+    // Run without DATABASE_URL or CONNECTION_STRING and from a directory without .env
     let output = Command::new(&binary_path)
         .current_dir(&temp_dir)
         .env_clear() // Clear all environment variables
@@ -99,13 +100,13 @@ fn test_application_exits_on_missing_connection_string() {
     // Should exit with error code
     assert!(
         !output.status.success(),
-        "Process should fail without CONNECTION_STRING"
+        "Process should fail without DATABASE_URL or CONNECTION_STRING"
     );
 
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(
-        stderr.contains("CONNECTION_STRING environment variable must be set"),
-        "Should report missing CONNECTION_STRING. Got: {}",
+        stderr.contains("DATABASE_URL or CONNECTION_STRING environment variable must be set"),
+        "Should report missing DATABASE_URL and CONNECTION_STRING. Got: {}",
         stderr
     );
 }

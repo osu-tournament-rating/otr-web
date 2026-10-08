@@ -132,6 +132,7 @@ mod config_tests {
     }
 
     fn cleanup_env_vars() {
+        env::remove_var("RABBITMQ_AMQP_URL");
         env::remove_var("RABBITMQ_URL");
         env::remove_var("RABBITMQ_HOST");
         env::remove_var("RABBITMQ_USERNAME");
