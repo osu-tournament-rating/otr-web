@@ -157,8 +157,8 @@ async fn test_crash_leaves_database_consistent() {
         committed.push(snapshot(&check_client, table).await);
     }
 
-    // Killing after a fixed delay raced the commit, which the small seed
-    // usually won. A read lock on player_ratings instead stalls the next run at
+    // A fixed delay usually let the run commit before the kill, since the seed
+    // is small. A read lock on player_ratings instead stalls the next run at
     // its TRUNCATE of that table, inside its transaction and after earlier
     // writes, so the kill always lands mid-transaction.
     let lock_client = test_db.get_client().await.expect("Failed to get client");

@@ -12,9 +12,13 @@ on:
         default: true
 
 jobs:
-  # Gates the processor jobs. A pull request diffs its merge commit against the
-  # base it merges into; deploy.yml's push to master diffs the pushed range.
-  # Plain git covers both events without a token or a third-party action.
+  # Decides whether the processor jobs run: only when a file under
+  # apps/processor/ changed. On a pull request, CI checks out GitHub's trial
+  # merge of the pull request into master, so comparing it with master lists
+  # exactly what the pull request changes. When deploy.yml runs CI on a push to
+  # master, the job compares master before the push with master after it. This
+  # uses plain git rather than the dorny/paths-filter action, which would need a
+  # token and add a third-party dependency.
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -23,7 +27,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # The merge commit's first parent is the pull request's base.
+          # Also fetches the master commit that a pull request is compared with.
           fetch-depth: 2
 
       - name: Detect changed paths
@@ -39,12 +43,13 @@ jobs:
             git fetch --quiet --depth=1 origin "$BEFORE"; then
             base="$BEFORE"
           else
-            # No previous commit to compare with, so run everything.
+            # No commit to compare the push with, so run the processor jobs.
             echo "processor=true" | tee -a "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          # --no-renames lists both sides of a move.
+          # --no-renames lists a moved file under its old and new paths, so a
+          # file moved out of apps/processor/ still counts.
           changed="$(git diff --name-only --no-renames "$base" HEAD)"
           processor=false
           if grep -q '^apps/processor/' <<<"$changed"; then processor=true; fi
