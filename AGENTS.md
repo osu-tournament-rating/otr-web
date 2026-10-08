@@ -15,7 +15,7 @@ Run commands from the repository root unless noted.
 - `bun test` runs the Bun tests across all workspaces.
 - In `apps/processor`, check with `cargo +nightly fmt -- --check`,
   `cargo clippy`, and `cargo test`. Its database tests need Docker for
-  Testcontainers.
+  Testcontainers. CI runs these only when `apps/processor/**` changes.
 - E2E specs are `apps/web/e2e/*.e2e.ts` and need the configured database,
   RabbitMQ, and auth fixtures. Write or run them only when instructed.
 - Avoid `bun run build` and the full E2E suite — both build, and both are slow.

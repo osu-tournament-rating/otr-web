@@ -34,6 +34,8 @@ isolated Testcontainers tests can use their assigned dynamic ports.
   otherwise the root `.env` supplies them.
 - Before handoff: `cargo +nightly fmt -- --check`, `cargo clippy`, `cargo test`,
   and `git diff --check`. Report unavailable infrastructure as blocked.
+- CI runs fmt, clippy with `-D warnings`, tests, and an image build only when a
+  change touches `apps/processor/**`.
 
 ## Ownership
 
