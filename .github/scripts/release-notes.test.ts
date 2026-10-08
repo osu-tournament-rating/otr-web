@@ -4,6 +4,7 @@ import {
   checkPullRequest,
   parseChangelog,
   parseHeader,
+  pullNumber,
   renderRelease,
 } from './release-notes';
 
@@ -24,6 +25,32 @@ describe('parseHeader', () => {
     expect(parseHeader('Fix the leaderboard')).toBeNull();
     expect(parseHeader('fix:no space')).toBeNull();
     expect(parseHeader('Fix: capitalised type')).toBeNull();
+  });
+});
+
+describe('pullNumber', () => {
+  it('reads the number a squash merge appends', () => {
+    expect(pullNumber('fix(ui): tooltips stay closed (#937)')).toBe(937);
+    expect(pullNumber('fix: x (#12) (#34)')).toBe(34);
+  });
+
+  it('reads the number from a merge commit', () => {
+    expect(
+      pullNumber(
+        'Merge pull request #940 from osu-tournament-rating/cc/processor-import'
+      )
+    ).toBe(940);
+  });
+
+  it('ignores commits that merged no pull request', () => {
+    expect(pullNumber('chore: pushed directly')).toBeUndefined();
+    expect(pullNumber('fix: see #12 for context')).toBeUndefined();
+    expect(pullNumber("Merge branch 'master' into feature")).toBeUndefined();
+    expect(
+      pullNumber("Add 'apps/processor/' from commit '8c59235b'")
+    ).toBeUndefined();
+    expect(pullNumber('Merge pull request #940')).toBeUndefined();
+    expect(pullNumber('')).toBeUndefined();
   });
 });
 
