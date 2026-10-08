@@ -6,6 +6,11 @@
 // the pull request link followed by those bullets. Anything after the marker,
 // such as a signature, never reaches the release.
 //
+// A release covers master's first-parent commits since the previous release.
+// A pull request merged with a merge commit, such as one that imports another
+// repository's history, is its one `Merge pull request #N` commit, and the
+// commits it brought in are not listed.
+//
 //   bun .github/scripts/release-notes.ts check   validates PR_TITLE and PR_BODY
 //   bun .github/scripts/release-notes.ts render  prints notes for TARGET_SHA,
 //                                                 since PREVIOUS_TAG or the
@@ -40,7 +45,10 @@ const HEADER =
   /^(?<type>[a-z]+)(?:\((?<scope>[^()\r\n]+)\))?(?<breaking>!)?: (?<description>\S.*)$/;
 
 /** The number GitHub appends to a squash-merged title, e.g. `(#930)`. */
-const PULL_NUMBER = /\s*\(#(\d+)\)$/;
+const SQUASH_PULL_NUMBER = /\s*\(#(\d+)\)$/;
+
+/** The subject of a merge commit, e.g. `Merge pull request #930 from o/branch`. */
+const MERGE_PULL_NUMBER = /^Merge pull request #(\d+) from \S/;
 
 const BULLET = /^\s*[-*] \S/;
 const TOP_LEVEL_BULLET = /^[-*] \S/;
@@ -58,6 +66,13 @@ export function parseHeader(title: string): Header | null {
     breaking: groups.breaking === '!',
     description: groups.description,
   };
+}
+
+/** The pull request a commit on master merged, read from its subject. */
+export function pullNumber(subject: string): number | undefined {
+  const match =
+    SQUASH_PULL_NUMBER.exec(subject) ?? MERGE_PULL_NUMBER.exec(subject);
+  return match ? Number(match[1]) : undefined;
 }
 
 export interface Changelog {
@@ -182,13 +197,13 @@ async function render(target: string): Promise<string> {
     (await $`gh release view --json tagName --jq .tagName`.text()).trim();
   const repository = (await $`gh repo view --json url --jq .url`.text()).trim();
   const log =
-    await $`git log --reverse --format=%H%x09%s ${`${previous}..${target}`}`.text();
+    await $`git log --first-parent --reverse --format=%H%x09%s ${`${previous}..${target}`}`.text();
 
   const changes: MergedChange[] = [];
   for (const line of log.split('\n').filter(Boolean)) {
     const [sha, subject] = line.split('\t');
-    const number = PULL_NUMBER.exec(subject)?.[1];
-    if (number) {
+    const number = pullNumber(subject);
+    if (number !== undefined) {
       const body = await $`gh pr view ${number} --json body --jq .body`.text();
       changes.push({ url: `${repository}/pull/${number}`, body });
     } else {

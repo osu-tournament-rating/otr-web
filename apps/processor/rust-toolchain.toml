@@ -1,0 +1,4 @@
+# Matches `rust-version` in Cargo.toml and the Dockerfile's rust image. rustfmt
+# is the one nightly tool: run `cargo +nightly fmt`.
+[toolchain]
+channel = "1.97.1"

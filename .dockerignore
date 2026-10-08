@@ -32,6 +32,8 @@ apps/web/playwright-report
 apps/web/test-results
 apps/web/e2e
 apps/data-worker/tests
+# The processor image builds with apps/processor as its own context.
+apps/processor
 monitoring
 docker-compose*.yml
 Dockerfile

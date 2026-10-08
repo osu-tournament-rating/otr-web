@@ -1,0 +1,2 @@
+# The Rust processor formats with rustfmt, and its JSON is test data.
+apps/processor/

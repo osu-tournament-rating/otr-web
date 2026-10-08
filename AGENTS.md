@@ -5,12 +5,17 @@ Run commands from the repository root unless noted.
 - `packages/otr-core/` is the shared contract layer: Drizzle schema, relations,
   domain enums, queue names and messages, logging, maintenance windows. Never
   duplicate a shared contract inside an app workspace.
+- `apps/processor/` is the Rust rating processor, not a bun workspace. Run cargo
+  from that directory; its `AGENTS.md` has the processor guidance.
 - Do not invoke anything under `scripts/` or `monitoring/`.
 
 ## Commands
 
 - `bun run dev` serves the web app on :3000. Playwright owns :3001.
 - `bun test` runs the Bun tests across all workspaces.
+- In `apps/processor`, check with `cargo +nightly fmt -- --check`,
+  `cargo clippy`, and `cargo test`. Its database tests need Docker for
+  Testcontainers.
 - E2E specs are `apps/web/e2e/*.e2e.ts` and need the configured database,
   RabbitMQ, and auth fixtures. Write or run them only when instructed.
 - Avoid `bun run build` and the full E2E suite — both build, and both are slow.
@@ -89,5 +94,5 @@ Run commands from the repository root unless noted.
   `docker compose up -d db` if nothing is running at `localhost:5432`.
 - If a non-o!TR database is running at `localhost:5432`, make no writes and apply
   no migrations. Report it as a blocking issue.
-- Physical SQL names and persisted numeric enums are contracts with
-  `otr-processor`. TypeScript cannot validate those consumers.
+- Physical SQL names and persisted numeric enums are contracts with the Rust
+  processor in `apps/processor`. TypeScript cannot validate that consumer.
