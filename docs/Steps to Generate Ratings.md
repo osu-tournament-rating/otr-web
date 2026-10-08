@@ -110,9 +110,11 @@ gunzip -c /path/to/replica.gz | docker exec -i otr-db psql -U postgres -d postgr
 
 ### Run the processor
 
-Browse the [releases page](https://github.com/osu-tournament-rating/otr-processor/releases) to find the most recent release published **at or before the timestamp of the *replica*** imported earlier. The replica's timestamp, not the effective date, is the reference point. The ratings in a replica were produced by whichever release was live when it was taken.
+Processor releases up to `2026.08.16` were published from the [otr-processor repository](https://github.com/osu-tournament-rating/otr-processor/releases); later processor releases are [otr-web releases](https://github.com/osu-tournament-rating/otr-web/releases) that changed the processor. Every supported processor release has a [`stagecodes/otr-processor` image](https://hub.docker.com/r/stagecodes/otr-processor/tags) tagged with its name, so an otr-web release after `2026.08.16` without a matching image is not a processor release. No otr-web release up to `2026.08.16` is a processor release, even when it shares a name with one.
 
-Docker image tags match release versions, so take the name of the release and replace the `YYYY.MM.DD` text below with that value.
+Find the most recent processor release published **at or before the timestamp of the *replica*** imported earlier. The replica's timestamp, not the effective date, is the reference point. The ratings in a replica were produced by whichever release was live when it was taken. `otr-replay` makes this selection automatically.
+
+Docker image tags match release names, so take the name of the release and replace the `YYYY.MM.DD` text below with that value.
 
 ```bash
 docker run --rm \
@@ -126,9 +128,11 @@ docker run --rm \
 
 > [!note]
 > A placeholder `RABBITMQ_URL` is provided as the processor requires it be set. A warning will appear in the processor that can be safely ignored.
+>
+> `CONNECTION_STRING` and `RABBITMQ_URL` work with every processor release. Images published from otr-web also accept `DATABASE_URL` and `RABBITMQ_AMQP_URL`.
 
 > [!example]
-> If the effective date is `2026-07-01T23:00:00Z`, the newest replica at or before it is `2026-06-30T11:45:01Z`, and the latest release published before that replica is `2026.05.18`.
+> If the effective date is `2026-07-01T23:00:00Z`, the newest replica at or before it is `2026-06-30T11:45:01Z`, and the latest processor release published before that replica is `2026.05.18`.
 
 > [!example]
 > Releases `2026.08.03` and `2026.08.04` were published at `2026-08-03T23:05:05Z` and `2026-08-04T23:41:47Z`. For an effective date of `2026-08-05T12:00:00Z`, the newest replica at or before it is `2026-08-04T11:45:01Z`, which was taken roughly twelve hours before `2026.08.04` shipped. The correct release is therefore `2026.08.03`, even though `2026.08.04` was already published by the effective date.
@@ -139,7 +143,7 @@ docker run --rm \
 > A release is only deployed once its Docker image exists. Usually this happens a few minutes after the GitHub release. This can be verified on [Docker Hub](https://hub.docker.com/r/stagecodes/otr-processor/tags).
 
 > [!tip]
-> The releases page shows relative dates such as "3 days ago". Hover over one to reveal its exact publication time in UTC. When a release and the replica share a date, compare those two times directly and skip the release if it came later.
+> The releases pages show relative dates such as "3 days ago". Hover over one to reveal its exact publication time in UTC. When a release and the replica share a date, compare those two times directly and skip the release if it came later.
 
 ### Reconcile decay
 

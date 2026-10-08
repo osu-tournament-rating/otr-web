@@ -7,8 +7,7 @@ Please leave all bug reports on the respective repository's issues page. For new
 Here are our repositories:
 
 * [o!TR Docs](https://github.com/osu-tournament-rating/otr-docs)
-* [o!TR Processor](https://github.com/osu-tournament-rating/otr-processor)
-* [o!TR Web](https://github.com/osu-tournament-rating/otr-web)
+* [o!TR Web](https://github.com/osu-tournament-rating/otr-web), including the [processor](https://github.com/osu-tournament-rating/otr-web/tree/master/apps/processor)
 
 ## General contact
 

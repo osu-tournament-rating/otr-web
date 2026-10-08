@@ -1,6 +1,6 @@
 ## Overview
 
-This article details how to clone and configure the website, data worker, and processor projects. By the end, these projects will be ready for local execution via docker or standalone commands.
+This article details how to clone and configure the otr-web repository, which contains the website, data worker, and processor. By the end, these projects will be ready for local execution via docker or standalone commands.
 
 > [!note]
 > Testing locally with an outdated database replica is out of this article's scope. In short, checkout the latest tag created prior to the date of the replica. See [[Steps to Generate Ratings]] for more information on this.
@@ -13,21 +13,19 @@ This article details how to clone and configure the website, data worker, and pr
 - [git](https://git-scm.com/downloads)
 - [Docker Desktop](https://www.docker.com/) (optional)
 - [Bun](https://bun.sh/) (1.3+)
-- [Rust](https://rust-lang.org/tools/install/) (1.97.1+)
+- [Rust](https://rust-lang.org/tools/install/) (1.97.1, pinned by `apps/processor/rust-toolchain.toml`)
 - Download the latest [public replica](https://data.otr.stagec.net/) (`.gz` file)
 - Create an [osu! API v2 client](https://osu.ppy.sh/home/account/edit) and set the `Application Callback URLs` field to `http://localhost:3000/api/auth/oauth2/callback/osu`.
 
-### Clone repositories
+### Clone the repository
 
 > [!important]
-> Outside contributors need to first fork the repositories on [GitHub](https://github.com/osu-tournament-rating). This is only necessary for those who intend to author code contributions.
+> Outside contributors need to first fork the [otr-web repository](https://github.com/osu-tournament-rating/otr-web) on GitHub. This is only necessary for those who intend to author code contributions.
 
-Optionally organize the projects under a single `otr/` directory and clone:
+Clone otr-web, which contains every project in this article:
 
 ```
-mkdir otr && cd otr
 git clone https://github.com/osu-tournament-rating/otr-web.git
-git clone https://github.com/osu-tournament-rating/otr-processor.git
 ```
 
 ### Environment files
@@ -110,18 +108,26 @@ Note that ratings will not appear until the processor is run successfully.
 
 ### Processor configuration
 
-In the `otr-processor` directory, copy the `.env.example` file into `.env`:
+The processor needs no configuration of its own. It reads the `.env` file at the otr-web root, connecting to the database at `DATABASE_URL` and to RabbitMQ at `RABBITMQ_AMQP_URL`. It also accepts its former variable names, `CONNECTION_STRING` and `RABBITMQ_URL`.
 
-```
-cp .env.example .env
-```
+> [!warning]
+> A processor run rewrites every rating in the database at `DATABASE_URL`. Only run it against a local database.
 
 ### Run the processor
 
+The processor lives in `apps/processor`. Unlike the Bun commands above, its commands run from that directory:
+
+```
+cd apps/processor
+```
+
 Use these commands to test and run the processor:
 
-- `cargo test` - run tests, all should pass.
+- `cargo test` - run tests, all should pass. Database tests require Docker.
 - `cargo run -r` - run the processor.
+- `cargo run -- --help` - list the processor's options.
+- `cargo clippy` - lint the code.
+- `cargo +nightly fmt` - format the code. This is the only command that uses the nightly toolchain.
 
 After running the processor and revisiting the website locally, ratings should be present and the leaderboard will be populated.
 

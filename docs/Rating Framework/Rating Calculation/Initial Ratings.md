@@ -16,7 +16,7 @@ $$
 This rank z-score will be a real number typically between $-3$ and $3$, with better-ranked players having a higher z-score.
 
 > [!info]
-> Instead of constantly recomputing the values of $\text{avg}(\ln(\text{rank})$ and $\text{stddev}(\ln(\text{rank}))$ for every rating recalculation, a snapshot of those values was stored during the beta phase of o!TR and is used for all calculations. The constants are found in [the processor code](https://github.com/osu-tournament-rating/otr-processor/blob/master/src/model/rating_utils.rs#L151) and are also listed in the table below.
+> Instead of constantly recomputing the values of $\text{avg}(\ln(\text{rank})$ and $\text{stddev}(\ln(\text{rank}))$ for every rating recalculation, a snapshot of those values was stored during the beta phase of o!TR and is used for all calculations. The constants are found in [the processor code](https://github.com/osu-tournament-rating/otr-web/blob/master/apps/processor/src/model/rating_utils.rs#L158-L178) and are also listed in the table below.
 
 |  Game mode   | $\text{avg}(\ln(\text{rank})$ | $\text{stddev}(\ln(\text{rank}))$ |
 | :----------: | :---------------------------: | :-------------------------------: |

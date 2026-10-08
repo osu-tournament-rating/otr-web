@@ -46,7 +46,7 @@ First, we compute an overall uncertainty constant $c$, which is given by
 
 $$c = \sqrt{4\beta^2 + \sigma_{\text{thighhigh}}^2 + \sigma_{\text{glixh\_hunt3r}}^2 + \sigma_{\text{Miori Celesta}}^2 + \sigma_{\text{PotjeNutella}}^2} \approx \boxed{639.45}.$$
 
-Here $\beta = 200$ is a constant specified by our [constants file](https://github.com/osu-tournament-rating/otr-processor/blob/master/src/model/constants.rs), and the other four terms in the square roots come from the volatilities of the four players prior to the match. This $c$ is used to compute the predicted probabilities of players placing in various orders. It roughly means that for this game, a difference of $c \approx 639.45$ rating points between two players means the higher-rated player has $e \approx 2.7$ times the chance of placing above the lower-rated player.
+Here $\beta = 200$ is a constant specified by our [constants file](https://github.com/osu-tournament-rating/otr-web/blob/master/apps/processor/src/model/constants.rs), and the other four terms in the square roots come from the volatilities of the four players prior to the match. This $c$ is used to compute the predicted probabilities of players placing in various orders. It roughly means that for this game, a difference of $c \approx 639.45$ rating points between two players means the higher-rated player has $e \approx 2.7$ times the chance of placing above the lower-rated player.
 
 Next, we calculate two values $\Omega$ and $\Delta$ for each player in the game. These specify an _additive_ rating change and a _multiplicative_ volatility change, respectively. Instead of repeating all of the formulas from the paper, we will try to work out an example in understandable words.
 

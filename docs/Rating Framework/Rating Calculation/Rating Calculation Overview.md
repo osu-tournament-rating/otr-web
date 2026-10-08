@@ -3,7 +3,7 @@ tags:
   - math
 ---
 
-o!TR primarily uses the OpenSkill algorithm[^1], specifically using the Plackett-Luce ranking model. The implementation source code can be found in the [otr-processor repository](https://github.com/osu-tournament-rating/otr-processor/blob/master/src/model/otr_model.rs). In short, OpenSkill is a system similar to the [Elo](https://en.wikipedia.org/wiki/Elo_rating_system) or [Glicko/Glicko-2](https://en.wikipedia.org/wiki/Glicko_rating_system) rating systems used in games like chess. It assigns each player an approximate rating and volatility, where a higher volatility means more opportunity for the rating to increase or decrease. Rating updates are performed based on relative performance of players in a match.
+o!TR primarily uses the OpenSkill algorithm[^1], specifically using the Plackett-Luce ranking model. The implementation source code can be found in the [otr-web repository](https://github.com/osu-tournament-rating/otr-web/blob/master/apps/processor/src/model/otr_model.rs). In short, OpenSkill is a system similar to the [Elo](https://en.wikipedia.org/wiki/Elo_rating_system) or [Glicko/Glicko-2](https://en.wikipedia.org/wiki/Glicko_rating_system) rating systems used in games like chess. It assigns each player an approximate rating and volatility, where a higher volatility means more opportunity for the rating to increase or decrease. Rating updates are performed based on relative performance of players in a match.
 
 ## Rating
 
