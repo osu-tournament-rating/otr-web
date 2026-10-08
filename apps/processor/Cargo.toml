@@ -1,0 +1,58 @@
+[package]
+name = "otr-processor"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.97.1"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "otr_processor"
+path = "src/lib.rs"
+
+[[bin]]
+name = "otr-processor"
+path = "src/main.rs"
+
+[dependencies]
+dotenv = "0.15.0"
+indicatif = "0.18"
+serde = { version = "1.0.228", features = ["derive"] }
+tokio = { version = "1.52.3", features = ["full"] }
+chrono = {  version = "0.4.44", features = ["serde"] }
+openskill = "0.0.1"
+serde_repr = "0.1.20"
+lazy_static = "1.5.0"
+itertools = "0.14.0"
+indexmap = "2.14.0"
+approx = "0.5.1"
+strum = "0.28.0"
+strum_macros = "0.28.0"
+tokio-postgres = { version = "0.7.17", features = ["with-chrono-0_4"] }
+postgres-types = "0.2.13"
+rand_chacha = "0.10.0"
+rand = "0.10.1"
+thiserror = "2.0.18"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tracing-indicatif = "0.3"
+clap = { version = "4.6.1", features = ["derive", "env"] }
+bytes = "1.11.1"
+futures = "0.3.32"
+lapin = "4.10.0"
+serde_json = "1.0.150"
+uuid = { version = "1.23", features = ["serde", "v4"] }
+rayon = "1.12.0"
+
+[dev-dependencies]
+testcontainers = "0.27"
+testcontainers-modules = { version = "0.15", features = ["postgres"] }
+sqlx = { version = "0.9", features = ["runtime-tokio", "tls-native-tls", "postgres", "migrate"] }
+serial_test = "3.4"
+
+[lints.rust]
+dead_code = "allow"
+unused_variables = "allow"
+
+[profile.release]
+debug = true

@@ -1,0 +1,22 @@
+name: Release Discord notification
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  notify:
+    name: Send Discord notification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: SethCohen/github-releases-to-discord@v1
+        with:
+          webhook_url: ${{ secrets.CHANGELOG_WEBHOOK_URL }}
+          color: '15105570'
+          username: 'o!TR Processor Releases'
+          content: '||<@&1233868955693875280>||'
+          footer_title: 'Changelog'
+          footer_timestamp: true
+          reduce_headings: true
