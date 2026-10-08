@@ -25,6 +25,9 @@ out/
 # production
 build/
 
+# rust
+apps/processor/target/
+
 # misc
 .DS_Store
 *.pem
