@@ -34,6 +34,8 @@ apps/web/e2e
 apps/data-worker/tests
 # The processor image builds with apps/processor as its own context.
 apps/processor
+# The docs image builds with apps/docs as its own context.
+apps/docs
 monitoring
 docker-compose*.yml
 Dockerfile

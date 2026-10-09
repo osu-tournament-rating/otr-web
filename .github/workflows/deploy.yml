@@ -12,6 +12,10 @@ name: Deploy
 # GitHub has no tag for. `latest`, which production's compose file pulls, moves
 # last, and only to images built from the commit the release tag points at.
 #
+# The docs site in apps/docs is part of the compose stack too. Every release
+# builds its image, `stagecodes/otr-docs`, alongside the web and data worker
+# images, and production serves it on port 8090.
+#
 # The rating processor is not part of the compose stack. A weekly cron outside
 # this repository runs whatever `stagecodes/otr-processor:latest` is. A release
 # builds a new processor image only when apps/processor changed since the
@@ -192,14 +196,17 @@ jobs:
     outputs:
       web: ${{ steps.web.outputs.digest }}
       data-worker: ${{ steps.data-worker.outputs.digest }}
+      docs: ${{ steps.docs.outputs.digest }}
       # Empty when this run does not build a processor image.
       processor: ${{ steps.processor.outputs.digest }}
 
     steps:
+      # The docs image copies Quartz from the apps/docs/quartz submodule.
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.resolve.outputs.ref }}
+          submodules: true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -235,6 +242,18 @@ jobs:
           tags: stagecodes/otr-data-worker:sha-${{ needs.resolve.outputs.ref }}
           cache-from: type=gha,scope=data-worker
           cache-to: type=gha,scope=data-worker,mode=max,ignore-error=true
+
+      - name: Build and push docs image
+        id: docs
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/docs
+          file: apps/docs/Dockerfile
+          push: true
+          provenance: mode=max
+          tags: stagecodes/otr-docs:sha-${{ needs.resolve.outputs.ref }}
+          cache-from: type=gha,scope=docs
+          cache-to: type=gha,scope=docs,mode=max,ignore-error=true
 
       # Only when the resolve job chose to build one. The cache keeps only the
       # final image's layers, as ci.yml explains.
@@ -361,10 +380,12 @@ jobs:
           TAG: ${{ steps.reserve.outputs.tag }}
           WEB: stagecodes/otr-web@${{ needs.build.outputs.web }}
           DATA_WORKER: stagecodes/otr-data-worker@${{ needs.build.outputs.data-worker }}
+          DOCS: stagecodes/otr-docs@${{ needs.build.outputs.docs }}
         run: |
           set -euo pipefail
           docker buildx imagetools create --tag "stagecodes/otr-web:$TAG" "$WEB"
           docker buildx imagetools create --tag "stagecodes/otr-data-worker:$TAG" "$DATA_WORKER"
+          docker buildx imagetools create --tag "stagecodes/otr-docs:$TAG" "$DOCS"
 
       # Writes the processor's version tag once. Writing it again would move
       # its push time on Docker Hub, which otr-replay reads as the time the
@@ -496,6 +517,21 @@ jobs:
           verify otr-web "$TAG" "$commit"
           verify otr-data-worker "$TAG" "$commit"
 
+          # Releases made before the docs moved into this repository have no
+          # docs image. A redeploy of one leaves stagecodes/otr-docs:latest
+          # where it is, and its compose file has no docs service, so compose
+          # removes the docs container.
+          errors="$(mktemp)"
+          if [[ "$NEW" == "true" ]] ||
+            docker buildx imagetools inspect "stagecodes/otr-docs:$TAG" >/dev/null 2>"$errors"; then
+            verify otr-docs "$TAG" "$commit"
+          elif grep -q ': not found' "$errors"; then
+            echo "::warning::Release $TAG has no docs image, so stagecodes/otr-docs:latest stays where it is."
+          else
+            cat "$errors" >&2
+            exit 1
+          fi
+
           if [[ -z "$PROCESSOR_TAG" ]]; then
             # Only a redeploy of a release made before the processor line
             # existed gets here; a new release always names an image.
@@ -561,10 +597,15 @@ jobs:
         env:
           WEB: ${{ steps.images.outputs.otr-web }}
           DATA_WORKER: ${{ steps.images.outputs.otr-data-worker }}
+          # Empty only on a redeploy of a release that has no docs image.
+          DOCS: ${{ steps.images.outputs.otr-docs }}
         run: |
           set -euo pipefail
           docker buildx imagetools create --tag stagecodes/otr-web:latest "$WEB"
           docker buildx imagetools create --tag stagecodes/otr-data-worker:latest "$DATA_WORKER"
+          if [[ -n "$DOCS" ]]; then
+            docker buildx imagetools create --tag stagecodes/otr-docs:latest "$DOCS"
+          fi
 
       - name: Deploy stack via docker compose
         env:
@@ -576,7 +617,16 @@ jobs:
           ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s -- "$REMOTE_PATH" <<'EOF'
             cd "$1"
             docker compose pull
-            docker compose --profile migrate run --rm migrate && docker compose --profile node-exporter up -d --remove-orphans
+            docker compose --profile migrate run --rm migrate || exit
+            # One-time move of the docs into the stack: otr-docs' own deploy
+            # ran an `otr-docs` container outside compose, which holds the
+            # name and port compose's docs service needs. Remove this once a
+            # release has deployed the docs service.
+            if labels="$(docker container inspect -f '{{ json .Config.Labels }}' otr-docs 2>/dev/null)" &&
+              [[ "$labels" != *com.docker.compose.project* ]]; then
+              docker rm -f otr-docs
+            fi
+            docker compose --profile node-exporter up -d --remove-orphans
           EOF
 
       # Moved after the stack is up, so the weekly run never pairs a new

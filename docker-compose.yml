@@ -166,6 +166,21 @@ services:
       retries: 3
       start_period: 10s
 
+  # The docs site. The image renders apps/docs with Quartz when it starts, then
+  # serves it. Building it locally needs the apps/docs/quartz submodule.
+  docs:
+    build:
+      context: apps/docs
+    image: stagecodes/otr-docs:latest
+    # The published images are amd64 only. Without this, an arm64 host (Apple
+    # Silicon) finds no matching manifest and silently builds from the local
+    # checkout instead of running the deployed image.
+    platform: linux/amd64
+    container_name: otr-docs
+    restart: unless-stopped
+    ports:
+      - '8090:8080'
+
   prometheus:
     image: prom/prometheus:v3.13.1
     container_name: otr-prometheus

@@ -9,8 +9,9 @@ staged_files="$(git diff --cached --name-only --diff-filter=ACMR | while IFS= re
 
 if [ -n "$staged_files" ]; then
   echo "Formatting staged files..."
-  printf '%s\n' "$staged_files" | xargs bunx prettier --write --ignore-unknown
-  printf '%s\n' "$staged_files" | xargs git add --
+  # NUL-separated, because docs paths contain spaces
+  printf '%s\n' "$staged_files" | tr '\n' '\0' | xargs -0 bunx prettier --write --ignore-unknown
+  printf '%s\n' "$staged_files" | tr '\n' '\0' | xargs -0 git add --
 else
   echo "No staged files to format."
 fi
