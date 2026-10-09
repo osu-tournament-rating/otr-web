@@ -34,8 +34,11 @@ isolated Testcontainers tests can use their assigned dynamic ports.
   otherwise the root `.env` supplies them.
 - Before handoff: `cargo +nightly fmt -- --check`, `cargo clippy`, `cargo test`,
   and `git diff --check`. Report unavailable infrastructure as blocked.
-- CI runs fmt, clippy with `-D warnings`, tests, and an image build only when a
-  change touches `apps/processor/**`.
+- CI runs fmt, clippy with `-D warnings`, and tests only when a change touches
+  `apps/processor/**`, and builds the image on such a pull request.
+- A release pushes `stagecodes/otr-processor:<release tag>` only when this
+  directory changed since the previous release; release notes name the image
+  each release runs. Production's cron runs `latest` weekly, Tuesdays 12:00 UTC.
 
 ## Ownership
 

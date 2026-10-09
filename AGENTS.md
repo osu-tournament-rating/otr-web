@@ -28,6 +28,10 @@ Run commands from the repository root unless noted.
 - Every merge to `master` deploys to production once CI passes and is published
   as a GitHub release. There is no staging environment; try risky changes on a
   PR preview.
+- A release builds the processor image only when `apps/processor/**` changed
+  since the previous release, as `stagecodes/otr-processor:<release tag>`, and
+  otherwise keeps the previous one. Its notes name the image it runs. A weekly
+  cron outside this repository runs `latest` on Tuesdays at 12:00 UTC.
 - The title is a [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
   header, `type(scope)!: description`, because the squash merge uses it as the
   commit message. Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`,
