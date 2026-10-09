@@ -4,6 +4,8 @@ import {
   checkPullRequest,
   parseChangelog,
   parseHeader,
+  parseProcessorImage,
+  processorLine,
   pullNumber,
   renderRelease,
 } from './release-notes';
@@ -150,5 +152,197 @@ describe('renderRelease', () => {
     expect(renderRelease([{ url, body: body('- None') }])).toBe(
       `${url}\n\n\n## Changelog\n\n- None\n`
     );
+  });
+});
+
+describe('processorLine', () => {
+  it('names an image this release built', () => {
+    expect(processorLine({ tag: '2026.10.09', built: true })).toBe(
+      'Processor image: stagecodes/otr-processor:2026.10.09'
+    );
+  });
+
+  it('marks an image an earlier release built', () => {
+    expect(processorLine({ tag: '2026.10.08.1', built: false })).toBe(
+      'Processor image: stagecodes/otr-processor:2026.10.08.1 (unchanged since that release)'
+    );
+  });
+
+  it('accepts only release tags', () => {
+    for (const tag of [
+      '',
+      'latest',
+      'sha-7de4ed01',
+      'v1.0.1',
+      '2026.10.9',
+      '2026.10.09.',
+      '2026.10.09 ',
+      '2026.10.09\nProcessor image: x',
+    ]) {
+      expect(() => processorLine({ tag, built: true })).toThrow();
+    }
+  });
+});
+
+describe('renderRelease with a processor image', () => {
+  const url = 'https://github.com/o/r/pull/1';
+
+  it('puts an image this release built between the links and the changelog', () => {
+    expect(
+      renderRelease([{ url, body: body('- Added a.') }], {
+        tag: '2026.10.09',
+        built: true,
+      })
+    ).toBe(
+      `${url}\n\nProcessor image: stagecodes/otr-processor:2026.10.09\n\n\n## Changelog\n\n- Added a.\n`
+    );
+  });
+
+  it('puts an image an earlier release built in the same place', () => {
+    expect(
+      renderRelease(
+        [
+          { url, body: body('- None') },
+          { url: 'https://github.com/o/r/pull/2', body: body('- Fixed b.') },
+        ],
+        { tag: '2026.10.08.1', built: false }
+      )
+    ).toBe(
+      [
+        url,
+        'https://github.com/o/r/pull/2',
+        '',
+        'Processor image: stagecodes/otr-processor:2026.10.08.1 (unchanged since that release)',
+        '',
+        '',
+        '## Changelog',
+        '',
+        '- Fixed b.',
+        '',
+      ].join('\n')
+    );
+  });
+
+  it('refuses to write a line it could not read back', () => {
+    expect(() =>
+      renderRelease([{ url, body: body('- None') }], {
+        tag: 'latest',
+        built: false,
+      })
+    ).toThrow();
+  });
+});
+
+describe('parseProcessorImage', () => {
+  const url = 'https://github.com/o/r/pull/1';
+
+  it('reads back both forms renderRelease writes', () => {
+    for (const image of [
+      { tag: '2026.10.09', built: true },
+      { tag: '2026.10.09.2', built: true },
+      { tag: '2026.10.08.1', built: false },
+    ]) {
+      expect(
+        parseProcessorImage(
+          renderRelease([{ url, body: body('- None') }], image)
+        )
+      ).toEqual(image);
+    }
+  });
+
+  it('finds nothing in a release made before the line existed', () => {
+    // The body of release 2026.10.08.1.
+    expect(
+      parseProcessorImage(
+        'https://github.com/osu-tournament-rating/otr-web/pull/943\n\n\n## Changelog\n\n- None\n'
+      )
+    ).toBeNull();
+    expect(parseProcessorImage('')).toBeNull();
+    expect(parseProcessorImage(null)).toBeNull();
+  });
+
+  it('reads a release edited on GitHub, which saves CRLF', () => {
+    expect(
+      parseProcessorImage(
+        `${url}\r\n\r\nProcessor image: stagecodes/otr-processor:2026.10.09 \r\n\r\n## Changelog\r\n`
+      )
+    ).toEqual({ tag: '2026.10.09', built: true });
+  });
+
+  it('ignores lines that only resemble it', () => {
+    for (const line of [
+      '- Processor image: stagecodes/otr-processor:2026.10.09',
+      'See Processor image: stagecodes/otr-processor:2026.10.09',
+      'Processor image: stagecodes/otr-web:2026.10.09',
+      'Processor image: stagecodes/otr-processor:latest',
+      'Processor image: stagecodes/otr-processor:2026.10.09 (unchanged)',
+      'processor image: stagecodes/otr-processor:2026.10.09',
+      'Processor image: `stagecodes/otr-processor:2026.10.09`',
+    ]) {
+      expect(parseProcessorImage(`${url}\n\n${line}\n`)).toBeNull();
+    }
+  });
+
+  it('takes the first line when there are several', () => {
+    expect(
+      parseProcessorImage(
+        'Processor image: stagecodes/otr-processor:2026.10.09.1 (unchanged since that release)\nProcessor image: stagecodes/otr-processor:2026.10.09'
+      )
+    ).toEqual({ tag: '2026.10.09.1', built: false });
+  });
+});
+
+describe('command line', () => {
+  const script = `${import.meta.dir}/release-notes.ts`;
+
+  const run = async (
+    args: string[],
+    env: Record<string, string>,
+    stdin = ''
+  ) => {
+    const child = Bun.spawn([process.execPath, script, ...args], {
+      env: { PATH: process.env.PATH ?? '', ...env },
+      stdin: new Blob([stdin]),
+      stdout: 'pipe',
+      stderr: 'pipe',
+    });
+    const [stdout, code] = await Promise.all([
+      new Response(child.stdout).text(),
+      child.exited,
+    ]);
+    return { stdout, code };
+  };
+
+  it('prints the processor tag a release body names', async () => {
+    expect(
+      await run(
+        ['processor-tag'],
+        {},
+        renderRelease([{ url: 'https://github.com/o/r/pull/1' }], {
+          tag: '2026.10.08.1',
+          built: false,
+        })
+      )
+    ).toEqual({ stdout: '2026.10.08.1\n', code: 0 });
+  });
+
+  it('prints nothing for a body that names no processor image', async () => {
+    expect(
+      await run(['processor-tag'], {}, '## Changelog\n\n- None\n')
+    ).toEqual({ stdout: '', code: 0 });
+  });
+
+  it('will not render a release without its processor image', async () => {
+    const envs: Record<string, string>[] = [
+      {},
+      { PROCESSOR_TAG: '2026.10.09' },
+      { PROCESSOR_TAG: '2026.10.09', PROCESSOR_BUILT: 'yes' },
+      { PROCESSOR_TAG: 'latest', PROCESSOR_BUILT: 'false' },
+    ];
+    for (const env of envs) {
+      const result = await run(['render'], { TARGET_SHA: 'HEAD', ...env });
+      expect(result.code).not.toBe(0);
+      expect(result.stdout).toBe('');
+    }
   });
 });

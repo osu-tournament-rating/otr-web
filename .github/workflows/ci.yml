@@ -226,6 +226,8 @@ jobs:
             test) cargo --version ;;
           esac
 
+      # Saved only from master, which every pull request can read; see the
+      # image build below for why.
       - name: Cache cargo
         if: matrix.task != 'fmt'
         uses: Swatinem/rust-cache@v2
@@ -234,6 +236,7 @@ jobs:
           # Matrix entries share a job id, so keep clippy and test apart.
           key: ${{ matrix.task }}
           cache-on-failure: true
+          save-if: ${{ github.ref == 'refs/heads/master' }}
 
       # The database tests start PostgreSQL with Testcontainers on the runner's
       # Docker, and set DATABASE_URL themselves.
@@ -248,7 +251,9 @@ jobs:
   processor-image:
     name: processor (image)
     needs: changes
-    if: needs.changes.outputs.processor == 'true'
+    # Pull requests only: on master, deploy.yml builds and pushes the image
+    # itself when the processor changed since the previous release.
+    if: github.event_name == 'pull_request' && needs.changes.outputs.processor == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -257,8 +262,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Checks the image builds and starts without pushing it. A cache saved on
-      # master is readable from every branch; a pull request's stays its own.
+      # Checks the image builds and starts without pushing it. Pull requests
+      # read the caches master saves but write none of their own: the
+      # repository's 10 GB cache budget was at ~3.7 GB after one pull request.
+      # The deploy saves only the final image's layers, because the Dockerfile
+      # copies the whole crate before `cargo build --release`, so any source
+      # change rebuilds everything and the cache mostly saves the runtime layer.
       - name: Build processor image
         uses: docker/build-push-action@v6
         with:
@@ -268,7 +277,6 @@ jobs:
           load: true
           tags: otr-processor:ci
           cache-from: type=gha,scope=processor
-          cache-to: type=gha,scope=processor,mode=max,ignore-error=true
 
       - name: Smoke test processor image
         run: docker run --rm otr-processor:ci --help
