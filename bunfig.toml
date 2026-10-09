@@ -1,0 +1,3 @@
+# Quartz, checked out at apps/docs/quartz, ships tests for its own runner.
+[test]
+pathIgnorePatterns = ["apps/docs/**"]
