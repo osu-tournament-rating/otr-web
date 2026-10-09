@@ -11,6 +11,18 @@ name: Deploy
 # changes, so a GitHub outage fails the deploy instead of shipping a build that
 # GitHub has no tag for. `latest`, which production's compose file pulls, moves
 # last, and only to images built from the commit the release tag points at.
+#
+# The rating processor is not part of the compose stack. A weekly cron outside
+# this repository runs whatever `stagecodes/otr-processor:latest` is. A release
+# builds a new processor image only when apps/processor changed since the
+# previous release, and gives it the release tag. Otherwise the release keeps
+# the image the previous release ran. Either way, its notes name the image on a
+# `Processor image:` line, described in .github/scripts/release-notes.ts. The
+# next release reads that line to find the image it keeps, and a redeploy reads
+# it to point `latest` back at the release's image. A processor version tag is
+# written once and never again, because otr-replay takes the time it was pushed
+# as the time its release became usable. Only `latest` moves: after the rest of
+# the stack is up, and only to an image built from the commit its tag points at.
 
 on:
   push:
@@ -38,6 +50,15 @@ jobs:
       tag: ${{ steps.resolve.outputs.tag }}
       ref: ${{ steps.resolve.outputs.ref }}
       new: ${{ steps.resolve.outputs.new }}
+      # The previous release, for a new release only.
+      previous: ${{ steps.processor.outputs.previous }}
+      # 'true' when this run builds a processor image.
+      processor-build: ${{ steps.processor.outputs.build }}
+      # The tag of the processor image the release runs, when it already
+      # exists: the image a new release keeps, or the one a redeployed release
+      # names. Empty when this run builds one, because the release tag that
+      # image will get is not reserved yet.
+      processor-tag: ${{ steps.processor.outputs.tag }}
     steps:
       - name: Resolve tag and source
         id: resolve
@@ -70,6 +91,91 @@ jobs:
             echo "new=true"
           } >> "$GITHUB_OUTPUT"
 
+      # The commit this workflow runs from, for its copy of the release notes
+      # script. On a push it is also the commit being released.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.x
+
+      # Decides whether this run builds a processor image and, when it does
+      # not, which existing image the release runs.
+      #
+      # A new release builds one when a file under apps/processor/ differs
+      # between the previous release and this commit. It also builds one when
+      # the previous release's notes name no processor image, which is true of
+      # every release made before the notes carried that line. Otherwise it
+      # keeps the image the previous release names. Comparing with the previous
+      # release, rather than with the commit before this push, counts changes
+      # from runs that failed or were cancelled before they released anything.
+      #
+      # A redeploy builds nothing and runs the image its release names. A
+      # release made before the line existed names none, and then the deploy
+      # leaves the processor alone.
+      - name: Choose processor image
+        id: processor
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEW: ${{ steps.resolve.outputs.new }}
+          TAG: ${{ steps.resolve.outputs.tag }}
+          SHA: ${{ steps.resolve.outputs.ref }}
+        run: |
+          set -euo pipefail
+
+          # Each lookup is one pipeline, so with pipefail a failed GitHub call
+          # fails the step instead of reading as a release that names no image.
+          if [[ "$NEW" != "true" ]]; then
+            tag="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body --jq .body |
+              bun .github/scripts/release-notes.ts processor-tag)"
+            if [[ -n "$tag" ]]; then
+              echo "Release $TAG runs stagecodes/otr-processor:$tag."
+            else
+              echo "::warning::Release $TAG names no processor image, so stagecodes/otr-processor:latest stays where it is."
+            fi
+            {
+              echo "build=false"
+              echo "tag=$tag"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # The same baseline the release notes use, which the release job
+          # passes on to them.
+          previous="$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)"
+          kept="$(gh release view "$previous" --repo "$GITHUB_REPOSITORY" --json body --jq .body |
+            bun .github/scripts/release-notes.ts processor-tag)"
+
+          # The comparison reads only the two commits' file trees, so one commit
+          # of history from the previous release is enough. --no-renames lists
+          # a moved file under its old and new paths, so a file moved out of
+          # apps/processor/ still counts.
+          git fetch --quiet --depth=1 --no-tags origin "refs/tags/$previous:refs/tags/$previous"
+          changed="$(git diff --name-only --no-renames "refs/tags/$previous" "$SHA" -- apps/processor)"
+
+          if [[ -z "$kept" ]]; then
+            echo "Release $previous names no processor image, so this release builds one."
+            build=true
+          elif [[ -n "$changed" ]]; then
+            echo "apps/processor changed since $previous, so this release builds a processor image:"
+            echo "$changed"
+            build=true
+            kept=
+          else
+            echo "apps/processor is unchanged since $previous, so this release keeps stagecodes/otr-processor:$kept."
+            build=false
+          fi
+
+          {
+            echo "previous=$previous"
+            echo "build=$build"
+            echo "tag=$kept"
+          } >> "$GITHUB_OUTPUT"
+
   checks:
     name: CI
     if: github.event_name == 'push'
@@ -86,6 +192,8 @@ jobs:
     outputs:
       web: ${{ steps.web.outputs.digest }}
       data-worker: ${{ steps.data-worker.outputs.digest }}
+      # Empty when this run does not build a processor image.
+      processor: ${{ steps.processor.outputs.digest }}
 
     steps:
       - name: Checkout repository
@@ -128,6 +236,21 @@ jobs:
           cache-from: type=gha,scope=data-worker
           cache-to: type=gha,scope=data-worker,mode=max,ignore-error=true
 
+      # Only when the resolve job chose to build one. The cache keeps only the
+      # final image's layers, as ci.yml explains.
+      - name: Build and push processor image
+        id: processor
+        if: needs.resolve.outputs.processor-build == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/processor
+          file: apps/processor/Dockerfile
+          push: true
+          provenance: mode=max
+          tags: stagecodes/otr-processor:sha-${{ needs.resolve.outputs.ref }}
+          cache-from: type=gha,scope=processor
+          cache-to: type=gha,scope=processor,mode=min,ignore-error=true
+
   release:
     name: Publish release
     needs: [resolve, checks, build]
@@ -138,6 +261,7 @@ jobs:
       pull-requests: read
     outputs:
       tag: ${{ steps.reserve.outputs.tag }}
+      processor-tag: ${{ steps.processor.outputs.tag }}
 
     steps:
       - name: Checkout repository
@@ -150,13 +274,6 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.x
-
-      # Only reads, so it runs before anything is written.
-      - name: Write release notes
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TARGET_SHA: ${{ needs.resolve.outputs.ref }}
-        run: bun .github/scripts/release-notes.ts render > release-notes.md
 
       - name: Reserve release tag
         id: reserve
@@ -199,6 +316,36 @@ jobs:
           echo "Releasing $SHA as $tag"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
+      # A processor image built by this run takes the release tag just
+      # reserved. Otherwise the release keeps the image the resolve job found.
+      - name: Choose processor tag
+        id: processor
+        env:
+          BUILD: ${{ needs.resolve.outputs.processor-build }}
+          TAG: ${{ steps.reserve.outputs.tag }}
+          KEPT: ${{ needs.resolve.outputs.processor-tag }}
+        run: |
+          set -euo pipefail
+          if [[ "$BUILD" == "true" ]]; then tag="$TAG"; else tag="$KEPT"; fi
+          if [[ -z "$tag" ]]; then
+            echo "::error::No processor image was built or kept for $TAG." >&2
+            exit 1
+          fi
+          echo "Release $TAG runs stagecodes/otr-processor:$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      # Runs after the tag is reserved because the processor line can name the
+      # new tag. A failure here leaves the tag reserved for this commit, and a
+      # re-run reuses it.
+      - name: Write release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ needs.resolve.outputs.ref }}
+          PREVIOUS_TAG: ${{ needs.resolve.outputs.previous }}
+          PROCESSOR_TAG: ${{ steps.processor.outputs.tag }}
+          PROCESSOR_BUILT: ${{ needs.resolve.outputs.processor-build }}
+        run: bun .github/scripts/release-notes.ts render > release-notes.md
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -218,6 +365,56 @@ jobs:
           set -euo pipefail
           docker buildx imagetools create --tag "stagecodes/otr-web:$TAG" "$WEB"
           docker buildx imagetools create --tag "stagecodes/otr-data-worker:$TAG" "$DATA_WORKER"
+
+      # Writes the processor's version tag once. Writing it again would move
+      # its push time on Docker Hub, which otr-replay reads as the time the
+      # release became usable. A re-run can find the tag already written by an
+      # earlier attempt: it is kept when it names the image this run built, or
+      # another image built from the same commit, as when every job re-ran and
+      # rebuilt it. A tag on an image from any other commit stops the release.
+      - name: Tag processor image with the release
+        if: needs.resolve.outputs.processor-build == 'true'
+        env:
+          TAG: ${{ steps.reserve.outputs.tag }}
+          SHA: ${{ needs.resolve.outputs.ref }}
+          DIGEST: ${{ needs.build.outputs.processor }}
+        run: |
+          set -euo pipefail
+          image=stagecodes/otr-processor
+
+          if [[ ! "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::The build job reported no processor image digest." >&2
+            exit 1
+          fi
+
+          # A missing tag is the one failure that means "not written yet".
+          errors="$(mktemp)"
+          if ! manifest="$(docker buildx imagetools inspect "$image:$TAG" \
+            --format '{{json .Manifest}}' 2>"$errors")"; then
+            if ! grep -q ': not found' "$errors"; then
+              cat "$errors" >&2
+              exit 1
+            fi
+            docker buildx imagetools create --tag "$image:$TAG" "$image@$DIGEST"
+            exit 0
+          fi
+
+          existing="$(jq -r .digest <<<"$manifest")"
+          if [[ "$existing" == "$DIGEST" ]]; then
+            echo "$image:$TAG already names $DIGEST."
+            exit 0
+          fi
+          # Older images carry SLSA v0.2 provenance, newer ones v1.
+          built="$(docker buildx imagetools inspect "$image@$existing" \
+            --format '{{json .Provenance}}' | jq -r '
+              .SLSA.runDetails.metadata.buildkit_metadata.vcs.revision //
+              .SLSA.metadata["https://mobyproject.org/buildkit@v1#metadata"].vcs.revision //
+              empty')"
+          if [[ "$built" != "$SHA" ]]; then
+            echo "::error::$image:$TAG already names $existing, built from ${built:-an unrecorded commit}, not $SHA. It is never rewritten." >&2
+            exit 1
+          fi
+          echo "$image:$TAG already names $existing, an earlier build of $SHA, so it is kept."
 
       - name: Create release
         env:
@@ -258,17 +455,30 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # An image whose provenance does not name the release's commit, such as
-      # one pushed by hand, is refused.
+      # one pushed by hand, is refused. A processor image kept from an earlier
+      # release must name that release's commit instead.
       - name: Verify release images
         id: images
         env:
+          GH_TOKEN: ${{ github.token }}
+          NEW: ${{ needs.resolve.outputs.new }}
           TAG: ${{ needs.resolve.outputs.tag || needs.release.outputs.tag }}
+          # The release job's choice for a new release; on a redeploy, which
+          # skips that job, the image the redeployed release names.
+          PROCESSOR_TAG: ${{ needs.release.outputs.processor-tag || needs.resolve.outputs.processor-tag }}
         run: |
           set -euo pipefail
-          commit="$(git rev-parse HEAD)"
-          for image in otr-web otr-data-worker; do
-            digest="$(docker buildx imagetools inspect "stagecodes/$image:$TAG" \
+
+          # Checks that stagecodes/$1:$2 was built from commit $3, then records
+          # the image by digest for the steps that move `latest`.
+          verify() {
+            local image="$1" tag="$2" commit="$3" digest built
+            digest="$(docker buildx imagetools inspect "stagecodes/$image:$tag" \
               --format '{{json .Manifest}}' | jq -r .digest)"
+            if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+              echo "::error::stagecodes/$image:$tag has no image digest." >&2
+              exit 1
+            fi
             # Older images carry SLSA v0.2 provenance, newer ones v1.
             built="$(docker buildx imagetools inspect "stagecodes/$image@$digest" \
               --format '{{json .Provenance}}' | jq -r '
@@ -276,11 +486,43 @@ jobs:
                 .SLSA.metadata["https://mobyproject.org/buildkit@v1#metadata"].vcs.revision //
                 empty')"
             if [[ "$built" != "$commit" ]]; then
-              echo "::error::stagecodes/$image:$TAG was built from ${built:-an unrecorded commit}, not $TAG ($commit)." >&2
+              echo "::error::stagecodes/$image:$tag was built from ${built:-an unrecorded commit}, not $tag ($commit)." >&2
               exit 1
             fi
             echo "$image=stagecodes/$image@$digest" >> "$GITHUB_OUTPUT"
-          done
+          }
+
+          commit="$(git rev-parse HEAD)"
+          verify otr-web "$TAG" "$commit"
+          verify otr-data-worker "$TAG" "$commit"
+
+          if [[ -z "$PROCESSOR_TAG" ]]; then
+            # Only a redeploy of a release made before the processor line
+            # existed gets here; a new release always names an image.
+            if [[ "$NEW" == "true" ]]; then
+              echo "::error::Release $TAG names no processor image." >&2
+              exit 1
+            fi
+            echo "::warning::Release $TAG names no processor image, so stagecodes/otr-processor:latest stays where it is."
+          elif [[ "$PROCESSOR_TAG" == "$TAG" ]]; then
+            verify otr-processor "$PROCESSOR_TAG" "$commit"
+          else
+            # The commit the older release's tag points at. An annotated tag
+            # points at a tag object, which is followed to its commit.
+            object="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$PROCESSOR_TAG" \
+              --jq '.object.type + " " + .object.sha')"
+            read -r type sha <<<"$object"
+            while [[ "$type" == "tag" ]]; do
+              object="$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$sha" \
+                --jq '.object.type + " " + .object.sha')"
+              read -r type sha <<<"$object"
+            done
+            if [[ "$type" != "commit" ]]; then
+              echo "::error::Tag $PROCESSOR_TAG does not point at a commit." >&2
+              exit 1
+            fi
+            verify otr-processor "$PROCESSOR_TAG" "$sha"
+          fi
 
       - name: Connect to tailscale
         uses: tailscale/github-action@v4
@@ -336,3 +578,14 @@ jobs:
             docker compose pull
             docker compose --profile migrate run --rm migrate && docker compose --profile node-exporter up -d --remove-orphans
           EOF
+
+      # Moved after the stack is up, so the weekly run never pairs a new
+      # processor with a database whose migration failed. Only `latest` is
+      # written; the image keeps its version tag as it is.
+      - name: Point the processor's latest at the release image
+        if: steps.images.outputs.otr-processor != ''
+        env:
+          PROCESSOR: ${{ steps.images.outputs.otr-processor }}
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create --tag stagecodes/otr-processor:latest "${PROCESSOR:?}"
