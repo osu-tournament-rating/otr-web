@@ -1,0 +1,17 @@
+config:
+  line-length: false
+  first-line-heading: false
+  fenced-code-language: false
+  no-duplicate-heading:
+    siblings_only: true
+  no-hard-tabs:
+    spaces_per_tab: 4
+  no-blanks-blockquote: false
+  ul-indent:
+    indent: 4
+
+gitignore: true
+globs:
+  - "./docs/**/*.md"
+ignores:
+  - "./quartz/"
