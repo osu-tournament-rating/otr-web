@@ -65,3 +65,5 @@ monitoring/loki/data/
 
 # top-level images (playwright mcp)
 *.png
+# The rule above matches in every directory, so re-include the docs' images.
+!apps/docs/**/*.png

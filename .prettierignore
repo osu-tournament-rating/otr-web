@@ -1,2 +1,4 @@
 # The Rust processor formats with rustfmt, and its JSON is test data.
 apps/processor/
+# The docs are formatted for markdownlint, and apps/docs/quartz is a submodule.
+apps/docs/
