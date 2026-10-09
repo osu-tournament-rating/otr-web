@@ -12,17 +12,18 @@ on:
         default: true
 
 jobs:
-  # Decides whether the processor jobs run: only when a file under
-  # apps/processor/ changed. On a pull request, CI checks out GitHub's trial
-  # merge of the pull request into master, so comparing it with master lists
-  # exactly what the pull request changes. When deploy.yml runs CI on a push to
-  # master, the job compares master before the push with master after it. This
-  # uses plain git rather than the dorny/paths-filter action, which would need a
-  # token and add a third-party dependency.
+  # Decides whether the processor and docs jobs run: only when a file under
+  # apps/processor/ or apps/docs/ changed. On a pull request, CI checks out
+  # GitHub's trial merge of the pull request into master, so comparing it with
+  # master lists exactly what the pull request changes. When deploy.yml runs CI
+  # on a push to master, the job compares master before the push with master
+  # after it. This uses plain git rather than the dorny/paths-filter action,
+  # which would need a token and add a third-party dependency.
   changes:
     runs-on: ubuntu-latest
     outputs:
       processor: ${{ steps.diff.outputs.processor }}
+      docs: ${{ steps.diff.outputs.docs }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -43,17 +44,21 @@ jobs:
             git fetch --quiet --depth=1 origin "$BEFORE"; then
             base="$BEFORE"
           else
-            # No commit to compare the push with, so run the processor jobs.
-            echo "processor=true" | tee -a "$GITHUB_OUTPUT"
+            # No commit to compare the push with, so run the processor and
+            # docs jobs.
+            printf '%s\n' processor=true docs=true | tee -a "$GITHUB_OUTPUT"
             exit 0
           fi
 
           # --no-renames lists a moved file under its old and new paths, so a
-          # file moved out of apps/processor/ still counts.
+          # file moved out of apps/processor/ still counts. A bumped Quartz
+          # submodule is listed as apps/docs/quartz.
           changed="$(git diff --name-only --no-renames "$base" HEAD)"
           processor=false
           if grep -q '^apps/processor/' <<<"$changed"; then processor=true; fi
-          echo "processor=$processor" | tee -a "$GITHUB_OUTPUT"
+          docs=false
+          if grep -q '^apps/docs/' <<<"$changed"; then docs=true; fi
+          printf '%s\n' "processor=$processor" "docs=$docs" | tee -a "$GITHUB_OUTPUT"
 
   checks:
     runs-on: ubuntu-latest
@@ -280,3 +285,55 @@ jobs:
 
       - name: Smoke test processor image
         run: docker run --rm otr-processor:ci --help
+
+  # The pinned markdownlint-cli2 is the version otr-docs' markdownlint action
+  # ran. Run from apps/docs, its .markdownlint-cli2.yaml adds every file under
+  # docs/ to the top-level markdown named here.
+  docs:
+    name: docs (markdownlint)
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/docs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Lint markdown
+        run: npx --yes markdownlint-cli2@0.17.2 '*.md'
+
+  docs-image:
+    name: docs (image)
+    needs: changes
+    # Pull requests only: on master, deploy.yml builds and pushes the image
+    # with every release.
+    if: github.event_name == 'pull_request' && needs.changes.outputs.docs == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      # The image copies Quartz from the apps/docs/quartz submodule.
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Reads the cache the deploy saves and writes none, as the processor
+      # image above explains.
+      - name: Build docs image
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/docs
+          file: apps/docs/Dockerfile
+          push: false
+          load: true
+          tags: otr-docs:ci
+          cache-from: type=gha,scope=docs
+
+      # The image only builds the site when it starts, so a page Quartz cannot
+      # render would otherwise pass here and fail in production.
+      - name: Build the site in the docs image
+        run: docker run --rm otr-docs:ci npx quartz build
