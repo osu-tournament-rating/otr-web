@@ -617,7 +617,9 @@ jobs:
           ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s -- "$REMOTE_PATH" <<'EOF'
             cd "$1"
             docker compose pull
-            docker compose --profile migrate run --rm migrate || exit
+            # compose run attaches stdin, which is this script, so without
+            # </dev/null it consumes the lines below and they never run.
+            docker compose --profile migrate run --rm -T migrate </dev/null || exit
             # One-time move of the docs into the stack: otr-docs' own deploy
             # ran an `otr-docs` container outside compose, which holds the
             # name and port compose's docs service needs. Remove this once a
