@@ -7,6 +7,9 @@ Run commands from the repository root unless noted.
   duplicate a shared contract inside an app workspace.
 - `apps/processor/` is the Rust rating processor, not a bun workspace. Run cargo
   from that directory; its `AGENTS.md` has the processor guidance.
+- `apps/docs/` is the docs site at docs.otr.stagec.net: Markdown rendered by
+  Quartz from the `apps/docs/quartz` submodule. It is not a bun workspace; its
+  `AGENTS.md` has the docs guidance.
 - Do not invoke anything under `scripts/` or `monitoring/`.
 
 ## Commands
@@ -16,6 +19,9 @@ Run commands from the repository root unless noted.
 - In `apps/processor`, check with `cargo +nightly fmt -- --check`,
   `cargo clippy`, and `cargo test`. Its database tests need Docker for
   Testcontainers. CI runs these only when `apps/processor/**` changes.
+- In `apps/docs`, lint with `npx markdownlint-cli2@0.17.2 '*.md'`. Building its
+  image needs `git submodule update --init apps/docs/quartz`. CI lints the docs
+  and checks their image only when `apps/docs/**` changes.
 - E2E specs are `apps/web/e2e/*.e2e.ts` and need the configured database,
   RabbitMQ, and auth fixtures. Write or run them only when instructed.
 - Avoid `bun run build` and the full E2E suite — both build, and both are slow.
@@ -32,6 +38,8 @@ Run commands from the repository root unless noted.
   since the previous release, as `stagecodes/otr-processor:<release tag>`, and
   otherwise keeps the previous one. Its notes name the image it runs. A weekly
   cron outside this repository runs `latest` on Tuesdays at 12:00 UTC.
+- Every release also builds the docs image, as
+  `stagecodes/otr-docs:<release tag>`, and deploys it with the stack.
 - The title is a [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
   header, `type(scope)!: description`, because the squash merge uses it as the
   commit message. Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`,

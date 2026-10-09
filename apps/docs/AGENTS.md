@@ -1,20 +1,25 @@
 # otr-docs agent guidance
 
-Run commands from the repository root.
+The docs live in `apps/docs` of otr-web. Run commands from `apps/docs` unless
+noted. Pull requests follow the root `AGENTS.md`.
 
 - `docs/` is the authored source of truth. Quartz renders it. Do not edit
   `quartz/` or its submodule reference unless the task is a Quartz change.
+- The root `.gitmodules` points `quartz/` at the `quartz/v4` branch of the
+  otr-docs repository. From the repository root,
+  `git submodule update --init apps/docs/quartz` checks it out.
 - Do not commit Obsidian workspace state or editor settings.
-- Link to information maintained by another o!TR repository instead of
-  duplicating it.
+- Link to information maintained elsewhere in otr-web or in another o!TR
+  repository instead of duplicating it.
 
 ## Commands
 
-- `markdownlint-cli2 <changed-files>` matches CI through
-  `.markdownlint-cli2.yaml`.
+- `npx markdownlint-cli2@0.17.2 '*.md'` matches CI. Through
+  `.markdownlint-cli2.yaml`, it also lints every file under `docs/`.
 - `docker build -t otr-docs:local . && docker run --rm -p 8080:8080 otr-docs:local`
-  serves the site at `http://localhost:8080`. Inspect rendered links, callouts,
-  headings, code blocks, and navigation when presentation can change.
+  serves the site at `http://localhost:8080` and needs the Quartz submodule.
+  Inspect rendered links, callouts, headings, code blocks, and navigation when
+  presentation can change.
 
 ## Authoring
 
