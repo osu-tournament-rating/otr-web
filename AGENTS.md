@@ -47,7 +47,8 @@ needs. They never use the configured application database.
   older archives of the same kind. `--db-only` leaves the Compose stack running
   and drops only connections to the target database.
 - `processor` runs the configured image against configured PostgreSQL and
-  RabbitMQ. Do not treat it as a test command.
+  RabbitMQ. Do not treat it as a test command. It requires image `2026.10.09`
+  or newer, because it passes `DATABASE_URL` and `RABBITMQ_AMQP_URL`.
 - `template-db seed` explicitly restores an archive into `otr_template`.
   `create` fetches the supplied web checkout's `origin` default-branch revision,
   runs those migrations on the source template, clones it, and runs the task

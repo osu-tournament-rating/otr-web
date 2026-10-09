@@ -22,7 +22,10 @@ def run():
     rust_log = "info"
     rabbit = config.rabbitmq_url
 
-    run_cmd = f"docker run --network host -e CONNECTION_STRING={conn_str} -e RUST_LOG={rust_log} -e RABBITMQ_URL={rabbit} {image}".split()
+    # Images 2026.10.09 and newer read DATABASE_URL and RABBITMQ_AMQP_URL. Only the
+    # container's names changed: the host .env still sets RABBITMQ_URL, which
+    # config.rabbitmq_url reads.
+    run_cmd = f"docker run --network host -e DATABASE_URL={conn_str} -e RUST_LOG={rust_log} -e RABBITMQ_AMQP_URL={rabbit} {image}".split()
 
     logger.info("Running processor")
     exc = subprocess.run(
