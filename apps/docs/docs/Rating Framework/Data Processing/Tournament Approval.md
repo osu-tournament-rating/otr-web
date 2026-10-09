@@ -82,7 +82,7 @@ Any tournament may be submitted from any time period. Make sure to do quality ch
 
 ### What if the tournament I want to submit is missing matches?
 
-If the tournament is not yet finished, do not submit it. If a very old tournament is missing data, it is okay to submit it anyway as we do care about data preservation. If the tournament started on or after January 01, 2021 and is missing data, or you are unsure, please ask in our [[Contact#Quick links|Discord Server]].
+If the tournament is not yet finished, do not submit it. If a very old tournament is missing data, it is okay to submit it anyway as we do care about data preservation. If the tournament started on or after January 01, 2021 and is missing data, or you are unsure, please ask in our [[Contact#Quick Links|Discord Server]].
 
 ### Is it okay for two tournaments to share the same abbreviation?
 
