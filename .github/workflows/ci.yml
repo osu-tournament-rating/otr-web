@@ -253,6 +253,24 @@ jobs:
             test) cargo test ;;
           esac
 
+  # Stands in for the processor matrix above when apps/processor is unchanged.
+  # Branch protection requires processor (fmt), (clippy), and (test), but a
+  # skipped matrix job reports a single check named `processor`, so a pull
+  # request that leaves the processor alone would wait on them forever. These
+  # report the same names as passing instead, as GitHub advises for required
+  # checks that are skipped.
+  processor-unchanged:
+    name: processor (${{ matrix.task }})
+    needs: changes
+    if: needs.changes.outputs.processor != 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task: [fmt, clippy, test]
+    steps:
+      - name: Skip ${{ matrix.task }}
+        run: echo "apps/processor is unchanged, so the processor checks did not run."
+
   processor-image:
     name: processor (image)
     needs: changes
