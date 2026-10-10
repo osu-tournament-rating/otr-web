@@ -114,7 +114,13 @@ def _restore_steps(dump: Path) -> list[list[str]]:
         ),
         _psql_command(f"DROP DATABASE IF EXISTS {config.db_name}", db="template1"),
         _psql_command(f"CREATE DATABASE {config.db_name}", db="template1"),
-        ["bash", "-o", "pipefail", "-c", f"gunzip -c {shlex.quote(str(dump))} | {load}"],
+        [
+            "bash",
+            "-o",
+            "pipefail",
+            "-c",
+            f"gunzip -c {shlex.quote(str(dump))} | {load}",
+        ],
     ]
 
 
@@ -265,7 +271,9 @@ def _table_columns(table: str) -> list[Column]:
     )
 
     columns = [
-        Column(*line.split("|", 1)) for line in result.stdout.splitlines() if line.strip()
+        Column(*line.split("|", 1))
+        for line in result.stdout.splitlines()
+        if line.strip()
     ]
 
     if not columns:
@@ -303,7 +311,9 @@ def _redacted_copy_command(table: str, columns: list[Column]) -> str:
     )
     column_list = ", ".join(f'"{column.name}"' for column in columns)
 
-    header = shlex.join(["printf", "%s\\n", f"COPY {table} ({column_list}) FROM stdin;"])
+    header = shlex.join(
+        ["printf", "%s\\n", f"COPY {table} ({column_list}) FROM stdin;"]
+    )
     rows = shlex.join(_psql_command(f"COPY (SELECT {selected} FROM {table}) TO STDOUT"))
     terminator = shlex.join(["printf", "%s\\n", "\\."])
 
@@ -325,7 +335,10 @@ def _dev_export_command(columns_by_table: dict[str, list[Column]], dest: Path) -
                 ],
                 clean=False,
             ),
-            *(_redacted_copy_command(table, columns_by_table[table]) for table in tables),
+            *(
+                _redacted_copy_command(table, columns_by_table[table])
+                for table in tables
+            ),
             _pg_dump_command(["--section=post-data"], clean=False),
         ],
         dest,

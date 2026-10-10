@@ -45,9 +45,7 @@ def download_latest_public_archive(out_dir: Path) -> PublicArchive:
     client = storage_client()
 
     archives = [
-        blob
-        for blob in client.list_blobs(bucket_name)
-        if blob.name.endswith(".gz")
+        blob for blob in client.list_blobs(bucket_name) if blob.name.endswith(".gz")
     ]
     assert archives, f"No public archive blobs ending in .gz found in {bucket_name}"
 
@@ -57,9 +55,9 @@ def download_latest_public_archive(out_dir: Path) -> PublicArchive:
 
     hash_blob_name = f"{latest.name}.sha256"
     hash_blob = client.bucket(bucket_name).blob(hash_blob_name)
-    assert hash_blob.exists(client), (
-        f"Missing SHA256 object for latest archive: gs://{bucket_name}/{hash_blob_name}"
-    )
+    assert hash_blob.exists(
+        client
+    ), f"Missing SHA256 object for latest archive: gs://{bucket_name}/{hash_blob_name}"
 
     hash_path = out_dir / Path(hash_blob_name).name
     hash_blob.download_to_filename(str(hash_path))
@@ -125,9 +123,9 @@ def parse_sha256_line(line: str) -> tuple[str, str]:
 
     expected_hash, filename = parts
     assert len(expected_hash) == 64, f"Invalid SHA256 digest length: {line!r}"
-    assert all(c in "0123456789abcdefABCDEF" for c in expected_hash), (
-        f"Invalid SHA256 digest characters: {line!r}"
-    )
+    assert all(
+        c in "0123456789abcdefABCDEF" for c in expected_hash
+    ), f"Invalid SHA256 digest characters: {line!r}"
     assert filename, f"SHA256 line is missing a filename: {line!r}"
 
     return expected_hash.lower(), filename.strip()
@@ -254,9 +252,7 @@ def restore_archive(container: PostgresContainer, archive_path: Path):
     gzip_proc.stdout.close()
 
     try:
-        psql_stdout, psql_stderr = psql_proc.communicate(
-            timeout=IMPORT_TIMEOUT_SECONDS
-        )
+        psql_stdout, psql_stderr = psql_proc.communicate(timeout=IMPORT_TIMEOUT_SECONDS)
     except subprocess.TimeoutExpired as exc:
         psql_proc.kill()
         gzip_proc.kill()

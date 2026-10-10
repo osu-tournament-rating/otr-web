@@ -213,9 +213,9 @@ def assert_mirrored_tables(dump: str):
 def assert_row_counts(container: PostgresContainer):
     for table, expected in MIRRORED_COUNTS.items():
         actual = int(query(container, f"SELECT count(*) FROM {table}"))
-        assert actual == expected, (
-            f"{table} has {actual} rows after restore, expected {expected}"
-        )
+        assert (
+            actual == expected
+        ), f"{table} has {actual} rows after restore, expected {expected}"
 
 
 def assert_null_shape_preserved(container: PostgresContainer):
@@ -259,9 +259,7 @@ class PostgresContainer:
     db: str
 
     def stop(self):
-        subprocess.run(
-            ["docker", "stop", self.name], capture_output=True, check=False
-        )
+        subprocess.run(["docker", "stop", self.name], capture_output=True, check=False)
 
 
 def start_postgres() -> PostgresContainer:
@@ -273,12 +271,20 @@ def start_postgres() -> PostgresContainer:
 
     subprocess.run(
         [
-            "docker", "run", "--detach", "--rm",
-            "--name", container.name,
-            "--network", "none",
-            "--env", f"POSTGRES_USER={container.user}",
-            "--env", f"POSTGRES_PASSWORD={POSTGRES_PASSWORD}",
-            "--env", f"POSTGRES_DB={container.db}",
+            "docker",
+            "run",
+            "--detach",
+            "--rm",
+            "--name",
+            container.name,
+            "--network",
+            "none",
+            "--env",
+            f"POSTGRES_USER={container.user}",
+            "--env",
+            f"POSTGRES_PASSWORD={POSTGRES_PASSWORD}",
+            "--env",
+            f"POSTGRES_DB={container.db}",
             POSTGRES_IMAGE,
         ],
         capture_output=True,
@@ -300,8 +306,14 @@ def wait_for_postgres(container: PostgresContainer):
     while time.monotonic() < deadline:
         proc = subprocess.run(
             [
-                "docker", "exec", container.name,
-                "pg_isready", "-U", container.user, "-d", container.db,
+                "docker",
+                "exec",
+                container.name,
+                "pg_isready",
+                "-U",
+                container.user,
+                "-d",
+                container.db,
             ],
             capture_output=True,
             check=False,
@@ -316,9 +328,18 @@ def wait_for_postgres(container: PostgresContainer):
 def psql(container: PostgresContainer, sql: str):
     subprocess.run(
         [
-            "docker", "exec", "-i", container.name,
-            "psql", "-U", container.user, "-d", container.db,
-            "-v", "ON_ERROR_STOP=1", "-q",
+            "docker",
+            "exec",
+            "-i",
+            container.name,
+            "psql",
+            "-U",
+            container.user,
+            "-d",
+            container.db,
+            "-v",
+            "ON_ERROR_STOP=1",
+            "-q",
         ],
         input=sql,
         text=True,
@@ -330,9 +351,19 @@ def psql(container: PostgresContainer, sql: str):
 def query(container: PostgresContainer, sql: str) -> str:
     result = subprocess.run(
         [
-            "docker", "exec", "-i", container.name,
-            "psql", "-U", container.user, "-d", container.db,
-            "-Aqt", "--no-psqlrc", "-c", sql,
+            "docker",
+            "exec",
+            "-i",
+            container.name,
+            "psql",
+            "-U",
+            container.user,
+            "-d",
+            container.db,
+            "-Aqt",
+            "--no-psqlrc",
+            "-c",
+            sql,
         ],
         capture_output=True,
         text=True,
@@ -344,9 +375,18 @@ def query(container: PostgresContainer, sql: str) -> str:
 def restore(container: PostgresContainer, dump: str):
     result = subprocess.run(
         [
-            "docker", "exec", "-i", container.name,
-            "psql", "-U", container.user, "-d", container.db,
-            "-v", "ON_ERROR_STOP=1", "-q",
+            "docker",
+            "exec",
+            "-i",
+            container.name,
+            "psql",
+            "-U",
+            container.user,
+            "-d",
+            container.db,
+            "-v",
+            "ON_ERROR_STOP=1",
+            "-q",
         ],
         input=dump,
         text=True,

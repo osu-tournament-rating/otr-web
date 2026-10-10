@@ -61,7 +61,9 @@ def test_restore_steps_target_only_the_configured_database():
     for step in (terminate, drop, create):
         assert step[step.index("-d") + 1] == "template1"
     assert load[:4] == ["bash", "-o", "pipefail", "-c"]
-    assert load[-1].startswith("gunzip -c '/dumps/a b.gz' | docker exec -i otr-test-db psql")
+    assert load[-1].startswith(
+        "gunzip -c '/dumps/a b.gz' | docker exec -i otr-test-db psql"
+    )
     assert "-d otr_test -v ON_ERROR_STOP=1 --quiet" in load[-1]
 
 

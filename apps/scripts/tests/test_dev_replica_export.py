@@ -124,16 +124,12 @@ def test_redacting_a_non_text_column_is_refused():
 
 def test_missing_secret_column_is_refused():
     with pytest.raises(RuntimeError, match="missing redacted columns"):
-        db._redacted_copy_command(
-            "public.auth_sessions", [db.Column("id", "text")]
-        )
+        db._redacted_copy_command("public.auth_sessions", [db.Column("id", "text")])
 
 
 def test_table_without_id_is_refused():
     with pytest.raises(RuntimeError, match="no id column"):
-        db._redacted_copy_command(
-            "public.auth_sessions", [db.Column("token", "text")]
-        )
+        db._redacted_copy_command("public.auth_sessions", [db.Column("token", "text")])
 
 
 def test_production_export_is_still_a_full_dump():
