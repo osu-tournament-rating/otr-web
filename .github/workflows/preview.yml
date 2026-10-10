@@ -325,7 +325,6 @@ jobs:
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
           DEV_REMOTE_PATH: ${{ secrets.DEV_REMOTE_PATH }}
-          OTR_SCRIPTS_DIR: ${{ secrets.OTR_SCRIPTS_DIR }}
           BASE_JOURNAL: ${{ steps.context.outputs.base_journal }}
           EXPECTED_JOURNAL: ${{ steps.context.outputs.expected_journal }}
           ISOLATE: ${{ steps.context.outputs.isolate }}
@@ -335,16 +334,15 @@ jobs:
           set -euo pipefail
           status=0
           output=$(ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
-            bash -s -- "$DEV_REMOTE_PATH" "$OTR_SCRIPTS_DIR" "$BASE_JOURNAL" \
+            bash -s -- "$DEV_REMOTE_PATH" "$BASE_JOURNAL" \
             "$EXPECTED_JOURNAL" "$ISOLATE" "$PREVIEW_DB" 2>&1 <<'EOF'
             set -euo pipefail
             cd "$1"
-            export OTR_SCRIPTS_DIR="$2"
-            EXPECTED_JOURNAL="$(printf %s "$3" | base64 -d)" ./scripts/preview/dev-db.sh sync
-            if [[ "$5" == "true" ]]; then
-              EXPECTED_JOURNAL="$(printf %s "$4" | base64 -d)" ./scripts/preview/dev-db.sh clone "$6"
+            EXPECTED_JOURNAL="$(printf %s "$2" | base64 -d)" ./scripts/preview/dev-db.sh sync
+            if [[ "$4" == "true" ]]; then
+              EXPECTED_JOURNAL="$(printf %s "$3" | base64 -d)" ./scripts/preview/dev-db.sh clone "$5"
             else
-              ./scripts/preview/dev-db.sh info "$6"
+              ./scripts/preview/dev-db.sh info "$5"
             fi
           EOF
           ) || status=$?

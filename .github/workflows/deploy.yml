@@ -27,6 +27,12 @@ name: Deploy
 # written once and never again, because otr-replay takes the time it was pushed
 # as the time its release became usable. Only `latest` moves: after the rest of
 # the stack is up, and only to an image built from the commit its tag points at.
+#
+# The operations scripts in apps/scripts, which run the weekly processor and
+# the database archives and recoveries, are not an image. Every release copies
+# them to the host at <REMOTE_PATH>/apps/scripts, with the production
+# environment's SCRIPTS_ENV secret as their .env, once the stack is up. A
+# redeploy installs the release's copy, so it rolls the scripts back too.
 
 on:
   push:
@@ -470,6 +476,15 @@ jobs:
           sparse-checkout: |
             docker-compose.yml
             monitoring
+            apps/scripts
+
+      # The installer comes from the commit this workflow runs from, because an
+      # older release being redeployed may not have it.
+      - name: Checkout deployment scripts
+        uses: actions/checkout@v4
+        with:
+          path: .workflow
+          sparse-checkout: .github/scripts
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -635,6 +650,26 @@ jobs:
             fi
             docker compose --profile node-exporter up -d --remove-orphans
           EOF
+
+      # Before the processor's `latest` moves, so a failed install leaves the
+      # weekly run with the scripts and the image of the previous release.
+      - name: Install the operations scripts
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
+          SCRIPTS_ENV: ${{ secrets.SCRIPTS_ENV }}
+          TAG: ${{ needs.resolve.outputs.tag || needs.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # Only a redeploy of a release made before the scripts moved into
+          # this repository gets here.
+          if [[ ! -d apps/scripts ]]; then
+            echo "::warning::Release $TAG has no apps/scripts, so the host keeps the scripts it has."
+            exit 0
+          fi
+          bash .workflow/.github/scripts/deploy-ops-scripts.sh apps/scripts \
+            "$SSH_USER@$SSH_HOST" "$REMOTE_PATH"
 
       # Moved after the stack is up, so the weekly run never pairs a new
       # processor with a database whose migration failed. Only `latest` is

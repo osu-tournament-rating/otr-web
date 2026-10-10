@@ -4,9 +4,12 @@ The scripts live in otr-web at `apps/scripts`. They are Python, not a bun
 workspace: run their commands from this directory with Python 3.14 and `uv`,
 unlike the rest of otr-web. Pull requests follow the root `AGENTS.md`.
 
-Merging a change here deploys it nowhere yet. The production and dev hosts,
-including the Tuesday processor cron, run a checkout of the otr-scripts
-repository, which that repository's workflows deploy.
+Merging a change here deploys it. Every release installs this directory on
+the production host, where the Tuesday processor cron runs it, and the dev
+tier's deploy and nightly runs install it from `master` on the dev host, where
+`dev-db.sh` restores the replica with it. `.github/scripts/deploy-ops-scripts.sh`
+does the install and documents its layout. Each host's `.env` comes from that
+GitHub environment's `SCRIPTS_ENV` secret.
 
 `archive`, `recovery`, and `processor` operate on configured infrastructure.
 Never run them, upload archives, publish indexes, or deploy while developing.
