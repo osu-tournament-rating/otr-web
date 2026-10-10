@@ -36,6 +36,8 @@ apps/data-worker/tests
 apps/processor
 # The docs image builds with apps/docs as its own context.
 apps/docs
+# The scripts run from a checkout on the host, not from an image.
+apps/scripts
 monitoring
 docker-compose*.yml
 Dockerfile
