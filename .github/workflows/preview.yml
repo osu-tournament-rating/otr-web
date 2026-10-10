@@ -8,10 +8,15 @@ name: PR preview
 # personal services, so trust is settled in `authorize` before anything is
 # built. Forks never deploy under any path: `pull_request` withholds secrets
 # from them, and the comment override re-checks that the branch lives here.
+#
+# The `preview` label is the switch. Only a labelled pull request that changes
+# the website deploys, even with a `!deploy` comment. Removing the label or
+# closing the pull request tears the preview down, and a pull request that
+# never had the label leaves the deployment host alone.
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled, closed]
+    types: [opened, synchronize, reopened, labeled, unlabeled, closed]
   issue_comment:
     types: [created]
 
@@ -26,8 +31,13 @@ permissions:
 jobs:
   authorize:
     name: Authorize preview
+    # Other labels coming and going change nothing about the preview, so they
+    # do not redeploy it.
     if: >-
-      (github.event_name == 'pull_request' && github.event.action != 'closed') ||
+      (github.event_name == 'pull_request' &&
+       github.event.action != 'closed' &&
+       github.event.action != 'unlabeled' &&
+       (github.event.action != 'labeled' || github.event.label.name == 'preview')) ||
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request != null &&
        startsWith(github.event.comment.body, '!deploy'))
@@ -50,6 +60,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           EVENT: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
           PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
           COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
           # Authors whose pull requests may change what runs on the host, and
@@ -91,6 +102,24 @@ jobs:
           [[ "$(jq -r .state <<<"$pull")" == "open" ]] ||
             skip false "the pull request is closed"
 
+          # Adding the label or commenting `!deploy` asks for a preview, so a
+          # skip is explained on the pull request. Pushes skip quietly.
+          asked=false
+          if [[ "$EVENT" == "issue_comment" || "$ACTION" == "labeled" ]]; then
+            asked=true
+          fi
+
+          jq -e '[.labels[].name] | index("preview")' <<<"$pull" >/dev/null ||
+            skip "$asked" "the preview label is not applied"
+
+          # A preview runs only the website, so a pull request that changes
+          # nothing outside the docs, the processor, and the data worker has
+          # nothing to preview.
+          files=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate \
+            --jq '.[].filename')
+          grep -qvE '^(apps/(docs|processor|data-worker)/|$)' <<<"$files" ||
+            skip "$asked" "this pull request changes only the docs, the processor, or the data worker"
+
           # `!deploy` vouches for whatever is at the head of the branch right
           # now. The SHA goes in the deployment comment so it is auditable, and
           # the next push has to be authorized again.
@@ -102,9 +131,6 @@ jobs:
             exit 0
           fi
 
-          jq -e '[.labels[].name] | index("preview")' <<<"$pull" >/dev/null ||
-            skip false "the preview label is not applied"
-
           author=$(jq -r .user.login <<<"$pull")
           if trusted "$author"; then
             echo "deploy=true" >> "$GITHUB_OUTPUT"
@@ -115,8 +141,7 @@ jobs:
           # paths choose what runs on the host or reach postgres as superuser,
           # so touching one needs a `!deploy` comment after review.
           guarded='^\.github/|^docker-compose[^/]*\.ya?ml$|(^|/)Dockerfile|^\.dockerignore$|^scripts/|^preview/|^monitoring/|^apps/web/drizzle/|^drizzle\.config\.ts$|(^|/)package\.json$|(^|/)bun\.lock$|^\.husky/|\.sh$'
-          hits=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate \
-            --jq '.[].filename' | grep -E "$guarded" || true)
+          hits=$(grep -E "$guarded" <<<"$files" || true)
 
           if [[ -n "$hits" ]]; then
             {
@@ -492,10 +517,17 @@ jobs:
 
   teardown:
     name: Tear down preview
+    # Only a pull request with the preview label can have a preview, and
+    # removing the label tears it down then, so closing one without the label
+    # has nothing to remove. The job runs in the dev environment, which GitHub
+    # records as a deployment on the pull request, so it must not run for
+    # nothing.
     if: >-
       github.event_name == 'pull_request' &&
-      github.event.action == 'closed' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      ((github.event.action == 'closed' &&
+        contains(github.event.pull_request.labels.*.name, 'preview')) ||
+       (github.event.action == 'unlabeled' && github.event.label.name == 'preview'))
     runs-on: ubuntu-latest
     environment: dev
 
@@ -535,6 +567,23 @@ jobs:
             cd "$2"
             ./scripts/preview/dev-db.sh drop "otr_pr_$3"
           EOF
+
+      # Removing the label leaves the pull request open, so its preview
+      # comment says the preview is gone instead of linking to it.
+      - name: Mark the preview comment removed
+        if: github.event.action == 'unlabeled'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          found=$(gh api "repos/$GITHUB_REPOSITORY/issues/${PR_NUMBER}/comments" --paginate \
+            --jq '.[] | select(.body | startswith("<!-- otr-preview -->")) | .id')
+          id=${found%%$'\n'*}
+          if [[ -n "$id" ]]; then
+            body=$(printf '<!-- otr-preview -->\n%s\n' \
+              'Preview removed with the `preview` label. Add the label again to redeploy.')
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/${id}" -f body="$body" >/dev/null
+          fi
 
       - name: Delete the preview image tag
         if: always()
