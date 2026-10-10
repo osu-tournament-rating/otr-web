@@ -1,0 +1,21 @@
+[project]
+name = "otr-scripts"
+authors = [{name = "github/hburn7"}]
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "google-cloud-storage~=3.10.1",
+    "dotenv",
+    "black",
+    "ruff"
+]
+
+[project.optional-dependencies]
+e2e = [
+    "pytest~=8.4.2",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "e2e: end-to-end tests that use external services",
+]

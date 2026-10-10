@@ -1,0 +1,50 @@
+name: Run script
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to run in"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+      args:
+        description: 'Arguments for src/main.py, e.g. "-s recovery --recovery-bucket production"'
+        required: true
+        type: string
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Connect to tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: ${{ secrets.SSH_HOST }}
+
+      - name: Run script
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
+          ARGS: ${{ inputs.args }}
+        run: |
+          set -euo pipefail
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" bash -s -- "$REMOTE_PATH" "$ARGS" <<'EOF'
+            set -euo pipefail
+            REMOTE_PATH="$1"
+            ARGS="$2"
+            cd "$REMOTE_PATH"
+            set -f
+            set -- $ARGS
+            ~/.local/bin/uv run python src/main.py "$@"
+          EOF
