@@ -581,7 +581,7 @@ jobs:
           id=${found%%$'\n'*}
           if [[ -n "$id" ]]; then
             body=$(printf '<!-- otr-preview -->\n%s\n' \
-              'Preview removed with the `preview` label. Add the label again to redeploy.')
+              "Preview removed with the \`preview\` label. Add the label again to redeploy.")
             gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/${id}" -f body="$body" >/dev/null
           fi
 
