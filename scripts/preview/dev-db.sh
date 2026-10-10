@@ -53,7 +53,9 @@ CONTAINER="${DEV_DB_CONTAINER:-otr-dev-db}"
 DB_USER="${DEV_DB_USER:-postgres}"
 SEED_DB="${DEV_SEED_DB:-otr_dev_seed}"
 LIVE_DB="${DEV_LIVE_DB:-otr_dev}"
-OTR_SCRIPTS_DIR="${OTR_SCRIPTS_DIR:-/srv/otr-scripts}"
+# dev-tier.yml installs the operations scripts beside scripts/preview, at
+# <DEV_REMOTE_PATH>/apps/scripts. The variable lets dev-db-test.sh stub them.
+OTR_SCRIPTS_DIR="${OTR_SCRIPTS_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/apps/scripts}"
 MAX_STALE_DAYS="${DEV_DB_MAX_STALE_DAYS:-14}"
 EXPECTED_JOURNAL="${EXPECTED_JOURNAL:-}"
 PREVIEW_REMOTE_PATH="${PREVIEW_REMOTE_PATH:-}"
@@ -256,8 +258,9 @@ restore() {
   require_journal
   echo "restoring $SEED_DB from the dev replica"
   # --db-only keeps this to the dev tier's own db container. The scoping that
-  # keeps it off production lives in the otr-scripts .env: OTR_WEB_DIR must
-  # point at the dev tier directory and DB_NAME at the seed.
+  # keeps it off production lives in the scripts' .env, the dev environment's
+  # SCRIPTS_ENV secret: OTR_WEB_DIR must point at the dev tier directory and
+  # DB_NAME at the seed.
   local output status=0
   # shellcheck disable=SC2086 # the seam is a command line, not one word
   output="$(cd "$OTR_SCRIPTS_DIR" && ${DEV_RESTORE_COMMAND:-uv run python src/main.py \

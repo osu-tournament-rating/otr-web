@@ -45,10 +45,13 @@ Run commands from the repository root unless noted.
 - A release builds the processor image only when `apps/processor/**` changed
   since the previous release, as `stagecodes/otr-processor:<release tag>`, and
   otherwise keeps the previous one. Its notes name the image it runs. A weekly
-  cron outside this repository runs `latest` on Tuesdays at 12:00 UTC.
-- Merging a change to `apps/scripts` deploys it nowhere yet. The production and
-  dev hosts, including that cron, run a checkout of the otr-scripts repository,
-  which that repository's own workflows deploy.
+  cron on the production host runs `latest` on Tuesdays at 12:00 UTC through
+  `apps/scripts`.
+- Every release installs `apps/scripts` on the production host, and the dev
+  tier's deploy and nightly runs install it from `master` on the dev host. Each
+  host keeps it at `apps/scripts` under its compose directory, and its `.env`
+  comes from that environment's `SCRIPTS_ENV` secret. The `Run script` workflow
+  runs the installed copy by hand.
 - Every release also builds the docs image, as
   `stagecodes/otr-docs:<release tag>`, and deploys it with the stack.
 - The title is a [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)

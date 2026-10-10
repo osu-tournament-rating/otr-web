@@ -1,0 +1,67 @@
+name: Run script
+
+# Runs the operations scripts in apps/scripts on a host, for a one-off archive
+# or recovery. Nothing is checked out: the run uses the copy installed on the
+# host and its .env. In production that is the copy the last deploy.yml run
+# installed, from its release. On the dev host it is the copy dev-tier.yml last
+# installed, from the default branch.
+#
+# The arguments go to src/main.py. They are split on whitespace, with no
+# quoting and no globbing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run in'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - production
+      args:
+        description: 'Arguments for src/main.py, e.g. "-s recovery --recovery-bucket production"'
+        required: true
+        type: string
+
+concurrency:
+  group: run-script-${{ inputs.environment }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    name: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Connect to tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: ${{ secrets.SSH_HOST }}
+
+      - name: Run script
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          # The directory the scripts are installed under.
+          REMOTE_PATH: ${{ inputs.environment == 'dev' && secrets.DEV_REMOTE_PATH || secrets.REMOTE_PATH }}
+          ARGS: ${{ inputs.args }}
+        run: |
+          set -euo pipefail
+          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
+            bash -s -- "$REMOTE_PATH" "$ARGS" <<'EOF'
+            set -euo pipefail
+            cd "$1/apps/scripts"
+            set -f
+            # shellcheck disable=SC2086 # the arguments are split on purpose
+            set -- $2
+            .venv/bin/python src/main.py "$@"
+          EOF
