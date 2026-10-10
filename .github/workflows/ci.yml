@@ -10,6 +10,14 @@ on:
         description: 'Also build the apps; the deploy builds them into images instead'
         type: boolean
         default: true
+    # A called workflow sees only the secrets its caller passes, so deploy.yml
+    # passes these for the Docker Hub sign-ins below. Without them, CI pulls
+    # anonymously.
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: false
+      DOCKERHUB_TOKEN:
+        required: false
 
 jobs:
   # Decides whether the processor and docs jobs run: only when a file under
@@ -73,6 +81,15 @@ jobs:
     services:
       postgres:
         image: postgres:17
+        # Anonymous pulls count against Docker Hub's per-address limit, which
+        # GitHub's runners share, and have failed CI. A service is pulled
+        # before any step runs, so it signs in here rather than with
+        # docker/login-action. Pull requests from forks get no secrets: when
+        # either value is empty, the runner skips the sign-in and pulls
+        # anonymously.
+        credentials:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -195,6 +212,10 @@ jobs:
     defaults:
       run:
         working-directory: apps/processor
+    env:
+      # Secrets cannot appear in `if:`, so the Docker Hub sign-in checks this.
+      # It is empty on pull requests from forks, which then pull anonymously.
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -243,6 +264,15 @@ jobs:
           cache-on-failure: true
           save-if: ${{ github.ref == 'refs/heads/master' }}
 
+      # Testcontainers pulls the tests' PostgreSQL image from Docker Hub with
+      # the credentials this writes to ~/.docker/config.json.
+      - name: Log in to Docker Hub
+        if: matrix.task == 'test' && env.DOCKERHUB_USERNAME != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       # The database tests start PostgreSQL with Testcontainers on the runner's
       # Docker, and set DATABASE_URL themselves.
       - name: Run ${{ matrix.task }}
@@ -278,9 +308,22 @@ jobs:
     # itself when the processor changed since the previous release.
     if: github.event_name == 'pull_request' && needs.changes.outputs.processor == 'true'
     runs-on: ubuntu-latest
+    env:
+      # Secrets cannot appear in `if:`, so the Docker Hub sign-in checks this.
+      # It is empty on pull requests from forks, which then pull anonymously.
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      # The Dockerfile's base images come from Docker Hub, and so does the
+      # BuildKit image that setting up Buildx pulls, so this signs in first.
+      - name: Log in to Docker Hub
+        if: env.DOCKERHUB_USERNAME != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

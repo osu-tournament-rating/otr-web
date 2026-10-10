@@ -39,6 +39,9 @@ jobs:
       # and data-worker (Playwright launches its own web on 3001).
       OTR_COMPOSE_DIR: ${{ github.workspace }}/.e2e-compose
 
+      # Secrets cannot appear in `if:`, so the Docker Hub sign-in checks this.
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+
     steps:
       - name: Checkout otr-web
         uses: actions/checkout@v4
@@ -141,6 +144,17 @@ jobs:
           GCS_SA_JSON_PATH=${HOME}/.gcs/sa.json
           RABBITMQ_URL=amqp://admin:admin@localhost:5672/
           EOF
+
+      # The recovery script starts the compose file above, which pulls
+      # PostgreSQL and RabbitMQ from Docker Hub. Signed in, the pulls count
+      # against the account's quota rather than the runner's shared anonymous
+      # limit.
+      - name: Log in to Docker Hub
+        if: env.DOCKERHUB_USERNAME != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Restore production-replica database via otr-scripts
         working-directory: otr-scripts

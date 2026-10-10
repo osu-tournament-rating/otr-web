@@ -186,6 +186,11 @@ jobs:
     uses: ./.github/workflows/ci.yml
     with:
       build: false
+    # A called workflow sees only the secrets passed to it. CI signs in to
+    # Docker Hub with these before pulling images.
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   build:
     name: Build & push Docker images
