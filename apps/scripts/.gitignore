@@ -1,0 +1,8 @@
+# Environment secrets
+.vscode/
+**/__pycache__
+gcp_secrets/
+build/
+logs/
+.env
+**/*.egg-info

@@ -20,8 +20,8 @@ on:
         required: false
 
 jobs:
-  # Decides whether the processor and docs jobs run: only when a file under
-  # apps/processor/ or apps/docs/ changed. On a pull request, CI checks out
+  # Decides whether the processor, docs, and scripts jobs run: only when a file
+  # under apps/processor/, apps/docs/, or apps/scripts/ changed. On a pull request, CI checks out
   # GitHub's trial merge of the pull request into master, so comparing it with
   # master lists exactly what the pull request changes. When deploy.yml runs CI
   # on a push to master, the job compares master before the push with master
@@ -32,6 +32,7 @@ jobs:
     outputs:
       processor: ${{ steps.diff.outputs.processor }}
       docs: ${{ steps.diff.outputs.docs }}
+      scripts: ${{ steps.diff.outputs.scripts }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -52,9 +53,9 @@ jobs:
             git fetch --quiet --depth=1 origin "$BEFORE"; then
             base="$BEFORE"
           else
-            # No commit to compare the push with, so run the processor and
-            # docs jobs.
-            printf '%s\n' processor=true docs=true | tee -a "$GITHUB_OUTPUT"
+            # No commit to compare the push with, so run the processor, docs,
+            # and scripts jobs.
+            printf '%s\n' processor=true docs=true scripts=true | tee -a "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -66,7 +67,9 @@ jobs:
           if grep -q '^apps/processor/' <<<"$changed"; then processor=true; fi
           docs=false
           if grep -q '^apps/docs/' <<<"$changed"; then docs=true; fi
-          printf '%s\n' "processor=$processor" "docs=$docs" | tee -a "$GITHUB_OUTPUT"
+          scripts=false
+          if grep -q '^apps/scripts/' <<<"$changed"; then scripts=true; fi
+          printf '%s\n' "processor=$processor" "docs=$docs" "scripts=$scripts" | tee -a "$GITHUB_OUTPUT"
 
   checks:
     runs-on: ubuntu-latest
@@ -411,3 +414,39 @@ jobs:
       # render would otherwise pass here and fail in production.
       - name: Build the site in the docs image
         run: docker run --rm otr-docs:ci npx quartz build
+
+  # The operations scripts in apps/scripts are Python, managed by uv. uv
+  # installs the exact versions in uv.lock, including ruff and black, and
+  # --locked fails the job if uv.lock no longer matches pyproject.toml. The
+  # unit tests mock Docker, PostgreSQL, and GCS; the e2e tests are left out
+  # because they need GCS credentials.
+  scripts:
+    needs: changes
+    if: needs.changes.outputs.scripts == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        task: [lint, format, test]
+    defaults:
+      run:
+        working-directory: apps/scripts
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.14'
+
+      - name: Install dependencies
+        run: uv sync --locked --extra e2e
+
+      - name: Run ${{ matrix.task }}
+        run: |
+          case "${{ matrix.task }}" in
+            lint) uv run ruff check src tests && uv run python -m compileall -q src ;;
+            format) uv run black --check src tests ;;
+            test) uv run python -m pytest tests -m 'not e2e' ;;
+          esac

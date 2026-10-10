@@ -1,7 +1,7 @@
 name: E2E Tests
 
 # Manual-only: spins up Postgres + RabbitMQ in the runner, restores a
-# production-replica dump via otr-scripts, and runs playwright.
+# production-replica dump via apps/scripts, and runs playwright.
 on:
   workflow_dispatch:
 
@@ -16,7 +16,7 @@ jobs:
 
     env:
       # Match docker-compose.yml so the otr-db container name and creds
-      # line up with what otr-scripts expects via DB_CONTAINER/DB_USER/DB_NAME.
+      # line up with what apps/scripts expects via DB_CONTAINER/DB_USER/DB_NAME.
       DOCKER_POSTGRES_USER: postgres
       DOCKER_POSTGRES_PASSWORD: password
       DOCKER_POSTGRES_DB: postgres
@@ -33,7 +33,7 @@ jobs:
       BETTER_AUTH_SECRET: e2e-test-secret
       BETTER_AUTH_URL: http://localhost:3001
 
-      # Staging dir for otr-scripts. Holds a stripped compose file that
+      # Staging dir for apps/scripts. Holds a stripped compose file that
       # only declares db + rabbitmq, so the recovery script's
       # `docker compose down` / `up -d` cycle doesn't try to start web
       # and data-worker (Playwright launches its own web on 3001).
@@ -45,12 +45,6 @@ jobs:
     steps:
       - name: Checkout otr-web
         uses: actions/checkout@v4
-
-      - name: Checkout otr-scripts
-        uses: actions/checkout@v4
-        with:
-          repository: osu-tournament-rating/otr-scripts
-          path: otr-scripts
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -68,14 +62,14 @@ jobs:
       - name: Install otr-web dependencies
         run: bun install --frozen-lockfile
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.14'
 
-      - name: Install otr-scripts dependencies
-        working-directory: otr-scripts
-        run: pip install -e .
+      - name: Install apps/scripts dependencies
+        working-directory: apps/scripts
+        run: uv sync --locked
 
       - name: Write GCS service account key
         run: |
@@ -83,10 +77,13 @@ jobs:
           printf '%s' '${{ secrets.GCS_SERVICE_ACCOUNT_KEY }}' > "${HOME}/.gcs/sa.json"
           chmod 600 "${HOME}/.gcs/sa.json"
 
-      - name: Stage minimal compose for otr-scripts
-        # otr-scripts' recovery script runs `docker compose down/up` in
-        # OTR_WEB_DIR. Point it at this dir which only declares the two
-        # services we actually need for E2E.
+      - name: Stage minimal compose for apps/scripts
+        # The recovery script runs `docker compose down/up` in OTR_WEB_DIR.
+        # Point it at this dir which only declares the two services we
+        # actually need for E2E. Recovery also runs the `migrate` service
+        # after restoring, and fails without one. Here it does nothing:
+        # the "Run database migrations" step below applies this checkout's
+        # migrations instead of the deployed image's.
         run: |
           mkdir -p "${OTR_COMPOSE_DIR}"
           cat > "${OTR_COMPOSE_DIR}/docker-compose.yml" <<'YAML'
@@ -121,10 +118,15 @@ jobs:
                 interval: 10s
                 timeout: 5s
                 retries: 12
+            migrate:
+              image: postgres:17
+              profiles:
+                - migrate
+              command: ['true']
           YAML
 
-      - name: Write otr-scripts .env
-        working-directory: otr-scripts
+      - name: Write apps/scripts .env
+        working-directory: apps/scripts
         run: |
           cat > .env <<EOF
           ENVIRONMENT=production
@@ -156,9 +158,9 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Restore production-replica database via otr-scripts
-        working-directory: otr-scripts
-        run: python src/main.py -s recovery --recovery-bucket production
+      - name: Restore production-replica database via apps/scripts
+        working-directory: apps/scripts
+        run: uv run python src/main.py -s recovery --recovery-bucket production
 
       - name: Wait for db healthy
         run: |

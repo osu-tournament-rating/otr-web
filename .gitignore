@@ -28,6 +28,11 @@ build/
 # rust
 apps/processor/target/
 
+# python
+apps/scripts/.venv/
+apps/scripts/.pytest_cache/
+apps/scripts/.ruff_cache/
+
 # misc
 .DS_Store
 *.pem
