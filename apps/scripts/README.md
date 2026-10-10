@@ -1,12 +1,17 @@
 # otr-scripts
 
+Operations scripts for the o!TR platform: database archives and recovery, the
+weekly processor run, and disposable template databases. They live in otr-web
+under `apps/scripts`; run the commands below from this directory. The scripts
+read their configuration from `apps/scripts/.env`, which starts from
+`.env.example`.
+
 ## Getting started
 
 Install deps:
 
 ```
-uv venv --python 3.14
-uv pip install .
+uv sync --locked
 ```
 
 ## End-to-end tests
@@ -18,14 +23,14 @@ The dev replica scenario seeds a disposable container with known credentials,
 exports a dev archive, and fails if any secret reaches it.
 
 ```
-uv pip install '.[e2e]'
-python -m pytest -m e2e tests/e2e
+uv sync --locked --extra e2e
+uv run python -m pytest -m e2e tests/e2e
 ```
 
 Unit tests need neither Docker nor credentials:
 
 ```
-python -m pytest tests -m 'not e2e'
+uv run python -m pytest tests -m 'not e2e'
 ```
 
 ## Dev replicas

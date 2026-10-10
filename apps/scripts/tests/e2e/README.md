@@ -13,14 +13,16 @@ Prerequisites:
 
 - Docker daemon access
 - GCS read access to `GCS_PUBLIC_BUCKET`
-- Either `GCS_SA_JSON_PATH` in `.env` or Google Application Default Credentials
-- `DB_USER` and `DB_NAME` in `.env` when the dump contains ownership metadata
+- Either `GCS_SA_JSON_PATH` in `apps/scripts/.env` or Google Application
+  Default Credentials
+- `DB_USER` and `DB_NAME` in `apps/scripts/.env` when the dump contains
+  ownership metadata
 
-Run from the repository root:
+Run from `apps/scripts`:
 
 ```bash
-uv pip install '.[e2e]'
-python -m pytest -m e2e tests/e2e
+uv sync --locked --extra e2e
+uv run python -m pytest -m e2e tests/e2e
 ```
 
 The test creates a uniquely named Docker container and removes it during

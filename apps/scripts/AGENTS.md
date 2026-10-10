@@ -1,14 +1,22 @@
 # otr-scripts agent guidance
 
-Run commands from the repository root with Python 3.14 and `uv`.
+The scripts live in otr-web at `apps/scripts`. They are Python, not a bun
+workspace: run their commands from this directory with Python 3.14 and `uv`,
+unlike the rest of otr-web. Pull requests follow the root `AGENTS.md`.
+
+Merging a change here deploys it nowhere yet. The production and dev hosts,
+including the Tuesday processor cron, run a checkout of the otr-scripts
+repository, which that repository's workflows deploy.
 
 `archive`, `recovery`, and `processor` operate on configured infrastructure.
 Never run them, upload archives, publish indexes, or deploy while developing.
 Stop for manual intervention when a task truly requires one.
 
-`.env` contains credentials and infrastructure paths. `lib.config` loads it at
-import. Never commit or print it. Bucket names and table inclusion policy remain
-in their existing constants and `lib/scripts/db.py`.
+`.env` contains credentials and infrastructure paths. `lib.config` loads
+`apps/scripts/.env` at import, and only that file: never otr-web's root `.env`,
+which holds different variables. Never commit or print it. Bucket names and
+table inclusion policy remain in their existing constants and
+`lib/scripts/db.py`.
 
 `template-db` is the development exception. Its `seed`, `create`, `drop`, and
 `list` actions manage a dedicated PostgreSQL container and refuse ports `5432`
@@ -17,19 +25,21 @@ needs. They never use the configured application database.
 
 ## Commands
 
-- Setup: `uv venv --python 3.14` and `uv pip install .`. Install `'.[e2e]'` when
-  pytest-based checks are required. The extra supplies pytest; installing it
-  does not authorize external test execution. Build a task `.env` from
-  `.env.example`; do not copy secrets.
+- Setup: `uv sync --locked` installs the versions in `uv.lock`. Add
+  `--extra e2e` when pytest-based checks are required. The extra supplies
+  pytest; installing it does not authorize external test execution. Build a
+  task `.env` from `.env.example`; do not copy secrets.
 - CLI: `uv run python src/main.py --script <operation> [options]`.
 - Checks: `uv run ruff check src tests`, `uv run black --check src tests`,
   `uv run python -m compileall -q src`, and focused
   `uv run --extra e2e python -m pytest <path>` tests. Use mocked unit tests for
-  operational commands; do not replace execution with test collection.
+  operational commands; do not replace execution with test collection. CI runs
+  ruff, compileall, black, and `pytest tests -m 'not e2e'` only when a change
+  touches `apps/scripts/**`.
 - Before database-dependent work, create a prepared database on port `5434`:
-  `uv run python src/main.py --script template-db --template-action create --template-name <name> --template-web-dir <task-web-checkout>`.
-  Supply an `otr-web` checkout with Bun and its dependencies installed. For a
-  scripts or processor task, supply the web checkout whose schema it expects.
+  `uv run python src/main.py --script template-db --template-action create --template-name <name> --template-web-dir ../..`.
+  `../..` is the root of this otr-web checkout, which needs `bun install` first.
+  Its migrations carry the schema the task's scripts and processor expect.
   Documentation-only work does not require a database.
 - `uv run --extra e2e python -m pytest -m e2e tests/e2e` needs Docker and GCS
   credentials and imports a public archive into an isolated container. Run only

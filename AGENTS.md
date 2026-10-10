@@ -10,6 +10,10 @@ Run commands from the repository root unless noted.
 - `apps/docs/` is the docs site at docs.otr.stagec.net: Markdown rendered by
   Quartz from the `apps/docs/quartz` submodule. It is not a bun workspace; its
   `AGENTS.md` has the docs guidance.
+- `apps/scripts/` holds the Python operations scripts: database archives and
+  recovery, the weekly processor run, and disposable template databases. It is
+  not a bun workspace. Run uv from that directory; its `AGENTS.md` has the
+  scripts guidance and the operations that must never run while developing.
 - Do not invoke anything under `scripts/` or `monitoring/`.
 
 ## Commands
@@ -22,6 +26,10 @@ Run commands from the repository root unless noted.
 - In `apps/docs`, lint with `npx markdownlint-cli2@0.17.2 '*.md'`. Building its
   image needs `git submodule update --init apps/docs/quartz`. CI lints the docs
   and checks their image only when `apps/docs/**` changes.
+- In `apps/scripts`, run `uv sync --locked --extra e2e`, then check with
+  `uv run ruff check src tests`, `uv run black --check src tests`, and
+  `uv run python -m pytest tests -m 'not e2e'`. CI runs these only when
+  `apps/scripts/**` changes.
 - E2E specs are `apps/web/e2e/*.e2e.ts` and need the configured database,
   RabbitMQ, and auth fixtures. Write or run them only when instructed.
 - Avoid `bun run build` and the full E2E suite — both build, and both are slow.
@@ -38,6 +46,9 @@ Run commands from the repository root unless noted.
   since the previous release, as `stagecodes/otr-processor:<release tag>`, and
   otherwise keeps the previous one. Its notes name the image it runs. A weekly
   cron outside this repository runs `latest` on Tuesdays at 12:00 UTC.
+- Merging a change to `apps/scripts` deploys it nowhere yet. The production and
+  dev hosts, including that cron, run a checkout of the otr-scripts repository,
+  which that repository's own workflows deploy.
 - Every release also builds the docs image, as
   `stagecodes/otr-docs:<release tag>`, and deploys it with the stack.
 - The title is a [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
