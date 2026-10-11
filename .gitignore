@@ -72,6 +72,3 @@ monitoring/loki/data/
 *.png
 # The rule above matches in every directory, so re-include the docs' images.
 !apps/docs/**/*.png
-
-# The scripts' service account keys
-apps/scripts/.secrets/
