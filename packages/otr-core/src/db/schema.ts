@@ -964,15 +964,6 @@ export const gameScoreAdminNotes = pgTable(
   ]
 );
 
-export const logs = pgTable('logs', {
-  message: text(),
-  messageTemplate: text('message_template'),
-  level: integer(),
-  timestamp: timestamp({ mode: 'string' }),
-  exception: text(),
-  logEvent: jsonb('log_event'),
-});
-
 export const matchAudits = pgTable(
   'match_audits',
   {
