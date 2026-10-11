@@ -20,19 +20,21 @@ on:
         required: false
 
 jobs:
-  # Decides whether the processor, docs, and scripts jobs run: only when a file
-  # under apps/processor/, apps/docs/, or apps/scripts/ changed. On a pull request, CI checks out
-  # GitHub's trial merge of the pull request into master, so comparing it with
-  # master lists exactly what the pull request changes. When deploy.yml runs CI
-  # on a push to master, the job compares master before the push with master
-  # after it. This uses plain git rather than the dorny/paths-filter action,
-  # which would need a token and add a third-party dependency.
+  # Decides whether the processor, docs, scripts, and replay jobs run: only when
+  # a file under apps/processor/, apps/docs/, apps/scripts/, or apps/replay/
+  # changed. On a pull request, CI checks out GitHub's trial merge of the pull
+  # request into master, so comparing it with master lists exactly what the
+  # pull request changes. When deploy.yml runs CI on a push to master, the job
+  # compares master before the push with master after it. This uses plain git
+  # rather than the dorny/paths-filter action, which would need a token and add
+  # a third-party dependency.
   changes:
     runs-on: ubuntu-latest
     outputs:
       processor: ${{ steps.diff.outputs.processor }}
       docs: ${{ steps.diff.outputs.docs }}
       scripts: ${{ steps.diff.outputs.scripts }}
+      replay: ${{ steps.diff.outputs.replay }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -54,8 +56,8 @@ jobs:
             base="$BEFORE"
           else
             # No commit to compare the push with, so run the processor, docs,
-            # and scripts jobs.
-            printf '%s\n' processor=true docs=true scripts=true | tee -a "$GITHUB_OUTPUT"
+            # scripts, and replay jobs.
+            printf '%s\n' processor=true docs=true scripts=true replay=true | tee -a "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -69,7 +71,10 @@ jobs:
           if grep -q '^apps/docs/' <<<"$changed"; then docs=true; fi
           scripts=false
           if grep -q '^apps/scripts/' <<<"$changed"; then scripts=true; fi
-          printf '%s\n' "processor=$processor" "docs=$docs" "scripts=$scripts" | tee -a "$GITHUB_OUTPUT"
+          replay=false
+          if grep -q '^apps/replay/' <<<"$changed"; then replay=true; fi
+          printf '%s\n' "processor=$processor" "docs=$docs" "scripts=$scripts" "replay=$replay" |
+            tee -a "$GITHUB_OUTPUT"
 
   checks:
     runs-on: ubuntu-latest
@@ -449,4 +454,40 @@ jobs:
             lint) uv run ruff check src tests && uv run python -m compileall -q src ;;
             format) uv run black --check src tests ;;
             test) uv run python -m pytest tests -m 'not e2e' ;;
+          esac
+
+  # The replay tool in apps/replay is Python, managed by uv, and runs on users'
+  # machines rather than in production. The unit tests are offline; the
+  # reconcile tests run the reconciliation SQL in a postgres:17 container on
+  # the runner's Docker.
+  replay:
+    needs: changes
+    if: needs.changes.outputs.replay == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        task: [lint, format, test, reconcile]
+    defaults:
+      run:
+        working-directory: apps/replay
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.14'
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run ${{ matrix.task }}
+        run: |
+          case "${{ matrix.task }}" in
+            lint) uv run ruff check . ;;
+            format) uv run black --check . ;;
+            test) uv run pytest ;;
+            reconcile) OTR_REPLAY_DOCKER_TEST=1 uv run pytest tests/test_reconcile_docker.py ;;
           esac
