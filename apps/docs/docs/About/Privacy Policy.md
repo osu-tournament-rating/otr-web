@@ -62,7 +62,7 @@ The following information is logged in order to provide our services:
     - Your User ID, if signed in
     - Request metadata, such as endpoint, response code, response time, and other relevant, non-identifying information
     - Timestamp
-- Error and warning logs of various nature, including API requests, are stored in our database.
+- Error and warning logs of various nature, including API requests. Like request logs, these are not saved in our database.
 
 ## Data Access
 
