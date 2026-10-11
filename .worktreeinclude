@@ -1,0 +1,5 @@
+# Gitignored files Claude Code copies into each new worktree, so agents
+# start with working credentials. `apps/scripts/otr up` then points the
+# copied root .env at the worktree's own stack.
+.env
+apps/scripts/.env
