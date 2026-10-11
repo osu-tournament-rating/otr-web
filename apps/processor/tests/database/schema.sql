@@ -7,15 +7,6 @@
 CREATE TABLE "__EFMigrationsHistory" ( migration_id varchar(150) NOT NULL, product_version varchar(32) NOT NULL, CONSTRAINT pk___ef_migrations_history PRIMARY KEY (migration_id));
 
 
--- public.logs definition
-
--- Drop table
-
--- DROP TABLE logs;
-
-CREATE TABLE logs ( message text NULL, message_template text NULL, "level" int4 NULL, "timestamp" timestamp NULL, "exception" text NULL, log_event jsonb NULL);
-
-
 -- public.players definition
 
 -- Drop table
