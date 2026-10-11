@@ -1,10 +1,24 @@
 ## Summary
 
-<!-- What changed and why. -->
+<!--
+Two to four plain sentences: what users, admins, or operators can now do, and
+why. Describe behavior, not code: no file paths, links to files, or function
+names. Keep the whole description under 150 words.
+-->
 
-## Verification
+## Testing
 
-<!-- How you checked it. -->
+<!--
+One or two sentences: what you confirmed works, and where, such as the local
+stack or the PR preview. No commands or logs.
+-->
+
+## Deploy risk
+
+<!--
+One line, or "None": migrations, data rewrites, or changes to the public API or
+a shared contract.
+-->
 
 ## Changelog
 

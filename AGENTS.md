@@ -1,124 +1,196 @@
 # otr-web agent guidance
 
-Run commands from the repository root unless noted.
+o!TR (osu! Tournament Rating) rates osu! tournament players. It collects
+tournament match data from osu!, people verify that data, and every week it
+computes ratings from the verified matches. The website shows leaderboards,
+player profiles, and tournaments, and has a public REST API. Everything lives
+in this monorepo, and a merge to `master` ships to production.
 
-- `packages/otr-core/` is the shared contract layer: Drizzle schema, relations,
-  domain enums, queue names and messages, logging, maintenance windows. Never
-  duplicate a shared contract inside an app workspace.
-- `apps/processor/` is the Rust rating processor, not a bun workspace. Run cargo
-  from that directory; its `AGENTS.md` has the processor guidance.
-- `apps/docs/` is the docs site at docs.otr.stagec.net: Markdown rendered by
-  Quartz from the `apps/docs/quartz` submodule. It is not a bun workspace; its
-  `AGENTS.md` has the docs guidance.
-- `apps/scripts/` holds the Python operations scripts: database archives and
-  recovery, the weekly processor run, and disposable template databases. It is
-  not a bun workspace. Run uv from that directory; its `AGENTS.md` has the
-  scripts guidance and the operations that must never run while developing.
-- Do not invoke anything under `scripts/` or `monitoring/`.
+Run commands from the repository root unless noted. `CLAUDE.md` is a symlink to
+this file.
 
-## Commands
+## Repository map
 
-- `bun run dev` serves the web app on :3000. Playwright owns :3001.
-- `bun test` runs the Bun tests across all workspaces.
-- In `apps/processor`, check with `cargo +nightly fmt -- --check`,
-  `cargo clippy`, and `cargo test`. Its database tests need Docker for
-  Testcontainers. CI runs these only when `apps/processor/**` changes.
-- In `apps/docs`, lint with `npx markdownlint-cli2@0.17.2 '*.md'`. Building its
-  image needs `git submodule update --init apps/docs/quartz`. CI lints the docs
-  and checks their image only when `apps/docs/**` changes.
-- In `apps/scripts`, run `uv sync --locked --extra e2e`, then check with
-  `uv run ruff check src tests`, `uv run black --check src tests`, and
-  `uv run python -m pytest tests -m 'not e2e'`. CI runs these only when
-  `apps/scripts/**` changes.
-- E2E specs are `apps/web/e2e/*.e2e.ts` and need the configured database,
-  RabbitMQ, and auth fixtures. Write or run them only when instructed.
-- Avoid `bun run build` and the full E2E suite — both build, and both are slow.
-  Fast iteration outweighs exhaustive checks on small changes.
-- Do not run the site or screenshot it to check your own work; the web
-  designer and tester verify the preview deployment.
+- `apps/web`: the Next.js site. It also serves the API: an internal oRPC
+  endpoint for the site itself, and a public REST API with an OpenAPI
+  reference.
+- `apps/data-worker`: a Bun service that consumes RabbitMQ jobs. It fetches
+  data from osu! and osu!track, runs automated data checks, and computes
+  match and tournament stats.
+- `apps/processor`: the Rust rating engine. It rebuilds every rating from
+  scratch once a week.
+- `apps/scripts`: Python operations scripts. They cover database archives and
+  recovery, the weekly processor run, and disposable template databases.
+- `apps/docs`: the docs site at docs.otr.stagec.net, Markdown rendered by
+  Quartz.
+- `packages/otr-core` (`@otr/core`): the shared contract layer. It holds the
+  database schema, domain enums, queue names and messages, logging, tracing, and
+  maintenance windows. Never duplicate any of these inside an app.
+- `scripts/` (root) and `monitoring/` hold deployment tooling and production
+  observability config. Never invoke anything in them. Don't confuse root
+  `scripts/` with `apps/scripts/`.
 
-## Pull requests
+The processor, scripts, and docs are not Bun workspaces. Each has its own
+toolchain and its own `AGENTS.md`; read that file before working there.
 
-- Every merge to `master` deploys to production once CI passes and is published
-  as a GitHub release. There is no staging environment; try risky changes on a
-  PR preview.
-- A release builds the processor image only when `apps/processor/**` changed
-  since the previous release, as `stagecodes/otr-processor:<release tag>`, and
-  otherwise keeps the previous one. Its notes name the image it runs. A weekly
-  cron on the production host runs `latest` on Tuesdays at 12:00 UTC through
-  `apps/scripts`.
-- Every release installs `apps/scripts` on the production host, and the dev
-  tier's deploy and nightly runs install it from `master` on the dev host. Each
-  host keeps it at `apps/scripts` under its compose directory, and its `.env`
-  comes from that environment's `SCRIPTS_ENV` secret. The `Run script` workflow
-  runs the installed copy by hand.
-- Every release also builds the docs image, as
-  `stagecodes/otr-docs:<release tag>`, and deploys it with the stack.
-- The title is a [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
-  header, `type(scope)!: description`, because the squash merge uses it as the
-  commit message. Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`,
-  `build`, `ci`, `chore`, `style`, `revert`. The squash message body is blank,
-  so a breaking change to the public API or a shared contract is marked with `!`
-  in the title, not a `BREAKING CHANGE:` footer.
-- The description follows `.github/pull_request_template.md`. Its
-  `## Changelog` becomes the release notes, ending at `<!-- changelog:end -->`.
-  It holds only bullets: user-facing changes in the past tense, with links to
-  the pages they touch and details or API endpoints as sub-bullets. Write
-  `- None` when nothing user-facing changed. Keep any text that is not release
-  notes, such as a signature, after the end marker.
-- `.github/scripts/release-notes.ts` checks both and writes the release notes.
+## How the pieces talk
+
+PostgreSQL is the only shared state and RabbitMQ is the only messaging. There is
+no Redis and no service-to-service HTTP. A tournament's life:
+
+1. A user submits a tournament on the site. The web app writes it to Postgres
+   and queues fetch jobs for its matches.
+2. The data worker fetches matches, beatmaps, and players from the osu! API, and
+   rank history from osu!track. Once a tournament is fully fetched, the worker
+   runs automated checks that mark its data pre-verified or pre-rejected.
+3. Admins review the data on the site and set it verified or rejected. A
+   rejection cascades down from tournament to match to game to score.
+4. On Tuesdays at 12:00 UTC, a cron on the production host uses `apps/scripts`
+   to run the processor. The processor rebuilds all ratings from verified data
+   in one transaction, then queues stats jobs that the data worker picks up.
+5. The site reads Postgres directly through Drizzle.
+
+A failed queue job is retried after a delay and moved to a `.failed` queue after
+five attempts. A weekly maintenance window, Tuesdays 11:45–12:15 UTC, protects
+the rating run: admin writes return 503 and the worker defers osu! fetches.
+
+## Tech stack
+
+- Bun workspaces and TypeScript throughout the JavaScript side.
+- Web: Next.js 16 App Router, React 19, Tailwind v4, shadcn/ui on Radix,
+  react-hook-form with zod, Recharts, and SWR. oRPC with zod schemas serves
+  both the internal endpoint and the public OpenAPI. better-auth provides osu!
+  OAuth sign-in, sessions, admin roles, and API keys.
+- Data: PostgreSQL 17 through Drizzle ORM, and RabbitMQ 4.
+- Processor: Rust, with an OpenSkill (Plackett–Luce) rating model plus decay.
+- Scripts: Python 3.14 with uv. Archives are stored in Google Cloud Storage.
+- Operations: Docker Compose on a single production host, reached over
+  Tailscale. Images are `stagecodes/otr-*` on Docker Hub. OpenTelemetry sends
+  traces through Alloy to Tempo, with Loki, Prometheus, and Grafana alongside.
+
+## Environments and releases
+
+- Every merge to `master` deploys to production after CI passes, and is
+  published as a GitHub release tagged by date. There is no staging.
+- A deploy runs pending database migrations, then restarts the stack. It
+  rebuilds the processor image only when `apps/processor` changed, and installs
+  `apps/scripts` on the host every time.
+- PR previews run when a PR has the `preview` label. A preview runs only the web
+  app, with no data worker. Most previews share the dev tier's database, so
+  their writes land in shared data. A PR that adds migrations gets its own
+  copy.
+- The dev tier is a shared environment, restored nightly from a redacted copy of
+  production.
+
+## Gotchas
+
+- Persisted enums are numbers, and the Rust processor reads those numbers
+  directly. Never renumber or reorder an enum. Many enums are bitflags, so test
+  them with `&`, not equality. Verification statuses are not ordered by
+  meaning, so never compare them with `<`.
+- The processor reads and writes tables with raw SQL, so TypeScript cannot catch
+  a broken contract. Treat SQL table and column names, and the JSON shape of
+  queue messages, as contracts with the processor.
+- The schema lives in `packages/otr-core/src/db/schema.ts`, but migrations are
+  generated into `apps/web/drizzle`. Run `bunx drizzle-kit generate` from the
+  root, read the emitted SQL, and commit the schema, SQL, snapshot, and journal
+  together. Merged migrations are immutable: never edit, rename, reorder, or
+  delete them.
+- Apply migrations only to a disposable local database. If something that is
+  not an o!TR database is running at `localhost:5432`, make no writes and
+  report it as blocking.
+- Generated columns, such as a score's final value and the search vectors,
+  cannot be written. IDs are identity columns.
+- Admin writes go through `adminMutationProcedure` so the maintenance window
+  applies. Authorization happens in procedures and server-side page checks.
+  Next middleware does no authorization.
+- Only procedures tagged `public` appear in the REST API. Changing one is a
+  public API change.
+- Server components call the site's own oRPC endpoint over HTTP, so a wrong
+  `INTERNAL_APP_BASE_URL` breaks server rendering.
+- Configuration comes from one root `.env`, which the web app, worker,
+  migrations, and processor all load. `apps/scripts` reads only its own `.env`.
+  Variables already set in the shell win over `.env`.
+- Changing a queue's declared arguments, such as its priority, requires deleting
+  that queue on every broker.
+- `apps/docs/quartz` is a git submodule and may be empty in a fresh checkout.
+
+## UI conventions
+
+- All user-facing text uses the Inter sans font, including chart axes,
+  tooltips, table headers, and numbers. Use sentence case: no `uppercase` and
+  no `tracking-wide`. `text-xs` is the minimum size; fix smaller overrides when
+  you find them.
+- Color text with semantic tokens, never palette classes like
+  `text-orange-500`. Status tokens (`success`, `warning`, `destructive`) are for
+  fills, borders, and icons. Their `*-foreground` tokens are for text.
+  `text-primary-foreground` goes only on `bg-primary`. On a solid `bg-success`
+  fill, use `text-green-950`.
+- Never put a `z-*` class on shadcn overlay content (popover, dropdown,
+  tooltip); it overrides the portal's stacking. Wrap a tooltip around
+  `DialogTrigger`, never around `Dialog`.
 
 ## Tracing
 
-- Spans go to Alloy over OTLP, then to Tempo; read them in Grafana under
-  Drilldown > Traces. Nothing is exported unless
-  `OTEL_EXPORTER_OTLP_ENDPOINT` is set, so local runs and tests stay quiet.
-- `@otr/core/tracing` owns the setup. A procedure span wraps every oRPC call and
-  each statement drizzle issues becomes a child span, so a slow query is visible
-  under the procedure that ran it. Queue messages carry the trace across to the
-  data worker.
-- Logs carry `traceId`, which is how Grafana links a log line to its trace.
-  Never put query parameters or user input on a span.
+Every oRPC call gets a span, and each database statement becomes a child span.
+Queue messages carry the trace into the data worker. Nothing is exported unless
+`OTEL_EXPORTER_OTLP_ENDPOINT` is set. Logs carry `traceId`. Never put query
+parameters or user input on a span.
 
-## Typography
+## Commits
 
-- Use the UI sans font (`--font-sans`, Inter) for all user-facing text, including
-  labels, captions, chart axes, chart tooltips, table headers, and numbers.
-- Sentence case for labels and captions. No `uppercase`, and no `tracking-wide`
-  to compensate for it.
-- `text-xs` (12px) is the minimum. Update manual overrides to adhere if encountered.
+Write [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
+`type(scope): description`, lowercase and short, one concern per commit. Use
+the area as the scope: `web`, `worker`, `core`, `db`, `processor`, `scripts`,
+`docs`, `ci`, or `preview`. Types are `feat`, `fix`, `perf`, `refactor`,
+`docs`, `test`, `build`, `ci`, `chore`, `style`, and `revert`. When a body is
+needed, it explains why, not what. Branch commits stay in `master`'s history,
+so keep them clean.
 
-## Tailwind
+## Pull requests
 
-- Use semantic color tokens for text, never palette colors like
-  `text-neutral-200` or `text-orange-500`.
-- The base status token (`success`, `warning`, `destructive`) is the vivid role:
-  fills, chip tints, borders, and icons. It clears the 3:1 graphics bar, not the
-  4.5:1 text bar.
-- The matching `*-foreground` token is the readable text role in both themes,
-  for a label on a tinted chip and for colored body text alike.
-  `text-primary-foreground` only goes on `bg-primary`. `text-muted-foreground`
-  is the muted text token and is fine anywhere.
-- Measure the label on a solid status fill rather than assuming it. `bg-success`
-  takes `text-green-950`, the one measured exception to the rule above: white is
-  3.22 and `green-800` is 2.21 on `green-600`.
-- Never set a `z-*` class on shadcn overlay content (`PopoverContent`,
-  `DropdownMenuContent`, `TooltipContent`). They are portalled at `z-50`, and
-  `cn` is `twMerge` (`apps/web/lib/utils.ts`), so a call-site `z-1` overrides
-  the primitive.
-- Wrap the tooltip around `DialogTrigger`, never around `Dialog`.
+The reviewer judges what the software now does. They do not walk through the
+code. Write for that reader.
 
-## Database and migrations
+- The title follows the commit format and becomes the release entry. Mark a
+  breaking change to the public API or a shared contract with `!`, as in
+  `feat(web)!: ...`. Do not use a `BREAKING CHANGE:` footer.
+- The description follows `.github/pull_request_template.md`. Keep it under
+  150 words in total, not counting the template's comments.
+- Describe behavior and outcomes in plain language: what a user, admin, or
+  operator now sees or can do, and why. Leave out file paths, function names,
+  diffs, and step-by-step implementation detail; the diff already shows those.
+- Never link to files, lines, or commits. Link only to pages on the site or
+  the docs.
+- Under Testing, say in a sentence or two what you confirmed works. Do not
+  paste commands or logs. Under Deploy risk, name any migration, data rewrite,
+  or contract change, or write "None".
+- `## Changelog` becomes the release notes. Use only past-tense bullets for
+  user-facing changes, linking the pages they touch. Write `- None` when
+  nothing user-facing changed. Keep the `<!-- changelog:end -->` marker, and
+  put anything after the release notes, such as the signature, below it.
+  `.github/scripts/release-notes.ts` enforces the title and changelog format.
+- Accuracy beats completeness. Never claim something was checked unless it
+  was.
 
-- `packages/otr-core/src/db/schema.ts` is the model source of truth. Generate
-  with `bunx drizzle-kit generate` from the root and read the emitted SQL.
-- Migrations and metadata on `master` are immutable, since every merge deploys
-  to production: never rewrite, rename, reorder, or delete merged SQL,
-  snapshots, or journal entries.
-- Commit the schema change, generated SQL, snapshot, and journal update together.
-- Apply migrations only to a disposable local database. Start one with
-  `docker compose up -d db` if nothing is running at `localhost:5432`.
-- If a non-o!TR database is running at `localhost:5432`, make no writes and apply
-  no migrations. Report it as a blocking issue.
-- Physical SQL names and persisted numeric enums are contracts with the Rust
-  processor in `apps/processor`. TypeScript cannot validate that consumer.
+## Issues
+
+Open an issue for anything you notice outside your task, such as an unrelated
+bug, a risk, dead code, or documentation that no longer matches the code. Do not
+fix it in the current change.
+
+- Confirm it is real first, and search open issues so you don't file a
+  duplicate.
+- File one issue per problem with `gh issue create`. Follow
+  `.github/ISSUE_TEMPLATE/report.md` and the same rules as a PR description:
+  high level, under 150 words, and no links to files.
+- The title is a plain sentence that names the problem, not a commit header.
+  Add `bug` for a defect in shipped behavior or `proposal` for an idea. Add
+  `meta:ops`, `meta:ui-ux`, or `meta:performance` when one fits.
+- List the issues you opened in your final report to the user.
+
+## Signature
+
+End everything you post publicly on the user's behalf with `^claude` on its
+own final line. That covers issues, pull requests, comments, and reviews. In a
+pull request, the signature goes after `<!-- changelog:end -->`.
