@@ -83,6 +83,12 @@ the rating run: admin writes return 503 and the worker defers osu! fetches.
 - The dev tier is a shared environment, restored nightly from a redacted copy of
   production.
 
+## Starting in a worktree
+
+Before working in a new worktree, fetch `origin/master` and merge it into the
+worktree's branch. A worktree can be cut from a stale local branch, and work
+must start from the latest `master`.
+
 ## Your stack
 
 Work in a linked worktree runs against its own disposable stack, never the main

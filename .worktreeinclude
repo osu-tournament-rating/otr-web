@@ -3,3 +3,4 @@
 # copied root .env at the worktree's own stack.
 .env
 apps/scripts/.env
+apps/scripts/.secrets
