@@ -53,7 +53,7 @@ uv run python -m pytest tests -m 'not e2e'
 
 ## Dev replicas
 
-Dev archives mirror production: every table and every row, audits and logs
+Dev archives mirror production: every table and every row, audits
 included. Only the credential columns in `dev_secret_columns`
 (`src/lib/scripts/db.py`) are redacted, keyed on the row id so `NOT NULL` and
 `UNIQUE` still hold and `NULL` stays `NULL`. Everything else, including real

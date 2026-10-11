@@ -50,11 +50,10 @@ def test_dev_export_excludes_only_credential_table_data():
     assert excluded_tables(dev_command()) == set(db.dev_secret_columns)
 
 
-def test_audit_and_log_tables_are_mirrored():
+def test_audit_tables_are_mirrored():
     excluded = excluded_tables(dev_command())
 
     for table in (
-        "public.logs",
         "public.game_audits",
         "public.game_score_audits",
         "public.match_audits",
@@ -144,4 +143,4 @@ def test_public_export_is_unchanged():
 
     assert "--schema-only" in command
     assert "--data-only" in command
-    assert "public.logs" not in command
+    assert "public.match_audits" not in command

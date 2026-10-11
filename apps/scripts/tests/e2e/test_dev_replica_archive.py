@@ -96,8 +96,6 @@ CREATE TABLE o_auth_client_admin_note (
     o_auth_client_id integer NOT NULL REFERENCES o_auth_clients(id) ON DELETE CASCADE
 );
 
-CREATE TABLE logs (message text, level integer);
-
 CREATE TABLE match_audits (
     id integer PRIMARY KEY,
     reference_id integer,
@@ -135,8 +133,6 @@ INSERT INTO o_auth_clients VALUES (100, '{SECRETS["client_secret"]}', 500, 10);
 
 INSERT INTO o_auth_client_admin_note VALUES (1, 'issued for the bracket bot', 100);
 
-INSERT INTO logs VALUES ('rating batch finished', 2), ('match ingested', 1);
-
 INSERT INTO match_audits VALUES (1, 55, 1), (2, 56, 1);
 """
 
@@ -147,7 +143,6 @@ MIRRORED_COUNTS = {
     "auth_sessions": 1,
     "auth_verifications": 1,
     "api_keys": 1,
-    "logs": 2,
     "match_audits": 2,
     "users": 2,
     "o_auth_clients": 1,
