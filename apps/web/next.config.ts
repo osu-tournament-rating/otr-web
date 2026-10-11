@@ -6,6 +6,9 @@ import { loadRootEnv } from '../../lib/env/load-root-env';
 loadRootEnv();
 
 const nextConfig: NextConfig = {
+  // The repository keeps its own agent guidance; stop `next dev` from writing
+  // an untracked apps/web/AGENTS.md.
+  agentRules: false,
   images: {
     remotePatterns: [
       {
