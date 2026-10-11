@@ -4,7 +4,7 @@ Contact the o!TR team here!
 
 Please leave all bug reports on the respective repository's issues page. For new features, please create a [GitHub discussion](https://docs.github.com/en/discussions/collaborating-with-your-community-using-discussions/about-discussions) on the appropriate repository.
 
-Our code lives in the [o!TR Web](https://github.com/osu-tournament-rating/otr-web) repository, which includes the [processor](https://github.com/osu-tournament-rating/otr-web/tree/master/apps/processor) and the [docs](https://github.com/osu-tournament-rating/otr-web/tree/master/apps/docs).
+Our code lives in the [o!TR Web](https://github.com/osu-tournament-rating/otr-web) repository, which includes the [processor](https://github.com/osu-tournament-rating/otr-web/tree/master/apps/processor), the [`otr-replay`](https://github.com/osu-tournament-rating/otr-web/tree/master/apps/replay) tool, and the [docs](https://github.com/osu-tournament-rating/otr-web/tree/master/apps/docs).
 
 ## General Contact
 

@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+otr-replay_*.csv
+otr-replay_*.metadata.json

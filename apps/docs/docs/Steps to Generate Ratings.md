@@ -1,4 +1,4 @@
-This guide explains how to regenerate player ratings from publicly available datasets as they were at the time of the snapshot. This enables independent verification of tournaments which use the platform for filtering and/or seeding. The [`otr-replay`](https://github.com/osu-tournament-rating/otr-replay) tool performs the entire procedure automatically; however, the equivalent manual process is also documented.
+This guide explains how to regenerate player ratings from publicly available datasets as they were at the time of the snapshot. This enables independent verification of tournaments which use the platform for filtering and/or seeding. The [`otr-replay`](https://github.com/osu-tournament-rating/otr-web/tree/master/apps/replay) tool performs the entire procedure automatically; however, the equivalent manual process is also documented.
 
 Throughout this guide, the **"effective date"** is the point in time that ratings are generated for. This is usually the moment a tournament closes registrations, or another date the tournament announces for capturing ratings of registrants. All dates and times are in UTC.
 
@@ -8,17 +8,20 @@ Ratings are reproduced exactly as they were at the instant the database snapshot
 
 `otr-replay` requires [Docker](https://www.docker.com/get-started/) and [uv](https://docs.astral.sh/uv/).
 
-1. Clone the [otr-replay](https://github.com/osu-tournament-rating/otr-replay) repository: `git clone https://github.com/osu-tournament-rating/otr-replay.git`.
-1. From the repository root, run the program with the effective date as a timestamp. Replace the example date in the command below with the effective date. Timestamps use the format `YYYY-MM-DDTHH:MM[:SS][Z]` and are always interpreted as UTC, so a replica timestamp such as `2026-08-08T00:06:13Z` can be pasted as-is.
+1. Clone the [otr-web](https://github.com/osu-tournament-rating/otr-web) repository, which holds `otr-replay` in its `apps/replay` folder: `git clone --depth 1 https://github.com/osu-tournament-rating/otr-web.git`.
+1. From the `apps/replay` folder, run the program with the effective date as a timestamp. Replace the example date in the command below with the effective date. Timestamps use the format `YYYY-MM-DDTHH:MM[:SS][Z]` and are always interpreted as UTC, so a replica timestamp such as `2026-08-08T00:06:13Z` can be pasted as-is.
 
 ```bash
-cd otr-replay
+cd otr-web/apps/replay
 uv run otr-replay --as-of 2026-06-27T23:59
 ```
 
 The program downloads the correct public replica from the [public replicas site](https://data.otr.stagec.net), verifies its checksum, imports it into a temporary database, runs the correct [[Development/Platform Architecture#processor|processor]] release, reconciles decay, and writes two files: a CSV with the columns `osu_id`, `username`, `ruleset`, `rating`, and `volatility`, and a metadata file describing the run.
 
 The replica is stored in the system's default temp directory and is discarded when the process finishes, even if it fails.
+
+> [!note]
+> `otr-replay` used to live in its own [otr-replay](https://github.com/osu-tournament-rating/otr-replay) repository, which no longer receives updates. Existing clones of it should be replaced with a clone of otr-web.
 
 > [!note]
 > The first public replica is dated `2025-10-06T21:13:57Z`, and `2025.10.01` is the earliest supported processor release for this process.

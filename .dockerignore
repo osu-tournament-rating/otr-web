@@ -38,6 +38,8 @@ apps/processor
 apps/docs
 # The scripts run from a checkout on the host, not from an image.
 apps/scripts
+# The replay tool runs from a checkout on the user's machine, not from an image.
+apps/replay
 monitoring
 docker-compose*.yml
 Dockerfile
