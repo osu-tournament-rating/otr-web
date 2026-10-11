@@ -43,12 +43,12 @@ pub struct Args {
     pub rabbitmq_routing_key: String
 }
 
-/// Database URL variables, preferred first. `DATABASE_URL` is the name otr-web
+/// Database URL variables, preferred first. `DATABASE_URL` is the name otr
 /// shares; the production cron still passes `CONNECTION_STRING`.
 pub const DATABASE_URL_VARS: [&str; 2] = ["DATABASE_URL", "CONNECTION_STRING"];
 
 /// RabbitMQ URL variables, preferred first. `RABBITMQ_AMQP_URL` is the name
-/// otr-web shares; the production cron still passes `RABBITMQ_URL`.
+/// otr shares; the production cron still passes `RABBITMQ_URL`.
 pub const RABBITMQ_URL_VARS: [&str; 2] = ["RABBITMQ_AMQP_URL", "RABBITMQ_URL"];
 
 /// The value of the first variable in `names` that is set and not empty.

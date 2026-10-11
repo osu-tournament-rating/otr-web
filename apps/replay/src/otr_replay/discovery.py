@@ -24,7 +24,7 @@ PROCESSOR_REPOSITORIES = (
     # The processor has lived in apps/processor since 2026-10-08. Some older website
     # releases share a tag with an otr-processor release, such as 2026.08.16; the
     # Docker tag of that name is the processor's, so otr-processor comes first.
-    "osu-tournament-rating/otr-web",
+    "osu-tournament-rating/otr",
 )
 
 _REPLICA_NAME = re.compile(
@@ -149,7 +149,7 @@ def tag_key(tag: str) -> tuple[int, int, int, int] | None:
 
 def select_release(releases: list[dict], tags: list[dict], cutoff: datetime) -> Release:
     # A release counts only if it is both a GitHub release and an active Docker Hub
-    # tag with a digest. otr-web releases the whole monorepo and pushes
+    # tag with a digest. otr releases the whole monorepo and pushes
     # stagecodes/otr-processor:<tag> only for releases in which the processor
     # changed, so the releases that have an image are exactly the processor's
     # releases. A release without one left the previous processor release in effect.

@@ -43,7 +43,7 @@ jobs:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
     steps:
-      - name: Checkout otr-web
+      - name: Checkout otr
         uses: actions/checkout@v4
 
       - name: Set up Bun
@@ -59,7 +59,7 @@ jobs:
           restore-keys: |
             bun-store-${{ runner.os }}-
 
-      - name: Install otr-web dependencies
+      - name: Install otr dependencies
         run: bun install --frozen-lockfile
 
       - name: Set up uv

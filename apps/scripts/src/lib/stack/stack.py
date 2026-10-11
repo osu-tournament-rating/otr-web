@@ -74,7 +74,7 @@ def find_checkout(path: Path) -> Checkout:
         check=False,
     )
     if result.returncode != 0:
-        raise StackError(f"{path} is not inside an otr-web checkout")
+        raise StackError(f"{path} is not inside an otr checkout")
     toplevel, common = result.stdout.splitlines()[:2]
     return Checkout(Path(toplevel), Path(common).parent)
 
