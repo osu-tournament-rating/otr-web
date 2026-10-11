@@ -44,7 +44,7 @@ fn processor_binary() -> &'static str {
 }
 
 /// A processor run against the test database. Both URLs are set because dotenv
-/// would otherwise load otr-web's root .env and reach the local services. The
+/// would otherwise load otr's root .env and reach the local services. The
 /// broker URL refuses connections, so the run continues without messaging.
 fn processor(binary: &str, test_db: &TestDatabase) -> Command {
     let mut command = Command::new(binary);

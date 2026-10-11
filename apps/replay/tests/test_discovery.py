@@ -22,7 +22,7 @@ from otr_replay.models import ReplayError, ReplicaRef
 
 FIXTURES = Path(__file__).parent / "fixtures"
 OTR_PROCESSOR = "osu-tournament-rating/otr-processor"
-OTR_WEB = "osu-tournament-rating/otr-web"
+OTR = "osu-tournament-rating/otr"
 
 
 @pytest.fixture
@@ -37,12 +37,12 @@ def releases():
 
 @pytest.fixture
 def web_releases():
-    return json.loads((FIXTURES / "otr_web_releases.json").read_text())
+    return json.loads((FIXTURES / "otr_releases.json").read_text())
 
 
 @pytest.fixture
 def merged(releases, web_releases):
-    return merge_releases({OTR_PROCESSOR: releases, OTR_WEB: web_releases})
+    return merge_releases({OTR_PROCESSOR: releases, OTR: web_releases})
 
 
 @pytest.fixture
@@ -160,18 +160,18 @@ def test_select_release_orders_same_day_releases_numerically(merged, tags, cutof
     assert select_release(merged, tags, cutoff).tag == expected
 
 
-def test_select_release_reads_otr_web_releases(merged, tags):
+def test_select_release_reads_otr_releases(merged, tags):
     release = select_release(merged, tags, datetime(2026, 10, 5, tzinfo=UTC))
     assert release.tag == "2026.10.04.10"
-    assert release.repository == OTR_WEB
+    assert release.repository == OTR
     assert release.html_url == (
-        "https://github.com/osu-tournament-rating/otr-web/releases/tag/2026.10.04.10"
+        "https://github.com/osu-tournament-rating/otr/releases/tag/2026.10.04.10"
     )
     assert release.image == (
         "stagecodes/otr-processor@"
         "sha256:9a1c37e04b5d10000000000000000000000000000000000000000000000000a3"
     )
-    # otr-web tags the image before it publishes the release.
+    # otr tags the image before it publishes the release.
     assert release.usable_at == datetime(2026, 10, 4, 18, 20, 5, tzinfo=UTC)
 
 
@@ -194,22 +194,22 @@ def test_merge_releases_keeps_the_otr_processor_entry_for_a_shared_tag(merged):
     assert shared[0]["repository"] == OTR_PROCESSOR
     assert shared[0]["published_at"] == "2026-08-16T17:49:59Z"
     assert [entry["tag_name"] for entry in merged].count("2026.05.18") == 1
-    assert {entry["repository"] for entry in merged} == {OTR_PROCESSOR, OTR_WEB}
+    assert {entry["repository"] for entry in merged} == {OTR_PROCESSOR, OTR}
 
 
 def test_shared_tag_is_usable_from_the_otr_processor_publication(
     releases, web_releases, merged, tags
 ):
     # The image was pushed 17:53:28 and otr-processor published 17:49:59; the
-    # otr-web release of the same name followed at 17:53:50.
+    # otr release of the same name followed at 17:53:50.
     cutoff = datetime(2026, 8, 16, 17, 53, 40, tzinfo=UTC)
     release = select_release(merged, tags, cutoff)
     assert release.tag == "2026.08.16"
     assert release.repository == OTR_PROCESSOR
     assert release.html_url.startswith("https://github.com/osu-tournament-rating/otr-processor/")
     assert release.usable_at == datetime(2026, 8, 16, 17, 53, 28, 256844, tzinfo=UTC)
-    # Had the otr-web entry won, the release would not be usable yet.
-    web_first = merge_releases({OTR_WEB: web_releases, OTR_PROCESSOR: releases})
+    # Had the otr entry won, the release would not be usable yet.
+    web_first = merge_releases({OTR: web_releases, OTR_PROCESSOR: releases})
     assert select_release(web_first, tags, cutoff).tag == "2026.08.04"
 
 
@@ -223,22 +223,20 @@ def test_shared_tag_is_usable_from_the_otr_processor_publication(
         (datetime(2026, 5, 19, tzinfo=UTC), "2026.05.18"),
     ],
 )
-def test_otr_web_releases_leave_earlier_selections_unchanged(
-    releases, merged, tags, cutoff, expected
-):
+def test_otr_releases_leave_earlier_selections_unchanged(releases, merged, tags, cutoff, expected):
     processor_only = merge_releases({OTR_PROCESSOR: releases})
     assert select_release(merged, tags, cutoff) == select_release(processor_only, tags, cutoff)
     assert select_release(merged, tags, cutoff).tag == expected
 
 
-def test_otr_web_releases_leave_the_earliest_usable_release_unchanged(merged, tags):
+def test_otr_releases_leave_the_earliest_usable_release_unchanged(merged, tags):
     with pytest.raises(ReplayError) as exc:
         select_release(merged, tags, datetime(2026, 1, 1, tzinfo=UTC))
     assert "2026.05.18" in exc.value.hint
 
 
 def test_fetch_releases_pages_through_both_repositories(releases, web_releases):
-    assert PROCESSOR_REPOSITORIES == (OTR_PROCESSOR, OTR_WEB)
+    assert PROCESSOR_REPOSITORIES == (OTR_PROCESSOR, OTR)
     page_two = "https://api.github.com/repositories/1/releases?per_page=100&page=2"
     requested: list[str] = []
 
@@ -251,7 +249,7 @@ def test_fetch_releases_pages_through_both_repositories(releases, web_releases):
             return httpx.Response(
                 200, json=releases[:3], headers={"link": f'<{page_two}>; rel="next"'}
             )
-        if request.url.path == f"/repos/{OTR_WEB}/releases":
+        if request.url.path == f"/repos/{OTR}/releases":
             return httpx.Response(200, json=web_releases)
         return httpx.Response(404)
 
@@ -260,13 +258,13 @@ def test_fetch_releases_pages_through_both_repositories(releases, web_releases):
     assert requested == [
         f"https://api.github.com/repos/{OTR_PROCESSOR}/releases?per_page=100",
         page_two,
-        f"https://api.github.com/repos/{OTR_WEB}/releases?per_page=100",
+        f"https://api.github.com/repos/{OTR}/releases?per_page=100",
     ]
     by_tag = {entry["tag_name"]: entry["repository"] for entry in fetched}
     assert len(fetched) == len(by_tag)
     assert by_tag["2025.06.08"] == OTR_PROCESSOR  # from the second page
     assert by_tag["2026.08.16"] == OTR_PROCESSOR
-    assert by_tag["2026.10.04.10"] == OTR_WEB
+    assert by_tag["2026.10.04.10"] == OTR
 
 
 def _download(tmp_path, handler):

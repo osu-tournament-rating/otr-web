@@ -63,7 +63,7 @@ def source_commit() -> str | None:
         )  # fmt: skip
         if head.returncode != 0:
             return None
-        # The checkout is all of otr-web, so only changes under apps/replay
+        # The checkout is all of otr, so only changes under apps/replay
         # make this copy dirty.
         status = subprocess.run(
             ["git", "-C", str(package_dir.parents[1]), "status", "--porcelain", "--", "."],

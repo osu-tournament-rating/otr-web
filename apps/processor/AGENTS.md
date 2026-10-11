@@ -1,19 +1,19 @@
 # otr-processor agent guidance
 
-The processor lives in otr-web at `apps/processor`. It is not a bun workspace:
-run its commands from this directory, unlike the rest of otr-web. Stable Rust is
+The processor lives in otr at `apps/processor`. It is not a bun workspace:
+run its commands from this directory, unlike the rest of otr. Stable Rust is
 pinned in `rust-toolchain.toml` to match `rust-version` in `Cargo.toml`.
 `cargo +nightly fmt` is the one nightly command because `rustfmt.toml` uses
 unstable options.
 
-This app owns rating calculation and full-rebuild SQL. The rest of otr-web owns
+This app owns rating calculation and full-rebuild SQL. The rest of otr owns
 the schema and migrations. Treat the boundary as a contract. Start task
 configuration from the root `.env.example`; never copy credentials, commit
 `.env`, or log a credentialed PostgreSQL or RabbitMQ URL.
 
 `dotenv` looks for `.env` in the working directory, then in each parent, and
 loads the first one it finds without overriding variables already set. A run
-from `apps/processor` therefore reads otr-web's root `.env`, whose
+from `apps/processor` therefore reads otr's root `.env`, whose
 `DATABASE_URL` is the local development database. A `.env` in this directory
 would shadow the root one.
 
@@ -68,9 +68,9 @@ tests.
 
 ## Database and messaging contracts
 
-- `src/database/db.rs` consumes the otr-web schema at
+- `src/database/db.rs` consumes the otr schema at
   `packages/otr-core/src/db/schema.ts`; migrations live in `apps/web/drizzle/`.
-  Both paths are from the otr-web root.
+  Both paths are from the otr root.
   Update row structs, raw SQL, `COPY` columns, and `tests/database/schema.sql`
   for an affected contract. Use additive migrations and test a fresh disposable
   database.

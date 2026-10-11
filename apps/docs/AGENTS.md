@@ -1,6 +1,6 @@
 # otr-docs agent guidance
 
-The docs live in `apps/docs` of otr-web. Run commands from `apps/docs` unless
+The docs live in `apps/docs` of otr. Run commands from `apps/docs` unless
 noted. Pull requests follow the root `AGENTS.md`.
 
 - `docs/` is the authored source of truth. Quartz renders it. Do not edit
@@ -9,7 +9,7 @@ noted. Pull requests follow the root `AGENTS.md`.
   otr-docs repository. From the repository root,
   `git submodule update --init apps/docs/quartz` checks it out.
 - Do not commit Obsidian workspace state or editor settings.
-- Link to information maintained elsewhere in otr-web or in another o!TR
+- Link to information maintained elsewhere in otr or in another o!TR
   repository instead of duplicating it.
 
 ## Commands
@@ -36,10 +36,10 @@ Processor changelog entries go under `## Unreleased` in
 `Website Changelog.md`. Never add a version or date. Name a changelog branch
 `changelog/<repo>-<pr>`.
 
-Every otr-web merge ships as its own GitHub release, whose body is the merged
+Every otr merge ships as its own GitHub release, whose body is the merged
 pull request's `## Changelog` bullets. Do not add website entries per pull
 request. Every two weeks, alongside the Discord announcement, those releases
 are collected into one `Website Changelog.md` section in the same format. Its
 heading is the latest release tag, compare-linked from the previous section's
 tag, and the release is added to Full Changelogs. Name that branch
-`changelog/otr-web-<tag>`.
+`changelog/otr-<tag>`.

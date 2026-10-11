@@ -35,7 +35,7 @@ pub struct RabbitMqConfig {
 impl RabbitMqConfig {
     /// Creates a new RabbitMQ configuration from environment variables
     pub fn from_env() -> Result<Self, env::VarError> {
-        // A URL wins over the individual variables, preferring otr-web's RABBITMQ_AMQP_URL
+        // A URL wins over the individual variables, preferring otr's RABBITMQ_AMQP_URL
         if let Some(url) = first_env(&RABBITMQ_URL_VARS) {
             return Self::from_url(&url);
         }
@@ -155,7 +155,7 @@ impl RabbitMqConfig {
 /// Parses an AMQP URL, reading an empty vhost as RabbitMQ's default `/`.
 ///
 /// By the AMQP URI spec, `amqp://host:5672/` names the empty vhost `""`, which
-/// lapin sends as is and RabbitMQ refuses. otr-web's shared `RABBITMQ_AMQP_URL`
+/// lapin sends as is and RabbitMQ refuses. otr's shared `RABBITMQ_AMQP_URL`
 /// is written with that trailing slash, which its Node client reads as `/`.
 /// The error never repeats the URL, since it can carry credentials.
 pub fn parse_amqp_uri(url: &str) -> Result<AMQPUri, String> {
