@@ -14,6 +14,24 @@ Install deps:
 uv sync --locked
 ```
 
+## Agent stacks
+
+`otr` gives each linked otr-web worktree its own disposable stack: a copy of
+the database on localhost:5432 and the worktree's web app, plus the data
+worker, RabbitMQ, or Grafana on request. Copies share disk blocks with one
+another on btrfs or XFS, so each takes about a second to make.
+
+```
+./otr up                  # database and web app
+./otr up worker           # add RabbitMQ and the data worker
+./otr up monitoring       # add Grafana, Tempo, Loki, and Prometheus
+./otr down                # dispose the whole stack
+./otr status              # every stack on this machine
+./otr down --orphans      # remove stacks whose worktree is gone
+```
+
+See "Agent stacks" in `AGENTS.md` for how it works.
+
 ## End-to-end tests
 
 External e2e tests live under `tests/e2e`. The public replica import scenario

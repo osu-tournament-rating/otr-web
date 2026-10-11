@@ -1,0 +1,59 @@
+# One agent stack. apps/scripts/otr runs this once per worktree as its own
+# Compose project and fills in every OTR_STACK_* variable. Ports bind to
+# loopback only. Nothing restarts on its own: after a reboot, `otr up` brings a
+# stack back.
+services:
+  db:
+    image: ${OTR_STACK_PG_IMAGE}
+    restart: 'no'
+    shm_size: '256m'
+    ports:
+      - '127.0.0.1:${OTR_STACK_DB_PORT}:5432'
+    volumes:
+      - '${OTR_STACK_PGDATA}:/var/lib/postgresql/data'
+    # A disposable copy, tuned for speed and a small footprint beside other
+    # stacks. Unsafe settings for data that matters.
+    command:
+      - postgres
+      - -c
+      - fsync=off
+      - -c
+      - synchronous_commit=off
+      - -c
+      - full_page_writes=off
+      - -c
+      - shared_buffers=256MB
+    labels:
+      otr.stack.worktree: '${OTR_STACK_WORKTREE}'
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-q', '-h', '127.0.0.1']
+      interval: 1s
+      timeout: 5s
+      retries: 120
+
+  rabbitmq:
+    profiles: [rabbitmq]
+    image: rabbitmq:4-management
+    restart: 'no'
+    ports:
+      - '127.0.0.1:${OTR_STACK_RABBITMQ_PORT}:5672'
+      - '127.0.0.1:${OTR_STACK_RABBITMQ_UI_PORT}:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: '${OTR_STACK_RABBITMQ_USER}'
+      RABBITMQ_DEFAULT_PASS: '${OTR_STACK_RABBITMQ_PASSWORD}'
+    healthcheck:
+      test: ['CMD-SHELL', 'rabbitmq-diagnostics -q ping']
+      interval: 2s
+      timeout: 5s
+      retries: 60
+
+  # Grafana with Tempo, Loki, and Prometheus behind one OTLP endpoint. otr
+  # points the stack's web app and worker at it only while it runs.
+  monitoring:
+    profiles: [monitoring]
+    image: grafana/otel-lgtm:0.33.1
+    restart: 'no'
+    ports:
+      - '127.0.0.1:${OTR_STACK_GRAFANA_PORT}:3000'
+      - '127.0.0.1:${OTR_STACK_OTLP_GRPC_PORT}:4317'
+      - '127.0.0.1:${OTR_STACK_OTLP_HTTP_PORT}:4318'

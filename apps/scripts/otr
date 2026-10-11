@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# A disposable o!TR stack for the worktree this file is in. Usage: otr --help
+set -euo pipefail
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# otr uses only the standard library, so it skips syncing the scripts' venv.
+exec uv run --quiet --no-project --python 3.14 python "$here/src/otr.py" "$@"

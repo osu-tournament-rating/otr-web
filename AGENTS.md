@@ -20,7 +20,8 @@ this file.
 - `apps/processor`: the Rust rating engine. It rebuilds every rating from
   scratch once a week.
 - `apps/scripts`: Python operations scripts. They cover database archives and
-  recovery, the weekly processor run, and disposable template databases.
+  recovery, the weekly processor run, disposable template databases, and `otr`,
+  which runs each worktree's own stack.
 - `apps/docs`: the docs site at docs.otr.stagec.net, Markdown rendered by
   Quartz.
 - `packages/otr-core` (`@otr/core`): the shared contract layer. It holds the
@@ -82,6 +83,28 @@ the rating run: admin writes return 503 and the worker defers osu! fetches.
 - The dev tier is a shared environment, restored nightly from a redacted copy of
   production.
 
+## Your stack
+
+Work in a linked worktree runs against its own disposable stack, never the main
+checkout's services on ports 5432, 5672, and 3000. This is a rule.
+
+- Run `apps/scripts/otr up` before anything that needs a database or the
+  running site: database tests, migrations, the processor, or a look at a page.
+  It copies the local database in a few seconds, starts this worktree's web
+  app, and prints the URLs.
+- `otr up` points this worktree's `.env` at the stack, so ordinary commands
+  such as `bunx drizzle-kit migrate` and `cargo run` use it too. Don't edit
+  the block it writes. The `.env` itself comes from the main checkout.
+- Only the database and web app start by default. Add `worker`, `rabbitmq`, or
+  `monitoring` (Grafana with traces) to `otr up` when a task needs them;
+  `--no-web` skips the site.
+- osu! sign-in does not work on a stack's port. Sign in with
+  `POST /api/auth/e2e/sign-in` and a body of `{"playerId": <id>, "admin": true}`.
+- Run `apps/scripts/otr down` when the task is done, unless the user still
+  wants to look at the site. Say in your final report whether it is still up.
+  `otr status` lists every stack, and `otr down --orphans` removes those whose
+  worktree is gone.
+
 ## Gotchas
 
 - Persisted enums are numbers, and the Rust processor reads those numbers
@@ -96,9 +119,9 @@ the rating run: admin writes return 503 and the worker defers osu! fetches.
   root, read the emitted SQL, and commit the schema, SQL, snapshot, and journal
   together. Merged migrations are immutable: never edit, rename, reorder, or
   delete them.
-- Apply migrations only to a disposable local database. If something that is
-  not an o!TR database is running at `localhost:5432`, make no writes and
-  report it as blocking.
+- Apply migrations only to your own stack's database (see Your stack). The
+  database at `localhost:5432` belongs to the developer: `otr` only reads it to
+  make copies, and nothing else may touch it.
 - Generated columns, such as a score's final value and the search vectors,
   cannot be written. IDs are identity columns.
 - Admin writes go through `adminMutationProcedure` so the maintenance window
