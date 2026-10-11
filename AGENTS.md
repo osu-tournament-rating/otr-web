@@ -1,4 +1,4 @@
-# otr-web agent guidance
+# otr agent guidance
 
 o!TR (osu! Tournament Rating) rates osu! tournament players. It collects
 tournament match data from osu!, people verify that data, and every week it

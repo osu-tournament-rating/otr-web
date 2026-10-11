@@ -24,18 +24,18 @@ Thus, a pattern emerges. Usually, the web backend publishes new queue messages, 
 
 ### Web application
 
-The web application, located under `otr-web/apps/web`, is both the public-facing site and our API layer. It runs on [Next.js](https://nextjs.org/) using Bun and features server-side rendered pages, oRPC procedures, and auth management via BetterAuth.
+The web application, located under `otr/apps/web`, is both the public-facing site and our API layer. It runs on [Next.js](https://nextjs.org/) using Bun and features server-side rendered pages, oRPC procedures, and auth management via BetterAuth.
 
 ### Data worker
 
-The data worker lives under `otr-web/apps/data-worker`. This Bun-based application consumes and publishes [RabbitMQ](https://www.rabbitmq.com/) messages to fetch external osu! data, generate statistics, and run all [[Automated Checks|automated checks]]. It relies on queues to know when to fetch data, what data to fetch, and which tournaments need stats or automated checks to be processed.
+The data worker lives under `otr/apps/data-worker`. This Bun-based application consumes and publishes [RabbitMQ](https://www.rabbitmq.com/) messages to fetch external osu! data, generate statistics, and run all [[Automated Checks|automated checks]]. It relies on queues to know when to fetch data, what data to fetch, and which tournaments need stats or automated checks to be processed.
 
 Further, it natively supports message queue priority. The platform utilizes priority queues to separate background data fetching from manual data fetching requests. This means admin actions and user submissions are always handled as fast as possible.
 
 ### Processor
 
-The processor, located under `otr-web/apps/processor`, is a [Rust](https://www.rust-lang.org/) CLI tool. A cron job on the production host runs it [[Rating Calculation Overview#Rating update schedule|once a week]], on Tuesdays at 12:00 UTC. It looks at all verified tournament data and builds a rating network from individual match data by utilizing OpenSkill[^1], an open-source multiplayer rating algorithm ([source code](https://crates.io/crates/openskill)). For each game the processor hasn't processed before, placements for the game's scores are stored in the `game_scores` table.
+The processor, located under `otr/apps/processor`, is a [Rust](https://www.rust-lang.org/) CLI tool. A cron job on the production host runs it [[Rating Calculation Overview#Rating update schedule|once a week]], on Tuesdays at 12:00 UTC. It looks at all verified tournament data and builds a rating network from individual match data by utilizing OpenSkill[^1], an open-source multiplayer rating algorithm ([source code](https://crates.io/crates/openskill)). For each game the processor hasn't processed before, placements for the game's scores are stored in the `game_scores` table.
 
-Processor releases up to `2026.08.16` were published from the [otr-processor](https://github.com/osu-tournament-rating/otr-processor) repository; later processor releases are [otr-web releases](https://github.com/osu-tournament-rating/otr-web/releases) that changed the processor. The [[Processor Changelog|processor changelog]] records them.
+Processor releases up to `2026.08.16` were published from the [otr-processor](https://github.com/osu-tournament-rating/otr-processor) repository; later processor releases are [otr releases](https://github.com/osu-tournament-rating/otr/releases) that changed the processor. The [[Processor Changelog|processor changelog]] records them.
 
 [^1]: Weng, Ruby & Lin, Chih-Jen. (2011). A Bayesian Approximation Method for Online Ranking. Journal of Machine Learning Research. 12. 267-300. <https://jmlr.csail.mit.edu/papers/volume12/weng11a/weng11a.pdf>.

@@ -1,7 +1,7 @@
 # otr-scripts
 
 Operations scripts for the o!TR platform: database archives and recovery, the
-weekly processor run, and disposable template databases. They live in otr-web
+weekly processor run, and disposable template databases. They live in otr
 under `apps/scripts`; run the commands below from this directory. The scripts
 read their configuration from `apps/scripts/.env`, which starts from
 `.env.example`.
@@ -16,9 +16,9 @@ uv sync --locked
 
 ## Agent stacks
 
-`otr` gives each linked otr-web worktree its own disposable stack: a copy of
-the database on localhost:5432 and the worktree's web app, plus the data
-worker, RabbitMQ, or Grafana on request. Copies share disk blocks with one
+`otr` gives each linked worktree of this repository its own disposable
+stack: a copy of the database on localhost:5432 and the worktree's web app,
+plus the data worker, RabbitMQ, or Grafana on request. Copies share disk blocks with one
 another on btrfs or XFS, so each takes about a second to make.
 
 ```

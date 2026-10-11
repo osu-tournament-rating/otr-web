@@ -1,12 +1,12 @@
 # otr-replay agent guidance
 
-otr-replay lives in otr-web at `apps/replay`. It is Python, not a bun
+otr-replay lives in otr at `apps/replay`. It is Python, not a bun
 workspace: run its commands from this directory through `uv`, unlike the rest
-of otr-web, and do not call `pip` or `python` directly. Pull requests follow
+of otr, and do not call `pip` or `python` directly. Pull requests follow
 the root `AGENTS.md`. Python 3.14 is required. The app and Docker tests need
 Docker.
 
-Nothing deploys this directory. People run it from their own clone of otr-web,
+Nothing deploys this directory. People run it from their own clone of otr,
 so a merge to `master` reaches them on their next pull. It reads only public
 data: GitHub releases, Docker Hub tags, and the public replicas. It never needs
 the root `.env` or a worktree stack.
@@ -32,10 +32,10 @@ including an offset-less API value, as UTC.
 
 - `discovery.py` selects the newest public replica and the newest stable
   `YYYY.MM.DD[.N]` processor release usable at the cutoff, ordering tags
-  numerically. Processor releases are otr-web releases, since the processor lives
+  numerically. Processor releases are otr releases, since the processor lives
   in its `apps/processor`; the former otr-processor repository holds the history,
   and its entry wins a tag both repositories have. A release counts only with an
-  active `stagecodes/otr-processor` Docker Hub tag, which otr-web pushes only when
+  active `stagecodes/otr-processor` Docker Hub tag, which otr pushes only when
   the processor changed. Usable time is the later GitHub publication or Docker
   push time. Preserve retry and rate-limit failure.
 - `sandbox.py` owns run-labeled Docker resources, streams imports, uses processor

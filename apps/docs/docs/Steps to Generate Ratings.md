@@ -1,4 +1,4 @@
-This guide explains how to regenerate player ratings from publicly available datasets as they were at the time of the snapshot. This enables independent verification of tournaments which use the platform for filtering and/or seeding. The [`otr-replay`](https://github.com/osu-tournament-rating/otr-web/tree/master/apps/replay) tool performs the entire procedure automatically; however, the equivalent manual process is also documented.
+This guide explains how to regenerate player ratings from publicly available datasets as they were at the time of the snapshot. This enables independent verification of tournaments which use the platform for filtering and/or seeding. The [`otr-replay`](https://github.com/osu-tournament-rating/otr/tree/master/apps/replay) tool performs the entire procedure automatically; however, the equivalent manual process is also documented.
 
 Throughout this guide, the **"effective date"** is the point in time that ratings are generated for. This is usually the moment a tournament closes registrations, or another date the tournament announces for capturing ratings of registrants. All dates and times are in UTC.
 
@@ -8,11 +8,11 @@ Ratings are reproduced exactly as they were at the instant the database snapshot
 
 `otr-replay` requires [Docker](https://www.docker.com/get-started/) and [uv](https://docs.astral.sh/uv/).
 
-1. Clone the [otr-web](https://github.com/osu-tournament-rating/otr-web) repository, which holds `otr-replay` in its `apps/replay` folder: `git clone --depth 1 https://github.com/osu-tournament-rating/otr-web.git`.
+1. Clone the [otr](https://github.com/osu-tournament-rating/otr) repository, which holds `otr-replay` in its `apps/replay` folder: `git clone --depth 1 https://github.com/osu-tournament-rating/otr.git`.
 1. From the `apps/replay` folder, run the program with the effective date as a timestamp. Replace the example date in the command below with the effective date. Timestamps use the format `YYYY-MM-DDTHH:MM[:SS][Z]` and are always interpreted as UTC, so a replica timestamp such as `2026-08-08T00:06:13Z` can be pasted as-is.
 
 ```bash
-cd otr-web/apps/replay
+cd otr/apps/replay
 uv run otr-replay --as-of 2026-06-27T23:59
 ```
 
@@ -21,7 +21,7 @@ The program downloads the correct public replica from the [public replicas site]
 The replica is stored in the system's default temp directory and is discarded when the process finishes, even if it fails.
 
 > [!note]
-> `otr-replay` used to live in its own [otr-replay](https://github.com/osu-tournament-rating/otr-replay) repository, which no longer receives updates. Existing clones of it should be replaced with a clone of otr-web.
+> `otr-replay` used to live in its own [otr-replay](https://github.com/osu-tournament-rating/otr-replay) repository, which no longer receives updates. Existing clones of it should be replaced with a clone of otr.
 
 > [!note]
 > The first public replica is dated `2025-10-06T21:13:57Z`, and `2025.10.01` is the earliest supported processor release for this process.
@@ -113,7 +113,7 @@ gunzip -c /path/to/replica.gz | docker exec -i otr-db psql -U postgres -d postgr
 
 ### Run the processor
 
-Processor releases up to `2026.08.16` were published from the [otr-processor repository](https://github.com/osu-tournament-rating/otr-processor/releases); later processor releases are [otr-web releases](https://github.com/osu-tournament-rating/otr-web/releases) that changed the processor. Every supported processor release has a [`stagecodes/otr-processor` image](https://hub.docker.com/r/stagecodes/otr-processor/tags) tagged with its name, so an otr-web release after `2026.08.16` without a matching image is not a processor release. No otr-web release up to `2026.08.16` is a processor release, even when it shares a name with one.
+Processor releases up to `2026.08.16` were published from the [otr-processor repository](https://github.com/osu-tournament-rating/otr-processor/releases); later processor releases are [otr releases](https://github.com/osu-tournament-rating/otr/releases) that changed the processor. Every supported processor release has a [`stagecodes/otr-processor` image](https://hub.docker.com/r/stagecodes/otr-processor/tags) tagged with its name, so an otr release after `2026.08.16` without a matching image is not a processor release. No otr release up to `2026.08.16` is a processor release, even when it shares a name with one.
 
 Find the most recent processor release published **at or before the timestamp of the *replica*** imported earlier. The replica's timestamp, not the effective date, is the reference point. The ratings in a replica were produced by whichever release was live when it was taken. `otr-replay` makes this selection automatically.
 
@@ -132,7 +132,7 @@ docker run --rm \
 > [!note]
 > A placeholder `RABBITMQ_URL` is provided as the processor requires it be set. A warning will appear in the processor that can be safely ignored.
 >
-> `CONNECTION_STRING` and `RABBITMQ_URL` work with every processor release. Images published from otr-web also accept `DATABASE_URL` and `RABBITMQ_AMQP_URL`.
+> `CONNECTION_STRING` and `RABBITMQ_URL` work with every processor release. Images published from otr also accept `DATABASE_URL` and `RABBITMQ_AMQP_URL`.
 
 > [!example]
 > If the effective date is `2026-07-01T23:00:00Z`, the newest replica at or before it is `2026-06-30T11:45:01Z`, and the latest processor release published before that replica is `2026.05.18`.

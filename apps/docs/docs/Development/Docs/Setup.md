@@ -8,7 +8,7 @@ The o!TR Docs serve to document anything and everything related to the o!TR proj
 ## Cloning the Repository
 
 > [!NOTE]
-> The docs live in the `apps/docs` folder of the [otr-web repository](https://github.com/osu-tournament-rating/otr-web). If you want to contribute to the docs and you are not part of our organization, you must first [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) that repository and clone the version tied to your GitHub account.
+> The docs live in the `apps/docs` folder of the [otr repository](https://github.com/osu-tournament-rating/otr). If you want to contribute to the docs and you are not part of our organization, you must first [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) that repository and clone the version tied to your GitHub account.
 >
 > See the [[Contribution Guide]] for more information.
 
@@ -17,13 +17,13 @@ The o!TR Docs serve to document anything and everything related to the o!TR proj
 1. Execute the following command to clone the repository:
 
 ```
-git clone <YOUR FORK, OR https://github.com/osu-tournament-rating/otr-web.git>
+git clone <YOUR FORK, OR https://github.com/osu-tournament-rating/otr.git>
 ```
 
 ## Opening in Obsidian
 
 1. Open Obsidian.
-1. Select “Open folder as vault” and navigate to the `apps/docs` folder of the cloned `otr-web` repository. Obsidian will then index and display the documentation.
+1. Select “Open folder as vault” and navigate to the `apps/docs` folder of the cloned `otr` repository. Obsidian will then index and display the documentation.
 
 ## Optional: Git Plugin
 

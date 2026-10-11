@@ -1,5 +1,5 @@
 ![osu! Tournament Rating](https://akinariosu.s-ul.eu/X1Me0Jpd)
 
-# o!TR Web
+# o!TR
 
 Check out our [development guide](https://docs.otr.stagec.net/Development/Development-Guide) to get started with local development.

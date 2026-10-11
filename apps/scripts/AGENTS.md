@@ -1,8 +1,8 @@
 # otr-scripts agent guidance
 
-The scripts live in otr-web at `apps/scripts`. They are Python, not a bun
+The scripts live in otr at `apps/scripts`. They are Python, not a bun
 workspace: run their commands from this directory with Python 3.14 and `uv`,
-unlike the rest of otr-web. Pull requests follow the root `AGENTS.md`.
+unlike the rest of otr. Pull requests follow the root `AGENTS.md`.
 
 Merging a change here deploys it. Every release installs this directory on
 the production host, where the Tuesday processor cron runs it, and the dev
@@ -16,7 +16,7 @@ Never run them, upload archives, publish indexes, or deploy while developing.
 Stop for manual intervention when a task truly requires one.
 
 `.env` contains credentials and infrastructure paths. `lib.config` loads
-`apps/scripts/.env` at import, and only that file: never otr-web's root `.env`,
+`apps/scripts/.env` at import, and only that file: never otr's root `.env`,
 which holds different variables. Never commit or print it. Bucket names and
 table inclusion policy remain in their existing constants and
 `lib/scripts/db.py`.
