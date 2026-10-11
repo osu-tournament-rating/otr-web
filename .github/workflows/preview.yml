@@ -265,14 +265,14 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-          ping: ${{ secrets.SSH_HOST }}
+          ping: ${{ secrets.TS_HOST_IP }}
 
       # The host runs whatever copy the Dev tier deploy action last put there,
       # so settle that before spending a build on it.
       - name: Check the host database script
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_HOST: ${{ secrets.TS_HOST_IP }}
           DEV_REMOTE_PATH: ${{ secrets.DEV_REMOTE_PATH }}
         run: |
           set -euo pipefail
@@ -323,7 +323,7 @@ jobs:
         id: database
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_HOST: ${{ secrets.TS_HOST_IP }}
           DEV_REMOTE_PATH: ${{ secrets.DEV_REMOTE_PATH }}
           BASE_JOURNAL: ${{ steps.context.outputs.base_journal }}
           EXPECTED_JOURNAL: ${{ steps.context.outputs.expected_journal }}
@@ -371,7 +371,7 @@ jobs:
       - name: Upload preview assets
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_HOST: ${{ secrets.TS_HOST_IP }}
           PREVIEW_REMOTE_PATH: ${{ secrets.PREVIEW_REMOTE_PATH }}
           ENV_CONTENT: ${{ secrets.PREVIEW_ENV }}
           # Scoped to tag:preview alone, not the tag:ci client used above.
@@ -408,7 +408,7 @@ jobs:
       - name: Migrate and start the preview stack
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_HOST: ${{ secrets.TS_HOST_IP }}
           PREVIEW_REMOTE_PATH: ${{ secrets.PREVIEW_REMOTE_PATH }}
           DEV_REMOTE_PATH: ${{ secrets.DEV_REMOTE_PATH }}
           PROJECT: ${{ steps.context.outputs.project }}
@@ -539,12 +539,12 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-          ping: ${{ secrets.SSH_HOST }}
+          ping: ${{ secrets.TS_HOST_IP }}
 
       - name: Remove preview stack and database
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_HOST: ${{ secrets.TS_HOST_IP }}
           PREVIEW_REMOTE_PATH: ${{ secrets.PREVIEW_REMOTE_PATH }}
           DEV_REMOTE_PATH: ${{ secrets.DEV_REMOTE_PATH }}
         run: |

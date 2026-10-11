@@ -45,12 +45,12 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-          ping: ${{ secrets.SSH_HOST }}
+          ping: ${{ secrets.TS_HOST_IP }}
 
       - name: Run script
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_HOST: ${{ secrets.TS_HOST_IP }}
           # The directory the scripts are installed under.
           REMOTE_PATH: ${{ inputs.environment == 'dev' && secrets.DEV_REMOTE_PATH || secrets.REMOTE_PATH }}
           ARGS: ${{ inputs.args }}

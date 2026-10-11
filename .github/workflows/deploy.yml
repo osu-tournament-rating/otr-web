@@ -586,12 +586,12 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-          ping: ${{ secrets.SSH_HOST }}
+          ping: ${{ secrets.TS_HOST_IP }}
 
       - name: Ensure remote directory exists
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_HOST: ${{ secrets.TS_HOST_IP }}
           REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
         run: |
           set -euo pipefail
@@ -602,7 +602,7 @@ jobs:
       - name: Upload deployment assets
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_HOST: ${{ secrets.TS_HOST_IP }}
           REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
           ENV_CONTENT: ${{ secrets.ENV }}
         run: |
@@ -630,7 +630,7 @@ jobs:
       - name: Deploy stack via docker compose
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_HOST: ${{ secrets.TS_HOST_IP }}
           REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
         run: |
           set -euo pipefail
@@ -656,7 +656,7 @@ jobs:
       - name: Install the operations scripts
         env:
           SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_HOST: ${{ secrets.TS_HOST_IP }}
           REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
           SCRIPTS_ENV: ${{ secrets.SCRIPTS_ENV }}
           TAG: ${{ needs.resolve.outputs.tag || needs.release.outputs.tag }}
