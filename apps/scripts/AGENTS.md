@@ -21,17 +21,20 @@ which holds different variables. Never commit or print it. Bucket names and
 table inclusion policy remain in their existing constants and
 `lib/scripts/db.py`.
 
-`template-db` is the development exception. Its `seed`, `create`, `drop`, and
-`list` actions manage a dedicated PostgreSQL container and refuse ports `5432`
-and `5433`. They can start or mutate that container; run only the action the task
-needs. They never use the configured application database.
+`otr` and `template-db` are the development exceptions. `otr` manages
+per-worktree agent stacks; see Agent stacks below and the root `AGENTS.md`.
+`template-db`'s `seed`, `create`, `drop`, and `list` actions manage a dedicated
+PostgreSQL container and refuse ports `5432` and `5433`. They can start or
+mutate that container; run only the action the task needs. Neither uses the
+configured application database.
 
 ## Commands
 
 - Setup: `uv sync --locked` installs the versions in `uv.lock`. Add
   `--extra e2e` when pytest-based checks are required. The extra supplies
-  pytest; installing it does not authorize external test execution. Build a
-  task `.env` from `.env.example`; do not copy secrets.
+  pytest; installing it does not authorize external test execution. A new
+  worktree gets a copy of the main checkout's `.env` when it has one;
+  otherwise build one from `.env.example` and do not copy secrets into it.
 - CLI: `uv run python src/main.py --script <operation> [options]`.
 - Checks: `uv run ruff check src tests`, `uv run black --check src tests`,
   `uv run python -m compileall -q src`, and focused
@@ -39,11 +42,9 @@ needs. They never use the configured application database.
   operational commands; do not replace execution with test collection. CI runs
   ruff, compileall, black, and `pytest tests -m 'not e2e'` only when a change
   touches `apps/scripts/**`.
-- Before database-dependent work, create a prepared database on port `5434`:
-  `uv run python src/main.py --script template-db --template-action create --template-name <name> --template-web-dir ../..`.
-  `../..` is the root of this otr-web checkout, which needs `bun install` first.
-  Its migrations carry the schema the task's scripts and processor expect.
-  Documentation-only work does not require a database.
+- Before database-dependent work, run `./otr up --no-web`. It gives the
+  worktree its own copy of the local database with the branch's migrations
+  applied. Documentation-only work does not require a database.
 - `uv run --extra e2e python -m pytest -m e2e tests/e2e` needs Docker and GCS
   credentials and imports a public archive into an isolated container. Run only
   for an explicitly authorized archive validation.
@@ -79,3 +80,33 @@ needs. They never use the configured application database.
   and operations in `src/lib/`.
 - Prefer argument lists for subprocesses. Preserve upstream failure and quote
   paths when a shell pipeline is unavoidable.
+
+## Agent stacks
+
+`./otr up|down|status` (`apps/scripts/otr` from the repository root) gives
+each linked worktree its own stack. The code is `src/otr.py` and
+`src/lib/stack/`. It uses only the standard library, so the wrapper runs it
+without syncing the venv. It refuses to run in the main checkout.
+
+- The shared base is an online `pg_basebackup` of the container publishing
+  port 5432, taken only after checking that it holds an o!TR database. Its
+  other databases, and directories no database owns, are dropped. A stack's
+  database is a `cp --reflink=auto` copy of the base, which is nearly instant
+  and shares disk blocks on btrfs or XFS. `up --fresh` rebuilds the base and
+  replaces the stack's copy.
+- Each `up` runs `bun install --frozen-lockfile` and the worktree's pending
+  migrations. The web app and worker run on the host from the worktree's code,
+  in their own process groups. RabbitMQ and monitoring (`grafana/otel-lgtm`)
+  run in the stack's Compose project, from `src/lib/stack/compose.yml`.
+- State lives in `~/.local/share/otr/stacks` (or `$OTR_STACKS_DIR`): `base/`,
+  one directory per stack with its data, registry entry, and process records,
+  and `locks/`. Logs go to the worktree's `.tmp/otr/`.
+- Stack slot `n` owns ports `20000 + 10n` through `+9`: web `+0`, PostgreSQL
+  `+1`, RabbitMQ `+2`, its management UI `+3`, worker health `+4`, Grafana
+  `+5`, and OTLP over HTTP `+6` and gRPC `+7`. Everything binds to loopback.
+- `up` writes a marked block into the worktree's `.env`. It holds the stack's
+  URLs and ports. It turns on test sign-in (`E2E_TEST_AUTH`), and turns off
+  scheduled player refetches and the maintenance window. The tracing endpoint
+  is set only while monitoring runs. A running process whose settings changed
+  is restarted. After `down`, the block still points at the disposed stack, so
+  nothing falls back to the main checkout's services.
