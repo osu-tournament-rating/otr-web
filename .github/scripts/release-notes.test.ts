@@ -254,7 +254,7 @@ describe('parseProcessorImage', () => {
     // The body of release 2026.10.08.1.
     expect(
       parseProcessorImage(
-        'https://github.com/osu-tournament-rating/otr-web/pull/943\n\n\n## Changelog\n\n- None\n'
+        'https://github.com/osu-tournament-rating/otr/pull/943\n\n\n## Changelog\n\n- None\n'
       )
     ).toBeNull();
     expect(parseProcessorImage('')).toBeNull();
