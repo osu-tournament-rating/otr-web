@@ -44,7 +44,7 @@ def _env_or_default(key: str, default: str) -> str:
 
 def init() -> Config:
     # Only apps/scripts/.env. Without a path, python-dotenv searches each
-    # parent directory and would load otr-web's root .env instead.
+    # parent directory and would load otr's root .env instead.
     env_file = Path(__file__).resolve().parents[2] / ".env"
     if not load_dotenv(env_file):
         raise FileNotFoundError(f"Missing {env_file}")

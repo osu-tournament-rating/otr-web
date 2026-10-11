@@ -144,7 +144,7 @@ def add_args(parser: ArgumentParser):
     template_args.add_argument(
         "--template-web-dir",
         type=Path,
-        help="Task otr-web checkout with installed dependencies (required for create)",
+        help="Task otr checkout with installed dependencies (required for create)",
     )
 
     args = parser.parse_args()
