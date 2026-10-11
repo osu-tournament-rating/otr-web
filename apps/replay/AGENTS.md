@@ -1,10 +1,15 @@
 # otr-replay agent guidance
 
-Run commands from the repository root through `uv`; do not call `pip` or
-`python` directly. Expand `$HOME` to the current user's home directory, then
-first read `$HOME/code/git/otr/AGENTS.md` and
-`$HOME/code/git/otr/.agents/WORKFLOW.md`. Python 3.14 is required. The app and
-Docker tests need Docker.
+otr-replay lives in otr-web at `apps/replay`. It is Python, not a bun
+workspace: run its commands from this directory through `uv`, unlike the rest
+of otr-web, and do not call `pip` or `python` directly. Pull requests follow
+the root `AGENTS.md`. Python 3.14 is required. The app and Docker tests need
+Docker.
+
+Nothing deploys this directory. People run it from their own clone of otr-web,
+so a merge to `master` reaches them on their next pull. It reads only public
+data: GitHub releases, Docker Hub tags, and the public replicas. It never needs
+the root `.env` or a worktree stack.
 
 The tool reproduces published ratings at a UTC `--as-of` time from the newest
 eligible public replica and processor release. It writes a CSV and audit
@@ -14,7 +19,8 @@ including an offset-less API value, as UTC.
 
 ## Commands
 
-- `uv sync`; use `--frozen` in CI.
+- `uv sync`; CI uses `--locked`, and runs every check below only when a change
+  touches `apps/replay/**`.
 - `uv run otr-replay --as-of 2026-06-27T23:59` runs the application.
 - `uv run pytest` runs unit tests.
 - `OTR_REPLAY_DOCKER_TEST=1 uv run pytest tests/test_reconcile_docker.py` runs

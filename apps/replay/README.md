@@ -8,6 +8,11 @@ runs the most recent processor release that was available when that replica
 was taken, and writes the resulting ratings to a CSV file. A reconciliation is also performed as described
 in [our online documentation](https://docs.otr.stagec.net/Steps-to-Generate-Ratings#Decay-Reconciliation).
 
+`otr-replay` lives in the `apps/replay` folder of
+[otr-web](https://github.com/osu-tournament-rating/otr-web). It was previously
+developed in its own [otr-replay](https://github.com/osu-tournament-rating/otr-replay)
+repository, which no longer receives updates.
+
 ## Processor releases
 
 The processor has been part of [otr-web](https://github.com/osu-tournament-rating/otr-web)
@@ -30,10 +35,13 @@ image of that name belongs to otr-processor, so its release is the one used.
 
 ## Usage
 
-Run the program from the repository root with the UTC timestamp at which the
-tournament closed registrations, or another timestamp the ratings were taken from:
+Clone otr-web, then run the program from its `apps/replay` folder with the UTC
+timestamp at which the tournament closed registrations, or another timestamp the
+ratings were taken from:
 
 ```sh
+git clone --depth 1 https://github.com/osu-tournament-rating/otr-web.git
+cd otr-web/apps/replay
 uv run otr-replay --as-of 2026-06-27T23:59
 ```
 
@@ -53,4 +61,4 @@ Two files are written to the working directory and never overwritten:
 
 ## License
 
-MIT
+MIT, unlike the rest of otr-web. See `LICENSE` in this folder.

@@ -24,6 +24,9 @@ this file.
   which runs each worktree's own stack.
 - `apps/docs`: the docs site at docs.otr.stagec.net, Markdown rendered by
   Quartz.
+- `apps/replay`: `otr-replay`, a Python CLI that anyone can run to reproduce
+  published ratings for a past date from a public database replica and the
+  processor release of that time. It never touches production.
 - `packages/otr-core` (`@otr/core`): the shared contract layer. It holds the
   database schema, domain enums, queue names and messages, logging, tracing, and
   maintenance windows. Never duplicate any of these inside an app.
@@ -31,7 +34,7 @@ this file.
   observability config. Never invoke anything in them. Don't confuse root
   `scripts/` with `apps/scripts/`.
 
-The processor, scripts, and docs are not Bun workspaces. Each has its own
+The processor, scripts, replay, and docs are not Bun workspaces. Each has its own
 toolchain and its own `AGENTS.md`; read that file before working there.
 
 ## How the pieces talk
@@ -64,7 +67,8 @@ the rating run: admin writes return 503 and the worker defers osu! fetches.
   OAuth sign-in, sessions, admin roles, and API keys.
 - Data: PostgreSQL 17 through Drizzle ORM, and RabbitMQ 4.
 - Processor: Rust, with an OpenSkill (Plackett–Luce) rating model plus decay.
-- Scripts: Python 3.14 with uv. Archives are stored in Google Cloud Storage.
+- Scripts and replay: Python 3.14 with uv. Archives are stored in Google Cloud
+  Storage.
 - Operations: Docker Compose on a single production host, reached over
   Tailscale. Images are `stagecodes/otr-*` on Docker Hub. OpenTelemetry sends
   traces through Alloy to Tempo, with Loki, Prometheus, and Grafana alongside.
@@ -171,7 +175,7 @@ parameters or user input on a span.
 Write [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
 `type(scope): description`, lowercase and short, one concern per commit. Use
 the area as the scope: `web`, `worker`, `core`, `db`, `processor`, `scripts`,
-`docs`, `ci`, or `preview`. Types are `feat`, `fix`, `perf`, `refactor`,
+`replay`, `docs`, `ci`, or `preview`. Types are `feat`, `fix`, `perf`, `refactor`,
 `docs`, `test`, `build`, `ci`, `chore`, `style`, and `revert`. When a body is
 needed, it explains why, not what. Branch commits stay in `master`'s history,
 so keep them clean.
