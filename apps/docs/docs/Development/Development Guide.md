@@ -1,6 +1,6 @@
 ## Overview
 
-This article details how to clone and configure the otr-web repository, which contains the website, data worker, and processor. By the end, these projects will be ready for local execution via docker or standalone commands.
+This article details how to clone and configure the otr repository, which contains the website, data worker, and processor. By the end, these projects will be ready for local execution via docker or standalone commands.
 
 > [!note]
 > Testing locally with an outdated database replica is out of this article's scope. In short, checkout the latest tag created prior to the date of the replica. See [[Steps to Generate Ratings]] for more information on this.
@@ -20,20 +20,20 @@ This article details how to clone and configure the otr-web repository, which co
 ### Clone the repository
 
 > [!important]
-> Outside contributors need to first fork the [otr-web repository](https://github.com/osu-tournament-rating/otr-web) on GitHub. This is only necessary for those who intend to author code contributions.
+> Outside contributors need to first fork the [otr repository](https://github.com/osu-tournament-rating/otr) on GitHub. This is only necessary for those who intend to author code contributions.
 
-Clone otr-web, which contains every project in this article:
+Clone otr, which contains every project in this article:
 
 ```
-git clone https://github.com/osu-tournament-rating/otr-web.git
+git clone https://github.com/osu-tournament-rating/otr.git
 ```
 
 ### Environment files
 
-In `otr-web`, copy the `.env.example` file into `.env` :
+In `otr`, copy the `.env.example` file into `.env` :
 
 ```
-cd otr-web
+cd otr
 cp .env.example .env
 ```
 
@@ -41,7 +41,7 @@ Populate the `WEB_OSU_CLIENT_ID` and `WEB_OSU_CLIENT_SECRET` variables using the
 
 ### Start Postgres and RabbitMQ
 
-From the `otr-web/` directory, start the database and queue manager:
+From the `otr/` directory, start the database and queue manager:
 
 ```
 docker compose up -d db rabbitmq
@@ -50,7 +50,7 @@ docker compose up -d db rabbitmq
 This starts Postgres 17 and RabbitMQ 4. The RabbitMQ management UI is viewable at `http://localhost:15672/` (default user `admin`, password `admin`).
 
 > [!important]
-> The database and queue manager will run so long as Docker is running, even after rebooting. To stop the programs indefinitely, run `docker compose down` in the `otr-web` directory.
+> The database and queue manager will run so long as Docker is running, even after rebooting. To stop the programs indefinitely, run `docker compose down` in the `otr` directory.
 
 #### Database import
 
@@ -108,7 +108,7 @@ Note that ratings will not appear until the processor is run successfully.
 
 ### Processor configuration
 
-The processor needs no configuration of its own. It reads the `.env` file at the otr-web root, connecting to the database at `DATABASE_URL` and to RabbitMQ at `RABBITMQ_AMQP_URL`. It also accepts its former variable names, `CONNECTION_STRING` and `RABBITMQ_URL`.
+The processor needs no configuration of its own. It reads the `.env` file at the otr root, connecting to the database at `DATABASE_URL` and to RabbitMQ at `RABBITMQ_AMQP_URL`. It also accepts its former variable names, `CONNECTION_STRING` and `RABBITMQ_URL`.
 
 > [!warning]
 > A processor run rewrites every rating in the database at `DATABASE_URL`. Only run it against a local database.
@@ -133,7 +133,7 @@ After running the processor and revisiting the website locally, ratings should b
 
 ### Run the entire stack
 
-It is possible to run the entire stack locally identically to how it runs in production. To run the stack in a production-like state, run these commands inside `otr-web/`:
+It is possible to run the entire stack locally identically to how it runs in production. To run the stack in a production-like state, run these commands inside `otr/`:
 
 - Build the `otr-web:local` and `otr-data-worker:local` images: `./scripts/local-up.sh`
 - (Linux only) Start the compose stack with system monitoring `docker compose --profile node-exporter up`

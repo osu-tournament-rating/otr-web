@@ -9,14 +9,14 @@ was taken, and writes the resulting ratings to a CSV file. A reconciliation is a
 in [our online documentation](https://docs.otr.stagec.net/Steps-to-Generate-Ratings#Decay-Reconciliation).
 
 `otr-replay` lives in the `apps/replay` folder of
-[otr-web](https://github.com/osu-tournament-rating/otr-web). It was previously
+[otr](https://github.com/osu-tournament-rating/otr). It was previously
 developed in its own [otr-replay](https://github.com/osu-tournament-rating/otr-replay)
 repository, which no longer receives updates.
 
 ## Processor releases
 
-The processor has been part of [otr-web](https://github.com/osu-tournament-rating/otr-web)
-(`apps/processor`) since 2026-10-08, so its releases are otr-web releases, tagged
+The processor has been part of [otr](https://github.com/osu-tournament-rating/otr)
+(`apps/processor`) since 2026-10-08, so its releases are otr releases, tagged
 `YYYY.MM.DD`, or `YYYY.MM.DD.N` for later releases on the same day. Only a release
 that changed the processor publishes a `stagecodes/otr-processor` image, and only a
 release with both a GitHub release and that image counts; any other release left the
@@ -25,7 +25,7 @@ GitHub publication and its image push.
 
 Earlier releases, up to `2026.08.16`, come from the processor's former
 [otr-processor](https://github.com/osu-tournament-rating/otr-processor) repository.
-Some older otr-web releases share a tag with one of them, such as `2026.08.16`; the
+Some older otr releases share a tag with one of them, such as `2026.08.16`; the
 image of that name belongs to otr-processor, so its release is the one used.
 
 ## Prerequisites
@@ -35,13 +35,13 @@ image of that name belongs to otr-processor, so its release is the one used.
 
 ## Usage
 
-Clone otr-web, then run the program from its `apps/replay` folder with the UTC
+Clone otr, then run the program from its `apps/replay` folder with the UTC
 timestamp at which the tournament closed registrations, or another timestamp the
 ratings were taken from:
 
 ```sh
-git clone --depth 1 https://github.com/osu-tournament-rating/otr-web.git
-cd otr-web/apps/replay
+git clone --depth 1 https://github.com/osu-tournament-rating/otr.git
+cd otr/apps/replay
 uv run otr-replay --as-of 2026-06-27T23:59
 ```
 
@@ -61,4 +61,4 @@ Two files are written to the working directory and never overwritten:
 
 ## License
 
-MIT, unlike the rest of otr-web. See `LICENSE` in this folder.
+MIT, unlike the rest of otr. See `LICENSE` in this folder.
