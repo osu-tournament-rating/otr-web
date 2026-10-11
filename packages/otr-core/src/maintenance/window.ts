@@ -1,5 +1,5 @@
 // Weekly freeze on data mutations and external fetches around the 12:00 UTC
-// rating processor run. https://github.com/osu-tournament-rating/otr-web/issues/763
+// rating processor run. https://github.com/osu-tournament-rating/otr/issues/763
 
 /** Start of the window, in minutes past midnight UTC (11:45 UTC). */
 export const MAINTENANCE_WINDOW_START_UTC_MINUTES = 11 * 60 + 45;
