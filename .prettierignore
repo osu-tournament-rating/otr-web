@@ -2,3 +2,5 @@
 apps/processor/
 # The docs are formatted for markdownlint, and apps/docs/quartz is a submodule.
 apps/docs/
+# The replay tool's fixtures copy real GitHub, Docker Hub, and GCS responses.
+apps/replay/tests/fixtures/

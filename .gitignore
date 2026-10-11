@@ -32,6 +32,10 @@ apps/processor/target/
 apps/scripts/.venv/
 apps/scripts/.pytest_cache/
 apps/scripts/.ruff_cache/
+apps/replay/.venv/
+apps/replay/.pytest_cache/
+apps/replay/.ruff_cache/
+apps/replay/otr-replay_*
 
 # misc
 .DS_Store
