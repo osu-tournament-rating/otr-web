@@ -168,7 +168,7 @@ code. Write for that reader.
 - `## Changelog` becomes the release notes. Use only past-tense bullets for
   user-facing changes, linking the pages they touch. Write `- None` when
   nothing user-facing changed. Keep the `<!-- changelog:end -->` marker, and
-  put anything after the release notes, such as a signature, below it.
+  put anything after the release notes, such as the signature, below it.
   `.github/scripts/release-notes.ts` enforces the title and changelog format.
 - Accuracy beats completeness. Never claim something was checked unless it
   was.
@@ -188,3 +188,9 @@ fix it in the current change.
   Add `bug` for a defect in shipped behavior or `proposal` for an idea. Add
   `meta:ops`, `meta:ui-ux`, or `meta:performance` when one fits.
 - List the issues you opened in your final report to the user.
+
+## Signature
+
+End everything you post publicly on the user's behalf with `^claude` on its
+own final line. That covers issues, pull requests, comments, and reviews. In a
+pull request, the signature goes after `<!-- changelog:end -->`.
