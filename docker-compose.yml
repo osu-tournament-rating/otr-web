@@ -1,3 +1,9 @@
+# Compose prefixes volume names with the project name, so the data lives in
+# otr-web_postgres-data and the like. Pinned so that renaming or recloning the
+# checkout directory can't start the stack on new, empty volumes. Production
+# runs as otr-prod: COMPOSE_PROJECT_NAME in its .env wins over this.
+name: otr-web
+
 services:
   db:
     image: postgres:17
