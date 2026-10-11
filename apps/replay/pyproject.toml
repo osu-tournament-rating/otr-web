@@ -1,0 +1,38 @@
+[project]
+name = "otr-replay"
+version = "1.0.0"
+description = "Reproduces published o!TR player ratings for a point in time."
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "osu! Tournament Rating" }]
+dependencies = ["httpx>=0.28", "rich>=14"]
+
+[project.scripts]
+otr-replay = "otr_replay.cli:main"
+
+[project.urls]
+Homepage = "https://otr.stagec.net/"
+
+[build-system]
+requires = ["uv_build>=0.8.5,<0.9"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["pytest>=8.4", "black>=25.1", "ruff>=0.12"]
+
+[tool.black]
+line-length = 100
+target-version = ["py314"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

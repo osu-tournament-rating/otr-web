@@ -1,0 +1,65 @@
+[
+  {
+    "tag_name": "2026.10.08",
+    "html_url": "https://github.com/osu-tournament-rating/otr-web/releases/tag/2026.10.08",
+    "published_at": "2026-10-08T20:33:28Z",
+    "draft": false,
+    "prerelease": false
+  },
+  {
+    "tag_name": "2026.10.07",
+    "html_url": "https://github.com/osu-tournament-rating/otr-web/releases/tag/untagged-0f1e2d3c4b5a69788796",
+    "published_at": null,
+    "draft": true,
+    "prerelease": false
+  },
+  {
+    "tag_name": "2026.10.04.10",
+    "html_url": "https://github.com/osu-tournament-rating/otr-web/releases/tag/2026.10.04.10",
+    "published_at": "2026-10-04T18:20:05Z",
+    "draft": false,
+    "prerelease": false
+  },
+  {
+    "tag_name": "2026.10.04.2",
+    "html_url": "https://github.com/osu-tournament-rating/otr-web/releases/tag/2026.10.04.2",
+    "published_at": "2026-10-04T12:54:30Z",
+    "draft": false,
+    "prerelease": false
+  },
+  {
+    "tag_name": "2026.10.04.1",
+    "html_url": "https://github.com/osu-tournament-rating/otr-web/releases/tag/2026.10.04.1",
+    "published_at": "2026-10-04T12:39:47Z",
+    "draft": false,
+    "prerelease": false
+  },
+  {
+    "tag_name": "2026.10.04",
+    "html_url": "https://github.com/osu-tournament-rating/otr-web/releases/tag/2026.10.04",
+    "published_at": "2026-10-04T12:04:02Z",
+    "draft": false,
+    "prerelease": false
+  },
+  {
+    "tag_name": "2026.09.01",
+    "html_url": "https://github.com/osu-tournament-rating/otr-web/releases/tag/2026.09.01",
+    "published_at": "2026-09-01T04:20:16Z",
+    "draft": false,
+    "prerelease": false
+  },
+  {
+    "tag_name": "2026.08.16",
+    "html_url": "https://github.com/osu-tournament-rating/otr-web/releases/tag/2026.08.16",
+    "published_at": "2026-08-16T17:53:50Z",
+    "draft": false,
+    "prerelease": false
+  },
+  {
+    "tag_name": "2026.05.18",
+    "html_url": "https://github.com/osu-tournament-rating/otr-web/releases/tag/2026.05.18",
+    "published_at": "2026-05-18T19:55:10Z",
+    "draft": false,
+    "prerelease": false
+  }
+]
