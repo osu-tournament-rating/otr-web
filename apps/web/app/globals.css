@@ -4,11 +4,11 @@
  * `@import url(...)` rules from the bundled CSS, which silently dropped the web font
  */
 @import 'tailwindcss';
+@plugin 'tailwindcss-animate';
 
 @custom-variant dark (&:is(.dark *));
 
 @layer base {
-  @tailwindcss /animate;
   body {
     letter-spacing: var(--tracking-normal);
     font-variant-numeric: tabular-nums;
