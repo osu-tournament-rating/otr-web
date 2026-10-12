@@ -339,7 +339,7 @@ impl OtrModel {
     /// methods A and B for a specific match.
     ///
     /// More information about the A and B ratings can be found here:
-    /// https://docs.otr.stagec.xyz/Rating-Framework/Rating-Calculation/Rating-Calculation-Overview#ranking--rating-calculation
+    /// https://docs.otr.stagec.net/Rating-Framework/Rating-Calculation/Rating-Calculation-Overview#ranking--rating-calculation
     fn calc_weighted_rating(
         ratings_a: &[Rating],
         ratings_b: &[Rating],
@@ -1434,7 +1434,7 @@ mod tests {
     }
 
     /// Test that validates the rating calculation algorithm against the documented sample match.
-    /// See: https://docs.otr.stagec.xyz/Rating-Framework/Rating-Calculation/Sample-Match
+    /// See: https://docs.otr.stagec.net/Rating-Framework/Rating-Calculation/Sample-Match
     #[test]
     fn test_documented_sample_match_rating_calculation() {
         const TOLERANCE: f64 = 0.000009;
