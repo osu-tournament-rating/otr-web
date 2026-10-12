@@ -1,6 +1,6 @@
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use otr_processor::{
-    database::{db::DbClient, db_structs::*},
+    database::{db::DbClient, db_structs::*, error::DbError},
     model::structures::{rating_adjustment_type::RatingAdjustmentType, ruleset::Ruleset}
 };
 use serial_test::serial;
@@ -15,11 +15,11 @@ async fn test_get_players() {
     let test_db = TestDatabase::new().await.expect("Failed to create test database");
     test_db.seed_test_data().await.expect("Failed to seed test data");
 
-    let db_client = DbClient::connect(&test_db.connection_string, false)
+    let db_client = DbClient::connect(&test_db.connection_string)
         .await
         .expect("Failed to connect");
 
-    let players = db_client.get_players().await;
+    let players = db_client.get_players().await.expect("Failed to fetch players");
 
     assert_eq!(players.len(), 4);
     assert_eq!(players[0].username, Some("TestPlayer1".to_string()));
@@ -63,10 +63,10 @@ async fn test_get_players_keeps_all_rulesets_at_batch_boundary() {
         .await
         .expect("Failed to seed players at the batch boundary");
 
-    let db_client = DbClient::connect(&test_db.connection_string, false)
+    let db_client = DbClient::connect(&test_db.connection_string)
         .await
         .expect("Failed to connect");
-    let players = db_client.get_players().await;
+    let players = db_client.get_players().await.expect("Failed to fetch players");
 
     assert_eq!(players.len(), 5000);
     let boundary_rulesets = players
@@ -109,10 +109,10 @@ async fn test_get_players_keeps_earliest_rank_when_current_rank_is_null() {
         .await
         .expect("Failed to insert nullable current rank");
 
-    let db_client = DbClient::connect(&test_db.connection_string, false)
+    let db_client = DbClient::connect(&test_db.connection_string)
         .await
         .expect("Failed to connect");
-    let players = db_client.get_players().await;
+    let players = db_client.get_players().await.expect("Failed to fetch players");
 
     assert_eq!(players.len(), 1);
     let ruleset_data = players[0]
@@ -131,11 +131,11 @@ async fn test_get_matches() {
     let test_db = TestDatabase::new().await.expect("Failed to create test database");
     test_db.seed_test_data().await.expect("Failed to seed test data");
 
-    let db_client = DbClient::connect(&test_db.connection_string, false)
+    let db_client = DbClient::connect(&test_db.connection_string)
         .await
         .expect("Failed to connect");
 
-    let matches = db_client.get_matches().await;
+    let matches = db_client.get_matches().await.expect("Failed to fetch matches");
 
     assert_eq!(matches.len(), 2);
     assert_eq!(matches[0].id, 1);
@@ -153,12 +153,163 @@ async fn test_get_matches() {
 
 #[tokio::test]
 #[serial]
+async fn test_get_matches_orders_by_start_time_and_skips_unratable_games() {
+    init_test_env();
+    let test_db = TestDatabase::new().await.expect("Failed to create test database");
+    test_db.seed_test_data().await.expect("Failed to seed test data");
+
+    // The second match now starts first, and its only game keeps one verified score.
+    let admin_client = test_db.get_client().await.expect("Failed to get client");
+    admin_client
+        .batch_execute(
+            "
+            UPDATE matches SET start_time = '2023-12-31 12:00:00+00' WHERE osu_id = 12346;
+
+            UPDATE game_scores SET verification_status = 3
+            WHERE id = (
+                SELECT MIN(gs.id)
+                FROM game_scores gs
+                JOIN games g ON g.id = gs.game_id
+                WHERE g.osu_id = 3
+            );
+            "
+        )
+        .await
+        .expect("Failed to adjust seeded matches");
+
+    let db_client = DbClient::connect(&test_db.connection_string)
+        .await
+        .expect("Failed to connect");
+    let matches = db_client.get_matches().await.expect("Failed to fetch matches");
+
+    assert_eq!(matches.len(), 2);
+    assert_eq!(matches[0].name, "Test Match 2");
+    assert!(
+        matches[0].games.is_empty(),
+        "A game with one verified score should be skipped"
+    );
+
+    assert_eq!(matches[1].name, "Test Match 1");
+    let game_ids: Vec<i32> = matches[1].games.iter().map(|game| game.id).collect();
+    assert!(game_ids.is_sorted(), "Games should be in id order");
+    for game in &matches[1].games {
+        let score_ids: Vec<i32> = game.scores.iter().map(|score| score.id).collect();
+        assert!(score_ids.is_sorted(), "Scores should be in id order");
+        assert!(game.scores.iter().all(|score| score.game_id == game.id));
+    }
+}
+
+#[tokio::test]
+#[serial]
+async fn test_get_tournament_info_requires_a_scored_game() {
+    init_test_env();
+    let test_db = TestDatabase::new().await.expect("Failed to create test database");
+    test_db.seed_test_data().await.expect("Failed to seed test data");
+
+    // A verified tournament whose only verified match has no games.
+    let admin_client = test_db.get_client().await.expect("Failed to get client");
+    admin_client
+        .batch_execute(
+            "
+            INSERT INTO tournaments
+                (name, abbreviation, forum_url, rank_range_lower_bound, ruleset, lobby_size, verification_status)
+            VALUES ('Empty Tournament', 'ET', 'https://example.com/empty', 0, 0, 8, 4);
+
+            INSERT INTO matches (osu_id, name, start_time, end_time, verification_status, tournament_id)
+            SELECT 22222, 'Empty Match', '2024-02-01 12:00:00+00', '2024-02-01 13:00:00+00', 4, id
+            FROM tournaments
+            WHERE abbreviation = 'ET';
+            "
+        )
+        .await
+        .expect("Failed to seed an empty tournament");
+
+    let db_client = DbClient::connect(&test_db.connection_string)
+        .await
+        .expect("Failed to connect");
+    let matches = db_client.get_matches().await.expect("Failed to fetch matches");
+    assert_eq!(matches.len(), 3);
+
+    let tournaments = db_client
+        .get_tournament_info_for_matches(&matches)
+        .await
+        .expect("Failed to fetch tournament info");
+    let names: Vec<&str> = tournaments.values().map(|info| info.name.as_str()).collect();
+    assert_eq!(names, vec!["Test Tournament"]);
+}
+
+#[tokio::test]
+#[serial]
+async fn test_get_tournaments_needing_stats_refresh() {
+    init_test_env();
+    let test_db = TestDatabase::new().await.expect("Failed to create test database");
+    test_db.seed_test_data().await.expect("Failed to seed test data");
+
+    let admin_client = test_db.get_client().await.expect("Failed to get client");
+    let tournament_id: i32 = admin_client
+        .query_one("SELECT id FROM tournaments", &[])
+        .await
+        .expect("Failed to fetch tournament")
+        .get(0);
+    let db_client = DbClient::connect(&test_db.connection_string)
+        .await
+        .expect("Failed to connect");
+
+    // A tournament without stats needs them.
+    assert_eq!(
+        db_client
+            .get_tournaments_needing_stats_refresh(&[tournament_id])
+            .await
+            .expect("Failed to check stats"),
+        vec![tournament_id]
+    );
+
+    // Stats created after every update are current. The seed never sets `updated`.
+    admin_client
+        .execute(
+            "
+            INSERT INTO player_tournament_stats
+                (average_rating_delta, average_match_cost, average_score, average_placement,
+                 average_accuracy, matches_played, matches_won, matches_lost, games_played,
+                 games_won, games_lost, teammate_ids, player_id, tournament_id, created)
+            SELECT 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '{}', MIN(id), $1, '2025-01-01 00:00:00+00'
+            FROM players
+            ",
+            &[&tournament_id]
+        )
+        .await
+        .expect("Failed to seed tournament stats");
+    assert!(db_client
+        .get_tournaments_needing_stats_refresh(&[tournament_id])
+        .await
+        .expect("Failed to check stats")
+        .is_empty());
+
+    // A score updated after the stats makes them stale.
+    admin_client
+        .execute(
+            "UPDATE game_scores SET updated = '2025-01-02 00:00:00+00' WHERE id = (SELECT MIN(id) FROM game_scores)",
+            &[]
+        )
+        .await
+        .expect("Failed to update a score");
+    assert_eq!(
+        db_client
+            .get_tournaments_needing_stats_refresh(&[tournament_id])
+            .await
+            .expect("Failed to check stats"),
+        vec![tournament_id]
+    );
+}
+
+#[tokio::test]
+#[serial]
 async fn test_save_results() {
     init_test_env();
     let test_db = TestDatabase::new().await.expect("Failed to create test database");
     test_db.seed_test_data().await.expect("Failed to seed test data");
 
-    let db_client = DbClient::connect(&test_db.connection_string, false)
+    let db_client = DbClient::connect(&test_db.connection_string)
         .await
         .expect("Failed to connect");
 
@@ -211,7 +362,10 @@ async fn test_save_results() {
     ];
 
     // Save results
-    db_client.save_results(&player_ratings).await;
+    db_client
+        .save_results(&player_ratings)
+        .await
+        .expect("Failed to save results");
 
     // Verify data was saved
     let check_client = test_db.get_client().await.expect("Failed to get client");
@@ -255,10 +409,13 @@ async fn test_save_results_updates_global_and_country_highest_ranks_independentl
         player_rating_with_ranks(3, 3000, 30, timestamp),
     ];
 
-    let db_client = DbClient::connect(&test_db.connection_string, false)
+    let db_client = DbClient::connect(&test_db.connection_string)
         .await
         .expect("Failed to connect");
-    db_client.save_results(&player_ratings).await;
+    db_client
+        .save_results(&player_ratings)
+        .await
+        .expect("Failed to save results");
 
     let rows = admin_client
         .query(
@@ -302,6 +459,126 @@ async fn test_save_results_updates_global_and_country_highest_ranks_independentl
     );
     assert_eq!(rows[2].get::<_, i32>("country_rank"), 30);
     assert_eq!(rows[2].get::<_, DateTime<FixedOffset>>("country_rank_date"), timestamp);
+}
+
+#[tokio::test]
+#[serial]
+async fn test_save_results_stores_first_highest_ranks_for_new_ratings() {
+    init_test_env();
+    let test_db = TestDatabase::new().await.expect("Failed to create test database");
+    test_db.seed_test_data().await.expect("Failed to seed test data");
+
+    // The seed stores osu! peaks only, so a taiko rating has none yet.
+    let timestamp = DateTime::parse_from_rfc3339("2025-02-03T04:05:06+00:00").unwrap();
+    let mut taiko_rating = player_rating_with_ranks(1, 0, 7, timestamp);
+    taiko_rating.ruleset = Ruleset::Taiko;
+    taiko_rating.adjustments[0].ruleset = Ruleset::Taiko;
+
+    let db_client = DbClient::connect(&test_db.connection_string)
+        .await
+        .expect("Failed to connect");
+    db_client
+        .save_results(&[taiko_rating])
+        .await
+        .expect("Failed to save results");
+
+    let admin_client = test_db.get_client().await.expect("Failed to get client");
+    let row = admin_client
+        .query_one(
+            "
+            SELECT global_rank, global_rank_date, country_rank, country_rank_date
+            FROM player_highest_ranks
+            WHERE player_id = 1 AND ruleset = $1
+            ",
+            &[&(Ruleset::Taiko as i32)]
+        )
+        .await
+        .expect("A first taiko peak should be stored");
+
+    // Unknown ranks are stored as they are.
+    assert_eq!(row.get::<_, i32>("global_rank"), 0);
+    assert_eq!(row.get::<_, DateTime<FixedOffset>>("global_rank_date"), timestamp);
+    assert_eq!(row.get::<_, i32>("country_rank"), 7);
+    assert_eq!(row.get::<_, DateTime<FixedOffset>>("country_rank_date"), timestamp);
+}
+
+#[tokio::test]
+#[serial]
+async fn test_save_results_links_each_adjustment_to_its_rating() {
+    init_test_env();
+    let test_db = TestDatabase::new().await.expect("Failed to create test database");
+    test_db.seed_test_data().await.expect("Failed to seed test data");
+
+    let timestamp = DateTime::parse_from_rfc3339("2025-02-03T04:05:06+00:00").unwrap();
+    let mut taiko_rating = player_rating_with_ranks(1, 10, 1, timestamp);
+    taiko_rating.ruleset = Ruleset::Taiko;
+    taiko_rating.adjustments[0].ruleset = Ruleset::Taiko;
+    taiko_rating.adjustments[0].rating_after = 1234.5;
+    let player_ratings = vec![
+        player_rating_with_ranks(2, 20, 2, timestamp),
+        taiko_rating,
+        player_rating_with_ranks(1, 30, 3, timestamp),
+    ];
+
+    let db_client = DbClient::connect(&test_db.connection_string)
+        .await
+        .expect("Failed to connect");
+    db_client
+        .save_results(&player_ratings)
+        .await
+        .expect("Failed to save results");
+
+    let admin_client = test_db.get_client().await.expect("Failed to get client");
+    let rows = admin_client
+        .query(
+            "
+            SELECT pr.player_id AS rating_player_id, pr.ruleset AS rating_ruleset,
+                   ra.player_id, ra.ruleset, ra.rating_after, ra.timestamp
+            FROM rating_adjustments ra
+            JOIN player_ratings pr ON pr.id = ra.player_rating_id
+            ORDER BY ra.player_id, ra.ruleset
+            ",
+            &[]
+        )
+        .await
+        .expect("Failed to fetch adjustments");
+
+    assert_eq!(rows.len(), 3);
+    for row in &rows {
+        assert_eq!(row.get::<_, i32>("rating_player_id"), row.get::<_, i32>("player_id"));
+        assert_eq!(row.get::<_, i32>("rating_ruleset"), row.get::<_, i32>("ruleset"));
+        assert_eq!(row.get::<_, DateTime<FixedOffset>>("timestamp"), timestamp);
+    }
+    assert_eq!(rows[1].get::<_, i32>("ruleset"), Ruleset::Taiko as i32);
+    assert_eq!(rows[1].get::<_, f64>("rating_after"), 1234.5);
+}
+
+#[tokio::test]
+#[serial]
+async fn test_save_results_refuses_empty_ratings() {
+    init_test_env();
+    let test_db = TestDatabase::new().await.expect("Failed to create test database");
+    test_db.seed_test_data().await.expect("Failed to seed test data");
+
+    let timestamp = DateTime::parse_from_rfc3339("2025-02-03T04:05:06+00:00").unwrap();
+    let db_client = DbClient::connect(&test_db.connection_string)
+        .await
+        .expect("Failed to connect");
+    db_client
+        .save_results(&[player_rating_with_ranks(1, 10, 1, timestamp)])
+        .await
+        .expect("Failed to save results");
+
+    let result = db_client.save_results(&[]).await;
+    assert!(matches!(result, Err(DbError::NoRatings)), "Got {result:?}");
+
+    let admin_client = test_db.get_client().await.expect("Failed to get client");
+    let rating_count: i64 = admin_client
+        .query_one("SELECT COUNT(*) FROM player_ratings", &[])
+        .await
+        .expect("Failed to count ratings")
+        .get(0);
+    assert_eq!(rating_count, 1, "Existing ratings should be kept");
 }
 
 fn player_rating_with_ranks(
@@ -358,30 +635,40 @@ async fn test_detects_tournaments_with_changed_match_rating_adjustments() {
     let timestamp = DateTime::parse_from_rfc3339("2025-02-03T04:05:06+00:00").unwrap();
     let previous_ratings = vec![player_rating_with_match_adjustment(1, match_id, 1500.0, timestamp)];
 
-    let db_client = DbClient::connect(&test_db.connection_string, false)
+    let db_client = DbClient::connect(&test_db.connection_string)
         .await
         .expect("Failed to connect");
 
-    let mut initial_transaction = db_client
+    let initial_transaction = db_client
         .begin_transaction()
         .await
         .expect("Failed to begin transaction");
-    db_client.save_results(&previous_ratings).await;
+    db_client
+        .save_results(&previous_ratings)
+        .await
+        .expect("Failed to save results");
     initial_transaction
         .commit()
         .await
         .expect("Failed to commit initial ratings");
 
     // Rewriting identical adjustment values should not invalidate the tournament.
-    let mut unchanged_transaction = db_client
+    let unchanged_transaction = db_client
         .begin_transaction()
         .await
         .expect("Failed to begin transaction");
-    db_client.snapshot_match_rating_adjustments().await;
-    db_client.save_results(&previous_ratings).await;
+    db_client
+        .snapshot_match_rating_adjustments()
+        .await
+        .expect("Failed to snapshot adjustments");
+    db_client
+        .save_results(&previous_ratings)
+        .await
+        .expect("Failed to save results");
     assert!(db_client
         .get_tournaments_with_changed_rating_adjustments()
         .await
+        .expect("Failed to compare adjustments")
         .is_empty());
     unchanged_transaction
         .rollback()
@@ -392,14 +679,23 @@ async fn test_detects_tournaments_with_changed_match_rating_adjustments() {
     let mut changed_ratings = previous_ratings.clone();
     changed_ratings[0].rating = 1510.0;
     changed_ratings[0].adjustments.last_mut().unwrap().rating_after = 1510.0;
-    let mut changed_transaction = db_client
+    let changed_transaction = db_client
         .begin_transaction()
         .await
         .expect("Failed to begin transaction");
-    db_client.snapshot_match_rating_adjustments().await;
-    db_client.save_results(&changed_ratings).await;
+    db_client
+        .snapshot_match_rating_adjustments()
+        .await
+        .expect("Failed to snapshot adjustments");
+    db_client
+        .save_results(&changed_ratings)
+        .await
+        .expect("Failed to save results");
     assert_eq!(
-        db_client.get_tournaments_with_changed_rating_adjustments().await,
+        db_client
+            .get_tournaments_with_changed_rating_adjustments()
+            .await
+            .expect("Failed to compare adjustments"),
         vec![tournament_id]
     );
     changed_transaction
@@ -410,14 +706,23 @@ async fn test_detects_tournaments_with_changed_match_rating_adjustments() {
     // Adding a new player's match adjustment should also invalidate the tournament.
     let mut added_ratings = previous_ratings.clone();
     added_ratings.push(player_rating_with_match_adjustment(2, match_id, 1400.0, timestamp));
-    let mut added_transaction = db_client
+    let added_transaction = db_client
         .begin_transaction()
         .await
         .expect("Failed to begin transaction");
-    db_client.snapshot_match_rating_adjustments().await;
-    db_client.save_results(&added_ratings).await;
+    db_client
+        .snapshot_match_rating_adjustments()
+        .await
+        .expect("Failed to snapshot adjustments");
+    db_client
+        .save_results(&added_ratings)
+        .await
+        .expect("Failed to save results");
     assert_eq!(
-        db_client.get_tournaments_with_changed_rating_adjustments().await,
+        db_client
+            .get_tournaments_with_changed_rating_adjustments()
+            .await
+            .expect("Failed to compare adjustments"),
         vec![tournament_id]
     );
     added_transaction
@@ -426,18 +731,24 @@ async fn test_detects_tournaments_with_changed_match_rating_adjustments() {
         .expect("Failed to rollback added case");
 
     // Removing an existing match adjustment should invalidate the tournament.
-    let mut removed_transaction = db_client
+    let removed_transaction = db_client
         .begin_transaction()
         .await
         .expect("Failed to begin transaction");
-    db_client.snapshot_match_rating_adjustments().await;
+    db_client
+        .snapshot_match_rating_adjustments()
+        .await
+        .expect("Failed to snapshot adjustments");
     db_client
         .client()
         .execute("DELETE FROM rating_adjustments WHERE match_id = $1", &[&match_id])
         .await
         .expect("Failed to remove match adjustment");
     assert_eq!(
-        db_client.get_tournaments_with_changed_rating_adjustments().await,
+        db_client
+            .get_tournaments_with_changed_rating_adjustments()
+            .await
+            .expect("Failed to compare adjustments"),
         vec![tournament_id]
     );
     removed_transaction
@@ -446,11 +757,14 @@ async fn test_detects_tournaments_with_changed_match_rating_adjustments() {
         .expect("Failed to rollback removed case");
 
     // Initial and decay adjustments are not inputs to per-match tournament statistics.
-    let mut non_match_transaction = db_client
+    let non_match_transaction = db_client
         .begin_transaction()
         .await
         .expect("Failed to begin transaction");
-    db_client.snapshot_match_rating_adjustments().await;
+    db_client
+        .snapshot_match_rating_adjustments()
+        .await
+        .expect("Failed to snapshot adjustments");
     db_client
         .client()
         .execute(
@@ -462,6 +776,7 @@ async fn test_detects_tournaments_with_changed_match_rating_adjustments() {
     assert!(db_client
         .get_tournaments_with_changed_rating_adjustments()
         .await
+        .expect("Failed to compare adjustments")
         .is_empty());
     non_match_transaction
         .rollback()
@@ -469,11 +784,14 @@ async fn test_detects_tournaments_with_changed_match_rating_adjustments() {
         .expect("Failed to rollback non-match case");
 
     // Rejected tournaments are not eligible for downstream stats processing.
-    let mut rejected_transaction = db_client
+    let rejected_transaction = db_client
         .begin_transaction()
         .await
         .expect("Failed to begin transaction");
-    db_client.snapshot_match_rating_adjustments().await;
+    db_client
+        .snapshot_match_rating_adjustments()
+        .await
+        .expect("Failed to snapshot adjustments");
     db_client
         .client()
         .execute(
@@ -493,6 +811,7 @@ async fn test_detects_tournaments_with_changed_match_rating_adjustments() {
     assert!(db_client
         .get_tournaments_with_changed_rating_adjustments()
         .await
+        .expect("Failed to compare adjustments")
         .is_empty());
     rejected_transaction
         .rollback()
@@ -549,12 +868,12 @@ async fn test_empty_database() {
     let test_db = TestDatabase::new().await.expect("Failed to create test database");
     // Don't seed data
 
-    let db_client = DbClient::connect(&test_db.connection_string, false)
+    let db_client = DbClient::connect(&test_db.connection_string)
         .await
         .expect("Failed to connect");
 
-    let players = db_client.get_players().await;
-    let matches = db_client.get_matches().await;
+    let players = db_client.get_players().await.expect("Failed to fetch players");
+    let matches = db_client.get_matches().await.expect("Failed to fetch matches");
 
     assert_eq!(players.len(), 0);
     assert_eq!(matches.len(), 0);
@@ -614,11 +933,14 @@ async fn test_calculate_and_update_game_score_placements() {
         .await
         .expect("Failed to create tied scores");
 
-    let db_client = DbClient::connect(&test_db.connection_string, false)
+    let db_client = DbClient::connect(&test_db.connection_string)
         .await
         .expect("Failed to connect");
 
-    db_client.calculate_and_update_game_score_placements().await;
+    db_client
+        .calculate_and_update_game_score_placements()
+        .await
+        .expect("Failed to update placements");
 
     let rows = admin_client
         .query(

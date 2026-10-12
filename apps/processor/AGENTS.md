@@ -68,7 +68,7 @@ tests.
 
 ## Database and messaging contracts
 
-- `src/database/db.rs` consumes the otr schema at
+- `src/database/` consumes the otr schema at
   `packages/otr-core/src/db/schema.ts`; migrations live in `apps/web/drizzle/`.
   Both paths are from the otr root.
   Update row structs, raw SQL, `COPY` columns, and `tests/database/schema.sql`

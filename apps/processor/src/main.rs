@@ -35,7 +35,7 @@ async fn main() {
 
     info!("Begin processing...");
 
-    let client: DbClient = client(&args).await;
+    let client: DbClient = client().await;
 
     // Initialize RabbitMQ publisher
     let mut rabbitmq_publisher = match initialize_rabbitmq().await {
@@ -46,19 +46,19 @@ async fn main() {
         }
     };
 
-    let mut transaction_guard = client.begin_transaction().await.expect("Failed to begin transaction");
+    let transaction_guard = client.begin_transaction().await.expect("Failed to begin transaction");
     info!("BEGIN TRANSACTION");
 
     // Execute all operations
     let process_result = async {
         // 1. Calculate and update game score placements
         // This must happen before data fetching and rating processing
-        client.calculate_and_update_game_score_placements().await;
+        client.calculate_and_update_game_score_placements().await?;
         info!("Game score placements calculated and updated.");
 
         // 2. Fetch matches and players for processing
-        let matches = client.get_matches().await;
-        let players = client.get_players().await;
+        let matches = client.get_matches().await?;
+        let players = client.get_players().await?;
 
         if matches.is_empty() {
             warn!("No matches found to process! Check that matches have verification_status=4");
@@ -69,7 +69,7 @@ async fn main() {
         debug!("Fetched {} matches and {} players.", matches.len(), players.len());
 
         // Fetch tournament information for processed matches
-        let tournament_info = client.get_tournament_info_for_matches(&matches).await;
+        let tournament_info = client.get_tournament_info_for_matches(&matches).await?;
         info!(
             "Fetched tournament information for {} tournaments.",
             tournament_info.len()
@@ -95,26 +95,26 @@ async fn main() {
         // 7. Save results in database
         let track_rating_changes = rabbitmq_publisher.is_some();
         if track_rating_changes {
-            client.snapshot_match_rating_adjustments().await;
+            client.snapshot_match_rating_adjustments().await?;
         }
 
-        client.save_results(&results).await;
+        client.save_results(&results).await?;
         info!("Results saved to database.");
 
         let rating_changed_tournament_ids = if track_rating_changes {
-            client.get_tournaments_with_changed_rating_adjustments().await
+            client.get_tournaments_with_changed_rating_adjustments().await?
         } else {
             Vec::new()
         };
 
         // 8. Remove lingering stats for tournaments/matches rejected since the last run
-        client.delete_rejected_player_stats().await;
+        client.delete_rejected_player_stats().await?;
 
         // 9. Emit messages for tournaments needing stats refresh
         if let Some(ref mut publisher) = rabbitmq_publisher {
             let mut tournaments_needing_refresh: BTreeSet<i32> = client
                 .get_tournaments_needing_stats_refresh(&all_tournament_ids)
-                .await
+                .await?
                 .into_iter()
                 .collect();
 
@@ -169,13 +169,9 @@ async fn main() {
     match process_result {
         Ok(()) => {
             // COMMIT TRANSACTION
+            // A failed COMMIT has already rolled the transaction back.
             if let Err(e) = transaction_guard.commit().await {
                 error!("Failed to commit transaction: {}", e);
-                if let Err(rollback_err) = transaction_guard.rollback().await {
-                    error!("Failed to rollback transaction after commit failure: {}", rollback_err);
-                } else {
-                    error!("Transaction rolled back due to commit failure");
-                }
                 cleanup_rabbitmq(&mut rabbitmq_publisher).await;
                 std::process::exit(1);
             }
@@ -201,11 +197,11 @@ async fn main() {
     cleanup_rabbitmq(&mut rabbitmq_publisher).await;
 }
 
-async fn client(args: &Args) -> DbClient {
+async fn client() -> DbClient {
     let connection_string =
         first_env(&DATABASE_URL_VARS).expect("DATABASE_URL or CONNECTION_STRING environment variable must be set");
 
-    match DbClient::connect(&connection_string, args.ignore_constraints).await {
+    match DbClient::connect(&connection_string).await {
         Ok(client) => client,
         Err(e) => {
             error!("Failed to connect to database: {}", e);

@@ -152,6 +152,15 @@ async fn test_crash_leaves_database_consistent() {
         "Run should save rating adjustments"
     );
 
+    // A stale placement makes the next run write before it reaches the lock below.
+    check_client
+        .execute(
+            "UPDATE game_scores SET placement = 99 WHERE id = (SELECT MIN(id) FROM game_scores)",
+            &[]
+        )
+        .await
+        .expect("Failed to make a placement stale");
+
     let mut committed = Vec::new();
     for table in REBUILT_TABLES {
         committed.push(snapshot(&check_client, table).await);
@@ -159,8 +168,8 @@ async fn test_crash_leaves_database_consistent() {
 
     // A fixed delay usually let the run commit before the kill, since the seed
     // is small. A read lock on player_ratings instead stalls the next run at
-    // its TRUNCATE of that table, inside its transaction and after earlier
-    // writes, so the kill always lands mid-transaction.
+    // its TRUNCATE of that table, inside its transaction and after its
+    // placement update, so the kill always lands mid-transaction.
     let lock_client = test_db.get_client().await.expect("Failed to get client");
     lock_client
         .batch_execute("BEGIN; LOCK TABLE player_ratings IN ACCESS SHARE MODE")
