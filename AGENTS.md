@@ -203,6 +203,9 @@ code. Write for that reader.
   nothing user-facing changed. Keep the `<!-- changelog:end -->` marker, and
   put anything after the release notes, such as the signature, below it.
   `.github/scripts/release-notes.ts` enforces the title and changelog format.
+- Add an `app:<name>` label, such as `app:web` or `app:processor`, for every
+  app under `apps/` whose behavior the change affects. A change to
+  `packages/otr-core` gets the label of each app it affects.
 - Accuracy beats completeness. Never claim something was checked unless it
   was.
 
@@ -219,7 +222,8 @@ fix it in the current change.
   high level, under 150 words, and no links to files.
 - The title is a plain sentence that names the problem, not a commit header.
   Add `bug` for a defect in shipped behavior or `proposal` for an idea. Add
-  `meta:ops`, `meta:ui-ux`, or `meta:performance` when one fits.
+  `meta:ops`, `meta:ui-ux`, or `meta:performance` when one fits. Add an
+  `app:<name>` label for every app the problem affects, as for a pull request.
 - List the issues you opened in your final report to the user.
 
 ## Signature
