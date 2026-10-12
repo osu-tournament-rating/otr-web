@@ -1,0 +1,23 @@
+name: Label pull request
+
+# Adds an app label for each app a pull request changes, as mapped in
+# .github/labeler.yml. Labels are only added, never removed, so one added by
+# hand stays. `pull_request_target` lets fork pull requests be labelled too;
+# it is safe here because the labeler reads changed paths from the API and
+# never checks out or runs pull-request code.
+
+on:
+  pull_request_target:
+    branches: [master]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    name: label
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v7

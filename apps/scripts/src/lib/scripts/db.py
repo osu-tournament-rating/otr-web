@@ -124,13 +124,16 @@ def _restore_steps(dump: Path) -> list[list[str]]:
     ]
 
 
-def _import(dump: Path, db_only: bool = False) -> bool:
+def _import(dump: Path, db_only: bool = False, migrate: bool = True) -> bool:
     """Import a local dump to the database
 
     Args:
         dump: Path to the gzipped database dump to restore.
         db_only: When True, leave the docker-compose stack running and restore
             in place, dropping only the connections to the target database.
+        migrate: When False, skip the docker-compose migrate service. The dev
+            tier has no such service; its dev-db.sh migrates the database
+            itself once the restore returns.
     """
     if dump.suffix != ".gz":
         logger.error(f"Expected dump path to end with '.gz': {dump}")
@@ -153,7 +156,9 @@ def _import(dump: Path, db_only: bool = False) -> bool:
 
     # The dump carries the schema of the tier it came from, so the deployed
     # image's pending migrations must be replayed before the stack serves it.
-    migrated = returncode == 0 and _compose("--profile migrate run --rm migrate") == 0
+    migrated = returncode == 0 and (
+        not migrate or _compose("--profile migrate run --rm migrate") == 0
+    )
 
     if not db_only:
         _compose("up -d")
@@ -171,6 +176,13 @@ def _import(dump: Path, db_only: bool = False) -> bool:
             f"after {elapsed:.0f}s; the stack is serving an outdated schema"
         )
         return False
+
+    if not migrate:
+        logger.info(
+            f"Restored {dump.name} into {config.db_name} in {elapsed:.0f}s, "
+            "skipping migrations"
+        )
+        return True
 
     logger.info(
         f"Restored and migrated {dump.name} into {config.db_name} in {elapsed:.0f}s"
@@ -433,7 +445,11 @@ def archive(args: ScriptArgs):
 def recovery(args: ScriptArgs) -> bool:
     if args.recovery_src:
         # Just import this local dump, no GCS connection needed
-        return _import(args.recovery_src, db_only=args.db_only)
+        return _import(
+            args.recovery_src,
+            db_only=args.db_only,
+            migrate=not args.skip_migrations,
+        )
 
     bucket = args.recovery_bucket
     if not bucket:
@@ -444,7 +460,7 @@ def recovery(args: ScriptArgs) -> bool:
     if not out_file:
         return False
 
-    if not _import(out_file, db_only=args.db_only):
+    if not _import(out_file, db_only=args.db_only, migrate=not args.skip_migrations):
         return False
 
     prune_dumps(out_file)

@@ -86,6 +86,10 @@ the rating run: admin writes return 503 and the worker defers osu! fetches.
   copy.
 - The dev tier is a shared environment, restored nightly from a redacted copy of
   production.
+- The dev host keeps the `scripts/preview` from the last Dev tier `deploy` run.
+  Nightly runs and previews use that copy, and nothing else updates it. After
+  a change to `scripts/preview` merges, tell the user to run the Dev tier
+  `deploy` action.
 
 ## Starting in a worktree
 
@@ -203,6 +207,8 @@ code. Write for that reader.
   nothing user-facing changed. Keep the `<!-- changelog:end -->` marker, and
   put anything after the release notes, such as the signature, below it.
   `.github/scripts/release-notes.ts` enforces the title and changelog format.
+- CI adds an `app:<name>` label for each app whose files the pull request
+  changes. Do not add them by hand.
 - Accuracy beats completeness. Never claim something was checked unless it
   was.
 
@@ -219,7 +225,9 @@ fix it in the current change.
   high level, under 150 words, and no links to files.
 - The title is a plain sentence that names the problem, not a commit header.
   Add `bug` for a defect in shipped behavior or `proposal` for an idea. Add
-  `meta:ops`, `meta:ui-ux`, or `meta:performance` when one fits.
+  `meta:ops`, `meta:ui-ux`, or `meta:performance` when one fits. Add an
+  `app:<name>` label, such as `app:web` or `app:processor`, for every app
+  under `apps/` that the problem affects.
 - List the issues you opened in your final report to the user.
 
 ## Signature

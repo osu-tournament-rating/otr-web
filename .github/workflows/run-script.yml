@@ -8,6 +8,10 @@ name: Run script
 #
 # The arguments go to src/main.py. They are split on whitespace, with no
 # quoting and no globbing.
+#
+# The job waits for the script to finish and streams everything it prints,
+# including its logs and the output of the commands it runs. The job fails when
+# the script exits non-zero or the connection drops.
 
 on:
   workflow_dispatch:
@@ -56,12 +60,28 @@ jobs:
           ARGS: ${{ inputs.args }}
         run: |
           set -euo pipefail
-          ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
-            bash -s -- "$REMOTE_PATH" "$ARGS" <<'EOF'
+          : "${REMOTE_PATH:?no remote path is configured for this environment}"
+          # ssh joins its arguments into one remote command line, which would
+          # split the arguments again on the host, so they travel encoded.
+          # Keepalives make a dropped connection fail the job instead of
+          # leaving it waiting.
+          ssh -o StrictHostKeyChecking=no \
+            -o ServerAliveInterval=30 -o ServerAliveCountMax=10 \
+            "$SSH_USER@$SSH_HOST" \
+            bash -s -- "$REMOTE_PATH" "$(base64 -w0 <<<"$ARGS")" <<'EOF'
             set -euo pipefail
             cd "$1/apps/scripts"
+            args="$(printf %s "$2" | base64 -d)"
             set -f
             # shellcheck disable=SC2086 # the arguments are split on purpose
-            set -- $2
-            .venv/bin/python src/main.py "$@"
+            set -- $args
+            echo "Running src/main.py $*"
+            # One unbuffered stream keeps the script's logs and its
+            # subprocesses' output in order. stdin is the rest of this
+            # script, so nothing the script runs may read it.
+            status=0
+            PYTHONUNBUFFERED=1 .venv/bin/python src/main.py "$@" </dev/null 2>&1 ||
+              status=$?
+            echo "src/main.py exited with status $status"
+            exit "$status"
           EOF
