@@ -8,4 +8,4 @@ The processor lives in otr under `apps/processor`. From this directory,
 at `DATABASE_URL`, read from the environment or otr's root `.env`.
 
 Please see the
-[Development Guide](https://docs.otr.stagec.xyz/Development/Development-Guide) for more information.
+[Development Guide](https://docs.otr.stagec.net/Development/Development-Guide) for more information.
