@@ -1,7 +1,7 @@
 import { ApiReference } from '@scalar/nextjs-api-reference';
 
 const SCALAR_CDN_URL =
-  'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.62.5';
+  'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.73.1';
 
 export const GET = ApiReference({
   url: '/spec.json',

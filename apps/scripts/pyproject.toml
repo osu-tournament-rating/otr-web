@@ -4,7 +4,7 @@ authors = [{name = "github/hburn7"}]
 version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
-    "google-cloud-storage~=3.10.1",
+    "google-cloud-storage~=3.17.0",
     "dotenv",
     "black",
     "ruff"
@@ -12,7 +12,7 @@ dependencies = [
 
 [project.optional-dependencies]
 e2e = [
-    "pytest~=8.4.2",
+    "pytest~=9.1.1",
 ]
 
 [tool.pytest.ini_options]

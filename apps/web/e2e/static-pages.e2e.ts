@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { ROUTES } from './fixtures/test-config';
 
 test.describe('API Reference Page', () => {
-  const scalarCdn = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.62.5';
+  const scalarCdn = 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.73.1';
 
   test('boots the pinned Scalar reference with the public spec', async ({
     page,

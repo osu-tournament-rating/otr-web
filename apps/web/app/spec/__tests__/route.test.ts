@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { GET } from '../route';
 
 const PINNED_SCALAR_CDN =
-  'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.62.5';
+  'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.73.1';
 
 describe('Scalar API reference route', () => {
   test('serves a pinned, read-only Scalar reference', async () => {
@@ -10,7 +10,9 @@ describe('Scalar API reference route', () => {
     const html = await response.text();
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('content-type')).toBe('text/html');
+    expect(response.headers.get('content-type')).toBe(
+      'text/html; charset=utf-8'
+    );
     expect(html).toContain('<title>o!TR API Reference</title>');
     expect(html).toContain(`<script src="${PINNED_SCALAR_CDN}">`);
     expect(html).not.toContain(

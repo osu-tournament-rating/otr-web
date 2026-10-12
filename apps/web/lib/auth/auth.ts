@@ -316,7 +316,7 @@ const syncPlayerFriends = async ({
     profile,
   });
 
-  let relations: User.Relation[] = [];
+  let relations: User.Relation[];
 
   try {
     const api = createUserOsuApiClient(accessToken);
