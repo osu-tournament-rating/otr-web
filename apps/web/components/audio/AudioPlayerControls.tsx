@@ -79,7 +79,7 @@ export default function AudioPlayerControls() {
         data-testid="audio-preview-transport"
         data-player-state={playerState}
         aria-label="Beatmap preview player"
-        className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6 fixed inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-50 mx-auto max-w-[1050px] motion-safe:duration-300 motion-safe:ease-out"
+        className="fixed inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-50 mx-auto max-w-[1050px] motion-safe:duration-300 motion-safe:ease-out motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-6"
       >
         <div className="relative overflow-hidden rounded-xl border bg-card text-card-foreground shadow-lg dark:bg-muted">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-3 py-3 pr-11 pl-3 sm:grid-cols-[minmax(0,1fr)_minmax(11rem,1.4fr)_auto] sm:items-center sm:gap-5 sm:py-3 sm:pr-12">
