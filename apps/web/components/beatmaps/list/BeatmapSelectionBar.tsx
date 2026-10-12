@@ -23,7 +23,7 @@ export default function BeatmapSelectionBar({
     >
       <div
         data-testid="beatmap-selection-bar"
-        className="animate-in fade-in slide-in-from-bottom-2 pointer-events-auto flex items-center gap-2 rounded-full border bg-popover/95 py-1.5 pr-1.5 pl-4 shadow-lg backdrop-blur"
+        className="pointer-events-auto flex items-center gap-2 rounded-full border bg-popover/95 py-1.5 pr-1.5 pl-4 shadow-lg backdrop-blur animate-in fade-in slide-in-from-bottom-2"
       >
         <span aria-live="polite" className="text-sm font-medium">
           {count} selected
