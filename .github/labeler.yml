@@ -1,0 +1,30 @@
+# Each app under apps/ gets a label when a pull request changes its files. The
+# shared core package is built into both Bun apps, so it counts for each.
+
+app:web:
+  - changed-files:
+      - any-glob-to-any-file:
+          - apps/web/**
+          - packages/otr-core/**
+
+app:data-worker:
+  - changed-files:
+      - any-glob-to-any-file:
+          - apps/data-worker/**
+          - packages/otr-core/**
+
+app:processor:
+  - changed-files:
+      - any-glob-to-any-file: apps/processor/**
+
+app:scripts:
+  - changed-files:
+      - any-glob-to-any-file: apps/scripts/**
+
+app:docs:
+  - changed-files:
+      - any-glob-to-any-file: apps/docs/**
+
+app:replay:
+  - changed-files:
+      - any-glob-to-any-file: apps/replay/**
