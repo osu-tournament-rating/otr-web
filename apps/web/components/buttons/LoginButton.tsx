@@ -91,8 +91,8 @@ export default function LoginButton() {
           return;
         }
 
-        const { error } = await authClient.signIn.oauth2({
-          providerId: 'osu',
+        const { error } = await authClient.signIn.social({
+          provider: 'osu',
           callbackURL: path,
         });
 

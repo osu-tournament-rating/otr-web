@@ -14,6 +14,7 @@ import {
 } from 'better-auth/plugins';
 import { ac, admin, superadmin, ADMIN_ROLES } from './auth-roles';
 import { e2eTestAuthPlugin, isE2eAuthEnabled } from './e2e-test-auth-plugin';
+import { legacyOAuthCallbackURL } from './osu-callback';
 import { nextCookies } from 'better-auth/next-js';
 import * as schema from '@otr/core/db/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
@@ -239,9 +240,7 @@ const bannedLoginRedirectPlugin = () => ({
                 }
 
                 const path = ctx.path ?? '';
-                const isAuthCallback =
-                  path.startsWith('/callback') ||
-                  path.startsWith('/oauth2/callback');
+                const isAuthCallback = path.startsWith('/callback');
                 const bannedMessage =
                   'You have been banned from this application. Please contact support if you believe this is an error.';
 
@@ -581,6 +580,10 @@ export const auth = betterAuth({
           tokenUrl: 'https://osu.ppy.sh/oauth/token',
           userInfoUrl: OSU_PROFILE_URL,
           scopes: ['identify', 'public'],
+          redirectURI: legacyOAuthCallbackURL(
+            OSU_PROVIDER_ID,
+            process.env.BETTER_AUTH_URL
+          ),
           getUserInfo: async (tokens) => {
             const profile = await fetchOsuProfile(tokens.accessToken);
 
