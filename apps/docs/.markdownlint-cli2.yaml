@@ -13,5 +13,3 @@ config:
 gitignore: true
 globs:
   - "./docs/**/*.md"
-ignores:
-  - "./quartz/"

@@ -3,11 +3,19 @@
 The docs live in `apps/docs` of otr. Run commands from `apps/docs` unless
 noted. Pull requests follow the root `AGENTS.md`.
 
-- `docs/` is the authored source of truth. Quartz renders it. Do not edit
-  `quartz/` or its submodule reference unless the task is a Quartz change.
-- The root `.gitmodules` points `quartz/` at the `quartz/v4` branch of the
-  otr-docs repository. From the repository root,
-  `git submodule update --init apps/docs/quartz` checks it out.
+- `docs/` is the authored source of truth. Quartz renders it.
+- The `Dockerfile` fetches Quartz's v5 branch at the commit in `QUARTZ_REF`
+  and never patches it. Our changes go on top: `quartz.config.yaml`, the
+  footer plugin in `plugins/otr-footer`, and the icon and link-preview image
+  in `static/`. Change a Quartz behavior through those files, not by forking
+  Quartz.
+- To update Quartz, change `QUARTZ_REF` to a newer v5 commit. If Quartz's
+  `quartz.config.default.yaml` changed in between, carry the change into
+  `quartz.config.yaml`. Then build the image and look over the site.
+- Page URLs are lowercase and hyphenated, so `Rating Framework/Rating FAQ.md`
+  is served at `/rating-framework/rating-faq`. Link to that form. The
+  capitalized Quartz 4 URL only redirects, and the redirect drops any
+  `#heading`.
 - Do not commit Obsidian workspace state or editor settings.
 - Link to information maintained elsewhere in otr or in another o!TR
   repository instead of duplicating it.
@@ -17,9 +25,9 @@ noted. Pull requests follow the root `AGENTS.md`.
 - `npx markdownlint-cli2@0.17.2 '*.md'` matches CI. Through
   `.markdownlint-cli2.yaml`, it also lints every file under `docs/`.
 - `docker build -t otr-docs:local . && docker run --rm -p 8080:8080 otr-docs:local`
-  serves the site at `http://localhost:8080` and needs the Quartz submodule.
-  Inspect rendered links, callouts, headings, code blocks, and navigation when
-  presentation can change.
+  builds the site and serves it at `http://localhost:8080`. A page Quartz
+  cannot render fails the build. Inspect rendered links, callouts, headings,
+  code blocks, and navigation when presentation can change.
 
 ## Authoring
 

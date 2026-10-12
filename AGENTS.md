@@ -150,7 +150,6 @@ checkout's services on ports 5432, 5672, and 3000. This is a rule.
   Variables already set in the shell win over `.env`.
 - Changing a queue's declared arguments, such as its priority, requires deleting
   that queue on every broker.
-- `apps/docs/quartz` is a git submodule and may be empty in a fresh checkout.
 
 ## UI conventions
 

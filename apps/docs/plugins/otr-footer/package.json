@@ -1,0 +1,25 @@
+{
+  "name": "otr-footer",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./components": "./index.js"
+  },
+  "peerDependencies": {
+    "preact": "^10.0.0"
+  },
+  "quartz": {
+    "name": "otr-footer",
+    "displayName": "o!TR footer",
+    "category": "component",
+    "quartzVersion": ">=5.0.0",
+    "components": {
+      "OtrFooter": {
+        "displayName": "o!TR footer",
+        "defaultPosition": "footer",
+        "defaultPriority": 50
+      }
+    }
+  }
+}
