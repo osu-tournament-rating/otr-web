@@ -80,7 +80,7 @@ def add_args(parser: ArgumentParser):
         type=str,
         required=True,
         choices=_script_options,
-        nargs="*",
+        nargs="+",
     )
 
     parser.add_argument("--log-dir", type=str, required=False, default="./logs")
