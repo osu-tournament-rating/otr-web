@@ -21,7 +21,7 @@ export default async function TournamentSubmissionPage() {
           tracking.
         </p>
         <Link
-          href="https://docs.otr.stagec.net/Rating-Framework/Data-Processing/Tournament-Approval#acceptance-criteria"
+          href="https://docs.otr.stagec.net/rating-framework/data-processing/tournament-approval#acceptance-criteria"
           target="_blank"
           className="mt-3 inline-flex items-center text-sm text-primary underline underline-offset-4 transition-colors hover:text-primary/80"
         >

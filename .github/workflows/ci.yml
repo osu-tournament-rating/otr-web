@@ -62,8 +62,7 @@ jobs:
           fi
 
           # --no-renames lists a moved file under its old and new paths, so a
-          # file moved out of apps/processor/ still counts. A bumped Quartz
-          # submodule is listed as apps/docs/quartz.
+          # file moved out of apps/processor/ still counts.
           changed="$(git diff --name-only --no-renames "$base" HEAD)"
           processor=false
           if grep -q '^apps/processor/' <<<"$changed"; then processor=true; fi
@@ -385,11 +384,8 @@ jobs:
       # It is empty on pull requests from forks, which then pull anonymously.
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
     steps:
-      # The image copies Quartz from the apps/docs/quartz submodule.
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          submodules: true
 
       # The Dockerfile's base image comes from Docker Hub, and so does the
       # BuildKit image that setting up Buildx pulls, so this signs in first.
@@ -403,8 +399,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Reads the cache the deploy saves and writes none, as the processor
-      # image above explains.
+      # Building the image builds the site, so a page Quartz cannot render
+      # fails here. Reads the cache the deploy saves and writes none, as the
+      # processor image above explains.
       - name: Build docs image
         uses: docker/build-push-action@v6
         with:
@@ -415,10 +412,10 @@ jobs:
           tags: otr-docs:ci
           cache-from: type=gha,scope=docs
 
-      # The image only builds the site when it starts, so a page Quartz cannot
-      # render would otherwise pass here and fail in production.
-      - name: Build the site in the docs image
-        run: docker run --rm otr-docs:ci npx quartz build
+      # nginx reads its config only when it starts, so a mistake in nginx.conf
+      # would otherwise pass here and fail in production.
+      - name: Check the nginx config
+        run: docker run --rm otr-docs:ci nginx -t
 
   # The operations scripts in apps/scripts are Python, managed by uv. uv
   # installs the exact versions in uv.lock, including ruff and black, and
