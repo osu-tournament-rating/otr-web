@@ -14,6 +14,7 @@ class ScriptArgs:
     recovery_bucket: str | None
     recovery_src: Path | None
     db_only: bool
+    skip_migrations: bool
     upload_hash: bool
     template_action: str | None
     template_name: str | None
@@ -65,6 +66,7 @@ def init() -> ScriptArgs:
         args.recovery_bucket,
         Path(args.recovery_src) if args.recovery_src else None,
         args.db_only,
+        args.skip_migrations,
         args.upload_hash,
         args.template_action,
         args.template_name,
@@ -119,6 +121,13 @@ def add_args(parser: ArgumentParser):
         action="store_true",
         help="During recovery, restore in place instead of restarting the "
         "docker-compose stack",
+    )
+    recovery_args.add_argument(
+        "--skip-migrations",
+        action="store_true",
+        help="During recovery, leave the restored schema as the dump had it "
+        "instead of running the docker-compose migrate service, for a caller "
+        "that migrates the database itself",
     )
 
     template_args = parser.add_argument_group(

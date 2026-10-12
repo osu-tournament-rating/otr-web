@@ -112,6 +112,31 @@ def test_failed_migration_fails_the_import_and_brings_the_stack_back(monkeypatch
     assert shell_commands(commands)[-2:] == [MIGRATE, "docker compose up -d"]
 
 
+def test_skip_migrations_restores_without_the_migrate_service(monkeypatch):
+    commands = record_runs(monkeypatch)
+
+    assert db._import(Path(f"/dumps/{KEEP}"), db_only=True, migrate=False) is True
+
+    assert shell_commands(commands) == ["docker compose up -d db"]
+
+
+def test_recovery_passes_skip_migrations_to_the_import(monkeypatch, tmp_path):
+    (dump,) = touch(tmp_path, KEEP)
+    seen = []
+    monkeypatch.setattr(
+        db, "_import", lambda dump, **kwargs: seen.append(kwargs) or True
+    )
+
+    for skip in (False, True):
+        args = SimpleNamespace(recovery_src=dump, db_only=True, skip_migrations=skip)
+        assert db.recovery(args) is True
+
+    assert seen == [
+        {"db_only": True, "migrate": True},
+        {"db_only": True, "migrate": False},
+    ]
+
+
 def test_failed_load_fails_the_import_without_migrating(monkeypatch):
     commands = record_runs(monkeypatch, fail_on="pipefail")
 
@@ -134,14 +159,16 @@ def test_full_restart_brings_the_stack_back_after_a_failure(monkeypatch):
 
 def test_recovery_prunes_only_after_a_successful_restore(monkeypatch, tmp_path):
     older, keep = touch(tmp_path, OLDER, KEEP)
-    args = SimpleNamespace(recovery_src=None, recovery_bucket="dev", db_only=True)
+    args = SimpleNamespace(
+        recovery_src=None, recovery_bucket="dev", db_only=True, skip_migrations=True
+    )
     monkeypatch.setattr(db.gcs_utils, "download_latest", lambda bucket, out_dir: keep)
 
-    monkeypatch.setattr(db, "_import", lambda dump, db_only: False)
+    monkeypatch.setattr(db, "_import", lambda dump, **kwargs: False)
     assert db.recovery(args) is False
     assert older.exists()
 
-    monkeypatch.setattr(db, "_import", lambda dump, db_only: True)
+    monkeypatch.setattr(db, "_import", lambda dump, **kwargs: True)
     assert db.recovery(args) is True
     assert not older.exists()
     assert keep.exists()
