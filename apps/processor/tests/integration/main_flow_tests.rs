@@ -31,7 +31,7 @@ fn test_application_exits_on_connection_failure() {
     };
 
     // Run with invalid connection string. DATABASE_URL is set because it outranks
-    // CONNECTION_STRING, and dotenv would otherwise load it from otr's root .env.
+    // CONNECTION_STRING, and dotenvy would otherwise load it from otr's root .env.
     let output = Command::new(binary_path)
         .env(
             "DATABASE_URL",
