@@ -1,25 +1,40 @@
-from types import SimpleNamespace
+import logging
+
+import pytest
 
 from lib import processor
 
 IMAGE = "stagecodes/otr-processor:test"
 
 
-def record_runs(monkeypatch) -> list:
+class FakeProcess:
+    def __init__(self, output: str, returncode: int):
+        self.stdout = iter(output.splitlines(keepends=True))
+        self.returncode = returncode
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+def record_runs(monkeypatch, outputs: dict[str, str] | None = None, fail_on=None):
     commands = []
 
-    def run(cmd, **kwargs):
+    def popen(cmd, **kwargs):
         commands.append(cmd)
-        return SimpleNamespace(returncode=0, stdout=b"")
+        step = cmd[1]
+        return FakeProcess((outputs or {}).get(step, ""), 1 if step == fail_on else 0)
 
-    monkeypatch.setattr(processor.subprocess, "run", run)
+    monkeypatch.setattr(processor.subprocess, "Popen", popen)
     return commands
 
 
 def test_run_passes_the_new_variable_names_to_the_container(monkeypatch):
     commands = record_runs(monkeypatch)
 
-    processor.run()
+    assert processor.run() is True
 
     pull, run = commands
     assert pull == ["docker", "pull", IMAGE]
@@ -39,3 +54,20 @@ def test_run_passes_the_new_variable_names_to_the_container(monkeypatch):
     assert not any(
         arg.startswith(("CONNECTION_STRING=", "RABBITMQ_URL=")) for arg in run
     )
+
+
+def test_run_logs_every_line_of_output(monkeypatch, caplog):
+    record_runs(monkeypatch, {"pull": "pulled\n", "run": "rating\nrated\n"})
+
+    with caplog.at_level(logging.INFO, logger=processor.__name__):
+        processor.run()
+
+    assert {"pulled", "rating", "rated"} <= {r.getMessage() for r in caplog.records}
+
+
+@pytest.mark.parametrize("step", ["pull", "run"])
+def test_run_fails_when_a_step_fails(monkeypatch, step):
+    commands = record_runs(monkeypatch, fail_on=step)
+
+    assert processor.run() is False
+    assert commands[-1][1] == step
