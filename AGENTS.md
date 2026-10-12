@@ -86,6 +86,10 @@ the rating run: admin writes return 503 and the worker defers osu! fetches.
   copy.
 - The dev tier is a shared environment, restored nightly from a redacted copy of
   production.
+- The dev host keeps the `scripts/preview` from the last Dev tier `deploy` run.
+  Nightly runs and previews use that copy, and nothing else updates it. After
+  a change to `scripts/preview` merges, tell the user to run the Dev tier
+  `deploy` action.
 
 ## Starting in a worktree
 
