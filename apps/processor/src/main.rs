@@ -21,7 +21,7 @@ async fn main() {
     let start = Instant::now();
 
     // Initialize env vars
-    let _ = dotenv::dotenv();
+    let _ = dotenvy::dotenv();
 
     // Parse args
     let args = Args::parse();

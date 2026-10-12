@@ -15,7 +15,7 @@ name = "otr-processor"
 path = "src/main.rs"
 
 [dependencies]
-dotenv = "0.15.0"
+dotenvy = "0.15.7"
 indicatif = "0.18"
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.52.3", features = ["full"] }

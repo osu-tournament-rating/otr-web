@@ -11,7 +11,7 @@ the schema and migrations. Treat the boundary as a contract. Start task
 configuration from the root `.env.example`; never copy credentials, commit
 `.env`, or log a credentialed PostgreSQL or RabbitMQ URL.
 
-`dotenv` looks for `.env` in the working directory, then in each parent, and
+`dotenvy` looks for `.env` in the working directory, then in each parent, and
 loads the first one it finds without overriding variables already set. A run
 from `apps/processor` therefore reads otr's root `.env`, whose
 `DATABASE_URL` is the local development database. A `.env` in this directory
