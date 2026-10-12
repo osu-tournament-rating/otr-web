@@ -2,6 +2,7 @@ import type { NextConfig } from 'next';
 import { join } from 'path';
 
 import { loadRootEnv } from '../../lib/env/load-root-env';
+import { LEGACY_OAUTH_CALLBACK_PATH } from './lib/auth/osu-callback';
 
 loadRootEnv();
 
@@ -9,6 +10,16 @@ const nextConfig: NextConfig = {
   // The repository keeps its own agent guidance; stop `next dev` from writing
   // an untracked apps/web/AGENTS.md.
   agentRules: false,
+  async redirects() {
+    return [
+      {
+        // osu! returns here; better-auth handles the callback at the new path.
+        source: `${LEGACY_OAUTH_CALLBACK_PATH}/:providerId`,
+        destination: '/api/auth/callback/:providerId',
+        permanent: false,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

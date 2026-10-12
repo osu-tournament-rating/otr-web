@@ -1,8 +1,5 @@
 import { createAuthClient } from 'better-auth/react';
-import {
-  customSessionClient,
-  genericOAuthClient,
-} from 'better-auth/client/plugins';
+import { customSessionClient } from 'better-auth/client/plugins';
 import { apiKeyClient } from '@better-auth/api-key/client';
 import type { auth } from './auth';
 
@@ -18,11 +15,7 @@ const baseURL = resolveBaseURL();
 
 export const authClient = createAuthClient({
   baseURL,
-  plugins: [
-    customSessionClient<typeof auth>(),
-    genericOAuthClient(),
-    apiKeyClient(),
-  ],
+  plugins: [customSessionClient<typeof auth>(), apiKeyClient()],
 });
 
 export const { signIn, signOut, useSession } = authClient;

@@ -52,8 +52,8 @@ export default function FriendsSyncClient({
   const handleSyncFriends = async () => {
     setIsSyncing(true);
     try {
-      await authClient.signIn.oauth2({
-        providerId: 'osu',
+      await authClient.signIn.social({
+        provider: 'osu',
         scopes: ['identify', 'public', 'friends.read'],
         callbackURL: '/settings?friendsSync=complete',
       });
