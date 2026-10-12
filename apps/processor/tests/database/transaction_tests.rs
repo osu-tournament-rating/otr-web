@@ -14,11 +14,11 @@ use crate::common::init_test_env;
 async fn test_begin_transaction_uses_repeatable_read() {
     init_test_env();
     let test_db = TestDatabase::new().await.expect("Failed to create test database");
-    let client = DbClient::connect(&test_db.connection_string, false)
+    let client = DbClient::connect(&test_db.connection_string)
         .await
         .expect("Failed to connect");
 
-    let mut transaction = client.begin_transaction().await.expect("Failed to begin transaction");
+    let transaction = client.begin_transaction().await.expect("Failed to begin transaction");
     let isolation_level: String = client
         .client()
         .query_one("SHOW transaction_isolation", &[])
@@ -37,7 +37,7 @@ async fn test_transaction_rollback_on_processing_failure() {
     let test_db = TestDatabase::new().await.expect("Failed to create test database");
     test_db.seed_test_data().await.expect("Failed to seed test data");
 
-    let client = DbClient::connect(&test_db.connection_string, false)
+    let client = DbClient::connect(&test_db.connection_string)
         .await
         .expect("Failed to connect");
 
@@ -49,7 +49,7 @@ async fn test_transaction_rollback_on_processing_failure() {
         .expect("Failed to begin transaction");
 
     // Perform some operations (fetch matches to test transaction)
-    let matches = client.get_matches().await;
+    let matches = client.get_matches().await.expect("Failed to fetch matches");
 
     // Verify we have matches
     assert!(!matches.is_empty(), "Should have matches in test data");
@@ -78,7 +78,7 @@ async fn test_full_processing_transaction_commit() {
     let test_db = TestDatabase::new().await.expect("Failed to create test database");
     test_db.seed_test_data().await.expect("Failed to seed test data");
 
-    let client = DbClient::connect(&test_db.connection_string, false)
+    let client = DbClient::connect(&test_db.connection_string)
         .await
         .expect("Failed to connect");
 
@@ -90,15 +90,15 @@ async fn test_full_processing_transaction_commit() {
         .expect("Failed to begin transaction");
 
     // Run the full processing pipeline
-    let matches = client.get_matches().await;
-    let players = client.get_players().await;
+    let matches = client.get_matches().await.expect("Failed to fetch matches");
+    let players = client.get_players().await.expect("Failed to fetch players");
 
     let initial_ratings = create_initial_ratings(&players, &matches);
     let country_mapping: HashMap<i32, String> = generate_country_mapping_players(&players);
     let mut model = OtrModel::new(&initial_ratings, &country_mapping);
     let results = model.process(&matches);
 
-    client.save_results(&results).await;
+    client.save_results(&results).await.expect("Failed to save results");
 
     // Commit transaction
     client.client().execute("COMMIT", &[]).await.expect("Failed to commit");
@@ -121,7 +121,7 @@ async fn test_partial_processing_rollback() {
     let test_db = TestDatabase::new().await.expect("Failed to create test database");
     test_db.seed_test_data().await.expect("Failed to seed test data");
 
-    let client = DbClient::connect(&test_db.connection_string, false)
+    let client = DbClient::connect(&test_db.connection_string)
         .await
         .expect("Failed to connect");
 
@@ -133,8 +133,8 @@ async fn test_partial_processing_rollback() {
         .expect("Failed to begin transaction");
 
     // Perform partial operations
-    let matches = client.get_matches().await;
-    let players = client.get_players().await;
+    let matches = client.get_matches().await.expect("Failed to fetch matches");
+    let players = client.get_players().await.expect("Failed to fetch players");
 
     // Create initial ratings but don't save
     let initial_ratings = create_initial_ratings(&players, &matches);
@@ -143,7 +143,7 @@ async fn test_partial_processing_rollback() {
     let results = model.process(&matches);
 
     // Save results (this would normally commit data)
-    client.save_results(&results).await;
+    client.save_results(&results).await.expect("Failed to save results");
 
     // Check that data exists within transaction
     let tx_rating_count: i64 = client
