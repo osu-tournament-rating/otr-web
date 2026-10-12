@@ -59,7 +59,9 @@ configured application database.
   deployed image's pending migrations through the Compose `migrate` profile
   before the stack returns; a failed migration fails the run. It removes only
   older archives of the same kind. `--db-only` leaves the Compose stack running
-  and drops only connections to the target database.
+  and drops only connections to the target database. `--skip-migrations` skips
+  the `migrate` service, for the dev tier, which has none: `dev-db.sh` migrates
+  the restored seed itself.
 - `processor` runs the configured image against configured PostgreSQL and
   RabbitMQ. Do not treat it as a test command. It requires image `2026.10.09`
   or newer, because it passes `DATABASE_URL` and `RABBITMQ_AMQP_URL`.

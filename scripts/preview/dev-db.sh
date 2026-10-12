@@ -260,11 +260,12 @@ restore() {
   # --db-only keeps this to the dev tier's own db container. The scoping that
   # keeps it off production lives in the scripts' .env, the dev environment's
   # SCRIPTS_ENV secret: OTR_WEB_DIR must point at the dev tier directory and
-  # DB_NAME at the seed.
+  # DB_NAME at the seed. --skip-migrations because this tier's compose file has
+  # no migrate service; the seed is migrated below instead.
   local output status=0
   # shellcheck disable=SC2086 # the seam is a command line, not one word
   output="$(cd "$OTR_SCRIPTS_DIR" && ${DEV_RESTORE_COMMAND:-uv run python src/main.py \
-    --script recovery --recovery-bucket dev --db-only} 2>&1 </dev/null)" || status=$?
+    --script recovery --recovery-bucket dev --db-only --skip-migrations} 2>&1 </dev/null)" || status=$?
   redact <<<"$output"
   [[ "$status" == 0 ]] || fail "restore of $SEED_DB failed (exit $status)"
 
