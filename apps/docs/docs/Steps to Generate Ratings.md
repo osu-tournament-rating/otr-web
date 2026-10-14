@@ -124,7 +124,6 @@ docker run --rm \
   --name otr-processor \
   --network otr-replay-net \
   -e CONNECTION_STRING="postgresql://postgres:password@otr-db:5432/postgres" \
-  -e IGNORE_CONSTRAINTS=true \
   -e RABBITMQ_URL="amqp://guest:guest@127.0.0.1:1" \
   stagecodes/otr-processor:YYYY.MM.DD
 ```
