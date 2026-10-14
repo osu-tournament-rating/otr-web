@@ -102,11 +102,6 @@ export const publishFetchPlayerMessage = (
   options?: QueuePublishOptions
 ) => getQueuePublishers().fetchPlayer(payload, options);
 
-export const publishFetchPlayerOsuTrackMessage = (
-  payload: { osuPlayerId: number },
-  options?: QueuePublishOptions
-) => getQueuePublishers().fetchPlayerOsuTrack(payload, options);
-
 export const publishProcessTournamentAutomationCheckMessage = (
   payload: { tournamentId: number; overrideVerifiedState: boolean },
   options?: QueuePublishOptions

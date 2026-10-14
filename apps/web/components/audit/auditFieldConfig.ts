@@ -192,10 +192,6 @@ export const auditFieldConfig: Record<
   },
 };
 
-export function getTrackedFields(entityType: AuditEntityType): string[] {
-  return Object.keys(auditFieldConfig[entityType]);
-}
-
 export function getFieldLabel(
   entityType: AuditEntityType,
   fieldName: string
