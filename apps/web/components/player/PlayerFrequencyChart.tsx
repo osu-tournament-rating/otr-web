@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useCallback, useState, type ComponentProps } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { BarChart, XAxis, YAxis, Bar } from 'recharts';
 import { ChartConfig, ChartContainer, ChartTooltip } from '../ui/chart';
 import {
@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from '../ui/card';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const CHART_CONSTANTS = {
   DESKTOP_DISPLAY_LIMIT: 10,
@@ -20,6 +21,8 @@ const CHART_CONSTANTS = {
     TICK: 32,
     TOOLTIP: 40,
   },
+  // Room around a tick avatar so its focus ring isn't clipped
+  TICK_FOCUS_RING: 3,
   CHART_MARGIN: {
     top: 20,
     right: 0,
@@ -35,6 +38,7 @@ const CHART_CONSTANTS = {
 interface ChartDataEntry {
   username: string;
   frequency: number;
+  playerId: number;
   osuId: number;
   avatarUrl: string;
 }
@@ -70,6 +74,7 @@ function isChartDataEntry(data: unknown): data is ChartDataEntry {
     typeof data === 'object' &&
     'username' in data &&
     'frequency' in data &&
+    'playerId' in data &&
     'osuId' in data &&
     'avatarUrl' in data
   );
@@ -147,7 +152,6 @@ export default function PlayerFrequencyChart({
   emptyMessage,
   chartColor,
 }: PlayerFrequencyChartProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
   const [transparentAvatars, setTransparentAvatars] = useState<Set<number>>(
@@ -185,6 +189,7 @@ export default function PlayerFrequencyChart({
         .map((item) => ({
           username: item.player.username,
           frequency: item.frequency,
+          playerId: item.player.id,
           osuId: item.player.osuId,
           avatarUrl: `${CHART_CONSTANTS.DEFAULT_AVATAR_URL}/${item.player.osuId}`,
         }))
@@ -234,6 +239,17 @@ export default function PlayerFrequencyChart({
     []
   );
 
+  // Link by o!TR ID: a numeric key is tried as an o!TR ID before an osu! ID
+  const profileHref = useCallback(
+    (playerId: number) => {
+      const ruleset = searchParams.get('ruleset');
+      return ruleset
+        ? `/players/${playerId}?ruleset=${encodeURIComponent(ruleset)}`
+        : `/players/${playerId}`;
+    },
+    [searchParams]
+  );
+
   const createCustomXAxisTick = useCallback(
     (tickData: ChartDataEntry[]) => {
       const TickComponent = (props: {
@@ -257,35 +273,20 @@ export default function PlayerFrequencyChart({
         const isTransparent = transparentAvatars.has(player.osuId);
         const shouldUseFallback = hasImageError || isTransparent;
         const avatarSize = CHART_CONSTANTS.AVATAR_SIZE.TICK;
+        const ring = CHART_CONSTANTS.TICK_FOCUS_RING;
 
         return (
           <g transform={`translate(${x},${y})`}>
             <foreignObject
-              x={-avatarSize / 2}
-              y={5}
-              width={avatarSize}
-              height={avatarSize}
+              x={-avatarSize / 2 - ring}
+              y={5 - ring}
+              width={avatarSize + ring * 2}
+              height={avatarSize + ring * 2}
             >
-              <button
-                type="button"
-                onClick={() => {
-                  const ruleset = searchParams.get('ruleset');
-                  const url = ruleset
-                    ? `/players/${player.osuId}?ruleset=${ruleset}`
-                    : `/players/${player.osuId}`;
-                  router.push(url);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    const ruleset = searchParams.get('ruleset');
-                    const url = ruleset
-                      ? `/players/${player.osuId}?ruleset=${ruleset}`
-                      : `/players/${player.osuId}`;
-                    router.push(url);
-                  }
-                }}
-                className="cursor-pointer rounded-full outline-none focus:outline-none"
+              <Link
+                href={profileHref(player.playerId)}
+                className="flex rounded-full focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                style={{ margin: ring }}
                 aria-label={`View ${player.username}'s profile`}
                 title={player.username}
               >
@@ -307,7 +308,7 @@ export default function PlayerFrequencyChart({
                     onError={() => handleImageError(player.osuId)}
                   />
                 )}
-              </button>
+              </Link>
             </foreignObject>
           </g>
         );
@@ -316,8 +317,7 @@ export default function PlayerFrequencyChart({
       return TickComponent;
     },
     [
-      router,
-      searchParams,
+      profileHref,
       imageErrors,
       transparentAvatars,
       handleImageError,
