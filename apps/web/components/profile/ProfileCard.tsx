@@ -106,6 +106,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
       </span>
     ) : (
       <span
+        role="img"
         className="size-2 rounded-full bg-blue-500"
         aria-label="Unread report updates"
       />
@@ -123,7 +124,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
               <div className="absolute inset-0 backdrop-blur-md" />
               <Image
                 src="/decorations/decoration-2.svg"
-                alt="background image"
+                alt=""
                 width={300}
                 height={200}
                 className="size-full object-cover"
@@ -282,7 +283,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             <div className="absolute inset-0 backdrop-blur-md" />
             <Image
               src="/decorations/decoration-2.svg"
-              alt="background image"
+              alt=""
               width={300}
               height={200}
               className="size-full object-cover"
