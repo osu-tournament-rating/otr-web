@@ -137,6 +137,7 @@ export default function TournamentListRow({
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2">
           <VerificationBadge
+            interactive={false}
             verificationStatus={tournament.verificationStatus}
             rejectionReason={tournament.rejectionReason}
             entityType="tournament"

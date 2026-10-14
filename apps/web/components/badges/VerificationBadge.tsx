@@ -17,6 +17,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import React from 'react';
+import SimpleTooltip from '../simple-tooltip';
 import TapTooltip from '../tap-tooltip';
 import { cn } from '@/lib/utils';
 import {
@@ -110,6 +111,11 @@ interface VerificationBadgeProps {
   entityType?: ApiItemType;
   gameIndex?: number;
   verifierUsername?: string;
+  /**
+   * False inside a link or other control: hover tooltip only, so the badge
+   * adds no nested button.
+   */
+  interactive?: boolean;
 }
 
 function getWarningMetadata(
@@ -272,6 +278,7 @@ export default function VerificationBadge({
   entityType,
   gameIndex,
   verifierUsername,
+  interactive = true,
 }: VerificationBadgeProps) {
   const { text: statusText } =
     VerificationStatusEnumHelper.getMetadata(verificationStatus);
@@ -342,6 +349,10 @@ export default function VerificationBadge({
     verifierUsername,
     verificationStatus
   );
+
+  if (!interactive) {
+    return <SimpleTooltip content={tooltipContent}>{badge}</SimpleTooltip>;
+  }
 
   return (
     <TapTooltip
