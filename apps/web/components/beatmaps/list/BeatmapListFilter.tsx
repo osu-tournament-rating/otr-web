@@ -17,6 +17,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type KeyboardEvent,
 } from 'react';
@@ -237,19 +238,25 @@ export default function BeatmapListFilter({
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = useState(filter.q ?? '');
+  // The term this box last sent to the URL
+  const sentQueryRef = useRef(normalizeBeatmapSearchQuery(filter.q));
   const [isSearching, setIsSearching] = useState(false);
   // Optimistic copy the controls read while a navigation is in flight.
   const [pending, setPending] = useState<FilterData | null>(null);
   const currentFilter = pending ?? filter;
 
-  // Resync the box from the URL on external navigation.
+  // Resync the box from the URL on external navigation only; a search landing
+  // while the user keeps typing must not overwrite the newer text.
   useEffect(() => {
-    setQuery((current) =>
-      normalizeBeatmapSearchQuery(current) ===
-      normalizeBeatmapSearchQuery(filter.q)
-        ? current
-        : (filter.q ?? '')
-    );
+    const landed = normalizeBeatmapSearchQuery(filter.q);
+    if (landed !== sentQueryRef.current) {
+      sentQueryRef.current = landed;
+      setQuery((current) =>
+        normalizeBeatmapSearchQuery(current) === landed
+          ? current
+          : (filter.q ?? '')
+      );
+    }
     setIsSearching(false);
   }, [filter.q]);
 
@@ -268,6 +275,7 @@ export default function BeatmapListFilter({
       const params = buildBeatmapSearchParams({ ...next, page: undefined });
       const nextPath = params.size ? `${pathname}?${params}` : pathname;
       const currentPath = window.location.pathname + window.location.search;
+      sentQueryRef.current = normalizeBeatmapSearchQuery(next.q);
       if (nextPath !== currentPath) {
         router.push(nextPath, { scroll: false });
       } else {
