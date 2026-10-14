@@ -16,7 +16,6 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import ProfileCard from '../profile/ProfileCard';
 import SearchCommandDialog from '../search/SearchCommandDialog';
-import { DialogTitle } from '../ui/dialog';
 import { ModeToggle } from '../ui/mode-toggle';
 import {
   NavigationMenu,
@@ -26,7 +25,7 @@ import {
 } from '../ui/navigation-menu';
 import { NavigationMenuTrigger } from '@radix-ui/react-navigation-menu';
 import { Separator } from '../ui/separator';
-import { Sheet, SheetClose, SheetContent } from '../ui/sheet';
+import { Sheet, SheetClose, SheetContent, SheetTitle } from '../ui/sheet';
 import ClientOnly from '../client-only';
 import MobileNavTrigger from './MobileNavTrigger';
 import SupportButton from '../buttons/SupportButton';
@@ -173,8 +172,7 @@ export default function Header() {
               closeButton={false}
               className="top-(--header-height-px) h-auto w-full overflow-y-auto border-t border-t-muted border-l-muted bg-card p-6 sm:max-w-xs md:hidden"
             >
-              {/* Radix requires a title */}
-              <DialogTitle hidden />
+              <SheetTitle className="sr-only">Navigation</SheetTitle>
               <div className="flex flex-col space-y-6">
                 <nav className="flex flex-col space-y-1">
                   <NavigationMenu
