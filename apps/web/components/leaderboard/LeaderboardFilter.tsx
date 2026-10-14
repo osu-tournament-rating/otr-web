@@ -104,6 +104,17 @@ export default function LeaderboardFilter({
     router.push(pathName + (searchParams.size > 0 ? `?${searchParams}` : ''));
   };
 
+  // Submits on commit, which covers keyboard steps as well as pointer releases.
+  // A controlled Radix slider commits a keyboard step before onValueChange
+  // runs, so the commit applies the values itself first.
+  const sliderHandlers = (apply: (vals: number[]) => void) => ({
+    onValueChange: apply,
+    onValueCommit: (vals: number[]) => {
+      apply(vals);
+      form.handleSubmit(onSubmit)();
+    },
+  });
+
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
@@ -202,7 +213,7 @@ export default function LeaderboardFilter({
                             defaultLeaderboardFilterValues.maxOsuRank!
                           ),
                         ]}
-                        onValueChange={(vals) => {
+                        {...sliderHandlers((vals) => {
                           minRankField.onChange(
                             scaleExponentially(
                               vals[0],
@@ -217,8 +228,7 @@ export default function LeaderboardFilter({
                               defaultLeaderboardFilterValues.maxOsuRank!
                             )
                           );
-                        }}
-                        onPointerUp={form.handleSubmit(onSubmit)}
+                        })}
                         minStepsBetweenThumbs={1}
                       />
                       <div className="flex justify-between text-sm text-muted-foreground">
@@ -277,11 +287,10 @@ export default function LeaderboardFilter({
                           maxRatingField.value ??
                             defaultLeaderboardFilterValues.maxRating!,
                         ]}
-                        onValueChange={(vals) => {
+                        {...sliderHandlers((vals) => {
                           minRatingField.onChange(vals[0]);
                           maxRatingField.onChange(vals[1]);
-                        }}
-                        onPointerUp={form.handleSubmit(onSubmit)}
+                        })}
                         minStepsBetweenThumbs={1}
                       />
                       <div className="flex justify-between text-sm text-muted-foreground">
@@ -348,7 +357,7 @@ export default function LeaderboardFilter({
                             defaultLeaderboardFilterValues.maxMatches!
                           ),
                         ]}
-                        onValueChange={(vals) => {
+                        {...sliderHandlers((vals) => {
                           minMatchesField.onChange(
                             scaleExponentially(
                               vals[0],
@@ -363,8 +372,7 @@ export default function LeaderboardFilter({
                               defaultLeaderboardFilterValues.maxMatches!
                             )
                           );
-                        }}
-                        onPointerUp={form.handleSubmit(onSubmit)}
+                        })}
                         minStepsBetweenThumbs={1}
                       />
                       <div className="flex justify-between text-sm text-muted-foreground">
@@ -423,11 +431,10 @@ export default function LeaderboardFilter({
                           maxWinRateField.value ??
                             defaultLeaderboardFilterValues.maxWinRate!,
                         ]}
-                        onValueChange={(vals) => {
+                        {...sliderHandlers((vals) => {
                           minWinRateField.onChange(vals[0]);
                           maxWinRateField.onChange(vals[1]);
-                        }}
-                        onPointerUp={form.handleSubmit(onSubmit)}
+                        })}
                         minStepsBetweenThumbs={1}
                       />
                       <div className="flex justify-between text-sm text-muted-foreground">
