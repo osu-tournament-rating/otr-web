@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import {
   AlertTriangle,
   ChevronDown,
@@ -262,16 +261,12 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   return (
     <DropdownMenu open={isOpen} onOpenChange={toggleIsOpen}>
       <DropdownMenuTrigger asChild>
-        <motion.div
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          className="cursor-pointer focus:outline-none"
-        >
+        <div className="cursor-pointer transition-transform hover:scale-103 focus:outline-none active:scale-97">
           <UserAvatar
             player={player}
             showNotificationDot={hasReportNotification}
           />
-        </motion.div>
+        </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="mt-1 w-56 rounded-xl bg-card">
         <DropdownMenuLabel className="relative overflow-hidden">
