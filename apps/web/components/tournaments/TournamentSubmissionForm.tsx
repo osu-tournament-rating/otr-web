@@ -27,6 +27,7 @@ import { Select, SelectTrigger, SelectValue } from '../ui/select';
 import { orpc } from '@/lib/orpc/orpc';
 import { useSession } from '@/lib/hooks/useSession';
 import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
 import { MultipleSelect } from '../select/multiple-select';
 import { TournamentRejectionReasonEnumHelper } from '@/lib/enum-helpers';
 import Link from 'next/link';
@@ -249,7 +250,7 @@ export default function TournamentSubmissionForm() {
               render={({ field, fieldState }) => (
                 <FormItem>
                   <LabelWithTooltip
-                    label="Forum Post URL"
+                    label="Forum post URL"
                     tooltip="Forum post URL or wiki page for the tournament"
                   />
                   <FormControl>
@@ -303,7 +304,7 @@ export default function TournamentSubmissionForm() {
               render={({ field, fieldState }) => (
                 <FormItem>
                   <LabelWithTooltip
-                    label="Lobby Size"
+                    label="Lobby size"
                     tooltip="Number of players per team in each match"
                   />
                   <Select
@@ -329,7 +330,7 @@ export default function TournamentSubmissionForm() {
               render={({ field, fieldState }) => (
                 <FormItem>
                   <LabelWithTooltip
-                    label="Rank Restriction"
+                    label="Rank restriction"
                     tooltip="The 'best' global rank allowed to participate. Use 1 for open rank."
                   />
                   <FormControl>
@@ -378,12 +379,18 @@ export default function TournamentSubmissionForm() {
             {isAdmin && (
               <div className="flex flex-row items-center gap-2">
                 <Checkbox
+                  id="reject-on-submit"
                   checked={rejectOnSubmit}
-                  onClick={() => setRejectOnSubmit((prev) => !prev)}
+                  onCheckedChange={(checked) =>
+                    setRejectOnSubmit(checked === true)
+                  }
                 />
-                <FormLabel className="font-medium text-foreground">
+                <Label
+                  htmlFor="reject-on-submit"
+                  className="font-medium text-foreground"
+                >
                   Reject this tournament on submission
-                </FormLabel>
+                </Label>
                 {rejectOnSubmit && (
                   <FormField
                     control={form.control}
@@ -393,6 +400,9 @@ export default function TournamentSubmissionForm() {
                       fieldState: { invalid },
                     }) => (
                       <FormItem>
+                        <FormLabel className="sr-only">
+                          Rejection reason
+                        </FormLabel>
                         <FormControl>
                           <MultipleSelect
                             placeholder="Select rejection reason"
@@ -509,7 +519,7 @@ export default function TournamentSubmissionForm() {
             {isSubmitting ? (
               <LoaderCircle className="animate-spin" />
             ) : (
-              'Submit Tournament'
+              'Submit tournament'
             )}
           </Button>
         </form>

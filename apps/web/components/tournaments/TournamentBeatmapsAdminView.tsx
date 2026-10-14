@@ -450,7 +450,7 @@ export default function TournamentBeatmapsAdminView({
                 Remove
               </Button>
             </DialogTrigger>
-            <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col overflow-hidden">
+            <DialogContent className="flex max-h-[80vh] flex-col overflow-hidden sm:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Confirm beatmap removal</DialogTitle>
                 <DialogDescription asChild>
