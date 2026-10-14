@@ -185,31 +185,8 @@ so keep them clean.
 
 ## Pull requests
 
-The reviewer judges what the software now does. They do not walk through the
-code. Write for that reader.
-
-- The title follows the commit format and becomes the release entry. Mark a
-  breaking change to the public API or a shared contract with `!`, as in
-  `feat(web)!: ...`. Do not use a `BREAKING CHANGE:` footer.
-- The description follows `.github/pull_request_template.md`. Keep it under
-  150 words in total, not counting the template's comments.
-- Describe behavior and outcomes in plain language: what a user, admin, or
-  operator now sees or can do, and why. Leave out file paths, function names,
-  diffs, and step-by-step implementation detail; the diff already shows those.
-- Never link to files, lines, or commits. Link only to pages on the site or
-  the docs.
-- Under Testing, say in a sentence or two what you confirmed works. Do not
-  paste commands or logs. Under Deploy risk, name any migration, data rewrite,
-  or contract change, or write "None".
-- `## Changelog` becomes the release notes. Use only past-tense bullets for
-  user-facing changes, linking the pages they touch. Write `- None` when
-  nothing user-facing changed. Keep the `<!-- changelog:end -->` marker, and
-  put anything after the release notes, such as the signature, below it.
-  `.github/scripts/release-notes.ts` enforces the title and changelog format.
-- CI adds an `app:<name>` label for each app whose files the pull request
-  changes. Do not add them by hand.
-- Accuracy beats completeness. Never claim something was checked unless it
-  was.
+Before you open a pull request or edit one's title or description, read and
+follow the `pull-request` skill in `.claude/skills/pull-request/SKILL.md`.
 
 ## Issues
 
@@ -220,8 +197,8 @@ fix it in the current change.
 - Confirm it is real first, and search open issues so you don't file a
   duplicate.
 - File one issue per problem with `gh issue create`. Follow
-  `.github/ISSUE_TEMPLATE/report.md` and the same rules as a PR description:
-  high level, under 150 words, and no links to files.
+  `.github/ISSUE_TEMPLATE/report.md`. Keep it high level and under 150 words,
+  and never link to files.
 - The title is a plain sentence that names the problem, not a commit header.
   Add `bug` for a defect in shipped behavior or `proposal` for an idea. Add
   `meta:ops`, `meta:ui-ux`, or `meta:performance` when one fits. Add an
