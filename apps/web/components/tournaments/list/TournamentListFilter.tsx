@@ -7,6 +7,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type KeyboardEvent,
 } from 'react';
@@ -122,12 +123,22 @@ const fromDateInputValue = (value?: string) =>
 
 function useSearchInput(initialQuery: string) {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
+  // The query this box last sent to the URL
+  const sentQueryRef = useRef(initialQuery);
 
+  // Resync only on outside navigation; a search landing while the user keeps
+  // typing must not overwrite the newer text.
   useEffect(() => {
+    if (initialQuery === sentQueryRef.current) return;
+    sentQueryRef.current = initialQuery;
     setSearchQuery(initialQuery);
   }, [initialQuery]);
 
-  return { searchQuery, setSearchQuery };
+  const markQuerySent = useCallback((query: string) => {
+    sentQueryRef.current = query;
+  }, []);
+
+  return { searchQuery, setSearchQuery, markQuerySent };
 }
 
 function SearchInput({
@@ -291,7 +302,7 @@ function RulesetFilter({
   ];
 
   return (
-    <div aria-label="Filter by ruleset" className="min-w-0">
+    <div role="group" aria-label="Filter by ruleset" className="min-w-0">
       <div className="flex flex-wrap gap-1.5">
         {options.map((option) => (
           <FilterChip
@@ -540,7 +551,7 @@ function ActiveFilterSummary({
 export default function TournamentListFilter({
   filter,
 }: TournamentListFilterProps) {
-  const { searchQuery, setSearchQuery } = useSearchInput(
+  const { searchQuery, setSearchQuery, markQuerySent } = useSearchInput(
     filter.searchQuery ?? ''
   );
   const router = useRouter();
@@ -612,11 +623,12 @@ export default function TournamentListFilter({
           : pathname;
       const currentUrl = window.location.pathname + window.location.search;
 
+      markQuerySent(searchParams.get('searchQuery') ?? '');
       if (currentUrl !== newPath) {
         router.push(newPath, { scroll: false });
       }
     },
-    [pathname, router]
+    [markQuerySent, pathname, router]
   );
 
   const { schedule, applyNow, cancel } = useDeferredFilterApply(submitValues);
@@ -657,12 +669,13 @@ export default function TournamentListFilter({
   const handleClearFilters = useCallback(() => {
     cancel();
     setSearchQuery('');
+    markQuerySent('');
     form.reset({
       ...defaultTournamentListFilter,
       searchQuery: '',
     } as FilterFormData);
     router.push(pathname, { scroll: false });
-  }, [cancel, form, pathname, router, setSearchQuery]);
+  }, [cancel, form, markQuerySent, pathname, router, setSearchQuery]);
 
   const currentFilter = form.watch();
   const activeFilterCount = countAdvancedFilters(currentFilter);

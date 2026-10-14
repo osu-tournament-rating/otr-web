@@ -7,7 +7,31 @@ import { LeaderboardEntry } from '@/lib/orpc/schema/leaderboard';
 import { TierName, getTierString } from '@/lib/utils/tierData';
 import type { ColumnDef } from '@tanstack/react-table';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
+
+/** Narrows the current leaderboard to one country, keeping the other filters. */
+function CountryRankLink({
+  country,
+  countryRank,
+}: {
+  country: string;
+  countryRank: number;
+}) {
+  const params = new URLSearchParams(useSearchParams());
+  params.set('country', country);
+  params.delete('page');
+
+  return (
+    <Link
+      href={`/leaderboard?${params}`}
+      className="flex w-full gap-2 align-baseline font-medium text-muted-foreground"
+    >
+      <CountryFlag tooltipContent={country} className="w-7" country={country} />
+      <span className="align-baseline">#{countryRank}</span>
+    </Link>
+  );
+}
 
 export const columns: ColumnDef<LeaderboardEntry>[] = [
   {
@@ -26,23 +50,12 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
     id: 'player.country',
     accessorFn: (row) => row.player.country,
     header: 'Country',
-    cell: ({ row }) => {
-      const country = row.original.player.country;
-      const countryRank = row.original.countryRank;
-      return (
-        <Link
-          href={`/leaderboard?country=${country}`}
-          className="flex w-full gap-2 align-baseline font-medium text-muted-foreground"
-        >
-          <CountryFlag
-            tooltipContent={country}
-            className="w-7"
-            country={country}
-          />
-          <span className="align-baseline">#{countryRank}</span>
-        </Link>
-      );
-    },
+    cell: ({ row }) => (
+      <CountryRankLink
+        country={row.original.player.country}
+        countryRank={row.original.countryRank}
+      />
+    ),
   },
   {
     id: 'player.osuId',
