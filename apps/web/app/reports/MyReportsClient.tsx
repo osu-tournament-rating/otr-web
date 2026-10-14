@@ -216,23 +216,15 @@ export default function MyReportsClient() {
                       key={report.id}
                       data-testid="my-reports-row"
                       data-report-id={report.id}
-                      tabIndex={0}
-                      role="button"
-                      aria-label={`View report for ${report.entityDisplayName}`}
                       className="cursor-pointer"
                       onClick={() => handleViewDetails(report)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
-                          handleViewDetails(report);
-                        }
-                      }}
                     >
                       <TableCell className="py-3">
                         {report.hasUnreadUpdate && (
                           <span
                             className="block size-2.5 rounded-full bg-blue-500"
                             data-testid="my-reports-unread-dot"
+                            role="img"
                             aria-label="Unread admin update"
                             title="Unread admin update"
                           />
@@ -246,7 +238,17 @@ export default function MyReportsClient() {
                         }
                       </TableCell>
                       <TableCell className="max-w-[20rem] truncate">
-                        {report.entityDisplayName}
+                        <button
+                          type="button"
+                          className="block max-w-full cursor-pointer truncate text-left"
+                          onClick={(event) => {
+                            // The row already opens the details on a pointer click
+                            event.stopPropagation();
+                            handleViewDetails(report);
+                          }}
+                        >
+                          {report.entityDisplayName}
+                        </button>
                       </TableCell>
                       <TableCell className="min-w-48 font-medium">
                         {report.reason.label}
@@ -266,7 +268,7 @@ export default function MyReportsClient() {
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent
-          className="max-h-[85vh] max-w-2xl overflow-y-auto"
+          className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"
           data-testid="my-report-detail"
         >
           <DialogHeader>
