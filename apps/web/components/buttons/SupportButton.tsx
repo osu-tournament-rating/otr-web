@@ -9,6 +9,7 @@ export default function SupportButton() {
     <Link href="https://buymeacoffee.com/stagecodes" target="_blank">
       <SimpleTooltip content="Support the project">
         <Button
+          aria-label="Support the project"
           className="cursor-pointer hover:animate-pulse hover:text-pink-500"
           variant="ghost"
           size="icon"
