@@ -181,7 +181,6 @@ class DockerSandbox:
                 "--label", self.label,
                 "--network", self.network,
                 "--env", f"CONNECTION_STRING={CONNECTION_STRING}",
-                "--env", "IGNORE_CONSTRAINTS=true",
                 "--env", "RABBITMQ_URL=amqp://guest:guest@127.0.0.1:1",
                 "--env", "RUST_LOG=info",
                 image,
