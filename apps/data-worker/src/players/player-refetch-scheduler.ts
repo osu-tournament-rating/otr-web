@@ -13,8 +13,10 @@ import type { DatabaseClient } from '../db';
 import type { Logger } from '../logging/logger';
 import type { QueuePublisher } from '@otr/core/queues';
 import {
-  setPlayerFetchStatusByOsuId,
-  setPlayerOsuTrackFetchStatusByOsuId,
+  claimPlayerFetchLease,
+  releasePlayerFetchLease,
+  type PlayerFetchSource,
+  type PlayerFetchState,
 } from '../osu/player-store';
 
 type AutoRefetchConfig = {
@@ -30,6 +32,11 @@ type SchedulerConfig = {
 
 const MS_PER_MINUTE = 60_000;
 const MS_PER_DAY = 86_400_000;
+
+// A Fetching player whose lease started longer ago than this is enqueued again.
+// It must outlast the longest queue wait: at 60 osu! requests a minute, four
+// per player, refetching every player once takes about five days.
+const FETCH_LEASE_DAYS = 7;
 
 // Ceilings on player_ratings.global_rank; `maxRank: null` matches any rank.
 const REFETCH_TIERS = {
@@ -171,16 +178,29 @@ export class PlayerRefetchScheduler {
       .select({
         osuPlayerId: schema.players.osuId,
         cadenceDays,
+        status: schema.players.dataFetchStatus,
+        lastFetch: schema.players.osuLastFetch,
       })
       .from(schema.players)
       .leftJoin(
         schema.playerRatings,
         eq(schema.playerRatings.playerId, schema.players.id)
       )
-      .where(ne(schema.players.dataFetchStatus, DataFetchStatus.Fetching))
       .groupBy(schema.players.id)
       .having(
-        sql`${schema.players.osuLastFetch} < now() - (${cadenceDays} * interval '1 day')`
+        or(
+          and(
+            ne(schema.players.dataFetchStatus, DataFetchStatus.Fetching),
+            sql`${schema.players.osuLastFetch} < now() - (${cadenceDays} * interval '1 day')`
+          ),
+          and(
+            eq(schema.players.dataFetchStatus, DataFetchStatus.Fetching),
+            lt(
+              schema.players.osuLastFetch,
+              this.calculateCutoff(FETCH_LEASE_DAYS)
+            )
+          )
+        )
       )
       .orderBy(asc(cadenceDays), asc(schema.players.osuLastFetch));
 
@@ -204,20 +224,14 @@ export class PlayerRefetchScheduler {
           (enqueuedByCadence.get(cadence) ?? 0) + 1
         );
       },
+      source: 'osu',
       logContext: 'osu!',
-      setFetchingStatus: async (osuPlayerId) => {
-        await setPlayerFetchStatusByOsuId(
-          this.db,
-          osuPlayerId,
-          DataFetchStatus.Fetching,
-          new Date().toISOString()
-        );
-      },
     });
 
-    if (enqueued > 0) {
+    if (enqueued.count > 0) {
       this.logger.info('Auto-refetch enqueued osu! players', {
-        count: enqueued,
+        count: enqueued.count,
+        expiredLeases: enqueued.expiredLeases,
         byCadenceDays: Object.fromEntries(
           [...enqueuedByCadence.entries()].sort((a, b) => a[0] - b[0])
         ),
@@ -253,14 +267,29 @@ export class PlayerRefetchScheduler {
     const players = await this.db
       .select({
         osuPlayerId: schema.players.osuId,
+        status: schema.players.osuTrackDataFetchStatus,
+        lastFetch: schema.players.osuTrackLastFetch,
       })
       .from(schema.players)
       .where(
-        and(
-          ne(schema.players.osuTrackDataFetchStatus, DataFetchStatus.Fetching),
-          or(
-            isNull(schema.players.osuTrackLastFetch),
+        or(
+          isNull(schema.players.osuTrackLastFetch),
+          and(
+            ne(
+              schema.players.osuTrackDataFetchStatus,
+              DataFetchStatus.Fetching
+            ),
             lt(schema.players.osuTrackLastFetch, cutoffIso)
+          ),
+          and(
+            eq(
+              schema.players.osuTrackDataFetchStatus,
+              DataFetchStatus.Fetching
+            ),
+            lt(
+              schema.players.osuTrackLastFetch,
+              this.calculateCutoff(FETCH_LEASE_DAYS)
+            )
           )
         )
       )
@@ -274,53 +303,88 @@ export class PlayerRefetchScheduler {
           { metadata: { priority: MessagePriority.Low } }
         );
       },
+      source: 'osuTrack',
       logContext: 'osu!track',
-      setFetchingStatus: async (osuPlayerId) => {
-        await setPlayerOsuTrackFetchStatusByOsuId(
-          this.db,
-          osuPlayerId,
-          DataFetchStatus.Fetching,
-          new Date().toISOString()
-        );
-      },
     });
 
-    if (enqueued > 0) {
+    if (enqueued.count > 0) {
       this.logger.info('Auto-refetch enqueued osu!track players', {
-        count: enqueued,
+        count: enqueued.count,
+        expiredLeases: enqueued.expiredLeases,
       });
     }
   }
 
   private async enqueuePlayers<
-    TPlayer extends { osuPlayerId: number },
+    TPlayer extends PlayerFetchState & { osuPlayerId: number },
   >(options: {
     players: Array<TPlayer>;
     publish: (osuPlayerId: number, player: TPlayer) => Promise<void>;
+    source: PlayerFetchSource;
     logContext: string;
-    setFetchingStatus?: (osuPlayerId: number) => Promise<void>;
-  }): Promise<number> {
-    let enqueued = 0;
+  }): Promise<{ count: number; expiredLeases: number }> {
+    let count = 0;
+    let expiredLeases = 0;
 
     for (const player of options.players) {
       const osuPlayerId = player.osuPlayerId;
+      // Claimed before publishing, so the lease never lands on top of a fetch
+      // that a fast worker has already finished.
+      const leaseIso = new Date().toISOString();
+      let claimed = false;
 
       try {
-        if (options.setFetchingStatus) {
-          await options.setFetchingStatus(osuPlayerId);
+        claimed = await claimPlayerFetchLease(
+          this.db,
+          options.source,
+          osuPlayerId,
+          player,
+          leaseIso
+        );
+        if (!claimed) {
+          continue;
         }
         await options.publish(osuPlayerId, player);
-        enqueued += 1;
+        count += 1;
+        if (player.status === DataFetchStatus.Fetching) {
+          expiredLeases += 1;
+        }
       } catch (error) {
         this.logger.error('Failed to publish auto-refetch player', {
           osuPlayerId,
           queue: options.logContext,
           error,
         });
+        if (claimed) {
+          await this.releaseLease(options, player, leaseIso);
+        }
       }
     }
 
-    return enqueued;
+    return { count, expiredLeases };
+  }
+
+  private async releaseLease(
+    options: { source: PlayerFetchSource; logContext: string },
+    player: PlayerFetchState & { osuPlayerId: number },
+    leaseIso: string
+  ) {
+    try {
+      await releasePlayerFetchLease(
+        this.db,
+        options.source,
+        player.osuPlayerId,
+        player,
+        leaseIso
+      );
+    } catch (error) {
+      // The lease expires on its own after FETCH_LEASE_DAYS.
+      this.logger.error('Failed to release auto-refetch lease', {
+        osuPlayerId: player.osuPlayerId,
+        queue: options.logContext,
+        error,
+      });
+    }
   }
 
   private calculateCutoff(outdatedDays: number) {
