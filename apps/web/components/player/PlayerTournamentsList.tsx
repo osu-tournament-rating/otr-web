@@ -57,7 +57,7 @@ export default function PlayerTournamentsList({
               )
             }
           >
-            Show More ({tournaments.length - displayCount} more)
+            Show more ({tournaments.length - displayCount} more)
           </Button>
         )}
       </CardContent>
