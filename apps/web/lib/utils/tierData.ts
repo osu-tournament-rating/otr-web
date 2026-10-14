@@ -47,7 +47,10 @@ export function getTierColor(tier: TierName) {
 }
 
 export type TierColor = {
-  /** Glow around the tier icon, as `from-color-000 to-color-000`. */
+  /**
+   * Glow around the tier icon, as `from-color-000 to-color-000`. Dark classes
+   * carry their full `dark:` prefix so Tailwind can find them.
+   */
   gradient: {
     dark: string;
 
@@ -61,56 +64,56 @@ export type TierColor = {
 export const tierColors: Partial<{ [key in TierName]: TierColor }> = {
   'Elite Grandmaster': {
     gradient: {
-      dark: 'from-blue-500/40 to-blue-700/50',
+      dark: 'dark:from-blue-500/40 dark:to-blue-700/50',
       light: 'from-blue-500/30 to-blue-700/40',
     },
     textClass: 'text-elite-grandmaster',
   },
   Grandmaster: {
     gradient: {
-      dark: 'from-red-500/40 to-red-700/50',
+      dark: 'dark:from-red-500/40 dark:to-red-700/50',
       light: 'from-red-500/30 to-red-700/40',
     },
     textClass: 'text-grandmaster',
   },
   Master: {
     gradient: {
-      dark: 'from-purple-400/40 to-purple-600/30',
+      dark: 'dark:from-purple-400/40 dark:to-purple-600/30',
       light: 'from-purple-400/30 to-purple-600/20',
     },
     textClass: 'text-master',
   },
   Diamond: {
     gradient: {
-      dark: 'from-purple-400/40 to-purple-700/20',
+      dark: 'dark:from-purple-400/40 dark:to-purple-700/20',
       light: 'from-purple-400/30 to-purple-700/10',
     },
     textClass: 'text-diamond',
   },
   Platinum: {
     gradient: {
-      dark: 'from-cyan-500/30 to-cyan-700/10',
+      dark: 'dark:from-cyan-500/30 dark:to-cyan-700/10',
       light: 'from-cyan-600/20 to-cyan-800/10',
     },
     textClass: 'text-platinum',
   },
   Gold: {
     gradient: {
-      dark: 'from-yellow-500/30 to-yellow-700/10',
+      dark: 'dark:from-yellow-500/30 dark:to-yellow-700/10',
       light: 'from-yellow-600/20 to-yellow-800/10',
     },
     textClass: 'text-gold',
   },
   Emerald: {
     gradient: {
-      dark: 'from-emerald-500/30 to-emerald-700/10',
+      dark: 'dark:from-emerald-500/30 dark:to-emerald-700/10',
       light: 'from-emerald-600/20 to-emerald-800/10',
     },
     textClass: 'text-emerald',
   },
   Silver: {
     gradient: {
-      dark: 'from-slate-400/30 to-slate-600/10',
+      dark: 'dark:from-slate-400/30 dark:to-slate-600/10',
       light: 'from-slate-500/20 to-slate-700/10',
     },
     textClass: 'text-silver',

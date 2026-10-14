@@ -24,15 +24,15 @@ export default function TierCard({
   return (
     <Card
       className={cn(
-        'relative flex flex-col items-center gap-2 rounded-2xl border-none bg-popover p-3',
+        'relative isolate flex flex-col items-center gap-2 rounded-2xl border-none bg-popover p-3',
         className
       )}
     >
       <div
         className={cn(
           'absolute inset-0 -z-10 rounded-lg bg-gradient-to-br opacity-40 blur-md',
-          tierColor?.gradient.light || '',
-          'dark:' + (tierColor?.gradient.dark || '')
+          tierColor?.gradient.light,
+          tierColor?.gradient.dark
         )}
       />
 
@@ -40,8 +40,8 @@ export default function TierCard({
         <div
           className={cn(
             'absolute inset-0 rounded-full bg-gradient-to-br opacity-60 blur-sm',
-            tierColor?.gradient.light || '',
-            'dark:' + (tierColor?.gradient.dark || '')
+            tierColor?.gradient.light,
+            tierColor?.gradient.dark
           )}
         />
         <span className="relative z-10">
