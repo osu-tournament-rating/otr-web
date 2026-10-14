@@ -35,16 +35,24 @@ function LoadingSkeleton(): React.JSX.Element {
   );
 }
 
-function EmptyState(): React.JSX.Element {
+function EmptyState({
+  isFiltered,
+}: {
+  isFiltered: boolean;
+}): React.JSX.Element {
   return (
     <div
       data-testid="audit-feed-empty"
       className="flex flex-col items-center justify-center py-16"
     >
       <ClipboardList className="mb-4 h-12 w-12 text-muted-foreground/50" />
-      <h3 className="text-lg font-medium">No audit events found</h3>
+      <h3 className="text-lg font-medium">
+        {isFiltered ? 'No audit events match' : 'No audit events found'}
+      </h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        No audit activity has been recorded yet.
+        {isFiltered
+          ? 'Try fewer filters or clear them.'
+          : 'No audit activity has been recorded yet.'}
       </p>
     </div>
   );
@@ -97,6 +105,10 @@ export default function AuditEventFeed(): React.JSX.Element {
   const allEvents = pages.flatMap((page) => page.events);
   const hasMore = pages[pages.length - 1]?.hasMore ?? false;
   const isEmpty = !isLoading && allEvents.length === 0;
+  const isFiltered =
+    filters.entityTypes.length > 0 ||
+    filters.fieldsChanged.length > 0 ||
+    filters.actionTypes.length > 0;
 
   return (
     <div data-testid="audit-event-feed" className="flex flex-col gap-4">
@@ -111,7 +123,7 @@ export default function AuditEventFeed(): React.JSX.Element {
           onRetry={() => void mutate()}
         />
       ) : isEmpty ? (
-        <EmptyState />
+        <EmptyState isFiltered={isFiltered} />
       ) : (
         <div className="space-y-4">
           <div
