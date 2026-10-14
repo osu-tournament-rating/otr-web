@@ -3,7 +3,8 @@
 <!--
 Two to four plain sentences: what users, admins, or operators can now do, and
 why. Describe behavior, not code: no file paths, links to files, or function
-names. Keep the whole description under 150 words.
+names. Keep the whole description under 150 words, not counting the Review
+list.
 -->
 
 ## Testing
@@ -18,6 +19,13 @@ stack or the PR preview. No commands or logs.
 <!--
 One line, or "None": migrations, data rewrites, or changes to the public API or
 a shared contract.
+-->
+
+## Review
+
+<!--
+Findings from the independent review, most severe first, each marked fixed or
+declined with a reason. Write "- None found" if the review found nothing.
 -->
 
 ## Changelog
