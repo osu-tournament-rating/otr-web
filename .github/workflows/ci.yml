@@ -22,9 +22,12 @@ on:
 jobs:
   # Decides whether the processor, docs, scripts, and replay jobs run: only when
   # a file under apps/processor/, apps/docs/, apps/scripts/, or apps/replay/
-  # changed. On a pull request, CI checks out GitHub's trial merge of the pull
-  # request into master, so comparing it with master lists exactly what the
-  # pull request changes. When deploy.yml runs CI on a push to master, the job
+  # changed. The processor jobs also run when the schema, the migrations, or
+  # the enums the processor stores as numbers change, because its tests build
+  # their database from the migrations and check those enums. On a pull
+  # request, CI checks out GitHub's trial merge of the pull request into
+  # master, so comparing it with master lists exactly what the pull request
+  # changes. When deploy.yml runs CI on a push to master, the job
   # compares master before the push with master after it. This uses plain git
   # rather than the dorny/paths-filter action, which would need a token and add
   # a third-party dependency.
@@ -65,7 +68,9 @@ jobs:
           # file moved out of apps/processor/ still counts.
           changed="$(git diff --name-only --no-renames "$base" HEAD)"
           processor=false
-          if grep -q '^apps/processor/' <<<"$changed"; then processor=true; fi
+          if grep -qE '^(apps/processor/|apps/web/drizzle/|packages/otr-core/src/db/|packages/otr-core/src/osu/enums\.ts$)' <<<"$changed"; then
+            processor=true
+          fi
           docs=false
           if grep -q '^apps/docs/' <<<"$changed"; then docs=true; fi
           scripts=false
@@ -155,7 +160,8 @@ jobs:
         env:
           DATABASE_URL: ${{ env.SEARCH_TEST_DATABASE_URL }}
         run: |
-          # 0000 ships commented out
+          # 0000 ships commented out. The processor's test database helper
+          # uncomments it the same way, so change both together.
           sed -i -e '1,3d' -e 's/^-- //' apps/web/drizzle/0000_brave_hex.sql
           bunx drizzle-kit migrate
 
@@ -290,10 +296,10 @@ jobs:
             test) cargo test ;;
           esac
 
-  # Stands in for the processor matrix above when apps/processor is unchanged.
-  # Branch protection requires processor (fmt), (clippy), and (test), but a
-  # skipped matrix job reports a single check named `processor`, so a pull
-  # request that leaves the processor alone would wait on them forever. These
+  # Stands in for the processor matrix above when it does not run. Branch
+  # protection requires processor (fmt), (clippy), and (test), but a skipped
+  # matrix job reports a single check named `processor`, so a pull request that
+  # leaves the processor and its inputs alone would wait on them forever. These
   # report the same names as passing instead, as GitHub advises for required
   # checks that are skipped.
   processor-unchanged:
@@ -306,7 +312,7 @@ jobs:
         task: [fmt, clippy, test]
     steps:
       - name: Skip ${{ matrix.task }}
-        run: echo "apps/processor is unchanged, so the processor checks did not run."
+        run: echo "Nothing the processor depends on changed, so the processor checks did not run."
 
   processor-image:
     name: processor (image)
