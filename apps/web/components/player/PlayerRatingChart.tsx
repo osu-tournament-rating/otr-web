@@ -114,7 +114,7 @@ export default function PlayerRatingChart({
 }: PlayerRatingChartProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   const dateMinParam = searchParams.get('dateMin');
   const dateMaxParam = searchParams.get('dateMax');
@@ -322,7 +322,7 @@ export default function PlayerRatingChart({
             }
             activeTab={activeTab}
             highestRating={highestRating}
-            theme={theme}
+            theme={resolvedTheme}
           />
         </TabsContent>
         <TabsContent
