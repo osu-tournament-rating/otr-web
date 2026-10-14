@@ -5,6 +5,7 @@ import { Check, ExternalLink, Eye, Loader2, RotateCcw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
+import SectionError from '@/components/error/SectionError';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -105,6 +106,7 @@ function getEntityLink(
 export default function AdminReportsClient() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ReportStatus | 'all'>('all');
 
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
@@ -119,6 +121,7 @@ export default function AdminReportsClient() {
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
+    setLoadFailed(false);
     try {
       const data = await orpc.reports.list({
         status: statusFilter === 'all' ? undefined : statusFilter,
@@ -127,7 +130,7 @@ export default function AdminReportsClient() {
       setReports(data.reports);
     } catch (error) {
       console.error('[admin-reports] failed to fetch reports', error);
-      toast.error('Failed to load reports');
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -300,6 +303,11 @@ export default function AdminReportsClient() {
               <Loader2 className="size-4 animate-spin" />
               Loading reports...
             </div>
+          ) : loadFailed ? (
+            <SectionError
+              title="Reports could not load"
+              onRetry={() => void fetchReports()}
+            />
           ) : reports.length === 0 ? (
             <p
               className="py-8 text-center text-sm text-muted-foreground"

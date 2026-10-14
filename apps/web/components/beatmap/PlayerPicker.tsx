@@ -43,6 +43,7 @@ export default function PlayerPicker({
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PlayerLookupResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const term = query.trim();
 
@@ -50,6 +51,7 @@ export default function PlayerPicker({
     if (!term) {
       setResults([]);
       setLoading(false);
+      setFailed(false);
       return;
     }
 
@@ -58,9 +60,15 @@ export default function PlayerPicker({
     const timer = setTimeout(async () => {
       try {
         const response = await orpc.players.lookup({ query: term });
-        if (!cancelled) setResults(response.players);
+        if (!cancelled) {
+          setResults(response.players);
+          setFailed(false);
+        }
       } catch {
-        if (!cancelled) setResults([]);
+        if (!cancelled) {
+          setResults([]);
+          setFailed(true);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -117,9 +125,11 @@ export default function PlayerPicker({
                 </div>
               ) : (
                 <CommandEmpty>
-                  {term
-                    ? 'No players found. Paste an osu! user id to pin one.'
-                    : 'Type a username or osu! user id.'}
+                  {failed
+                    ? 'Player search failed. Edit the search to try again.'
+                    : term
+                      ? 'No players found. Paste an osu! user id to pin one.'
+                      : 'Type a username or osu! user id.'}
                 </CommandEmpty>
               )}
               <CommandGroup>

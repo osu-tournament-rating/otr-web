@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import useSWRInfinite from 'swr/infinite';
 import { ClipboardList, Loader2 } from 'lucide-react';
 import type { AuditEvent } from '@/lib/orpc/schema/audit';
+import SectionError from '@/components/error/SectionError';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { orpc } from '@/lib/orpc/orpc';
@@ -66,28 +67,31 @@ export default function AuditEventFeed(): React.JSX.Element {
     [filters]
   );
 
-  const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(
-    getKey,
-    async ([, cursor]) =>
-      orpc.audit.events({
-        limit: 30,
-        cursor: cursor ?? undefined,
-        showSystem: filters.showSystem ? true : undefined,
-        entityTypes:
-          filters.entityTypes.length > 0 ? filters.entityTypes : undefined,
-        fieldsChanged:
-          filters.fieldsChanged.length > 0 ? filters.fieldsChanged : undefined,
-        actionTypes:
-          filters.actionTypes.length > 0 ? filters.actionTypes : undefined,
-      }),
-    {
-      revalidateFirstPage: false,
-      revalidateOnFocus: false,
-      revalidateIfStale: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 60_000,
-    }
-  );
+  const { data, error, mutate, size, setSize, isLoading, isValidating } =
+    useSWRInfinite(
+      getKey,
+      async ([, cursor]) =>
+        orpc.audit.events({
+          limit: 30,
+          cursor: cursor ?? undefined,
+          showSystem: filters.showSystem ? true : undefined,
+          entityTypes:
+            filters.entityTypes.length > 0 ? filters.entityTypes : undefined,
+          fieldsChanged:
+            filters.fieldsChanged.length > 0
+              ? filters.fieldsChanged
+              : undefined,
+          actionTypes:
+            filters.actionTypes.length > 0 ? filters.actionTypes : undefined,
+        }),
+      {
+        revalidateFirstPage: false,
+        revalidateOnFocus: false,
+        revalidateIfStale: false,
+        revalidateOnReconnect: false,
+        dedupingInterval: 60_000,
+      }
+    );
 
   const pages = data ?? [];
   const allEvents = pages.flatMap((page) => page.events);
@@ -100,6 +104,12 @@ export default function AuditEventFeed(): React.JSX.Element {
 
       {isLoading ? (
         <LoadingSkeleton />
+      ) : error && !data ? (
+        <SectionError
+          title="Audit events could not load"
+          retrying={isValidating}
+          onRetry={() => void mutate()}
+        />
       ) : isEmpty ? (
         <EmptyState />
       ) : (
