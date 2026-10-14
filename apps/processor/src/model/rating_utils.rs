@@ -9,6 +9,7 @@ use crate::{
 };
 use chrono::{DateTime, Duration, FixedOffset};
 use std::{collections::HashMap, ops::Sub};
+use strum::IntoEnumIterator;
 use tracing::debug;
 use tracing_indicatif::span_ext::IndicatifSpanExt;
 
@@ -43,46 +44,47 @@ pub fn create_initial_ratings(players: &[Player], matches: &[Match]) -> Vec<Play
 
     let mut ratings = Vec::new();
     for player in players {
-        for ruleset in ruleset_activity.keys() {
-            if let Some(ruleset_entry) = ruleset_activity.get(ruleset) {
-                if ruleset_entry.get(&player.id).is_none() {
-                    // Player has not played in this ruleset
-                    continue;
-                }
+        // Visit rulesets in a fixed order, not the map's per-process hash
+        // order, so every run returns the ratings in the same order.
+        for ruleset in Ruleset::iter() {
+            let Some(timestamp) = ruleset_activity
+                .get(&ruleset)
+                .and_then(|activity| activity.get(&player.id))
+            else {
+                // Player has not played in this ruleset
+                continue;
+            };
+
+            let rating = initial_rating(player, &ruleset);
+            let adjustment = RatingAdjustment {
+                player_id: player.id,
+                ruleset,
+                match_id: None,
+                rating_before: 0.0,
+                rating_after: rating,
+                volatility_before: 0.0,
+                volatility_after: DEFAULT_VOLATILITY,
+                timestamp: timestamp.sub(Duration::seconds(1)),
+                adjustment_type: RatingAdjustmentType::Initial
+            };
+
+            if rating.is_nan() || rating <= 0.0 {
+                panic!("Initial rating is NaN or <= 0.0 for: {player:?}");
             }
 
-            let rating = initial_rating(player, ruleset);
-            if let Some(timestamp) = ruleset_activity.get(ruleset).unwrap().get(&player.id) {
-                let adjustment = RatingAdjustment {
-                    player_id: player.id,
-                    ruleset: *ruleset,
-                    match_id: None,
-                    rating_before: 0.0,
-                    rating_after: rating,
-                    volatility_before: 0.0,
-                    volatility_after: DEFAULT_VOLATILITY,
-                    timestamp: timestamp.sub(Duration::seconds(1)),
-                    adjustment_type: RatingAdjustmentType::Initial
-                };
-
-                if rating.is_nan() || rating <= 0.0 {
-                    panic!("Initial rating is NaN or <= 0.0 for: {player:?}");
-                }
-
-                ratings.push(PlayerRating {
-                    id: 0, // database id, leave default
-                    player_id: player.id,
-                    ruleset: *ruleset,
-                    rating,
-                    volatility: DEFAULT_VOLATILITY,
-                    // percentile, global_rank, and country_rank
-                    // are managed by the rating_tracker
-                    percentile: 0.0,
-                    global_rank: 0,
-                    country_rank: 0,
-                    adjustments: vec![adjustment]
-                });
-            }
+            ratings.push(PlayerRating {
+                id: 0, // database id, leave default
+                player_id: player.id,
+                ruleset,
+                rating,
+                volatility: DEFAULT_VOLATILITY,
+                // percentile, global_rank, and country_rank
+                // are managed by the rating_tracker
+                percentile: 0.0,
+                global_rank: 0,
+                country_rank: 0,
+                adjustments: vec![adjustment]
+            });
         }
     }
 
@@ -327,6 +329,47 @@ mod tests {
         assert_eq!(
             ratings[0].adjustments[0].timestamp,
             early_start + Duration::hours(1) - Duration::seconds(1)
+        );
+    }
+
+    #[test]
+    fn test_initial_ratings_are_ordered_by_player_then_ruleset() {
+        let players: Vec<Player> = [1, 2]
+            .into_iter()
+            .map(|id| Player {
+                id,
+                username: None,
+                country: None,
+                ruleset_data: None
+            })
+            .collect();
+        let placements = vec![generate_placement(1, 1), generate_placement(2, 2)];
+        let games = vec![generate_game(1, &placements)];
+        let start = Utc.with_ymd_and_hms(2024, 1, 1, 10, 0, 0).unwrap().fixed_offset();
+        let matches: Vec<_> = [Mania7k, Osu, Catch, Taiko]
+            .into_iter()
+            .enumerate()
+            .map(|(i, ruleset)| generate_match(i as i32 + 1, ruleset, &games, start))
+            .collect();
+
+        let ratings = super::create_initial_ratings(&players, &matches);
+        let keys: Vec<_> = ratings
+            .iter()
+            .map(|rating| (rating.player_id, rating.ruleset))
+            .collect();
+
+        assert_eq!(
+            keys,
+            vec![
+                (1, Osu),
+                (1, Taiko),
+                (1, Catch),
+                (1, Mania7k),
+                (2, Osu),
+                (2, Taiko),
+                (2, Catch),
+                (2, Mania7k),
+            ]
         );
     }
 

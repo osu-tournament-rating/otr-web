@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cmp::Ordering, collections::HashMap};
 
 use indexmap::IndexMap;
 use itertools::Itertools;
@@ -56,12 +56,18 @@ impl RatingTracker {
         }
     }
 
-    /// Returns all current player ratings across all rulesets
+    /// Returns all current player ratings across all rulesets, ordered by
+    /// player id and then ruleset
     ///
     /// This is typically used when saving the final state of all ratings
-    /// to the database after processing matches
+    /// to the database after processing matches. Ratings are saved in this
+    /// order, so it decides their ids, and it is the same every run.
     pub fn get_all_ratings(&self) -> Vec<PlayerRating> {
-        self.leaderboard.values().cloned().collect()
+        self.leaderboard
+            .values()
+            .sorted_by_key(|rating| (rating.player_id, rating.ruleset as i32))
+            .cloned()
+            .collect()
     }
 
     /// Returns the current leaderboard for a specific ruleset
@@ -187,7 +193,7 @@ impl RatingTracker {
                 .leaderboard
                 .iter_mut()
                 .filter(|(_, rating)| rating.ruleset == *ruleset)
-                .sorted_by(|(_, a), (_, b)| b.rating.partial_cmp(&a.rating).unwrap_or(std::cmp::Ordering::Equal))
+                .sorted_by(|(_, a), (_, b)| Self::rank_order(a, b))
                 .collect();
 
             let total_players = ruleset_leaderboard.len() as i32;
@@ -227,7 +233,7 @@ impl RatingTracker {
                 let country_ruleset_board: Vec<_> = country_leaderboard
                     .iter()
                     .filter(|(_, rating)| rating.ruleset == *ruleset)
-                    .sorted_by(|(_, a), (_, b)| b.rating.partial_cmp(&a.rating).unwrap_or(std::cmp::Ordering::Equal))
+                    .sorted_by(|(_, a), (_, b)| Self::rank_order(a, b))
                     .collect();
 
                 // Update country ranks in main leaderboard
@@ -255,6 +261,18 @@ impl RatingTracker {
         }
     }
 
+    /// Orders ratings from best to worst rank: highest rating first, with
+    /// equal ratings ranked by lowest player id
+    ///
+    /// The tie-break keeps ranks the same from run to run instead of
+    /// depending on the order ratings were stored in.
+    fn rank_order(a: &PlayerRating, b: &PlayerRating) -> Ordering {
+        b.rating
+            .partial_cmp(&a.rating)
+            .unwrap_or(Ordering::Equal)
+            .then_with(|| a.player_id.cmp(&b.player_id))
+    }
+
     /// Calculates percentile for a given rank and total player count
     ///
     /// # Formula
@@ -270,7 +288,7 @@ impl RatingTracker {
     /// - Percentile as a float between 0 and 100
     fn calculate_percentile(rank: i32, total: i32) -> Option<f64> {
         match rank.cmp(&1) {
-            std::cmp::Ordering::Less => None,
+            Ordering::Less => None,
             _ => {
                 let players_below = total - rank;
                 Some(players_below as f64 / total as f64 * 100.0)
@@ -570,6 +588,66 @@ mod tests {
                 assert!(window[0].global_rank < window[1].global_rank);
             }
         }
+    }
+
+    #[test]
+    fn test_tied_ratings_rank_by_player_id() {
+        let mut tracker = RatingTracker::new();
+
+        // Equal ratings, stored in an order unrelated to player id
+        let ratings = vec![
+            generate_player_rating(3, Ruleset::Osu, 1000.0, 100.0, 1, None, None),
+            generate_player_rating(1, Ruleset::Osu, 1000.0, 100.0, 1, None, None),
+            generate_player_rating(4, Ruleset::Osu, 1100.0, 100.0, 1, None, None),
+            generate_player_rating(2, Ruleset::Osu, 1000.0, 100.0, 1, None, None),
+        ];
+
+        let mut country_mapping = HashMap::new();
+        for player_id in [1, 2, 3] {
+            country_mapping.insert(player_id, "US".to_string());
+        }
+        country_mapping.insert(4, "JP".to_string());
+
+        tracker.set_country_mapping(country_mapping);
+        tracker.insert_or_update(&ratings);
+        tracker.sort();
+
+        let ranks = |player_id| {
+            let rating = tracker.get_rating(player_id, Ruleset::Osu).unwrap();
+            (rating.global_rank, rating.country_rank)
+        };
+
+        assert_eq!(ranks(4), (1, 1));
+        assert_eq!(ranks(1), (2, 1));
+        assert_eq!(ranks(2), (3, 2));
+        assert_eq!(ranks(3), (4, 3));
+    }
+
+    #[test]
+    fn test_get_all_ratings_is_ordered_by_player_then_ruleset() {
+        let mut tracker = RatingTracker::new();
+        tracker.insert_or_update(&[
+            generate_player_rating(2, Ruleset::Taiko, 1000.0, 100.0, 1, None, None),
+            generate_player_rating(1, Ruleset::Mania7k, 1000.0, 100.0, 1, None, None),
+            generate_player_rating(2, Ruleset::Osu, 1000.0, 100.0, 1, None, None),
+            generate_player_rating(1, Ruleset::Osu, 1000.0, 100.0, 1, None, None)
+        ]);
+
+        let keys: Vec<_> = tracker
+            .get_all_ratings()
+            .iter()
+            .map(|rating| (rating.player_id, rating.ruleset))
+            .collect();
+
+        assert_eq!(
+            keys,
+            vec![
+                (1, Ruleset::Osu),
+                (1, Ruleset::Mania7k),
+                (2, Ruleset::Osu),
+                (2, Ruleset::Taiko),
+            ]
+        );
     }
 
     #[test]
