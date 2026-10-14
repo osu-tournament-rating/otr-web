@@ -81,7 +81,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-4 border-t border-border pt-4 text-center text-sm text-muted-foreground">
-          <span>&copy; 2025 osu! Tournament Rating</span>
+          <span>&copy; {new Date().getFullYear()} osu! Tournament Rating</span>
         </div>
       </div>
     </footer>
