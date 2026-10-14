@@ -12,6 +12,7 @@ import PlayerRatingChartOptions, {
   PlayerRatingChartFilterValues,
 } from './PlayerRatingChartOptions';
 import SimpleTooltip from '@/components/simple-tooltip';
+import TapTooltip from '@/components/tap-tooltip';
 import {
   Select,
   SelectTrigger,
@@ -222,9 +223,20 @@ export default function PlayerRatingChart({
           <div className="flex items-center gap-2">
             <LineChartIcon className="h-6 w-6 text-primary" />
             <h3 className="font-sans text-lg font-semibold">Rating History</h3>
-            <SimpleTooltip content="Shows your rating changes over time. Each entry represents a rating adjustment from a match or rating decay. The dashed line marks the all-time peak rating.">
-              <Info className="h-4 w-4 text-muted-foreground" />
-            </SimpleTooltip>
+            <TapTooltip
+              side="top"
+              triggerAriaLabel="About rating history"
+              triggerClassName="flex w-auto shrink-0 items-center rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+              content={
+                <span className="block max-w-56">
+                  Shows your rating changes over time. Each entry represents a
+                  rating adjustment from a match or rating decay. The dashed
+                  line marks the all-time peak rating.
+                </span>
+              }
+            >
+              <Info className="h-4 w-4" aria-hidden />
+            </TapTooltip>
 
             {highestRating != null && (
               <>

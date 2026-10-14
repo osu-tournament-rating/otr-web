@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from '../ui/card';
 import { InfoIcon } from 'lucide-react';
-import SimpleTooltip from '../simple-tooltip';
+import TapTooltip from '../tap-tooltip';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import { formatChartNumber } from '@/lib/utils/chart';
 import type { PlayerModStats } from '@/lib/orpc/schema/playerStats';
@@ -132,9 +132,14 @@ export default function PlayerModStatsChart({
         <CardTitle className="flex items-center gap-2">
           <span>Mod Performance</span>
           {hasEasyMod && (
-            <SimpleTooltip content="All EZ scores are multiplied by 1.75x">
-              <InfoIcon className="h-4 w-4 text-muted-foreground" />
-            </SimpleTooltip>
+            <TapTooltip
+              side="top"
+              triggerAriaLabel="About EZ scores"
+              triggerClassName="flex w-auto shrink-0 items-center rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+              content="All EZ scores are multiplied by 1.75x"
+            >
+              <InfoIcon className="h-4 w-4" aria-hidden />
+            </TapTooltip>
           )}
         </CardTitle>
         <CardDescription>
