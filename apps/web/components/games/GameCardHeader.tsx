@@ -29,6 +29,7 @@ export default function GameCardHeader({ game }: { game: Game }) {
   const isDeletedBeatmap =
     !game.beatmap || !game.beatmap.beatmapset || game.beatmap.osuId === 0;
   const headerMods = resolveGameDisplayMods(game, game.scores);
+  const beatmapLabel = `${game.beatmap?.beatmapset?.title ?? 'Deleted beatmap'} [${game.beatmap?.diffName ?? 'Unknown'}]`;
 
   return (
     <div className="relative flex h-32 flex-col overflow-hidden rounded-xl">
@@ -155,10 +156,10 @@ export default function GameCardHeader({ game }: { game: Game }) {
               <Link
                 data-testid="beatmap-link"
                 href={`/beatmaps/${game.beatmap?.osuId}`}
+                title={beatmapLabel}
                 className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl"
               >
-                {game.beatmap?.beatmapset?.title ?? 'Deleted beatmap'} [
-                {game.beatmap?.diffName ?? 'Unknown'}]
+                {beatmapLabel}
               </Link>
             )}
           </div>

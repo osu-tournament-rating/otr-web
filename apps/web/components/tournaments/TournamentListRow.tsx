@@ -141,7 +141,10 @@ export default function TournamentListRow({
             entityType="tournament"
             verifierUsername={tournament.verifiedByUsername ?? undefined}
           />
-          <h2 className="min-w-0 truncate text-base leading-snug font-semibold text-foreground transition-colors group-hover:text-primary sm:text-lg">
+          <h2
+            title={tournament.name}
+            className="min-w-0 truncate text-base leading-snug font-semibold text-foreground transition-colors group-hover:text-primary sm:text-lg"
+          >
             {tournament.name}
           </h2>
           <span
