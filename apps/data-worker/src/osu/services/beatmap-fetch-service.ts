@@ -12,9 +12,11 @@ import {
   updateBeatmapStatus,
 } from '../beatmap-store';
 import {
+  claimPlayerFetchLease,
   getOrCreatePlayerId,
-  getPlayerFetchStatus,
-  setPlayerFetchStatusByOsuId,
+  getPlayerOsuFetchState,
+  releasePlayerFetchLease,
+  type PlayerFetchState,
 } from '../player-store';
 import { TournamentDataCompletionService } from './tournament-data-completion-service';
 import type { DatabaseClient } from '../../db';
@@ -187,26 +189,34 @@ export class BeatmapFetchService {
       }
 
       for (const userId of userIds) {
+        let previous: PlayerFetchState | null = null;
+        let claimed = false;
         try {
-          const status = await getPlayerFetchStatus(tx, userId);
-          if (status === DataFetchStatus.Fetching) {
+          previous = await getPlayerOsuFetchState(tx, userId);
+          if (previous?.status === DataFetchStatus.Fetching) {
             this.logger.debug('Skipping player enqueue - already fetching', {
               userId,
             });
             continue;
           }
-          await setPlayerFetchStatusByOsuId(
-            tx,
-            userId,
-            DataFetchStatus.Fetching,
-            nowIso
-          );
+          if (previous) {
+            claimed = await claimPlayerFetchLease(
+              tx,
+              'osu',
+              userId,
+              previous,
+              nowIso
+            );
+          }
           await this.publishPlayerFetch(userId);
         } catch (error) {
           this.logger.error('Failed to enqueue player fetch', {
             userId,
             error,
           });
+          if (claimed && previous) {
+            await releasePlayerFetchLease(tx, 'osu', userId, previous, nowIso);
+          }
         }
       }
 
