@@ -5,6 +5,7 @@ import SimpleTooltip from '@/components/simple-tooltip';
 import { useMemo } from 'react';
 import { VariantProps } from 'class-variance-authority';
 import { Roles } from '@otr/core/osu';
+import { cn } from '@/lib/utils';
 
 interface ProfileRoleBadgeProps {
   scopes: string[];
@@ -50,7 +51,7 @@ export default function ProfileRoleBadge({
         <SimpleTooltip key={label} content={tooltip}>
           <Badge
             variant={variant}
-            className={`h-5 px-1.5 py-0 text-xs ${className}`}
+            className={cn('h-5 px-1.5 py-0 text-xs', className)}
           >
             {label}
           </Badge>
