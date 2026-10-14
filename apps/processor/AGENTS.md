@@ -18,10 +18,10 @@ from `apps/processor` therefore reads otr's root `.env`, whose
 would shadow the root one.
 
 Running the binary changes its target database. Never use production or a
-shared database for verification. `--ignore-constraints` is not a dry run. Use
-the assigned disposable database on port `5434` for manual runs, and set
-`DATABASE_URL` for the run so the root `.env` cannot pick the target. Existing
-isolated Testcontainers tests can use their assigned dynamic ports.
+shared database for verification. Use the assigned disposable database on port
+`5434` for manual runs, and set `DATABASE_URL` for the run so the root `.env`
+cannot pick the target. Existing isolated Testcontainers tests can use their
+assigned dynamic ports.
 
 ## Commands
 
