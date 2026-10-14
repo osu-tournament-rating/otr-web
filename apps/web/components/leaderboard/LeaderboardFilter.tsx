@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { leaderboardFilterSchema } from '@/lib/validation-schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Resolver } from 'react-hook-form';
@@ -54,6 +54,11 @@ const scaleInverseExponentially = (value: number, min: number, max: number) => {
   return (Math.log(value / min) / Math.log(max / min)) * 100;
 };
 
+/** Names a range slider's thumbs, e.g. "Minimum rating" and "Maximum rating". */
+const rangeThumbProps = (noun: string) => (index: number) => ({
+  'aria-label': `${index === 0 ? 'Minimum' : 'Maximum'} ${noun}`,
+});
+
 export default function LeaderboardFilter({
   filter,
 }: {
@@ -76,6 +81,7 @@ export default function LeaderboardFilter({
   });
 
   const [isOpen, setIsOpen] = useState(false);
+  const id = useId();
 
   useEffect(() => {
     form.reset(normalizedFilter);
@@ -193,9 +199,12 @@ export default function LeaderboardFilter({
                   control={form.control}
                   name="maxOsuRank"
                   render={({ field: maxRankField }) => (
-                    <FormItem>
-                      <FormLabel>osu! Global Rank</FormLabel>
+                    <FormItem role="group" aria-labelledby={`${id}-rank-label`}>
+                      <FormLabel id={`${id}-rank-label`}>
+                        osu! Global Rank
+                      </FormLabel>
                       <Slider
+                        getThumbProps={rangeThumbProps('osu! global rank')}
                         min={0}
                         max={100}
                         step={1}
@@ -232,22 +241,26 @@ export default function LeaderboardFilter({
                         minStepsBetweenThumbs={1}
                       />
                       <div className="flex justify-between text-sm text-muted-foreground">
+                        <FormControl>
+                          <Input
+                            type="number"
+                            aria-label="Minimum osu! global rank"
+                            value={
+                              minRankField.value ??
+                              defaultLeaderboardFilterValues.minOsuRank
+                            }
+                            min={defaultLeaderboardFilterValues.minOsuRank!}
+                            max={maxRankField.value}
+                            className="w-20 p-1 text-center"
+                            onChange={(e) =>
+                              minRankField.onChange(Number(e.target.value))
+                            }
+                            onBlur={form.handleSubmit(onSubmit)}
+                          />
+                        </FormControl>
                         <Input
                           type="number"
-                          value={
-                            minRankField.value ??
-                            defaultLeaderboardFilterValues.minOsuRank
-                          }
-                          min={defaultLeaderboardFilterValues.minOsuRank!}
-                          max={maxRankField.value}
-                          className="w-20 p-1 text-center"
-                          onChange={(e) =>
-                            minRankField.onChange(Number(e.target.value))
-                          }
-                          onBlur={form.handleSubmit(onSubmit)}
-                        />
-                        <Input
-                          type="number"
+                          aria-label="Maximum osu! global rank"
                           value={
                             maxRankField.value ??
                             defaultLeaderboardFilterValues.maxOsuRank
@@ -275,9 +288,13 @@ export default function LeaderboardFilter({
                   control={form.control}
                   name="maxRating"
                   render={({ field: maxRatingField }) => (
-                    <FormItem>
-                      <FormLabel>Rating</FormLabel>
+                    <FormItem
+                      role="group"
+                      aria-labelledby={`${id}-rating-label`}
+                    >
+                      <FormLabel id={`${id}-rating-label`}>Rating</FormLabel>
                       <Slider
+                        getThumbProps={rangeThumbProps('rating')}
                         min={defaultLeaderboardFilterValues.minRating!}
                         max={defaultLeaderboardFilterValues.maxRating!}
                         step={20}
@@ -294,22 +311,26 @@ export default function LeaderboardFilter({
                         minStepsBetweenThumbs={1}
                       />
                       <div className="flex justify-between text-sm text-muted-foreground">
+                        <FormControl>
+                          <Input
+                            type="number"
+                            aria-label="Minimum rating"
+                            value={
+                              minRatingField.value ??
+                              defaultLeaderboardFilterValues.minRating
+                            }
+                            min={defaultLeaderboardFilterValues.minRating!}
+                            max={maxRatingField.value}
+                            className="w-20 p-1 text-center"
+                            onChange={(e) =>
+                              minRatingField.onChange(Number(e.target.value))
+                            }
+                            onBlur={form.handleSubmit(onSubmit)}
+                          />
+                        </FormControl>
                         <Input
                           type="number"
-                          value={
-                            minRatingField.value ??
-                            defaultLeaderboardFilterValues.minRating
-                          }
-                          min={defaultLeaderboardFilterValues.minRating!}
-                          max={maxRatingField.value}
-                          className="w-20 p-1 text-center"
-                          onChange={(e) =>
-                            minRatingField.onChange(Number(e.target.value))
-                          }
-                          onBlur={form.handleSubmit(onSubmit)}
-                        />
-                        <Input
-                          type="number"
+                          aria-label="Maximum rating"
                           value={
                             maxRatingField.value ??
                             defaultLeaderboardFilterValues.maxRating
@@ -337,9 +358,13 @@ export default function LeaderboardFilter({
                   control={form.control}
                   name="maxMatches"
                   render={({ field: maxMatchesField }) => (
-                    <FormItem>
-                      <FormLabel>Matches</FormLabel>
+                    <FormItem
+                      role="group"
+                      aria-labelledby={`${id}-matches-label`}
+                    >
+                      <FormLabel id={`${id}-matches-label`}>Matches</FormLabel>
                       <Slider
+                        getThumbProps={rangeThumbProps('matches')}
                         min={0}
                         max={100}
                         step={1}
@@ -376,22 +401,26 @@ export default function LeaderboardFilter({
                         minStepsBetweenThumbs={1}
                       />
                       <div className="flex justify-between text-sm text-muted-foreground">
+                        <FormControl>
+                          <Input
+                            type="number"
+                            aria-label="Minimum matches"
+                            value={
+                              minMatchesField.value ??
+                              defaultLeaderboardFilterValues.minMatches
+                            }
+                            min={defaultLeaderboardFilterValues.minMatches}
+                            max={maxMatchesField.value}
+                            className="w-20 p-1 text-center"
+                            onChange={(e) =>
+                              minMatchesField.onChange(Number(e.target.value))
+                            }
+                            onBlur={form.handleSubmit(onSubmit)}
+                          />
+                        </FormControl>
                         <Input
                           type="number"
-                          value={
-                            minMatchesField.value ??
-                            defaultLeaderboardFilterValues.minMatches
-                          }
-                          min={defaultLeaderboardFilterValues.minMatches}
-                          max={maxMatchesField.value}
-                          className="w-20 p-1 text-center"
-                          onChange={(e) =>
-                            minMatchesField.onChange(Number(e.target.value))
-                          }
-                          onBlur={form.handleSubmit(onSubmit)}
-                        />
-                        <Input
-                          type="number"
+                          aria-label="Maximum matches"
                           value={
                             maxMatchesField.value ??
                             defaultLeaderboardFilterValues.maxMatches
@@ -419,9 +448,15 @@ export default function LeaderboardFilter({
                   control={form.control}
                   name="maxWinRate"
                   render={({ field: maxWinRateField }) => (
-                    <FormItem>
-                      <FormLabel>Win rate %</FormLabel>
+                    <FormItem
+                      role="group"
+                      aria-labelledby={`${id}-win-rate-label`}
+                    >
+                      <FormLabel id={`${id}-win-rate-label`}>
+                        Win rate %
+                      </FormLabel>
                       <Slider
+                        getThumbProps={rangeThumbProps('win rate')}
                         min={defaultLeaderboardFilterValues.minWinRate}
                         max={defaultLeaderboardFilterValues.maxWinRate}
                         step={0.1}
@@ -438,22 +473,28 @@ export default function LeaderboardFilter({
                         minStepsBetweenThumbs={1}
                       />
                       <div className="flex justify-between text-sm text-muted-foreground">
+                        <FormControl>
+                          <Input
+                            type="number"
+                            aria-label="Minimum win rate"
+                            value={
+                              minWinRateField.value ??
+                              defaultLeaderboardFilterValues.minWinRate
+                            }
+                            min={defaultLeaderboardFilterValues.minWinRate}
+                            max={maxWinRateField.value}
+                            className="w-20 p-1 text-center"
+                            onChange={(e) =>
+                              minWinRateField.onChange(
+                                parseFloat(e.target.value)
+                              )
+                            }
+                            onBlur={form.handleSubmit(onSubmit)}
+                          />
+                        </FormControl>
                         <Input
                           type="number"
-                          value={
-                            minWinRateField.value ??
-                            defaultLeaderboardFilterValues.minWinRate
-                          }
-                          min={defaultLeaderboardFilterValues.minWinRate}
-                          max={maxWinRateField.value}
-                          className="w-20 p-1 text-center"
-                          onChange={(e) =>
-                            minWinRateField.onChange(parseFloat(e.target.value))
-                          }
-                          onBlur={form.handleSubmit(onSubmit)}
-                        />
-                        <Input
-                          type="number"
+                          aria-label="Maximum win rate"
                           value={
                             maxWinRateField.value ??
                             defaultLeaderboardFilterValues.maxWinRate
@@ -499,14 +540,16 @@ export default function LeaderboardFilter({
               render={({ field }) => (
                 <FormItem data-testid="leaderboard-filter-tiers">
                   <FormLabel>Tiers</FormLabel>
-                  <MultipleSelect
-                    selected={field.value ?? []}
-                    options={tierItems}
-                    onChange={(value: string[]) => {
-                      field.onChange(value);
-                      form.handleSubmit(onSubmit)();
-                    }}
-                  />
+                  <FormControl>
+                    <MultipleSelect
+                      selected={field.value ?? []}
+                      options={tierItems}
+                      onChange={(value: string[]) => {
+                        field.onChange(value);
+                        form.handleSubmit(onSubmit)();
+                      }}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />
