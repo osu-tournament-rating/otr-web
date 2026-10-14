@@ -55,7 +55,8 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const [isOpen, toggleIsOpen] = useToggle();
   const router = useRouter();
   const path = useAuthRedirectPath();
-  const isMobile = useMediaQuery('only screen and (max-width : 768px)');
+  // Below Tailwind's `md`, where the header swaps in the mobile nav
+  const isMobile = useMediaQuery('(width < 48rem)');
   const sessionResult = useAuthSession();
   const { data: session, isPending: isSessionPending } = sessionResult;
   const error = (sessionResult as { error?: unknown }).error ?? null;
