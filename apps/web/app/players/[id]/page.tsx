@@ -182,9 +182,8 @@ export default async function PlayerPage(props: PageProps) {
 
   const canonicalPlayerId = playerData.playerInfo.id;
 
-  const currentRuleset = searchParams.ruleset
-    ? (Number(searchParams.ruleset) as Ruleset)
-    : Ruleset.Osu;
+  // The stats resolve a missing or invalid ruleset to the player's default
+  const currentRuleset = playerData.ruleset;
 
   const playerTournaments = await getTournaments(canonicalPlayerId, {
     ...searchParams,
