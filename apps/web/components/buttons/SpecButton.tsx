@@ -6,17 +6,18 @@ import { FileCode } from 'lucide-react';
 
 export default function SpecButton() {
   return (
-    <Link href="/spec" prefetch={false}>
-      <SimpleTooltip content="OpenAPI specification">
-        <Button
-          aria-label="API spec"
-          className="cursor-pointer hover:text-primary"
-          variant="ghost"
-          size="icon"
-        >
+    <SimpleTooltip content="OpenAPI specification">
+      <Button
+        asChild
+        aria-label="API spec"
+        className="cursor-pointer hover:text-primary"
+        variant="ghost"
+        size="icon"
+      >
+        <Link href="/spec" prefetch={false}>
           <FileCode className={iconButtonStyle()} />
-        </Button>
-      </SimpleTooltip>
-    </Link>
+        </Link>
+      </Button>
+    </SimpleTooltip>
   );
 }

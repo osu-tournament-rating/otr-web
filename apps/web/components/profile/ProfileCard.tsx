@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import {
   AlertTriangle,
   ChevronDown,
@@ -56,7 +55,8 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   const [isOpen, toggleIsOpen] = useToggle();
   const router = useRouter();
   const path = useAuthRedirectPath();
-  const isMobile = useMediaQuery('only screen and (max-width : 768px)');
+  // Below Tailwind's `md`, where the header swaps in the mobile nav
+  const isMobile = useMediaQuery('(width < 48rem)');
   const sessionResult = useAuthSession();
   const { data: session, isPending: isSessionPending } = sessionResult;
   const error = (sessionResult as { error?: unknown }).error ?? null;
@@ -106,6 +106,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
       </span>
     ) : (
       <span
+        role="img"
         className="size-2 rounded-full bg-blue-500"
         aria-label="Unread report updates"
       />
@@ -115,12 +116,15 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
     return (
       <Collapsible open={isOpen} onOpenChange={toggleIsOpen}>
         <CollapsibleTrigger asChild>
-          <div className="relative mb-2 w-full cursor-pointer overflow-hidden rounded-md md:hidden">
+          <button
+            type="button"
+            className="relative mb-2 block w-full cursor-pointer overflow-hidden rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 md:hidden"
+          >
             <div className="absolute inset-0 z-0 opacity-20">
               <div className="absolute inset-0 backdrop-blur-md" />
               <Image
                 src="/decorations/decoration-2.svg"
-                alt="background image"
+                alt=""
                 width={300}
                 height={200}
                 className="size-full object-cover"
@@ -152,7 +156,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
                 )}
               />
             </div>
-          </div>
+          </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
           {isMobileNav ? (
@@ -262,16 +266,16 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   return (
     <DropdownMenu open={isOpen} onOpenChange={toggleIsOpen}>
       <DropdownMenuTrigger asChild>
-        <motion.div
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          className="cursor-pointer focus:outline-none"
+        <button
+          type="button"
+          aria-label="Account menu"
+          className="block cursor-pointer rounded-full transition-transform outline-none hover:scale-103 focus-visible:ring-[3px] focus-visible:ring-ring/50 active:scale-97"
         >
           <UserAvatar
             player={player}
             showNotificationDot={hasReportNotification}
           />
-        </motion.div>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="mt-1 w-56 rounded-xl bg-card">
         <DropdownMenuLabel className="relative overflow-hidden">
@@ -279,7 +283,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
             <div className="absolute inset-0 backdrop-blur-md" />
             <Image
               src="/decorations/decoration-2.svg"
-              alt="background image"
+              alt=""
               width={300}
               height={200}
               className="size-full object-cover"
