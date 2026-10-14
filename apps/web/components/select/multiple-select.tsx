@@ -35,6 +35,10 @@ interface MultiSelectProps {
   placeholder?: string;
   disabled?: boolean;
   invalid?: boolean;
+  // Set by FormControl, so a FormLabel names the trigger.
+  id?: string;
+  'aria-describedby'?: string;
+  'aria-invalid'?: boolean;
 }
 
 function MultiSelect({
@@ -45,6 +49,9 @@ function MultiSelect({
   placeholder = 'Select options...',
   disabled = false,
   invalid,
+  id,
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
   ...props
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
@@ -160,15 +167,20 @@ function MultiSelect({
       <PopoverTrigger asChild>
         <Button
           ref={triggerRef}
+          id={id}
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          aria-invalid={invalid}
+          aria-invalid={invalid ?? ariaInvalid}
+          aria-describedby={ariaDescribedBy}
           aria-haspopup="listbox"
+          // A linked label names the trigger; the selection is its value.
           aria-label={
-            selected.length > 0
-              ? `${selected.length} items selected`
-              : placeholder
+            id
+              ? undefined
+              : selected.length > 0
+                ? `${selected.length} items selected`
+                : placeholder
           }
           className={cn(
             'w-full justify-between',
