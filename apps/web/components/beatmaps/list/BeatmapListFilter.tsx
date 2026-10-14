@@ -534,6 +534,7 @@ export default function BeatmapListFilter({
       <div className="flex items-center justify-end gap-3 md:justify-between">
         <div
           data-testid="beatmap-ruleset-filters-desktop"
+          role="group"
           aria-label="Filter by ruleset"
           className="hidden flex-wrap gap-1.5 md:flex"
         >

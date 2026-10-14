@@ -302,7 +302,7 @@ function RulesetFilter({
   ];
 
   return (
-    <div aria-label="Filter by ruleset" className="min-w-0">
+    <div role="group" aria-label="Filter by ruleset" className="min-w-0">
       <div className="flex flex-wrap gap-1.5">
         {options.map((option) => (
           <FilterChip
