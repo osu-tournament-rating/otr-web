@@ -605,7 +605,7 @@ export default function BeatmapListFilter({
             className="shrink-0 text-xs text-muted-foreground"
             aria-live="polite"
           >
-            {totalCount.toLocaleString()} maps
+            {totalCount.toLocaleString('en-US')} maps
           </span>
         </div>
       </div>
