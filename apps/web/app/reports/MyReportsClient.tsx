@@ -268,7 +268,7 @@ export default function MyReportsClient() {
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent
-          className="max-h-[85vh] max-w-2xl overflow-y-auto"
+          className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"
           data-testid="my-report-detail"
         >
           <DialogHeader>
