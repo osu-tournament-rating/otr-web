@@ -139,6 +139,16 @@ describe('tournamentListFilterSchema', () => {
     expect(filter.searchQuery).toBe('owc');
   });
 
+  test('includes the whole "through" day', () => {
+    const filter = tournamentListFilterSchema.parse({
+      dateMin: '2025-01-01',
+      dateMax: '2025-01-15',
+    });
+
+    expect(filter.dateMin?.toISOString()).toBe('2025-01-01T00:00:00.000Z');
+    expect(filter.dateMax?.toISOString()).toBe('2025-01-15T23:59:59.999Z');
+  });
+
   test('parses repeated team sizes', () => {
     expect(
       tournamentListFilterSchema.parse({ lobbySize: ['1', '2'] }).lobbySize

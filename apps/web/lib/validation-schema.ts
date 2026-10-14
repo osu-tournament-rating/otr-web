@@ -46,6 +46,13 @@ const booleanStringSchema = z
   .refine((val) => val === 'true' || val === 'false')
   .transform((val) => val === 'true');
 
+/** The last millisecond of `date`'s UTC day. */
+const endOfUTCDay = (date: Date) => {
+  const end = new Date(date);
+  end.setUTCHours(23, 59, 59, 999);
+  return end;
+};
+
 export const tournamentEditFormSchema = z.object({
   name: z.string().min(1),
   abbreviation: z.string().min(1),
@@ -86,7 +93,9 @@ export const tournamentListFilterSchema = z
     ruleset: numericEnumValueSchema(Ruleset).optional().catch(undefined),
     searchQuery: z.string().catch(''),
     dateMin: z.coerce.date().optional().catch(undefined),
-    dateMax: z.coerce.date().optional().catch(undefined),
+    // The public list API compares end times with <=, so a "through" date
+    // has to cover its whole UTC day.
+    dateMax: z.coerce.date().transform(endOfUTCDay).optional().catch(undefined),
     verificationStatus: z
       .preprocess(
         (val) => {
