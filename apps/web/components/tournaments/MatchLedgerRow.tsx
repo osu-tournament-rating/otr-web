@@ -214,6 +214,7 @@ export default function MatchLedgerRow({
         <div className="flex min-w-0 items-baseline gap-1.5">
           <Link
             href={`/matches/${match.id}`}
+            title={match.name || `Match ${match.id}`}
             className="flex min-w-0 items-baseline gap-1.5 hover:underline"
           >
             <MatchTitle match={match} />

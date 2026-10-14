@@ -276,11 +276,11 @@ export default function BeatmapListTable({
                   {beatmap.ar.toFixed(1)}
                 </TableCell>
                 <TableCell className={COLUMN.games}>
-                  {beatmap.gameCount.toLocaleString()}
+                  {beatmap.gameCount.toLocaleString('en-US')}
                 </TableCell>
                 {showTournamentCount ? (
                   <TableCell className={COLUMN.tournaments}>
-                    {beatmap.tournamentCount.toLocaleString()}
+                    {beatmap.tournamentCount.toLocaleString('en-US')}
                   </TableCell>
                 ) : null}
                 <TableCell className={COLUMN.mods}>

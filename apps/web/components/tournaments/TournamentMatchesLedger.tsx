@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatUTCDateRange, playWeekKey } from '@/lib/utils/date';
+import { formatUTCDayRange, playWeekKey } from '@/lib/utils/date';
 import { cn } from '@/lib/utils';
 import MatchLedgerRow from './MatchLedgerRow';
 
@@ -72,6 +72,61 @@ export function MatchSortSelect({
   );
 }
 
+export type MatchGroup = {
+  key: string;
+  /** Null for the single ungrouped list of a non-date sort. */
+  label: string | null;
+  matches: MatchRow[];
+};
+
+/** Sorts matches, grouping them by play week only when sorting by date. */
+export function groupMatches(matches: MatchRow[], sort: SortKey): MatchGroup[] {
+  const sorted = [...matches].sort(comparators[sort]);
+
+  if (sort !== 'newest' && sort !== 'oldest') {
+    return sorted.length ? [{ key: 'all', label: null, matches: sorted }] : [];
+  }
+
+  const byWeek = new Map<number, MatchRow[]>();
+  const undated: MatchRow[] = [];
+
+  for (const match of sorted) {
+    if (!match.startDate) {
+      undated.push(match);
+      continue;
+    }
+
+    const week = playWeekKey(new Date(match.startDate));
+    const weekMatches = byWeek.get(week);
+    if (weekMatches) {
+      weekMatches.push(match);
+    } else {
+      byWeek.set(week, [match]);
+    }
+  }
+
+  const weeks: MatchGroup[] = [...byWeek]
+    .sort(([a], [b]) => (sort === 'oldest' ? a - b : b - a))
+    .map(([week, weekMatches]) => {
+      const times = weekMatches.map(startedAt);
+
+      return {
+        key: String(week),
+        label: formatUTCDayRange(
+          new Date(Math.min(...times)),
+          new Date(Math.max(...times))
+        ),
+        matches: weekMatches,
+      };
+    });
+
+  if (undated.length) {
+    weeks.push({ key: 'undated', label: 'No start time', matches: undated });
+  }
+
+  return weeks;
+}
+
 interface TournamentMatchesLedgerProps {
   matches: MatchRow[];
   sort: SortKey;
@@ -87,47 +142,7 @@ export default function TournamentMatchesLedger({
   onSelectMatch,
   onSelectMatches,
 }: TournamentMatchesLedgerProps) {
-  const groups = useMemo(() => {
-    const sorted = [...matches].sort(comparators[sort]);
-    const byWeek = new Map<number, MatchRow[]>();
-    const undated: MatchRow[] = [];
-
-    for (const match of sorted) {
-      if (!match.startDate) {
-        undated.push(match);
-        continue;
-      }
-
-      const week = playWeekKey(new Date(match.startDate));
-      const weekMatches = byWeek.get(week);
-      if (weekMatches) {
-        weekMatches.push(match);
-      } else {
-        byWeek.set(week, [match]);
-      }
-    }
-
-    const weeks = [...byWeek]
-      .sort(([a], [b]) => (sort === 'oldest' ? a - b : b - a))
-      .map(([week, weekMatches]) => {
-        const times = weekMatches.map(startedAt);
-
-        return {
-          key: String(week),
-          label: formatUTCDateRange(
-            new Date(Math.min(...times)),
-            new Date(Math.max(...times))
-          ),
-          matches: weekMatches,
-        };
-      });
-
-    if (undated.length) {
-      weeks.push({ key: 'undated', label: 'No start time', matches: undated });
-    }
-
-    return weeks;
-  }, [matches, sort]);
+  const groups = useMemo(() => groupMatches(matches, sort), [matches, sort]);
 
   return (
     <div className="rounded-lg border bg-card">
@@ -144,33 +159,35 @@ export default function TournamentMatchesLedger({
 
         return (
           <section key={group.key}>
-            <header
-              className={cn(
-                'z-10 flex items-center gap-2 border-b bg-muted px-3 py-1.5 md:sticky md:top-(--header-height-px)',
-                index === 0 && 'rounded-t-lg'
-              )}
-            >
-              {onSelectMatches && (
-                <Checkbox
-                  checked={
-                    selectedCount === 0
-                      ? false
-                      : selectedCount === ids.length
-                        ? true
-                        : 'indeterminate'
-                  }
-                  onCheckedChange={(checked) =>
-                    onSelectMatches(ids, checked === true)
-                  }
-                  aria-label={`Select matches from ${group.label}`}
-                />
-              )}
-              <span className="text-sm font-semibold">{group.label}</span>
-              <span className="text-xs text-muted-foreground">
-                · {group.matches.length}{' '}
-                {group.matches.length === 1 ? 'match' : 'matches'}
-              </span>
-            </header>
+            {group.label !== null && (
+              <header
+                className={cn(
+                  'z-10 flex items-center gap-2 border-b bg-muted px-3 py-1.5 md:sticky md:top-(--header-height-px)',
+                  index === 0 && 'rounded-t-lg'
+                )}
+              >
+                {onSelectMatches && (
+                  <Checkbox
+                    checked={
+                      selectedCount === 0
+                        ? false
+                        : selectedCount === ids.length
+                          ? true
+                          : 'indeterminate'
+                    }
+                    onCheckedChange={(checked) =>
+                      onSelectMatches(ids, checked === true)
+                    }
+                    aria-label={`Select matches from ${group.label}`}
+                  />
+                )}
+                <span className="text-sm font-semibold">{group.label}</span>
+                <span className="text-xs text-muted-foreground">
+                  · {group.matches.length}{' '}
+                  {group.matches.length === 1 ? 'match' : 'matches'}
+                </span>
+              </header>
+            )}
             {group.matches.map((match) => (
               <MatchLedgerRow
                 key={match.id}

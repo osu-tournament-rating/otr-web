@@ -137,7 +137,8 @@ export default function ScoreCard({
       data-team={Team[score.team]}
       className={cn(
         'team-flex-row group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white transition-all duration-300 **:z-10 dark:border-neutral-700 dark:bg-neutral-800',
-        highlighted && 'ring-2 ring-yellow-400 ring-offset-2'
+        highlighted &&
+          'ring-2 ring-yellow-400 ring-offset-2 ring-offset-secondary'
       )}
     >
       <div className="absolute z-2 size-full bg-[var(--team-color)]/10" />
@@ -186,7 +187,7 @@ export default function ScoreCard({
               className="h-5 w-5"
             />
             <span className="text-(--score-text-color)">
-              {score.score.toLocaleString()}
+              {score.score.toLocaleString('en-US')}
             </span>
           </div>
         </div>
@@ -247,7 +248,7 @@ export default function ScoreCard({
               className="h-8 w-8"
             />
             <span className="text-(--score-text-color)">
-              {score.score.toLocaleString()}
+              {score.score.toLocaleString('en-US')}
             </span>
           </div>
         </div>

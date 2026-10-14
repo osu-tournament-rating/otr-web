@@ -98,9 +98,9 @@ export default function GameCard({
     const pointDifference = Math.abs(score1 - score2);
 
     if (score1 > score2) {
-      outcomeText = `Team ${TeamEnumHelper.getMetadata(team1).text} wins by ${pointDifference.toLocaleString()}`;
+      outcomeText = `Team ${TeamEnumHelper.getMetadata(team1).text} wins by ${pointDifference.toLocaleString('en-US')}`;
     } else if (score2 > score1) {
-      outcomeText = `Team ${TeamEnumHelper.getMetadata(team2).text} wins by ${pointDifference.toLocaleString()}`;
+      outcomeText = `Team ${TeamEnumHelper.getMetadata(team2).text} wins by ${pointDifference.toLocaleString('en-US')}`;
     } else {
       outcomeText = "It's a tie!";
     }
@@ -117,7 +117,8 @@ export default function GameCard({
       id={`game-${game.id}`}
       className={cn(
         'flex flex-col space-y-2 rounded-xl bg-secondary p-3 transition-all duration-300',
-        highlighted && 'ring-2 ring-yellow-400 ring-offset-2'
+        highlighted &&
+          'ring-2 ring-yellow-400 ring-offset-2 ring-offset-background'
       )}
     >
       <GameCardHeader game={game} />

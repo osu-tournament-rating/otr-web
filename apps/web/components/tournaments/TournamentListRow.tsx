@@ -80,9 +80,8 @@ function AdminNotesTooltip({
       <TooltipTrigger asChild>
         <span
           data-testid="tournament-admin-notes-trigger"
-          tabIndex={0}
           aria-label={`${notes.length} admin ${notes.length === 1 ? 'note' : 'notes'} for ${tournamentName}`}
-          className="inline-flex size-5 items-center justify-center rounded-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex size-5 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
         >
           <StickyNote className="size-4" aria-hidden="true" />
         </span>
@@ -143,7 +142,10 @@ export default function TournamentListRow({
             entityType="tournament"
             verifierUsername={tournament.verifiedByUsername ?? undefined}
           />
-          <h2 className="min-w-0 truncate text-base leading-snug font-semibold text-foreground transition-colors group-hover:text-primary sm:text-lg">
+          <h2
+            title={tournament.name}
+            className="min-w-0 truncate text-base leading-snug font-semibold text-foreground transition-colors group-hover:text-primary sm:text-lg"
+          >
             {tournament.name}
           </h2>
           <span

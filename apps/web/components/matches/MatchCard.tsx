@@ -142,6 +142,7 @@ export default function MatchCard({ match }: { match: MatchDetail }) {
               </span>
               <p
                 data-testid="match-name"
+                title={match.name || `Match ${match.id}`}
                 className="truncate text-sm font-bold text-white drop-shadow-sm sm:text-xl"
               >
                 {match.name || `Match ${match.id}`}
