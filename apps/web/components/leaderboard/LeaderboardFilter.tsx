@@ -560,8 +560,17 @@ export default function LeaderboardFilter({
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  form.reset(defaultLeaderboardFilterValues);
-                  router.push('/leaderboard');
+                  // Clearing filters keeps the friends tab
+                  const cleared = {
+                    ...defaultLeaderboardFilterValues,
+                    friend: filter.friend,
+                  };
+                  const searchParams = createSearchParamsFromSchema(cleared);
+
+                  form.reset(cleared);
+                  router.push(
+                    pathName + (searchParams.size > 0 ? `?${searchParams}` : '')
+                  );
                 }}
               >
                 <X className="h-4 w-4" />
