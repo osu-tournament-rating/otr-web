@@ -3,8 +3,8 @@
 otr-replay lives in otr at `apps/replay`. It is Python, not a bun
 workspace: run its commands from this directory through `uv`, unlike the rest
 of otr, and do not call `pip` or `python` directly. Pull requests follow
-the root `AGENTS.md`. Python 3.14 is required. The app and Docker tests need
-Docker.
+the root `pull-request` skill. Python 3.14 is required. The app and Docker
+tests need Docker.
 
 Nothing deploys this directory. People run it from their own clone of otr,
 so a merge to `master` reaches them on their next pull. It reads only public

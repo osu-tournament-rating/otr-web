@@ -1,7 +1,7 @@
 # otr-docs agent guidance
 
 The docs live in `apps/docs` of otr. Run commands from `apps/docs` unless
-noted. Pull requests follow the root `AGENTS.md`.
+noted. Pull requests follow the root `pull-request` skill.
 
 - `docs/` is the authored source of truth. Quartz renders it.
 - The `Dockerfile` fetches Quartz's v5 branch at the commit in `QUARTZ_REF`
