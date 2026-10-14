@@ -48,7 +48,8 @@ export default function ThemeHotkeyClient() {
       data-testid="settings-theme-hotkey-section"
       className={cn(
         'transition-all duration-300',
-        highlighted && 'ring-2 ring-yellow-400 ring-offset-2'
+        highlighted &&
+          'ring-2 ring-yellow-400 ring-offset-2 ring-offset-background'
       )}
     >
       <CardHeader>

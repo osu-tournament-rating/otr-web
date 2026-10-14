@@ -117,7 +117,8 @@ export default function GameCard({
       id={`game-${game.id}`}
       className={cn(
         'flex flex-col space-y-2 rounded-xl bg-secondary p-3 transition-all duration-300',
-        highlighted && 'ring-2 ring-yellow-400 ring-offset-2'
+        highlighted &&
+          'ring-2 ring-yellow-400 ring-offset-2 ring-offset-background'
       )}
     >
       <GameCardHeader game={game} />
