@@ -13,11 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import SimpleTooltip from '@/components/simple-tooltip';
 import { orpc } from '@/lib/orpc/orpc';
 
 interface RefetchMatchDataButtonProps {
@@ -60,67 +56,57 @@ export default function RefetchMatchDataButton({
   };
 
   return (
-    <Tooltip>
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10 hover:text-yellow-600 dark:border-yellow-500/50 dark:text-yellow-500 dark:hover:bg-yellow-500/10"
-            >
-              <Database className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Refetch match data</p>
-        </TooltipContent>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Match Data Refetch</DialogTitle>
-            <DialogDescription asChild>
-              <div>
-                Are you sure you want to refetch match data for{' '}
-                <strong>{tournament.name}</strong>? This action cannot be
-                undone.
-                <br />
-                <br />
-                <ul className="list-disc pl-4">
-                  <li>All match data will be refetched</li>
-                  <li>
-                    If a match has since been deleted from osu!, the data could
-                    be permanently lost.
-                  </li>
-                </ul>
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleReset}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Queueing...
-                </>
-              ) : (
-                'Confirm'
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </Tooltip>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <SimpleTooltip content="Refetch match data">
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10 hover:text-yellow-600 dark:border-yellow-500/50 dark:text-yellow-500 dark:hover:bg-yellow-500/10"
+          >
+            <Database className="h-4 w-4" />
+          </Button>
+        </DialogTrigger>
+      </SimpleTooltip>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Confirm Match Data Refetch</DialogTitle>
+          <DialogDescription asChild>
+            <div>
+              Are you sure you want to refetch match data for{' '}
+              <strong>{tournament.name}</strong>? This action cannot be undone.
+              <br />
+              <br />
+              <ul className="list-disc pl-4">
+                <li>All match data will be refetched</li>
+                <li>
+                  If a match has since been deleted from osu!, the data could be
+                  permanently lost.
+                </li>
+              </ul>
+            </div>
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleReset}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Queueing...
+              </>
+            ) : (
+              'Confirm'
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

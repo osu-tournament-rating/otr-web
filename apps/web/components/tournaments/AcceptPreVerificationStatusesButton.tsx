@@ -13,11 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import SimpleTooltip from '@/components/simple-tooltip';
 import { orpc } from '@/lib/orpc/orpc';
 
 interface AcceptPreVerificationStatusesButtonProps {
@@ -54,65 +50,51 @@ export default function AcceptPreVerificationStatusesButton({
   };
 
   return (
-    <Tooltip>
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button variant="default" size="sm">
-              <CheckCircle2 className="size-4" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Accept pre-verification statuses for tournament and children</p>
-        </TooltipContent>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Accept Pre-Verification Statuses</DialogTitle>
-            <DialogDescription asChild>
-              <div>
-                Are you sure you want to accept pre-verification statuses for{' '}
-                <strong>{tournament.name}</strong>? This action cannot be
-                undone.
-                <br />
-                <br />
-                <ul className="list-disc pl-4">
-                  <li>Pre-rejected items will be marked as rejected.</li>
-                  <li>Pre-verified items will be marked as verified.</li>
-                  <li>Everything under a rejected item will be rejected.</li>
-                  <li>
-                    This action will process the tournament and all its children
-                    (matches, games, scores).
-                  </li>
-                </ul>
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="default"
-              onClick={handleAccept}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                'Confirm'
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </Tooltip>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <SimpleTooltip content="Accept pre-verification statuses for tournament and children">
+        <DialogTrigger asChild>
+          <Button variant="default" size="sm">
+            <CheckCircle2 className="size-4" />
+          </Button>
+        </DialogTrigger>
+      </SimpleTooltip>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Confirm Accept Pre-Verification Statuses</DialogTitle>
+          <DialogDescription asChild>
+            <div>
+              Are you sure you want to accept pre-verification statuses for{' '}
+              <strong>{tournament.name}</strong>? This action cannot be undone.
+              <br />
+              <br />
+              <ul className="list-disc pl-4">
+                <li>Pre-rejected items will be marked as rejected.</li>
+                <li>Pre-verified items will be marked as verified.</li>
+                <li>Everything under a rejected item will be rejected.</li>
+                <li>
+                  This action will process the tournament and all its children
+                  (matches, games, scores).
+                </li>
+              </ul>
+            </div>
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button variant="default" onClick={handleAccept} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              'Confirm'
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -14,11 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import VerificationBadge from '@/components/badges/VerificationBadge';
@@ -284,73 +279,68 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
   }
 
   return (
-    <Tooltip>
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button variant="secondary" size="sm">
-              <Merge className="size-4" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Merge matches</p>
-        </TooltipContent>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Merge Matches</DialogTitle>
-            <DialogDescription>
-              Merge child matches into parent match{' '}
-              <strong>{match.name}</strong>. All games from the child matches
-              will be moved here, and the child matches will be deleted.
-            </DialogDescription>
-          </DialogHeader>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <SimpleTooltip content="Merge matches">
+        <DialogTrigger asChild>
+          <Button variant="secondary" size="sm">
+            <Merge className="size-4" />
+          </Button>
+        </DialogTrigger>
+      </SimpleTooltip>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Merge Matches</DialogTitle>
+          <DialogDescription>
+            Merge child matches into parent match <strong>{match.name}</strong>.
+            All games from the child matches will be moved here, and the child
+            matches will be deleted.
+          </DialogDescription>
+        </DialogHeader>
 
-          <div className="space-y-4">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="matchIds">Child Match IDs</Label>
             <div className="space-y-2">
-              <Label htmlFor="matchIds">Child Match IDs</Label>
-              <div className="space-y-2">
-                <Textarea
-                  id="matchIds"
-                  placeholder={TEXTAREA_PLACEHOLDER}
-                  value={matchIdsInput}
-                  onChange={(e) => setMatchIdsInput(e.target.value)}
-                  rows={3}
-                />
-                <Button
-                  onClick={handleFetchMatches}
-                  disabled={isFetching || !matchIdsInput.trim()}
-                  className="w-full"
-                >
-                  {isFetching ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Fetching...
-                    </>
-                  ) : (
-                    'Fetch Matches'
-                  )}
-                </Button>
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              <Textarea
+                id="matchIds"
+                placeholder={TEXTAREA_PLACEHOLDER}
+                value={matchIdsInput}
+                onChange={(e) => setMatchIdsInput(e.target.value)}
+                rows={3}
+              />
+              <Button
+                onClick={handleFetchMatches}
+                disabled={isFetching || !matchIdsInput.trim()}
+                className="w-full"
+              >
+                {isFetching ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Fetching...
+                  </>
+                ) : (
+                  'Fetch Matches'
+                )}
+              </Button>
             </div>
-
-            {renderChildMatchesList()}
+            {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleProceedToConfirmation}
-              disabled={childMatches.length === 0}
-            >
-              Continue
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </Tooltip>
+          {renderChildMatchesList()}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleProceedToConfirmation}
+            disabled={childMatches.length === 0}
+          >
+            Continue
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -14,11 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import SimpleTooltip from '@/components/simple-tooltip';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { orpc } from '@/lib/orpc/orpc';
@@ -305,85 +301,80 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
   }
 
   return (
-    <Tooltip>
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button variant="secondary" size="sm">
-              <Merge className="size-4" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Merge games</p>
-        </TooltipContent>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Merge Games</DialogTitle>
-            <DialogDescription asChild>
-              <div className="space-y-2">
-                <p>
-                  Merge scores from child games into{' '}
-                  <strong>Game #{game.id}</strong>.
-                </p>
-                <ul className="list-inside list-disc space-y-1 text-xs text-muted-foreground">
-                  <li>All scores will be moved to this game</li>
-                  <li>Child games will be permanently deleted</li>
-                  <li>Games must have the same beatmap</li>
-                  <li>Players cannot have scores in multiple games</li>
-                </ul>
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <SimpleTooltip content="Merge games">
+        <DialogTrigger asChild>
+          <Button variant="secondary" size="sm">
+            <Merge className="size-4" />
+          </Button>
+        </DialogTrigger>
+      </SimpleTooltip>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Merge Games</DialogTitle>
+          <DialogDescription asChild>
             <div className="space-y-2">
-              <Label htmlFor="gameIds">Child Game IDs</Label>
-              <div className="space-y-2">
-                <Textarea
-                  id="gameIds"
-                  placeholder={TEXTAREA_PLACEHOLDER}
-                  value={gameIdsInput}
-                  onChange={(e) => setGameIdsInput(e.target.value)}
-                  rows={3}
-                />
-                <Button
-                  onClick={handleFetchGames}
-                  disabled={isFetching || !gameIdsInput.trim()}
-                  className="w-full"
-                >
-                  {isFetching ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Fetching...
-                    </>
-                  ) : (
-                    'Fetch Games'
-                  )}
-                </Button>
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              {beatmapMismatch && (
-                <p className="text-sm text-destructive">{beatmapMismatch}</p>
-              )}
+              <p>
+                Merge scores from child games into{' '}
+                <strong>Game #{game.id}</strong>.
+              </p>
+              <ul className="list-inside list-disc space-y-1 text-xs text-muted-foreground">
+                <li>All scores will be moved to this game</li>
+                <li>Child games will be permanently deleted</li>
+                <li>Games must have the same beatmap</li>
+                <li>Players cannot have scores in multiple games</li>
+              </ul>
             </div>
+          </DialogDescription>
+        </DialogHeader>
 
-            {renderChildGamesList()}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="gameIds">Child Game IDs</Label>
+            <div className="space-y-2">
+              <Textarea
+                id="gameIds"
+                placeholder={TEXTAREA_PLACEHOLDER}
+                value={gameIdsInput}
+                onChange={(e) => setGameIdsInput(e.target.value)}
+                rows={3}
+              />
+              <Button
+                onClick={handleFetchGames}
+                disabled={isFetching || !gameIdsInput.trim()}
+                className="w-full"
+              >
+                {isFetching ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Fetching...
+                  </>
+                ) : (
+                  'Fetch Games'
+                )}
+              </Button>
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            {beatmapMismatch && (
+              <p className="text-sm text-destructive">{beatmapMismatch}</p>
+            )}
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleProceedToConfirmation}
-              disabled={childGames.length === 0 || Boolean(beatmapMismatch)}
-            >
-              Continue
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </Tooltip>
+          {renderChildGamesList()}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleProceedToConfirmation}
+            disabled={childGames.length === 0 || Boolean(beatmapMismatch)}
+          >
+            Continue
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

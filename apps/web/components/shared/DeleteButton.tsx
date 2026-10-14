@@ -13,11 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import SimpleTooltip from '@/components/simple-tooltip';
 import { orpc } from '@/lib/orpc/orpc';
 
 type EntityType = 'tournament' | 'match' | 'game' | 'score';
@@ -71,59 +67,50 @@ export default function DeleteButton({
   };
 
   return (
-    <Tooltip>
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button variant="destructive" size="sm">
-              <Trash2 className="size-4" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>Delete {entityLabels[entityType]}</p>
-        </TooltipContent>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Delete {entityLabels[entityType]}</DialogTitle>
-            <DialogDescription asChild>
-              <div>
-                Are you sure you want to delete <strong>{entityName}</strong>?
-                This action cannot be undone.
-                <br />
-                <br />
-                <ul className="list-disc pl-4">
-                  <li>This action will cascade to all children.</li>
-                  <li>All associated data will be permanently removed.</li>
-                </ul>
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                'Delete'
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </Tooltip>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <SimpleTooltip content={`Delete ${entityLabels[entityType]}`}>
+        <DialogTrigger asChild>
+          <Button variant="destructive" size="sm">
+            <Trash2 className="size-4" />
+          </Button>
+        </DialogTrigger>
+      </SimpleTooltip>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Confirm Delete {entityLabels[entityType]}</DialogTitle>
+          <DialogDescription asChild>
+            <div>
+              Are you sure you want to delete <strong>{entityName}</strong>?
+              This action cannot be undone.
+              <br />
+              <br />
+              <ul className="list-disc pl-4">
+                <li>This action will cascade to all children.</li>
+                <li>All associated data will be permanently removed.</li>
+              </ul>
+            </div>
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              'Delete'
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
