@@ -17,7 +17,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import React from 'react';
-import SimpleTooltip from '../simple-tooltip';
+import TapTooltip from '../tap-tooltip';
 import { cn } from '@/lib/utils';
 import {
   GameRejectionReasonEnumHelper,
@@ -292,16 +292,17 @@ export default function VerificationBadge({
     minimal
   );
 
+  // A span, not a div: the tooltip trigger is a button
   const badge = (
-    <div
+    <span
       className={cn(
         ...badgeStyles,
         sizeConfig.container,
         displayText ? sizeConfig.padding : sizeConfig.iconPadding
       )}
     >
-      <Icon className={cn(sizeConfig.icon, iconColor)} />
-      {displayText && (
+      <Icon className={cn(sizeConfig.icon, iconColor)} aria-hidden />
+      {displayText ? (
         <span
           className={cn(
             'ml-1.5 font-medium',
@@ -311,8 +312,14 @@ export default function VerificationBadge({
         >
           {statusText}
         </span>
+      ) : (
+        <span className="sr-only">
+          {gameIndex !== undefined
+            ? `Game ${gameIndex + 1}: ${statusText}`
+            : statusText}
+        </span>
       )}
-    </div>
+    </span>
   );
 
   const hasVerifier =
@@ -336,5 +343,13 @@ export default function VerificationBadge({
     verificationStatus
   );
 
-  return <SimpleTooltip content={tooltipContent}>{badge}</SimpleTooltip>;
+  return (
+    <TapTooltip
+      side="top"
+      content={tooltipContent}
+      triggerClassName="inline-flex w-auto shrink-0 rounded-md"
+    >
+      {badge}
+    </TapTooltip>
+  );
 }
