@@ -170,6 +170,7 @@ export default function TournamentAdminView({
           className="h-6 w-6 hover:bg-black/15 hover:text-black dark:hover:bg-white/20 dark:hover:text-white"
           variant={'ghost'}
           size="icon"
+          aria-label="Edit tournament"
         >
           <EditIcon className="h-3 w-3 text-neutral-600 hover:text-black dark:text-white/70 dark:hover:text-white" />
         </Button>

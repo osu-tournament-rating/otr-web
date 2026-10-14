@@ -16,6 +16,9 @@ import {
 import SimpleTooltip from '@/components/simple-tooltip';
 import { orpc } from '@/lib/orpc/orpc';
 
+const TRIGGER_LABEL =
+  'Accept pre-verification statuses for tournament and children';
+
 interface AcceptPreVerificationStatusesButtonProps {
   tournament: {
     id: number;
@@ -51,9 +54,9 @@ export default function AcceptPreVerificationStatusesButton({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <SimpleTooltip content="Accept pre-verification statuses for tournament and children">
+      <SimpleTooltip content={TRIGGER_LABEL}>
         <DialogTrigger asChild>
-          <Button variant="default" size="sm">
+          <Button variant="default" size="sm" aria-label={TRIGGER_LABEL}>
             <CheckCircle2 className="size-4" />
           </Button>
         </DialogTrigger>

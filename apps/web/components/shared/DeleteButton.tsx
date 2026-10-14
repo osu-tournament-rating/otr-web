@@ -66,11 +66,13 @@ export default function DeleteButton({
     setIsOpen(false);
   };
 
+  const triggerLabel = `Delete ${entityLabels[entityType]}`;
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <SimpleTooltip content={`Delete ${entityLabels[entityType]}`}>
+      <SimpleTooltip content={triggerLabel}>
         <DialogTrigger asChild>
-          <Button variant="destructive" size="sm">
+          <Button variant="destructive" size="sm" aria-label={triggerLabel}>
             <Trash2 className="size-4" />
           </Button>
         </DialogTrigger>

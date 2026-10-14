@@ -282,7 +282,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <SimpleTooltip content="Merge matches">
         <DialogTrigger asChild>
-          <Button variant="secondary" size="sm">
+          <Button variant="secondary" size="sm" aria-label="Merge matches">
             <Merge className="size-4" />
           </Button>
         </DialogTrigger>

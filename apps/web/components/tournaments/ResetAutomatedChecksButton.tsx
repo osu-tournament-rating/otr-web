@@ -60,7 +60,11 @@ export default function ResetAutomatedChecksButton({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <SimpleTooltip content="Reset automated checks">
         <DialogTrigger asChild>
-          <Button variant="default" size="sm">
+          <Button
+            variant="default"
+            size="sm"
+            aria-label="Reset automated checks"
+          >
             <RefreshCw className="h-4 w-4" />
           </Button>
         </DialogTrigger>

@@ -110,6 +110,7 @@ export default function AdminNoteView({
           )}
           variant={'ghost'}
           size="icon"
+          aria-label="Admin notes"
         >
           <StickyNote
             className={cn(

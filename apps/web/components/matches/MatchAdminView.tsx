@@ -172,6 +172,7 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
           className="h-6 w-6 hover:bg-white/20 hover:text-white"
           variant={'ghost'}
           size="icon"
+          aria-label="Edit match"
         >
           <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
         </Button>

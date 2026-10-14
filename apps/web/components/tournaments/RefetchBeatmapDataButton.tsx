@@ -71,6 +71,7 @@ export default function RefetchBeatmapDataButton({
           <Button
             variant="outline"
             size="sm"
+            aria-label="Refetch beatmap data"
             className="border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10 hover:text-yellow-600 dark:border-yellow-500/50 dark:text-yellow-500 dark:hover:bg-yellow-500/10"
           >
             <FileMusic className="h-4 w-4" />

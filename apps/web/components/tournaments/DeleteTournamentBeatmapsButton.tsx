@@ -51,7 +51,11 @@ export default function DeleteTournamentBeatmapsButton({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <SimpleTooltip content="Unlink pooled beatmaps">
         <DialogTrigger asChild>
-          <Button variant="destructive" size="sm">
+          <Button
+            variant="destructive"
+            size="sm"
+            aria-label="Unlink pooled beatmaps"
+          >
             <Unlink className="size-4" />
           </Button>
         </DialogTrigger>

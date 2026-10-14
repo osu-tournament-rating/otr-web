@@ -304,7 +304,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <SimpleTooltip content="Merge games">
         <DialogTrigger asChild>
-          <Button variant="secondary" size="sm">
+          <Button variant="secondary" size="sm" aria-label="Merge games">
             <Merge className="size-4" />
           </Button>
         </DialogTrigger>

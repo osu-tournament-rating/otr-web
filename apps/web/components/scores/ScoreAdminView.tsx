@@ -252,6 +252,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
             className="h-6 w-6 hover:bg-white/20 hover:text-white"
             variant={'ghost'}
             size="icon"
+            aria-label="Edit score"
           >
             <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
           </Button>
@@ -706,6 +707,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                       size="icon"
                       onClick={() => setShowDeletePlayerScoresDialog(true)}
                       disabled={!matchId}
+                      aria-label="Delete All Player Scores"
                       className="h-8 w-8"
                     >
                       <UserRoundMinusIcon className="h-4 w-4" />
