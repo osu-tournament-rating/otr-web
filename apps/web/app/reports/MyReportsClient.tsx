@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import Link from 'next/link';
 
+import SectionError from '@/components/error/SectionError';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -116,6 +116,8 @@ function getStatusBadge(status: ReportStatus) {
 export default function MyReportsClient() {
   const [reports, setReports] = useState<MyReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [selectedReport, setSelectedReport] = useState<MyReport | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const selectedLegacyChanges = selectedReport
@@ -124,6 +126,8 @@ export default function MyReportsClient() {
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
+    setLoadFailed(false);
     orpc.reports
       .listMine({})
       .then((data) => {
@@ -131,7 +135,7 @@ export default function MyReportsClient() {
       })
       .catch((error) => {
         console.error('[my-reports] failed to fetch reports', error);
-        toast.error('Failed to load your reports');
+        if (active) setLoadFailed(true);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -139,7 +143,7 @@ export default function MyReportsClient() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadAttempt]);
 
   const handleViewDetails = useCallback((report: MyReport) => {
     setSelectedReport(report);
@@ -175,6 +179,11 @@ export default function MyReportsClient() {
               <Loader2 className="size-4 animate-spin" />
               Loading your reports...
             </div>
+          ) : loadFailed ? (
+            <SectionError
+              title="Your reports could not load"
+              onRetry={() => setLoadAttempt((attempt) => attempt + 1)}
+            />
           ) : reports.length === 0 ? (
             <p
               className="py-8 text-center text-sm text-muted-foreground"

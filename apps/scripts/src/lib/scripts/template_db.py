@@ -239,12 +239,16 @@ def ensure_container() -> bool:
     return wait_for_db()
 
 
-def database_exists(name: str) -> bool:
+def database_exists(name: str) -> bool | None:
+    """Whether `name` exists, or None when the lookup itself failed"""
     out = run_command(
         psql_command(f"SELECT 1 FROM pg_database WHERE datname = '{name}'")
     )
+    if out is None:
+        logger.error(f"Checking whether {name} exists failed")
+        return None
 
-    return bool(out and out.strip())
+    return bool(out.strip())
 
 
 def valid_dump(dump: Path) -> bool:
@@ -378,12 +382,18 @@ def create(name: str, web: Path) -> bool:
     with template_lock():
         if not ensure_container():
             return False
-        if database_exists(name):
+        exists = database_exists(name)
+        if exists is None:
+            return False
+        if exists:
             logger.error(
                 f"{name} already exists; choose a new name or explicitly drop it"
             )
             return False
-        if not database_exists(TEMPLATE):
+        seeded = database_exists(TEMPLATE)
+        if seeded is None:
+            return False
+        if not seeded:
             logger.error(
                 f"{TEMPLATE} does not exist; run "
                 f"--script {scripts.TEMPLATE_DB} --template-action {scripts.SEED} first"
@@ -411,7 +421,10 @@ def drop(name: str) -> bool:
     if not ensure_container():
         return False
 
-    if not database_exists(name):
+    exists = database_exists(name)
+    if exists is None:
+        return False
+    if not exists:
         logger.info(f"{name} does not exist")
         return True
 

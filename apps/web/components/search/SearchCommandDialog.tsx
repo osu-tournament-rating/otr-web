@@ -52,7 +52,8 @@ export default function SearchCommandDialog() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 500);
-  const { data, isLoading } = useSearch(debouncedQuery);
+  const { data, error, isLoading, isValidating, mutate } =
+    useSearch(debouncedQuery);
   const session = useSession();
   const router = useRouter();
 
@@ -81,7 +82,9 @@ export default function SearchCommandDialog() {
 
   if (!session) return null;
 
+  // Kept results belong to an earlier query once a search fails.
   const hasResults =
+    !error &&
     data &&
     (data.players.length > 0 ||
       data.tournaments.length > 0 ||
@@ -146,6 +149,30 @@ export default function SearchCommandDialog() {
             {debouncedQuery &&
               debouncedQuery.trim().length >= 2 &&
               !isLoading &&
+              error && (
+                <div
+                  role="alert"
+                  className="flex flex-col items-center justify-center gap-3 py-8 text-center"
+                >
+                  <p className="text-sm text-muted-foreground">
+                    Search failed. Try again in a moment.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isValidating}
+                    onClick={() => void mutate()}
+                  >
+                    Try again
+                  </Button>
+                </div>
+              )}
+
+            {debouncedQuery &&
+              debouncedQuery.trim().length >= 2 &&
+              !isLoading &&
+              !error &&
               !hasResults && (
                 <CommandEmpty>
                   <div className="text-center">

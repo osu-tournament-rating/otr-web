@@ -179,6 +179,18 @@ def test_existing_database_is_preserved(preparation, monkeypatch):
     assert events == ["lock", "unlock"]
 
 
+@pytest.mark.parametrize("failing", ["agent_1", "otr_template"])
+def test_a_failed_lookup_blocks_creation(preparation, monkeypatch, failing):
+    args, events, _, _ = preparation
+    monkeypatch.setattr(
+        template_db,
+        "database_exists",
+        lambda name: None if name == failing else name == template_db.TEMPLATE,
+    )
+    assert not template_db.run(args)
+    assert events == ["lock", "unlock"]
+
+
 def test_clone_migration_failure_is_reported_without_dropping(preparation, monkeypatch):
     args, events, _, _ = preparation
     monkeypatch.setattr(

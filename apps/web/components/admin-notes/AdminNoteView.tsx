@@ -110,6 +110,7 @@ export default function AdminNoteView({
           )}
           variant={'ghost'}
           size="icon"
+          aria-label="Admin notes"
         >
           <StickyNote
             className={cn(
@@ -128,7 +129,7 @@ export default function AdminNoteView({
       </DialogTrigger>
       <DialogContent className="p-4">
         <DialogHeader className="space-y-1">
-          <DialogTitle>Admin Notes</DialogTitle>
+          <DialogTitle>Admin notes</DialogTitle>
           <DialogDescription>
             Viewing admin notes for{' '}
             <span className="font-semibold">{entityDisplayName}</span>

@@ -35,6 +35,10 @@ interface MultiSelectProps {
   placeholder?: string;
   disabled?: boolean;
   invalid?: boolean;
+  // Set by FormControl, so a FormLabel names the trigger.
+  id?: string;
+  'aria-describedby'?: string;
+  'aria-invalid'?: boolean;
 }
 
 function MultiSelect({
@@ -45,6 +49,9 @@ function MultiSelect({
   placeholder = 'Select options...',
   disabled = false,
   invalid,
+  id,
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
   ...props
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
@@ -52,6 +59,7 @@ function MultiSelect({
   const [searchValue, setSearchValue] = React.useState('');
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const commandRef = React.useRef<HTMLDivElement>(null);
+  const wasOpenRef = React.useRef(false);
 
   const filteredOptions = React.useMemo(() => {
     if (!searchValue) return options;
@@ -68,9 +76,11 @@ function MultiSelect({
     if (open) {
       setHighlightedIndex(-1);
       setSearchValue('');
-    } else {
+    } else if (wasOpenRef.current) {
+      // Only after a close; on mount this would steal focus from the page
       triggerRef.current?.focus();
     }
+    wasOpenRef.current = open;
   }, [open]);
 
   const handleUnselect = (item: string) => {
@@ -157,15 +167,20 @@ function MultiSelect({
       <PopoverTrigger asChild>
         <Button
           ref={triggerRef}
+          id={id}
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          aria-invalid={invalid}
+          aria-invalid={invalid ?? ariaInvalid}
+          aria-describedby={ariaDescribedBy}
           aria-haspopup="listbox"
+          // A linked label names the trigger; the selection is its value.
           aria-label={
-            selected.length > 0
-              ? `${selected.length} items selected`
-              : placeholder
+            id
+              ? undefined
+              : selected.length > 0
+                ? `${selected.length} items selected`
+                : placeholder
           }
           className={cn(
             'w-full justify-between',
@@ -179,44 +194,49 @@ function MultiSelect({
         >
           <div className="flex flex-wrap gap-1">
             {selected.length > 0 ? (
-              selected.map((item) => (
-                <Badge
-                  variant="secondary"
-                  key={item}
-                  className="mr-1 mb-1"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleUnselect(item);
-                  }}
-                >
-                  {options.find((option) => option.value === item)?.label ||
-                    item}
-                  <span
-                    role="button"
-                    tabIndex={-1}
-                    aria-label={`Remove ${item}`}
-                    className="ml-1 cursor-pointer rounded-full ring-offset-background outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleUnselect(item);
-                      }
-                    }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
+              selected.map((item) => {
+                const label =
+                  options.find((option) => option.value === item)?.label ||
+                  item;
+
+                return (
+                  <Badge
+                    variant="secondary"
+                    key={item}
+                    className="mr-1 mb-1"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       handleUnselect(item);
                     }}
                   >
-                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                  </span>
-                </Badge>
-              ))
+                    {label}
+                    <span
+                      role="button"
+                      tabIndex={-1}
+                      aria-label={`Remove ${label}`}
+                      className="ml-1 cursor-pointer rounded-full ring-offset-background outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleUnselect(item);
+                        }
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleUnselect(item);
+                      }}
+                    >
+                      <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                    </span>
+                  </Badge>
+                );
+              })
             ) : (
               <span className="text-muted-foreground">{placeholder}</span>
             )}

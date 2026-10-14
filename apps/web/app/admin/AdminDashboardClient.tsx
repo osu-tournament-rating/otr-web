@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -845,6 +845,7 @@ export default function AdminDashboardClient() {
             <AlertDialogAction
               onClick={handleConfirmBan}
               disabled={!banReason || banning}
+              className={buttonVariants({ variant: 'destructive' })}
             >
               {banning ? (
                 <>

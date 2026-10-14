@@ -172,13 +172,14 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
           className="h-6 w-6 hover:bg-white/20 hover:text-white"
           variant={'ghost'}
           size="icon"
+          aria-label="Edit match"
         >
           <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
         </Button>
       </DialogTrigger>
       <DialogContent className="p-4">
         <DialogHeader className="space-y-1">
-          <DialogTitle>Edit Match</DialogTitle>
+          <DialogTitle>Edit match</DialogTitle>
           <DialogDescription>
             Editing <strong>{match.name}</strong>
           </DialogDescription>
@@ -210,21 +211,23 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
 
                 return (
                   <FormItem>
-                    <FormLabel>Rejection Reason</FormLabel>
-                    <MultipleSelect
-                      className={inputChangedStyle(fieldState)}
-                      placeholder={'No rejection reason'}
-                      selected={flags.map(String)}
-                      options={matchRejectionReasonOptions}
-                      onChange={(values: string[]) => {
-                        let flag = 0;
-                        values.forEach((v: string) => {
-                          flag |= Number(v);
-                        });
+                    <FormLabel>Rejection reason</FormLabel>
+                    <FormControl>
+                      <MultipleSelect
+                        className={inputChangedStyle(fieldState)}
+                        placeholder={'No rejection reason'}
+                        selected={flags.map(String)}
+                        options={matchRejectionReasonOptions}
+                        onChange={(values: string[]) => {
+                          let flag = 0;
+                          values.forEach((v: string) => {
+                            flag |= Number(v);
+                          });
 
-                        onChange(flag);
-                      }}
-                    />
+                          onChange(flag);
+                        }}
+                      />
+                    </FormControl>
                   </FormItem>
                 );
               }}
@@ -238,22 +241,24 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
 
                 return (
                   <FormItem>
-                    <FormLabel>Warning Flags</FormLabel>
-                    <MultipleSelect
-                      className={inputChangedStyle(fieldState)}
-                      placeholder={'No warnings'}
-                      disabled
-                      selected={flags.map(String)}
-                      options={warningFlagOptions}
-                      onChange={(values: string[]) => {
-                        let flag = 0;
-                        values.forEach((v: string) => {
-                          flag |= Number(v);
-                        });
+                    <FormLabel>Warning flags</FormLabel>
+                    <FormControl>
+                      <MultipleSelect
+                        className={inputChangedStyle(fieldState)}
+                        placeholder={'No warnings'}
+                        disabled
+                        selected={flags.map(String)}
+                        options={warningFlagOptions}
+                        onChange={(values: string[]) => {
+                          let flag = 0;
+                          values.forEach((v: string) => {
+                            flag |= Number(v);
+                          });
 
-                        onChange(flag);
-                      }}
-                    />
+                          onChange(flag);
+                        }}
+                      />
+                    </FormControl>
                   </FormItem>
                 );
               }}
@@ -265,7 +270,7 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
                 name="verificationStatus"
                 render={({ field: { value, onChange }, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Verification Status</FormLabel>
+                    <FormLabel>Verification status</FormLabel>
                     <Select
                       onValueChange={(val) => {
                         onChange(Number(val));

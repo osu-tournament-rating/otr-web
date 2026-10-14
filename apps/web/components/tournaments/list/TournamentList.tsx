@@ -2,11 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { AlertCircle, RefreshCw, SearchX } from 'lucide-react';
+import { SearchX } from 'lucide-react';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import useSWRInfinite, { type SWRInfiniteKeyLoader } from 'swr/infinite';
 import { type Fetcher } from 'swr';
 
+import SectionError from '@/components/error/SectionError';
 import TournamentListRow from '@/components/tournaments/TournamentListRow';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -131,11 +132,18 @@ export default function TournamentList({
   ]);
 
   if (error && !data) {
-    return <ErrorState onRetry={() => void mutate()} />;
+    return (
+      <SectionError
+        title="Tournaments could not load"
+        description="The archive is temporarily unavailable. Try the request again."
+        retrying={isValidating}
+        onRetry={() => void mutate()}
+      />
+    );
   }
 
   if (!data) {
-    return <InitialLoadingState />;
+    return <TournamentListSkeleton />;
   }
 
   if (tournamentData.length === 0) {
@@ -218,7 +226,7 @@ function ListHeader() {
   );
 }
 
-function InitialLoadingState() {
+export function TournamentListSkeleton() {
   return (
     <div role="status" aria-label="Loading tournaments">
       <ListHeader />
@@ -271,32 +279,6 @@ function EmptyState({ isFiltered }: { isFiltered: boolean }) {
           <Link href="/tournaments">Clear filters</Link>
         </Button>
       )}
-    </div>
-  );
-}
-
-function ErrorState({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div
-      role="alert"
-      className="flex min-h-72 flex-col items-center justify-center px-5 py-12 text-center"
-    >
-      <span className="mb-4 flex size-12 items-center justify-center rounded-full bg-destructive/10">
-        <AlertCircle className="size-6 text-destructive" aria-hidden="true" />
-      </span>
-      <h2 className="text-lg font-semibold">Tournaments could not load</h2>
-      <p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
-        The archive is temporarily unavailable. Try the request again.
-      </p>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={onRetry}
-        className="mt-5"
-      >
-        <RefreshCw aria-hidden="true" />
-        Try again
-      </Button>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -252,13 +252,14 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
             className="h-6 w-6 hover:bg-white/20 hover:text-white"
             variant={'ghost'}
             size="icon"
+            aria-label="Edit score"
           >
             <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
           </Button>
         </DialogTrigger>
         <DialogContent className="p-4">
           <DialogHeader className="space-y-1">
-            <DialogTitle>Edit Score</DialogTitle>
+            <DialogTitle>Edit score</DialogTitle>
             <DialogDescription>Editing Score {score.id}</DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -319,14 +320,14 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
 
               <div className="grid grid-cols-2 items-start gap-4 sm:grid-cols-3">
                 <FormItem>
-                  <FormLabel>Raw Score</FormLabel>
+                  <FormLabel>Raw score</FormLabel>
                   <FormControl>
                     <Input disabled type="number" value={score.rawScore} />
                   </FormControl>
                   <FormDescription>The total osu! reported.</FormDescription>
                 </FormItem>
                 <FormItem>
-                  <FormLabel>Adjusted Score</FormLabel>
+                  <FormLabel>Adjusted score</FormLabel>
                   <FormControl>
                     <Input
                       disabled
@@ -345,7 +346,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                   name="scoreOverride"
                   render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel>Score Override</FormLabel>
+                      <FormLabel>Score override</FormLabel>
                       <FormControl>
                         <Input
                           className={inputChangedStyle(fieldState)}
@@ -376,7 +377,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                   name="maxCombo"
                   render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel>Max Combo</FormLabel>
+                      <FormLabel>Max combo</FormLabel>
                       <FormControl>
                         <Input
                           className={inputChangedStyle(fieldState)}
@@ -603,21 +604,23 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
 
                     return (
                       <FormItem className="min-w-0">
-                        <FormLabel>Rejection Reason</FormLabel>
-                        <MultipleSelect
-                          className={inputChangedStyle(fieldState)}
-                          placeholder={'No rejection reason'}
-                          selected={flags.map(String)}
-                          options={scoreRejectionReasonOptions}
-                          onChange={(values: string[]) => {
-                            let flag = 0;
-                            values.forEach((v: string) => {
-                              flag |= Number(v);
-                            });
+                        <FormLabel>Rejection reason</FormLabel>
+                        <FormControl>
+                          <MultipleSelect
+                            className={inputChangedStyle(fieldState)}
+                            placeholder={'No rejection reason'}
+                            selected={flags.map(String)}
+                            options={scoreRejectionReasonOptions}
+                            onChange={(values: string[]) => {
+                              let flag = 0;
+                              values.forEach((v: string) => {
+                                flag |= Number(v);
+                              });
 
-                            onChange(flag);
-                          }}
-                        />
+                              onChange(flag);
+                            }}
+                          />
+                        </FormControl>
                       </FormItem>
                     );
                   }}
@@ -631,20 +634,22 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                     return (
                       <FormItem className="min-w-0">
                         <FormLabel>Mods</FormLabel>
-                        <MultipleSelect
-                          className={inputChangedStyle(fieldState)}
-                          placeholder={'No mods'}
-                          selected={flags.map(String)}
-                          options={modOptions}
-                          onChange={(values: string[]) => {
-                            let flag = 0;
-                            values.forEach((v: string) => {
-                              flag |= Number(v);
-                            });
+                        <FormControl>
+                          <MultipleSelect
+                            className={inputChangedStyle(fieldState)}
+                            placeholder={'No mods'}
+                            selected={flags.map(String)}
+                            options={modOptions}
+                            onChange={(values: string[]) => {
+                              let flag = 0;
+                              values.forEach((v: string) => {
+                                flag |= Number(v);
+                              });
 
-                            onChange(flag);
-                          }}
-                        />
+                              onChange(flag);
+                            }}
+                          />
+                        </FormControl>
                       </FormItem>
                     );
                   }}
@@ -657,7 +662,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                   name="verificationStatus"
                   render={({ field: { value, onChange }, fieldState }) => (
                     <FormItem className="flex-1">
-                      <FormLabel>Verification Status</FormLabel>
+                      <FormLabel>Verification status</FormLabel>
                       <Select
                         onValueChange={(val) => {
                           onChange(Number(val));
@@ -699,13 +704,14 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                     onDeleted={() => router.refresh()}
                   />
 
-                  <SimpleTooltip content="Delete All Player Scores">
+                  <SimpleTooltip content="Delete all player scores">
                     <Button
                       type="button"
                       variant="destructive"
                       size="icon"
                       onClick={() => setShowDeletePlayerScoresDialog(true)}
                       disabled={!matchId}
+                      aria-label="Delete all player scores"
                       className="h-8 w-8"
                     >
                       <UserRoundMinusIcon className="h-4 w-4" />
@@ -736,7 +742,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete All Player Scores</AlertDialogTitle>
+            <AlertDialogTitle>Delete all player scores</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete all scores for player{' '}
               {score.playerId} in this match? This action cannot be undone and
@@ -749,14 +755,14 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
             <AlertDialogAction
               onClick={handleDeletePlayerScores}
               disabled={isDeleting}
-              className="bg-destructive hover:bg-destructive/90"
+              className={buttonVariants({ variant: 'destructive' })}
             >
               {isDeleting ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Trash2 className="mr-2 h-4 w-4" />
               )}
-              Delete All Scores
+              Delete all scores
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -765,7 +771,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
       <AlertDialog open={showNotePrompt} onOpenChange={setShowNotePrompt}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Admin Note Required</AlertDialogTitle>
+            <AlertDialogTitle>Admin note required</AlertDialogTitle>
             <AlertDialogDescription>
               You are modifying sensitive values. Please provide a note
               explaining the reason for these changes.
@@ -787,7 +793,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
               onClick={() => pendingSubmit && submitScorePatch(pendingSubmit)}
               disabled={!adminNote.trim()}
             >
-              Confirm Changes
+              Confirm changes
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -29,10 +29,6 @@ async fn main() {
     // Initialize tracing with indicatif integration
     init_tracing(&args.log_level);
 
-    if args.ignore_constraints {
-        info!("Ignoring database constraints");
-    }
-
     info!("Begin processing...");
 
     let client: DbClient = client().await;

@@ -157,6 +157,42 @@ def test_full_restart_brings_the_stack_back_after_a_failure(monkeypatch):
     assert not any("CREATE DATABASE" in shlex.join(cmd) for cmd in commands[1:-1])
 
 
+def test_a_failed_stop_restores_nothing_and_brings_the_stack_back(monkeypatch):
+    commands = record_runs(monkeypatch, fail_on="docker compose down")
+
+    assert db._import(Path(f"/dumps/{KEEP}")) is False
+
+    assert commands == ["docker compose down", "docker compose up -d"]
+
+
+def test_a_database_that_never_starts_brings_the_stack_back(monkeypatch):
+    commands = record_runs(monkeypatch)
+    monkeypatch.setattr(db, "_wait_for_db", lambda: False)
+
+    assert db._import(Path(f"/dumps/{KEEP}")) is False
+
+    assert commands == [
+        "docker compose down",
+        "docker compose up -d db",
+        "docker compose up -d",
+    ]
+
+
+def test_a_failed_restart_fails_a_restore_that_worked(monkeypatch):
+    commands = []
+
+    def run(cmd, **kwargs):
+        commands.append(cmd)
+        return SimpleNamespace(returncode=1 if cmd == "docker compose up -d" else 0)
+
+    monkeypatch.setattr(db.subprocess, "run", run)
+
+    assert db._import(Path(f"/dumps/{KEEP}")) is False
+
+    assert MIGRATE in commands
+    assert commands[-1] == "docker compose up -d"
+
+
 def test_recovery_prunes_only_after_a_successful_restore(monkeypatch, tmp_path):
     older, keep = touch(tmp_path, OLDER, KEEP)
     args = SimpleNamespace(

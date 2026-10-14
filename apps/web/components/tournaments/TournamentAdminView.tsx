@@ -170,13 +170,14 @@ export default function TournamentAdminView({
           className="h-6 w-6 hover:bg-black/15 hover:text-black dark:hover:bg-white/20 dark:hover:text-white"
           variant={'ghost'}
           size="icon"
+          aria-label="Edit tournament"
         >
           <EditIcon className="h-3 w-3 text-neutral-600 hover:text-black dark:text-white/70 dark:hover:text-white" />
         </Button>
       </DialogTrigger>
       <DialogContent className="p-4">
         <DialogHeader className="space-y-1">
-          <DialogTitle>Edit Tournament</DialogTitle>
+          <DialogTitle>Edit tournament</DialogTitle>
           <DialogDescription>Editing {tournament.name}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -288,7 +289,7 @@ export default function TournamentAdminView({
                 name="rankRangeLowerBound"
                 render={({ field, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Rank Restriction</FormLabel>
+                    <FormLabel>Rank restriction</FormLabel>
                     <FormControl className="w-full">
                       <Input
                         {...field}
@@ -312,21 +313,23 @@ export default function TournamentAdminView({
 
                 return (
                   <FormItem>
-                    <FormLabel>Rejection Reason</FormLabel>
-                    <MultipleSelect
-                      className={inputChangedStyle(fieldState)}
-                      placeholder={'No rejection reason'}
-                      selected={flags.map(String)}
-                      options={tournamentRejectionReasonOptions}
-                      onChange={(values: string[]) => {
-                        let flag = 0;
-                        values.forEach((v: string) => {
-                          flag |= Number(v);
-                        });
+                    <FormLabel>Rejection reason</FormLabel>
+                    <FormControl>
+                      <MultipleSelect
+                        className={inputChangedStyle(fieldState)}
+                        placeholder={'No rejection reason'}
+                        selected={flags.map(String)}
+                        options={tournamentRejectionReasonOptions}
+                        onChange={(values: string[]) => {
+                          let flag = 0;
+                          values.forEach((v: string) => {
+                            flag |= Number(v);
+                          });
 
-                        onChange(flag);
-                      }}
-                    />
+                          onChange(flag);
+                        }}
+                      />
+                    </FormControl>
                   </FormItem>
                 );
               }}
@@ -338,7 +341,7 @@ export default function TournamentAdminView({
                 name="verificationStatus"
                 render={({ field: { value, onChange }, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Verification Status</FormLabel>
+                    <FormLabel>Verification status</FormLabel>
                     <Select
                       onValueChange={(val) => {
                         onChange(Number(val));

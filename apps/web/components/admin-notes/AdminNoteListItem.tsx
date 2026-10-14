@@ -2,7 +2,6 @@
 
 import { AdminNoteRouteTarget } from '@otr/core/osu';
 import { PencilLineIcon, Trash } from 'lucide-react';
-import { iconButtonStyle } from '../buttons/IconButton';
 import { useState } from 'react';
 import {
   AlertDialog,
@@ -13,11 +12,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { hasAdminScope } from '@/lib/auth/roles';
 import { toast } from 'sonner';
-import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
 import { useSession } from '@/lib/hooks/useSession';
 import { useRouter } from 'next/navigation';
 import { AdminNote } from './types';
@@ -79,13 +79,21 @@ export default function AdminNoteListItem({
           <>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <PencilLineIcon
-                  className={iconButtonStyle('text-muted-foreground')}
-                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Edit note"
+                  className="size-4 text-muted-foreground"
+                >
+                  <PencilLineIcon />
+                </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Edit Note</AlertDialogTitle>
+                  <AlertDialogTitle>Edit note</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Change the text of this note.
+                  </AlertDialogDescription>
                 </AlertDialogHeader>
                 <Textarea
                   value={editedNote}
@@ -105,18 +113,28 @@ export default function AdminNoteListItem({
             </AlertDialog>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Trash className={iconButtonStyle('text-destructive')} />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Delete note"
+                  className="size-4 text-destructive"
+                >
+                  <Trash />
+                </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Note</AlertDialogTitle>
+                  <AlertDialogTitle>Delete note</AlertDialogTitle>
                   <AlertDialogDescription>
                     Are you sure you want to delete this note?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className={buttonVariants({ variant: 'destructive' })}
+                  >
                     Delete
                   </AlertDialogAction>
                 </AlertDialogFooter>

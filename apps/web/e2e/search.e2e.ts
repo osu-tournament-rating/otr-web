@@ -104,6 +104,25 @@ test.describe('Global Website Search', () => {
       });
     });
 
+    test('a failed search shows an error instead of no results', async ({
+      page,
+    }) => {
+      await page.route('**/rpc/search/query', (route) =>
+        route.fulfill({ status: 500, body: 'Internal Server Error' })
+      );
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await openSearchViaButton(page);
+      await typeQuery(page, 'Stage');
+
+      const results = page.locator(SEARCH_RESULTS);
+      await expect(results.getByRole('alert')).toContainText('Search failed', {
+        timeout: 15000,
+      });
+      await expect(results).not.toContainText('No results found');
+    });
+
     test('Cmd/Ctrl+K opens the command dialog', async ({ page }) => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');

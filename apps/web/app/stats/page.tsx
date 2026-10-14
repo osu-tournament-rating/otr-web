@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import StatsPageContent from '@/components/stats/StatsPageContent';
 import { orpc } from '@/lib/orpc/orpc';
 
@@ -9,18 +8,8 @@ export const metadata: Metadata = {
 };
 
 export default async function StatsPage() {
-  let stats: Awaited<ReturnType<typeof orpc.stats.platform>>;
-
-  try {
-    stats = await orpc.stats.platform();
-  } catch (error) {
-    console.error('Failed to fetch platform stats:', error);
-    return notFound();
-  }
-
-  if (!stats) {
-    return notFound();
-  }
+  // A failure reaches the error screen; this page always exists.
+  const stats = await orpc.stats.platform();
 
   return <StatsPageContent stats={stats} />;
 }

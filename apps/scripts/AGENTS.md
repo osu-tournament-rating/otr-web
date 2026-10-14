@@ -2,7 +2,7 @@
 
 The scripts live in otr at `apps/scripts`. They are Python, not a bun
 workspace: run their commands from this directory with Python 3.14 and `uv`,
-unlike the rest of otr. Pull requests follow the root `AGENTS.md`.
+unlike the rest of otr. Pull requests follow the root `pull-request` skill.
 
 Merging a change here deploys it. Every release installs this directory on
 the production host, where the Tuesday processor cron runs it, and the dev
@@ -82,6 +82,10 @@ configured application database.
   and operations in `src/lib/`.
 - Prefer argument lists for subprocesses. Preserve upstream failure and quote
   paths when a shell pipeline is unavoidable.
+- The cron and `run-script.yml` see only the exit code and the log. Each
+  operation returns `True` only when every step worked, and logs one error
+  naming the step that failed. `main.py` exits 1 on any other result or an
+  uncaught exception. Check every subprocess's return code.
 
 ## Agent stacks
 

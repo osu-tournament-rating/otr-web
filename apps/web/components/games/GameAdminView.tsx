@@ -189,13 +189,14 @@ export default function GameAdminView({ game }: { game: Game }) {
           className="h-6 w-6 hover:bg-white/20 hover:text-white"
           variant={'ghost'}
           size="icon"
+          aria-label="Edit game"
         >
           <EditIcon className="h-3 w-3 text-white/70 hover:text-white" />
         </Button>
       </DialogTrigger>
       <DialogContent className="p-4">
         <DialogHeader className="space-y-1">
-          <DialogTitle>Edit Game</DialogTitle>
+          <DialogTitle>Edit game</DialogTitle>
           <DialogDescription>Editing Game {game.id}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -206,7 +207,7 @@ export default function GameAdminView({ game }: { game: Game }) {
                 name="scoringType"
                 render={({ field: { value, onChange }, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Scoring Type</FormLabel>
+                    <FormLabel>Scoring type</FormLabel>
                     <Select
                       onValueChange={(val) => onChange(Number(val))}
                       value={value.toString()}
@@ -228,7 +229,7 @@ export default function GameAdminView({ game }: { game: Game }) {
                 name="teamType"
                 render={({ field: { value, onChange }, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Team Type</FormLabel>
+                    <FormLabel>Team type</FormLabel>
                     <Select
                       onValueChange={(val) => onChange(Number(val))}
                       value={value.toString()}
@@ -285,7 +286,7 @@ export default function GameAdminView({ game }: { game: Game }) {
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel className="text-muted-foreground">
-                      Free Mod
+                      Free mod
                     </FormLabel>
                   </div>
                 </FormItem>
@@ -300,21 +301,23 @@ export default function GameAdminView({ game }: { game: Game }) {
 
                 return (
                   <FormItem>
-                    <FormLabel>Rejection Reason</FormLabel>
-                    <MultipleSelect
-                      className={inputChangedStyle(fieldState)}
-                      placeholder={'No rejection reason'}
-                      selected={flags.map(String)}
-                      options={gameRejectionReasonOptions}
-                      onChange={(values: string[]) => {
-                        let flag = 0;
-                        values.forEach((v: string) => {
-                          flag |= Number(v);
-                        });
+                    <FormLabel>Rejection reason</FormLabel>
+                    <FormControl>
+                      <MultipleSelect
+                        className={inputChangedStyle(fieldState)}
+                        placeholder={'No rejection reason'}
+                        selected={flags.map(String)}
+                        options={gameRejectionReasonOptions}
+                        onChange={(values: string[]) => {
+                          let flag = 0;
+                          values.forEach((v: string) => {
+                            flag |= Number(v);
+                          });
 
-                        onChange(flag);
-                      }}
-                    />
+                          onChange(flag);
+                        }}
+                      />
+                    </FormControl>
                   </FormItem>
                 );
               }}
@@ -329,20 +332,22 @@ export default function GameAdminView({ game }: { game: Game }) {
                 return (
                   <FormItem>
                     <FormLabel>Mods</FormLabel>
-                    <MultipleSelect
-                      className={inputChangedStyle(fieldState)}
-                      placeholder={'No mods'}
-                      selected={flags.map(String)}
-                      options={modOptions}
-                      onChange={(values: string[]) => {
-                        let flag = 0;
-                        values.forEach((v: string) => {
-                          flag |= Number(v);
-                        });
+                    <FormControl>
+                      <MultipleSelect
+                        className={inputChangedStyle(fieldState)}
+                        placeholder={'No mods'}
+                        selected={flags.map(String)}
+                        options={modOptions}
+                        onChange={(values: string[]) => {
+                          let flag = 0;
+                          values.forEach((v: string) => {
+                            flag |= Number(v);
+                          });
 
-                        onChange(flag);
-                      }}
-                    />
+                          onChange(flag);
+                        }}
+                      />
+                    </FormControl>
                   </FormItem>
                 );
               }}
@@ -356,22 +361,24 @@ export default function GameAdminView({ game }: { game: Game }) {
 
                 return (
                   <FormItem>
-                    <FormLabel>Warning Flags</FormLabel>
-                    <MultipleSelect
-                      className={inputChangedStyle(fieldState)}
-                      placeholder={'No warnings'}
-                      disabled
-                      selected={flags.map(String)}
-                      options={warningFlagOptions}
-                      onChange={(values: string[]) => {
-                        let flag = 0;
-                        values.forEach((v: string) => {
-                          flag |= Number(v);
-                        });
+                    <FormLabel>Warning flags</FormLabel>
+                    <FormControl>
+                      <MultipleSelect
+                        className={inputChangedStyle(fieldState)}
+                        placeholder={'No warnings'}
+                        disabled
+                        selected={flags.map(String)}
+                        options={warningFlagOptions}
+                        onChange={(values: string[]) => {
+                          let flag = 0;
+                          values.forEach((v: string) => {
+                            flag |= Number(v);
+                          });
 
-                        onChange(flag);
-                      }}
-                    />
+                          onChange(flag);
+                        }}
+                      />
+                    </FormControl>
                   </FormItem>
                 );
               }}
@@ -383,7 +390,7 @@ export default function GameAdminView({ game }: { game: Game }) {
                 name="verificationStatus"
                 render={({ field: { value, onChange }, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Verification Status</FormLabel>
+                    <FormLabel>Verification status</FormLabel>
                     <Select
                       onValueChange={(val) => {
                         onChange(Number(val));

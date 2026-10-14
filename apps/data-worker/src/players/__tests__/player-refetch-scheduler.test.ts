@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { inArray } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
@@ -19,6 +19,16 @@ const FALLBACK_DAYS = 14;
 
 const daysAgo = (days: number) =>
   new Date(Date.now() - days * 86_400_000).toISOString();
+
+const silentLogger = {
+  debug() {},
+  info() {},
+  warn() {},
+  error() {},
+  child() {
+    return this;
+  },
+} as unknown as Logger;
 
 type SeededPlayer = {
   osuId: number;
@@ -96,7 +106,7 @@ const seed: SeededPlayer[] = [
   },
   {
     osuId: 999_300_012,
-    lastFetch: 20,
+    lastFetch: 2,
     ratings: [[Ruleset.Osu, 100]],
     fetching: true,
     expected: null,
@@ -195,15 +205,7 @@ describe.skipIf(!url)('osu! auto-refetch tiers', () => {
 
     const scheduler = new PlayerRefetchScheduler({
       db: db as unknown as DatabaseClient,
-      logger: {
-        debug() {},
-        info() {},
-        warn() {},
-        error() {},
-        child() {
-          return this;
-        },
-      } as unknown as Logger,
+      logger: silentLogger,
       osuPublisher: {
         async publish(message, options) {
           published.push({
@@ -274,4 +276,331 @@ describe.skipIf(!url)('osu! auto-refetch tiers', () => {
 
     expect(cadences).toEqual([...cadences].sort((a, b) => a - b));
   });
+});
+
+type LeaseCase = {
+  osuId: number;
+  status: DataFetchStatus;
+  // Days since the last fetch or lease start; null for never.
+  lastFetch: number | null;
+  publish: 'ok' | 'fail' | 'completeThenFail';
+  enqueued: boolean;
+};
+
+const osuLeaseCases: LeaseCase[] = [
+  // Stale lease
+  {
+    osuId: 999_301_001,
+    status: DataFetchStatus.Fetching,
+    lastFetch: 8,
+    publish: 'ok',
+    enqueued: true,
+  },
+  // Fresh lease
+  {
+    osuId: 999_301_002,
+    status: DataFetchStatus.Fetching,
+    lastFetch: 2,
+    publish: 'ok',
+    enqueued: false,
+  },
+  {
+    osuId: 999_301_003,
+    status: DataFetchStatus.Fetched,
+    lastFetch: 2,
+    publish: 'fail',
+    enqueued: false,
+  },
+  {
+    osuId: 999_301_004,
+    status: DataFetchStatus.Fetching,
+    lastFetch: 8,
+    publish: 'fail',
+    enqueued: false,
+  },
+  // A worker finishes the fetch before the publisher reports a failure.
+  {
+    osuId: 999_301_005,
+    status: DataFetchStatus.Fetched,
+    lastFetch: 2,
+    publish: 'completeThenFail',
+    enqueued: false,
+  },
+];
+
+const osuTrackLeaseCases: LeaseCase[] = [
+  {
+    osuId: 999_301_011,
+    status: DataFetchStatus.Fetching,
+    lastFetch: 8,
+    publish: 'ok',
+    enqueued: true,
+  },
+  // Marked Fetching before leases recorded a start
+  {
+    osuId: 999_301_012,
+    status: DataFetchStatus.Fetching,
+    lastFetch: null,
+    publish: 'ok',
+    enqueued: true,
+  },
+  {
+    osuId: 999_301_013,
+    status: DataFetchStatus.Fetching,
+    lastFetch: 2,
+    publish: 'ok',
+    enqueued: false,
+  },
+  {
+    osuId: 999_301_014,
+    status: DataFetchStatus.Fetched,
+    lastFetch: 90,
+    publish: 'fail',
+    enqueued: false,
+  },
+  {
+    osuId: 999_301_015,
+    status: DataFetchStatus.Fetching,
+    lastFetch: 8,
+    publish: 'fail',
+    enqueued: false,
+  },
+  {
+    osuId: 999_301_016,
+    status: DataFetchStatus.NotFetched,
+    lastFetch: null,
+    publish: 'fail',
+    enqueued: false,
+  },
+  {
+    osuId: 999_301_017,
+    status: DataFetchStatus.Fetched,
+    lastFetch: 90,
+    publish: 'completeThenFail',
+    enqueued: false,
+  },
+];
+
+describe.skipIf(!url)('auto-refetch fetch leases', () => {
+  const pool = new Pool({ connectionString: url });
+  const db = drizzle(pool, { schema });
+  const cases = [...osuLeaseCases, ...osuTrackLeaseCases];
+  const osuIds = cases.map((entry) => entry.osuId);
+
+  const seededAt = new Map<number, string | null>();
+  const workerFinishedAt = daysAgo(0);
+  const published = { osu: [] as number[], osuTrack: [] as number[] };
+  let runStartedMs = 0;
+
+  const remove = () =>
+    db.delete(schema.players).where(inArray(schema.players.osuId, osuIds));
+
+  const epochMs = (
+    column:
+      | typeof schema.players.osuLastFetch
+      | typeof schema.players.osuTrackLastFetch
+  ) =>
+    sql<number | null>`extract(epoch from ${column}) * 1000`.mapWith((value) =>
+      value === null ? null : Number(value)
+    );
+
+  const readPlayer = async (osuId: number) => {
+    const [row] = await db
+      .select({
+        status: schema.players.dataFetchStatus,
+        lastFetchMs: epochMs(schema.players.osuLastFetch),
+        osuTrackStatus: schema.players.osuTrackDataFetchStatus,
+        osuTrackLastFetchMs: epochMs(schema.players.osuTrackLastFetch),
+      })
+      .from(schema.players)
+      .where(eq(schema.players.osuId, osuId));
+
+    return row!;
+  };
+
+  const msOf = (iso: string | null | undefined) =>
+    iso ? new Date(iso).getTime() : null;
+
+  const publishFor =
+    (source: 'osu' | 'osuTrack', sourceCases: LeaseCase[]) =>
+    async (osuPlayerId: number) => {
+      const entry = sourceCases.find((c) => c.osuId === osuPlayerId);
+
+      if (entry?.publish === 'completeThenFail') {
+        await db
+          .update(schema.players)
+          .set(
+            source === 'osu'
+              ? {
+                  dataFetchStatus: DataFetchStatus.Fetched,
+                  osuLastFetch: workerFinishedAt,
+                }
+              : {
+                  osuTrackDataFetchStatus: DataFetchStatus.Fetched,
+                  osuTrackLastFetch: workerFinishedAt,
+                }
+          )
+          .where(eq(schema.players.osuId, osuPlayerId));
+        throw new Error('publish confirmation timed out');
+      }
+
+      if (entry?.publish === 'fail') {
+        throw new Error('broker unavailable');
+      }
+
+      published[source].push(osuPlayerId);
+    };
+
+  beforeAll(async () => {
+    await remove();
+
+    for (const entry of osuLeaseCases) {
+      const lastFetch = daysAgo(entry.lastFetch!);
+      seededAt.set(entry.osuId, lastFetch);
+      await db.insert(schema.players).values({
+        osuId: entry.osuId,
+        dataFetchStatus: entry.status,
+        osuLastFetch: lastFetch,
+        // Rank 100 refetches daily, so every row is past its cadence.
+        osuTrackDataFetchStatus: DataFetchStatus.Fetched,
+        osuTrackLastFetch: daysAgo(0),
+      });
+    }
+
+    const osuIdsWithRatings = await db
+      .select({ id: schema.players.id })
+      .from(schema.players)
+      .where(
+        inArray(
+          schema.players.osuId,
+          osuLeaseCases.map((entry) => entry.osuId)
+        )
+      );
+
+    await db.insert(schema.playerRatings).values(
+      osuIdsWithRatings.map(({ id }) => ({
+        playerId: id,
+        ruleset: Ruleset.Osu,
+        rating: 1000,
+        volatility: 100,
+        percentile: 0.5,
+        globalRank: 100,
+        countryRank: 100,
+      }))
+    );
+
+    for (const entry of osuTrackLeaseCases) {
+      const lastFetch =
+        entry.lastFetch === null ? null : daysAgo(entry.lastFetch);
+      seededAt.set(entry.osuId, lastFetch);
+      await db.insert(schema.players).values({
+        osuId: entry.osuId,
+        dataFetchStatus: DataFetchStatus.Fetched,
+        osuLastFetch: daysAgo(0),
+        osuTrackDataFetchStatus: entry.status,
+        osuTrackLastFetch: lastFetch,
+      });
+    }
+
+    const publishOsu = publishFor('osu', osuLeaseCases);
+    const publishOsuTrack = publishFor('osuTrack', osuTrackLeaseCases);
+
+    const scheduler = new PlayerRefetchScheduler({
+      db: db as unknown as DatabaseClient,
+      logger: silentLogger,
+      osuPublisher: {
+        async publish(message) {
+          await publishOsu((message as { osuPlayerId: number }).osuPlayerId);
+          return message as unknown as FetchOsuMessage;
+        },
+      },
+      osuTrackPublisher: {
+        async publish(message) {
+          await publishOsuTrack(message.osuPlayerId);
+          return message as unknown as FetchPlayerOsuTrackMessage;
+        },
+      },
+      config: {
+        osu: { enabled: true, intervalMinutes: 30, outdatedDays: 14 },
+        osuTrack: { enabled: true, intervalMinutes: 30, outdatedDays: 60 },
+      },
+    });
+
+    // Postgres keeps microseconds; allow for the truncation to milliseconds.
+    runStartedMs = Date.now() - 1;
+    await scheduler.start();
+    await scheduler.stop();
+  });
+
+  afterAll(async () => {
+    await remove();
+    await pool.end();
+  });
+
+  for (const [source, sourceCases] of [
+    ['osu', osuLeaseCases],
+    ['osuTrack', osuTrackLeaseCases],
+  ] as const) {
+    describe(source, () => {
+      const current = async (osuId: number) => {
+        const row = await readPlayer(osuId);
+        return source === 'osu'
+          ? { status: row.status, lastFetchMs: row.lastFetchMs }
+          : {
+              status: row.osuTrackStatus,
+              lastFetchMs: row.osuTrackLastFetchMs,
+            };
+      };
+
+      it('enqueues expired leases and skips fresh ones', () => {
+        const expected = sourceCases
+          .filter((entry) => entry.enqueued)
+          .map((entry) => entry.osuId);
+        const enqueued = published[source].filter((osuId) =>
+          osuIds.includes(osuId)
+        );
+
+        expect(new Set(enqueued)).toEqual(new Set(expected));
+      });
+
+      it('renews the lease of every enqueued player', async () => {
+        for (const entry of sourceCases.filter((c) => c.enqueued)) {
+          const row = await current(entry.osuId);
+
+          expect(row.status).toBe(DataFetchStatus.Fetching);
+          expect(row.lastFetchMs!).toBeGreaterThanOrEqual(runStartedMs);
+        }
+      });
+
+      it('leaves a fresh lease untouched', async () => {
+        for (const entry of sourceCases.filter(
+          (c) => c.status === DataFetchStatus.Fetching && c.lastFetch === 2
+        )) {
+          const row = await current(entry.osuId);
+
+          expect(row.status).toBe(DataFetchStatus.Fetching);
+          expect(row.lastFetchMs).toBe(msOf(seededAt.get(entry.osuId)));
+        }
+      });
+
+      it('restores the previous state when publishing fails', async () => {
+        for (const entry of sourceCases.filter((c) => c.publish === 'fail')) {
+          const row = await current(entry.osuId);
+
+          expect(row.status).toBe(entry.status);
+          expect(row.lastFetchMs).toBe(msOf(seededAt.get(entry.osuId)));
+        }
+      });
+
+      it('keeps a fetch that finished before the publish failed', async () => {
+        const entry = sourceCases.find(
+          (c) => c.publish === 'completeThenFail'
+        )!;
+        const row = await current(entry.osuId);
+
+        expect(row.status).toBe(DataFetchStatus.Fetched);
+        expect(row.lastFetchMs).toBe(msOf(workerFinishedAt));
+      });
+    });
+  }
 });
