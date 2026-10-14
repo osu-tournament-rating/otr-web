@@ -171,7 +171,7 @@ export default function Header() {
             <SheetContent
               overlay={false}
               closeButton={false}
-              className="inset-y-16 w-full border-t border-t-muted border-l-muted bg-card p-6 sm:max-w-xs md:hidden"
+              className="top-(--header-height-px) h-auto w-full overflow-y-auto border-t border-t-muted border-l-muted bg-card p-6 sm:max-w-xs md:hidden"
             >
               {/* Radix requires a title */}
               <DialogTitle hidden />
