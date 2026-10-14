@@ -169,7 +169,7 @@ export default function PlayerFrequencyChart({
       ? 'No teammate data available'
       : 'No opponent data available';
   const defaultChartColor =
-    type === 'teammates' ? 'hsl(var(--chart-1))' : 'hsl(var(--chart-2))';
+    type === 'teammates' ? 'var(--chart-1)' : 'var(--chart-2)';
 
   const chartConfig: ChartConfig = {
     frequency: {

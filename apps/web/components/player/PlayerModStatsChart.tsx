@@ -44,7 +44,7 @@ export default function PlayerModStatsChart({
   const chartConfig: ChartConfig = {
     averageScore: {
       label: 'Score',
-      color: 'hsl(var(--chart-1))',
+      color: 'var(--chart-1)',
     },
   };
 
