@@ -1,7 +1,8 @@
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::convert::TryFrom;
+use strum_macros::EnumIter;
 
-#[derive(Deserialize_repr, Serialize_repr, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Deserialize_repr, Serialize_repr, Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter)]
 #[repr(u8)]
 pub enum RatingAdjustmentType {
     Initial = 0,

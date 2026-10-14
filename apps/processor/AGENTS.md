@@ -57,7 +57,8 @@ tests.
 - Preserve chronological match order, match-end fallback, decay boundaries,
   ranking ties, participation behavior, and rating floor semantics.
 - Persisted `Ruleset` is `0..=5`; `RatingAdjustmentType` is `0..=3`. Never
-  reorder or renumber them.
+  reorder or renumber them. `tests/contracts/` checks them, and the verified
+  status the SQL filters on, against `@otr/core`.
 - Changes to match weights, initial bounds, decay, volatility, or floors need
   focused unit tests and full-rating tests with expected impact.
 - Skip a verified game with fewer than two verified scores and retain its
