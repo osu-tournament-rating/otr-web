@@ -179,7 +179,7 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
       </DialogTrigger>
       <DialogContent className="p-4">
         <DialogHeader className="space-y-1">
-          <DialogTitle>Edit Match</DialogTitle>
+          <DialogTitle>Edit match</DialogTitle>
           <DialogDescription>
             Editing <strong>{match.name}</strong>
           </DialogDescription>
@@ -211,7 +211,7 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
 
                 return (
                   <FormItem>
-                    <FormLabel>Rejection Reason</FormLabel>
+                    <FormLabel>Rejection reason</FormLabel>
                     <FormControl>
                       <MultipleSelect
                         className={inputChangedStyle(fieldState)}
@@ -241,7 +241,7 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
 
                 return (
                   <FormItem>
-                    <FormLabel>Warning Flags</FormLabel>
+                    <FormLabel>Warning flags</FormLabel>
                     <FormControl>
                       <MultipleSelect
                         className={inputChangedStyle(fieldState)}
@@ -270,7 +270,7 @@ export default function MatchAdminView({ match }: { match: EditableMatch }) {
                 name="verificationStatus"
                 render={({ field: { value, onChange }, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Verification Status</FormLabel>
+                    <FormLabel>Verification status</FormLabel>
                     <Select
                       onValueChange={(val) => {
                         onChange(Number(val));

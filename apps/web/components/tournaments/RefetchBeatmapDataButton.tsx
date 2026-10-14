@@ -80,7 +80,7 @@ export default function RefetchBeatmapDataButton({
       </SimpleTooltip>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Confirm Beatmap Data Refetch</DialogTitle>
+          <DialogTitle>Confirm beatmap data refetch</DialogTitle>
           <DialogDescription asChild>
             <div>
               Are you sure you want to refetch beatmap data for{' '}

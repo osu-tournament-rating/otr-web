@@ -225,7 +225,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
     return (
       <div className="space-y-2 rounded-lg border p-4">
         <h4 className="font-semibold">
-          Child Game{pluralSuffix} ({gameCount})
+          Child game{pluralSuffix} ({gameCount})
         </h4>
         <div className="max-h-60 space-y-3 overflow-y-auto">
           {childGames.map(renderChildGameInfo)}
@@ -247,7 +247,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Game Merge</DialogTitle>
+            <DialogTitle>Confirm game merge</DialogTitle>
             <DialogDescription asChild>
               <div className="space-y-3">
                 <p>
@@ -311,7 +311,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
       </SimpleTooltip>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Merge Games</DialogTitle>
+          <DialogTitle>Merge games</DialogTitle>
           <DialogDescription asChild>
             <div className="space-y-2">
               <p>
@@ -330,7 +330,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="gameIds">Child Game IDs</Label>
+            <Label htmlFor="gameIds">Child game IDs</Label>
             <div className="space-y-2">
               <Textarea
                 id="gameIds"
@@ -350,7 +350,7 @@ export default function MergeGameButton({ game }: MergeGameButtonProps) {
                     Fetching...
                   </>
                 ) : (
-                  'Fetch Games'
+                  'Fetch games'
                 )}
               </Button>
             </div>

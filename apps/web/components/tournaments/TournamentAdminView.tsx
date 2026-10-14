@@ -177,7 +177,7 @@ export default function TournamentAdminView({
       </DialogTrigger>
       <DialogContent className="p-4">
         <DialogHeader className="space-y-1">
-          <DialogTitle>Edit Tournament</DialogTitle>
+          <DialogTitle>Edit tournament</DialogTitle>
           <DialogDescription>Editing {tournament.name}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -289,7 +289,7 @@ export default function TournamentAdminView({
                 name="rankRangeLowerBound"
                 render={({ field, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Rank Restriction</FormLabel>
+                    <FormLabel>Rank restriction</FormLabel>
                     <FormControl className="w-full">
                       <Input
                         {...field}
@@ -313,7 +313,7 @@ export default function TournamentAdminView({
 
                 return (
                   <FormItem>
-                    <FormLabel>Rejection Reason</FormLabel>
+                    <FormLabel>Rejection reason</FormLabel>
                     <FormControl>
                       <MultipleSelect
                         className={inputChangedStyle(fieldState)}
@@ -341,7 +341,7 @@ export default function TournamentAdminView({
                 name="verificationStatus"
                 render={({ field: { value, onChange }, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Verification Status</FormLabel>
+                    <FormLabel>Verification status</FormLabel>
                     <Select
                       onValueChange={(val) => {
                         onChange(Number(val));

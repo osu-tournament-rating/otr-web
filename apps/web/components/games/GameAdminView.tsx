@@ -196,7 +196,7 @@ export default function GameAdminView({ game }: { game: Game }) {
       </DialogTrigger>
       <DialogContent className="p-4">
         <DialogHeader className="space-y-1">
-          <DialogTitle>Edit Game</DialogTitle>
+          <DialogTitle>Edit game</DialogTitle>
           <DialogDescription>Editing Game {game.id}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -207,7 +207,7 @@ export default function GameAdminView({ game }: { game: Game }) {
                 name="scoringType"
                 render={({ field: { value, onChange }, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Scoring Type</FormLabel>
+                    <FormLabel>Scoring type</FormLabel>
                     <Select
                       onValueChange={(val) => onChange(Number(val))}
                       value={value.toString()}
@@ -229,7 +229,7 @@ export default function GameAdminView({ game }: { game: Game }) {
                 name="teamType"
                 render={({ field: { value, onChange }, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Team Type</FormLabel>
+                    <FormLabel>Team type</FormLabel>
                     <Select
                       onValueChange={(val) => onChange(Number(val))}
                       value={value.toString()}
@@ -286,7 +286,7 @@ export default function GameAdminView({ game }: { game: Game }) {
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel className="text-muted-foreground">
-                      Free Mod
+                      Free mod
                     </FormLabel>
                   </div>
                 </FormItem>
@@ -301,7 +301,7 @@ export default function GameAdminView({ game }: { game: Game }) {
 
                 return (
                   <FormItem>
-                    <FormLabel>Rejection Reason</FormLabel>
+                    <FormLabel>Rejection reason</FormLabel>
                     <FormControl>
                       <MultipleSelect
                         className={inputChangedStyle(fieldState)}
@@ -361,7 +361,7 @@ export default function GameAdminView({ game }: { game: Game }) {
 
                 return (
                   <FormItem>
-                    <FormLabel>Warning Flags</FormLabel>
+                    <FormLabel>Warning flags</FormLabel>
                     <FormControl>
                       <MultipleSelect
                         className={inputChangedStyle(fieldState)}
@@ -390,7 +390,7 @@ export default function GameAdminView({ game }: { game: Game }) {
                 name="verificationStatus"
                 render={({ field: { value, onChange }, fieldState }) => (
                   <FormItem className="flex-1">
-                    <FormLabel>Verification Status</FormLabel>
+                    <FormLabel>Verification status</FormLabel>
                     <Select
                       onValueChange={(val) => {
                         onChange(Number(val));

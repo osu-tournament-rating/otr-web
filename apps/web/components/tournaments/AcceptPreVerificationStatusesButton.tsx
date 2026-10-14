@@ -63,7 +63,7 @@ export default function AcceptPreVerificationStatusesButton({
       </SimpleTooltip>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Confirm Accept Pre-Verification Statuses</DialogTitle>
+          <DialogTitle>Confirm accept pre-verification statuses</DialogTitle>
           <DialogDescription asChild>
             <div>
               Are you sure you want to accept pre-verification statuses for{' '}

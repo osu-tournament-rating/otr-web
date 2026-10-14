@@ -71,7 +71,7 @@ export default function ResetAutomatedChecksButton({
       </SimpleTooltip>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Confirm Reset Automated Checks</DialogTitle>
+          <DialogTitle>Confirm reset automated checks</DialogTitle>
           <DialogDescription asChild>
             <div>
               Are you sure you want to reset automated checks for{' '}

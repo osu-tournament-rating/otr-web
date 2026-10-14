@@ -71,7 +71,7 @@ export default function RefetchMatchDataButton({
       </SimpleTooltip>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Confirm Match Data Refetch</DialogTitle>
+          <DialogTitle>Confirm match data refetch</DialogTitle>
           <DialogDescription asChild>
             <div>
               Are you sure you want to refetch match data for{' '}

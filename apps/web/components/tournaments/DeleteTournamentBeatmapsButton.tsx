@@ -62,7 +62,7 @@ export default function DeleteTournamentBeatmapsButton({
       </SimpleTooltip>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Confirm Unlink Pooled Beatmaps</DialogTitle>
+          <DialogTitle>Confirm unlink pooled beatmaps</DialogTitle>
           <DialogDescription asChild>
             <div>
               Are you sure you want to unlink all pooled beatmaps from{' '}

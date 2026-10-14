@@ -79,7 +79,7 @@ export default function DeleteButton({
       </SimpleTooltip>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Confirm Delete {entityLabels[entityType]}</DialogTitle>
+          <DialogTitle>Confirm delete {entityLabels[entityType]}</DialogTitle>
           <DialogDescription asChild>
             <div>
               Are you sure you want to delete <strong>{entityName}</strong>?

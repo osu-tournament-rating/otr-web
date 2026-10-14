@@ -90,7 +90,7 @@ export default function AdminNoteListItem({
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Edit Note</AlertDialogTitle>
+                  <AlertDialogTitle>Edit note</AlertDialogTitle>
                   <AlertDialogDescription>
                     Change the text of this note.
                   </AlertDialogDescription>
@@ -124,7 +124,7 @@ export default function AdminNoteListItem({
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Note</AlertDialogTitle>
+                  <AlertDialogTitle>Delete note</AlertDialogTitle>
                   <AlertDialogDescription>
                     Are you sure you want to delete this note?
                   </AlertDialogDescription>

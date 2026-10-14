@@ -296,12 +296,12 @@ export default function TournamentMatchesAdminView({
                 <DialogTrigger asChild>
                   <Button variant="destructive" size="sm">
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Remove Selected ({selectedMatchIds.size})
+                    Remove selected ({selectedMatchIds.size})
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="flex max-h-[80vh] flex-col overflow-hidden sm:max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle>Confirm Match Removal</DialogTitle>
+                    <DialogTitle>Confirm match removal</DialogTitle>
                     <DialogDescription asChild>
                       <div>
                         Are you sure you want to remove{' '}
@@ -379,7 +379,7 @@ export default function TournamentMatchesAdminView({
                       ) : (
                         <>
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Remove Matches
+                          Remove matches
                         </>
                       )}
                     </Button>
@@ -391,12 +391,12 @@ export default function TournamentMatchesAdminView({
               <DialogTrigger asChild>
                 <Button size="sm">
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Matches
+                  Add matches
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add Matches</DialogTitle>
+                  <DialogTitle>Add matches</DialogTitle>
                   <DialogDescription asChild>
                     <div>
                       <p>
@@ -458,7 +458,7 @@ export default function TournamentMatchesAdminView({
                       ) : (
                         <>
                           <Plus className="h-4 w-4" />
-                          Add Matches
+                          Add matches
                         </>
                       )}
                     </Button>

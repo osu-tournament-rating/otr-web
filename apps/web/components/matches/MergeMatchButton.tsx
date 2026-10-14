@@ -178,7 +178,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
         </p>
         {childMatch.osuId && (
           <p className="flex items-center gap-2">
-            <strong>MP Link:</strong>
+            <strong>MP link:</strong>
             <a
               href={`https://osu.ppy.sh/community/matches/${childMatch.osuId}`}
               target="_blank"
@@ -190,15 +190,15 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
           </p>
         )}
         <p className="flex items-center gap-2">
-          <strong>Game Count:</strong>
+          <strong>Game count:</strong>
           {childMatch.games?.length ?? 0}
         </p>
         <p>
-          <strong>End Time:</strong>{' '}
+          <strong>End time:</strong>{' '}
           {formatDateTime(childMatch.endTime ?? null)}
         </p>
         <div className="flex items-center gap-2 text-sm">
-          <strong>Verification Status:</strong>
+          <strong>Verification status:</strong>
           <VerificationBadge
             verificationStatus={childMatch.verificationStatus}
             displayText
@@ -221,7 +221,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
     return (
       <div className="space-y-2 rounded-lg border p-4">
         <h4 className="font-semibold">
-          Child Match{pluralSuffix} ({matchCount})
+          Child match{pluralSuffix} ({matchCount})
         </h4>
         <div className="max-h-60 space-y-3 overflow-y-auto">
           {childMatches.map(renderChildMatchInfo)}
@@ -238,7 +238,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Match Merge</DialogTitle>
+            <DialogTitle>Confirm match merge</DialogTitle>
             <DialogDescription asChild>
               <div>
                 Are you sure you want to merge{' '}
@@ -289,7 +289,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
       </SimpleTooltip>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Merge Matches</DialogTitle>
+          <DialogTitle>Merge matches</DialogTitle>
           <DialogDescription>
             Merge child matches into parent match <strong>{match.name}</strong>.
             All games from the child matches will be moved here, and the child
@@ -299,7 +299,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="matchIds">Child Match IDs</Label>
+            <Label htmlFor="matchIds">Child match IDs</Label>
             <div className="space-y-2">
               <Textarea
                 id="matchIds"
@@ -319,7 +319,7 @@ export default function MergeMatchButton({ match }: MergeMatchButtonProps) {
                     Fetching...
                   </>
                 ) : (
-                  'Fetch Matches'
+                  'Fetch matches'
                 )}
               </Button>
             </div>
