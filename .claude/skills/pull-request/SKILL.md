@@ -97,4 +97,5 @@ yourself, send the images to the user, ask them to drop them into the
 CI adds an `app:<name>` label for each app whose files the pull request
 changes. Do not add them by hand. Add `preview` only when the change needs a
 running site to judge, such as new behavior or data flows, and not for a
-visual change the screenshots already show.
+visual change the screenshots already show. Add `meta:breaking-change` when the
+pull request breaks the public API, a database contract, or another consumer.
