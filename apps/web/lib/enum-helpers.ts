@@ -1,6 +1,5 @@
 import {
   AdminNoteRouteTarget,
-  AuditActionType,
   AuditEntityType,
   FilteringFailReason,
   GameRejectionReason,
@@ -17,7 +16,6 @@ import {
   ScoringType,
   Team,
   TeamType,
-  TournamentQuerySortType,
   TournamentRejectionReason,
   VerificationStatus,
 } from '@otr/core/osu';
@@ -142,38 +140,6 @@ export const VerificationStatusEnumHelper: IEnumHelper<VerificationStatus> = {
     },
   },
 };
-
-export const TournamentQuerySortTypeEnumHelper: IEnumHelper<TournamentQuerySortType> =
-  {
-    ...defaultEnumHelper(),
-
-    metadata: {
-      [TournamentQuerySortType.Id]: {
-        text: 'ID',
-        description: 'Sort by primary key (legacy submission order)',
-      },
-      [TournamentQuerySortType.StartTime]: {
-        text: 'Start Date',
-        description: 'Sort by the tournament start date',
-      },
-      [TournamentQuerySortType.EndTime]: {
-        text: 'End Date',
-        description: 'Sort by the tournament end date',
-      },
-      [TournamentQuerySortType.SearchQueryRelevance]: {
-        text: 'Search Relevance',
-        description: 'Sort by how closely tournaments match the search term',
-      },
-      [TournamentQuerySortType.SubmissionDate]: {
-        text: 'Submission Date',
-        description: 'Sort by when tournaments were submitted to o!TR',
-      },
-      [TournamentQuerySortType.LobbySize]: {
-        text: 'Lobby Size',
-        description: 'Sort by configured lobby size',
-      },
-    },
-  };
 
 export const AdminNoteRouteTargetEnumHelper: IEnumHelper<AdminNoteRouteTarget> =
   {
@@ -826,25 +792,6 @@ export const ReportStatusEnumHelper: IEnumHelper<ReportStatus> = {
     [ReportStatus.Rejected]: {
       text: 'Dismissed',
       description: 'No action to take',
-    },
-  },
-};
-
-export const AuditActionTypeEnumHelper: IEnumHelper<AuditActionType> = {
-  ...defaultEnumHelper(),
-
-  metadata: {
-    [AuditActionType.Created]: {
-      text: 'Created',
-      description: 'Entity was created',
-    },
-    [AuditActionType.Updated]: {
-      text: 'Updated',
-      description: 'Entity was updated',
-    },
-    [AuditActionType.Deleted]: {
-      text: 'Deleted',
-      description: 'Entity was deleted',
     },
   },
 };
