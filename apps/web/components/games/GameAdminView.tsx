@@ -302,20 +302,22 @@ export default function GameAdminView({ game }: { game: Game }) {
                 return (
                   <FormItem>
                     <FormLabel>Rejection Reason</FormLabel>
-                    <MultipleSelect
-                      className={inputChangedStyle(fieldState)}
-                      placeholder={'No rejection reason'}
-                      selected={flags.map(String)}
-                      options={gameRejectionReasonOptions}
-                      onChange={(values: string[]) => {
-                        let flag = 0;
-                        values.forEach((v: string) => {
-                          flag |= Number(v);
-                        });
+                    <FormControl>
+                      <MultipleSelect
+                        className={inputChangedStyle(fieldState)}
+                        placeholder={'No rejection reason'}
+                        selected={flags.map(String)}
+                        options={gameRejectionReasonOptions}
+                        onChange={(values: string[]) => {
+                          let flag = 0;
+                          values.forEach((v: string) => {
+                            flag |= Number(v);
+                          });
 
-                        onChange(flag);
-                      }}
-                    />
+                          onChange(flag);
+                        }}
+                      />
+                    </FormControl>
                   </FormItem>
                 );
               }}
@@ -330,20 +332,22 @@ export default function GameAdminView({ game }: { game: Game }) {
                 return (
                   <FormItem>
                     <FormLabel>Mods</FormLabel>
-                    <MultipleSelect
-                      className={inputChangedStyle(fieldState)}
-                      placeholder={'No mods'}
-                      selected={flags.map(String)}
-                      options={modOptions}
-                      onChange={(values: string[]) => {
-                        let flag = 0;
-                        values.forEach((v: string) => {
-                          flag |= Number(v);
-                        });
+                    <FormControl>
+                      <MultipleSelect
+                        className={inputChangedStyle(fieldState)}
+                        placeholder={'No mods'}
+                        selected={flags.map(String)}
+                        options={modOptions}
+                        onChange={(values: string[]) => {
+                          let flag = 0;
+                          values.forEach((v: string) => {
+                            flag |= Number(v);
+                          });
 
-                        onChange(flag);
-                      }}
-                    />
+                          onChange(flag);
+                        }}
+                      />
+                    </FormControl>
                   </FormItem>
                 );
               }}
@@ -358,21 +362,23 @@ export default function GameAdminView({ game }: { game: Game }) {
                 return (
                   <FormItem>
                     <FormLabel>Warning Flags</FormLabel>
-                    <MultipleSelect
-                      className={inputChangedStyle(fieldState)}
-                      placeholder={'No warnings'}
-                      disabled
-                      selected={flags.map(String)}
-                      options={warningFlagOptions}
-                      onChange={(values: string[]) => {
-                        let flag = 0;
-                        values.forEach((v: string) => {
-                          flag |= Number(v);
-                        });
+                    <FormControl>
+                      <MultipleSelect
+                        className={inputChangedStyle(fieldState)}
+                        placeholder={'No warnings'}
+                        disabled
+                        selected={flags.map(String)}
+                        options={warningFlagOptions}
+                        onChange={(values: string[]) => {
+                          let flag = 0;
+                          values.forEach((v: string) => {
+                            flag |= Number(v);
+                          });
 
-                        onChange(flag);
-                      }}
-                    />
+                          onChange(flag);
+                        }}
+                      />
+                    </FormControl>
                   </FormItem>
                 );
               }}

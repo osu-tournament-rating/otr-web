@@ -605,20 +605,22 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                     return (
                       <FormItem className="min-w-0">
                         <FormLabel>Rejection Reason</FormLabel>
-                        <MultipleSelect
-                          className={inputChangedStyle(fieldState)}
-                          placeholder={'No rejection reason'}
-                          selected={flags.map(String)}
-                          options={scoreRejectionReasonOptions}
-                          onChange={(values: string[]) => {
-                            let flag = 0;
-                            values.forEach((v: string) => {
-                              flag |= Number(v);
-                            });
+                        <FormControl>
+                          <MultipleSelect
+                            className={inputChangedStyle(fieldState)}
+                            placeholder={'No rejection reason'}
+                            selected={flags.map(String)}
+                            options={scoreRejectionReasonOptions}
+                            onChange={(values: string[]) => {
+                              let flag = 0;
+                              values.forEach((v: string) => {
+                                flag |= Number(v);
+                              });
 
-                            onChange(flag);
-                          }}
-                        />
+                              onChange(flag);
+                            }}
+                          />
+                        </FormControl>
                       </FormItem>
                     );
                   }}
@@ -632,20 +634,22 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
                     return (
                       <FormItem className="min-w-0">
                         <FormLabel>Mods</FormLabel>
-                        <MultipleSelect
-                          className={inputChangedStyle(fieldState)}
-                          placeholder={'No mods'}
-                          selected={flags.map(String)}
-                          options={modOptions}
-                          onChange={(values: string[]) => {
-                            let flag = 0;
-                            values.forEach((v: string) => {
-                              flag |= Number(v);
-                            });
+                        <FormControl>
+                          <MultipleSelect
+                            className={inputChangedStyle(fieldState)}
+                            placeholder={'No mods'}
+                            selected={flags.map(String)}
+                            options={modOptions}
+                            onChange={(values: string[]) => {
+                              let flag = 0;
+                              values.forEach((v: string) => {
+                                flag |= Number(v);
+                              });
 
-                            onChange(flag);
-                          }}
-                        />
+                              onChange(flag);
+                            }}
+                          />
+                        </FormControl>
                       </FormItem>
                     );
                   }}

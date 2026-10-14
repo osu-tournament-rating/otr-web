@@ -27,6 +27,7 @@ import { Select, SelectTrigger, SelectValue } from '../ui/select';
 import { orpc } from '@/lib/orpc/orpc';
 import { useSession } from '@/lib/hooks/useSession';
 import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
 import { MultipleSelect } from '../select/multiple-select';
 import { TournamentRejectionReasonEnumHelper } from '@/lib/enum-helpers';
 import Link from 'next/link';
@@ -378,12 +379,18 @@ export default function TournamentSubmissionForm() {
             {isAdmin && (
               <div className="flex flex-row items-center gap-2">
                 <Checkbox
+                  id="reject-on-submit"
                   checked={rejectOnSubmit}
-                  onClick={() => setRejectOnSubmit((prev) => !prev)}
+                  onCheckedChange={(checked) =>
+                    setRejectOnSubmit(checked === true)
+                  }
                 />
-                <FormLabel className="font-medium text-foreground">
+                <Label
+                  htmlFor="reject-on-submit"
+                  className="font-medium text-foreground"
+                >
                   Reject this tournament on submission
-                </FormLabel>
+                </Label>
                 {rejectOnSubmit && (
                   <FormField
                     control={form.control}
@@ -393,6 +400,9 @@ export default function TournamentSubmissionForm() {
                       fieldState: { invalid },
                     }) => (
                       <FormItem>
+                        <FormLabel className="sr-only">
+                          Rejection reason
+                        </FormLabel>
                         <FormControl>
                           <MultipleSelect
                             placeholder="Select rejection reason"
