@@ -3,6 +3,8 @@
 import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { useAudioPlayer } from '@/lib/hooks/useAudioPlayer';
+import { cn } from '@/lib/utils';
 
 /** Floating bar carrying the actions for a table's current selection. */
 export default function BeatmapSelectionBar({
@@ -14,10 +16,19 @@ export default function BeatmapSelectionBar({
   onClear: () => void;
   children: ReactNode;
 }) {
+  const { state } = useAudioPlayer();
+  // The same check that shows the audio preview transport.
+  const hasTransport =
+    state.currentTrack !== null && state.currentlyPlaying !== null;
+
   return (
     <div
       // Only the bar takes pointer events; the strip spans the viewport.
-      className="pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-4"
+      className={cn(
+        'pointer-events-none fixed inset-x-0 z-40 flex justify-center px-4',
+        // 1rem above the transport, whose spacer is h-32 sm:h-22.
+        hasTransport ? 'bottom-36 sm:bottom-26' : 'bottom-6'
+      )}
       role="region"
       aria-label="Beatmap selection actions"
     >
