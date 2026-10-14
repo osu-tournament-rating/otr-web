@@ -58,7 +58,7 @@ export async function generateMetadata({
 
   if (!parsedParams.success) {
     return {
-      title: 'Player Not Found',
+      title: 'Player not found',
     };
   }
 
@@ -67,7 +67,7 @@ export async function generateMetadata({
 
   if (!playerData) {
     return {
-      title: 'Player Not Found',
+      title: 'Player not found',
     };
   }
 

@@ -2,7 +2,7 @@ import { ShieldAlert } from 'lucide-react';
 import { type Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Account Suspended',
+  title: 'Account suspended',
   description: 'Your osu! Tournament Rating account has been banned.',
 };
 
