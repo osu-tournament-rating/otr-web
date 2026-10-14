@@ -299,7 +299,7 @@ export default function TournamentMatchesAdminView({
                     Remove Selected ({selectedMatchIds.size})
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col overflow-hidden">
+                <DialogContent className="flex max-h-[80vh] flex-col overflow-hidden sm:max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>Confirm Match Removal</DialogTitle>
                     <DialogDescription asChild>
