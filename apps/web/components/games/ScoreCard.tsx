@@ -186,7 +186,7 @@ export default function ScoreCard({
               className="h-5 w-5"
             />
             <span className="text-(--score-text-color)">
-              {score.score.toLocaleString()}
+              {score.score.toLocaleString('en-US')}
             </span>
           </div>
         </div>
@@ -247,7 +247,7 @@ export default function ScoreCard({
               className="h-8 w-8"
             />
             <span className="text-(--score-text-color)">
-              {score.score.toLocaleString()}
+              {score.score.toLocaleString('en-US')}
             </span>
           </div>
         </div>

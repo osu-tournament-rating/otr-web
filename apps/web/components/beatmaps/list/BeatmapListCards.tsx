@@ -200,16 +200,18 @@ export default function BeatmapListCards({
                         aria-hidden="true"
                       />
                     }
-                    value={beatmap.verifiedGameCount.toLocaleString()}
-                    ariaLabel={`${beatmap.verifiedGameCount.toLocaleString()} verified games`}
+                    value={beatmap.verifiedGameCount.toLocaleString('en-US')}
+                    ariaLabel={`${beatmap.verifiedGameCount.toLocaleString('en-US')} verified games`}
                   />
                   <BeatmapMetric
                     testId="beatmap-tournaments-count"
                     icon={
                       <Trophy className="size-4 shrink-0" aria-hidden="true" />
                     }
-                    value={beatmap.verifiedTournamentCount.toLocaleString()}
-                    ariaLabel={`${beatmap.verifiedTournamentCount.toLocaleString()} verified tournaments`}
+                    value={beatmap.verifiedTournamentCount.toLocaleString(
+                      'en-US'
+                    )}
+                    ariaLabel={`${beatmap.verifiedTournamentCount.toLocaleString('en-US')} verified tournaments`}
                   />
                   {showMods ? <BeatmapTopMods mods={topMods} /> : null}
                 </div>

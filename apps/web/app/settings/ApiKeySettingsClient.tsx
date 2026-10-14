@@ -52,10 +52,11 @@ const MAX_API_KEYS = 3;
 const FALLBACK_KEY_NAME = 'API key';
 
 const formatDateTime = (value: string) =>
-  new Date(value).toLocaleString(undefined, {
+  `${new Date(value).toLocaleString('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',
-  });
+    timeZone: 'UTC',
+  })} UTC`;
 
 const getKeyName = (metadata: ApiKeyMetadataWithKey) =>
   metadata.name && metadata.name.trim().length > 0
