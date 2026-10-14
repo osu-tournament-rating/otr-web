@@ -182,44 +182,49 @@ function MultiSelect({
         >
           <div className="flex flex-wrap gap-1">
             {selected.length > 0 ? (
-              selected.map((item) => (
-                <Badge
-                  variant="secondary"
-                  key={item}
-                  className="mr-1 mb-1"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleUnselect(item);
-                  }}
-                >
-                  {options.find((option) => option.value === item)?.label ||
-                    item}
-                  <span
-                    role="button"
-                    tabIndex={-1}
-                    aria-label={`Remove ${item}`}
-                    className="ml-1 cursor-pointer rounded-full ring-offset-background outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleUnselect(item);
-                      }
-                    }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
+              selected.map((item) => {
+                const label =
+                  options.find((option) => option.value === item)?.label ||
+                  item;
+
+                return (
+                  <Badge
+                    variant="secondary"
+                    key={item}
+                    className="mr-1 mb-1"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       handleUnselect(item);
                     }}
                   >
-                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                  </span>
-                </Badge>
-              ))
+                    {label}
+                    <span
+                      role="button"
+                      tabIndex={-1}
+                      aria-label={`Remove ${label}`}
+                      className="ml-1 cursor-pointer rounded-full ring-offset-background outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleUnselect(item);
+                        }
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleUnselect(item);
+                      }}
+                    >
+                      <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                    </span>
+                  </Badge>
+                );
+              })
             ) : (
               <span className="text-muted-foreground">{placeholder}</span>
             )}
