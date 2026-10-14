@@ -28,7 +28,8 @@ assigned dynamic ports.
 - `cargo run -- --help` lists options. A run needs `DATABASE_URL`, or
   `CONNECTION_STRING`, which the production cron still passes. RabbitMQ reads
   `RABBITMQ_AMQP_URL`, then `RABBITMQ_URL`.
-- `cargo test` runs unit tests. Database tests use Testcontainers and Docker.
+- `cargo test` runs unit tests. Database tests use Testcontainers and Docker,
+  and build each database from otr's drizzle migrations.
   Real-broker tests are ignored unless an approved disposable broker is assigned.
   A test that spawns the binary sets `DATABASE_URL` and any broker URL itself;
   otherwise the root `.env` supplies them.
@@ -71,9 +72,10 @@ tests.
 - `src/database/` consumes the otr schema at
   `packages/otr-core/src/db/schema.ts`; migrations live in `apps/web/drizzle/`.
   Both paths are from the otr root.
-  Update row structs, raw SQL, `COPY` columns, and `tests/database/schema.sql`
-  for an affected contract. Use additive migrations and test a fresh disposable
-  database.
+  Update row structs, raw SQL, and `COPY` columns for an affected contract.
+  The database tests run against a schema built from those migrations, so
+  update their seed data when a column they insert changes. Use additive
+  migrations.
 - Keep recomputation writes on one connection inside the transaction guard.
   Preserve rollback around truncation, `COPY`, score updates, and stale-stat
   deletion.

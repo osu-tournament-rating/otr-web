@@ -1,6 +1,27 @@
-use testcontainers::{runners::AsyncRunner, ContainerAsync};
+use serde::Deserialize;
+use std::{fs, path::Path};
+use testcontainers::{runners::AsyncRunner, ContainerAsync, ImageExt};
 use testcontainers_modules::postgres::Postgres;
 use tokio_postgres::{Client, NoTls};
+
+/// otr's drizzle migrations, which own the schema the processor reads and writes.
+const MIGRATIONS_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../web/drizzle");
+
+/// Production's PostgreSQL major version.
+const POSTGRES_TAG: &str = "17";
+
+/// The comment lines that open the baseline migration, above its commented-out SQL.
+const BASELINE_HEADER_LINES: usize = 3;
+
+#[derive(Deserialize)]
+struct Journal {
+    entries: Vec<JournalEntry>
+}
+
+#[derive(Deserialize)]
+struct JournalEntry {
+    tag: String
+}
 
 pub struct TestDatabase {
     pub connection_string: String,
@@ -10,7 +31,7 @@ pub struct TestDatabase {
 impl TestDatabase {
     pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
         // Start PostgreSQL container
-        let container = Postgres::default().start().await?;
+        let container = Postgres::default().with_tag(POSTGRES_TAG).start().await?;
         let port = container.get_host_port_ipv4(5432).await?;
 
         let connection_string = format!(
@@ -19,7 +40,7 @@ impl TestDatabase {
         );
 
         // Connect and create schema
-        let (client, connection) = tokio_postgres::connect(&connection_string, NoTls).await?;
+        let (mut client, connection) = tokio_postgres::connect(&connection_string, NoTls).await?;
 
         // Spawn the connection handler
         tokio::spawn(async move {
@@ -28,9 +49,7 @@ impl TestDatabase {
             }
         });
 
-        // Load and execute schema
-        let schema = include_str!("schema.sql");
-        client.batch_execute(schema).await?;
+        apply_migrations(&mut client).await?;
 
         Ok(TestDatabase {
             connection_string,
@@ -152,254 +171,84 @@ impl TestDatabase {
             .map(|row| row.get(0))
             .collect();
 
-        // Insert game scores
-        let score_values = vec![
-            (
-                player_ids[0],
-                game_ids[0],
-                0,
-                1000000,
-                500,
-                10,
-                20,
-                300,
-                5,
-                0,
-                0,
-                false,
-                true,
-                1,
-                0,
-                0,
-                0,
-                4,
-                0
-            ),
-            (
-                player_ids[1],
-                game_ids[0],
-                0,
-                900000,
-                450,
-                15,
-                25,
-                280,
-                10,
-                0,
-                0,
-                false,
-                true,
-                2,
-                0,
-                0,
-                0,
-                4,
-                0
-            ),
-            (
-                player_ids[2],
-                game_ids[0],
-                0,
-                800000,
-                400,
-                20,
-                30,
-                260,
-                15,
-                0,
-                0,
-                false,
-                true,
-                3,
-                0,
-                0,
-                0,
-                4,
-                0
-            ),
-            (
-                player_ids[3],
-                game_ids[0],
-                0,
-                700000,
-                350,
-                25,
-                35,
-                240,
-                20,
-                0,
-                0,
-                false,
-                true,
-                4,
-                0,
-                0,
-                0,
-                4,
-                0
-            ),
-            (
-                player_ids[0],
-                game_ids[1],
-                0,
-                950000,
-                480,
-                12,
-                22,
-                290,
-                7,
-                0,
-                0,
-                false,
-                true,
-                2,
-                0,
-                0,
-                0,
-                4,
-                0
-            ),
-            (
-                player_ids[1],
-                game_ids[1],
-                0,
-                1000000,
-                500,
-                8,
-                18,
-                310,
-                3,
-                0,
-                0,
-                false,
-                true,
-                1,
-                0,
-                0,
-                0,
-                4,
-                0
-            ),
-            (
-                player_ids[2],
-                game_ids[1],
-                0,
-                850000,
-                420,
-                18,
-                28,
-                270,
-                12,
-                0,
-                0,
-                false,
-                true,
-                3,
-                0,
-                0,
-                0,
-                4,
-                0
-            ),
-            (
-                player_ids[3],
-                game_ids[1],
-                0,
-                750000,
-                370,
-                22,
-                32,
-                250,
-                18,
-                0,
-                0,
-                false,
-                true,
-                4,
-                0,
-                0,
-                0,
-                4,
-                0
-            ),
-            (
-                player_ids[0],
-                game_ids[2],
-                0,
-                980000,
-                490,
-                9,
-                19,
-                305,
-                4,
-                0,
-                0,
-                false,
-                true,
-                1,
-                0,
-                0,
-                0,
-                4,
-                0
-            ),
-            (
-                player_ids[1],
-                game_ids[2],
-                0,
-                920000,
-                460,
-                13,
-                23,
-                285,
-                8,
-                0,
-                0,
-                false,
-                true,
-                2,
-                0,
-                0,
-                0,
-                4,
-                0
-            ),
+        // Insert game scores: (player index, game index, raw score, max combo, placement).
+        // The columns the processor never reads take one fixed value.
+        let score_values = [
+            (0, 0, 1000000, 500, 1),
+            (1, 0, 900000, 450, 2),
+            (2, 0, 800000, 400, 3),
+            (3, 0, 700000, 350, 4),
+            (0, 1, 950000, 480, 2),
+            (1, 1, 1000000, 500, 1),
+            (2, 1, 850000, 420, 3),
+            (3, 1, 750000, 370, 4),
+            (0, 2, 980000, 490, 1),
+            (1, 2, 920000, 460, 2)
         ];
 
-        for (
-            player_id,
-            game_id,
-            team,
-            score,
-            max_combo,
-            count50,
-            count100,
-            count300,
-            count_miss,
-            count_geki,
-            count_katu,
-            perfect,
-            pass,
-            placement,
-            grade,
-            mods,
-            ruleset,
-            verification_status,
-            rejection_reason
-        ) in score_values
-        {
-            client.execute(
-                "INSERT INTO game_scores (player_id, game_id, team, score, max_combo, count50, count100, count300, count_miss, count_geki, count_katu, perfect, pass, placement, grade, mods, ruleset, verification_status, rejection_reason) 
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)",
-                &[
-                    &player_id, &game_id, &team, &score, &max_combo,
-                    &count50, &count100, &count300, &count_miss, &count_geki,
-                    &count_katu, &perfect, &pass, &placement, &grade,
-                    &mods, &ruleset, &verification_status, &rejection_reason
-                ]
-            ).await?;
+        for (player, game, raw_score, max_combo, placement) in score_values {
+            client
+                .execute(
+                    "INSERT INTO game_scores (player_id, game_id, raw_score, max_combo, placement, accuracy, pass, is_perfect_combo, legacy_perfect, legacy_total_score, grade, mods, team, ruleset, verification_status, rejection_reason)
+                     VALUES ($1, $2, $3, $4, $5, 0.95, true, false, false, $3, 0, 0, 0, 0, 4, 0)",
+                    &[&player_ids[player], &game_ids[game], &raw_score, &max_combo, &placement]
+                )
+                .await?;
         }
 
         Ok(())
     }
+}
+
+/// Builds the schema from otr's drizzle migrations, as `drizzle-kit migrate`
+/// does for a new database: every migration in journal order, inside one
+/// transaction, one statement-breakpoint chunk at a time. The processor reads
+/// and writes these tables with raw SQL, so its tests must see the schema that
+/// production runs, not a hand-maintained copy of it.
+async fn apply_migrations(client: &mut Client) -> Result<(), Box<dyn std::error::Error>> {
+    let dir = Path::new(MIGRATIONS_DIR);
+    let journal: Journal = serde_json::from_str(&fs::read_to_string(dir.join("meta/_journal.json"))?)?;
+
+    let transaction = client.transaction().await?;
+    for (index, entry) in journal.entries.iter().enumerate() {
+        let mut sql = fs::read_to_string(dir.join(format!("{}.sql", entry.tag)))?;
+        if index == 0 {
+            sql = uncomment_baseline(&entry.tag, &sql);
+        }
+
+        for statement in sql.split("--> statement-breakpoint") {
+            transaction.batch_execute(statement).await.map_err(|e| {
+                let detail = e.as_db_error().map_or_else(|| e.to_string(), |db| db.to_string());
+                format!("migration {} failed: {}", entry.tag, detail)
+            })?;
+        }
+    }
+    transaction.commit().await?;
+
+    Ok(())
+}
+
+/// The baseline migration ships commented out so `drizzle-kit migrate` leaves
+/// existing databases alone. This drops its header and strips each `-- `
+/// prefix, the same edit CI's web test job makes with
+/// `sed -e '1,3d' -e 's/^-- //'`. It panics if the file has changed shape, so a
+/// new layout fails here instead of building a partial schema.
+fn uncomment_baseline(tag: &str, sql: &str) -> String {
+    let mut lines = sql.lines();
+    let header: Vec<_> = lines.by_ref().take(BASELINE_HEADER_LINES).collect();
+    assert!(
+        header.len() == BASELINE_HEADER_LINES && header.iter().all(|line| line.starts_with("-- ")),
+        "{tag} no longer opens with a {BASELINE_HEADER_LINES}-line comment header"
+    );
+
+    lines
+        .map(|line| {
+            if line.is_empty() {
+                return line;
+            }
+            line.strip_prefix("-- ")
+                .unwrap_or_else(|| panic!("{tag} has a line that is not commented out: {line}"))
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
 }
