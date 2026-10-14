@@ -152,6 +152,20 @@ test.describe('Player Profile Page', () => {
     });
   });
 
+  test.describe('Missing players', () => {
+    test('a player that does not exist shows the not-found page', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.playerProfile(999_999_999));
+      await page.waitForLoadState('networkidle');
+
+      await expect(page.getByText('404 Not Found')).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page.getByText('Player could not load')).toHaveCount(0);
+    });
+  });
+
   test.describe('Tournament History', () => {
     test('displays tournament list section', async ({ page }) => {
       await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
