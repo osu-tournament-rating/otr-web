@@ -22,7 +22,13 @@ const VOLUME_STORAGE_KEY = 'otr-audio-player-volume';
 
 function getStoredVolume(): number {
   if (typeof window === 'undefined') return DEFAULT_PREVIEW_VOLUME;
-  const stored = localStorage.getItem(VOLUME_STORAGE_KEY);
+  let stored: string | null;
+  try {
+    stored = localStorage.getItem(VOLUME_STORAGE_KEY);
+  } catch {
+    // Storage throws when the browser blocks site data.
+    return DEFAULT_PREVIEW_VOLUME;
+  }
   if (stored === null) return DEFAULT_PREVIEW_VOLUME;
 
   return clampPreviewVolume(parseFloat(stored));
@@ -266,7 +272,11 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     if (audioRef.current) {
       audioRef.current.volume = safeVolume;
     }
-    localStorage.setItem(VOLUME_STORAGE_KEY, safeVolume.toString());
+    try {
+      localStorage.setItem(VOLUME_STORAGE_KEY, safeVolume.toString());
+    } catch {
+      // The volume still applies for this visit.
+    }
     setState((previous) => ({ ...previous, volume: safeVolume }));
   }, []);
 

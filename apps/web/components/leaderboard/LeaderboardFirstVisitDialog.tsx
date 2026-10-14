@@ -19,13 +19,23 @@ export default function LeaderboardFirstVisitDialog() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    if (!localStorage.getItem(STORAGE_KEY)) {
-      setIsOpen(true);
+    try {
+      if (!localStorage.getItem(STORAGE_KEY)) {
+        setIsOpen(true);
+      }
+    } catch {
+      // Storage throws when the browser blocks site data. Without it the
+      // dismissal can't stick, so skip the dialog rather than show it on
+      // every visit.
     }
   }, []);
 
   const handleDismiss = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, 'true');
+    try {
+      localStorage.setItem(STORAGE_KEY, 'true');
+    } catch {
+      // Storage is unavailable; closing still works for this visit.
+    }
     setIsOpen(false);
   }, []);
 

@@ -11,6 +11,28 @@ import { toast } from 'sonner';
 const LOGIN_STORAGE_KEY = 'otr:isLoggingIn';
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Storage throws when the browser blocks site data. The flag only keeps the
+// spinner up across the OAuth redirect, so sign-in works without it.
+function readLoginFlag(): boolean {
+  try {
+    return sessionStorage.getItem(LOGIN_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function writeLoginFlag(isLoggingIn: boolean) {
+  try {
+    if (isLoggingIn) {
+      sessionStorage.setItem(LOGIN_STORAGE_KEY, 'true');
+    } else {
+      sessionStorage.removeItem(LOGIN_STORAGE_KEY);
+    }
+  } catch {
+    // Nothing to persist.
+  }
+}
+
 export default function LoginButton() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const sessionRefreshTriggeredRef = useRef(false);
@@ -22,7 +44,7 @@ export default function LoginButton() {
       return;
     }
 
-    if (sessionStorage.getItem(LOGIN_STORAGE_KEY) === 'true') {
+    if (readLoginFlag()) {
       sessionRefreshTriggeredRef.current = true;
       setIsLoggingIn(true);
     }
@@ -42,9 +64,7 @@ export default function LoginButton() {
       let cancelled = false;
 
       const finish = async () => {
-        if (typeof window !== 'undefined') {
-          sessionStorage.removeItem(LOGIN_STORAGE_KEY);
-        }
+        writeLoginFlag(false);
         await delay(10000);
 
         if (!cancelled) {
@@ -65,9 +85,7 @@ export default function LoginButton() {
     <Button
       className="cursor-pointer"
       onClick={async () => {
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem(LOGIN_STORAGE_KEY, 'true');
-        }
+        writeLoginFlag(true);
 
         sessionRefreshTriggeredRef.current = false;
         setIsLoggingIn(true);
@@ -82,7 +100,7 @@ export default function LoginButton() {
                 (error instanceof Error ? error.message : String(error))
             );
 
-            sessionStorage.removeItem(LOGIN_STORAGE_KEY);
+            writeLoginFlag(false);
             sessionRefreshTriggeredRef.current = false;
             await delay(1000);
             setIsLoggingIn(false);
@@ -99,9 +117,7 @@ export default function LoginButton() {
         if (error) {
           toast.error('Error occurred: ' + error.message);
 
-          if (typeof window !== 'undefined') {
-            sessionStorage.removeItem(LOGIN_STORAGE_KEY);
-          }
+          writeLoginFlag(false);
 
           sessionRefreshTriggeredRef.current = false;
           await delay(1000);
