@@ -135,6 +135,7 @@ export default async function Page(props: {
           <Link
             href={createUri(i)}
             data-testid={`leaderboard-pagination-page-${i}`}
+            aria-current={i === page ? 'page' : undefined}
             className={`px-2 sm:px-4 ${i === page ? 'font-bold' : ''}`}
           >
             {i}
@@ -210,16 +211,20 @@ export default async function Page(props: {
 
       <Pagination data-testid="leaderboard-pagination" className="mt-4">
         <PaginationContent>
-          <PaginationItem>
+          {/* The item keeps the cursor, since a disabled link takes no pointer events */}
+          <PaginationItem className={page <= 1 ? 'cursor-not-allowed' : ''}>
             <PaginationPrevious
               data-testid="leaderboard-pagination-prev"
               href={page > 1 ? createUri(page - 1) : createUri(1)}
               aria-disabled={page <= 1}
-              className={page <= 1 ? 'cursor-not-allowed opacity-50' : ''}
+              tabIndex={page <= 1 ? -1 : undefined}
+              className={page <= 1 ? 'pointer-events-none opacity-50' : ''}
             />
           </PaginationItem>
           {renderPageNumbers()}
-          <PaginationItem>
+          <PaginationItem
+            className={page >= totalPages ? 'cursor-not-allowed' : ''}
+          >
             <PaginationNext
               data-testid="leaderboard-pagination-next"
               href={
@@ -228,8 +233,9 @@ export default async function Page(props: {
                   : String(createUri(totalPages))
               }
               aria-disabled={page >= totalPages}
+              tabIndex={page >= totalPages ? -1 : undefined}
               className={
-                page >= totalPages ? 'cursor-not-allowed opacity-50' : ''
+                page >= totalPages ? 'pointer-events-none opacity-50' : ''
               }
             />
           </PaginationItem>
