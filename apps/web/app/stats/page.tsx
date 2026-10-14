@@ -4,7 +4,7 @@ import StatsPageContent from '@/components/stats/StatsPageContent';
 import { orpc } from '@/lib/orpc/orpc';
 
 export const metadata: Metadata = {
-  title: 'Platform Statistics | o!TR',
+  title: 'Platform statistics',
   description: 'View platform-wide statistics and insights for o!TR',
 };
 

@@ -10,6 +10,11 @@ import ThemeHotkeyClient from '@/app/settings/ThemeHotkeyClient';
 import { auth } from '@/lib/auth/auth';
 import { orpc } from '@/lib/orpc/orpc';
 import { getFriendCount } from '@/lib/db/player-friends';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Settings',
+};
 
 export default async function SettingsPage() {
   const headersList = await headers();

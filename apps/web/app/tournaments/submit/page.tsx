@@ -4,7 +4,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Submit Tournament | o!TR',
+  title: 'Submit a tournament',
   description: 'Submit a tournament to be included in the rating system',
 };
 

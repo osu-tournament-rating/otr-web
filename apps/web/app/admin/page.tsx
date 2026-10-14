@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { ShieldCheck } from 'lucide-react';
@@ -5,6 +6,10 @@ import { ShieldCheck } from 'lucide-react';
 import AdminDashboardClient from './AdminDashboardClient';
 import { auth } from '@/lib/auth/auth';
 import { hasAdminScope } from '@/lib/auth/roles';
+
+export const metadata: Metadata = {
+  title: 'Admin',
+};
 
 export default async function AdminDashboardPage() {
   const headersList = await headers();

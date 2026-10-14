@@ -75,7 +75,7 @@ export async function generateMetadata({
   const parsedParams = tournamentPageParamsSchema.safeParse(await params);
 
   if (!parsedParams.success) {
-    return { title: 'Tournament Not Found' };
+    return { title: 'Tournament not found' };
   }
 
   const tournament = await fetchOrpcOptional(() =>
@@ -83,7 +83,7 @@ export async function generateMetadata({
   );
 
   if (!tournament) {
-    return { title: 'Tournament Not Found' };
+    return { title: 'Tournament not found' };
   }
 
   return { title: tournament.name };

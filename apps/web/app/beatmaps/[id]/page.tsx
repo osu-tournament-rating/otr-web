@@ -33,12 +33,12 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const parsedParams = beatmapPageParamsSchema.safeParse(await params);
 
-  if (!parsedParams.success) return { title: 'Beatmap Not Found' };
+  if (!parsedParams.success) return { title: 'Beatmap not found' };
 
   const stats = await fetchOrpcOptional(() =>
     getBeatmapStatsCached(parsedParams.data.id)
   );
-  if (!stats) return { title: 'Beatmap Not Found' };
+  if (!stats) return { title: 'Beatmap not found' };
 
   const artist = getBeatmapArtist(stats.beatmap) ?? 'Unknown artist';
   const title = getBeatmapTitle(stats.beatmap) ?? 'Unknown title';

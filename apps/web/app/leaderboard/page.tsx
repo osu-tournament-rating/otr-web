@@ -25,7 +25,7 @@ import LeaderboardTabs from './LeaderboardTabs';
 import LeaderboardFirstVisitDialog from '@/components/leaderboard/LeaderboardFirstVisitDialog';
 
 export const metadata: Metadata = {
-  title: 'Global Leaderboard',
+  title: 'Global leaderboard',
   description:
     'View the global tournament rating leaderboard and player rankings.',
 };

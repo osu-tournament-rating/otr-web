@@ -37,7 +37,7 @@ export async function generateMetadata({
   const parsedParams = matchPageParamsSchema.safeParse(await params);
 
   if (!parsedParams.success) {
-    return { title: 'Match Not Found' };
+    return { title: 'Match not found' };
   }
 
   const match = await fetchOrpcOptional(() =>
@@ -45,7 +45,7 @@ export async function generateMetadata({
   );
 
   if (!match) {
-    return { title: 'Match Not Found' };
+    return { title: 'Match not found' };
   }
 
   return { title: match.name };

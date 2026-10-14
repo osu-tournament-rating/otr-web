@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AlertTriangle } from 'lucide-react';
@@ -5,6 +6,10 @@ import { AlertTriangle } from 'lucide-react';
 import AdminReportsClient from './AdminReportsClient';
 import { auth } from '@/lib/auth/auth';
 import { hasAdminScope } from '@/lib/auth/roles';
+
+export const metadata: Metadata = {
+  title: 'Data reports',
+};
 
 export default async function AdminReportsPage() {
   const headersList = await headers();

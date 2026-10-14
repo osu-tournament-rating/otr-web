@@ -5,6 +5,11 @@ import { db } from '@/lib/db';
 import { readRatingTimestamps } from '@/lib/db/rating-utils';
 import { resolveMaintenanceWindowActive } from '@/lib/maintenance-window';
 import FilteringPageClient from '@/app/tools/filter/FilteringPageClient';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Registrant filtering',
+};
 
 export default async function FilteringPage() {
   const headersList = await headers();
