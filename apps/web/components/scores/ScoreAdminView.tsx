@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -751,7 +751,7 @@ export default function ScoreAdminView({ score }: { score: GameScore }) {
             <AlertDialogAction
               onClick={handleDeletePlayerScores}
               disabled={isDeleting}
-              className="bg-destructive hover:bg-destructive/90"
+              className={buttonVariants({ variant: 'destructive' })}
             >
               {isDeleting ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
