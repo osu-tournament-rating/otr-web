@@ -9,7 +9,7 @@ import RulesetIcon from '../icons/RulesetIcon';
 import { Users, Target, Calendar, Eye, EyeOff, Swords } from 'lucide-react';
 import RatingDelta from '../rating/RatingDelta';
 import { Button } from '../ui/button';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import PlayerTournamentMatchTable from './PlayerTournamentMatchTable';
 import { cn } from '@/lib/utils';
 import { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
@@ -30,6 +30,7 @@ export default function PlayerTournamentCard({
   adjustments,
 }: PlayerTournamentCardProps) {
   const [isMatchesVisible, setIsMatchesVisible] = useState(false);
+  const matchesId = useId();
 
   const startDate = tournament.startTime
     ? new Date(tournament.startTime)
@@ -124,6 +125,8 @@ export default function PlayerTournamentCard({
             'border border-input',
             isMatchesVisible && 'bg-accent text-accent-foreground'
           )}
+          aria-expanded={isMatchesVisible}
+          aria-controls={matchesId}
           onClick={(e) => {
             e.preventDefault();
             setIsMatchesVisible(!isMatchesVisible);
@@ -144,24 +147,22 @@ export default function PlayerTournamentCard({
     <Card className="p-4 font-sans sm:p-6">
       {cardContent}
 
-      {isMatchesVisible && (
-        <div>
-          {(() => {
-            return filteredAdjustments.length > 0 ? (
-              <PlayerTournamentMatchTable adjustments={filteredAdjustments} />
-            ) : (
-              <>
-                <div className="border-t" />
-                <div className="flex items-center justify-center p-4">
-                  <span className="text-sm text-muted-foreground">
-                    No matches found
-                  </span>
-                </div>
-              </>
-            );
-          })()}
-        </div>
-      )}
+      {/* Stays mounted for aria-controls; hidden keeps it out of the card's gap */}
+      <div id={matchesId} hidden={!isMatchesVisible}>
+        {isMatchesVisible &&
+          (filteredAdjustments.length > 0 ? (
+            <PlayerTournamentMatchTable adjustments={filteredAdjustments} />
+          ) : (
+            <>
+              <div className="border-t" />
+              <div className="flex items-center justify-center p-4">
+                <span className="text-sm text-muted-foreground">
+                  No matches found
+                </span>
+              </div>
+            </>
+          ))}
+      </div>
     </Card>
   );
 }

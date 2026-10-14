@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Loader2, Music } from 'lucide-react';
 
 import BeatmapEmptyState from '@/components/beatmaps/BeatmapEmptyState';
@@ -30,12 +30,16 @@ export default function PlayerBeatmapsList({
   const [totalCount, setTotalCount] = useState(initialTotal);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Bumped on reset so a page still loading for the old list is dropped
+  const listVersion = useRef(0);
 
   useEffect(() => {
     // Drop cached pages when the player or ruleset changes
+    listVersion.current += 1;
     setBeatmaps(initialBeatmaps);
     setTotalCount(initialTotal);
     setErrorMessage(null);
+    setIsLoading(false);
   }, [initialBeatmaps, initialTotal, playerId, ruleset]);
 
   // Both conditions: the list is briefly empty across an SSR cache reset
@@ -47,6 +51,7 @@ export default function PlayerBeatmapsList({
       return;
     }
 
+    const version = listVersion.current;
     setIsLoading(true);
     setErrorMessage(null);
 
@@ -59,6 +64,10 @@ export default function PlayerBeatmapsList({
         limit: LOAD_MORE_COUNT,
       });
 
+      if (version !== listVersion.current) {
+        return;
+      }
+
       const existingIds = new Set(beatmaps.map((beatmap) => beatmap.id));
       const newBeatmaps = response.beatmaps.filter(
         (beatmap) => !existingIds.has(beatmap.id)
@@ -67,10 +76,16 @@ export default function PlayerBeatmapsList({
       setBeatmaps((prev) => [...prev, ...newBeatmaps]);
       setTotalCount(response.totalCount);
     } catch (error) {
+      if (version !== listVersion.current) {
+        return;
+      }
+
       console.error('Failed to load additional beatmaps', error);
       setErrorMessage('Failed to load more beatmaps. Please try again.');
     } finally {
-      setIsLoading(false);
+      if (version === listVersion.current) {
+        setIsLoading(false);
+      }
     }
   };
 

@@ -12,7 +12,7 @@ import {
 import { format } from 'date-fns';
 import Link from 'next/link';
 import RatingDelta from '@/components/rating/RatingDelta';
-import SimpleTooltip from '@/components/simple-tooltip';
+import TapTooltip from '@/components/tap-tooltip';
 import { HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { stickyTableHeaderFromLg } from '@/lib/utils/table';
@@ -43,9 +43,19 @@ export default function PlayerTournamentMatchTable({
               <TableHead className="text-center">
                 <div className="flex items-center justify-center gap-1">
                   Games (W-L)
-                  <SimpleTooltip content="Win-loss record for games this player participated in, not the entire team">
-                    <HelpCircle className="h-4 w-4" />
-                  </SimpleTooltip>
+                  <TapTooltip
+                    side="top"
+                    triggerAriaLabel="About games won and lost"
+                    triggerClassName="flex w-auto shrink-0 items-center rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                    content={
+                      <span className="block max-w-56">
+                        Win-loss record for games this player participated in,
+                        not the entire team
+                      </span>
+                    }
+                  >
+                    <HelpCircle className="h-4 w-4" aria-hidden />
+                  </TapTooltip>
                 </div>
               </TableHead>
               <TableHead className="text-center">Before</TableHead>

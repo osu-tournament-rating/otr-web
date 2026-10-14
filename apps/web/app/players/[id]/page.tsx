@@ -187,7 +187,8 @@ export default async function PlayerPage(props: PageProps) {
     redirect(redirectUrl);
   }
 
-  const currentRuleset = filter.ruleset ?? Ruleset.Osu;
+  // The stats resolve a missing or invalid ruleset to the player's default
+  const currentRuleset = playerData.ruleset;
 
   const chartHighestRating = playerData.rating?.adjustments?.length
     ? playerData.rating.adjustments.reduce(
