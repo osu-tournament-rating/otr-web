@@ -52,6 +52,7 @@ function MultiSelect({
   const [searchValue, setSearchValue] = React.useState('');
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const commandRef = React.useRef<HTMLDivElement>(null);
+  const wasOpenRef = React.useRef(false);
 
   const filteredOptions = React.useMemo(() => {
     if (!searchValue) return options;
@@ -68,9 +69,11 @@ function MultiSelect({
     if (open) {
       setHighlightedIndex(-1);
       setSearchValue('');
-    } else {
+    } else if (wasOpenRef.current) {
+      // Only after a close; on mount this would steal focus from the page
       triggerRef.current?.focus();
     }
+    wasOpenRef.current = open;
   }, [open]);
 
   const handleUnselect = (item: string) => {
