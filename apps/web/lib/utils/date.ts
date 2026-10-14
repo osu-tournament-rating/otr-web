@@ -71,3 +71,28 @@ const dateRangeFormat = new Intl.DateTimeFormat('en-US', {
 export function formatUTCDateRange(first: Date, last: Date): string {
   return dateRangeFormat.formatRange(first, last);
 }
+
+const dayFormat = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+
+/**
+ * Same output as {@link formatUTCDateRange}, but identical on every engine,
+ * so it is safe to render on the server and hydrate. V8 puts thin spaces
+ * around the dash of `formatRange` and JavaScriptCore puts plain ones.
+ */
+export function formatUTCDayRange(first: Date, last: Date): string {
+  if (formatUTCDate(first) === formatUTCDate(last)) {
+    return dateRangeFormat.format(first);
+  }
+
+  const start =
+    first.getUTCFullYear() === last.getUTCFullYear()
+      ? dayFormat.format(first)
+      : dateRangeFormat.format(first);
+
+  return `${start} – ${dateRangeFormat.format(last)}`;
+}

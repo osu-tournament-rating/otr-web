@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatUTCDateRange, playWeekKey } from '@/lib/utils/date';
+import { formatUTCDayRange, playWeekKey } from '@/lib/utils/date';
 import { cn } from '@/lib/utils';
 import MatchLedgerRow from './MatchLedgerRow';
 
@@ -114,7 +114,7 @@ export default function TournamentMatchesLedger({
 
         return {
           key: String(week),
-          label: formatUTCDateRange(
+          label: formatUTCDayRange(
             new Date(Math.min(...times)),
             new Date(Math.max(...times))
           ),
