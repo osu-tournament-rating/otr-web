@@ -7,14 +7,14 @@ from lib import cli, logs, processor, public_html
 from lib.constants import scripts
 from lib.scripts import db, template_db
 
-args = cli.init()
-
-logs.init()
 logger = logging.getLogger(__name__)
 
 
-def main():
-    script_map: dict[str, Callable] = {
+def main() -> int:
+    args = cli.init()
+    logs.init()
+
+    script_map: dict[str, Callable[[], bool]] = {
         scripts.ARCHIVE: partial(db.archive, args),
         scripts.PROCESSOR: processor.run,
         scripts.RECOVERY: partial(db.recovery, args),
@@ -27,10 +27,20 @@ def main():
             logger.info(f"Running '{script}', logging to {log_path}")
             logger.info(f"Resolved args: {args}")
 
-            if script_map[script]() is False:
+            # Only an explicit True is success, so a script that forgets to
+            # return a result fails loudly instead of passing for a success.
+            try:
+                succeeded = script_map[script]() is True
+            except Exception:
+                logger.exception(f"'{script}' failed")
+                return 1
+
+            if not succeeded:
                 logger.error(f"'{script}' failed")
-                sys.exit(1)
+                return 1
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
