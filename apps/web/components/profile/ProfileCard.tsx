@@ -114,7 +114,10 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
     return (
       <Collapsible open={isOpen} onOpenChange={toggleIsOpen}>
         <CollapsibleTrigger asChild>
-          <div className="relative mb-2 w-full cursor-pointer overflow-hidden rounded-md md:hidden">
+          <button
+            type="button"
+            className="relative mb-2 block w-full cursor-pointer overflow-hidden rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 md:hidden"
+          >
             <div className="absolute inset-0 z-0 opacity-20">
               <div className="absolute inset-0 backdrop-blur-md" />
               <Image
@@ -151,7 +154,7 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
                 )}
               />
             </div>
-          </div>
+          </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
           {isMobileNav ? (
@@ -261,12 +264,16 @@ export default function ProfileCard({ isMobileNav = false }: ProfileCardProps) {
   return (
     <DropdownMenu open={isOpen} onOpenChange={toggleIsOpen}>
       <DropdownMenuTrigger asChild>
-        <div className="cursor-pointer transition-transform hover:scale-103 focus:outline-none active:scale-97">
+        <button
+          type="button"
+          aria-label="Account menu"
+          className="block cursor-pointer rounded-full transition-transform outline-none hover:scale-103 focus-visible:ring-[3px] focus-visible:ring-ring/50 active:scale-97"
+        >
           <UserAvatar
             player={player}
             showNotificationDot={hasReportNotification}
           />
-        </div>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="mt-1 w-56 rounded-xl bg-card">
         <DropdownMenuLabel className="relative overflow-hidden">
