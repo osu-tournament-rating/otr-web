@@ -31,15 +31,16 @@ export default function StatsPageContent({ stats }: StatsPageContentProps) {
       .map((k) => parseInt(k, 10))
       .filter((r) => r !== Ruleset.ManiaOther);
 
-    Promise.all(
+    // One failed ruleset should not drop the markers for the others
+    Promise.allSettled(
       rulesets.map((ruleset) =>
         orpc.players.stats({ id: session.player.id, keyType: 'otr', ruleset })
       )
     ).then((results) => {
       const ratings: Record<number, number> = {};
       results.forEach((result) => {
-        if (result.rating) {
-          ratings[result.ruleset] = result.rating.rating;
+        if (result.status === 'fulfilled' && result.value.rating) {
+          ratings[result.value.ruleset] = result.value.rating.rating;
         }
       });
       setUserRatings(ratings);
