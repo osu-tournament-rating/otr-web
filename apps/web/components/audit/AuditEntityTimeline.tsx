@@ -5,6 +5,7 @@ import useSWRInfinite from 'swr/infinite';
 import { ClipboardList, Loader2 } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
 import type { EntityTimelineItem } from '@/lib/orpc/schema/audit';
+import SectionError from '@/components/error/SectionError';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { orpc } from '@/lib/orpc/orpc';
@@ -140,24 +141,25 @@ export default function AuditEntityTimeline({
     [entityType, entityId, showSystem]
   );
 
-  const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(
-    getKey,
-    async ([, eType, eId, withSystem, page]) =>
-      orpc.audit.timeline({
-        entityType: eType,
-        entityId: eId,
-        showSystem: withSystem,
-        pageSize: 50,
-        page,
-      }),
-    {
-      revalidateFirstPage: false,
-      revalidateOnFocus: false,
-      revalidateIfStale: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 300_000,
-    }
-  );
+  const { data, error, mutate, size, setSize, isLoading, isValidating } =
+    useSWRInfinite(
+      getKey,
+      async ([, eType, eId, withSystem, page]) =>
+        orpc.audit.timeline({
+          entityType: eType,
+          entityId: eId,
+          showSystem: withSystem,
+          pageSize: 50,
+          page,
+        }),
+      {
+        revalidateFirstPage: false,
+        revalidateOnFocus: false,
+        revalidateIfStale: false,
+        revalidateOnReconnect: false,
+        dedupingInterval: 300_000,
+      }
+    );
 
   const responsePages = data ?? [];
   const allItems = responsePages.flatMap((p) => p.items);
@@ -200,6 +202,16 @@ export default function AuditEntityTimeline({
 
   if (isLoading) {
     return <TimelineSkeleton />;
+  }
+
+  if (error && !data) {
+    return (
+      <SectionError
+        title="Audit history could not load"
+        retrying={isValidating}
+        onRetry={() => void mutate()}
+      />
+    );
   }
 
   if (isEmpty) {

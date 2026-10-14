@@ -115,6 +115,36 @@ test.describe('Admin pages', () => {
         await expect(filter).toContainText('Pending', { timeout: 10000 });
       });
 
+      test('a failed load shows an error with a retry, not an empty list', async ({
+        page,
+      }) => {
+        await page.route('**/rpc/reports/list', (route) =>
+          route.fulfill({ status: 500, body: 'Internal Server Error' })
+        );
+        await page.goto(ROUTES.adminReports);
+
+        const card = page.locator('[data-testid="admin-reports-card"]');
+        await expect(card.getByRole('alert')).toContainText(
+          'Reports could not load',
+          { timeout: 15000 }
+        );
+        await expect(
+          page.locator('[data-testid="admin-reports-empty"]')
+        ).toHaveCount(0);
+
+        await page.unroute('**/rpc/reports/list');
+        await card.getByRole('button', { name: 'Try again' }).click();
+
+        await expect(card.getByRole('alert')).toHaveCount(0, {
+          timeout: 15000,
+        });
+        await expect(
+          page.locator(
+            '[data-testid="admin-reports-list"], [data-testid="admin-reports-empty"]'
+          )
+        ).toBeVisible({ timeout: 15000 });
+      });
+
       test('a report entity link navigates to its entity page', async ({
         page,
       }) => {

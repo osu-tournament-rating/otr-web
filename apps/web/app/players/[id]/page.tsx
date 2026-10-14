@@ -1,3 +1,4 @@
+import SectionErrorBoundary from '@/components/error/SectionErrorBoundary';
 import PlayerBeatmapsList from '@/components/player/PlayerBeatmapsList';
 import PlayerCard from '@/components/player/PlayerCard';
 import PlayerModCountChart from '@/components/player/PlayerModCountChart';
@@ -5,18 +6,24 @@ import PlayerModStatsChart from '@/components/player/PlayerModStatsChart';
 import PlayerOpponentsChart from '@/components/player/PlayerOpponentsChart';
 import PlayerRatingChart from '@/components/player/PlayerRatingChart';
 import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
+import {
+  PlayerBeatmapsSkeleton,
+  PlayerTournamentsSkeleton,
+} from '@/components/player/PlayerSectionSkeletons';
 import PlayerTeammatesChart from '@/components/player/PlayerTeammatesChart';
 import PlayerTournamentsList from '@/components/player/PlayerTournamentsList';
 import { Card } from '@/components/ui/card';
 import { getPlayerBeatmapsCached } from '@/lib/orpc/queries/playerBeatmaps';
 import { getPlayerStatsCached } from '@/lib/orpc/queries/playerStats';
 import { getPlayerTournamentsCached } from '@/lib/orpc/queries/playerTournaments';
-import type { PlayerStats } from '@/lib/orpc/schema/playerStats';
-import { PlayerTournamentListItem } from '@/lib/orpc/schema/tournament';
+import type {
+  PlayerRatingAdjustment,
+  PlayerStats,
+} from '@/lib/orpc/schema/playerStats';
 import { Ruleset } from '@otr/core/osu';
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
-import { PlayerBeatmapsResponse } from '@/lib/orpc/schema/playerBeatmaps';
+import { Suspense } from 'react';
 import { resolvePlayerIdFromKey } from '@/lib/db/player-resolve';
 import { z } from 'zod';
 import {
@@ -34,6 +41,15 @@ type PageProps = {
 const playerPageParamsSchema = z.object({
   id: z.string().min(1),
 });
+
+// Junk filter params fall back to the defaults instead of failing the page.
+const playerPageFilterSchema = z.object({
+  ruleset: z.coerce.number().pipe(z.enum(Ruleset)).optional().catch(undefined),
+  dateMin: z.coerce.date().optional().catch(undefined),
+  dateMax: z.coerce.date().optional().catch(undefined),
+});
+
+type PlayerPageFilter = z.infer<typeof playerPageFilterSchema>;
 
 export async function generateMetadata({
   params,
@@ -60,9 +76,13 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * Resolves undefined only when the player does not exist. Every other failure
+ * throws, so it reaches the error screen rather than the not-found page.
+ */
 async function getPlayerData(
   key: string,
-  searchParams: { [key: string]: string | string[] | undefined }
+  filter: PlayerPageFilter
 ): Promise<PlayerStats | undefined> {
   const decodedKey = decodeURIComponent(key);
   const playerId = (await resolvePlayerIdFromKey(decodedKey)) ?? 0;
@@ -71,99 +91,62 @@ async function getPlayerData(
     return undefined;
   }
 
-  const dateMin = searchParams.dateMin
-    ? new Date(searchParams.dateMin as string)
-    : undefined;
-  const dateMax = searchParams.dateMax
-    ? new Date(searchParams.dateMax as string)
-    : undefined;
-
-  const ruleset = searchParams.ruleset
-    ? (Number(searchParams.ruleset) as Ruleset)
-    : undefined;
-
-  try {
-    const playerStats = await fetchOrpcOptional(() =>
-      getPlayerStatsCached(playerId, dateMin, dateMax, ruleset)
-    );
-    return playerStats;
-  } catch (error) {
-    console.error('Failed to fetch player data:', error);
-    return undefined;
-  }
+  return fetchOrpcOptional(() =>
+    getPlayerStatsCached(
+      playerId,
+      filter.dateMin,
+      filter.dateMax,
+      filter.ruleset
+    )
+  );
 }
 
-async function getTournaments(
-  playerId: number,
-  searchParams: { [key: string]: string | string[] | undefined }
-): Promise<PlayerTournamentListItem[]> {
-  if (playerId <= 0) {
-    return [];
-  }
+async function PlayerTournaments({
+  playerId,
+  filter,
+  adjustments,
+}: {
+  playerId: number;
+  filter: PlayerPageFilter;
+  adjustments: PlayerRatingAdjustment[];
+}) {
+  const tournaments = await getPlayerTournamentsCached(
+    playerId,
+    filter.dateMin,
+    filter.dateMax,
+    filter.ruleset
+  );
 
-  const dateMin = searchParams.dateMin
-    ? new Date(searchParams.dateMin as string)
-    : undefined;
-  const dateMax = searchParams.dateMax
-    ? new Date(searchParams.dateMax as string)
-    : undefined;
-
-  const ruleset = searchParams.ruleset
-    ? (Number(searchParams.ruleset) as Ruleset)
-    : undefined;
-
-  try {
-    return await getPlayerTournamentsCached(
-      playerId,
-      dateMin,
-      dateMax,
-      ruleset
-    );
-  } catch (error) {
-    const err = error as Error & { code?: string; status?: number };
-    console.error('Failed to fetch player tournaments:', {
-      message: err.message,
-      code: err.code,
-      status: err.status,
-      name: err.name,
-      stack: err.stack,
-    });
-    return [];
-  }
+  return (
+    <PlayerTournamentsList
+      tournaments={tournaments}
+      adjustments={adjustments}
+    />
+  );
 }
 
-async function getBeatmaps(
-  playerId: number,
-  ruleset?: Ruleset
-): Promise<PlayerBeatmapsResponse> {
-  if (!playerId || playerId <= 0) {
-    return {
-      beatmaps: [],
-      totalCount: 0,
-    };
-  }
+async function PlayerBeatmaps({
+  playerId,
+  ruleset,
+}: {
+  playerId: number;
+  ruleset: Ruleset;
+}) {
+  const { beatmaps, totalCount } = await getPlayerBeatmapsCached(
+    playerId,
+    ruleset,
+    INITIAL_BEATMAPS_LIMIT,
+    0
+  );
 
-  try {
-    return await getPlayerBeatmapsCached(
-      playerId,
-      ruleset,
-      INITIAL_BEATMAPS_LIMIT,
-      0
-    );
-  } catch (error) {
-    const err = error as Error & { code?: string; status?: number };
-    console.error('Failed to fetch player beatmaps:', {
-      message: err.message,
-      code: err.code,
-      status: err.status,
-      name: err.name,
-      stack: err.stack,
-    });
-    return {
-      beatmaps: [],
-      totalCount: 0,
-    };
-  }
+  return (
+    <PlayerBeatmapsList
+      playerId={playerId}
+      ruleset={ruleset}
+      initialBeatmaps={beatmaps}
+      totalCount={totalCount}
+    />
+  );
 }
 
 export default async function PlayerPage(props: PageProps) {
@@ -172,24 +155,16 @@ export default async function PlayerPage(props: PageProps) {
     playerPageParamsSchema,
     await props.params
   );
+  const filter = playerPageFilterSchema.parse(searchParams);
 
   const decodedId = decodeURIComponent(id);
-  const playerData = await getPlayerData(decodedId, searchParams);
+  const playerData = await getPlayerData(decodedId, filter);
 
   if (!playerData) {
     return notFound();
   }
 
   const canonicalPlayerId = playerData.playerInfo.id;
-
-  const currentRuleset = searchParams.ruleset
-    ? (Number(searchParams.ruleset) as Ruleset)
-    : Ruleset.Osu;
-
-  const playerTournaments = await getTournaments(canonicalPlayerId, {
-    ...searchParams,
-    ruleset: currentRuleset.toString(),
-  });
 
   // Canonicalize the URL onto the o!TR ID
   if (canonicalPlayerId && canonicalPlayerId.toString() !== decodedId) {
@@ -212,10 +187,7 @@ export default async function PlayerPage(props: PageProps) {
     redirect(redirectUrl);
   }
 
-  const playerBeatmapsResponse = await getBeatmaps(
-    canonicalPlayerId,
-    currentRuleset
-  );
+  const currentRuleset = filter.ruleset ?? Ruleset.Osu;
 
   const chartHighestRating = playerData.rating?.adjustments?.length
     ? playerData.rating.adjustments.reduce(
@@ -284,17 +256,24 @@ export default async function PlayerPage(props: PageProps) {
         </>
       )}
 
-      <PlayerTournamentsList
-        tournaments={playerTournaments}
-        adjustments={playerData.rating?.adjustments ?? []}
-      />
+      <SectionErrorBoundary title="Tournament history could not load">
+        <Suspense fallback={<PlayerTournamentsSkeleton />}>
+          <PlayerTournaments
+            playerId={canonicalPlayerId}
+            filter={{ ...filter, ruleset: currentRuleset }}
+            adjustments={playerData.rating?.adjustments ?? []}
+          />
+        </Suspense>
+      </SectionErrorBoundary>
 
-      <PlayerBeatmapsList
-        playerId={canonicalPlayerId}
-        ruleset={currentRuleset}
-        initialBeatmaps={playerBeatmapsResponse.beatmaps}
-        totalCount={playerBeatmapsResponse.totalCount}
-      />
+      <SectionErrorBoundary title="Pooled beatmaps could not load">
+        <Suspense fallback={<PlayerBeatmapsSkeleton />}>
+          <PlayerBeatmaps
+            playerId={canonicalPlayerId}
+            ruleset={currentRuleset}
+          />
+        </Suspense>
+      </SectionErrorBoundary>
     </div>
   );
 }

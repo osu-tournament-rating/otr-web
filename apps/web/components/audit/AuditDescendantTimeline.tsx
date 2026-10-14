@@ -11,6 +11,7 @@ import {
   ENTITY_TYPE_LABELS,
   ENTITY_TYPE_PLURALS,
 } from '@/lib/audit-entity-types';
+import SectionError from '@/components/error/SectionError';
 import { orpc } from '@/lib/orpc/orpc';
 import AuditEntryRow from './AuditEntryRow';
 import {
@@ -95,25 +96,26 @@ export default function AuditDescendantTimeline({
     [entityType, entityId, descendantType, showSystem]
   );
 
-  const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(
-    getKey,
-    async ([, eType, eId, dType, withSystem, page]) =>
-      orpc.audit.descendants({
-        entityType: eType,
-        entityId: eId,
-        descendantType: dType,
-        showSystem: withSystem,
-        pageSize: 50,
-        page,
-      }),
-    {
-      revalidateFirstPage: false,
-      revalidateOnFocus: false,
-      revalidateIfStale: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 300_000,
-    }
-  );
+  const { data, error, mutate, size, setSize, isLoading, isValidating } =
+    useSWRInfinite(
+      getKey,
+      async ([, eType, eId, dType, withSystem, page]) =>
+        orpc.audit.descendants({
+          entityType: eType,
+          entityId: eId,
+          descendantType: dType,
+          showSystem: withSystem,
+          pageSize: 50,
+          page,
+        }),
+      {
+        revalidateFirstPage: false,
+        revalidateOnFocus: false,
+        revalidateIfStale: false,
+        revalidateOnReconnect: false,
+        dedupingInterval: 300_000,
+      }
+    );
 
   const responsePages = data ?? [];
   const allItems = responsePages.flatMap((p) => p.items);
@@ -123,6 +125,16 @@ export default function AuditDescendantTimeline({
 
   if (isLoading) {
     return <TimelineSkeleton />;
+  }
+
+  if (error && !data) {
+    return (
+      <SectionError
+        title={`Changed ${plural} could not load`}
+        retrying={isValidating}
+        onRetry={() => void mutate()}
+      />
+    );
   }
 
   if (allItems.length === 0) {
