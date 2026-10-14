@@ -8,7 +8,7 @@ from lib.gcs import gcs_utils
 logger = logging.getLogger(__name__)
 
 
-def generate_index():
+def generate_index() -> bool:
     # This will always be done for a public bucket
     bucket = buckets.PUBLIC
 
@@ -66,3 +66,4 @@ def generate_index():
     index_loc.write_text(html, encoding="utf-8")
 
     logger.info(f"Wrote new HTML to {index_loc}")
+    return True

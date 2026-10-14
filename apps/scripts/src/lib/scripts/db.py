@@ -124,6 +124,55 @@ def _restore_steps(dump: Path) -> list[list[str]]:
     ]
 
 
+def _restore(dump: Path, db_only: bool, migrate: bool) -> bool:
+    """Replace the database with the dump, logging the step that failed"""
+    if not db_only and _compose("down") != 0:
+        logger.error(f"Stopping the stack failed, so {dump.name} was not restored")
+        return False
+
+    if _compose("up -d db") != 0:
+        logger.error(
+            f"Starting {config.db_container} failed, so {dump.name} was not restored"
+        )
+        return False
+
+    if not _wait_for_db():
+        return False
+
+    started = time.monotonic()
+    for step in _restore_steps(dump):
+        returncode = subprocess.run(step, check=False).returncode
+        if returncode != 0:
+            logger.error(
+                f"Restore of {dump.name} into {config.db_name} failed after "
+                f"{time.monotonic() - started:.0f}s (exit code {returncode})"
+            )
+            return False
+
+    if not migrate:
+        logger.info(
+            f"Restored {dump.name} into {config.db_name} in "
+            f"{time.monotonic() - started:.0f}s, skipping migrations"
+        )
+        return True
+
+    # The dump carries the schema of the tier it came from, so the deployed
+    # image's pending migrations must be replayed before the stack serves it.
+    if _compose("--profile migrate run --rm migrate") != 0:
+        logger.error(
+            f"Restored {dump.name} into {config.db_name} but migrating it failed "
+            f"after {time.monotonic() - started:.0f}s; the stack is serving an "
+            "outdated schema"
+        )
+        return False
+
+    logger.info(
+        f"Restored and migrated {dump.name} into {config.db_name} in "
+        f"{time.monotonic() - started:.0f}s"
+    )
+    return True
+
+
 def _import(dump: Path, db_only: bool = False, migrate: bool = True) -> bool:
     """Import a local dump to the database
 
@@ -139,55 +188,15 @@ def _import(dump: Path, db_only: bool = False, migrate: bool = True) -> bool:
         logger.error(f"Expected dump path to end with '.gz': {dump}")
         return False
 
-    if not db_only:
-        _compose("down")
+    restored = _restore(dump, db_only, migrate)
 
-    _compose("up -d db")
-
-    if not _wait_for_db():
+    # A full restore stops the stack, so it comes back even when the restore
+    # failed part way.
+    if not db_only and _compose("up -d") != 0:
+        logger.error("Restarting the stack failed; its services may still be down")
         return False
 
-    started = time.monotonic()
-    returncode = 0
-    for step in _restore_steps(dump):
-        returncode = subprocess.run(step, check=False).returncode
-        if returncode != 0:
-            break
-
-    # The dump carries the schema of the tier it came from, so the deployed
-    # image's pending migrations must be replayed before the stack serves it.
-    migrated = returncode == 0 and (
-        not migrate or _compose("--profile migrate run --rm migrate") == 0
-    )
-
-    if not db_only:
-        _compose("up -d")
-
-    elapsed = time.monotonic() - started
-    if returncode != 0:
-        logger.error(
-            f"Restore of {dump.name} into {config.db_name} failed after "
-            f"{elapsed:.0f}s (exit code {returncode})"
-        )
-        return False
-    if not migrated:
-        logger.error(
-            f"Restored {dump.name} into {config.db_name} but migrating it failed "
-            f"after {elapsed:.0f}s; the stack is serving an outdated schema"
-        )
-        return False
-
-    if not migrate:
-        logger.info(
-            f"Restored {dump.name} into {config.db_name} in {elapsed:.0f}s, "
-            "skipping migrations"
-        )
-        return True
-
-    logger.info(
-        f"Restored and migrated {dump.name} into {config.db_name} in {elapsed:.0f}s"
-    )
-    return True
+    return restored
 
 
 def prune_dumps(keep: Path):
@@ -385,7 +394,7 @@ def _export_command(replica: str, dest: Path) -> str:
     return _gzip_dump_command([_pg_dump_command([])], dest)
 
 
-def _export(replica: str) -> tuple[bool, Path]:
+def _export(replica: str) -> Path | None:
     dump_file_format = datetime.now(UTC).strftime(
         f"otr-{replica}-replica_%Y-%m-%dT%H:%M:%SZ.gz"
     )
@@ -399,47 +408,56 @@ def _export(replica: str) -> tuple[bool, Path]:
 
     result = subprocess.run(["bash", "-o", "pipefail", "-c", cmd], check=False)
 
-    if result.returncode == 0:
-        logger.info("Database archive creation succeeded")
-        return True, dest
-    else:
-        logger.error("Database archive creation failed")
-        return False, dest
+    if result.returncode != 0:
+        # A truncated dump is not a backup, so it must not sit beside real ones.
+        dest.unlink(missing_ok=True)
+        logger.error(f"Exporting {dest.name} failed (exit code {result.returncode})")
+        return None
+
+    logger.info("Database archive creation succeeded")
+    return dest
 
 
-def archive(args: ScriptArgs):
+def archive(args: ScriptArgs) -> bool:
     bucket = args.archive_bucket
     if not bucket:
         raise ValueError("Archive bucket must be populated")
 
-    success, dump = _export(bucket)
-
-    if not success:
-        logger.error(f"Failed to export bucket to local path {dump}")
-        return
-
+    # Names the step in progress, so a failure says which one broke.
+    step = f"exporting the {bucket} replica"
     try:
+        dump = _export(bucket)
+        if dump is None:
+            return False
+
+        step = f"uploading {dump.name}"
         gcs_utils.upload(dump, bucket)
 
         # Public replicas are always published with a checksum so consumers
         # (including otr-replay) can verify their downloads.
         if args.upload_hash or bucket == buckets.PUBLIC:
-            # Upload sha256
+            step = f"hashing {dump.name}"
             hash_loc = hash(dump)
+
+            step = f"uploading {hash_loc.name}"
             gcs_utils.upload(hash_loc, bucket)
 
             # Remove after upload
             hash_loc.unlink()
 
-        if args.archive_bucket == buckets.PUBLIC:
-            # Refresh the html
+        if bucket == buckets.PUBLIC:
+            step = "refreshing the public index"
             generate_index()
 
+        step = "removing local dumps"
         prune_dumps(dump)
         dump.unlink()
 
     except Exception:
-        logger.exception(f"Error occurred during upload of {dump} to GCS bucket")
+        logger.exception(f"Archive failed while {step}")
+        return False
+
+    return True
 
 
 def recovery(args: ScriptArgs) -> bool:

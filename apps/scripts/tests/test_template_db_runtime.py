@@ -111,7 +111,7 @@ def test_real_migrations_clone_and_repeat(tmp_path, monkeypatch):
         assert sql("SELECT count(*) FROM drizzle.__drizzle_migrations", first) == "2"
         write_migrations(source, [base, "THIS IS INVALID SQL;"])
         assert not template_db.create(failed, task)
-        assert not template_db.database_exists(failed)
+        assert template_db.database_exists(failed) is False
     finally:
         for name in (failed, second, first, source_name):
             sql(f"DROP DATABASE IF EXISTS {name} WITH (FORCE)")

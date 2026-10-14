@@ -82,6 +82,10 @@ configured application database.
   and operations in `src/lib/`.
 - Prefer argument lists for subprocesses. Preserve upstream failure and quote
   paths when a shell pipeline is unavoidable.
+- The cron and `run-script.yml` see only the exit code and the log. Each
+  operation returns `True` only when every step worked, and logs one error
+  naming the step that failed. `main.py` exits 1 on any other result or an
+  uncaught exception. Check every subprocess's return code.
 
 ## Agent stacks
 
