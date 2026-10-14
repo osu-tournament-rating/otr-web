@@ -79,38 +79,43 @@ export const defaultTournamentListFilter: Partial<TournamentListFilter> = {
   minRankRange: 1,
 };
 
+// Every field carries .catch so junk URL params degrade to their defaults.
 export const tournamentListFilterSchema = z
   .object({
     verified: z.union([z.boolean(), booleanStringSchema]).catch(false),
-    ruleset: numericEnumValueSchema(Ruleset).optional(),
+    ruleset: numericEnumValueSchema(Ruleset).optional().catch(undefined),
     searchQuery: z.string().catch(''),
-    dateMin: z.coerce.date().optional(),
-    dateMax: z.coerce.date().optional(),
-    verificationStatus: z.preprocess(
-      (val) => {
-        if (Array.isArray(val)) return val.map(Number);
-        if (val !== undefined && val !== null && val !== '')
-          return [Number(val)];
-        return undefined;
-      },
-      z.array(numericEnumValueSchema(VerificationStatus)).optional()
-    ),
-    rejectionReason: bitwiseEnumValueSchema(
-      TournamentRejectionReason
-    ).optional(),
-    submittedBy: z.coerce.number().optional(),
-    verifiedBy: z.coerce.number().optional(),
-    lobbySize: z.preprocess(
-      (val) => {
-        if (Array.isArray(val)) return val.map(Number);
-        if (val !== undefined && val !== null && val !== '')
-          return [Number(val)];
-        return undefined;
-      },
-      z.array(z.coerce.number().min(1).max(8)).optional()
-    ),
-    minRankRange: z.coerce.number().min(1).optional(),
-    maxRankRange: z.coerce.number().min(1).optional(),
+    dateMin: z.coerce.date().optional().catch(undefined),
+    dateMax: z.coerce.date().optional().catch(undefined),
+    verificationStatus: z
+      .preprocess(
+        (val) => {
+          if (Array.isArray(val)) return val.map(Number);
+          if (val !== undefined && val !== null && val !== '')
+            return [Number(val)];
+          return undefined;
+        },
+        z.array(numericEnumValueSchema(VerificationStatus)).optional()
+      )
+      .catch(undefined),
+    rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason)
+      .optional()
+      .catch(undefined),
+    submittedBy: z.coerce.number().int().optional().catch(undefined),
+    verifiedBy: z.coerce.number().int().optional().catch(undefined),
+    lobbySize: z
+      .preprocess(
+        (val) => {
+          if (Array.isArray(val)) return val.map(Number);
+          if (val !== undefined && val !== null && val !== '')
+            return [Number(val)];
+          return undefined;
+        },
+        z.array(z.coerce.number().int().min(1).max(8)).optional()
+      )
+      .catch(undefined),
+    minRankRange: z.coerce.number().int().min(1).optional().catch(undefined),
+    maxRankRange: z.coerce.number().int().min(1).optional().catch(undefined),
     sort: numericEnumValueSchema(TournamentQuerySortType).catch(
       TournamentQuerySortType.EndTime
     ),
@@ -173,30 +178,49 @@ export const playerRatingChartFilterSchema = z.object({
   showDecay: z.boolean().default(true),
 });
 
+// Every field carries .catch so junk URL params degrade to their defaults.
 export const leaderboardFilterSchema = z.object({
-  page: z.coerce.number().int().min(1).optional(),
-  country: z.string().optional(),
-  ruleset: numericEnumValueSchema(Ruleset).optional(),
-  minOsuRank: z.coerce.number().int().min(1).optional(),
-  maxOsuRank: z.coerce.number().int().min(1).optional(),
-  minRating: z.coerce.number().int().min(100).max(3500).optional(),
-  maxRating: z.coerce.number().int().min(100).max(3500).optional(),
-  minMatches: z.coerce.number().int().min(1).optional(),
-  maxMatches: z.coerce.number().int().min(1).optional(),
-  minWinRate: z.coerce.number().min(0).max(100).optional(),
-  maxWinRate: z.coerce.number().min(0).max(100).optional(),
-  tiers: z.preprocess(
-    (val) => {
-      if (typeof val === 'string') {
-        return [val as string];
-      }
+  page: z.coerce.number().int().min(1).optional().catch(undefined),
+  // Mirrors LeaderboardRequestSchema.country's bounds.
+  country: z.string().trim().min(2).max(4).optional().catch(undefined),
+  ruleset: numericEnumValueSchema(Ruleset).optional().catch(undefined),
+  minOsuRank: z.coerce.number().int().min(1).optional().catch(undefined),
+  maxOsuRank: z.coerce.number().int().min(1).optional().catch(undefined),
+  minRating: z.coerce
+    .number()
+    .int()
+    .min(100)
+    .max(3500)
+    .optional()
+    .catch(undefined),
+  maxRating: z.coerce
+    .number()
+    .int()
+    .min(100)
+    .max(3500)
+    .optional()
+    .catch(undefined),
+  minMatches: z.coerce.number().int().min(1).optional().catch(undefined),
+  maxMatches: z.coerce.number().int().min(1).optional().catch(undefined),
+  minWinRate: z.coerce.number().min(0).max(100).optional().catch(undefined),
+  maxWinRate: z.coerce.number().min(0).max(100).optional().catch(undefined),
+  tiers: z
+    .preprocess(
+      (val) => {
+        if (typeof val === 'string') {
+          return [val as string];
+        }
 
-      return val;
-    },
-    z.array(z.enum(leaderboardTierFilterValues)).optional()
-  ),
-  friend: z.coerce.boolean().optional(),
-  userId: z.coerce.number().min(1).optional(),
+        return val;
+      },
+      z.array(z.enum(leaderboardTierFilterValues)).optional()
+    )
+    .catch(undefined),
+  friend: z
+    .union([z.boolean(), booleanStringSchema])
+    .optional()
+    .catch(undefined),
+  userId: z.coerce.number().min(1).optional().catch(undefined),
 });
 
 export const beatmapListSortValues = [
