@@ -915,7 +915,7 @@ async fn test_calculate_and_update_game_score_placements() {
         .execute(
             "
             UPDATE game_scores
-            SET score = tied.max_score
+            SET raw_score = tied.max_score
             FROM (
                 SELECT game_id, MAX(score) AS max_score
                 FROM game_scores
