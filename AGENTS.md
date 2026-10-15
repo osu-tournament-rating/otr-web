@@ -194,17 +194,8 @@ Open an issue for anything you notice outside your task, such as an unrelated
 bug, a risk, dead code, or documentation that no longer matches the code. Do not
 fix it in the current change.
 
-- Confirm it is real first, and search open issues so you don't file a
-  duplicate.
-- File one issue per problem with `gh issue create`. Follow
-  `.github/ISSUE_TEMPLATE/report.md`. Keep it high level and under 150 words,
-  and never link to files.
-- The title is a plain sentence that names the problem, not a commit header.
-  Add `bug` for a defect in shipped behavior or `proposal` for an idea. Add
-  `meta:ops`, `meta:ui-ux`, or `meta:performance` when one fits. Add an
-  `app:<name>` label, such as `app:web` or `app:processor`, for every app
-  under `apps/` that the problem affects.
-- List the issues you opened in your final report to the user.
+Before you open, edit, or label an issue, read and follow the `issue` skill in
+`.claude/skills/issue/SKILL.md`.
 
 ## Signature
 
