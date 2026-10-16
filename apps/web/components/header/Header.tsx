@@ -1,383 +1,128 @@
 'use client';
 
-import { cn } from '@/lib/utils';
-import {
-  ChevronDown,
-  Clock,
-  FileText,
-  Filter,
-  LucideIcon,
-  Trophy,
-  Upload,
-} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import ProfileCard from '../profile/ProfileCard';
-import SearchCommandDialog from '../search/SearchCommandDialog';
-import { ModeToggle } from '../ui/mode-toggle';
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuList,
-  NavigationMenuContent,
-} from '../ui/navigation-menu';
-import { NavigationMenuTrigger } from '@radix-ui/react-navigation-menu';
-import { Separator } from '../ui/separator';
-import { Sheet, SheetClose, SheetContent, SheetTitle } from '../ui/sheet';
-import ClientOnly from '../client-only';
-import MobileNavTrigger from './MobileNavTrigger';
-import SupportButton from '../buttons/SupportButton';
-import DocsButton from '../buttons/DocsButton';
-import SpecButton from '../buttons/SpecButton';
-import { Roles } from '@otr/core/osu';
-import { useSession as useAuthSession } from '@/lib/auth/auth-client';
+
+import { Callout } from '@/components/kit/feedback/Callout';
+import AccountMenu from '@/components/profile/AccountMenu';
+import LoginButton from '@/components/profile/LoginButton';
+import MobileAccountMenu from '@/components/profile/MobileAccountMenu';
+import SearchCommandDialog from '@/components/search/SearchCommandDialog';
+import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { hasAdminScope } from '@/lib/auth/roles';
+import { useReportCount } from '@/lib/hooks/useReportCount';
 import { useSession } from '@/lib/hooks/useSession';
 
-type NavItem = {
-  title: string;
-  href: string;
-  dropdown?: SubNavItem[];
-  roles?: Roles[];
-};
+import DesktopNav from './DesktopNav';
+import MobileNav from './MobileNav';
+import MobileNavTrigger from './MobileNavTrigger';
+import { getNavEntries } from './navigation';
+import ThemeToggle from './ThemeToggle';
 
-type SubNavItem = {
-  icon: LucideIcon;
-  requiresSession?: boolean;
-} & Omit<NavItem, 'dropdown'>;
-
-const navItems: NavItem[] = [
-  {
-    title: 'Leaderboard',
-    href: '/leaderboard',
-    roles: [],
-  },
-  {
-    title: 'Tournaments',
-    href: '/tournaments',
-    roles: [],
-    dropdown: [
-      {
-        title: 'Browse',
-        href: '/tournaments',
-        icon: Trophy,
-        roles: [],
-      },
-      {
-        title: 'Submit',
-        href: '/tournaments/submit',
-        icon: Upload,
-        requiresSession: true,
-        roles: [],
-      },
-    ],
-  },
-  {
-    title: 'Beatmaps',
-    href: '/beatmaps',
-    roles: [],
-  },
-  {
-    title: 'Stats',
-    href: '/stats',
-    roles: [],
-  },
-  {
-    title: 'Tools',
-    href: '/tools/filter',
-    roles: [],
-    dropdown: [
-      {
-        title: 'Registrant Filtering',
-        href: '/tools/filter',
-        icon: Filter,
-        roles: [],
-        requiresSession: true,
-      },
-      {
-        title: 'Filter Reports',
-        href: '/tools/filter-reports',
-        icon: FileText,
-        roles: [],
-      },
-      {
-        title: 'Audit Logs',
-        href: '/tools/audit-logs',
-        icon: Clock,
-        roles: [],
-      },
-    ],
-  },
-];
-
+/**
+ * The site header: the logo and navigation on the left (an Admin menu for
+ * admins and a More menu for docs, the API reference and support), search,
+ * the theme switch and the account menu on the right. Below laptop width
+ * (1024px), where the admin's seven entries no longer fit, the navigation and
+ * the account menu move into one menu with the same structure.
+ */
 export default function Header() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const { isPending: isSessionPending } = useAuthSession();
-  const currentUser = useSession();
-  const scopes = currentUser?.scopes ?? [];
-  const hasSession = Boolean(currentUser);
+  const user = useSession();
+  const userId = user?.userId ?? null;
+  const isAdmin = hasAdminScope(user?.scopes);
+  const adminCount = useReportCount(isAdmin ? userId : null, true);
+  const userCount = useReportCount(userId, false);
+  // The hook keeps its last count when the user goes away, so after logging
+  // out the counts would still light the menu's dot.
+  const unseenReports = isAdmin ? adminCount : 0;
+  const unreadReportUpdates = userId ? userCount : 0;
+
+  const entries = getNavEntries({
+    hasSession: Boolean(user),
+    isAdmin,
+    unseenReports,
+  });
+
+  const menuNotification =
+    isAdmin && unseenReports > 0
+      ? 'unseen reports'
+      : unreadReportUpdates > 0
+        ? 'unread report updates'
+        : undefined;
 
   return (
     <>
       <header
         data-testid="header"
-        className="sticky top-0 z-50 flex h-(--header-height-px) w-full flex-row items-center justify-between border-b border-b-muted bg-card px-4 shadow-sm"
+        className="sticky top-0 z-50 flex h-(--header-height-px) w-full items-center justify-between gap-4 border-b border-b-muted bg-card px-4 shadow-sm"
       >
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-3 lg:gap-4">
           <Link
             href="/"
             data-testid="header-logo"
-            className="flex items-center"
+            className="flex shrink-0 items-center rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             <Image
-              src={'/logos/small.svg'}
-              alt="o!TR Logo"
+              src="/logos/small.svg"
+              alt="o!TR home"
               width={36}
               height={36}
               className="transition-transform hover:scale-105"
             />
           </Link>
-
-          <NavigationMenu viewport={false} className="hidden md:flex">
-            <NavigationMenuList className="gap-1">
-              {navItems.map((item) => (
-                <NavigationItem
-                  key={item.title}
-                  {...item}
-                  scopes={scopes}
-                  hasSession={hasSession}
-                />
-              ))}
-            </NavigationMenuList>
-          </NavigationMenu>
+          <DesktopNav entries={entries} />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1">
           <SearchCommandDialog />
-          <ModeToggle />
-          <DocsButton />
-          <SpecButton />
-          <SupportButton />
-          <ClientOnly>
-            <div className="hidden md:ml-1 md:block">
-              <ProfileCard />
-            </div>
-          </ClientOnly>
+          <ThemeToggle />
+          <div className="ml-1 hidden lg:block">
+            {user ? (
+              <AccountMenu
+                user={user}
+                unreadReportUpdates={unreadReportUpdates}
+              />
+            ) : (
+              <LoginButton size="sm" />
+            )}
+          </div>
 
-          <Sheet modal={false} onOpenChange={setIsMobileNavOpen}>
-            <MobileNavTrigger isOpen={isMobileNavOpen} />
+          <Sheet
+            modal={false}
+            open={isMobileNavOpen}
+            onOpenChange={setIsMobileNavOpen}
+          >
+            <MobileNavTrigger
+              isOpen={isMobileNavOpen}
+              notification={menuNotification}
+            />
             <SheetContent
               overlay={false}
               closeButton={false}
-              className="top-(--header-height-px) h-auto w-full overflow-y-auto border-t border-t-muted border-l-muted bg-card p-6 sm:max-w-xs md:hidden"
+              className="top-(--header-height-px) h-auto max-h-[calc(100dvh-var(--header-height-px))] w-full gap-0 overflow-y-auto border-t border-t-muted border-l-muted bg-card p-4 sm:max-w-xs lg:hidden"
             >
               <SheetTitle className="sr-only">Navigation</SheetTitle>
-              <div className="flex flex-col space-y-6">
-                <nav className="flex flex-col space-y-1">
-                  <NavigationMenu
-                    viewport={false}
-                    className="contents justify-start"
-                  >
-                    <ClientOnly>
-                      <ProfileCard isMobileNav />
-                    </ClientOnly>
-                    <Separator />
-                    <span className="py-2" />
-                    <NavigationMenuList className="flex flex-1 flex-col items-start gap-1">
-                      {navItems.map((item) => (
-                        <NavigationItem
-                          isMobile
-                          key={item.title}
-                          {...item}
-                          scopes={scopes}
-                          hasSession={hasSession}
-                        />
-                      ))}
-                    </NavigationMenuList>
-                  </NavigationMenu>
-                </nav>
+              <div className="flex flex-col gap-4">
+                <MobileAccountMenu
+                  user={user}
+                  unreadReportUpdates={unreadReportUpdates}
+                />
+                <Separator />
+                <MobileNav entries={entries} />
               </div>
             </SheetContent>
           </Sheet>
         </div>
       </header>
 
-      <ClientOnly>
-        {!currentUser && !isSessionPending && (
-          <div className="w-full bg-accent/50 py-1 text-center">
-            <p className="text-xs font-medium text-muted-foreground">
-              Some features are not available while signed out.
-            </p>
-          </div>
-        )}
-      </ClientOnly>
+      {user ? null : (
+        <Callout variant="banner" tone="info" data-testid="signed-out-notice">
+          Some features are not available while signed out.
+        </Callout>
+      )}
     </>
-  );
-}
-
-function NavLink({
-  isMobile,
-  className,
-  ...rest
-}: { isMobile: boolean } & React.ComponentProps<typeof Link>) {
-  const linkStyle =
-    'flex flex-row gap-2 rounded-md p-2 text-sm transition-colors hover:text-primary focus:bg-transparent focus:text-primary';
-
-  if (isMobile) {
-    return (
-      <SheetClose asChild>
-        <Link className={cn(linkStyle, className)} {...rest} />
-      </SheetClose>
-    );
-  }
-
-  return <Link className={cn(linkStyle, className)} {...rest} />;
-}
-
-function SubnavTrigger({
-  active,
-  dropdown,
-  children,
-  hasDropdown,
-  isMobile,
-}: {
-  dropdown: boolean;
-  active: boolean;
-  children: React.ReactNode;
-  hasDropdown: boolean;
-  isMobile: boolean;
-}) {
-  if (!dropdown) {
-    return children;
-  }
-
-  return (
-    <NavigationMenuTrigger
-      data-slot="navigation-menu-trigger"
-      className={cn(
-        'group inline-flex h-9 w-full items-center justify-between px-2 transition-[color,box-shadow] hover:cursor-pointer hover:bg-accent data-[state=open]:bg-accent md:hover:bg-transparent md:data-[state=open]:bg-transparent',
-        active && 'bg-accent md:bg-transparent'
-      )}
-      onPointerDown={
-        hasDropdown && !isMobile
-          ? (e: React.PointerEvent) => {
-              if (e.pointerType !== 'mouse') {
-                return;
-              }
-              e.preventDefault();
-            }
-          : undefined
-      }
-    >
-      <span className="flex items-center">{children}</span>
-      <ChevronDown
-        className="relative top-px size-3 transition duration-300 group-data-[state=open]:rotate-180"
-        aria-hidden="true"
-      />
-    </NavigationMenuTrigger>
-  );
-}
-
-type NavigationItemProps = NavItem & {
-  isMobile?: boolean;
-  scopes: string[];
-  hasSession: boolean;
-};
-
-function NavigationItem({
-  title,
-  href,
-  dropdown,
-  roles,
-  isMobile = false,
-  scopes,
-  hasSession,
-}: NavigationItemProps) {
-  const pathname = usePathname();
-  const hasDropdown = !!dropdown;
-  const isActive = hasDropdown
-    ? dropdown.some((item) => pathname.startsWith(item.href))
-    : pathname.startsWith(href);
-
-  const isVisible =
-    roles?.length === 0 || roles?.some((role) => scopes.includes(role));
-
-  const navTestId = `nav-${title.toLowerCase()}`;
-
-  return (
-    <NavigationMenuItem className={cn('w-full', !isVisible && 'hidden')}>
-      <SubnavTrigger
-        active={isActive}
-        dropdown={hasDropdown}
-        hasDropdown={hasDropdown}
-        isMobile={isMobile}
-      >
-        {hasDropdown ? (
-          <span
-            data-testid={navTestId}
-            className={cn(
-              'flex flex-row gap-2 rounded-md text-sm transition-colors hover:text-primary focus:text-primary',
-              isActive && 'font-bold text-primary'
-            )}
-          >
-            {title}
-          </span>
-        ) : (
-          <NavLink
-            isMobile={isMobile}
-            data-testid={navTestId}
-            href={href}
-            className={cn(
-              'bg-transparent hover:bg-transparent',
-              !hasDropdown &&
-                'hover:bg-accent focus:bg-accent md:hover:bg-transparent md:focus:bg-transparent',
-              isActive && 'bg-accent font-bold text-primary md:bg-transparent'
-            )}
-          >
-            {title}
-          </NavLink>
-        )}
-      </SubnavTrigger>
-      {hasDropdown && (
-        <NavigationMenuContent>
-          {/* Extends the nav border */}
-          <div className="pointer-events-none absolute bottom-0 left-0 hidden h-10/11 w-full rounded-b-xl border border-t-0 border-muted bg-transparent md:block" />
-          {dropdown.map(
-            ({ title, href, icon: Icon, roles, requiresSession }) => {
-              const isHidden =
-                (requiresSession && !hasSession) ||
-                (roles &&
-                  roles.length > 0 &&
-                  !roles.some((role) => scopes.includes(role)));
-
-              return (
-                <NavLink
-                  isMobile={isMobile}
-                  key={title}
-                  href={href}
-                  hidden={isHidden}
-                  className={cn(
-                    'whitespace-nowrap hover:bg-accent md:hover:bg-transparent',
-                    pathname === href &&
-                      'bg-accent font-semibold text-primary hover:text-primary focus:text-primary md:bg-transparent'
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <Icon
-                      className={cn(
-                        'size-5 hover:text-primary focus:text-primary',
-                        pathname === href && 'text-primary'
-                      )}
-                    />
-                    <p>{title}</p>
-                  </div>
-                </NavLink>
-              );
-            }
-          )}
-        </NavigationMenuContent>
-      )}
-    </NavigationMenuItem>
   );
 }

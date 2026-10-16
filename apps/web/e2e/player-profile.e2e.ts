@@ -159,7 +159,9 @@ test.describe('Player Profile Page', () => {
       await page.goto(ROUTES.playerProfile(999_999_999));
       await page.waitForLoadState('networkidle');
 
-      await expect(page.getByText('404 Not Found')).toBeVisible({
+      await expect(
+        page.getByRole('heading', { level: 1, name: 'Page not found' })
+      ).toBeVisible({
         timeout: 10000,
       });
       await expect(page.getByText('Player could not load')).toHaveCount(0);

@@ -69,7 +69,10 @@ test.describe('Banned Page', () => {
 
     const heading = page.locator('[data-testid="banned-heading"]');
     await expect(heading).toBeVisible({ timeout: 10000 });
-    await expect(heading).toHaveText('Account Suspended');
+    await expect(heading).toHaveText('Account suspended');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Account suspended' })
+    ).toBeVisible();
 
     await expect(page.locator('[data-testid="banned-reason"]')).toHaveCount(0);
   });
@@ -101,9 +104,28 @@ test.describe('Unauthorized Page', () => {
     const heading = page.locator('[data-testid="unauthorized-heading"]');
     await expect(heading).toBeVisible({ timeout: 10000 });
     await expect(heading).toHaveText('Unauthorized');
+    await expect(
+      container.getByRole('heading', { level: 1, name: 'Unauthorized' })
+    ).toBeVisible();
 
     await expect(container).toContainText(
       'You are not authorized to access this page.'
     );
+    await expect(container.getByRole('button')).toHaveCount(0);
+  });
+});
+
+test.describe('Not Found Page', () => {
+  test('renders the status page for an unknown address', async ({ page }) => {
+    const response = await page.goto('/this-page-does-not-exist');
+    await page.waitForLoadState('networkidle');
+
+    expect(response?.status()).toBe(404);
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Page not found' })
+    ).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByText("Sorry, we don't have that page!")
+    ).toBeVisible();
   });
 });

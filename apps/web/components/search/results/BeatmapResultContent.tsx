@@ -2,12 +2,13 @@
 
 import { Gamepad2, Star } from 'lucide-react';
 
-import { RulesetEnumHelper } from '@/lib/enum-helpers';
+import BeatmapBackground from '@/components/games/BeatmapBackground';
+import { getStarRatingMarkColor } from '@/lib/kit/color/star-rating';
+import { formatCount, formatNumber } from '@/lib/kit/format/number';
 import type { BeatmapSearchResult } from '@/lib/orpc/schema/search';
 import { highlightMatch } from '@/lib/utils/search';
-import RulesetIcon from '@/components/icons/RulesetIcon';
-import SimpleTooltip from '@/components/simple-tooltip';
-import BeatmapBackground from '@/components/games/BeatmapBackground';
+
+import { RulesetLabel } from './RulesetLabel';
 
 interface BeatmapResultContentProps {
   data: BeatmapSearchResult;
@@ -21,12 +22,12 @@ export function BeatmapResultContent({
   const displayTitle = `${data.artist} - ${data.title}`;
 
   return (
-    <div className="flex w-full items-center gap-3 overflow-hidden">
-      <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded">
+    <div className="flex w-full min-w-0 items-center gap-3">
+      <div className="relative size-8 shrink-0 overflow-hidden rounded">
         <BeatmapBackground
           beatmapsetId={data.beatmapsetOsuId ?? undefined}
           alt={`${displayTitle} cover`}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 size-full object-cover"
         />
       </div>
 
@@ -40,27 +41,24 @@ export function BeatmapResultContent({
         </span>
       </div>
 
-      <div className="flex flex-shrink-0 items-center gap-3">
-        <div className="flex items-center gap-1">
-          <Star className="h-3.5 w-3.5 text-primary" />
-          <span className="text-xs font-medium">{data.sr.toFixed(2)}</span>
-        </div>
-        <SimpleTooltip
-          content={RulesetEnumHelper.getMetadata(data.ruleset).text}
-        >
-          <RulesetIcon
-            ruleset={data.ruleset}
-            width={16}
-            height={16}
-            className="flex-shrink-0 fill-primary"
+      <div className="flex shrink-0 items-center gap-3 text-xs tabular-nums">
+        <span className="flex items-center gap-1 font-medium">
+          <Star
+            aria-hidden
+            className="size-3.5 shrink-0"
+            style={{ color: getStarRatingMarkColor(data.sr) }}
           />
-        </SimpleTooltip>
-        {data.gameCount > 0 && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Gamepad2 className="h-3 w-3" />
-            <span>{data.gameCount.toLocaleString()}</span>
-          </div>
-        )}
+          <span className="sr-only">Star rating </span>
+          {formatNumber(data.sr, { decimals: 2 })}
+        </span>
+        <RulesetLabel ruleset={data.ruleset} />
+        {data.gameCount > 0 ? (
+          <span className="flex items-center gap-1 text-muted-foreground">
+            <Gamepad2 aria-hidden className="size-3.5 shrink-0" />
+            {formatCount(data.gameCount)}
+            <span className="sr-only"> games</span>
+          </span>
+        ) : null}
       </div>
     </div>
   );

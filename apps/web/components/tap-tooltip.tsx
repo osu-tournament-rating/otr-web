@@ -11,6 +11,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { ACCENT_SURFACE_CLASSES } from '@/lib/kit/color/tokens';
 import { cn } from '@/lib/utils';
 
 interface TapTooltipProps {
@@ -68,7 +69,10 @@ export default function TapTooltip({
         align={align}
         sideOffset={6}
         collisionPadding={8}
-        className="w-auto max-w-[calc(100vw-2rem)] border-0 bg-accent p-3 text-xs text-accent-foreground"
+        className={cn(
+          'w-auto max-w-[calc(100vw-2rem)] border-0 p-3 text-xs',
+          ACCENT_SURFACE_CLASSES
+        )}
       >
         {content}
       </PopoverContent>

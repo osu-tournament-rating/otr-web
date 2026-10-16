@@ -1,8 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
+import { Ruleset } from '@otr/core/osu';
+
 import {
   beatmapListFilterSchema,
   leaderboardFilterSchema,
+  tournamentEditFormSchema,
   tournamentListFilterSchema,
 } from '../validation-schema';
 
@@ -98,6 +101,114 @@ describe('beatmapListFilterSchema', () => {
     expect(filter.sort).toBe('gameCount');
     expect(filter.descending).toBe(true);
     expect(filter.page).toBeUndefined();
+    expect(filter.ruleset).toBeUndefined();
+    expect(filter.rulesets).toBeUndefined();
+  });
+
+  test('reads one ruleset as both the single and the list value', () => {
+    const filter = beatmapListFilterSchema.parse({ ruleset: '4' });
+
+    expect(filter.ruleset).toBe(Ruleset.Mania4k);
+    expect(filter.rulesets).toEqual([Ruleset.Mania4k]);
+  });
+
+  test('reads repeated rulesets and keeps valid ones in enum order', () => {
+    const filter = beatmapListFilterSchema.parse({
+      ruleset: ['5', 'x', '0', '0', '99'],
+      minSr: '5',
+    });
+
+    expect(filter.ruleset).toBeUndefined();
+    expect(filter.rulesets).toEqual([Ruleset.Osu, Ruleset.Mania7k]);
+    expect(filter.minSr).toBe(5);
+  });
+});
+
+describe.each([
+  ['beatmapListFilterSchema', beatmapListFilterSchema],
+  ['tournamentListFilterSchema', tournamentListFilterSchema],
+] as const)('%s rulesets', (_, schema) => {
+  test('merges the ruleset and rulesets params', () => {
+    const filter = schema.parse({ ruleset: '2', rulesets: ['1', '2'] });
+
+    expect(filter.ruleset).toBeUndefined();
+    expect(filter.rulesets).toEqual([Ruleset.Taiko, Ruleset.Catch]);
+  });
+
+  test('accepts numbers from a form as well as URL strings', () => {
+    const filter = schema.parse({ ruleset: 1 });
+
+    expect(filter.ruleset).toBe(Ruleset.Taiko);
+    expect(filter.rulesets).toEqual([Ruleset.Taiko]);
+  });
+
+  test('ignores empty and unknown values', () => {
+    const filter = schema.parse({ ruleset: ['', '6'], rulesets: '-1' });
+
+    expect(filter.ruleset).toBeUndefined();
+    expect(filter.rulesets).toBeUndefined();
+  });
+});
+
+describe('tournamentEditFormSchema messages', () => {
+  const tournament = {
+    name: 'Test Tournament',
+    abbreviation: 'TT',
+    forumUrl: 'https://osu.ppy.sh/community/forums/topics/1',
+    rankRangeLowerBound: '1',
+    lobbySize: '2',
+    ruleset: '0',
+    verificationStatus: '4',
+    rejectionReason: '0',
+  };
+
+  const messagesFor = (patch: Record<string, unknown>, path: string) =>
+    tournamentEditFormSchema
+      .safeParse({ ...tournament, ...patch })
+      .error?.issues.filter((issue) => issue.path.join('.') === path)
+      .map((issue) => issue.message) ?? [];
+
+  test('accepts a valid tournament', () => {
+    expect(tournamentEditFormSchema.safeParse(tournament).success).toBe(true);
+  });
+
+  test('names the forum post URL, with one message per failure', () => {
+    const prefixMessage =
+      'Forum post URL must be from "https://osu.ppy.sh/community/forums/topics/" or "https://osu.ppy.sh/wiki/en/Tournaments/"';
+
+    expect(messagesFor({ forumUrl: '' }, 'forumUrl')).toEqual([
+      'Forum post URL is required',
+    ]);
+    expect(messagesFor({ forumUrl: 'not a url' }, 'forumUrl')).toEqual([
+      prefixMessage,
+    ]);
+    expect(
+      messagesFor({ forumUrl: 'https://example.com/topic/1' }, 'forumUrl')
+    ).toEqual([prefixMessage]);
+  });
+
+  test('states each field rule', () => {
+    expect(messagesFor({ name: '' }, 'name')).toEqual([
+      'Tournament name is required',
+    ]);
+    expect(messagesFor({ abbreviation: '' }, 'abbreviation')).toEqual([
+      'Tournament abbreviation is required',
+    ]);
+    expect(
+      messagesFor({ rankRangeLowerBound: '0' }, 'rankRangeLowerBound')
+    ).toEqual(['Rank restriction must be at least 1']);
+    expect(messagesFor({ lobbySize: '9' }, 'lobbySize')).toEqual([
+      'Lobby size cannot exceed 8',
+    ]);
+  });
+
+  test('still accepts a fractional rank restriction, as before', () => {
+    expect(
+      tournamentEditFormSchema.safeParse({
+        ...tournament,
+        rankRangeLowerBound: '1000.5',
+      }).success
+    ).toBe(true);
   });
 });
 
@@ -147,6 +258,18 @@ describe('tournamentListFilterSchema', () => {
 
     expect(filter.dateMin?.toISOString()).toBe('2025-01-01T00:00:00.000Z');
     expect(filter.dateMax?.toISOString()).toBe('2025-01-15T23:59:59.999Z');
+  });
+
+  test('reads the kit search key q when searchQuery is absent', () => {
+    expect(tournamentListFilterSchema.parse({ q: 'owc' }).searchQuery).toBe(
+      'owc'
+    );
+    expect(
+      tournamentListFilterSchema.parse({ q: 'owc', searchQuery: 'cwc' })
+        .searchQuery
+    ).toBe('cwc');
+    expect(tournamentListFilterSchema.parse({}).searchQuery).toBe('');
+    expect('q' in tournamentListFilterSchema.parse({ q: 'owc' })).toBe(false);
   });
 
   test('parses repeated team sizes', () => {
@@ -207,5 +330,31 @@ describe('leaderboardFilterSchema', () => {
       leaderboardFilterSchema.parse({ friend: 'maybe' }).friend
     ).toBeUndefined();
     expect(leaderboardFilterSchema.parse({}).friend).toBeUndefined();
+  });
+
+  test('reads the player search and sort', () => {
+    const filter = leaderboardFilterSchema.parse({
+      q: ' stage ',
+      sort: 'matches',
+      dir: 'asc',
+    });
+
+    expect(filter.q).toBe('stage');
+    expect(filter.sort).toBe('matches');
+    expect(filter.dir).toBe('asc');
+  });
+
+  test('drops a search that is too short and an unknown sort', () => {
+    const filter = leaderboardFilterSchema.parse({
+      q: 'a',
+      sort: 'country',
+      dir: 'up',
+      minMatches: '5',
+    });
+
+    expect(filter.q).toBeUndefined();
+    expect(filter.sort).toBeUndefined();
+    expect(filter.dir).toBeUndefined();
+    expect(filter.minMatches).toBe(5);
   });
 });

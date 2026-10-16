@@ -2,13 +2,15 @@
 
 import { Users } from 'lucide-react';
 
+import { Badge } from '@/components/kit/status/Badge';
+import { NotInRatings } from '@/components/kit/status/NotInRatings';
+import { VerificationStatusIcon } from '@/components/kit/status/VerificationStatusIcon';
+import { formatLobbySize } from '@/lib/kit/format/fields';
+import { getRejectionReasonTexts } from '@/lib/kit/status/reasons';
 import type { TournamentSearchResult } from '@/lib/orpc/schema/search';
-import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import { highlightMatch } from '@/lib/utils/search';
-import VerificationBadge from '@/components/badges/VerificationBadge';
-import { LazerBadge } from '@/components/badges/LazerBadge';
-import RulesetIcon from '@/components/icons/RulesetIcon';
-import SimpleTooltip from '@/components/simple-tooltip';
+
+import { RulesetLabel } from './RulesetLabel';
 
 interface TournamentResultContentProps {
   data: TournamentSearchResult;
@@ -20,36 +22,35 @@ export function TournamentResultContent({
   query,
 }: TournamentResultContentProps) {
   return (
-    <div className="flex w-full items-center gap-3">
-      <VerificationBadge
-        verificationStatus={data.verificationStatus}
-        rejectionReason={data.rejectionReason}
-        entityType="tournament"
-        interactive={false}
+    <div className="flex w-full min-w-0 items-center gap-3">
+      <VerificationStatusIcon
+        status={data.verificationStatus}
+        rejectionReasons={getRejectionReasonTexts(
+          'tournament',
+          data.rejectionReason
+        )}
+        tooltip="hover"
       />
-      <span className="min-w-0 flex-1 truncate font-medium">
-        {highlightMatch(data.name, query)}
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="min-w-0 truncate font-medium">
+          {highlightMatch(data.name, query)}
+        </span>
+        <NotInRatings status={data.verificationStatus} />
       </span>
 
-      <div className="flex flex-shrink-0 items-center gap-3">
-        <LazerBadge isLazer={data.isLazer} />
-        <div className="flex items-center gap-1">
-          <Users className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
-          <span className="text-xs">
-            {data.lobbySize}v{data.lobbySize}
-          </span>
-        </div>
-        <SimpleTooltip
-          content={RulesetEnumHelper.getMetadata(data.ruleset).text}
-        >
-          <RulesetIcon
-            ruleset={data.ruleset}
-            width={16}
-            height={16}
-            className="flex-shrink-0 fill-primary"
-          />
-        </SimpleTooltip>
-      </div>
+      <span className="flex shrink-0 items-center gap-3 text-xs">
+        {data.isLazer ? (
+          <Badge variant="outline" size="sm">
+            lazer
+          </Badge>
+        ) : null}
+        <span className="flex items-center gap-1 text-muted-foreground">
+          <Users aria-hidden className="size-3.5 shrink-0" />
+          <span className="sr-only">Lobby size </span>
+          {formatLobbySize(data.lobbySize)}
+        </span>
+        <RulesetLabel ruleset={data.ruleset} />
+      </span>
     </div>
   );
 }

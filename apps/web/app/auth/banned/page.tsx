@@ -1,6 +1,8 @@
 import { ShieldAlert } from 'lucide-react';
 import { type Metadata } from 'next';
 
+import { StatusPage } from '@/components/kit/feedback/StatusPage';
+
 export const metadata: Metadata = {
   title: 'Account suspended',
   description: 'Your osu! Tournament Rating account has been banned.',
@@ -40,34 +42,18 @@ export default async function BannedPage(props: BannedPageProps) {
   const reason = extractReason(params);
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 pt-4 pb-12 sm:pt-8">
-      <div className="space-y-6 rounded-2xl border border-border bg-background px-6 py-8 text-center shadow-sm sm:px-10 sm:py-12">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive-foreground ring-1 ring-destructive/30">
-          <ShieldAlert aria-hidden="true" className="h-7 w-7" />
-        </div>
-        <header className="space-y-3">
-          <h1
-            data-testid="banned-heading"
-            className="text-3xl font-semibold tracking-tight"
-          >
-            Account Suspended
-          </h1>
-          <p className="text-sm text-muted-foreground sm:text-base">
-            Your osu! Tournament Rating account has been temporarily disabled.
-            If you believe this is an error, please contact the administrators.
-          </p>
-        </header>
-        {reason ? (
-          <section className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-left text-sm text-destructive-foreground sm:text-base">
-            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-              <span className="font-medium">Reason:</span>
-              <span data-testid="banned-reason" className="break-words">
-                {reason}
-              </span>
-            </div>
-          </section>
-        ) : null}
-      </div>
-    </main>
+    <StatusPage
+      icon={ShieldAlert}
+      tone="destructive"
+      title={<span data-testid="banned-heading">Account suspended</span>}
+      description="Your osu! Tournament Rating account has been temporarily disabled. If you believe this is an error, please contact the administrators."
+    >
+      {reason ? (
+        <p className="break-words text-muted-foreground">
+          <span className="font-medium text-foreground">Reason:</span>{' '}
+          <span data-testid="banned-reason">{reason}</span>
+        </p>
+      ) : null}
+    </StatusPage>
   );
 }

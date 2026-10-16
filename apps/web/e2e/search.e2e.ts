@@ -11,21 +11,14 @@ import { STORAGE_STATE } from './fixtures/auth';
 
 /**
  * Global website search (issue #700). The dialog and the `/search` endpoint are
- * both gated behind a session, so the gating specs run signed out and the rest
- * with a baked regular-user session.
+ * open to everyone; a session only marks friends. Most specs run with a baked
+ * regular-user session, the signed-out ones without.
  */
 
 const SEARCH_TRIGGER = '[data-testid="search-trigger-button"]';
 const SEARCH_DIALOG = '[data-testid="search-dialog"]';
 const SEARCH_INPUT = '[data-testid="search-input"]';
 const SEARCH_RESULTS = '[data-testid="search-results-list"]';
-
-async function searchTriggerVisible(page: Page): Promise<boolean> {
-  return page
-    .locator(SEARCH_TRIGGER)
-    .isVisible({ timeout: 5000 })
-    .catch(() => false);
-}
 
 async function openSearchViaButton(page: Page) {
   await page.locator(SEARCH_TRIGGER).click();
@@ -39,25 +32,18 @@ async function typeQuery(page: Page, query: string) {
 }
 
 test.describe('Global Website Search', () => {
-  test.describe('Trigger and Gating', () => {
-    test('search trigger button is gated behind an authenticated session', async ({
+  test.describe('Signed out', () => {
+    test('the search button opens the dialog without a session', async ({
       page,
     }) => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
 
-      const header = page.locator('[data-testid="header"]');
-      await expect(header).toBeVisible({ timeout: 10000 });
-
-      if (await searchTriggerVisible(page)) {
-        await openSearchViaButton(page);
-        await expect(page.locator(SEARCH_INPUT)).toBeVisible({
-          timeout: 10000,
-        });
-      } else {
-        await expect(page.locator(SEARCH_TRIGGER)).toHaveCount(0);
-        await expect(page.locator(SEARCH_DIALOG)).toHaveCount(0);
-      }
+      await expect(page.locator('[data-testid="header"]')).toBeVisible({
+        timeout: 10000,
+      });
+      await openSearchViaButton(page);
+      await expect(page.locator(SEARCH_INPUT)).toBeVisible({ timeout: 10000 });
     });
 
     test('signed-out session shows the limited-features banner', async ({
@@ -66,25 +52,113 @@ test.describe('Global Website Search', () => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
 
-      if (await searchTriggerVisible(page)) {
-        test.skip(true, 'Authenticated session: signed-out banner not shown');
-      }
-
       await expect(
         page.getByText('Some features are not available while signed out.')
       ).toBeVisible({ timeout: 10000 });
     });
 
-    test('Cmd/Ctrl+K is a no-op without a session', async ({ page }) => {
+    test('Cmd/Ctrl+K opens the dialog without a session', async ({ page }) => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
 
-      if (await searchTriggerVisible(page)) {
-        test.skip(true, 'Authenticated session: hotkey opens the dialog');
-      }
-
       await page.keyboard.press('ControlOrMeta+KeyK');
-      await expect(page.locator(SEARCH_DIALOG)).toHaveCount(0);
+      await expect(page.locator(SEARCH_DIALOG)).toBeVisible({ timeout: 10000 });
+    });
+
+    test('a signed-out query finds a player', async ({ page }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await openSearchViaButton(page);
+      await typeQuery(page, 'Stage');
+
+      await expect(
+        page.locator(
+          '[data-testid="search-group-players"] [data-value="player-' +
+            TEST_PLAYER_ID +
+            '"]'
+        )
+      ).toBeVisible({ timeout: 15000 });
+    });
+  });
+
+  test.describe('Search behaviour', () => {
+    test.use({ storageState: STORAGE_STATE.user });
+
+    test('a one-character term shows the minimum-length hint and sends nothing', async ({
+      page,
+    }) => {
+      const searchRequests: string[] = [];
+      page.on('request', (request) => {
+        if (request.url().includes('/rpc/search/query')) {
+          searchRequests.push(request.url());
+        }
+      });
+
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await openSearchViaButton(page);
+      await typeQuery(page, 'S');
+
+      await expect(
+        page
+          .locator(SEARCH_RESULTS)
+          .getByText('Type at least 2 characters to search.')
+      ).toBeVisible({ timeout: 10000 });
+      await page.waitForTimeout(800);
+      expect(searchRequests).toHaveLength(0);
+    });
+
+    test('the clear button empties the field', async ({ page }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await openSearchViaButton(page);
+      await typeQuery(page, 'Stage');
+
+      await page
+        .locator(SEARCH_DIALOG)
+        .getByRole('button', { name: 'Clear search' })
+        .click();
+      await expect(page.locator(SEARCH_INPUT)).toHaveValue('');
+      await expect(page.locator(SEARCH_INPUT)).toBeFocused();
+    });
+
+    test('See all tournaments opens the tournament list already searched', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await openSearchViaButton(page);
+      await typeQuery(page, 'DAS');
+
+      const seeAll = page.locator('[data-testid="search-see-all-tournaments"]');
+      await expect(seeAll).toBeVisible({ timeout: 15000 });
+      await seeAll.click();
+
+      await page.waitForURL(/\/tournaments\?(.*&)?q=DAS(&|$)/, {
+        timeout: 10000,
+      });
+    });
+
+    test('See all on the leaderboard opens the leaderboard search', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await openSearchViaButton(page);
+      await typeQuery(page, 'Stage');
+
+      const seeAll = page.locator('[data-testid="search-see-all-players"]');
+      await expect(seeAll).toBeVisible({ timeout: 15000 });
+      await seeAll.click();
+
+      await page.waitForURL(/\/leaderboard\?(.*&)?q=Stage(&|$)/, {
+        timeout: 10000,
+      });
     });
   });
 

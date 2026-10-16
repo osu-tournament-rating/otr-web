@@ -1,6 +1,7 @@
 import { CATEGORICAL_OTHER, CATEGORICAL_PALETTE } from './categorical';
 import { GRADE_PALETTE } from './grades';
 import { MOD_PALETTE } from './mods';
+import type { Surface } from './surfaces';
 import { MATCH_SURFACES, MATCH_TEAM_COLORS } from './teams';
 import { themeColor, type ThemeColor } from './theme-color';
 import { TIER_PALETTE } from './tiers';
@@ -100,11 +101,56 @@ export const NOTIFICATION_COLOR: ThemeColor = themeColor(
   'mark'
 );
 
+/** Body text. */
+export const FOREGROUND_COLOR: ThemeColor = themeColor(
+  '--foreground',
+  'oklch(0 0 0)',
+  'oklch(1 0 0)',
+  'text'
+);
+
+/** Secondary text: labels, captions, table headers. 4.5:1 on every surface but accent. */
+export const MUTED_TEXT_COLOR: ThemeColor = themeColor(
+  '--muted-foreground',
+  'oklch(0.53 0 0)',
+  'oklch(0.69 0 0)',
+  'text'
+);
+
+/**
+ * Muted text on the accent surface, where `--muted-foreground` is under
+ * 4.5:1. Tooltips apply it through `ACCENT_SURFACE_CLASSES`.
+ */
+export const ACCENT_MUTED_TEXT_COLOR: ThemeColor = themeColor(
+  '--accent-muted-foreground',
+  'oklch(0.5 0 0)',
+  'oklch(0.75 0 0)',
+  'text'
+);
+
+/** Red text: errors, falls in rating, destructive menu items. Tailwind red-800 and red-400. */
+export const DESTRUCTIVE_TEXT_COLOR: ThemeColor = themeColor(
+  '--destructive-foreground',
+  'oklch(44.4% 0.177 26.899)',
+  'oklch(70.4% 0.191 22.216)',
+  'text'
+);
+
+/**
+ * The tooltip surface: `bg-accent`, its text colour, and muted text scoped to
+ * `--accent-muted-foreground`, so `text-muted-foreground` inside a tooltip
+ * stays legible. The shadcn tooltip and TapTooltip's popover both use it.
+ */
+export const ACCENT_SURFACE_CLASSES =
+  'bg-accent text-accent-foreground [--muted-foreground:var(--accent-muted-foreground)]';
+
 export interface TokenEntry {
   color: ThemeColor;
   label: string;
   /** Tailwind class stem, such as `series-1`, when the token is registered. */
   utility?: string;
+  /** The surface its contrast is measured on, when it is not the panel. */
+  surface?: Surface;
 }
 
 export interface TokenGroup {
@@ -115,8 +161,36 @@ export interface TokenGroup {
 
 const utilityOf = (color: ThemeColor) => color.token.slice(2);
 
-/** Every token the component library added to globals.css, grouped as the gallery shows them. */
+/**
+ * Every token the component library added to globals.css, and the theme text
+ * colours it depends on, grouped as the gallery shows them.
+ */
 export const TOKEN_GROUPS: readonly TokenGroup[] = [
+  {
+    id: 'text',
+    title: 'Text',
+    entries: [
+      { color: FOREGROUND_COLOR, label: 'Text', utility: 'foreground' },
+      {
+        color: MUTED_TEXT_COLOR,
+        label: 'Muted text',
+        utility: 'muted-foreground',
+        surface: 'muted',
+      },
+      {
+        color: ACCENT_MUTED_TEXT_COLOR,
+        label: 'Muted text in a tooltip',
+        utility: 'accent-muted-foreground',
+        surface: 'accent',
+      },
+      {
+        color: DESTRUCTIVE_TEXT_COLOR,
+        label: 'Red text',
+        utility: 'destructive-foreground',
+        surface: 'muted',
+      },
+    ],
+  },
   {
     id: 'categorical',
     title: 'Categorical chart palette',

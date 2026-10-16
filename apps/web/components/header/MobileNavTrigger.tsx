@@ -1,20 +1,36 @@
+import { IconButton } from '@/components/kit/controls/IconButton';
+import { NotificationDot } from '@/components/kit/status/NotificationDot';
+import { SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { Button } from '../ui/button';
-import { SheetTrigger } from '../ui/sheet';
 
 const lineClassName =
   'absolute h-[2px] w-full rounded-full bg-current transition-all duration-200 ease-in-out';
 
-export default function MobileNavTrigger({ isOpen }: { isOpen: boolean }) {
+/** The phone menu button: three lines that fold into a cross while open. */
+export default function MobileNavTrigger({
+  isOpen,
+  notification,
+}: {
+  isOpen: boolean;
+  /** Something new inside the menu, such as unseen reports. */
+  notification?: string;
+}) {
   return (
-    <SheetTrigger asChild className="md:hidden">
-      <Button
+    <SheetTrigger asChild>
+      <IconButton
         data-testid="mobile-nav-trigger"
-        aria-label="Navigation menu"
-        variant="ghost"
-        size="icon"
+        label={
+          notification ? `Navigation menu (${notification})` : 'Navigation menu'
+        }
+        tooltip="Navigation menu"
+        tooltipSide="bottom"
+        size="default"
+        className="relative lg:hidden"
       >
-        <div className="relative flex h-3 w-4 flex-col justify-between">
+        <span
+          aria-hidden="true"
+          className="relative flex h-3 w-4 flex-col justify-between"
+        >
           <span
             className={cn(
               lineClassName,
@@ -34,8 +50,15 @@ export default function MobileNavTrigger({ isOpen }: { isOpen: boolean }) {
               isOpen ? 'bottom-1/2 translate-y-1/2 -rotate-45' : 'bottom-0'
             )}
           />
-        </div>
-      </Button>
+        </span>
+        {notification && !isOpen ? (
+          <NotificationDot
+            placement="corner"
+            label={notification}
+            className="top-1.5 right-1.5 ring-card"
+          />
+        ) : null}
+      </IconButton>
     </SheetTrigger>
   );
 }

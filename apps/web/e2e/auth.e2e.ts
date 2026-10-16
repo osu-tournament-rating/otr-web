@@ -27,6 +27,36 @@ test.describe('Auth fixtures', () => {
         page.locator('[data-testid="search-trigger-button"]')
       ).toBeVisible({ timeout: 10000 });
     });
+
+    test('the Admin menu links the admin home and the report queue', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await page.locator('[data-testid="nav-admin"]').click();
+
+      await expect(
+        page.locator('[data-testid="nav-admin-home"]')
+      ).toHaveAttribute('href', ROUTES.admin);
+      await expect(page.locator('[data-testid="nav-admin-home"]')).toHaveText(
+        'Admin'
+      );
+      await expect(
+        page.locator('[data-testid="nav-admin-reports"]')
+      ).toHaveAttribute('href', ROUTES.adminReports);
+    });
+
+    test('My reports opens /reports for admins too', async ({ page }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await page.locator('[data-testid="account-menu-trigger"]').click();
+
+      const myReports = page.getByRole('menuitem', { name: 'My reports' });
+      await expect(myReports).toBeVisible({ timeout: 10000 });
+      await expect(myReports).toHaveAttribute('href', ROUTES.reports);
+    });
   });
 
   test.describe('Regular user role', () => {
@@ -37,6 +67,25 @@ test.describe('Auth fixtures', () => {
       await page.waitForLoadState('networkidle');
 
       await expect(page).toHaveURL(/\/unauthorized/, { timeout: 10000 });
+    });
+
+    test('the account menu lists the account pages and no Admin menu', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await expect(page.locator('[data-testid="nav-admin"]')).toHaveCount(0);
+      await page.locator('[data-testid="account-menu-trigger"]').click();
+
+      const menu = page.locator('[data-testid="account-menu"]');
+      // My reports may also carry the unread-updates dot's text
+      await expect(menu.getByRole('menuitem')).toHaveText([
+        'My profile',
+        'Settings',
+        /^My reports/,
+        'Log out',
+      ]);
     });
 
     test('authenticated global search finds a player and navigates', async ({

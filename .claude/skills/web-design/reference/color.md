@@ -5,6 +5,7 @@ Tokens live in `apps/web/app/globals.css`; every value is mirrored, with its lig
 
 - [Rules at a glance](#rules-at-a-glance)
 - [Theme tokens](#theme-tokens): every token, its class, light and dark values
+- [Theme text](#theme-text): text, muted text, red text, and muted text in tooltips
 - [Brand blue](#brand-blue): `primary`, `primary-solid` and `link`
 - [Accent rule](#accent-rule): what blue is for
 - [Categorical palette](#categorical-palette): `CATEGORICAL_PALETTE`, `seriesColor`
@@ -38,6 +39,10 @@ Every token below has a light value in `:root` and a dark value in `.dark`; the 
 
 | Token                                  | Class                        | Light       | Dark        | Use                                      |
 | -------------------------------------- | ---------------------------- | ----------- | ----------- | ---------------------------------------- |
+| `--foreground`                         | `foreground`                 | `#000000`   | `#ffffff`   | Text                                     |
+| `--muted-foreground`                   | `muted-foreground`           | `#6c6c6c`   | `#9b9b9b`   | Muted text: labels, captions, headers    |
+| `--accent-muted-foreground`            | `accent-muted-foreground`    | `#636363`   | `#aeaeae`   | Muted text on `bg-accent` (tooltips)     |
+| `--destructive-foreground`             | `destructive-foreground`     | red-800     | red-400     | Red text                                 |
 | `--series-1` … `--series-8`            | `series-1` … `series-8`      | below       | below       | Categorical chart marks                  |
 | `--series-other`                       | `series-other`               | `#7a7a7a`   | `#929292`   | The "Other" series or bucket             |
 | `--verification-verified`              | `verification-verified`      | `#25984d`   | `#47c86e`   | Verified icon and chart fill             |
@@ -64,11 +69,36 @@ Every token below has a light value in `:root` and a dark value in `.dark`; the 
 | `--score-grade-ss` … `--score-grade-d` | none                         | `grades.ts` | `grades.ts` | Grade chart marks                        |
 | `--mod-nm` … `--mod-key`               | none                         | `mods.ts`   | `mods.ts`   | Mod marks and solid mod pills            |
 
-The existing tokens (`muted`, `success`, `warning`, `destructive`, `chart-1` … `chart-5` and the rest) keep their values. The legacy palettes that pages still read (`--mod-hard-rock` and the other long mod names, `--text-<tier>` with the `.text-gold` utilities, `--grade-*`, `--rank-range-*`, `--team-red`, `--team-blue`, `--team-no-team`, `--color-status-*`) are replaced by the tokens above in the second pull request; don't use them in new code.
+The other existing tokens (`muted`, `accent`, `success`, `warning`, `destructive`, `chart-1` … `chart-5` and the rest) keep their values. The four text tokens at the top of the table are mirrored in `@/lib/kit/color/tokens` and tested like the library's own (see [Theme text](#theme-text)). The legacy palettes that pages still read (`--mod-hard-rock` and the other long mod names, `--text-<tier>` with the `.text-gold` utilities, `--grade-*`, `--rank-range-*`, `--team-red`, `--team-blue`, `--team-no-team`, `--color-status-*`) are replaced by the tokens above in the second pull request; don't use them in new code.
 
 A light subtree inside a dark page (`.theme-light`, the gallery only) gets the light values of every token above, and of `success` and `warning`.
 
 Gallery anchor: `/admin/design#color`
+
+## Theme text
+
+Three text colours, each 4.5:1 or better on panels, tiles and popovers in both themes, plus one for muted text on the tooltip surface. Use their classes; the values live in `globals.css` and are mirrored in `@/lib/kit/color/tokens` (`FOREGROUND_COLOR`, `MUTED_TEXT_COLOR`, `DESTRUCTIVE_TEXT_COLOR`, `ACCENT_MUTED_TEXT_COLOR`).
+
+| Text            | Class                         | Light                                | Dark                     | Hardest surface             |
+| --------------- | ----------------------------- | ------------------------------------ | ------------------------ | --------------------------- |
+| Text            | `text-foreground`             | black                                | white                    | every surface, 11:1 or more |
+| Muted text      | `text-muted-foreground`       | `oklch(0.53 0 0)`, 4.7:1 on popovers | `oklch(0.69 0 0)`, 5.9:1 | muted and popover           |
+| Red text        | `text-destructive-foreground` | red-800, 7.4:1                       | red-400, 5.6:1           | muted and popover           |
+| Muted (tooltip) | applied by the tooltip        | `oklch(0.5 0 0)`, 4.7:1 on accent    | `oklch(0.75 0 0)`, 5.1:1 | accent                      |
+
+Tooltips (the shadcn `TooltipContent` and TapTooltip's popover) sit on `bg-accent`, where plain muted text is under 4.5:1 in both themes. Both apply `ACCENT_SURFACE_CLASSES` from `@/lib/kit/color/tokens`: the accent fill, its text colour, and `--muted-foreground` rescoped to `--accent-muted-foreground`. So `text-muted-foreground` inside a tooltip is legible with no extra class.
+
+Do:
+
+- Use `text-muted-foreground` for secondary lines inside tooltips; the surface takes care of it.
+- Spread `ACCENT_SURFACE_CLASSES` onto any new surface drawn in the tooltip's grey (a pinned tooltip, a static tooltip preview).
+
+Don't:
+
+- Don't put red text on `bg-accent`: red-400 is 3.9:1 there in dark mode. Keep red in tooltips to the icon, or use a popover surface.
+- Don't put `text-muted-foreground` on a hand-made `bg-accent` box without `ACCENT_SURFACE_CLASSES`.
+
+Gallery anchor: `/admin/design#color-text`
 
 ## Brand blue
 
@@ -364,7 +394,7 @@ contrastRatio('#4589f2', SURFACES.light.card) >= CONTRAST_MARK;
 
 - `parseColor` reads hex, `rgb()`, `hsl()` and `oklch()`; `contrastRatio(fg, bg)` is WCAG 2 (a translucent foreground is painted over the background first); `formatContrast` rounds down.
 - `colorDistance(a, b, vision)`: OKLab ΔE ×100 for `normal`, `protan` or `deutan` readers; `worstAdjacentDistance` checks a palette's neighbours.
-- `SURFACES`: the light card (`--card`) and the dark panel (`--muted` at 75% over `--background`), plus each theme's muted surface. `TEXT_COLORS`: each theme's foreground and muted text. A test resolves both from `globals.css`.
+- `SURFACES`: the light card (`--card`) and the dark panel (`--muted` at 75% over `--background`), plus each theme's muted, popover and accent (tooltip) surfaces. `TEXT_COLORS`: each theme's foreground and muted text, as hex. A test resolves both from `globals.css`.
 
 Adding a colour token: add it to both blocks in `globals.css` (and to `@theme inline` if it needs a class), add the `themeColor(...)` entry to its module and to `TOKEN_GROUPS` in `@/lib/kit/color/tokens`, run `bun test apps/web/lib/kit/color`, and check the gallery.
 
@@ -466,10 +496,10 @@ import {
 
 - `chartAxisProps`: for any axis. `chartValueAxisProps` adds `width: 'auto'` for the value axis on the left.
 - `niceAxisProps(ticks)`: `type`, `domain`, `ticks`, `interval: 0` and `allowDecimals` from `getNiceTicks`.
-- `chartGridProps`: dashed, horizontal only. `ChartContainer` paints it in the border colour at half strength, so always render inside `ChartContainer` (`@/components/ui/chart`).
+- `chartGridProps`: dashed, horizontal only. `ChartContainer` paints it in the border colour at half strength, so always render inside `ChartContainer` (`@/components/ui/chart`). The container also gives tick labels tabular figures (the body no longer does) and paints the bar cursor. `globals.css` gives Recharts' hidden measuring span (`#recharts_measurement_span`) tabular figures too, so the labels Recharts decides to show are spaced for the width it draws; keep the two together.
 - `CHART_BAR_RADIUS` (4px data ends, square at the baseline), `CHART_LINE_WIDTH` (2px), `CHART_MARGIN`, `CHART_CURSOR.bar` and `.line`.
 - Stacked bars: a 1px `stroke="var(--card)"` separates segments; round only the top series.
-- `CHART_CURSOR.bar` is the muted band `ChartContainer` already paints; pass it anyway so the intent is explicit.
+- `CHART_CURSOR.bar` asks for a band behind the hovered bar; pass it anyway so the intent is explicit. `ChartContainer` paints that band `accent` at half strength, overriding the fill, because `--muted` matches the dark panel and the band vanished there.
 - Turn off animation (`isAnimationActive={false}`) as the beatmap charts do.
 
 Don't:
@@ -509,7 +539,7 @@ import { ChartTooltip } from '@/components/ui/chart';
 Don't:
 
 - Don't write a per-chart tooltip component (`CustomTooltip` in `components/stats/TournamentsByYearChart.tsx`, `components/player/PlayerRatingChartTooltip.tsx`).
-- Don't import the shadcn `ChartTooltipContent` from `@/components/ui/chart` in new charts (the beatmap cards still do); its values follow the visitor's locale.
+- Don't import the shadcn `ChartTooltipContent` from `@/components/ui/chart` in new charts (the beatmap cards still do). It now formats numbers as en-US with up to three decimals, never the visitor's locale, but it has no `valueFormatter`, footer or kit marker.
 - Don't print values with `toLocaleString()`; pass a formatter.
 
 Gallery anchor: `/admin/design#color-chart-tooltip`

@@ -1,6 +1,7 @@
-import React, { ReactNode } from 'react';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
+import React, { ReactNode } from 'react';
+
+import { Panel } from '@/components/kit/layout/Panel';
 import { cn } from '@/lib/utils';
 
 type ImagePosition = 'left' | 'right';
@@ -22,6 +23,12 @@ interface FeatureCardProps {
   children?: ReactNode;
 }
 
+/**
+ * A home page panel with its blob artwork behind the text. The artwork has
+ * fixed sizes, so these panels keep their tall padding (the one stated
+ * exception to the 16px panel padding). The panel clips the art and the
+ * text sits above it.
+ */
 function FeatureCard({
   decoration,
   imagePosition = 'left',
@@ -32,18 +39,19 @@ function FeatureCard({
   className,
   children,
   ...rest
-}: FeatureCardProps & React.ComponentProps<typeof Card>) {
+}: FeatureCardProps &
+  Omit<React.ComponentProps<typeof Panel>, keyof FeatureCardProps>) {
   return (
-    <Card
+    <Panel
       className={cn(
-        'relative overflow-hidden border-none p-4 md:p-6 lg:py-16',
+        'relative isolate flex flex-col gap-6 p-4 text-card-foreground md:p-6 lg:py-16',
         className
       )}
       {...rest}
     >
       <div
         className={cn(
-          'absolute top-0 opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100',
+          'absolute top-0 -z-10 opacity-50 transition-opacity duration-300 lg:opacity-70 xl:opacity-100',
           imageSize,
           imagePosition === 'left' ? 'left-0' : 'right-0',
           imageClassName
@@ -52,7 +60,7 @@ function FeatureCard({
       >
         <Image
           src={getDecorationSrc(decoration)}
-          alt={'Decorative background pattern'}
+          alt=""
           fill
           className={cn('blur-sm md:blur-none', {
             'object-cover': imageFit === 'cover',
@@ -62,7 +70,7 @@ function FeatureCard({
       </div>
       <div
         className={cn(
-          'z-10 flex h-full flex-col items-center justify-center gap-2 text-center sm:items-start sm:text-start md:w-3/5',
+          'relative flex h-full flex-col items-center justify-center gap-2 text-center sm:items-start sm:text-start md:w-3/5',
           imagePosition === 'left'
             ? 'md:ml-auto md:items-end md:text-end'
             : 'md:mr-auto',
@@ -71,17 +79,18 @@ function FeatureCard({
       >
         {children}
       </div>
-    </Card>
+    </Panel>
   );
 }
 
 function FeatureCardTitle({
+  as: Heading = 'h2',
   className,
   ...props
-}: React.ComponentProps<typeof CardTitle>) {
+}: React.ComponentProps<'h2'> & { as?: 'h1' | 'h2' }) {
   return (
-    <CardTitle
-      className={cn('text-2xl font-bold md:text-3xl', className)}
+    <Heading
+      className={cn('text-2xl leading-none font-bold md:text-3xl', className)}
       {...props}
     />
   );
@@ -90,11 +99,11 @@ function FeatureCardTitle({
 function FeatureCardDescription({
   className,
   ...props
-}: React.ComponentProps<typeof CardDescription>) {
+}: React.ComponentProps<'p'>) {
   return (
-    <CardDescription
+    <p
       className={cn(
-        'text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground',
+        'text-sm text-foreground/90 transition-colors duration-300 md:text-foreground/80 lg:text-secondary-foreground xl:text-muted-foreground',
         className
       )}
       {...props}

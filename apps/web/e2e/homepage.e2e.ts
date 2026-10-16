@@ -11,6 +11,15 @@ test.describe('Homepage and Global Navigation', () => {
       await expect(hero).toBeVisible({ timeout: 10000 });
     });
 
+    test('has one h1, the site name', async ({ page }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      const h1 = page.getByRole('heading', { level: 1 });
+      await expect(h1).toHaveCount(1);
+      await expect(h1).toHaveText('osu! Tournament Rating');
+    });
+
     test('page title contains expected text', async ({ page }) => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
@@ -178,6 +187,55 @@ test.describe('Homepage and Global Navigation', () => {
     });
   });
 
+  test.describe('Header menus', () => {
+    test('More lists the docs, the API reference and support', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await page.locator('[data-testid="nav-more"]').click();
+
+      const nav = page.getByRole('navigation', { name: 'Main' });
+      await expect(nav.getByRole('link', { name: /^Docs/ })).toHaveAttribute(
+        'href',
+        'https://docs.otr.stagec.net'
+      );
+      await expect(
+        nav.getByRole('link', { name: 'API reference' })
+      ).toHaveAttribute('href', ROUTES.spec);
+      await expect(nav.getByRole('link', { name: /^Support/ })).toHaveAttribute(
+        'href',
+        'https://buymeacoffee.com/stagecodes'
+      );
+    });
+
+    test('Tools items are in sentence case', async ({ page }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await page.locator('[data-testid="nav-tools"]').click();
+
+      const nav = page.getByRole('navigation', { name: 'Main' });
+      await expect(
+        nav.getByRole('link', { name: 'Filter reports' })
+      ).toBeVisible({ timeout: 10000 });
+      await expect(nav.getByRole('link', { name: 'Audit logs' })).toBeVisible();
+    });
+
+    test('signed-out visitors get no Admin menu and a Log in button', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await expect(page.locator('[data-testid="nav-admin"]')).toHaveCount(0);
+      await expect(
+        page.getByRole('banner').getByRole('button', { name: 'Log in' })
+      ).toBeVisible({ timeout: 10000 });
+    });
+  });
+
   test.describe('Footer', () => {
     test('displays footer with content', async ({ page }) => {
       await page.goto(ROUTES.home);
@@ -250,8 +308,8 @@ test.describe('Homepage and Global Navigation', () => {
     });
 
     test('shows mobile nav trigger at tablet width', async ({ page }) => {
-      // Desktop nav starts at the `md` breakpoint (768px)
-      await page.setViewportSize({ width: 767, height: 1024 });
+      // Desktop nav starts at the `lg` breakpoint (1024px)
+      await page.setViewportSize({ width: 1023, height: 1024 });
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
 
@@ -276,6 +334,12 @@ test.describe('Homepage and Global Navigation', () => {
       await expect(mobileSheet).toBeVisible({ timeout: 10000 });
       await expect(
         mobileSheet.locator('[data-testid="nav-leaderboard"]')
+      ).toBeVisible({ timeout: 10000 });
+
+      // Same structure as the desktop bar: More expands in place
+      await mobileSheet.locator('[data-testid="nav-more"]').click();
+      await expect(
+        mobileSheet.getByRole('link', { name: 'API reference' })
       ).toBeVisible({ timeout: 10000 });
     });
   });

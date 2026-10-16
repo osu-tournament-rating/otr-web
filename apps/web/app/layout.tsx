@@ -53,7 +53,9 @@ export default async function RootLayout({
               <AudioPlayerProvider>
                 <Header />
                 <MaintenanceBanner headers={new Headers(headersList)} />
-                <main className="mx-auto w-full max-w-[1050px] flex-1 pb-5 sm:px-5 sm:py-10">
+                {/* The page frame's margins: 16px at the sides on phones,
+                    40px below the header from sm. Pages add no container. */}
+                <main className="mx-auto w-full max-w-[1050px] flex-1 px-4 pt-6 pb-10 sm:px-5 sm:pt-10">
                   {children}
                 </main>
                 <Footer />

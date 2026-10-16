@@ -1,197 +1,275 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { useDebounce } from '@uidotdev/usehooks';
-import { useHotkeys } from 'react-hotkeys-hook';
+import { Command as CommandPrimitive } from 'cmdk';
 import {
-  Search,
-  LoaderCircle,
-  User,
-  Trophy,
-  Swords,
+  ArrowRight,
+  Loader2,
   Music,
+  Search,
+  Swords,
+  Trophy,
+  User,
+  X,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useHotkeys } from 'react-hotkeys-hook';
 
+import SectionError from '@/components/error/SectionError';
+import { IconButton } from '@/components/kit/controls/IconButton';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import {
   Command,
   CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
   CommandGroup,
   CommandItem,
+  CommandList,
 } from '@/components/ui/command';
-import { Button } from '@/components/ui/button';
-import { useSearch } from '@/lib/hooks/useSearch';
-import { useSession } from '@/lib/hooks/useSession';
-import { cn } from '@/lib/utils';
 import {
+  getSearchMinimumHint,
+  isBelowSearchMinimum,
+  MAX_SEARCH_LENGTH,
+  normalizeSearchTerm,
+  SEARCH_DEBOUNCE_MS,
+} from '@/lib/kit/lists/search';
+import type { KitIcon } from '@/lib/kit/layout/icon';
+import { useSearch } from '@/lib/hooks/useSearch';
+import { SearchRequestSchema } from '@/lib/orpc/schema/search';
+
+import {
+  BeatmapResultContent,
+  MatchResultContent,
   PlayerResultContent,
   TournamentResultContent,
-  MatchResultContent,
-  BeatmapResultContent,
 } from './results';
+import { getSeeAllHref, type SeeAllTarget } from './see-all';
 
-function GroupHeading({
-  icon: Icon,
-  label,
-}: {
-  icon: React.ElementType;
-  label: string;
-}) {
+/** The header search accepts what its procedure accepts. */
+const MAX_LENGTH =
+  SearchRequestSchema.shape.searchKey.maxLength ?? MAX_SEARCH_LENGTH;
+
+const SEE_ALL_LABELS: Record<SeeAllTarget, string> = {
+  players: 'See all on the leaderboard',
+  tournaments: 'See all tournaments',
+  beatmaps: 'See all beatmaps',
+};
+
+function GroupHeading({ icon: Icon, label }: { icon: KitIcon; label: string }) {
   return (
-    <div className="flex items-center gap-2">
-      <Icon className="h-4 w-4" />
-      <span>{label}</span>
-    </div>
+    <span className="flex items-center gap-2">
+      <Icon aria-hidden className="size-4 text-muted-foreground" />
+      {label}
+    </span>
   );
 }
 
+/**
+ * The header search, open to everyone: a search button (and Ctrl/Cmd+K)
+ * opens a command menu of players, tournaments, matches and beatmaps. It
+ * searches like every list's SearchField: 400ms after the last keystroke (or
+ * at once on Enter), from two characters, with a spinner while it waits.
+ * Each group ends with a link that opens the matching list already searched.
+ */
 export default function SearchCommandDialog() {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const debouncedQuery = useDebounce(query, 500);
-  const { data, error, isLoading, isValidating, mutate } =
-    useSearch(debouncedQuery);
-  const session = useSession();
+  const [text, setText] = useState('');
+  const [term, setTerm] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const hintId = useId();
   const router = useRouter();
+  const { data, error, isLoading, isValidating, mutate } = useSearch(term);
 
+  const typed = normalizeSearchTerm(text);
+  const waiting = typed !== term;
+
+  // Search once typing pauses; a cleared or too-short term clears at once.
   useEffect(() => {
-    if (!open) {
-      setQuery('');
+    if (typed === term) return;
+    const timer = window.setTimeout(
+      () => setTerm(typed),
+      typed ? SEARCH_DEBOUNCE_MS : 0
+    );
+    return () => window.clearTimeout(timer);
+  }, [term, typed]);
+
+  const changeOpen = useCallback((next: boolean) => {
+    setOpen(next);
+    if (!next) {
+      setText('');
+      setTerm('');
     }
-  }, [open]);
+  }, []);
 
   useHotkeys(
     'mod+k',
     (e) => {
       e.preventDefault();
-      setOpen((prev) => !prev);
+      changeOpen(!open);
     },
-    { enableOnFormTags: true }
+    { enableOnFormTags: true },
+    [open, changeOpen]
   );
 
   const handleSelect = useCallback(
     (href: string) => {
       router.push(href);
-      setOpen(false);
+      changeOpen(false);
     },
-    [router]
+    [router, changeOpen]
   );
 
-  if (!session) return null;
+  const clear = () => {
+    setText('');
+    inputRef.current?.focus();
+  };
 
-  // Kept results belong to an earlier query once a search fails.
+  const belowMinimum = isBelowSearchMinimum(text);
+  const busy = (waiting && typed !== '') || (term !== '' && isLoading);
+  const failed = term !== '' && Boolean(error) && !isLoading;
+  // SWR keeps the last results while a new term loads, but they belong to an
+  // earlier query once the field is cleared or a search fails.
+  const results = term === '' || failed ? undefined : data;
   const hasResults =
-    !error &&
-    data &&
-    (data.players.length > 0 ||
-      data.tournaments.length > 0 ||
-      data.matches.length > 0 ||
-      data.beatmaps.length > 0);
+    results !== undefined &&
+    (results.players.length > 0 ||
+      results.tournaments.length > 0 ||
+      results.matches.length > 0 ||
+      results.beatmaps.length > 0);
+  const empty =
+    term !== '' &&
+    !isLoading &&
+    !failed &&
+    results !== undefined &&
+    !hasResults;
+
+  const seeAll = (target: SeeAllTarget) => (
+    <CommandItem
+      value={`see-all-${target}`}
+      data-testid={`search-see-all-${target}`}
+      onSelect={() => handleSelect(getSeeAllHref(target, term))}
+      className="cursor-pointer py-2.5 font-medium"
+    >
+      <span className="flex-1">{SEE_ALL_LABELS[target]}</span>
+      <ArrowRight aria-hidden className="text-muted-foreground" />
+    </CommandItem>
+  );
 
   return (
     <>
-      <Button
+      <IconButton
         data-testid="search-trigger-button"
-        variant="ghost"
-        size="icon"
-        aria-label="Search"
-        onClick={() => setOpen(true)}
-        className="cursor-pointer"
-      >
-        <Search className="size-4" />
-      </Button>
+        label="Search"
+        tooltipSide="bottom"
+        size="default"
+        icon={Search}
+        onClick={() => changeOpen(true)}
+      />
 
       <CommandDialog
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={changeOpen}
         title="Search"
-        description="Search players, tournaments, matches, and beatmaps"
+        description="Search players, tournaments, matches and beatmaps"
         contentClassName="md:max-w-[612px] [&>button:last-child]:hidden"
       >
-        <Command data-testid="search-dialog" shouldFilter={false} loop>
-          <div className="relative">
-            <CommandInput
-              data-testid="search-input"
-              placeholder="Search players, tournaments, matches..."
-              value={query}
-              onValueChange={(value) => setQuery(value.trimStart())}
-            />
-            {isLoading && (
-              <LoaderCircle className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+        <Command
+          data-testid="search-dialog"
+          label="Search players, tournaments, matches and beatmaps"
+          shouldFilter={false}
+          loop
+        >
+          <div className="flex items-center gap-2 border-b pr-2 pl-4">
+            {busy ? (
+              <Loader2
+                aria-hidden="true"
+                className="size-4 shrink-0 animate-spin text-muted-foreground"
+              />
+            ) : (
+              <Search
+                aria-hidden="true"
+                className="size-4 shrink-0 text-muted-foreground"
+              />
             )}
+            <CommandPrimitive.Input
+              ref={inputRef}
+              data-testid="search-input"
+              aria-label="Search players, tournaments, matches and beatmaps"
+              aria-describedby={belowMinimum ? hintId : undefined}
+              aria-busy={busy || undefined}
+              placeholder="Search players, tournaments…"
+              value={text}
+              maxLength={MAX_LENGTH}
+              onValueChange={(value) => setText(value.trimStart())}
+              onKeyDown={(event) => {
+                // Enter searches at once; once results are in, it opens the
+                // highlighted one.
+                if (event.key === 'Enter' && waiting) {
+                  event.preventDefault();
+                  setTerm(typed);
+                }
+              }}
+              className="h-12 min-w-0 flex-1 bg-transparent text-base outline-hidden placeholder:text-muted-foreground sm:text-sm"
+            />
+            {text ? (
+              <IconButton label="Clear search" icon={X} onClick={clear} />
+            ) : null}
           </div>
 
           <CommandList
             data-testid="search-results-list"
             className="max-h-[min(400px,calc(100svh-10rem))] md:max-h-[min(800px,calc(100svh-10rem))]"
           >
-            {!debouncedQuery && (
+            {!text.trim() ? (
               <div className="flex flex-col items-center justify-center py-8">
-                <Search className="h-10 w-10 text-muted-foreground/30" />
+                <Search
+                  aria-hidden="true"
+                  className="size-10 text-muted-foreground/30"
+                />
                 <p className="mt-3 text-sm text-muted-foreground">
                   Start typing to search
                 </p>
               </div>
-            )}
+            ) : null}
 
-            {debouncedQuery && debouncedQuery.trim().length < 2 && (
-              <div className="flex flex-col items-center justify-center py-8">
-                <Search className="h-10 w-10 text-muted-foreground/30" />
-                <p className="mt-3 text-sm text-muted-foreground">
-                  Type at least 2 characters to search
-                </p>
-              </div>
-            )}
+            <p
+              id={hintId}
+              aria-live="polite"
+              className={
+                belowMinimum
+                  ? 'px-4 py-8 text-center text-sm text-muted-foreground'
+                  : 'sr-only'
+              }
+            >
+              {belowMinimum ? getSearchMinimumHint() : null}
+            </p>
 
-            {debouncedQuery &&
-              debouncedQuery.trim().length >= 2 &&
-              !isLoading &&
-              error && (
-                <div
-                  role="alert"
-                  className="flex flex-col items-center justify-center gap-3 py-8 text-center"
-                >
-                  <p className="text-sm text-muted-foreground">
-                    Search failed. Try again in a moment.
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={isValidating}
-                    onClick={() => void mutate()}
-                  >
-                    Try again
-                  </Button>
-                </div>
-              )}
+            {!belowMinimum && failed ? (
+              <SectionError
+                size="compact"
+                title="Search failed"
+                description="Try again in a moment."
+                retrying={isValidating}
+                onRetry={() => void mutate()}
+              />
+            ) : null}
 
-            {debouncedQuery &&
-              debouncedQuery.trim().length >= 2 &&
-              !isLoading &&
-              !error &&
-              !hasResults && (
-                <CommandEmpty>
-                  <div className="text-center">
-                    <p className="text-muted-foreground">No results found</p>
-                    <p className="text-xs text-muted-foreground/70">
-                      Try adjusting your search terms
-                    </p>
-                  </div>
-                </CommandEmpty>
-              )}
+            {!belowMinimum && empty ? (
+              <EmptyState
+                size="compact"
+                title="No results found"
+                description="Try adjusting your search terms."
+                data-testid="search-empty"
+              />
+            ) : null}
 
-            {hasResults && (
+            {!belowMinimum && hasResults && results ? (
               <>
-                {data.players.length > 0 && (
+                {results.players.length > 0 ? (
                   <CommandGroup
                     data-testid="search-group-players"
                     heading={<GroupHeading icon={User} label="Players" />}
                   >
-                    {data.players.map((player) => (
+                    {results.players.map((player) => (
                       <CommandItem
                         key={`player-${player.id}`}
                         value={`player-${player.id}`}
@@ -202,27 +280,21 @@ export default function SearchCommandDialog() {
                               : `/players/${player.id}`
                           )
                         }
-                        className={cn(
-                          'h-auto cursor-pointer py-3',
-                          player.isFriend &&
-                            'bg-primary/15 data-[selected=true]:bg-primary/25'
-                        )}
+                        className="h-auto cursor-pointer py-3"
                       >
-                        <PlayerResultContent
-                          data={player}
-                          query={debouncedQuery}
-                        />
+                        <PlayerResultContent data={player} query={term} />
                       </CommandItem>
                     ))}
+                    {seeAll('players')}
                   </CommandGroup>
-                )}
+                ) : null}
 
-                {data.tournaments.length > 0 && (
+                {results.tournaments.length > 0 ? (
                   <CommandGroup
                     data-testid="search-group-tournaments"
                     heading={<GroupHeading icon={Trophy} label="Tournaments" />}
                   >
-                    {data.tournaments.map((tournament) => (
+                    {results.tournaments.map((tournament) => (
                       <CommandItem
                         key={`tournament-${tournament.id}`}
                         value={`tournament-${tournament.id}`}
@@ -233,40 +305,38 @@ export default function SearchCommandDialog() {
                       >
                         <TournamentResultContent
                           data={tournament}
-                          query={debouncedQuery}
+                          query={term}
                         />
                       </CommandItem>
                     ))}
+                    {seeAll('tournaments')}
                   </CommandGroup>
-                )}
+                ) : null}
 
-                {data.matches.length > 0 && (
+                {results.matches.length > 0 ? (
                   <CommandGroup
                     data-testid="search-group-matches"
                     heading={<GroupHeading icon={Swords} label="Matches" />}
                   >
-                    {data.matches.map((match) => (
+                    {results.matches.map((match) => (
                       <CommandItem
                         key={`match-${match.id}`}
                         value={`match-${match.id}`}
                         onSelect={() => handleSelect(`/matches/${match.id}`)}
                         className="h-auto cursor-pointer py-3"
                       >
-                        <MatchResultContent
-                          data={match}
-                          query={debouncedQuery}
-                        />
+                        <MatchResultContent data={match} query={term} />
                       </CommandItem>
                     ))}
                   </CommandGroup>
-                )}
+                ) : null}
 
-                {data.beatmaps.length > 0 && (
+                {results.beatmaps.length > 0 ? (
                   <CommandGroup
                     data-testid="search-group-beatmaps"
                     heading={<GroupHeading icon={Music} label="Beatmaps" />}
                   >
-                    {data.beatmaps.map((beatmap) => (
+                    {results.beatmaps.map((beatmap) => (
                       <CommandItem
                         key={`beatmap-${beatmap.osuId}`}
                         value={`beatmap-${beatmap.osuId}`}
@@ -275,16 +345,14 @@ export default function SearchCommandDialog() {
                         }
                         className="h-auto cursor-pointer py-3"
                       >
-                        <BeatmapResultContent
-                          data={beatmap}
-                          query={debouncedQuery}
-                        />
+                        <BeatmapResultContent data={beatmap} query={term} />
                       </CommandItem>
                     ))}
+                    {seeAll('beatmaps')}
                   </CommandGroup>
-                )}
+                ) : null}
               </>
-            )}
+            ) : null}
           </CommandList>
         </Command>
       </CommandDialog>

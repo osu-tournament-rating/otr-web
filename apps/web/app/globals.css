@@ -12,9 +12,23 @@
  */
 @custom-variant dark (&:is(.dark *):not(.theme-light *));
 
+/*
+ * No site-wide tabular-nums: Inter's tabular figures also widen the hyphen
+ * ("Pre - verified"). Numeric contexts set it themselves, such as numeric
+ * table cells, phone rows, rating deltas and chart ticks and tooltips.
+ */
 @layer base {
   body {
     letter-spacing: var(--tracking-normal);
+  }
+
+  /*
+   * Recharts sizes tick labels in this span, appended to the body, to decide
+   * which labels fit. ChartContainer draws its ticks with tabular figures, so
+   * measure them that way too; narrower proportional figures let the labels
+   * crowd together.
+   */
+  #recharts_measurement_span {
     font-variant-numeric: tabular-nums;
   }
 }
@@ -55,6 +69,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-solid: var(--destructive-solid);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-muted-foreground: var(--accent-muted-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
@@ -161,7 +176,8 @@
   --background: oklch(0.99 0 0);
   --foreground: oklch(0 0 0);
   --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(54.517% 0.00006 271.152);
+  /* 4.7:1 on muted and popover surfaces, the lightest it can be there. */
+  --muted-foreground: oklch(0.53 0 0);
   --card: oklch(0.98 0 0);
   --card-foreground: oklch(0 0 0);
   --popover: oklch(0.96 0 0);
@@ -178,13 +194,16 @@
   --link: oklch(0.547 0.174 262.51);
   --accent: oklch(0.92 0 0);
   --accent-foreground: oklch(0 0 0);
+  /* Muted text on --accent (tooltips), where --muted-foreground is under 4.5:1. */
+  --accent-muted-foreground: oklch(0.5 0 0);
   --secondary: oklch(0.92 0 0);
   --secondary-foreground: oklch(0 0 0);
 
   --destructive: var(--color-red-600);
   /* Solid fill behind white text, such as the final destructive confirm. */
   --destructive-solid: var(--color-red-600);
-  --destructive-foreground: var(--color-red-800);
+  /* Red text. Tailwind's red-800, spelled out so lib/kit/color can test it. */
+  --destructive-foreground: oklch(44.4% 0.177 26.899);
 
   --warning: var(--color-warning);
   --warning-foreground: var(--color-warning-foreground);
@@ -450,7 +469,9 @@
   --destructive: var(--color-red-500);
   /* Red-500 under white text is about 3.8:1; red-600 clears 4.5:1. */
   --destructive-solid: var(--color-red-600);
-  --destructive-foreground: var(--color-red-500);
+  /* Red text: Tailwind's red-400, spelled out so lib/kit/color can test it.
+     Red-500 fell under 4.5:1 on tiles and popovers. */
+  --destructive-foreground: oklch(70.4% 0.191 22.216);
 
   --warning: var(--color-warning);
   --warning-foreground: var(--color-warning-foreground);
@@ -483,6 +504,7 @@
   --secondary-foreground: oklch(1 0 0);
   --accent: oklch(0.35 0 0);
   --accent-foreground: oklch(1 0 0);
+  --accent-muted-foreground: oklch(0.75 0 0);
   --input: oklch(0.32 0 0);
   --ring: oklch(0.67 0.17 258.51);
 
