@@ -4,13 +4,8 @@ import { Keyboard } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Panel, PanelBody } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -43,26 +38,22 @@ export default function ThemeHotkeyClient() {
   }, [highlighted]);
 
   return (
-    <Card
+    <Panel
       id="theme-hotkey"
       data-testid="settings-theme-hotkey-section"
       className={cn(
-        'transition-all duration-300',
+        'transition-shadow duration-300',
+        // Arriving from the "Ctrl+L toggled the theme" toast, the panel is
+        // marked for a moment so the switch is easy to find.
         highlighted &&
-          'ring-2 ring-yellow-400 ring-offset-2 ring-offset-background'
+          'ring-2 ring-primary ring-offset-2 ring-offset-background'
       )}
     >
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <Keyboard className="size-6 text-primary" />
-          <CardTitle>Keyboard shortcuts</CardTitle>
-        </div>
-        <CardDescription>
+      <SectionHeader icon={Keyboard} title="Keyboard shortcuts" />
+      <PanelBody className="flex flex-col gap-4">
+        <p className="text-sm text-muted-foreground">
           Ctrl+L switches between the light and dark theme.
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent>
+        </p>
         <div className="flex items-center justify-between gap-4">
           <Label htmlFor="theme-hotkey-switch" className="font-normal">
             Toggle the theme with Ctrl+L
@@ -75,7 +66,7 @@ export default function ThemeHotkeyClient() {
             className="cursor-pointer"
           />
         </div>
-      </CardContent>
-    </Card>
+      </PanelBody>
+    </Panel>
   );
 }

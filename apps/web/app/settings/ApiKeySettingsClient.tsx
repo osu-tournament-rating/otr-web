@@ -1,41 +1,29 @@
 'use client';
 
-import { Copy, KeyRound, Loader2, Trash2 } from 'lucide-react';
+import { Copy, KeyRound, Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/kit/controls/Button';
+import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
+import { IconButton } from '@/components/kit/controls/IconButton';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { Timestamp } from '@/components/kit/format/Timestamp';
+import { Panel, PanelBody } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from '@/components/kit/tables/DataTable';
+import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { formatCount, formatCountOf } from '@/lib/kit/format/number';
 import type { ApiKeyMetadataWithKey } from '@/lib/orpc/schema/apiKey';
 import { orpc } from '@/lib/orpc/orpc';
 import { getApiKeyPreview } from '@/lib/utils/apiKey';
@@ -50,13 +38,7 @@ interface ApiKeySettingsClientProps {
 
 const MAX_API_KEYS = 3;
 const FALLBACK_KEY_NAME = 'API key';
-
-const formatDateTime = (value: string) =>
-  `${new Date(value).toLocaleString('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'UTC',
-  })} UTC`;
+const KEY_NAME_REQUIRED_MESSAGE = 'Key name is required';
 
 const getKeyName = (metadata: ApiKeyMetadataWithKey) =>
   metadata.name && metadata.name.trim().length > 0
@@ -80,6 +62,11 @@ const calculateRequestsPerMinute = (
   return perMinute > 0 ? perMinute : 1;
 };
 
+const formatRateLimit = (requestsPerMinute: number | null) =>
+  requestsPerMinute
+    ? `${formatCountOf(requestsPerMinute, 'request')} per minute`
+    : 'Not rate limited';
+
 export default function ApiKeySettingsClient({
   initialKeys,
   rateLimit,
@@ -88,8 +75,11 @@ export default function ApiKeySettingsClient({
   const [pendingName, setPendingName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [confirmingKeyId, setConfirmingKeyId] = useState<string | null>(null);
+  // Kept after the confirm closes, so its title does not empty as it fades.
+  const [keyToDelete, setKeyToDelete] = useState<ApiKeyMetadataWithKey | null>(
+    null
+  );
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const sortedKeys = useMemo(
     () =>
@@ -115,9 +105,7 @@ export default function ApiKeySettingsClient({
 
     const trimmedName = pendingName.trim();
     if (trimmedName.length === 0) {
-      const message = 'Enter a descriptive name for this API key.';
-      setError(message);
-      toast.error(message);
+      setError(KEY_NAME_REQUIRED_MESSAGE);
       return;
     }
 
@@ -125,10 +113,9 @@ export default function ApiKeySettingsClient({
     setIsGenerating(true);
 
     try {
-      const result = await orpc.apiClients.generateKey({
+      const metadata = await orpc.apiClients.generateKey({
         name: trimmedName,
       });
-      const metadata: ApiKeyMetadataWithKey = result;
 
       setKeys((previous) => {
         const withoutDuplicate = previous.filter(
@@ -166,215 +153,193 @@ export default function ApiKeySettingsClient({
       .catch(() => toast.error('Failed to copy API key.'));
   };
 
-  const handleDeleteKey = async (keyId: string) => {
-    setPendingDeleteId(keyId);
-    try {
-      await orpc.apiClients.deleteKey({ keyId });
-      setKeys((previous) => previous.filter((key) => key.id !== keyId));
-      toast.success('API key deleted');
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Failed to delete API key. Please try again.';
-      toast.error(message);
-    } finally {
-      setPendingDeleteId(null);
-      setConfirmingKeyId(null);
-    }
+  const askToDelete = (key: ApiKeyMetadataWithKey) => {
+    setKeyToDelete(key);
+    setConfirmingDelete(true);
   };
 
+  const deleteKey = async () => {
+    if (!keyToDelete) return;
+
+    await orpc.apiClients.deleteKey({ keyId: keyToDelete.id });
+    setKeys((previous) => previous.filter((key) => key.id !== keyToDelete.id));
+    toast.success('API key deleted');
+  };
+
+  const renderActions = (keyMetadata: ApiKeyMetadataWithKey) => (
+    <span className="flex justify-end gap-1">
+      <IconButton
+        label="Copy API key"
+        icon={Copy}
+        onClick={() => handleCopySecret(keyMetadata.key)}
+      />
+      <IconButton
+        label="Delete API key"
+        icon={Trash2}
+        destructive
+        onClick={() => askToDelete(keyMetadata)}
+      />
+    </span>
+  );
+
+  const rows = sortedKeys.map((keyMetadata) => ({
+    keyMetadata,
+    name: getKeyName(keyMetadata),
+    preview: getApiKeyPreview(keyMetadata),
+    rateLimit: formatRateLimit(
+      calculateRequestsPerMinute(
+        keyMetadata.rateLimitMax,
+        keyMetadata.rateLimitTimeWindow,
+        rateLimit.maxRequests,
+        rateLimit.timeWindowMs
+      )
+    ),
+  }));
+
   return (
-    <div className="space-y-4" data-testid="settings-api-keys-section">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <KeyRound className="size-6 text-primary" />
-            <CardTitle>API Keys</CardTitle>
-          </div>
-          <CardDescription>
-            Use o!TR in spreadsheets and other tools via the API.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          <form
-            className="flex flex-col gap-4 rounded-xl border border-border/50 bg-muted/10 p-4 sm:flex-row sm:items-end sm:gap-6"
-            onSubmit={handleGenerate}
-          >
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="api-key-name">Key name</Label>
-              <Input
-                id="api-key-name"
-                placeholder='e.g. "My spreadsheet"'
-                value={pendingName}
-                onChange={(event) => setPendingName(event.target.value)}
-                maxLength={100}
-                disabled={isGenerating}
-                required
-              />
-            </div>
-            <Button
-              type="submit"
+    <Panel data-testid="settings-api-keys-section">
+      <SectionHeader
+        icon={KeyRound}
+        title="API keys"
+        meta={`${formatCount(remainingSlots)} of ${formatCount(MAX_API_KEYS)} slots available`}
+      />
+      <PanelBody className="flex flex-col gap-4">
+        <p className="text-sm text-muted-foreground">
+          Use o!TR in spreadsheets and other tools via the API.
+        </p>
+        <form
+          className="flex flex-col gap-3 sm:flex-row sm:items-end"
+          onSubmit={handleGenerate}
+          noValidate
+        >
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            <Label htmlFor="api-key-name">Key name</Label>
+            <Input
+              id="api-key-name"
+              placeholder='e.g. "My spreadsheet"'
+              value={pendingName}
+              onChange={(event) => {
+                setPendingName(event.target.value);
+                if (error === KEY_NAME_REQUIRED_MESSAGE) setError(null);
+              }}
+              maxLength={100}
               disabled={isGenerating}
-              className="sm:w-auto"
-              data-testid="settings-create-api-key-button"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                'Generate API key'
-              )}
-            </Button>
-          </form>
+              aria-required="true"
+              aria-invalid={error === KEY_NAME_REQUIRED_MESSAGE || undefined}
+              aria-describedby={error ? 'api-key-error' : undefined}
+            />
+          </div>
+          <Button
+            type="submit"
+            pending={isGenerating}
+            data-testid="settings-create-api-key-button"
+          >
+            {isGenerating ? 'Generating…' : 'Generate API key'}
+          </Button>
+        </form>
+        {error ? (
+          <p
+            id="api-key-error"
+            role="alert"
+            className="-mt-2 text-sm text-destructive-foreground"
+          >
+            {error}
+          </p>
+        ) : null}
+      </PanelBody>
 
-          {sortedKeys.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Key</TableHead>
-                  <TableHead>Rate limit</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedKeys.map((keyMetadata) => {
-                  const keyPreview = getApiKeyPreview(keyMetadata);
-                  const requestsPerMinute = calculateRequestsPerMinute(
-                    keyMetadata.rateLimitMax,
-                    keyMetadata.rateLimitTimeWindow,
-                    rateLimit.maxRequests,
-                    rateLimit.timeWindowMs
-                  );
-
-                  return (
-                    <TableRow key={keyMetadata.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex flex-col">
-                          <span>{getKeyName(keyMetadata)}</span>
-                          {keyPreview !== '—' && (
-                            <span className="text-xs text-muted-foreground">
-                              {keyPreview}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {requestsPerMinute
-                          ? `${requestsPerMinute} requests per minute`
-                          : 'Not rate limited'}
-                      </TableCell>
-                      <TableCell>
-                        {formatDateTime(keyMetadata.createdAt)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="hover:bg-primary/10"
-                            onClick={() => handleCopySecret(keyMetadata.key)}
-                          >
-                            <Copy className="size-4" />
-                            <span className="sr-only">Copy API key</span>
-                          </Button>
-                          <AlertDialog
-                            open={confirmingKeyId === keyMetadata.id}
-                            onOpenChange={(open) =>
-                              setConfirmingKeyId(open ? keyMetadata.id : null)
-                            }
-                          >
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive-foreground hover:bg-destructive/10"
-                                onClick={() =>
-                                  setConfirmingKeyId(keyMetadata.id)
-                                }
-                                disabled={pendingDeleteId === keyMetadata.id}
-                              >
-                                <Trash2 className="size-4" />
-                                <span className="sr-only">Delete API key</span>
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Delete &quot;{getKeyName(keyMetadata)}&quot;?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will immediately revoke access for any
-                                  integration using this key.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel
-                                  onClick={() => setConfirmingKeyId(null)}
-                                >
-                                  Cancel
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() =>
-                                    handleDeleteKey(keyMetadata.id)
-                                  }
-                                  className="bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/40"
-                                  disabled={pendingDeleteId === keyMetadata.id}
-                                >
-                                  {pendingDeleteId === keyMetadata.id
-                                    ? 'Deleting...'
-                                    : 'Delete key'}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="flex flex-col items-start gap-2 rounded-xl border border-border/60 p-6 text-sm text-muted-foreground">
-              <span>No API keys yet.</span>
-            </div>
-          )}
-
-          {sortedKeys.length > 0 && (
-            <div className="rounded-xl border border-border/60 bg-muted/10 p-4 text-sm text-muted-foreground">
-              Include your key via{' '}
-              <span className="font-medium">
-                `Authorization: Bearer &lt;key&gt;`
-              </span>{' '}
-              when making API calls.
-            </div>
-          )}
-        </CardContent>
-
-        <CardFooter className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-sm text-muted-foreground">
-            Remember not to leave your keys in sheet templates or other places
-            by mistake.
-          </span>
-          <span className="text-sm font-medium">
-            {remainingSlots} of {MAX_API_KEYS} slots available
-          </span>
-        </CardFooter>
-      </Card>
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertTitle>Something went wrong</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+      {rows.length > 0 ? (
+        <DataTable
+          fixed
+          aria-label="API keys"
+          containerClassName="border-t"
+          phoneRows={
+            <PhoneRowList aria-label="API keys" className="border-t">
+              {rows.map((row) => (
+                <PhoneRow
+                  key={row.keyMetadata.id}
+                  title={<span className="truncate">{row.name}</span>}
+                  description={[
+                    row.preview === '—' ? null : row.preview,
+                    row.rateLimit,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  value={renderActions(row.keyMetadata)}
+                />
+              ))}
+            </PhoneRowList>
+          }
+        >
+          <DataTableHeader>
+            <DataTableRow>
+              <DataTableHead>Key</DataTableHead>
+              <DataTableHead className="w-48">Rate limit</DataTableHead>
+              <DataTableHead className="w-52" showFrom="lg">
+                Created
+              </DataTableHead>
+              <DataTableHead className="w-24" align="end">
+                <span className="sr-only">Actions</span>
+              </DataTableHead>
+            </DataTableRow>
+          </DataTableHeader>
+          <DataTableBody>
+            {rows.map((row) => (
+              <DataTableRow key={row.keyMetadata.id}>
+                <DataTableCell>
+                  <span className="block truncate font-medium">{row.name}</span>
+                  {row.preview !== '—' ? (
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {row.preview}
+                    </span>
+                  ) : null}
+                </DataTableCell>
+                <DataTableCell>{row.rateLimit}</DataTableCell>
+                <DataTableCell muted showFrom="lg" className="tabular-nums">
+                  <Timestamp date={row.keyMetadata.createdAt} />
+                </DataTableCell>
+                <DataTableCell align="end" empty={false}>
+                  {renderActions(row.keyMetadata)}
+                </DataTableCell>
+              </DataTableRow>
+            ))}
+          </DataTableBody>
+        </DataTable>
+      ) : (
+        <EmptyState
+          size="compact"
+          icon={KeyRound}
+          title="No API keys yet"
+          className="border-t"
+        />
       )}
-    </div>
+
+      <div className="flex flex-col gap-1 border-t px-4 py-3 text-xs text-muted-foreground">
+        {rows.length > 0 ? (
+          <p>
+            Include your key via{' '}
+            <code className="font-sans font-medium text-foreground">
+              Authorization: Bearer &lt;key&gt;
+            </code>{' '}
+            when making API calls.
+          </p>
+        ) : null}
+        <p>
+          Remember not to leave your keys in sheet templates or other places by
+          mistake.
+        </p>
+      </div>
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        onOpenChange={setConfirmingDelete}
+        title={`Delete "${keyToDelete ? getKeyName(keyToDelete) : FALLBACK_KEY_NAME}"?`}
+        description="This will immediately revoke access for any integration using this key."
+        confirmLabel="Delete key"
+        pendingLabel="Deleting…"
+        errorText="Failed to delete API key. Try again."
+        onConfirm={deleteKey}
+      />
+    </Panel>
   );
 }

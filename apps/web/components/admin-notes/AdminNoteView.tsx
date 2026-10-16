@@ -1,193 +1,84 @@
 'use client';
 
 import { AdminNoteRouteTarget } from '@otr/core/osu';
-import { Loader2, StickyNote } from 'lucide-react';
+import { NotebookPen } from 'lucide-react';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '../ui/button';
+
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../ui/dialog';
-import { AdminNoteRouteTargetEnumHelper } from '@/lib/enum-helpers';
-import { adminNoteFormSchema } from '@/lib/validation-schema';
+  IconButton,
+  type IconButtonProps,
+} from '@/components/kit/controls/IconButton';
+import { NotificationDot } from '@/components/kit/status/NotificationDot';
 import { hasAdminScope } from '@/lib/auth/roles';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Resolver } from 'react-hook-form';
-import { toast } from 'sonner';
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormControl,
-  FormMessage,
-} from '../ui/form';
-import { Textarea } from '../ui/textarea';
-import { z } from 'zod';
-import AdminNotesList from './AdminNoteList';
 import { useSession } from '@/lib/hooks/useSession';
+
+import { AdminNotesDialog } from './AdminNotesDialog';
 import { AdminNote } from './types';
-import { getAdminNoteMutations } from './adminNoteMutations';
-import { cn } from '@/lib/utils';
+
+export {
+  AdminNotesDialog,
+  type AdminNotesDialogProps,
+} from './AdminNotesDialog';
 
 interface AdminNoteViewProps {
   notes: AdminNote[];
   entity: AdminNoteRouteTarget;
   entityId: number;
-  /** Falls back to entityId when omitted. */
+  /** Falls back to the entity's type and ID. */
   entityDisplayName?: string;
+  variant?: IconButtonProps['variant'];
+  size?: IconButtonProps['size'];
+  /** @deprecated On cover art, pass `variant="overlay"`. */
   darkMode?: boolean;
 }
 
+/**
+ * The "Admin notes" button with its dialog, for admins, and for everyone
+ * once an entity has notes. A dot marks existing notes until the dialog is
+ * first opened. Inside an AdminMenu or RowActionsMenu, add an "Admin notes"
+ * item instead and open `AdminNotesDialog` from it.
+ */
 export default function AdminNoteView({
   notes,
   entity,
   entityId,
   entityDisplayName,
-  darkMode,
+  variant,
+  size,
+  darkMode = false,
 }: AdminNoteViewProps) {
   const session = useSession();
-  const router = useRouter();
+  const [seen, setSeen] = useState(false);
 
   const isAdmin = hasAdminScope(session?.scopes ?? []);
-  const noteMutations = getAdminNoteMutations(entity);
-  const canMutate = isAdmin && noteMutations != null;
+  const hasNotes = notes.length > 0;
 
-  const form = useForm<z.infer<typeof adminNoteFormSchema>>({
-    resolver: zodResolver(adminNoteFormSchema) as Resolver<
-      z.infer<typeof adminNoteFormSchema>
-    >,
-    defaultValues: {
-      note: '',
-    },
-  });
-
-  const [showNotification, setShowNotification] = useState(true);
-  const notify = notes.length > 0;
-
-  if (!isAdmin && !notify) {
+  if (!isAdmin && !hasNotes) {
     return null;
   }
 
-  const entityMetadata = AdminNoteRouteTargetEnumHelper.getMetadata(entity);
-  entityDisplayName ??= `${entityMetadata.text} ${entityId}`;
-
-  async function onSubmit(data: z.infer<typeof adminNoteFormSchema>) {
-    if (!canMutate || !noteMutations) {
-      toast.error('Admin notes for this entity are not yet available.');
-      return;
-    }
-
-    try {
-      await noteMutations.create(entityId, data.note);
-
-      form.reset();
-      toast.success(`Created admin note for ${entityDisplayName}`);
-      router.refresh();
-    } catch {
-      toast.error(`Failed to create admin note for ${entityDisplayName}`);
-    }
-  }
-
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          onClick={() => {
-            if (showNotification) {
-              setShowNotification(false);
-            }
-          }}
-          className={cn(
-            'relative h-6 w-6',
-            darkMode
-              ? 'hover:bg-white/20 hover:text-white'
-              : 'hover:bg-black/15 hover:text-black dark:hover:bg-white/20 dark:hover:text-white'
-          )}
-          variant={'ghost'}
-          size="icon"
-          aria-label="Admin notes"
+    <AdminNotesDialog
+      notes={notes}
+      entity={entity}
+      entityId={entityId}
+      entityDisplayName={entityDisplayName}
+      onOpenChange={(open) => {
+        if (open) setSeen(true);
+      }}
+      trigger={
+        <IconButton
+          icon={NotebookPen}
+          label="Admin notes"
+          variant={variant ?? (darkMode ? 'overlay' : 'ghost')}
+          size={size}
+          className="relative"
         >
-          <StickyNote
-            className={cn(
-              'h-3 w-3',
-              darkMode
-                ? 'text-white/70 hover:text-white'
-                : 'text-neutral-600 hover:text-black dark:text-white/70 dark:hover:text-white'
-            )}
-          />
-          {showNotification && notify && (
-            <div className="absolute -top-1 -right-1 z-50">
-              <div className="h-2 w-2 rounded-full bg-yellow-600 dark:bg-yellow-400" />
-            </div>
-          )}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="p-4">
-        <DialogHeader className="space-y-1">
-          <DialogTitle>Admin notes</DialogTitle>
-          <DialogDescription>
-            Viewing admin notes for{' '}
-            <span className="font-semibold">{entityDisplayName}</span>
-          </DialogDescription>
-        </DialogHeader>
-
-        {canMutate && (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
-              <FormField
-                control={form.control}
-                name="note"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Add your note here"
-                        className="min-h-16 resize-none"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex justify-between space-x-2">
-                <Button
-                  type="reset"
-                  variant={'secondary'}
-                  size="sm"
-                  onClick={() => form.reset()}
-                  disabled={
-                    !form.formState.isDirty || form.formState.isSubmitting
-                  }
-                >
-                  Discard
-                </Button>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={
-                    !form.formState.isValid ||
-                    !form.formState.isDirty ||
-                    form.formState.isSubmitting
-                  }
-                >
-                  {form.formState.isSubmitting ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    'Submit'
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        )}
-        <AdminNotesList entity={entity} notes={notes} />
-      </DialogContent>
-    </Dialog>
+          {hasNotes && !seen ? (
+            <NotificationDot placement="corner" label="Has admin notes" />
+          ) : null}
+        </IconButton>
+      }
+    />
   );
 }

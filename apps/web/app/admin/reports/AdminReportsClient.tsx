@@ -1,616 +1,333 @@
 'use client';
 
+import { ReportStatus } from '@otr/core/osu';
+import { Flag } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { Check, ExternalLink, Eye, Loader2, RotateCcw, X } from 'lucide-react';
-import { toast } from 'sonner';
-import Link from 'next/link';
+import useSWR from 'swr';
 
 import SectionError from '@/components/error/SectionError';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { ListToolbar } from '@/components/kit/lists/ListToolbar';
+import { ScopeSwitch } from '@/components/kit/lists/ScopeSwitch';
+import { SortControl } from '@/components/kit/lists/SortControl';
+import { Panel } from '@/components/kit/layout/Panel';
+import { ReportStatusBadge } from '@/components/kit/status/ReportStatusBadge';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from '@/components/kit/tables/DataTable';
+import { DateText } from '@/components/kit/format/DateText';
+import { PaginationFooter } from '@/components/kit/tables/PaginationFooter';
+import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
+import { SortableHeader } from '@/components/kit/tables/SortableHeader';
+import { ViewButton } from '@/components/kit/tables/ViewButton';
+import { ReportEntityName } from '@/components/reports/ReportEntityName';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import {
-  ReportEntityTypeEnumHelper,
-  ReportStatusEnumHelper,
-} from '@/lib/enum-helpers';
+  formatReportSubject,
+  getReportEntityTypeName,
+} from '@/components/reports/report-presentation';
 import { notifyReportChange } from '@/lib/hooks/useReportCount';
+import { formatCountOf, formatId } from '@/lib/kit/format/number';
+import { useListState } from '@/lib/kit/lists/use-list-state';
+import {
+  REPORT_STATUS_ORDER,
+  getReportStatusCopy,
+} from '@/lib/kit/status/report';
 import { orpc } from '@/lib/orpc/orpc';
-import type { Report } from '@/lib/orpc/schema/report';
-import { ReportEntityType, ReportStatus } from '@otr/core/osu';
-import { cn } from '@/lib/utils';
-import { stickyTableHeaderFromLg } from '@/lib/utils/table';
+import type { Report, ReportListResponse } from '@/lib/orpc/schema/report';
 
-const formatDateTime = (value: string | null | undefined) => {
-  if (!value) return '—';
-  const timestamp = new Date(value);
-  if (Number.isNaN(timestamp.getTime())) return '—';
-  return timestamp.toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-};
+import { AdminReportDialog, ReportUserName } from './AdminReportDialog';
+import { AdminReportsTableSkeleton } from './AdminReportsFrame';
+import {
+  ADMIN_REPORTS_COLUMNS as COLUMN,
+  ADMIN_REPORTS_PAGE_SIZE,
+  ADMIN_REPORTS_PARAMS,
+  ADMIN_REPORT_SORT_OPTIONS,
+  toReportListInput,
+} from './list-params';
 
-const formatFieldName = (field: string) => {
-  return field
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, (str) => str.toUpperCase())
-    .trim();
-};
+type StatusScope = 'all' | `${ReportStatus}`;
 
-const getLegacySuggestedChanges = (
-  report: Pick<Report, 'reason' | 'suggestedChanges'>
-): Record<string, string> => {
-  const changes = report.suggestedChanges as Record<string, string>;
-  const entries = Object.entries(changes);
+const STATUS_OPTIONS: { value: StatusScope; label: string }[] = [
+  { value: 'all', label: 'All' },
+  ...REPORT_STATUS_ORDER.map((status) => ({
+    value: String(status) as StatusScope,
+    label: getReportStatusCopy(status).name,
+  })),
+];
 
-  if (
-    entries.length === 1 &&
-    entries[0]?.[0] === 'reason' &&
-    entries[0][1] === report.reason.label
-  ) {
-    return {};
-  }
-
-  return changes;
-};
-
-function getEntityLink(
-  entityType: ReportEntityType,
-  entityId: number,
-  matchId?: number
-): string {
-  switch (entityType) {
-    case ReportEntityType.Tournament:
-      return `/tournaments/${entityId}`;
-    case ReportEntityType.Match:
-      return `/matches/${entityId}`;
-    case ReportEntityType.Game:
-      return matchId ? `/matches/${matchId}?gameId=${entityId}` : '#';
-    case ReportEntityType.Score:
-      return matchId ? `/matches/${matchId}?scoreId=${entityId}` : '#';
-    default:
-      return '#';
-  }
-}
-
+/**
+ * The admin report queue: every report, newest first, paged in the panel.
+ * Status, sort and page live in the address. Each row opens its report from
+ * a labelled View button into one shared dialog, where admins confirm,
+ * dismiss or reopen it.
+ */
 export default function AdminReportsClient() {
-  const [reports, setReports] = useState<Report[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<ReportStatus | 'all'>('all');
+  const list = useListState(ADMIN_REPORTS_PARAMS);
+  const { state, setState } = list;
+  const input = toReportListInput(state);
 
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const { data, error, isValidating, mutate } = useSWR(
+    ['admin-reports', input],
+    () => orpc.reports.list(input),
+    { revalidateOnFocus: false, shouldRetryOnError: false }
+  );
 
-  const [resolving, setResolving] = useState(false);
-  const [reopening, setReopening] = useState(false);
-  const [adminNote, setAdminNote] = useState('');
-  const selectedLegacyChanges = selectedReport
-    ? getLegacySuggestedChanges(selectedReport)
-    : {};
-
-  const fetchReports = useCallback(async () => {
-    setLoading(true);
-    setLoadFailed(false);
-    try {
-      const data = await orpc.reports.list({
-        status: statusFilter === 'all' ? undefined : statusFilter,
-        pageSize: 100,
-      });
-      setReports(data.reports);
-    } catch (error) {
-      console.error('[admin-reports] failed to fetch reports', error);
-      setLoadFailed(true);
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter]);
-
-  useEffect(() => {
-    fetchReports();
-  }, [fetchReports]);
+  // Kept after the dialog closes, so it does not empty while it fades out.
+  const [selected, setSelected] = useState<Report | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     orpc.reports
       .markViewed({})
       .then(notifyReportChange)
-      .catch((error) => {
-        console.error('[admin-reports] failed to mark reports viewed', error);
+      .catch((cause) => {
+        console.error('[admin-reports] failed to mark reports viewed', cause);
       });
   }, []);
 
-  const handleViewDetails = useCallback((report: Report) => {
-    setSelectedReport(report);
-    setAdminNote(report.adminNote ?? '');
-    setDetailsOpen(true);
+  // An old link to a page past the end shows the last page instead.
+  useEffect(() => {
+    if (data && data.totalPages > 0 && state.page > data.totalPages) {
+      setState({ page: data.totalPages }, { history: 'replace' });
+    }
+  }, [data, setState, state.page]);
+
+  const openReport = useCallback((report: Report) => {
+    setSelected(report);
+    setDialogOpen(true);
   }, []);
 
-  const handleResolve = useCallback(
-    async (status: ReportStatus.Approved | ReportStatus.Rejected) => {
-      const comment = adminNote.trim();
-      if (!selectedReport || !comment) return;
-
-      setResolving(true);
-      try {
-        await orpc.reports.resolve({
-          reportId: selectedReport.id,
-          status,
-          adminNote: comment,
-        });
-        notifyReportChange();
-
-        setReports((prev) =>
-          prev.map((r) =>
-            r.id === selectedReport.id
-              ? { ...r, status, adminNote: comment }
-              : r
-          )
-        );
-
-        toast.success(
-          `Report ${status === ReportStatus.Approved ? 'confirmed' : 'dismissed'}`
-        );
-        setDetailsOpen(false);
-        setSelectedReport(null);
-        setAdminNote('');
-      } catch (error) {
-        console.error('[admin-reports] failed to resolve report', error);
-        toast.error('Failed to resolve report');
-      } finally {
-        setResolving(false);
-      }
+  const handleReportChange = useCallback(
+    (updated: Report) => {
+      setSelected(updated);
+      void mutate(
+        (current: ReportListResponse | undefined) =>
+          current && {
+            ...current,
+            reports: current.reports.map((report) =>
+              report.id === updated.id ? updated : report
+            ),
+          },
+        { revalidate: false }
+      );
     },
-    [selectedReport, adminNote]
+    [mutate]
   );
 
-  const handleReopen = useCallback(async () => {
-    if (!selectedReport) return;
-
-    setReopening(true);
-    try {
-      await orpc.reports.reopen({
-        reportId: selectedReport.id,
-      });
-      notifyReportChange();
-
-      setReports((prev) =>
-        prev.map((r) =>
-          r.id === selectedReport.id
-            ? {
-                ...r,
-                status: ReportStatus.Pending,
-                resolvedAt: null,
-                resolvedBy: null,
-              }
-            : r
-        )
-      );
-
-      setSelectedReport((prev) =>
-        prev
-          ? {
-              ...prev,
-              status: ReportStatus.Pending,
-              resolvedAt: null,
-              resolvedBy: null,
-            }
-          : null
-      );
-
-      toast.success('Report reopened');
-    } catch (error) {
-      console.error('[admin-reports] failed to reopen report', error);
-      toast.error('Failed to reopen report');
-    } finally {
-      setReopening(false);
-    }
-  }, [selectedReport]);
-
-  const getStatusBadge = (status: ReportStatus) => {
-    const metadata = ReportStatusEnumHelper.getMetadata(status);
-    return (
-      <Badge
-        variant={
-          status === ReportStatus.Pending
-            ? 'secondary'
-            : status === ReportStatus.Approved
-              ? 'default'
-              : 'destructive'
-        }
-        className={cn(
-          status === ReportStatus.Approved &&
-            'bg-success text-green-950 hover:bg-success/90'
-        )}
-      >
-        {metadata.text}
-      </Badge>
-    );
-  };
+  const statusName =
+    state.status === undefined
+      ? undefined
+      : getReportStatusCopy(state.status).name;
+  const reports = data?.reports ?? [];
+  // The date column shows the date the queue is sorted by.
+  const dateColumn =
+    state.sort.key === 'resolvedAt'
+      ? { key: 'resolvedAt' as const, label: 'Reviewed' }
+      : { key: 'created' as const, label: COLUMN.submitted.label };
 
   return (
-    <div className="space-y-6">
-      <Card data-testid="admin-reports-card">
-        <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>Reports</CardTitle>
-              <CardDescription>
-                User-submitted data issue reports
-              </CardDescription>
-            </div>
-            <Select
-              value={statusFilter === 'all' ? 'all' : String(statusFilter)}
+    <>
+      <Panel data-testid="admin-reports-card">
+        <ListToolbar
+          label="Sort and filter reports"
+          sort={
+            <SortControl
+              label="Sort reports by"
+              options={ADMIN_REPORT_SORT_OPTIONS}
+              value={state.sort}
+              onValueChange={(sort) => setState({ sort })}
+            />
+          }
+          scope={
+            <ScopeSwitch
+              label="Status"
+              data-testid="admin-reports-status-filter"
+              value={
+                state.status === undefined
+                  ? 'all'
+                  : (String(state.status) as StatusScope)
+              }
               onValueChange={(value) =>
-                setStatusFilter(
-                  value === 'all' ? 'all' : (Number(value) as ReportStatus)
-                )
+                setState({
+                  status:
+                    value === 'all'
+                      ? undefined
+                      : (Number(value) as ReportStatus),
+                })
+              }
+              options={STATUS_OPTIONS}
+            />
+          }
+          count={data ? formatCountOf(data.totalCount, 'report') : undefined}
+        />
+
+        {error && !data ? (
+          <SectionError
+            title="Reports could not load"
+            retrying={isValidating}
+            onRetry={() => void mutate()}
+          />
+        ) : !data ? (
+          <div role="status" aria-label="Loading reports">
+            <AdminReportsTableSkeleton />
+          </div>
+        ) : reports.length === 0 ? (
+          <EmptyState
+            icon={Flag}
+            title={
+              statusName
+                ? `No ${statusName.toLowerCase()} reports`
+                : 'No reports yet'
+            }
+            description={
+              statusName
+                ? 'Choose All to see reports in every state.'
+                : undefined
+            }
+            data-testid="admin-reports-empty"
+          />
+        ) : (
+          <>
+            <DataTable
+              fixed
+              // Up to 50 rows a page, so the header stays in view.
+              stickyHeader
+              aria-label="Reports"
+              data-testid="admin-reports-list"
+              phoneRows={
+                <PhoneRowList aria-label="Reports">
+                  {reports.map((report) => (
+                    <PhoneRow
+                      key={report.id}
+                      data-testid="admin-reports-phone-row"
+                      data-report-id={report.id}
+                      title={<ReportEntityName report={report} />}
+                      description={
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <ReportStatusBadge status={report.status} size="sm" />
+                          <span className="truncate">
+                            #{formatId(report.id)} · {report.reason.label}
+                          </span>
+                        </span>
+                      }
+                      value={
+                        <ViewButton
+                          subject={formatReportSubject(report)}
+                          onClick={() => openReport(report)}
+                        />
+                      }
+                    />
+                  ))}
+                </PhoneRowList>
               }
             >
-              <SelectTrigger
-                className="w-[180px]"
-                data-testid="admin-reports-status-filter"
-              >
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value={String(ReportStatus.Pending)}>
-                  Pending
-                </SelectItem>
-                <SelectItem value={String(ReportStatus.Approved)}>
-                  Approved
-                </SelectItem>
-                <SelectItem value={String(ReportStatus.Rejected)}>
-                  Rejected
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center gap-3 py-8 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-              Loading reports...
-            </div>
-          ) : loadFailed ? (
-            <SectionError
-              title="Reports could not load"
-              onRetry={() => void fetchReports()}
-            />
-          ) : reports.length === 0 ? (
-            <p
-              className="py-8 text-center text-sm text-muted-foreground"
-              data-testid="admin-reports-empty"
-            >
-              No reports found
-            </p>
-          ) : (
-            <div
-              className={cn(
-                'overflow-x-auto rounded-lg border',
-                stickyTableHeaderFromLg
-              )}
-              data-testid="admin-reports-list"
-            >
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted">
-                    <TableHead>ID</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Entity</TableHead>
-                    <TableHead>Reason</TableHead>
-                    <TableHead>Reporter</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reports.map((report) => (
-                    <TableRow
-                      key={report.id}
-                      data-testid="admin-reports-row"
-                      data-report-id={report.id}
-                    >
-                      <TableCell className="text-xs">{report.id}</TableCell>
-                      <TableCell>
-                        {
-                          ReportEntityTypeEnumHelper.getMetadata(
-                            report.entityType
-                          ).text
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <Link
-                          href={getEntityLink(
-                            report.entityType,
-                            report.entityId,
-                            report.matchId
-                          )}
-                          className="text-primary"
-                          data-testid="admin-reports-entity-link"
-                        >
-                          #{report.entityId}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="min-w-48 font-medium">
-                        {report.reason.label}
-                      </TableCell>
-                      <TableCell>
-                        {report.reporter
-                          ? (report.reporter.player.username ??
-                            `User #${report.reporter.id}`)
-                          : '[Deleted User]'}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(report.status)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {formatDateTime(report.created)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleViewDetails(report)}
-                          title="View details"
-                          data-testid="admin-reports-view-details"
-                        >
-                          <Eye className="size-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent
-          className="max-h-[90vh] gap-0 overflow-hidden p-0 sm:max-w-2xl"
-          data-testid="admin-report-detail"
-        >
-          {selectedReport && (
-            <>
-              <DialogHeader className="border-b px-6 pt-6 pr-12 pb-5 text-left">
-                <div className="mb-1 flex flex-wrap items-center gap-2">
-                  {getStatusBadge(selectedReport.status)}
-                  <p className="text-sm text-muted-foreground">
-                    Report #{selectedReport.id}
-                  </p>
-                </div>
-                <DialogTitle className="text-xl leading-tight">
-                  {selectedReport.reason.label}
-                </DialogTitle>
-                <DialogDescription className="leading-relaxed">
-                  Submitted by{' '}
-                  <span className="font-medium text-foreground">
-                    {selectedReport.reporter
-                      ? (selectedReport.reporter.player.username ??
-                        `User #${selectedReport.reporter.id}`)
-                      : '[Deleted User]'}
-                  </span>{' '}
-                  on {formatDateTime(selectedReport.created)}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="max-h-[calc(90vh-9rem)] overflow-y-auto">
-                <div className="space-y-6 px-6 py-5">
-                  <section aria-labelledby="reported-item-heading">
-                    <Label
-                      id="reported-item-heading"
-                      className="text-xs font-medium text-muted-foreground"
-                    >
-                      Reported item
-                    </Label>
-                    <div className="mt-2 flex items-start justify-between gap-4 rounded-lg border bg-muted/30 p-4">
-                      <div className="min-w-0">
-                        <p className="font-medium [overflow-wrap:anywhere]">
-                          {selectedReport.entityDisplayName}
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {
-                            ReportEntityTypeEnumHelper.getMetadata(
-                              selectedReport.entityType
-                            ).text
-                          }{' '}
-                          #{selectedReport.entityId}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="shrink-0"
-                        asChild
-                      >
-                        <Link
-                          href={getEntityLink(
-                            selectedReport.entityType,
-                            selectedReport.entityId,
-                            selectedReport.matchId
-                          )}
-                        >
-                          View
-                          <ExternalLink className="size-3.5" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </section>
-
-                  <section aria-labelledby="reporter-note-heading">
-                    <Label
-                      id="reporter-note-heading"
-                      className="text-xs font-medium text-muted-foreground"
-                    >
-                      Reporter&apos;s note
-                    </Label>
-                    <p
-                      className={cn(
-                        'mt-2 text-sm leading-relaxed [overflow-wrap:anywhere] whitespace-pre-wrap',
-                        !selectedReport.additionalInformation &&
-                          'text-muted-foreground italic'
-                      )}
-                    >
-                      {selectedReport.additionalInformation ||
-                        'No additional information was provided.'}
-                    </p>
-                  </section>
-
-                  {Object.keys(selectedLegacyChanges).length > 0 && (
-                    <section className="rounded-lg border p-4">
-                      <Label className="text-xs text-muted-foreground">
-                        Legacy report details
-                      </Label>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {Object.keys(selectedLegacyChanges).map((field) => (
-                          <Badge key={field} variant="secondary">
-                            {formatFieldName(field)}
-                          </Badge>
-                        ))}
-                      </div>
-                      {Object.values(selectedLegacyChanges).some(
-                        (value) => value
-                      ) && (
-                        <p className="mt-3 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
-                          {Object.values(selectedLegacyChanges)[0] ?? '—'}
-                        </p>
-                      )}
-                    </section>
-                  )}
-                </div>
-
-                {selectedReport.status === ReportStatus.Pending ? (
-                  <div className="border-t bg-muted/30 px-6 py-5">
-                    <div>
-                      <Label htmlFor="admin-note">
-                        Comment{' '}
-                        <span className="text-destructive" aria-hidden="true">
-                          *
-                        </span>
-                      </Label>
-                      <Textarea
-                        id="admin-note"
-                        value={adminNote}
-                        onChange={(e) => setAdminNote(e.target.value)}
-                        placeholder="Enter a comment"
-                        className="mt-3 bg-background"
-                        rows={3}
-                        maxLength={500}
-                        required
+              <DataTableHeader>
+                <DataTableRow>
+                  <DataTableHead className={COLUMN.id.width}>
+                    {COLUMN.id.label}
+                  </DataTableHead>
+                  <DataTableHead>{COLUMN.entity.label}</DataTableHead>
+                  <DataTableHead>{COLUMN.reason.label}</DataTableHead>
+                  <DataTableHead
+                    className={COLUMN.reporter.width}
+                    showFrom={COLUMN.reporter.showFrom}
+                  >
+                    {COLUMN.reporter.label}
+                  </DataTableHead>
+                  <DataTableHead className={COLUMN.status.width}>
+                    {COLUMN.status.label}
+                  </DataTableHead>
+                  <SortableHeader
+                    sortKey={dateColumn.key}
+                    sort={state.sort}
+                    getSortHref={(sort) => list.hrefFor({ sort })}
+                    className={COLUMN.submitted.width}
+                    showFrom={COLUMN.submitted.showFrom}
+                  >
+                    {dateColumn.label}
+                  </SortableHeader>
+                  <DataTableHead
+                    className={COLUMN.view.width}
+                    align={COLUMN.view.align}
+                  >
+                    <span className="sr-only">Actions</span>
+                  </DataTableHead>
+                </DataTableRow>
+              </DataTableHeader>
+              <DataTableBody>
+                {reports.map((report) => (
+                  <DataTableRow
+                    key={report.id}
+                    data-testid="admin-reports-row"
+                    data-report-id={report.id}
+                  >
+                    <DataTableCell className="text-muted-foreground tabular-nums">
+                      {formatId(report.id)}
+                    </DataTableCell>
+                    <DataTableCell>
+                      <span className="block text-xs text-muted-foreground">
+                        {getReportEntityTypeName(report.entityType)}
+                      </span>
+                      <ReportEntityName
+                        report={report}
+                        data-testid="admin-reports-entity-link"
                       />
-                    </div>
-                    <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                      <Button
-                        variant="outline"
-                        onClick={() => handleResolve(ReportStatus.Rejected)}
-                        disabled={resolving || !adminNote.trim()}
-                      >
-                        {resolving ? (
-                          <Loader2 className="mr-2 size-4 animate-spin" />
-                        ) : (
-                          <X className="mr-2 size-4" />
-                        )}
-                        Dismiss
-                      </Button>
-                      <Button
-                        onClick={() => handleResolve(ReportStatus.Approved)}
-                        disabled={resolving || !adminNote.trim()}
-                        className="bg-success text-green-950 hover:bg-success/90"
-                      >
-                        {resolving ? (
-                          <Loader2 className="mr-2 size-4 animate-spin" />
-                        ) : (
-                          <Check className="mr-2 size-4" />
-                        )}
-                        Confirm report
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="border-t bg-muted/30 px-6 py-5">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                      <div>
-                        <Label className="text-xs font-medium text-muted-foreground">
-                          Comment
-                        </Label>
-                        <p className="mt-1 text-sm">
-                          {formatDateTime(selectedReport.resolvedAt)}
-                          {selectedReport.resolvedBy?.player.username &&
-                            ` by ${selectedReport.resolvedBy.player.username}`}
-                        </p>
-                        {selectedReport.adminNote && (
-                          <p className="mt-2 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
-                            {selectedReport.adminNote}
-                          </p>
-                        )}
-                      </div>
-                      <Button
-                        variant="outline"
-                        onClick={handleReopen}
-                        disabled={reopening}
-                        className="shrink-0"
-                      >
-                        {reopening ? (
-                          <Loader2 className="mr-2 size-4 animate-spin" />
-                        ) : (
-                          <RotateCcw className="mr-2 size-4" />
-                        )}
-                        Reopen
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-          {!selectedReport && (
-            <>
-              <DialogHeader className="px-6 pt-6 pr-12 pb-5 text-left">
-                <DialogTitle>Report details</DialogTitle>
-                <DialogDescription>
-                  Loading report information…
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex items-center gap-3 border-t px-6 py-8 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" />
-                Loading report…
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+                    </DataTableCell>
+                    <DataTableCell>{report.reason.label}</DataTableCell>
+                    <DataTableCell showFrom={COLUMN.reporter.showFrom}>
+                      <span className="block truncate">
+                        <ReportUserName user={report.reporter} />
+                      </span>
+                    </DataTableCell>
+                    <DataTableCell>
+                      <ReportStatusBadge status={report.status} size="sm" />
+                    </DataTableCell>
+                    <DataTableCell
+                      muted
+                      showFrom={COLUMN.submitted.showFrom}
+                      className="tabular-nums"
+                    >
+                      <DateText
+                        date={
+                          dateColumn.key === 'resolvedAt'
+                            ? report.resolvedAt
+                            : report.created
+                        }
+                      />
+                    </DataTableCell>
+                    <DataTableCell align="end" empty={false}>
+                      <ViewButton
+                        subject={formatReportSubject(report)}
+                        data-testid="admin-reports-view-details"
+                        onClick={() => openReport(report)}
+                      />
+                    </DataTableCell>
+                  </DataTableRow>
+                ))}
+              </DataTableBody>
+            </DataTable>
+            <PaginationFooter
+              page={state.page}
+              pageSize={ADMIN_REPORTS_PAGE_SIZE}
+              totalCount={data.totalCount}
+              getPageHref={(page) => list.hrefFor({ page })}
+              label="Report pages"
+            />
+          </>
+        )}
+      </Panel>
+
+      <AdminReportDialog
+        report={selected}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onReportChange={handleReportChange}
+      />
+    </>
   );
 }

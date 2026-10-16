@@ -57,7 +57,7 @@ test.describe('Admin pages', () => {
 
         const heading = page.locator('[data-testid="admin-reports-heading"]');
         await expect(heading).toBeVisible({ timeout: 10000 });
-        await expect(heading).toHaveText('Data Reports');
+        await expect(heading).toHaveText('Data reports');
 
         await expect(
           page.locator('[data-testid="admin-reports-card"]')
@@ -85,7 +85,7 @@ test.describe('Admin pages', () => {
         }
       });
 
-      test('status filter opens and exposes status options', async ({
+      test('the status switch filters the queue and stays in the address', async ({
         page,
       }) => {
         await page.goto(ROUTES.adminReports);
@@ -96,23 +96,98 @@ test.describe('Admin pages', () => {
         );
         await expect(filter).toBeVisible({ timeout: 10000 });
 
-        await filter.click();
+        for (const name of ['All', 'Pending', 'Confirmed', 'Dismissed']) {
+          await expect(filter.getByRole('radio', { name })).toBeVisible();
+        }
+        await expect(filter.getByRole('radio', { name: 'All' })).toBeChecked();
+
+        await filter.getByRole('radio', { name: 'Pending' }).click();
+        await expect(page).toHaveURL(/[?&]status=0\b/, { timeout: 10000 });
+        await expect(
+          filter.getByRole('radio', { name: 'Pending' })
+        ).toBeChecked();
+
+        await page.reload();
+        await page.waitForLoadState('networkidle');
+        await expect(
+          page
+            .locator('[data-testid="admin-reports-status-filter"]')
+            .getByRole('radio', { name: 'Pending' })
+        ).toBeChecked({ timeout: 10000 });
+
+        const rows = page.locator('[data-testid="admin-reports-row"]');
+        const empty = page.locator('[data-testid="admin-reports-empty"]');
+        await expect(rows.first().or(empty)).toBeVisible({ timeout: 15000 });
+        const statuses = await rows
+          .locator('[data-slot="report-status-badge"]')
+          .allInnerTexts();
+        expect(statuses.every((status) => status.trim() === 'Pending')).toBe(
+          true
+        );
+      });
+
+      test('the sort and page live in the address', async ({ page }) => {
+        await page.goto(`${ROUTES.adminReports}?sort=resolvedAt&dir=asc`);
+        await page.waitForLoadState('networkidle');
 
         await expect(
-          page.getByRole('option', { name: 'All statuses' })
+          page.getByRole('combobox', { name: 'Sort reports by' })
+        ).toContainText('Date reviewed', { timeout: 10000 });
+        await expect(
+          page.getByRole('button', { name: 'Sort order is ascending' })
+        ).toBeVisible();
+
+        await page.goto(ROUTES.adminReports);
+        await page.waitForLoadState('networkidle');
+
+        const pages = page.getByRole('navigation', { name: 'Report pages' });
+        const rows = page.locator('[data-testid="admin-reports-row"]');
+        await expect(
+          rows.first().or(page.locator('[data-testid="admin-reports-empty"]'))
+        ).toBeVisible({ timeout: 15000 });
+
+        // Numbered pages appear only when the queue holds more than one page.
+        if (!(await pages.isVisible())) {
+          return;
+        }
+
+        const firstId = await rows.first().getAttribute('data-report-id');
+        await pages.getByRole('link', { name: 'Page 2' }).click();
+        await expect(page).toHaveURL(/[?&]page=2\b/, { timeout: 10000 });
+        await expect(rows.first()).not.toHaveAttribute(
+          'data-report-id',
+          firstId ?? '',
+          { timeout: 15000 }
+        );
+      });
+
+      test('a report opens from its View button in the report details dialog', async ({
+        page,
+      }) => {
+        await page.goto(ROUTES.adminReports);
+        await page.waitForLoadState('networkidle');
+
+        const row = page.locator('[data-testid="admin-reports-row"]').first();
+        const hasRow = await row
+          .isVisible({ timeout: 15000 })
+          .catch(() => false);
+        if (!hasRow) {
+          return;
+        }
+
+        const reportId = await row.getAttribute('data-report-id');
+        await row
+          .getByRole('button', { name: `View report #${reportId}` })
+          .click();
+
+        const dialog = page.getByTestId('admin-report-detail');
+        await expect(
+          dialog.getByRole('heading', { name: 'Report details' })
         ).toBeVisible({ timeout: 10000 });
-        await expect(
-          page.getByRole('option', { name: 'Pending' })
-        ).toBeVisible();
-        await expect(
-          page.getByRole('option', { name: 'Approved' })
-        ).toBeVisible();
-        await expect(
-          page.getByRole('option', { name: 'Rejected' })
-        ).toBeVisible();
+        await expect(dialog).toContainText(`Report #${reportId}`);
 
-        await page.getByRole('option', { name: 'Pending' }).click();
-        await expect(filter).toContainText('Pending', { timeout: 10000 });
+        await page.keyboard.press('Escape');
+        await expect(dialog).toBeHidden({ timeout: 10000 });
       });
 
       test('a failed load shows an error with a retry, not an empty list', async ({

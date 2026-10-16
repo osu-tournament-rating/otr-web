@@ -1,30 +1,16 @@
 'use client';
 
-import { Loader2, RefreshCw, Trash2, Users } from 'lucide-react';
+import { RefreshCw, Trash2, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Button } from '@/components/kit/controls/Button';
+import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
+import { Panel, PanelBody } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { authClient } from '@/lib/auth/auth-client';
+import { formatCountOf } from '@/lib/kit/format/number';
 import { orpc } from '@/lib/orpc/orpc';
 
 interface FriendsSyncClientProps {
@@ -36,8 +22,6 @@ export default function FriendsSyncClient({
 }: FriendsSyncClientProps) {
   const [friendCount, setFriendCount] = useState(initialFriendCount);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -64,99 +48,55 @@ export default function FriendsSyncClient({
     }
   };
 
-  const handleDeleteFriends = async () => {
-    setIsDeleting(true);
-    try {
-      await orpc.users.deleteMyFriends();
-      setFriendCount(0);
-      toast.success('Friends list cleared');
-      setIsDeleteDialogOpen(false);
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Failed to delete friends. Please try again.';
-      toast.error(message);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  const friends = formatCountOf(friendCount, 'friend');
 
   return (
-    <Card data-testid="settings-friends-sync-section">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <Users className="size-6 text-primary" />
-          <CardTitle>Friends</CardTitle>
+    <Panel data-testid="settings-friends-sync-section">
+      <SectionHeader icon={Users} title="Friends" />
+      <PanelBody className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1 text-sm">
+          <p className="text-muted-foreground">
+            Sync your osu! friends list to filter the leaderboard by friends.
+          </p>
+          <p>
+            {friendCount > 0
+              ? `${friends} synced.`
+              : 'Your friends list has not been synced yet.'}
+          </p>
         </div>
-        <CardDescription>
-          Sync your osu! friends list to filter the leaderboard by friends.
-        </CardDescription>
-      </CardHeader>
 
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          {friendCount > 0
-            ? `${friendCount} friend${friendCount !== 1 ? 's' : ''} synced.`
-            : 'Your friends list has not been synced yet.'}
-        </p>
-
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Button
-            onClick={handleSyncFriends}
-            disabled={isSyncing}
+            variant="outline"
+            icon={RefreshCw}
+            pending={isSyncing}
+            onClick={() => void handleSyncFriends()}
             data-testid="settings-sync-friends-button"
           >
-            {isSyncing ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Redirecting...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="mr-2 size-4" />
-                Sync Friends
-              </>
-            )}
+            {isSyncing ? 'Redirecting…' : 'Sync friends'}
           </Button>
 
-          {friendCount > 0 && (
-            <AlertDialog
-              open={isDeleteDialogOpen}
-              onOpenChange={setIsDeleteDialogOpen}
-            >
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={isDeleting}>
-                  <Trash2 className="mr-2 size-4" />
-                  Delete Friends
+          {friendCount > 0 ? (
+            <ConfirmDialog
+              trigger={
+                <Button variant="destructive" icon={Trash2}>
+                  Delete friends
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete your friends list?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will remove all {friendCount} friend
-                    {friendCount !== 1 ? 's' : ''} from your synced list. You
-                    can sync them again at any time.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isDeleting}>
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteFriends}
-                    className="bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/40"
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? 'Deleting...' : 'Delete Friends'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+              }
+              title="Delete your friends list?"
+              description={`This will remove all ${friends} from your synced list. You can sync them again at any time.`}
+              confirmLabel="Delete friends"
+              pendingLabel="Deleting…"
+              errorText="Failed to delete friends. Try again."
+              onConfirm={async () => {
+                await orpc.users.deleteMyFriends();
+                setFriendCount(0);
+                toast.success('Friends list cleared');
+              }}
+            />
+          ) : null}
         </div>
-      </CardContent>
-    </Card>
+      </PanelBody>
+    </Panel>
   );
 }

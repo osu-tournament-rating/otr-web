@@ -1,24 +1,32 @@
 'use client';
 
 import { AdminNoteRouteTarget } from '@otr/core/osu';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
+import { cn } from '@/lib/utils';
+
 import AdminNoteListItem from './AdminNoteListItem';
 import { AdminNote } from './types';
 
+/** An entity's admin notes as divided rows, newest as the server sends them. */
 export default function AdminNotesList({
   entity,
   notes,
+  className,
 }: {
   entity: AdminNoteRouteTarget;
   notes: AdminNote[];
+  className?: string;
 }) {
   return (
-    <ScrollArea className="max-h-36 space-y-3 px-2">
-      <div className="flex flex-col space-y-3">
-        {notes.map((note) => (
-          <AdminNoteListItem entity={entity} key={note.id} note={note} />
-        ))}
-      </div>
-    </ScrollArea>
+    <ul
+      aria-label="Admin notes"
+      className={cn('flex flex-col divide-y', className)}
+    >
+      {notes.map((note) => (
+        <li key={note.id} className="py-3 first:pt-0 last:pb-0">
+          <AdminNoteListItem entity={entity} note={note} />
+        </li>
+      ))}
+    </ul>
   );
 }
