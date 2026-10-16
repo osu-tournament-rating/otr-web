@@ -67,30 +67,34 @@ export default function ScoreActionsMenu({
         itemName={`${scoreName} in game ${gameNumber}`}
         notification={noteCount > 0 ? 'Has admin notes' : undefined}
         data-testid="score-actions"
+        // Public items first, in the heroes' order (report, audit history),
+        // then the admin ones.
         actions={[
-          isAdmin && {
-            label: 'Edit score',
-            icon: PencilLine,
-            onSelect: () => setEditing(true),
-          },
-          (isAdmin || noteCount > 0) && {
-            label: 'Admin notes',
-            icon: NotebookPen,
-            trailing:
-              noteCount > 0 ? (
-                <Badge size="sm">{formatBadgeCount(noteCount)}</Badge>
-              ) : undefined,
-            onSelect: () => setViewingNotes(true),
+          session && {
+            label: 'Report an issue',
+            icon: Flag,
+            onSelect: () => setReporting(true),
           },
           {
             label: 'View audit history',
             icon: History,
             href: `/audit/${entityTypeToSlug(AuditEntityType.Score)}/${score.id}`,
           },
-          session && {
-            label: 'Report an issue',
-            icon: Flag,
-            onSelect: () => setReporting(true),
+          isAdmin && {
+            label: 'Edit score',
+            icon: PencilLine,
+            group: 'admin',
+            onSelect: () => setEditing(true),
+          },
+          (isAdmin || noteCount > 0) && {
+            label: 'Admin notes',
+            icon: NotebookPen,
+            group: 'admin',
+            trailing:
+              noteCount > 0 ? (
+                <Badge size="sm">{formatBadgeCount(noteCount)}</Badge>
+              ) : undefined,
+            onSelect: () => setViewingNotes(true),
           },
           isAdmin && {
             label: 'Delete score',

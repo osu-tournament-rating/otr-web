@@ -11,7 +11,7 @@ import { PreviewStatusIcon } from './PreviewStatusIcon';
 const SHORT_LABELS: Record<PreviewButtonStatus, string> = {
   loading: 'Loading',
   playing: 'Pause',
-  error: 'Retry',
+  error: 'Try again',
   paused: 'Resume',
   idle: 'Preview',
 };
@@ -26,7 +26,10 @@ interface AudioPreviewButtonProps {
   difficulty?: string;
 }
 
-/** The labelled preview button: "Preview", then "Pause", "Resume" or "Retry". */
+/**
+ * The labelled preview button: "Preview", then "Pause", "Resume" or, after
+ * a failed load, "Try again".
+ */
 export default function AudioPreviewButton({
   beatmapsetOsuId,
   variant = 'overlay',

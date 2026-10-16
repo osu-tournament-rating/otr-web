@@ -58,7 +58,7 @@ export default function BeatmapListCards({
         const showMods = !isManiaRuleset(ruleset);
 
         return (
-          <article
+          <div
             key={beatmap.id}
             role="listitem"
             data-testid={`beatmap-list-row-${beatmap.osuId}`}
@@ -216,7 +216,7 @@ export default function BeatmapListCards({
                 </div>
               </div>
             </div>
-          </article>
+          </div>
         );
       })}
     </div>

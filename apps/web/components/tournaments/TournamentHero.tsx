@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation';
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
 
+import { DELETE_CASCADE_DESCRIPTION } from '@/components/admin-forms/adminFormFields';
 import { AdminNotesDialog } from '@/components/admin-notes/AdminNotesDialog';
 import { AdminMenu } from '@/components/kit/controls/AdminMenu';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
@@ -461,15 +462,7 @@ export default function TournamentHero({
           <ConfirmDialog
             {...dialog('delete')}
             title="Delete this tournament?"
-            description={
-              <>
-                <p>
-                  This action will cascade to all children. All associated data
-                  will be permanently removed.
-                </p>
-                <p>This action cannot be undone.</p>
-              </>
-            }
+            description={DELETE_CASCADE_DESCRIPTION}
             confirmLabel="Delete tournament"
             pendingLabel="Deleting…"
             errorText="Failed to delete tournament"

@@ -8,12 +8,13 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
+import type * as React from 'react';
 
 import { Panel, PanelBody } from '@/components/kit/layout/Panel';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { StatTile, StatTileGrid } from '@/components/kit/layout/StatTile';
+import { MissingValue } from '@/components/kit/tables/MissingValue';
 import { toDate } from '@/lib/kit/format/date';
-import { EMPTY_VALUE } from '@/lib/kit/format/empty';
 import {
   formatCount,
   formatCountOf,
@@ -27,10 +28,10 @@ const DAY_MS = 86_400_000;
 function formatDuration(
   start: TournamentDetail['startTime'],
   end: TournamentDetail['endTime']
-): string {
+): React.ReactNode {
   const startDate = toDate(start);
   const endDate = toDate(end);
-  if (!startDate || !endDate) return EMPTY_VALUE;
+  if (!startDate || !endDate) return <MissingValue />;
 
   const days = Math.ceil(
     Math.abs(endDate.getTime() - startDate.getTime()) / DAY_MS
@@ -64,6 +65,7 @@ export default function TournamentStatsPanel({
     (sum, match) => sum + (match.games?.length ?? 0),
     0
   );
+  const playerCount = tournament.playerTournamentStats?.length ?? 0;
   const verifiedMatches = matches.filter(
     (match) => match.verificationStatus === VerificationStatus.Verified
   ).length;
@@ -76,7 +78,11 @@ export default function TournamentStatsPanel({
           <StatTile
             icon={Users}
             label="Players"
-            value={formatCount(tournament.playerTournamentStats?.length ?? 0)}
+            // Counted from the player statistics, which only a verified
+            // tournament has after the Tuesday update: unknown until then.
+            value={
+              playerCount > 0 ? formatCount(playerCount) : <MissingValue />
+            }
           />
           <StatTile
             icon={Swords}
@@ -95,11 +101,13 @@ export default function TournamentStatsPanel({
           />
           <StatTile
             icon={Award}
-            label="Verified"
+            label="Verified matches"
             value={
-              matches.length > 0
-                ? formatPercent(verifiedMatches / matches.length)
-                : EMPTY_VALUE
+              matches.length > 0 ? (
+                formatPercent(verifiedMatches / matches.length)
+              ) : (
+                <MissingValue />
+              )
             }
           />
           <StatTile

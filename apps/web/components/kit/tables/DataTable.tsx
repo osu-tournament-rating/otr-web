@@ -2,6 +2,7 @@ import type * as React from 'react';
 
 import { InfoButton } from '@/components/kit/layout/InfoButton';
 import { MissingValue } from '@/components/kit/tables/MissingValue';
+import { aboutLabel } from '@/lib/kit/layout/about-label';
 import {
   Table,
   TableBody,
@@ -193,7 +194,7 @@ export function DataTableHead({
             size="sm"
             label={
               infoLabel ??
-              (typeof children === 'string' ? `About ${children}` : 'About')
+              (typeof children === 'string' ? aboutLabel(children) : 'About')
             }
           >
             {info}

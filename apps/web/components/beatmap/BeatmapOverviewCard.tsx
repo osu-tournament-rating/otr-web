@@ -38,7 +38,6 @@ import type {
   BeatmapUsagePoint,
   BeatmapWithDetails,
 } from '@/lib/orpc/schema/beatmapStats';
-import { cn } from '@/lib/utils';
 
 const ATTRIBUTE_SCALE_MAX = 10;
 
@@ -73,6 +72,9 @@ function AttributesGroup({ beatmap }: { beatmap: BeatmapWithDetails }) {
       <StatTileGrid columns={2} className="p-4">
         {attributes.map((row) => {
           const value = beatmap[row.key];
+          const formatted = row.integer
+            ? formatCount(value)
+            : formatNumber(value, { decimals: 1 });
 
           return (
             <StatTile
@@ -81,12 +83,15 @@ function AttributesGroup({ beatmap }: { beatmap: BeatmapWithDetails }) {
               label={
                 <Abbreviation full={row.label}>{row.abbreviation}</Abbreviation>
               }
+              // An attribute the ruleset doesn't use reads quieter: a muted
+              // value, never a faded tile, so its 12px label keeps 4.5:1.
               value={
-                row.integer
-                  ? formatCount(value)
-                  : formatNumber(value, { decimals: 1 })
+                row.muted ? (
+                  <span className="text-muted-foreground">{formatted}</span>
+                ) : (
+                  formatted
+                )
               }
-              className={cn(row.muted && 'opacity-55')}
             >
               {row.gauge !== false ? (
                 <Progress

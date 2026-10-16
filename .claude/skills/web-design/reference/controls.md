@@ -239,6 +239,7 @@ import { RowActionsMenu } from '@/components/kit/controls/RowActionsMenu';
         isAdmin && {
           label: 'Edit game',
           icon: PencilLine,
+          group: 'admin',
           onSelect: () => setEditing(true),
         },
         isAdmin && {
@@ -260,6 +261,7 @@ Props:
 - `label`: the tooltip, "Actions" by default.
 - `notification`: as AdminMenu's. It puts the one notification dot on the "…" button's corner and adds its text to the button's accessible name ("Actions for Game 3, Has admin notes"). Pair it with a count `Badge` as the matching item's `trailing`, so the menu says what is new.
 - Public items (report, audit history) are for everyone; gate only the admin items with `isAdmin &&`. With every admin item hidden, the menu still holds the public ones.
+- Order: the public items first, in the heroes' order ("Report an issue", "View audit history", "View … on osu! website"), then the admin items in their own `group: 'admin'` (edit, admin notes), then data operations, then the destructive group. The game and score menus (`components/games/GameActionsMenu.tsx`, `ScoreActionsMenu.tsx`) follow it.
 - `onArt`: the round dark pill, for a card header on cover art (`components/games/GameCardHeader.tsx`).
 - `size`: `sm` (default) or `default`.
 
@@ -447,7 +449,7 @@ import { Form } from '@/components/ui/form';
 
 <PageFrame>
   <PageHeader
-    icon={Trophy}
+    icon={Upload}
     title="Tournament submission"
     description="Use this form to submit a new tournament for verification and tracking."
   />
@@ -495,7 +497,7 @@ Don't:
 - Don't restyle inputs (`border-2 shadow-sm bg-card focus-visible:ring-primary`).
 - Don't build notices from palette classes (`border-orange-500/50 bg-orange-500/15`); use Callout.
 
-Admin edit dialogs share their parts in `components/admin-forms/adminFormFields.tsx`: `VerifyChildrenChoices` (with `VERIFY_CHILDREN_TITLE` and `VERIFY_CHILDREN_DESCRIPTION`), `LabelSelectContent` and `VerificationStatusSelectContent` for enum selects (`ALL_RULESET_LABELS` is every ruleset, `mania (other)` included, for admin pickers), `flagOptions` and `combineFlags` for bitflag fields, `changedFieldClass` for a field the admin changed, and `DELETE_CASCADE_DESCRIPTION`, the delete confirmations' shared wording. Import them from there rather than copying them into a dialog. The tournament submission form and edit dialog share their own pickers in `components/tournaments/TournamentFieldOptions.tsx`: `RulesetSelectContent` (`includeManiaOther` for admins), `LobbySizeSelectContent`, `VerificationStatusSelectContent` (with each state's glyph) and `RejectionReasonChips`.
+Admin edit dialogs share their parts in `components/admin-forms/adminFormFields.tsx`: `VerifyChildrenChoices` (with `VERIFY_CHILDREN_TITLE` and `VERIFY_CHILDREN_DESCRIPTION`), `LabelSelectContent` and `VerificationStatusSelectContent` for enum selects (`ALL_RULESET_LABELS` is every ruleset, `mania (other)` included, for admin pickers; the status picker shows each state's glyph and is the one the tournament, match, game and score dialogs use), `flagOptions` and `combineFlags` for bitflag fields, `changedFieldClass` for a field the admin changed, and `DELETE_CASCADE_DESCRIPTION`, the delete confirmations' shared wording. Import them from there rather than copying them into a dialog. The tournament submission form and edit dialog share their own pickers in `components/tournaments/TournamentFieldOptions.tsx`: `RulesetSelectContent` (`includeManiaOther` for admins), `LobbySizeSelectContent` and `RejectionReasonChips`.
 
 Gallery anchor: `/admin/design#controls-form-layout`
 
@@ -520,7 +522,7 @@ import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
 Props:
 
 - `children`: the label text, sentence case. It turns red with the field's error, from `FormLabel`.
-- `info`: the explanation behind an InfoButton (its `md` size, the one beside 14px text), which opens on tap, hover and focus. `infoLabel` names it; it defaults to "About {label}".
+- `info`: the explanation behind an InfoButton (its `md` size, the one beside 14px text), which opens on tap, hover and focus. `infoLabel` names it; it defaults to "About {label}", lower-cased mid-sentence ("About lobby size").
 - `hint`: muted text on the right. `hintId` gives it an id, so the control can point `aria-describedby` at it, such as a "Required" hint: `hint="Required" hintId={hintId}`, not a hand-made `<span id>` inside `hint`.
 - `htmlFor`: the id of the control it labels, for a field outside a `FormItem`. It then renders the plain `Label` (`FormLabel` only works inside a form field). `invalid` turns it red, as a field error does inside a form.
 - `groupId`: labels a group of controls, such as a `RadioGroup`, that a `<label>` can't point at. The label is plain text with this id, in the same 20px row and text style, and the group takes `aria-labelledby={groupId}`; each option keeps its own `Label`. `invalid` works here too.

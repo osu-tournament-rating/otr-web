@@ -134,8 +134,9 @@ export default function TournamentListToolbar({ count }: { count?: string }) {
       label="Search and filter tournaments"
       search={
         <SearchField
-          label="Search tournaments"
-          placeholder="Search by name or abbreviation"
+          label="Search tournaments by name or abbreviation"
+          // Short enough for the box at tablet width; the label says it all.
+          placeholder="Name or abbreviation"
           value={state.q}
           pending={list.isPending}
           onSearch={(q) => setState({ q })}

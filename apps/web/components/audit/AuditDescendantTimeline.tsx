@@ -140,6 +140,7 @@ export default function AuditDescendantTimeline({
       systemSwitch={systemSwitch}
       total={total}
       capped={capped}
+      loading={isLoading}
     />
   );
 

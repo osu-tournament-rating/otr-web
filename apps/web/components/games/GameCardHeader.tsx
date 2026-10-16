@@ -112,8 +112,12 @@ export default function GameCardHeader({
         </div>
         <div className="flex w-full flex-1 flex-row justify-between gap-2">
           <div className="flex max-w-3/4 flex-1 flex-col justify-end overflow-hidden">
-            <span className="flex gap-1 truncate text-xs text-white/80 sm:text-sm">
-              <span>Set by</span>
+            {/* One line of inline text, so a long line ends in an ellipsis
+                instead of cutting a name off mid-word. The padding, taken
+                back by the margin, keeps the links' focus rings inside the
+                clipped box. */}
+            <span className="-my-1 block truncate py-1 text-xs text-white/80 sm:text-sm">
+              Set by{' '}
               {isDeletedBeatmap || !game.beatmap?.beatmapset?.creator ? (
                 <span className="font-semibold text-white">Unknown user</span>
               ) : (
@@ -125,8 +129,8 @@ export default function GameCardHeader({
                   {game.beatmap.beatmapset.creator.username}
                 </Link>
               )}
-              <span aria-hidden="true">•</span>
-              <span>Map by</span>
+              <span aria-hidden="true"> • </span>
+              Map by{' '}
               {isDeletedBeatmap || !game.beatmap?.creators?.length ? (
                 <span className="font-semibold text-white">
                   Unknown creator

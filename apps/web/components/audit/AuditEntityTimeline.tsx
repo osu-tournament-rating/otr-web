@@ -7,12 +7,15 @@ import { AuditEntityType } from '@otr/core/osu';
 import type { EntityTimelineItem } from '@/lib/orpc/schema/audit';
 import SectionError from '@/components/error/SectionError';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
-import { RowListSkeleton } from '@/components/kit/feedback/Skeletons';
+import {
+  RowListSkeleton,
+  SkeletonText,
+} from '@/components/kit/feedback/Skeletons';
 import { RowList } from '@/components/kit/layout/RowList';
 import { ListToolbar } from '@/components/kit/lists/ListToolbar';
 import { LoadMore } from '@/components/kit/tables/LoadMore';
 import { ENTITY_TYPE_LABELS } from '@/lib/audit-entity-types';
-import { formatCountOf } from '@/lib/kit/format/number';
+import { formatCount, formatCountOf } from '@/lib/kit/format/number';
 import { orpc } from '@/lib/orpc/orpc';
 import AuditEntryRow, { AuditSubmissionRow } from './AuditEntryRow';
 import AuditNoteItem from './AuditNoteItem';
@@ -42,24 +45,31 @@ export function TimelineToolbar({
   systemSwitch,
   total,
   capped = false,
+  loading = false,
 }: {
   systemSwitch: React.ReactNode;
   /** Every change, once the first batch has loaded. */
   total?: number;
   /** The count hit the server's cap and is a lower bound. */
   capped?: boolean;
+  /** The first batch is loading: a bar holds the count's place. */
+  loading?: boolean;
 }): React.JSX.Element {
   return (
     <ListToolbar
       label="Filter audit history"
       leading={systemSwitch}
       count={
-        total === undefined ? undefined : (
+        total !== undefined ? (
           <span data-testid="timeline-summary">
-            {formatCountOf(total, 'change')}
-            {capped ? '+' : null}
+            {/* A lower bound reads "5,000+ changes". */}
+            {capped
+              ? `${formatCount(total)}+ changes`
+              : formatCountOf(total, 'change')}
           </span>
-        )
+        ) : loading ? (
+          <SkeletonText className="h-3 w-20" />
+        ) : undefined
       }
     />
   );
@@ -144,7 +154,11 @@ export default function AuditEntityTimeline({
   useScrollToHash(allItems.length > 0);
 
   const toolbar = (
-    <TimelineToolbar systemSwitch={systemSwitch} total={totalCount} />
+    <TimelineToolbar
+      systemSwitch={systemSwitch}
+      total={totalCount}
+      loading={isLoading}
+    />
   );
 
   if (isLoading) {

@@ -76,6 +76,12 @@ export default function Footer() {
                           className="rounded-sm text-sm text-muted-foreground transition-colors outline-none hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50"
                         >
                           {item.title}
+                          {internal ? null : (
+                            <span className="sr-only">
+                              {' '}
+                              (opens in a new tab)
+                            </span>
+                          )}
                         </Link>
                       </li>
                     );

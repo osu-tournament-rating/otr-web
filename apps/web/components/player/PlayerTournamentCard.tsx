@@ -145,7 +145,7 @@ export default function PlayerTournamentCard({
             <EmptyState
               size="compact"
               icon={Swords}
-              title="No matches found"
+              title="No matches"
               titleAs="p"
             />
           )

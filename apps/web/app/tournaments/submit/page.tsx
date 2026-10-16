@@ -1,4 +1,4 @@
-import { ExternalLink, Trophy } from 'lucide-react';
+import { ExternalLink, Upload } from 'lucide-react';
 import { Metadata } from 'next';
 
 import {
@@ -20,7 +20,7 @@ export default function TournamentSubmissionPage() {
   return (
     <PageFrame>
       <PageHeader
-        icon={Trophy}
+        icon={Upload}
         title={SUBMISSION_TITLE}
         description={SUBMISSION_DESCRIPTION}
         actions={

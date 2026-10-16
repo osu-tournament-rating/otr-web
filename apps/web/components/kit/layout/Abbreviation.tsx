@@ -1,15 +1,6 @@
 import TapTooltip from '@/components/tap-tooltip';
+import { midSentence } from '@/lib/kit/layout/about-label';
 import { cn } from '@/lib/utils';
-
-/**
- * The full form as it reads after a comma: "circle size" for "Circle size",
- * but "HP drain" keeps its capitals, since its first word is a short form.
- */
-function midSentence(full: string): string {
-  return /^[A-Z][a-z]/.test(full)
-    ? full.charAt(0).toLowerCase() + full.slice(1)
-    : full;
-}
 
 /**
  * A short form, such as CS for circle size, whose full form opens on tap,

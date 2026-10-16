@@ -39,7 +39,7 @@ Both block sizes go straight into the panel in place of the rows, directly under
 
 Copy:
 
-- Empty titles say what is missing: "No beatmaps match" when filtered, "No pooled beatmaps" or "No tournaments yet" otherwise. The description says why or what to try, in one sentence.
+- Empty titles say what is missing: "No beatmaps match" when filtered, "No pooled beatmaps" or "No tournaments yet" otherwise, and "Not enough data" for a chart with too few points. No "available" or "not available": "No mod data", "No match statistics". The description says why or what to try, in one sentence.
 - Error titles name the thing: "Tournaments could not load", "More audit events could not load". No "Unable to", "Failed to" or "Please", and no full stop in a title.
 - Retry buttons always read "Try again", never "Retry".
 
@@ -185,7 +185,7 @@ import {
 export function MyReportsPanelSkeleton() {
   return (
     <PanelSkeleton label="Loading reports">
-      <SectionHeaderSkeleton title="Reports" />
+      <SectionHeaderSkeleton icon={Flag} title="Reports" />
       <TableSkeleton
         columns={MY_REPORTS_SKELETON_COLUMNS}
         cellHeight="h-9"
@@ -240,6 +240,7 @@ Do:
 
 - Build `loading.tsx` from the same PageFrame, PageHeader or DetailHero and panels as the page, with the real static text (titles, labels, column headers), and change it whenever the page's layout changes.
 - Copy the loaded table's column widths, alignment and `showFrom` into `columns`, and check with the browser that a row is the same height loading and loaded.
+- On a page with tabs, underline the tab being opened and draw that tab's panels. A `loading.tsx` gets no search params, so a small client piece reads `?tab=` with `useSearchParams`, as `app/matches/[id]/loading-views.tsx` and `app/tournaments/[id]/loading-views.tsx` do.
 - Announce once per screen: `label` on one PanelSkeleton, or `role="status"` and `aria-label` on the PageFrame.
 - Inside an already-rendered panel (a client fetch, an expanded row), show two or three skeleton rows where the content goes instead of a spinner.
 

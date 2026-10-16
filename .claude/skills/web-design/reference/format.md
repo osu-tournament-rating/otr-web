@@ -277,7 +277,7 @@ The percentile style, and why: a whole ordinal, `97th percentile`, rounded down 
 
 Don't:
 
-- Don't write `#1234` or `#${rank.toLocaleString()}`; use `formatRank`.
+- Don't write `#1234` or `#${rank.toLocaleString()}`; use `formatRank`. A ranked table's column reads "Rank" and every position takes the `#`, bare numbers included; a shared competition rank adds a leading `=` (`=#7`), as the beatmap leaderboard does.
 - Don't render counts bare (`{count}`), on a page or on a chart axis.
 - Don't print a percentile as a share (`97.53%`), format numbers with `toLocaleString()`, or write a local ordinal or accuracy helper; these helpers cover them.
 

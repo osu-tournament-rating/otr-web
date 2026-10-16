@@ -65,17 +65,19 @@ export default function MergeGameDialog({
   };
 
   const validate = (gameIds: number[]): string | null => {
-    if (gameIds.length === 0) return 'Please enter valid game IDs';
+    if (gameIds.length === 0)
+      return 'Child game IDs must be positive whole numbers';
     const uniqueIds = new Set(gameIds);
-    if (uniqueIds.size !== gameIds.length) return 'Duplicate game IDs found';
-    if (uniqueIds.has(game.id)) return 'Cannot merge a game with itself';
+    if (uniqueIds.size !== gameIds.length)
+      return 'Each child game ID can appear only once';
+    if (uniqueIds.has(game.id)) return 'A game cannot be merged into itself';
     return null;
   };
 
   const fetchGames = async () => {
     const input = gameIdsInput.trim();
     if (!input) {
-      setError('Please enter at least one game ID');
+      setError('Child game IDs are required');
       return;
     }
 
@@ -222,7 +224,7 @@ export default function MergeGameDialog({
         </div>
       ) : (
         <>
-          <ul className="flex list-inside list-disc flex-col gap-1 text-sm text-muted-foreground">
+          <ul className="flex list-disc flex-col gap-1 pl-5 text-sm text-muted-foreground">
             <li>All scores will be moved to this game</li>
             <li>Child games will be permanently deleted</li>
             <li>Games must have the same beatmap</li>

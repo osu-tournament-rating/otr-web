@@ -491,6 +491,28 @@ test.describe('Leaderboard Page', () => {
     });
   });
 
+  test.describe('Tablets', () => {
+    test.use({ viewport: { width: 768, height: 1024 } });
+
+    test('the table fits the panel, five-digit ranks included', async ({
+      page,
+    }) => {
+      // The last page holds the longest ranks ("#26,963").
+      await page.goto(`${ROUTES.leaderboard}?page=9999`);
+      await page.waitForLoadState('networkidle');
+
+      const table = page.locator('[data-testid="leaderboard-table"]');
+      await expect(table).toBeVisible({ timeout: 10000 });
+
+      // The table's own scroll container would scroll it sideways.
+      const overflow = await table.evaluate((element) => {
+        const container = element.closest('[data-slot="table-container"]')!;
+        return container.scrollWidth - container.clientWidth;
+      });
+      expect(overflow).toBeLessThanOrEqual(0);
+    });
+  });
+
   test.describe('Phones', () => {
     test.use({ viewport: { width: 390, height: 844 } });
 

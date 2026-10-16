@@ -28,7 +28,7 @@ export default async function Page() {
         imageSize="h-[240px] w-[475px]"
         imageClassName="sm:-top-16"
         className="items-center lg:py-10"
-        contentClassName="px-2 max-w-md"
+        contentClassName="px-2 max-w-md md:px-0"
       >
         <FeatureCardTitle as="h1">osu! Tournament Rating</FeatureCardTitle>
         <FeatureCardDescription>
@@ -54,14 +54,17 @@ export default async function Page() {
         </FeatureCardDescription>
       </FeatureCard>
 
+      {/* The same side padding and heading size as the feature cards around
+          it, so their text lines up and no heading outgrows the h1. */}
       <Panel
         data-testid="rating-ladder-section"
-        className="flex flex-col gap-6 p-6 md:p-8"
+        className="flex flex-col gap-6 p-4 md:p-6 lg:py-10"
       >
         <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-bold">
+          {/* It wraps to two lines on phones. */}
+          <FeatureCardTitle className="leading-tight">
             Use ratings to filter registrants
-          </h2>
+          </FeatureCardTitle>
           <p className="text-muted-foreground">
             High ratings indicate consistently strong performance in matches,
             possibly due to playing in tournaments below one&apos;s skill level.

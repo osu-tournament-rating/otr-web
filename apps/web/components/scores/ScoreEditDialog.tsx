@@ -264,7 +264,7 @@ export default function ScoreEditDialog({
                 id={`score-note-${score.id}`}
                 value={adminNote}
                 onChange={(event) => setAdminNote(event.target.value)}
-                placeholder="Enter your reason for modifying this score..."
+                placeholder="Enter your reason for modifying this score…"
                 className="min-h-16 resize-none"
               />
             </div>
@@ -328,7 +328,12 @@ export default function ScoreEditDialog({
               <FormItem>
                 <FormLabel>Raw score</FormLabel>
                 <FormControl>
-                  <Input disabled type="number" value={score.rawScore} />
+                  {/* Read-only, so it reads as a count: 630,298. */}
+                  <Input
+                    disabled
+                    className="tabular-nums"
+                    value={formatCount(score.rawScore)}
+                  />
                 </FormControl>
                 <FormDescription>The total osu! reported.</FormDescription>
               </FormItem>
@@ -337,8 +342,12 @@ export default function ScoreEditDialog({
                 <FormControl>
                   <Input
                     disabled
-                    type="number"
-                    value={score.adjustedScore ?? ''}
+                    className="tabular-nums"
+                    value={
+                      score.adjustedScore == null
+                        ? ''
+                        : formatCount(score.adjustedScore)
+                    }
                     placeholder="None"
                   />
                 </FormControl>

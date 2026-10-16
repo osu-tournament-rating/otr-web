@@ -13,7 +13,7 @@ import { PageHeader } from '@/components/kit/layout/PageHeader';
 import { getDescendantTypes } from '@/lib/audit-entity-types';
 import { TimelineSkeleton } from './AuditEntityTimeline';
 import AuditEntityView from './AuditEntityView';
-import AuditPageHeader from './AuditPageHeader';
+import AuditPageHeader, { type AuditBackLink } from './AuditPageHeader';
 
 /**
  * The audit history panel while it loads: the tab strip (for entities with
@@ -87,10 +87,13 @@ export default function AuditHistoryPage({
   entityType,
   entityId,
   entityName,
+  back,
 }: {
   entityType: AuditEntityType;
   entityId: number;
   entityName?: string;
+  /** Overrides the header's back link, as AuditPageHeader's `back`. */
+  back?: AuditBackLink;
 }) {
   return (
     <PageFrame>
@@ -98,6 +101,7 @@ export default function AuditHistoryPage({
         entityType={entityType}
         entityId={entityId}
         entityName={entityName}
+        back={back}
       />
       {/* The view reads its tab and switch from the address. */}
       <Suspense

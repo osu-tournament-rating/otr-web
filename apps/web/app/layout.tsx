@@ -52,6 +52,14 @@ export default async function RootLayout({
           <TooltipProvider>
             <SessionProvider user={session}>
               <AudioPlayerProvider>
+                {/* The first stop for keyboard users: past the header's
+                    controls to the page. Hidden until focused. */}
+                <a
+                  href="#main"
+                  className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[60] focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:shadow-md focus:ring-[3px] focus:ring-ring/50 focus:outline-none"
+                >
+                  Skip to content
+                </a>
                 <Header />
                 {/* One strip: the maintenance window and the signed-out
                     note share it rather than stacking. */}
@@ -60,7 +68,11 @@ export default async function RootLayout({
                 />
                 {/* The page frame's margins: 16px at the sides on phones,
                     40px below the header from sm. Pages add no container. */}
-                <main className="mx-auto w-full max-w-[1050px] flex-1 px-4 pt-6 pb-10 sm:px-5 sm:pt-10">
+                <main
+                  id="main"
+                  tabIndex={-1}
+                  className="mx-auto w-full max-w-[1050px] flex-1 px-4 pt-6 pb-10 outline-none sm:px-5 sm:pt-10"
+                >
                   {children}
                 </main>
                 <Footer />

@@ -36,17 +36,17 @@ export const STATS_PANELS = {
   year: {
     icon: Calendar,
     title: 'Tournaments by year',
-    infoText: 'Number of verified tournaments by year',
+    infoText: 'Number of verified tournaments by year.',
   },
   ruleset: {
     icon: Gamepad2,
     title: 'Tournaments by ruleset',
-    infoText: 'Verified tournaments by ruleset',
+    infoText: 'Verified tournaments by ruleset.',
   },
   lobbySize: {
     icon: Users,
     title: 'Tournaments by lobby size',
-    infoText: 'Verified tournaments by lobby size',
+    infoText: 'Verified tournaments by lobby size.',
   },
   // The old card had no description, and help text is never invented; the
   // tier legend and the tooltip's rating range explain the bars.

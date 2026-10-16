@@ -13,6 +13,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
+import { aboutLabel } from '@/lib/kit/layout/about-label';
 import { cn } from '@/lib/utils';
 
 /** Set on a box while it holds an edit that Escape should revert, not close over. */
@@ -164,7 +165,7 @@ function FieldLabel({
         {label}
       </span>
       {info ? (
-        <InfoButton label={`About ${label}`} size="sm">
+        <InfoButton label={aboutLabel(label)} size="sm">
           {info}
         </InfoButton>
       ) : null}
@@ -294,7 +295,7 @@ export function SwitchFilter({
             {label}
           </label>
           {info ? (
-            <InfoButton label={`About ${label}`} size="sm">
+            <InfoButton label={aboutLabel(label)} size="sm">
               {info}
             </InfoButton>
           ) : null}

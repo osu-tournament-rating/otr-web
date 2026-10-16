@@ -1,6 +1,6 @@
 import {
   BookOpen,
-  Clock,
+  ClipboardList,
   FileCode,
   FileText,
   Filter,
@@ -102,7 +102,11 @@ export function getNavEntries({
           href: '/tools/filter-reports',
           icon: FileText,
         },
-        { title: 'Audit logs', href: '/tools/audit-logs', icon: Clock },
+        {
+          title: 'Audit logs',
+          href: '/tools/audit-logs',
+          icon: ClipboardList,
+        },
       ],
     },
   ];

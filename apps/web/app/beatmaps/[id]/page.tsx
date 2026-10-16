@@ -81,8 +81,10 @@ export default async function BeatmapPage({ params }: PageProps) {
     (total, distribution) => total + distribution.scoreCount,
     0
   );
-  const hasNoVerifiedData =
-    stats.tournaments.length === 0 && totalVerifiedScoreCount === 0;
+  // Every panel below the overview charts verified scores. Without any,
+  // such as a map pooled only in tournaments not verified yet, one empty
+  // band says so instead of seven "Not enough data" panels.
+  const hasNoVerifiedData = totalVerifiedScoreCount === 0;
 
   // BeatmapHeader and BeatmapOverviewCard render in both branches; keep their props in sync
   if (hasNoVerifiedData) {

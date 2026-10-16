@@ -1,5 +1,6 @@
 'use client';
 
+import type { Ruleset } from '@otr/core/osu';
 import { Swords } from 'lucide-react';
 
 import { seriesColor } from '@/lib/kit/color/categorical';
@@ -11,9 +12,12 @@ import { OPPONENTS_INFO } from './section-info';
 export default function PlayerOpponentsChart({
   className,
   opponents,
+  ruleset,
 }: {
   className?: string;
   opponents: PlayerFrequency[];
+  /** The ruleset the profile shows; the chart's links open it too. */
+  ruleset: Ruleset;
 }) {
   return (
     <PlayerFrequencyChart
@@ -22,7 +26,8 @@ export default function PlayerOpponentsChart({
       title="Frequent opponents"
       icon={Swords}
       infoText={OPPONENTS_INFO}
-      emptyTitle="No opponent data available"
+      emptyTitle="No opponent data"
+      ruleset={ruleset}
       color={seriesColor(1)}
     />
   );

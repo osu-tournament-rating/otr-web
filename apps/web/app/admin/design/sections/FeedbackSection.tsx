@@ -538,8 +538,8 @@ function ToolbarSkeletonDemo() {
             label="Search and filter tournaments"
             search={
               <SearchField
-                label="Search tournaments"
-                placeholder="Search by name or abbreviation"
+                label="Search tournaments by name or abbreviation"
+                placeholder="Name or abbreviation"
                 value=""
                 onSearch={() => {}}
               />
@@ -547,7 +547,7 @@ function ToolbarSkeletonDemo() {
             sort={
               <SortControl
                 label="Sort tournaments by"
-                options={[{ value: 'endTime', label: 'Completion date' }]}
+                options={[{ value: 'endTime', label: 'End date' }]}
                 value={{ key: 'endTime', direction: 'desc' }}
                 onValueChange={() => {}}
               />

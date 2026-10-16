@@ -302,7 +302,7 @@ describe('FormFieldLabel', () => {
     expect(html).toContain('<label data-slot="label"');
     expect(html).toContain('for="lobby-size"');
     expect(html).toContain('data-error="false"');
-    expect(html).toContain('aria-label="About Lobby size"');
+    expect(html).toContain('aria-label="About lobby size"');
     expect(html).toContain('1–8');
   });
 
@@ -330,7 +330,7 @@ describe('FormFieldLabel', () => {
     expect(html).not.toContain('<label');
     expect(html).toContain('text-sm leading-none font-medium');
     expect(html).toContain('min-h-5');
-    expect(html).toContain('aria-label="About Priority"');
+    expect(html).toContain('aria-label="About priority"');
     expect(html).toContain('>Priority</span>');
 
     const invalid = render(
@@ -434,7 +434,7 @@ describe('form layout', () => {
   });
 
   it('labels fields with the info button and a hint', () => {
-    expect(html).toContain('aria-label="About Name"');
+    expect(html).toContain('aria-label="About name"');
     expect(html).toContain('Required');
   });
 

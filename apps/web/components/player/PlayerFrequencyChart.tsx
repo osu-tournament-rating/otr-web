@@ -1,8 +1,8 @@
 'use client';
 
+import type { Ruleset } from '@otr/core/osu';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { type ComponentProps, useCallback, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
@@ -32,7 +32,13 @@ const PHONE_DISPLAY_LIMIT = 7;
 const AVATAR_SIZE = 32;
 // Room around a tick avatar so its focus ring isn't clipped.
 const TICK_FOCUS_RING = 3;
-const X_AXIS_HEIGHT = 48;
+// Recharts puts a tick 6px (its tick size) plus the tick margin below the
+// axis line; the avatar's top sits there.
+const TICK_SIZE = 6;
+const TICK_MARGIN = 4;
+// Tall enough for the avatar and its focus ring, so the chart's edge never
+// cuts off the bottom of either.
+const X_AXIS_HEIGHT = TICK_SIZE + TICK_MARGIN + AVATAR_SIZE + TICK_FOCUS_RING;
 const BAR_SIZE = 28;
 const AVATAR_BASE_URL = 'https://a.ppy.sh';
 
@@ -45,9 +51,9 @@ interface ChartDataEntry {
 
 /**
  * The players someone meets most, as bars with each player's avatar under
- * theirs, linking to that profile. Teammates and opponents are neutral
- * series: they take the first two categorical slots, never a good or bad
- * colour.
+ * theirs, linking to that profile in the ruleset the page shows. Teammates
+ * and opponents are neutral series: they take the first two categorical
+ * slots, never a good or bad colour.
  */
 export default function PlayerFrequencyChart({
   className,
@@ -57,6 +63,7 @@ export default function PlayerFrequencyChart({
   infoText,
   emptyTitle,
   color,
+  ruleset,
 }: {
   className?: string;
   data: PlayerFrequency[];
@@ -66,8 +73,12 @@ export default function PlayerFrequencyChart({
   emptyTitle: string;
   /** The series colour, from `seriesColor`. */
   color: string;
+  /**
+   * The ruleset the profile shows, so a player's link opens the same one
+   * even when the address has no `?ruleset=` (the player's own default).
+   */
+  ruleset: Ruleset;
 }) {
-  const searchParams = useSearchParams();
   const isPhone = useMediaQuery('(max-width: 767px)');
   const [failedAvatars, setFailedAvatars] = useState<Set<number>>(
     () => new Set()
@@ -118,13 +129,8 @@ export default function PlayerFrequencyChart({
 
   // Link by o!TR ID: a numeric key is tried as an o!TR ID before an osu! ID.
   const profileHref = useCallback(
-    (playerId: number) => {
-      const ruleset = searchParams.get('ruleset');
-      return ruleset
-        ? `/players/${playerId}?ruleset=${encodeURIComponent(ruleset)}`
-        : `/players/${playerId}`;
-    },
-    [searchParams]
+    (playerId: number) => `/players/${playerId}?ruleset=${ruleset}`,
+    [ruleset]
   );
 
   const AvatarTick = useCallback(
@@ -144,7 +150,7 @@ export default function PlayerFrequencyChart({
         <g transform={`translate(${x},${y})`}>
           <foreignObject
             x={-AVATAR_SIZE / 2 - TICK_FOCUS_RING}
-            y={6 - TICK_FOCUS_RING}
+            y={-TICK_FOCUS_RING}
             width={AVATAR_SIZE + TICK_FOCUS_RING * 2}
             height={AVATAR_SIZE + TICK_FOCUS_RING * 2}
           >
@@ -206,6 +212,8 @@ export default function PlayerFrequencyChart({
               {...chartAxisProps}
               dataKey="username"
               tick={AvatarTick as ComponentProps<typeof XAxis>['tick']}
+              tickSize={TICK_SIZE}
+              tickMargin={TICK_MARGIN}
               interval={0}
               height={X_AXIS_HEIGHT}
             />

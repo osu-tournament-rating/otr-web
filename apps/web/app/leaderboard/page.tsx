@@ -1,4 +1,4 @@
-import { Trophy } from 'lucide-react';
+import { Medal } from 'lucide-react';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -67,7 +67,7 @@ export default async function Page(props: {
     <PageFrame>
       <LeaderboardFirstVisitDialog />
       <PageHeader
-        icon={Trophy}
+        icon={Medal}
         title={<span data-testid="leaderboard-title">Leaderboard</span>}
         description="Players ranked by tournament rating."
       />

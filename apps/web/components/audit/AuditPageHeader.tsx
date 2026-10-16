@@ -6,17 +6,27 @@ import { ENTITY_TYPE_LABELS } from '@/lib/audit-entity-types';
 import { formatId } from '@/lib/kit/format/number';
 import { getEntityTypeName, nameOr } from './auditParams';
 
+export type AuditBackLink = { href: string; label: string };
+
 interface AuditPageHeaderProps {
   entityType: AuditEntityType;
   entityId: number;
   entityName?: string;
+  /**
+   * The way back when the entity's page isn't at its ID: a beatmap's page
+   * at its osu! ID, or the match page a game or score sits on.
+   */
+  back?: AuditBackLink;
 }
 
-/** The entity's own page, where it has one; otherwise back to the audit log. */
+/**
+ * Tournaments and matches open at their ID; anything else goes back to the
+ * audit log unless its page passes `back`.
+ */
 function getBackLink(
   entityType: AuditEntityType,
   entityId: number
-): { href: string; label: string } {
+): AuditBackLink {
   switch (entityType) {
     case AuditEntityType.Tournament:
       return { href: `/tournaments/${entityId}`, label: 'View tournament' };
@@ -48,6 +58,7 @@ export default function AuditPageHeader({
   entityType,
   entityId,
   entityName,
+  back,
 }: AuditPageHeaderProps) {
   const reference = `${ENTITY_TYPE_LABELS[entityType]} #${formatId(entityId)}`;
 
@@ -55,7 +66,7 @@ export default function AuditPageHeader({
     <PageHeader
       data-testid="audit-page-header"
       icon={History}
-      back={getBackLink(entityType, entityId)}
+      back={back ?? getBackLink(entityType, entityId)}
       title={
         <span data-testid="audit-entity-title">
           {getAuditEntityTitle(entityType, entityId, entityName)}

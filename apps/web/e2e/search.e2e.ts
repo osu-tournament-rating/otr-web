@@ -191,9 +191,12 @@ test.describe('Global Website Search', () => {
       await typeQuery(page, 'Stage');
 
       const results = page.locator(SEARCH_RESULTS);
-      await expect(results.getByRole('alert')).toContainText('Search failed', {
-        timeout: 15000,
-      });
+      await expect(results.getByRole('alert')).toContainText(
+        'Search results could not load',
+        {
+          timeout: 15000,
+        }
+      );
       await expect(results).not.toContainText('No results found');
     });
 
@@ -209,6 +212,28 @@ test.describe('Global Website Search', () => {
 
   test.describe('Query Results and Navigation', () => {
     test.use({ storageState: STORAGE_STATE.user });
+
+    test('arrow keys tint the result Enter opens, without the pointer', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      await openSearchViaButton(page);
+      await typeQuery(page, 'Stage');
+      await expect(
+        page.locator('[data-testid="search-group-players"]')
+      ).toBeVisible({ timeout: 10000 });
+
+      await page.keyboard.press('ArrowDown');
+      const selected = page.locator('[cmdk-item][data-selected="true"]');
+      await expect(selected).toHaveCount(1);
+      // The pointer never touched the list, so only the keyboard set it.
+      await expect(selected).not.toHaveCSS(
+        'background-color',
+        'rgba(0, 0, 0, 0)'
+      );
+    });
 
     test('player query "Stage" navigates to the player profile', async ({
       page,

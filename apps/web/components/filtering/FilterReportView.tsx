@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import useSWR from 'swr';
-import { FileText, Search } from 'lucide-react';
+import { ClipboardCheck, FileText, ListFilter, Search } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,8 +13,10 @@ import { Button } from '@/components/kit/controls/Button';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import {
   PanelSkeleton,
+  PhoneRowListSkeleton,
   SectionHeaderSkeleton,
   StatTileGridSkeleton,
+  TableSkeleton,
 } from '@/components/kit/feedback/Skeletons';
 import { Panel, PanelBody } from '@/components/kit/layout/Panel';
 import {
@@ -63,24 +65,52 @@ const filterReportSchema = z.object({
 
 type FilterReportForm = z.infer<typeof filterReportSchema>;
 
-/** The summary and table while a report loads. */
-function ReportSkeleton() {
+/** FilteringResultsTable's columns, for its loading rows. */
+const RESULTS_SKELETON_COLUMNS = [
+  { label: 'Status', width: 'w-28' },
+  { label: 'Player' },
+  { label: 'Failures' },
+  { label: 'osu! ID', width: 'w-32', align: 'end' },
+  { label: 'Rating', width: 'w-28', align: 'end' },
+] as const;
+
+/**
+ * The summary and results panels while a report loads. The report's ID is
+ * already in the address, so its title is real; bars stand in for the rest.
+ */
+function ReportSkeleton({ reportId }: { reportId: number }) {
   return (
-    <PanelSkeleton label="Loading filter report">
-      <SectionHeaderSkeleton />
-      <PanelBody>
-        <StatTileGridSkeleton
-          labels={[
-            'Passed',
-            'Failed',
-            'Total players',
-            'Ruleset',
-            'Minimum rating',
-            'Maximum rating',
-          ]}
+    <>
+      <PanelSkeleton label="Loading filter report">
+        <SectionHeaderSkeleton
+          icon={ClipboardCheck}
+          title={`Filter report #${formatId(reportId)}`}
+          // "Aug 6, 2026, 14:31 UTC", which fits beside the title on a phone.
+          meta="w-32"
         />
-      </PanelBody>
-    </PanelSkeleton>
+        <PanelBody>
+          <StatTileGridSkeleton
+            columns={3}
+            labels={[
+              'Passed',
+              'Failed',
+              'Total players',
+              'Ruleset',
+              'Minimum rating',
+              'Maximum rating',
+            ]}
+          />
+        </PanelBody>
+      </PanelSkeleton>
+      <PanelSkeleton>
+        <SectionHeaderSkeleton icon={ListFilter} title="Results" actions={1} />
+        <TableSkeleton
+          rows={4}
+          columns={RESULTS_SKELETON_COLUMNS}
+          phoneRows={<PhoneRowListSkeleton rows={4} leading={32} />}
+        />
+      </PanelSkeleton>
+    </>
   );
 }
 
@@ -214,7 +244,7 @@ export function FilterReportView() {
             />
           </>
         ) : (
-          <ReportSkeleton />
+          <ReportSkeleton reportId={reportId} />
         )
       ) : null}
     </>

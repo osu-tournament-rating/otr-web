@@ -58,7 +58,7 @@ export default function AudioPlayerControls() {
     : state.isPlaying
       ? 'Pause beatmap preview'
       : state.error
-        ? 'Retry beatmap preview'
+        ? 'Try again to play beatmap preview'
         : 'Play beatmap preview';
   const volumePercent = volumeToSliderPercent(state.volume);
   const VolumeIcon = isMuted ? VolumeX : volumePercent < 50 ? Volume1 : Volume2;

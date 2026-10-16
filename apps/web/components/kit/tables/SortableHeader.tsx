@@ -10,6 +10,7 @@ import {
   getAriaSort,
   toggleSort,
 } from '@/lib/kit/lists/sort';
+import { aboutLabel } from '@/lib/kit/layout/about-label';
 import type { ColumnBreakpoint } from '@/lib/kit/tables/cell';
 import { cn } from '@/lib/utils';
 
@@ -113,7 +114,7 @@ export function SortableHeader<K extends SortKey>({
       info={info}
       infoLabel={
         infoLabel ??
-        (typeof children === 'string' ? `About ${children}` : undefined)
+        (typeof children === 'string' ? aboutLabel(children) : undefined)
       }
       className={className}
       {...props}

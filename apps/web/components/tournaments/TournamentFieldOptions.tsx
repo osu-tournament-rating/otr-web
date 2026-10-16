@@ -9,16 +9,11 @@ import {
 } from '@/app/tournaments/list-params';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { ChoiceChip } from '@/components/kit/lists/ChoiceChip';
-import { VerificationStatusGlyph } from '@/components/kit/status/VerificationStatusIcon';
 import { SelectContent, SelectItem } from '@/components/ui/select';
 import { TOURNAMENT_REJECTION_REASON_LABELS } from '@/lib/kit/format/enum-labels';
 import { formatLobbySize } from '@/lib/kit/format/fields';
 import { RATED_RULESETS, getRulesetLabel } from '@/lib/kit/format/ruleset';
 import { flagsToMask } from '@/lib/kit/lists/params';
-import {
-  VERIFICATION_STATUS_ORDER,
-  getVerificationStatusName,
-} from '@/lib/kit/status/verification';
 import { cn } from '@/lib/utils';
 
 /**
@@ -57,20 +52,6 @@ export function LobbySizeSelectContent() {
       {LOBBY_SIZES.map((size) => (
         <SelectItem key={size} value={String(size)}>
           {formatLobbySize(size)}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  );
-}
-
-/** The five verification states, in display order, with their glyphs. */
-export function VerificationStatusSelectContent() {
-  return (
-    <SelectContent>
-      {VERIFICATION_STATUS_ORDER.map((status) => (
-        <SelectItem key={status} value={String(status)}>
-          <VerificationStatusGlyph status={status} className="size-4" />
-          {getVerificationStatusName(status)}
         </SelectItem>
       ))}
     </SelectContent>

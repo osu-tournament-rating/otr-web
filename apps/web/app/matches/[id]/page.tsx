@@ -9,12 +9,12 @@ import { PageFrame } from '@/components/kit/layout/PageFrame';
 import { Panel, PanelBody } from '@/components/kit/layout/Panel';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { NotInRatings } from '@/components/kit/status/NotInRatings';
-import MatchHero, { type MatchTab } from '@/components/matches/MatchHero';
+import MatchHero from '@/components/matches/MatchHero';
 import MatchStatsView from '@/components/matches/MatchStatsView';
 import { getMatchDisplayName } from '@/components/matches/matchName';
+import { parseMatchTab } from '@/components/matches/matchTabs';
 import { getCountryNames } from '@/lib/kit/format/country';
 import { formatCountOf } from '@/lib/kit/format/number';
-import { parseHeroTab } from '@/lib/kit/layout/hero-tabs';
 import { getMatchCached } from '@/lib/orpc/queries/match';
 import {
   fetchOrpcOptional,
@@ -28,8 +28,6 @@ type PageProps = {
   params: Promise<{ id: number }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
-
-const MATCH_TABS = ['games', 'stats'] as const satisfies readonly MatchTab[];
 
 const matchPageParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -57,7 +55,7 @@ export async function generateMetadata({
 
 export default async function Page({ params, searchParams }: PageProps) {
   const { id } = parseParamsOrNotFound(matchPageParamsSchema, await params);
-  const tab = parseHeroTab((await searchParams).tab, MATCH_TABS, 'games');
+  const tab = parseMatchTab((await searchParams).tab);
   const match = await fetchOrpcOrNotFound(() => getMatchCached(id));
   const games = match.games ?? [];
   const players = match.players ?? [];

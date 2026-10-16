@@ -22,7 +22,7 @@ export function AdminReportsFrame({
       <PageHeader
         icon={Flag}
         title={<span data-testid="admin-reports-heading">Data reports</span>}
-        description="Review and resolve user-submitted data issue reports"
+        description="Review and resolve user-submitted data issue reports."
       />
       {children}
     </PageFrame>

@@ -748,7 +748,7 @@ test.describe('Beatmaps Listing Page', () => {
       await expect(transport.getByRole('status')).toHaveText(
         'Preview unavailable'
       );
-      await expect(preview).toHaveAccessibleName('Retry preview');
+      await expect(preview).toHaveAccessibleName('Try again to play preview');
       await expect(preview).toHaveAttribute('data-preview-state', 'error');
       await expect(preview).toHaveAttribute('aria-pressed', 'false');
 
@@ -759,7 +759,7 @@ test.describe('Beatmaps Listing Page', () => {
       });
 
       await transport
-        .getByRole('button', { name: 'Retry beatmap preview' })
+        .getByRole('button', { name: 'Try again to play beatmap preview' })
         .click();
       await expect(transport).toHaveAttribute('data-player-state', 'playing');
       await expect(preview).toHaveAccessibleName('Pause preview');
@@ -1682,8 +1682,8 @@ test.describe('Beatmap Detail Page', () => {
 
       const transport = page.locator('[data-testid="audio-preview-transport"]');
       await expect(transport).toHaveAttribute('data-player-state', 'error');
-      await expect(preview).toHaveAccessibleName('Retry preview');
-      await expect(preview).toHaveText('Retry');
+      await expect(preview).toHaveAccessibleName('Try again to play preview');
+      await expect(preview).toHaveText('Try again');
       await expect(preview).toHaveAttribute('data-preview-state', 'error');
       await expect(preview).toHaveAttribute('aria-pressed', 'false');
     });

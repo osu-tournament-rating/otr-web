@@ -112,11 +112,7 @@ export default function PlayerRatingChartView({
 
   if (!data || data.length < MIN_DATA_POINTS) {
     return (
-      <EmptyState
-        size="compact"
-        icon={ChartLine}
-        title="Not enough data to display a chart"
-      />
+      <EmptyState size="compact" icon={ChartLine} title="Not enough data" />
     );
   }
 

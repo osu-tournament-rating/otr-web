@@ -76,20 +76,13 @@ export default function GameActionsMenu({
         itemName={itemName}
         notification={noteCount > 0 ? 'Has admin notes' : undefined}
         data-testid="game-actions"
+        // Public items first, in the heroes' order (report, audit history,
+        // osu!), then the admin ones.
         actions={[
-          isAdmin && {
-            label: 'Edit game',
-            icon: PencilLine,
-            onSelect: () => setEditing(true),
-          },
-          (isAdmin || noteCount > 0) && {
-            label: 'Admin notes',
-            icon: NotebookPen,
-            trailing:
-              noteCount > 0 ? (
-                <Badge size="sm">{formatBadgeCount(noteCount)}</Badge>
-              ) : undefined,
-            onSelect: () => setViewingNotes(true),
+          session && {
+            label: 'Report an issue',
+            icon: Flag,
+            onSelect: () => setReporting(true),
           },
           {
             label: 'View audit history',
@@ -102,10 +95,21 @@ export default function GameActionsMenu({
             href: `https://osu.ppy.sh/b/${beatmapOsuId}`,
             external: true,
           },
-          session && {
-            label: 'Report an issue',
-            icon: Flag,
-            onSelect: () => setReporting(true),
+          isAdmin && {
+            label: 'Edit game',
+            icon: PencilLine,
+            group: 'admin',
+            onSelect: () => setEditing(true),
+          },
+          (isAdmin || noteCount > 0) && {
+            label: 'Admin notes',
+            icon: NotebookPen,
+            group: 'admin',
+            trailing:
+              noteCount > 0 ? (
+                <Badge size="sm">{formatBadgeCount(noteCount)}</Badge>
+              ) : undefined,
+            onSelect: () => setViewingNotes(true),
           },
           isAdmin && {
             label: 'Merge games',

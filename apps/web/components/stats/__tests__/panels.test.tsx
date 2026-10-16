@@ -48,7 +48,7 @@ describe('stats chart panels', () => {
     const ruleset = render(<TournamentsByRulesetChart data={{}} />);
 
     expect(verification).toContain('data-slot="empty-state"');
-    expect(verification).toContain('No verification data available');
+    expect(verification).toContain('No verification data');
     expect(verification).not.toContain('data-slot="chart"');
     expect(ruleset).toContain('No verified tournaments yet');
   });

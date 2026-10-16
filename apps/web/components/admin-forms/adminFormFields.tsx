@@ -4,6 +4,7 @@ import type { VerificationStatus } from '@otr/core/osu';
 import type { ControllerFieldState } from 'react-hook-form';
 
 import { Button } from '@/components/kit/controls/Button';
+import { VerificationStatusGlyph } from '@/components/kit/status/VerificationStatusIcon';
 import type { Option } from '@/components/select/multiple-select';
 import { SelectContent, SelectItem } from '@/components/ui/select';
 import type { EnumLabels } from '@/lib/kit/format/enum-labels';
@@ -44,12 +45,17 @@ export function LabelSelectContent({ labels }: { labels: EnumLabels }) {
   );
 }
 
-/** The five verification states, in display order, by their one name. */
+/**
+ * The five verification states, in display order, each with its glyph and
+ * its one name. Every admin edit dialog (tournament, match, game, score)
+ * picks a status from this list.
+ */
 export function VerificationStatusSelectContent() {
   return (
     <SelectContent>
       {VERIFICATION_STATUS_ORDER.map((status: VerificationStatus) => (
         <SelectItem key={status} value={String(status)}>
+          <VerificationStatusGlyph status={status} className="size-4" />
           {getVerificationStatusName(status)}
         </SelectItem>
       ))}

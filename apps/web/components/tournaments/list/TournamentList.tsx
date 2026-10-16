@@ -1,6 +1,7 @@
 import { RowList, RowListItem } from '@/components/kit/layout/RowList';
 import TournamentListRow, {
   TOURNAMENT_ROW_COLUMNS,
+  TOURNAMENT_ROW_NAME_CELL,
 } from '@/components/tournaments/TournamentListRow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { type TournamentListItem } from '@/lib/orpc/schema/tournament';
@@ -18,7 +19,8 @@ function TournamentListColumns() {
     >
       <span>Tournament</span>
       <span>Format</span>
-      <span className="text-right">Dates</span>
+      {/* Ends where the dates do, before the rows' chevron (16px + 12px). */}
+      <span className="pr-7 text-right">Dates</span>
     </div>
   );
 }
@@ -49,13 +51,13 @@ export function TournamentListSkeleton({ rows = 8 }: { rows?: number }) {
       <RowList aria-hidden="true">
         {Array.from({ length: rows }, (_, index) => (
           <RowListItem key={index}>
-            <div
-              className={cn(
-                'grid gap-2 lg:items-center',
-                TOURNAMENT_ROW_COLUMNS
-              )}
-            >
-              <div className="flex h-6 items-center gap-2">
+            <div className={cn('grid gap-2', TOURNAMENT_ROW_COLUMNS)}>
+              <div
+                className={cn(
+                  'flex h-6 items-center gap-2',
+                  TOURNAMENT_ROW_NAME_CELL
+                )}
+              >
                 <Skeleton className="size-4 rounded-full" />
                 <Skeleton className="h-4 w-3/5" />
               </div>
@@ -64,7 +66,7 @@ export function TournamentListSkeleton({ rows = 8 }: { rows?: number }) {
                 <Skeleton className="h-4 w-10" />
                 <Skeleton className="h-4 w-20" />
               </div>
-              <div className="flex h-5 items-center pl-6 lg:justify-end lg:pl-0">
+              <div className="flex h-5 items-center pl-6 md:justify-end md:pl-0">
                 <Skeleton className="h-4 w-36" />
               </div>
             </div>

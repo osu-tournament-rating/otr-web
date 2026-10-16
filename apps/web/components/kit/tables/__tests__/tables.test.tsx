@@ -143,7 +143,7 @@ describe('DataTable', () => {
       </table>
     );
 
-    expect(html).toContain('aria-label="About Win rate"');
+    expect(html).toContain('aria-label="About win rate"');
   });
 
   it('right-aligns numbers with tabular figures', () => {

@@ -168,16 +168,24 @@ export default function ScoreCard({
           </div>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span
-            className="text-xs text-muted-foreground tabular-nums"
-            title={hitJudgments
-              .map((item) => `${item.label}: ${formatCount(item.count)}x`)
-              .join(', ')}
-          >
-            {hitJudgments.map((item) => formatCount(item.count)).join('/')}
-            {' · '}
-            {formatCount(score.maxCombo)}x{' · '}
-            {formatAccuracy(score.accuracy)}
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {/* The labels the tablet layout shows, for screen readers; on
+                screen the counts read in the game's own order. */}
+            <span className="sr-only">
+              {[
+                ...hitJudgments.map(
+                  (item) => `${item.label} ${formatCount(item.count)}`
+                ),
+                `Combo ${formatCount(score.maxCombo)}x`,
+                `Accuracy ${formatAccuracy(score.accuracy)}`,
+              ].join(', ')}
+            </span>
+            <span aria-hidden="true">
+              {hitJudgments.map((item) => formatCount(item.count)).join('/')}
+              {' · '}
+              {formatCount(score.maxCombo)}x{' · '}
+              {formatAccuracy(score.accuracy)}
+            </span>
           </span>
           {actions}
         </div>
@@ -204,8 +212,10 @@ export default function ScoreCard({
             </span>
           </div>
         </div>
-        <div className="team-flex-row flex flex-1 items-center justify-between gap-6 pb-1">
-          <div className="flex items-center justify-start gap-4">
+        {/* Mania's six judgments plus combo and accuracy are wider than a
+            half-width card, so the figures wrap instead of being clipped. */}
+        <div className="team-flex-row flex flex-1 flex-wrap items-center justify-between gap-x-4 gap-y-1 pb-1">
+          <div className="flex flex-wrap items-center justify-start gap-x-3 gap-y-1">
             {hitJudgments.map((item) => (
               <PerformanceItem
                 key={item.label}
@@ -214,7 +224,7 @@ export default function ScoreCard({
               />
             ))}
           </div>
-          <div className="team-flex-row flex items-center justify-start gap-4">
+          <div className="team-flex-row flex items-center justify-start gap-x-3">
             <PerformanceItem
               label="Combo"
               value={`${formatCount(score.maxCombo)}x`}

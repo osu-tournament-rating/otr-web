@@ -44,11 +44,7 @@ export default function PlayerTournamentsList({
         }
       />
       {tournaments.length === 0 ? (
-        <EmptyState
-          icon={Trophy}
-          title="No tournament data available"
-          titleAs="h3"
-        />
+        <EmptyState icon={Trophy} title="No tournaments" titleAs="h3" />
       ) : (
         <>
           <RowList>

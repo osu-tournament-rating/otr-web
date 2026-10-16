@@ -1,6 +1,7 @@
 import type * as React from 'react';
 
 import { InfoButton } from '@/components/kit/layout/InfoButton';
+import { aboutLabel } from '@/lib/kit/layout/about-label';
 import type { KitIcon } from '@/lib/kit/layout/icon';
 import { cn } from '@/lib/utils';
 
@@ -47,7 +48,7 @@ export function SectionHeader({
         ) : null}
         <Heading className="truncate font-semibold">{title}</Heading>
         {infoText ? (
-          <InfoButton label={`About ${title}`} side="bottom" align="start">
+          <InfoButton label={aboutLabel(title)} side="bottom" align="start">
             {infoText}
           </InfoButton>
         ) : null}

@@ -1,4 +1,4 @@
-import { Database, ExternalLink, Trophy } from 'lucide-react';
+import { Database, ExternalLink, Trophy, Upload } from 'lucide-react';
 
 import {
   ACCEPTANCE_CRITERIA_URL,
@@ -30,7 +30,7 @@ export default function TournamentSubmissionLoading() {
   return (
     <PageFrame>
       <PageHeader
-        icon={Trophy}
+        icon={Upload}
         title={SUBMISSION_TITLE}
         description={SUBMISSION_DESCRIPTION}
         actions={

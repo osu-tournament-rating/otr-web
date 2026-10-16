@@ -37,11 +37,7 @@ export default function PlayerModCountChart({
           title="Mod distribution"
           infoText={INFO_TEXT}
         />
-        <EmptyState
-          size="compact"
-          icon={ChartPie}
-          title="No mod data available"
-        />
+        <EmptyState size="compact" icon={ChartPie} title="No mod data" />
       </Panel>
     );
   }

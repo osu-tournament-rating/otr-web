@@ -15,6 +15,7 @@ import { FormGrid } from '@/components/kit/controls/FormPanel';
 import {
   VERIFY_CHILDREN_DESCRIPTION,
   VERIFY_CHILDREN_TITLE,
+  VerificationStatusSelectContent,
   VerifyChildrenChoices,
   changedFieldClass,
 } from '@/components/admin-forms/adminFormFields';
@@ -22,14 +23,12 @@ import {
   LobbySizeSelectContent,
   RejectionReasonChips,
   RulesetSelectContent,
-  VerificationStatusSelectContent,
 } from '@/components/tournaments/TournamentFieldOptions';
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -386,9 +385,14 @@ export default function TournamentEditDialog({
               <FormField
                 control={form.control}
                 name="rejectionReason"
-                render={({ field: { value, onChange } }) => (
+                render={({ field: { value, onChange }, fieldState }) => (
                   <FormItem>
-                    <FormLabel id={reasonLabelId}>Rejection reason</FormLabel>
+                    <FormFieldLabel
+                      groupId={reasonLabelId}
+                      invalid={fieldState.error !== undefined}
+                    >
+                      Rejection reason
+                    </FormFieldLabel>
                     <FormControl>
                       <RejectionReasonChips
                         aria-labelledby={reasonLabelId}

@@ -503,7 +503,7 @@ describe('Skeletons', () => {
       />
     );
 
-    expect(html).toContain('aria-label="About Tier breakdown"');
+    expect(html).toContain('aria-label="About tier breakdown"');
     expect(html).toMatch(/data-slot="skeleton"[^>]*class="[^"]*\bh-3 w-36\b/);
     expect(html).not.toContain('w-20');
 

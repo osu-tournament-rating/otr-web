@@ -123,6 +123,25 @@ test.describe('Homepage and Global Navigation', () => {
       });
     });
 
+    test('the first Tab offers a skip past the header', async ({ page }) => {
+      await page.goto(ROUTES.tournaments);
+      await page.waitForLoadState('networkidle');
+
+      await page.keyboard.press('Tab');
+      const skip = page.getByRole('link', { name: 'Skip to content' });
+      await expect(skip).toBeFocused();
+      await expect(skip).toBeVisible();
+
+      await page.keyboard.press('Enter');
+      await expect(page.locator('main#main')).toBeFocused();
+      // The next Tab lands in the page, not back in the header.
+      await page.keyboard.press('Tab');
+      const inHeader = await page.evaluate(
+        () => document.activeElement?.closest('[data-testid="header"]') !== null
+      );
+      expect(inHeader).toBe(false);
+    });
+
     test('logo links back to the homepage', async ({ page }) => {
       await page.goto(ROUTES.leaderboard);
       await page.waitForLoadState('networkidle');

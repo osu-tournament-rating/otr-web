@@ -38,6 +38,22 @@ import type {
 } from '@/lib/orpc/schema/leaderboard';
 import { type TierName, formatTierName } from '@/lib/kit/format/tier';
 
+/**
+ * The width of every column but Player, which takes the rest; on a tablet
+ * each is as narrow as its header and widest value ("#26,963") allow. The
+ * table keeps them fixed, so a long name truncates instead of pushing the
+ * table sideways at 768px, and paging or searching never moves the columns.
+ * The loading screen draws its columns at the same widths.
+ */
+export const LEADERBOARD_COLUMN_WIDTHS = {
+  rank: 'w-21',
+  tier: 'w-12 lg:w-44',
+  rating: 'w-18 lg:w-24',
+  tournaments: 'w-28 lg:w-32',
+  matches: 'w-22 lg:w-24',
+  winRate: 'w-24',
+} as const;
+
 /** The player's profile, on the leaderboard's ruleset. */
 function getPlayerHref(entry: LeaderboardEntry): string {
   return `/players/${entry.player.id}?ruleset=${entry.ruleset}`;
@@ -204,6 +220,7 @@ export default function LeaderboardTable({
       data-testid="leaderboard-table"
       aria-label="Leaderboard"
       stickyHeader
+      fixed
       phoneRows={
         <PhoneRowList as="ol" aria-label="Leaderboard">
           {rows.map((entry) => {
@@ -242,14 +259,19 @@ export default function LeaderboardTable({
     >
       <DataTableHeader>
         <DataTableRow>
-          <DataTableHead>Rank</DataTableHead>
+          <DataTableHead className={LEADERBOARD_COLUMN_WIDTHS.rank}>
+            Rank
+          </DataTableHead>
           <DataTableHead>Player</DataTableHead>
-          <DataTableHead>Tier</DataTableHead>
+          <DataTableHead className={LEADERBOARD_COLUMN_WIDTHS.tier}>
+            Tier
+          </DataTableHead>
           <SortableHeader
             sortKey="rating"
             sort={sort}
             getSortHref={getSortHref}
             numeric
+            className={LEADERBOARD_COLUMN_WIDTHS.rating}
           >
             Rating
           </SortableHeader>
@@ -258,6 +280,7 @@ export default function LeaderboardTable({
             sort={sort}
             getSortHref={getSortHref}
             numeric
+            className={LEADERBOARD_COLUMN_WIDTHS.tournaments}
           >
             Tournaments
           </SortableHeader>
@@ -266,6 +289,7 @@ export default function LeaderboardTable({
             sort={sort}
             getSortHref={getSortHref}
             numeric
+            className={LEADERBOARD_COLUMN_WIDTHS.matches}
           >
             Matches
           </SortableHeader>
@@ -274,6 +298,7 @@ export default function LeaderboardTable({
             sort={sort}
             getSortHref={getSortHref}
             numeric
+            className={LEADERBOARD_COLUMN_WIDTHS.winRate}
           >
             Win rate
           </SortableHeader>

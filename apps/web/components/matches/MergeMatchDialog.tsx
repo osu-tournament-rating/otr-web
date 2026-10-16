@@ -67,17 +67,19 @@ export default function MergeMatchDialog({
   };
 
   const validate = (matchIds: number[]): string | null => {
-    if (matchIds.length === 0) return 'Please enter valid match IDs';
+    if (matchIds.length === 0)
+      return 'Child match IDs must be positive whole numbers';
     const uniqueIds = new Set(matchIds);
-    if (uniqueIds.size !== matchIds.length) return 'Duplicate match IDs found';
-    if (uniqueIds.has(match.id)) return 'Cannot merge a match into itself';
+    if (uniqueIds.size !== matchIds.length)
+      return 'Each child match ID can appear only once';
+    if (uniqueIds.has(match.id)) return 'A match cannot be merged into itself';
     return null;
   };
 
   const fetchMatches = async () => {
     const input = matchIdsInput.trim();
     if (!input) {
-      setError('Please enter at least one match ID');
+      setError('Child match IDs are required');
       return;
     }
 
@@ -257,9 +259,12 @@ function ChildMatchRow({
   index: number;
 }) {
   const ruleset = (match.games?.[0]?.ruleset ?? 0) as Ruleset;
-  const mpUrl = match.osuId
-    ? `https://osu.ppy.sh/community/matches/${match.osuId}`
-    : null;
+  // Lazer rooms live at a different address, as in the match hero.
+  const mpUrl = !match.osuId
+    ? null
+    : match.isLazer
+      ? `https://osu.ppy.sh/multiplayer/rooms/${match.osuId}`
+      : `https://osu.ppy.sh/community/matches/${match.osuId}`;
 
   return (
     <li className="flex flex-col gap-1.5 px-3 py-2.5 text-sm">

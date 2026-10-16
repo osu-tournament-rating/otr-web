@@ -28,6 +28,7 @@ import {
   Trash2,
   Trophy,
   Unlink,
+  Upload,
   User,
   UserRound,
   Users,
@@ -674,19 +675,29 @@ function OnArtDemo() {
         {ART}
         <div className="absolute inset-0 bg-black/60" aria-hidden />
         <div className="relative flex items-center justify-between gap-2">
-          <span className="text-sm text-white/80">Team vs · ScoreV2</span>
+          <span className="text-sm text-white/80">Team Vs · ScoreV2</span>
           <RowActionsMenu
             onArt
             itemName="HAELEQUIN [alacat's Light Insane]"
             actions={[
-              { label: 'Edit game', icon: PencilLine, onSelect: () => {} },
-              { label: 'Admin notes', icon: NotebookPen, onSelect: () => {} },
+              { label: 'Report an issue', icon: Flag, onSelect: () => {} },
               {
                 label: 'View audit history',
                 icon: History,
                 href: '#controls-on-art',
               },
-              { label: 'Report an issue', icon: Flag, onSelect: () => {} },
+              {
+                label: 'Edit game',
+                icon: PencilLine,
+                group: 'admin',
+                onSelect: () => {},
+              },
+              {
+                label: 'Admin notes',
+                icon: NotebookPen,
+                group: 'admin',
+                onSelect: () => {},
+              },
               {
                 label: 'Merge games',
                 icon: GitMerge,
@@ -713,17 +724,17 @@ function OnArtDemo() {
 const GAMES = [
   {
     name: 'Hidden Chamber [Insane]',
-    detail: 'Team vs · HR · 3:12',
+    detail: 'Team Vs · HR · 3:12',
     status: VerificationStatus.Verified,
   },
   {
     name: 'Kokoro no Kakera [Extra]',
-    detail: 'Team vs · DT · 2:48',
+    detail: 'Team Vs · DT · 2:48',
     status: VerificationStatus.PreRejected,
   },
   {
     name: 'Ghost Rule [Tiebreaker]',
-    detail: 'Team vs · FM · 4:05',
+    detail: 'Team Vs · FM · 4:05',
     status: VerificationStatus.None,
   },
 ];
@@ -757,21 +768,23 @@ function RowActionsDemo() {
                   notification={index === 0 ? 'Has admin notes' : undefined}
                   actions={[
                     {
+                      label: 'View audit history',
+                      icon: History,
+                      href: '#controls-row-actions-menu',
+                    },
+                    {
                       label: 'Edit game',
                       icon: PencilLine,
+                      group: 'admin',
                       onSelect: () => {},
                     },
                     {
                       label: 'Admin notes',
                       icon: NotebookPen,
+                      group: 'admin',
                       trailing:
                         index === 0 ? <Badge size="sm">1</Badge> : undefined,
                       onSelect: () => {},
-                    },
-                    {
-                      label: 'View audit history',
-                      icon: History,
-                      href: '#controls-row-actions-menu',
                     },
                     {
                       label: 'Merge games',
@@ -1086,7 +1099,7 @@ function FormLayoutDemo() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        icon={Trophy}
+        icon={Upload}
         title="Tournament submission"
         description="Use this form to submit a new tournament for verification and tracking."
         actions={

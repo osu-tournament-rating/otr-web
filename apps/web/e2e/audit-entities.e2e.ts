@@ -10,8 +10,11 @@ type EntityCase = {
   label: string;
   id: number;
   route: string;
-  /** The page header's back link: the entity's own page, or the audit log. */
-  backLink: { name: string; href: string };
+  /**
+   * The page header's back link: the entity's own page, where a game or
+   * score is its match's page scrolled to it.
+   */
+  backLink: { name: string; href: string | RegExp };
   /** Tabs for the entity's descendants. */
   descendantTabs: string[];
 };
@@ -28,14 +31,20 @@ const ENTITY_CASES: EntityCase[] = [
     label: 'Game',
     id: TEST_AUDIT_GAME_ID,
     route: ROUTES.auditGame(TEST_AUDIT_GAME_ID),
-    backLink: { name: 'Audit logs', href: ROUTES.auditLogs },
+    backLink: {
+      name: 'View game',
+      href: new RegExp(`^/matches/\\d+\\?gameId=${TEST_AUDIT_GAME_ID}$`),
+    },
     descendantTabs: ['scores'],
   },
   {
     label: 'Score',
     id: TEST_AUDIT_SCORE_ID,
     route: ROUTES.auditScore(TEST_AUDIT_SCORE_ID),
-    backLink: { name: 'Audit logs', href: ROUTES.auditLogs },
+    backLink: {
+      name: 'View score',
+      href: new RegExp(`^/matches/\\d+\\?scoreId=${TEST_AUDIT_SCORE_ID}$`),
+    },
     descendantTabs: [],
   },
 ];
@@ -65,9 +74,7 @@ for (const entity of ENTITY_CASES) {
         ).toContainText(`#${entity.id}`);
       });
 
-      test('back link goes to the entity or the audit log', async ({
-        page,
-      }) => {
+      test("back link goes to the entity's page", async ({ page }) => {
         await gotoAudit(page, entity.route);
 
         const backLink = page
@@ -76,9 +83,13 @@ for (const entity of ENTITY_CASES) {
         await expect(backLink).toBeVisible({ timeout: 10000 });
         await expect(backLink).toHaveAttribute('href', entity.backLink.href);
 
-        if (entity.backLink.href === ROUTES.auditLogs) {
+        // A game or score opens on its match's page, scrolled to it.
+        const { href } = entity.backLink;
+        if (href instanceof RegExp) {
           await backLink.click();
-          await page.waitForURL('**/tools/audit-logs', { timeout: 10000 });
+          await page.waitForURL((url) => href.test(url.pathname + url.search), {
+            timeout: 15000,
+          });
         }
       });
 

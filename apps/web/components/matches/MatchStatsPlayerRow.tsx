@@ -1,4 +1,4 @@
-import { Team } from '@otr/core/osu';
+import { type Ruleset, Team } from '@otr/core/osu';
 import { ArrowRight, Trophy } from 'lucide-react';
 
 import { RatingDelta } from '@/components/kit/format/RatingDelta';
@@ -19,6 +19,7 @@ import {
 import {
   formatAverage,
   formatMatchCost,
+  playerProfileHref,
   type ProcessedPlayerStats,
 } from './MatchStatsUtils';
 
@@ -55,13 +56,15 @@ function PlayerBadges({ player }: { player: ProcessedPlayerStats }) {
 function PlayerName({
   player,
   avatarSize,
+  ruleset,
 }: {
   player: ProcessedPlayerStats;
   avatarSize: number;
+  ruleset?: Ruleset;
 }) {
   return (
     <EntityLink
-      href={`/players/${player.playerId}`}
+      href={playerProfileHref(player.playerId, ruleset)}
       leading={
         <OsuAvatar
           osuId={player.osuId}
@@ -109,9 +112,12 @@ function RatingRange({ player }: { player: ProcessedPlayerStats }) {
 export function PlayerStatsTableRow({
   player,
   showRecord,
+  ruleset,
 }: {
   player: ProcessedPlayerStats;
   showRecord: boolean;
+  /** The match's ruleset, which the player's link opens. */
+  ruleset?: Ruleset;
 }) {
   return (
     <DataTableRow
@@ -120,7 +126,7 @@ export function PlayerStatsTableRow({
     >
       <DataTableCell>
         <div className="flex min-w-0 items-center gap-2">
-          <PlayerName player={player} avatarSize={24} />
+          <PlayerName player={player} avatarSize={24} ruleset={ruleset} />
           <PlayerBadges player={player} />
         </div>
       </DataTableCell>
@@ -179,9 +185,12 @@ function PhoneMetric({ label, value }: { label: string; value: string }) {
 export function PlayerStatsPhoneRow({
   player,
   showRecord,
+  ruleset,
 }: {
   player: ProcessedPlayerStats;
   showRecord: boolean;
+  /** The match's ruleset, which the player's link opens. */
+  ruleset?: Ruleset;
 }) {
   return (
     <PhoneRow
@@ -189,7 +198,7 @@ export function PlayerStatsPhoneRow({
       align="start"
       title={
         <>
-          <PlayerName player={player} avatarSize={24} />
+          <PlayerName player={player} avatarSize={24} ruleset={ruleset} />
           <PlayerBadges player={player} />
         </>
       }
@@ -209,10 +218,7 @@ export function PlayerStatsPhoneRow({
           label={showRecord ? 'Record' : 'Games'}
           value={formatRecord(player, showRecord)}
         />
-        <PhoneMetric
-          label="Avg. score"
-          value={formatCount(player.averageScore)}
-        />
+        <PhoneMetric label="Score" value={formatCount(player.averageScore)} />
         <PhoneMetric
           label="Accuracy"
           value={formatAccuracy(player.averageAccuracy)}

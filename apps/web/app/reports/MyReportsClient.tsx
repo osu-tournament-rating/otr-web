@@ -101,6 +101,7 @@ export default function MyReportsClient() {
   return (
     <Panel data-testid="my-reports-card">
       <SectionHeader
+        icon={Flag}
         title="Reports"
         meta={
           data ? (

@@ -35,6 +35,7 @@ import {
 import type { KitIcon } from '@/lib/kit/layout/icon';
 import { useSearch } from '@/lib/hooks/useSearch';
 import { SearchRequestSchema } from '@/lib/orpc/schema/search';
+import { cn } from '@/lib/utils';
 
 import {
   BeatmapResultContent,
@@ -47,6 +48,12 @@ import { getSeeAllHref, type SeeAllTarget } from './see-all';
 /** The header search accepts what its procedure accepts. */
 const MAX_LENGTH =
   SearchRequestSchema.shape.searchKey.maxLength ?? MAX_SEARCH_LENGTH;
+
+/** Results are links; the shared command item tints the one Enter opens. */
+const ITEM_CLASSES = 'cursor-pointer';
+
+/** A prompt in the results area: before typing, and below the minimum. */
+const PROMPT_CLASSES = 'px-4 py-8 text-center text-sm text-muted-foreground';
 
 const SEE_ALL_LABELS: Record<SeeAllTarget, string> = {
   players: 'See all on the leaderboard',
@@ -147,7 +154,7 @@ export default function SearchCommandDialog() {
       value={`see-all-${target}`}
       data-testid={`search-see-all-${target}`}
       onSelect={() => handleSelect(getSeeAllHref(target, term))}
-      className="cursor-pointer py-2.5 font-medium"
+      className={cn(ITEM_CLASSES, 'py-2.5 font-medium')}
     >
       <span className="flex-1">{SEE_ALL_LABELS[target]}</span>
       <ArrowRight aria-hidden className="text-muted-foreground" />
@@ -170,7 +177,10 @@ export default function SearchCommandDialog() {
         onOpenChange={changeOpen}
         title="Search"
         description="Search players, tournaments, matches and beatmaps"
-        contentClassName="md:max-w-[612px] [&>button:last-child]:hidden"
+        // Pinned near the top rather than centred, so the field stays put
+        // while results grow the list under it; 12px corners like every
+        // dialog.
+        contentClassName="top-4 translate-y-0 rounded-xl sm:top-[10vh] md:max-w-[612px] [&>button:last-child]:hidden"
       >
         <Command
           data-testid="search-dialog"
@@ -220,25 +230,13 @@ export default function SearchCommandDialog() {
             className="max-h-[min(400px,calc(100svh-10rem))] md:max-h-[min(800px,calc(100svh-10rem))]"
           >
             {!text.trim() ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <Search
-                  aria-hidden="true"
-                  className="size-10 text-muted-foreground/30"
-                />
-                <p className="mt-3 text-sm text-muted-foreground">
-                  Start typing to search
-                </p>
-              </div>
+              <p className={PROMPT_CLASSES}>Start typing to search</p>
             ) : null}
 
             <p
               id={hintId}
               aria-live="polite"
-              className={
-                belowMinimum
-                  ? 'px-4 py-8 text-center text-sm text-muted-foreground'
-                  : 'sr-only'
-              }
+              className={belowMinimum ? PROMPT_CLASSES : 'sr-only'}
             >
               {belowMinimum ? getSearchMinimumHint() : null}
             </p>
@@ -246,7 +244,7 @@ export default function SearchCommandDialog() {
             {!belowMinimum && failed ? (
               <SectionError
                 size="compact"
-                title="Search failed"
+                title="Search results could not load"
                 description="Try again in a moment."
                 retrying={isValidating}
                 onRetry={() => void mutate()}
@@ -280,7 +278,7 @@ export default function SearchCommandDialog() {
                               : `/players/${player.id}`
                           )
                         }
-                        className="h-auto cursor-pointer py-3"
+                        className={cn(ITEM_CLASSES, 'h-auto py-3')}
                       >
                         <PlayerResultContent data={player} query={term} />
                       </CommandItem>
@@ -301,7 +299,7 @@ export default function SearchCommandDialog() {
                         onSelect={() =>
                           handleSelect(`/tournaments/${tournament.id}`)
                         }
-                        className="h-auto cursor-pointer py-3"
+                        className={cn(ITEM_CLASSES, 'h-auto py-3')}
                       >
                         <TournamentResultContent
                           data={tournament}
@@ -323,7 +321,7 @@ export default function SearchCommandDialog() {
                         key={`match-${match.id}`}
                         value={`match-${match.id}`}
                         onSelect={() => handleSelect(`/matches/${match.id}`)}
-                        className="h-auto cursor-pointer py-3"
+                        className={cn(ITEM_CLASSES, 'h-auto py-3')}
                       >
                         <MatchResultContent data={match} query={term} />
                       </CommandItem>
@@ -343,7 +341,7 @@ export default function SearchCommandDialog() {
                         onSelect={() =>
                           handleSelect(`/beatmaps/${beatmap.osuId}`)
                         }
-                        className="h-auto cursor-pointer py-3"
+                        className={cn(ITEM_CLASSES, 'h-auto py-3')}
                       >
                         <BeatmapResultContent data={beatmap} query={term} />
                       </CommandItem>

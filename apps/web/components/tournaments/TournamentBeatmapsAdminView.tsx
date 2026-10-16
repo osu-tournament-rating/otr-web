@@ -39,7 +39,6 @@ import {
   formatNumber,
 } from '@/lib/kit/format/number';
 import { defineListParams, sortParam } from '@/lib/kit/lists/params';
-import type { SortState } from '@/lib/kit/lists/sort';
 import { useListState } from '@/lib/kit/lists/use-list-state';
 import { orpc } from '@/lib/orpc/orpc';
 import type {
@@ -102,57 +101,38 @@ const beatmapLabel = (row: BeatmapTableRow) =>
   `${row.artist} - ${row.title} [${row.diffName}]`;
 
 /**
- * The pool on phones: the sort the table's headers give, then the rows, each
- * opening its beatmap as a whole like the table rows.
+ * The pool on phones: each row opens its beatmap as a whole, like the table
+ * rows, with the game count as the number to scan.
  */
-function PoolPhoneRows({
-  rows,
-  sort,
-  onSortChange,
-}: {
-  rows: BeatmapTableRow[];
-  sort: SortState<PoolSortKey>;
-  onSortChange: (sort: SortState<PoolSortKey>) => void;
-}) {
+function PoolPhoneRows({ rows }: { rows: BeatmapTableRow[] }) {
   return (
-    <>
-      <div className="border-b px-4 py-3">
-        <SortControl
-          size="sm"
-          label="Sort pooled beatmaps by"
-          options={POOL_SORT_OPTIONS}
-          value={sort}
-          onValueChange={onSortChange}
-        />
-      </div>
-      <PhoneRowList aria-label="Pooled beatmaps">
-        {rows.map((row) => (
-          <PhoneRow
-            key={row.id}
-            href={`/beatmaps/${row.osuId}`}
-            linkLabel={`View ${beatmapLabel(row)}`}
-            title={
-              <span data-row-title className="min-w-0 truncate">
-                {row.title}{' '}
-                <span className="font-normal text-muted-foreground">
-                  [{row.diffName}]
-                </span>
+    <PhoneRowList aria-label="Pooled beatmaps">
+      {rows.map((row) => (
+        <PhoneRow
+          key={row.id}
+          href={`/beatmaps/${row.osuId}`}
+          linkLabel={`View ${beatmapLabel(row)}`}
+          title={
+            <span data-row-title className="min-w-0 truncate">
+              {row.title}{' '}
+              <span className="font-normal text-muted-foreground">
+                [{row.diffName}]
               </span>
-            }
-            description={[
-              row.artist,
-              getBeatmapRulesetLabel(row.ruleset, row.diffName),
-              `${formatNumber(row.sr, { decimals: 2 })} SR`,
-              row.isDeleted ? 'Deleted from osu!' : null,
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-            value={formatCount(row.gameCount)}
-            valueDescription={row.gameCount === 1 ? 'game' : 'games'}
-          />
-        ))}
-      </PhoneRowList>
-    </>
+            </span>
+          }
+          description={[
+            row.artist,
+            getBeatmapRulesetLabel(row.ruleset, row.diffName),
+            `${formatNumber(row.sr, { decimals: 2 })} SR`,
+            row.isDeleted ? 'Deleted from osu!' : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          value={formatCount(row.gameCount)}
+          valueDescription={row.gameCount === 1 ? 'game' : 'games'}
+        />
+      ))}
+    </PhoneRowList>
   );
 }
 
@@ -379,17 +359,22 @@ export default function TournamentBeatmapsAdminView({
             })
           }
           showTournamentCount={false}
+          // A pool runs to a hundred rows or more: keep the headers in view.
+          stickyHeader
           selection={selecting ? selection : undefined}
           // Selecting keeps the table on phones, wide enough for its checkboxes.
           minWidthClassName={selecting ? 'min-w-[44rem]' : undefined}
           phoneRows={
-            selecting ? undefined : (
-              <PoolPhoneRows
-                rows={visibleRows}
-                sort={state.sort}
-                onSortChange={(sort) => setState({ sort })}
-              />
-            )
+            selecting ? undefined : <PoolPhoneRows rows={visibleRows} />
+          }
+          phoneSort={
+            <SortControl
+              size="sm"
+              label="Sort pooled beatmaps by"
+              options={POOL_SORT_OPTIONS}
+              value={state.sort}
+              onValueChange={(sort) => setState({ sort })}
+            />
           }
         />
       )}
@@ -422,7 +407,7 @@ export default function TournamentBeatmapsAdminView({
               if (!open) setBeatmapIdsToAdd('');
             }}
             title="Add beatmaps"
-            description="Enter osu! beatmap IDs or URLs to add to the tournament pool. Duplicates are safely ignored/merged into existing pool."
+            description="Enter osu! beatmap IDs or URLs to add to the tournament pool. Beatmaps already in the pool are skipped."
             onSubmit={(event) => {
               event.preventDefault();
               void addBeatmaps();

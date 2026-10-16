@@ -116,13 +116,9 @@ function UserLookup() {
     setFailedSearch(null);
 
     try {
+      // An empty result shows the panel's empty state; no toast repeats it.
       const response = await orpc.users.admin.search({ query: term });
-      const top = response[0] ?? null;
-      setResult(top);
-
-      if (!top) {
-        toast.info('No authenticated users matched that username.');
-      }
+      setResult(response[0] ?? null);
     } catch (error) {
       console.error('[admin] search failed', error);
       setResult(null);
@@ -661,7 +657,7 @@ function MassEnqueue() {
           <IdField
             id="beatmap-ids"
             label="Beatmap IDs"
-            placeholder="1234567, 2345678, 3456789..."
+            placeholder="1234567, 2345678, 3456789…"
             value={beatmapIdsInput}
             onValueChange={setBeatmapIdsInput}
             parsed={
@@ -674,7 +670,7 @@ function MassEnqueue() {
           <IdField
             id="match-ids"
             label="Match IDs"
-            placeholder="12345678, 23456789, 34567890..."
+            placeholder="12345678, 23456789, 34567890…"
             value={matchIdsInput}
             onValueChange={setMatchIdsInput}
             parsed={

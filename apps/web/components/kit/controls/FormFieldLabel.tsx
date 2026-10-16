@@ -3,6 +3,7 @@ import type * as React from 'react';
 import { InfoButton } from '@/components/kit/layout/InfoButton';
 import { FormLabel } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
+import { aboutLabel } from '@/lib/kit/layout/about-label';
 import { cn } from '@/lib/utils';
 
 // The ui Label's text style, for the group label, which is not a <label>.
@@ -32,7 +33,10 @@ export function FormFieldLabel({
   children: React.ReactNode;
   /** How to fill in the field, opened from a circled "i". */
   info?: React.ReactNode;
-  /** The info button's name; defaults to "About {label}" for a text label. */
+  /**
+   * The info button's name; defaults to "About {label}" for a text label,
+   * lower-cased mid-sentence ("About lobby size").
+   */
   infoLabel?: string;
   hint?: React.ReactNode;
   /**
@@ -62,7 +66,7 @@ export function FormFieldLabel({
 }) {
   const name =
     infoLabel ??
-    (typeof children === 'string' ? `About ${children}` : 'About this field');
+    (typeof children === 'string' ? aboutLabel(children) : 'About this field');
 
   return (
     <div

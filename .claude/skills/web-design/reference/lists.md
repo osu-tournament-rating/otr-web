@@ -86,8 +86,8 @@ const { state, setState } = list;
   label="Search and filter tournaments"
   search={
     <SearchField
-      label="Search tournaments"
-      placeholder="Search by name or abbreviation"
+      label="Search tournaments by name or abbreviation"
+      placeholder="Name or abbreviation"
       value={state.q}
       pending={list.isPending}
       onSearch={(q) => setState({ q })}
@@ -190,8 +190,8 @@ The one search box: a search icon that turns into a spinner while results load, 
 import { SearchField } from '@/components/kit/lists/SearchField';
 
 <SearchField
-  label="Search tournaments"
-  placeholder="Search by name or abbreviation"
+  label="Search tournaments by name or abbreviation"
+  placeholder="Name or abbreviation"
   value={state.q}
   pending={list.isPending}
   onSearch={(q) => setState({ q })}
@@ -237,7 +237,7 @@ import {
 const SORT_OPTIONS: SortOption<
   'endTime' | 'startTime' | 'submitted' | 'lobbySize'
 >[] = [
-  { value: 'endTime', label: 'Completion date' },
+  { value: 'endTime', label: 'End date' },
   { value: 'startTime', label: 'Start date' },
   { value: 'submitted', label: 'Submission date' },
   { value: 'lobbySize', label: 'Lobby size' },

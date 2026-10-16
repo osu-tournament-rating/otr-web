@@ -130,9 +130,7 @@ export function CountryCombobox({
                     value={country.code}
                     onSelect={() => choose(country.code)}
                     data-selected-country={isSelected || undefined}
-                    // The primitive only tints the active item under a
-                    // pointer; keyboard users need to see it too.
-                    className="flex cursor-pointer items-center gap-2 data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
+                    className="flex cursor-pointer items-center gap-2"
                   >
                     <CountryFlag
                       code={country.code}

@@ -53,7 +53,7 @@ export default function HomeActionCards({
 
       <LinkCard
         title="View rankings"
-        description="Find out where you stack up against your friends... and foes"
+        description="Find out where you stack up against your friends… and foes"
         icon="medal"
         href="/leaderboard"
       />

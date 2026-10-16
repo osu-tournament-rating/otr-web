@@ -33,6 +33,8 @@ import {
   PlayerStatsTableRow,
 } from './MatchStatsPlayerRow';
 import {
+  MATCH_STATISTICS_INFO,
+  PLAYER_PERFORMANCE_INFO,
   calculateHighlightStats,
   processMatchStatistics,
   type ProcessedPlayerStats,
@@ -90,20 +92,6 @@ function sortPlayers(
   });
 }
 
-/** Why a match that is not verified has no statistics. */
-function getUnavailableReason(status: VerificationStatus): string {
-  switch (status) {
-    case VerificationStatus.PreVerified:
-      return 'awaiting verification';
-    case VerificationStatus.Rejected:
-      return 'rejected';
-    case VerificationStatus.PreRejected:
-      return 'flagged for review';
-    default:
-      return 'pending processing';
-  }
-}
-
 /**
  * The match's Stats tab: the headline numbers, the team score chart and the
  * player performance table. Only verified matches have statistics.
@@ -119,14 +107,16 @@ export default function MatchStatsView({ match }: { match: MatchDetail }) {
         {isVerified ? (
           <EmptyState
             icon={ChartColumn}
-            title="Statistics pending"
-            description="Match statistics will appear after ratings are generated. Check back after the next ratings update."
+            title="No match statistics yet"
+            description="Match statistics show here from the Tuesday update after this match was verified."
           />
         ) : (
+          // The status badge in the hero, and the "Not in ratings yet"
+          // notice above, already say where the match stands.
           <EmptyState
             icon={ChartColumn}
-            title="Statistics not available"
-            description={`Match statistics are only available for verified matches. This match is currently ${getUnavailableReason(match.verificationStatus)}.`}
+            title="No match statistics"
+            description="Match statistics are only available for verified matches."
           />
         )}
       </Panel>
@@ -140,6 +130,7 @@ function VerifiedMatchStats({ match }: { match: MatchDetail }) {
   const list = useListState(MATCH_STATS_PARAMS, { shallow: true });
   const sort = list.state.sort;
   const hasRecordedResult = Boolean(match.winRecord);
+  const ruleset = match.tournament?.ruleset;
 
   const players = useMemo(
     () => processMatchStatistics(match, match.players ?? []),
@@ -164,7 +155,7 @@ function VerifiedMatchStats({ match }: { match: MatchDetail }) {
     { value: 'matchCost', label: 'Match cost', defaultDirection: 'desc' },
     { value: 'rating', label: 'Rating', defaultDirection: 'desc' },
     { value: 'ratingChange', label: 'Rating change', defaultDirection: 'desc' },
-    { value: 'score', label: 'Average score', defaultDirection: 'desc' },
+    { value: 'score', label: 'Score', defaultDirection: 'desc' },
     { value: 'accuracy', label: 'Accuracy', defaultDirection: 'desc' },
     { value: 'misses', label: 'Misses', defaultDirection: 'desc' },
     { value: 'placement', label: 'Placement', defaultDirection: 'desc' },
@@ -179,10 +170,10 @@ function VerifiedMatchStats({ match }: { match: MatchDetail }) {
         <SectionHeader
           icon={ChartColumn}
           title="Match statistics"
-          infoText="Performance across verified games in this match"
+          infoText={MATCH_STATISTICS_INFO}
         />
         <PanelBody>
-          <MatchStatsHighlights stats={highlights} />
+          <MatchStatsHighlights stats={highlights} ruleset={ruleset} />
         </PanelBody>
       </Panel>
 
@@ -192,7 +183,7 @@ function VerifiedMatchStats({ match }: { match: MatchDetail }) {
         <SectionHeader
           icon={Users}
           title="Player performance"
-          infoText="Score, accuracy, misses, and placement are per-game averages"
+          infoText={PLAYER_PERFORMANCE_INFO}
           meta={formatCountOf(players.length, 'player')}
         />
         <DataTable
@@ -213,6 +204,7 @@ function VerifiedMatchStats({ match }: { match: MatchDetail }) {
                   key={player.playerId}
                   player={player}
                   showRecord={hasRecordedResult}
+                  ruleset={ruleset}
                 />
               ))}
             </PhoneRowList>
@@ -284,6 +276,7 @@ function VerifiedMatchStats({ match }: { match: MatchDetail }) {
                 key={player.playerId}
                 player={player}
                 showRecord={hasRecordedResult}
+                ruleset={ruleset}
               />
             ))}
           </DataTableBody>

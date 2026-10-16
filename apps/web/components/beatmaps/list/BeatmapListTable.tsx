@@ -30,11 +30,11 @@ import {
   isManiaRuleset,
 } from '@/lib/beatmaps/presentation';
 import type { BeatmapTableRow } from '@/lib/beatmaps/table-row';
+import { formatDuration } from '@/lib/kit/format/date';
 import { formatCount, formatNumber } from '@/lib/kit/format/number';
 import { fromDescending, type SortState } from '@/lib/kit/lists/sort';
 import type { ColumnBreakpoint } from '@/lib/kit/tables/cell';
 import { cn } from '@/lib/utils';
-import { formatDuration } from '@/lib/kit/format/date';
 
 /** Row selection, for the surfaces that let an admin act on a set of rows. */
 export interface BeatmapTableSelection {
@@ -59,6 +59,12 @@ interface BeatmapListTableProps {
   stickyHeader?: boolean;
   /** Rows shown instead of the table below tablet width. */
   phoneRows?: React.ReactNode;
+  /**
+   * The sort above `phoneRows`, for a caller whose only sort is the table's
+   * headers: a `SortControl size="sm"` on the same sort (DataTable's
+   * `phoneSort`). The beatmap list leaves it out; its toolbar sorts.
+   */
+  phoneSort?: React.ReactNode;
   /** Classes for the wrapper around the table. */
   className?: string;
 }
@@ -73,7 +79,8 @@ const COLUMN = {
   cs: { className: 'w-15', showFrom: 'xl' },
   ar: { className: 'w-15', showFrom: 'xl' },
   games: { className: 'w-20' },
-  tournaments: { className: 'w-29', showFrom: 'md' },
+  // From `lg`: at tablet width the beatmap's name needs the room.
+  tournaments: { className: 'w-29', showFrom: 'lg' },
   mods: { className: 'w-34', showFrom: 'lg' },
 } as const satisfies Record<
   string,
@@ -96,6 +103,7 @@ export default function BeatmapListTable({
   minWidthClassName,
   stickyHeader = false,
   phoneRows,
+  phoneSort,
   className,
 }: BeatmapListTableProps) {
   const sortState = fromDescending(sort, descending);
@@ -111,6 +119,7 @@ export default function BeatmapListTable({
       fixed
       stickyHeader={stickyHeader}
       phoneRows={phoneRows}
+      phoneSort={phoneSort}
       containerClassName={className}
       className={minWidthClassName}
     >

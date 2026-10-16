@@ -216,8 +216,14 @@ export default async function PlayerPage(props: PageProps) {
           <div className="grid gap-4 md:grid-cols-2">
             <PlayerModStatsChart modStats={playerData.modStats} />
             <PlayerModCountChart modStats={playerData.modStats} />
-            <PlayerTeammatesChart teammates={playerData.frequentTeammates} />
-            <PlayerOpponentsChart opponents={playerData.frequentOpponents} />
+            <PlayerTeammatesChart
+              teammates={playerData.frequentTeammates}
+              ruleset={currentRuleset}
+            />
+            <PlayerOpponentsChart
+              opponents={playerData.frequentOpponents}
+              ruleset={currentRuleset}
+            />
           </div>
         </>
       ) : (
@@ -225,7 +231,7 @@ export default async function PlayerPage(props: PageProps) {
           <SectionHeader icon={ChartNoAxesColumnIncreasing} title="Rating" />
           <EmptyState
             icon={ChartNoAxesColumnIncreasing}
-            title="No rating data available"
+            title="No rating data"
             titleAs="h3"
             description="This player has no rating data for the selected ruleset."
           />

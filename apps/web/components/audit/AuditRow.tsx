@@ -23,6 +23,7 @@ import type {
   AuditEventAction,
 } from '@/lib/orpc/schema/audit';
 import type { FormattedAuditValue } from '@/lib/kit/format/audit';
+import { formatId } from '@/lib/kit/format/number';
 import { cn } from '@/lib/utils';
 
 /** Who made the change: their avatar and name as one link, or "System". */
@@ -38,7 +39,8 @@ export function AuditActor({
     return <span className="text-muted-foreground">{fallback}</span>;
   }
 
-  const name = user.username ?? `User ${user.id}`;
+  // As the report queue names a user without a username.
+  const name = user.username ?? `User #${formatId(user.id)}`;
   const avatar = user.osuId ? (
     <OsuAvatar osuId={user.osuId} username={user.username} size={20} />
   ) : null;

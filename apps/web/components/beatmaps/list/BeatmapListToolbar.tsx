@@ -214,7 +214,7 @@ export default function BeatmapListToolbar({
         />
       }
       view={<LayoutToggle layout={layout} onLayoutChange={onLayoutChange} />}
-      count={formatCountOf(totalCount, 'map', 'maps')}
+      count={formatCountOf(totalCount, 'beatmap')}
       activeFilters={
         <ActiveFilterChips
           filters={activeFilters}

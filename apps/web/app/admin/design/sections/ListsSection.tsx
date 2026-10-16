@@ -107,7 +107,7 @@ type TournamentSortKey = 'endTime' | 'startTime' | 'submitted' | 'lobbySize';
 // The tournament list's own sort keys. Like the list, a new key keeps the
 // current direction.
 const TOURNAMENT_SORTS: readonly SortOption<TournamentSortKey>[] = [
-  { value: 'endTime', label: 'Completion date' },
+  { value: 'endTime', label: 'End date' },
   { value: 'startTime', label: 'Start date' },
   { value: 'submitted', label: 'Submission date' },
   { value: 'lobbySize', label: 'Lobby size' },
@@ -360,8 +360,8 @@ function TournamentToolbarDemo() {
           label="Search and filter tournaments"
           search={
             <SearchField
-              label="Search tournaments"
-              placeholder="Search by name or abbreviation"
+              label="Search tournaments by name or abbreviation"
+              placeholder="Name or abbreviation"
               value={state.q}
               pending={list.isPending}
               onSearch={(q) => setState({ q })}
@@ -979,8 +979,8 @@ function SearchFieldDemo() {
   return (
     <div className="flex flex-col gap-4">
       <SearchField
-        label="Search tournaments"
-        placeholder="Search by name or abbreviation"
+        label="Search tournaments by name or abbreviation"
+        placeholder="Name or abbreviation"
         value={term}
         pending={pending}
         onSearch={(next) => {
@@ -994,8 +994,8 @@ function SearchFieldDemo() {
         State: {`{ q: '${term}' }`}
       </p>
       <SearchField
-        label="Search tournaments"
-        placeholder="Search by name or abbreviation"
+        label="Search tournaments by name or abbreviation"
+        placeholder="Name or abbreviation"
         value="c"
         onSearch={() => {}}
       />

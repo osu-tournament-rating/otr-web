@@ -4,7 +4,7 @@ import {
   PlayerMatchStats,
   RatingAdjustment,
 } from '@/lib/orpc/schema/match';
-import { Team, VerificationStatus } from '@otr/core/osu';
+import { type Ruleset, Team, VerificationStatus } from '@otr/core/osu';
 import { TierName, getTierFromRating } from '@/lib/utils/tierData';
 import {
   formatAccuracy,
@@ -38,6 +38,12 @@ export interface HighlightStat {
   metric?: string;
   helpText?: string;
 }
+
+/** The help behind the Stats tab's headers, shared with its loading screen. */
+export const MATCH_STATISTICS_INFO =
+  'Performance across verified games in this match';
+export const PLAYER_PERFORMANCE_INFO =
+  'Score, accuracy, misses, and placement are per-game averages';
 
 export type TeamColor = 'red' | 'blue';
 
@@ -175,8 +181,8 @@ function createResultStat(
       label: 'Match result',
       value:
         redScore !== undefined && blueScore !== undefined
-          ? `${formatCount(redScore)} – ${formatCount(blueScore)}`
-          : `${formatCount(winRecord.winnerPoints)} – ${formatCount(winRecord.loserPoints)}`,
+          ? `${formatCount(redScore)}–${formatCount(blueScore)}`
+          : `${formatCount(winRecord.winnerPoints)}–${formatCount(winRecord.loserPoints)}`,
       sublabel: winRecord.isTied
         ? 'Draw'
         : winRecord.winnerTeam === Team.Red
@@ -275,6 +281,16 @@ export function calculateHighlightStats(
       player: createHighlightPlayer(topAccuracy),
     },
   ];
+}
+
+/**
+ * A player's profile in the match's ruleset, as the score cards link it, so
+ * a mania match never opens someone's osu! profile.
+ */
+export function playerProfileHref(playerId: number, ruleset?: Ruleset): string {
+  return ruleset === undefined
+    ? `/players/${playerId}`
+    : `/players/${playerId}?ruleset=${ruleset}`;
 }
 
 /** A match cost, always with two decimals: `1.31`. */

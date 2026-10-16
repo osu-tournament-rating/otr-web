@@ -242,7 +242,7 @@ test.describe('Match Detail Page', () => {
       for (const label of [
         'Match cost',
         'Record',
-        'Avg. score',
+        'Score',
         'Accuracy',
         'Misses',
         'Placement',

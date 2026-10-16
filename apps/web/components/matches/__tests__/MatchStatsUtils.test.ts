@@ -130,7 +130,7 @@ describe('match statistics processing', () => {
     expect(summary).toHaveLength(6);
     expect(summary[0]).toMatchObject({
       id: 'match-result',
-      value: '6 – 7',
+      value: '6–7',
       sublabel: 'Blue wins',
     });
     expect(summary.find((stat) => stat.id === 'rated-games')?.value).toBe('1');

@@ -11,8 +11,8 @@ import {
   formatRank,
   formatRating,
 } from '@/lib/kit/format/number';
+import type { TierName } from '@/lib/kit/format/tier';
 import type { PlayerRatingStats as PlayerRatingStatsData } from '@/lib/orpc/schema/playerStats';
-import type { TierName } from '@/lib/utils/tierData';
 
 import PlayerTierProgress from './PlayerTierProgress';
 

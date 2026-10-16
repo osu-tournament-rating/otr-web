@@ -40,7 +40,7 @@ export const TOURNAMENT_SORT_OPTIONS: readonly {
   value: TournamentSortKey;
   label: string;
 }[] = [
-  { value: 'endTime', label: 'Completion date' },
+  { value: 'endTime', label: 'End date' },
   { value: 'startTime', label: 'Start date' },
   { value: 'submitted', label: 'Submission date' },
   { value: 'lobbySize', label: 'Lobby size' },

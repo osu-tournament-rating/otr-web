@@ -76,7 +76,7 @@ describe('SectionHeader', () => {
       <SectionHeader title="Tier breakdown" infoText="How to read it" />
     );
 
-    expect(html).toContain('aria-label="About Tier breakdown"');
+    expect(html).toContain('aria-label="About tier breakdown"');
   });
 
   it('puts meta beside the actions when both are given', () => {
@@ -428,7 +428,7 @@ describe('StatTile', () => {
       <StatTile label="Win rate" value="62%" infoText="Matches won." />
     );
     expect(html).toContain('<span class="truncate">Win rate</span>');
-    expect(html).toContain('aria-label="About Win rate"');
+    expect(html).toContain('aria-label="About win rate"');
   });
 
   it('puts the value on the label line in the inline layout', () => {

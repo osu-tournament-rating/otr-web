@@ -7,6 +7,7 @@ import useSWR from 'swr';
 
 import SectionError from '@/components/error/SectionError';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { SkeletonText } from '@/components/kit/feedback/Skeletons';
 import { ListToolbar } from '@/components/kit/lists/ListToolbar';
 import { ScopeSwitch } from '@/components/kit/lists/ScopeSwitch';
 import { SortControl } from '@/components/kit/lists/SortControl';
@@ -163,7 +164,15 @@ export default function AdminReportsClient() {
               options={STATUS_OPTIONS}
             />
           }
-          count={data ? formatCountOf(data.totalCount, 'report') : undefined}
+          // A bar holds the count's place while a page loads, as on the
+          // route's loading screen, so the sort control doesn't jump.
+          count={
+            data ? (
+              formatCountOf(data.totalCount, 'report')
+            ) : error ? undefined : (
+              <SkeletonText className="h-3 w-20" />
+            )
+          }
         />
 
         {error && !data ? (

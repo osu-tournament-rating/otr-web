@@ -8,7 +8,7 @@ export function StatsPageHeader() {
     <PageHeader
       icon={ChartColumn}
       title="Platform statistics"
-      description="Statistics covering all of osu! tournaments"
+      description="Statistics covering all of osu! tournaments."
     />
   );
 }

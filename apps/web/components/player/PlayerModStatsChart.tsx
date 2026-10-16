@@ -71,7 +71,7 @@ export default function PlayerModStatsChart({
         <EmptyState
           size="compact"
           icon={ChartBarBig}
-          title="No mod performance data available"
+          title="No mod performance data"
         />
       </Panel>
     );

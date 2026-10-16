@@ -6,6 +6,7 @@ import Link from 'next/link';
 
 import { Timestamp } from '@/components/kit/format/Timestamp';
 import { VerificationStatusIcon } from '@/components/kit/status/VerificationStatusIcon';
+import { MissingValue } from '@/components/kit/tables/MissingValue';
 import TapTooltip from '@/components/tap-tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getTeamTextColor, getTeamTintClass } from '@/lib/kit/color/teams';
@@ -75,13 +76,17 @@ function Scoreline({ match }: { match: MatchRow }) {
   );
 }
 
+// Below `lg` the title has a phone's width beside the result: the names
+// wrap instead of both truncating; from `lg` they share one line.
+const TEAM_NAME_CLASSES = 'min-w-0 break-words lg:truncate';
+
 /** The match name; with two teams, the winner first and the loser muted. */
 function MatchTitle({ match }: { match: MatchRow }) {
   const name = match.name || `Match ${match.id}`;
   const teams = parseTeamNames(match.name);
 
   const content = (() => {
-    if (!teams) return <span className="min-w-0 truncate">{name}</span>;
+    if (!teams) return <span className={TEAM_NAME_CLASSES}>{name}</span>;
 
     const winRecord = match.winRecord;
     const decided =
@@ -92,7 +97,7 @@ function MatchTitle({ match }: { match: MatchRow }) {
 
     return (
       <>
-        <span className="min-w-0 truncate">
+        <span className={TEAM_NAME_CLASSES}>
           {blueWon ? teams.blue : teams.red}
         </span>
         <span className="shrink-0 text-xs font-normal text-muted-foreground">
@@ -100,7 +105,7 @@ function MatchTitle({ match }: { match: MatchRow }) {
         </span>
         <span
           className={cn(
-            'min-w-0 truncate',
+            TEAM_NAME_CLASSES,
             decided && 'font-normal text-muted-foreground'
           )}
         >
@@ -115,7 +120,7 @@ function MatchTitle({ match }: { match: MatchRow }) {
       href={`/matches/${match.id}`}
       prefetch={false}
       title={name}
-      className="flex min-w-0 items-baseline gap-1.5 rounded-sm font-medium text-foreground transition-colors outline-none hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50"
+      className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 rounded-sm font-medium text-foreground transition-colors outline-none hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50 lg:flex-nowrap"
     >
       {content}
     </Link>
@@ -161,6 +166,11 @@ function Notes({ match }: { match: MatchRow }) {
 }
 
 function GamePips({ games }: { games: MatchRow['games'] }) {
+  if (games.length === 0) {
+    // Phones already say "0 games" on the line above; the column needs a mark.
+    return <MissingValue label="No games" className="hidden lg:inline" />;
+  }
+
   return (
     // 8px apart, so each 16px icon keeps a 24px tap area.
     <ul aria-label="Games" className="flex flex-wrap items-center gap-2">

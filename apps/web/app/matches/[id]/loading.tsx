@@ -1,19 +1,8 @@
-import { ChartLine, Swords } from 'lucide-react';
-
-import {
-  PanelSkeleton,
-  SectionHeaderSkeleton,
-  SkeletonText,
-} from '@/components/kit/feedback/Skeletons';
+import { SkeletonText } from '@/components/kit/feedback/Skeletons';
 import { DetailHero } from '@/components/kit/layout/DetailHero';
-import {
-  HeroTabLabel,
-  heroTabClassName,
-  heroTabListClassName,
-} from '@/components/kit/layout/HeroTabs';
 import { PageFrame } from '@/components/kit/layout/PageFrame';
 
-import { GameFramesSkeleton } from './skeletons';
+import { MatchLoadingBody, MatchLoadingTabs } from './loading-views';
 
 export default function MatchLoading() {
   return (
@@ -35,23 +24,9 @@ export default function MatchLoading() {
             <SkeletonText className="size-8" />
           </>
         }
-        tabs={
-          <div className={heroTabListClassName} aria-hidden="true">
-            <span className={heroTabClassName} aria-current="page">
-              <HeroTabLabel icon={Swords}>Games</HeroTabLabel>
-            </span>
-            <span className={heroTabClassName}>
-              <HeroTabLabel icon={ChartLine}>Stats</HeroTabLabel>
-            </span>
-          </div>
-        }
+        tabs={<MatchLoadingTabs />}
       />
-      <PanelSkeleton>
-        <SectionHeaderSkeleton icon={Swords} title="Games" meta="w-14" />
-        <div className="p-4">
-          <GameFramesSkeleton />
-        </div>
-      </PanelSkeleton>
+      <MatchLoadingBody />
     </PageFrame>
   );
 }

@@ -1,4 +1,4 @@
-import { Trophy } from 'lucide-react';
+import { Medal } from 'lucide-react';
 
 import {
   ListToolbarSkeleton,
@@ -8,35 +8,40 @@ import {
 import { PageFrame } from '@/components/kit/layout/PageFrame';
 import { PageHeader } from '@/components/kit/layout/PageHeader';
 import { Panel } from '@/components/kit/layout/Panel';
+import { LEADERBOARD_COLUMN_WIDTHS } from '@/components/leaderboard/LeaderboardTable';
 
-/** The loaded table's columns, so the header strip doesn't shift. */
+/** The loaded table's columns at its widths, so the header doesn't shift. */
 const COLUMNS = [
-  { label: 'Rank', width: 'w-20' },
+  { label: 'Rank', width: LEADERBOARD_COLUMN_WIDTHS.rank },
   { label: 'Player' },
-  { label: 'Tier', width: 'w-16 lg:w-44' },
-  { label: 'Rating', width: 'w-24', align: 'end' },
-  { label: 'Tournaments', width: 'w-28', align: 'end' },
-  { label: 'Matches', width: 'w-24', align: 'end' },
-  { label: 'Win rate', width: 'w-24', align: 'end' },
+  { label: 'Tier', width: LEADERBOARD_COLUMN_WIDTHS.tier },
+  { label: 'Rating', width: LEADERBOARD_COLUMN_WIDTHS.rating, align: 'end' },
+  {
+    label: 'Tournaments',
+    width: LEADERBOARD_COLUMN_WIDTHS.tournaments,
+    align: 'end',
+  },
+  { label: 'Matches', width: LEADERBOARD_COLUMN_WIDTHS.matches, align: 'end' },
+  { label: 'Win rate', width: LEADERBOARD_COLUMN_WIDTHS.winRate, align: 'end' },
 ] as const;
 
 export default function LeaderboardLoading() {
   return (
     <PageFrame>
       <PageHeader
-        icon={Trophy}
+        icon={Medal}
         title="Leaderboard"
         description="Players ranked by tournament rating."
       />
       <Panel as="div" role="status" aria-label="Loading leaderboard">
-        {/* The scope block stands in for All / Friends, which only
-            signed-in visitors see. The rulesets are a RulesetSwitch, so
-            there is no All chip. */}
+        {/* The scope block stands in for All / Friends (narrower below sm,
+            as the switch is), which only signed-in visitors see. The
+            rulesets are a RulesetSwitch, so there is no All chip. */}
         <ListToolbarSkeleton
           search
           sort
           filters
-          scope="w-36"
+          scope="w-29 sm:w-31"
           rulesets={5}
           rulesetsAll={false}
           count

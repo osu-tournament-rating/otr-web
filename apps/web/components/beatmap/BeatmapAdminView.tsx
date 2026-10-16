@@ -39,6 +39,7 @@ import { hasAdminScope } from '@/lib/auth/roles';
 import { getBeatmapTitle } from '@/lib/beatmaps/presentation';
 import { useSession } from '@/lib/hooks/useSession';
 import { RULESET_NAMES } from '@/lib/kit/format/ruleset';
+import { aboutLabel } from '@/lib/kit/layout/about-label';
 import { orpc } from '@/lib/orpc/orpc';
 import type { BeatmapWithDetails } from '@/lib/orpc/schema/beatmapStats';
 import type { PlayerLookupResult } from '@/lib/orpc/schema/player';
@@ -530,7 +531,7 @@ function FieldGroup({
           {title}
         </h3>
         {info ? (
-          <InfoButton label={`About ${title.toLowerCase()}`} align="start">
+          <InfoButton label={aboutLabel(title)} align="start">
             {info}
           </InfoButton>
         ) : null}

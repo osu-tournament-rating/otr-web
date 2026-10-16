@@ -22,7 +22,7 @@ export function MyReportsFrame({
       <PageHeader
         icon={Flag}
         title={<span data-testid="my-reports-heading">My reports</span>}
-        description="Track the status of data issues you've reported"
+        description="Track the status of data issues you've reported."
       />
       {children}
     </PageFrame>
@@ -51,7 +51,7 @@ export function MyReportsTableSkeleton() {
 export function MyReportsPanelSkeleton() {
   return (
     <PanelSkeleton label="Loading reports">
-      <SectionHeaderSkeleton title="Reports" />
+      <SectionHeaderSkeleton icon={Flag} title="Reports" />
       <MyReportsTableSkeleton />
     </PanelSkeleton>
   );

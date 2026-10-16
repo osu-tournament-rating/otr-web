@@ -1,7 +1,9 @@
 import TierIcon from '@/components/icons/TierIcon';
+import { Abbreviation } from '@/components/kit/layout/Abbreviation';
 import { Tile } from '@/components/kit/layout/Tile';
 import { TIER_TEXT_CLASS } from '@/lib/kit/color/tiers';
 import { formatRating } from '@/lib/kit/format/number';
+import { formatTierName } from '@/lib/kit/format/tier';
 import { cn } from '@/lib/utils';
 import { type TierName, getTierColor } from '@/lib/utils/tierData';
 
@@ -63,7 +65,17 @@ export default function TierCard({
       </div>
 
       <div className="flex flex-col items-center text-center">
-        <span className="text-sm font-semibold">{displayName}</span>
+        <span className="text-sm font-semibold">
+          {/* A shortened name ("Elite GM", to fit the ladder) opens the
+              full one on tap, as the tier icon's tooltip names it. */}
+          {displayName === formatTierName(tier) ? (
+            displayName
+          ) : (
+            <Abbreviation full={formatTierName(tier)}>
+              {displayName}
+            </Abbreviation>
+          )}
+        </span>
         <span
           className={cn(
             'text-xs font-semibold tabular-nums',

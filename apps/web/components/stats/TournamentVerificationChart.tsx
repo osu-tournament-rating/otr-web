@@ -32,7 +32,7 @@ export default function TournamentVerificationChart({
         <EmptyState
           size="compact"
           icon={STATS_PANELS.verification.icon}
-          title="No verification data available"
+          title="No verification data"
         />
       ) : (
         <PanelBody>

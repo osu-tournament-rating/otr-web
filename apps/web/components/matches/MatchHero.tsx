@@ -7,13 +7,11 @@ import {
 } from '@otr/core/osu';
 import {
   CalendarDays,
-  ChartLine,
   ExternalLink,
   GitMerge,
   History,
   NotebookPen,
   PencilLine,
-  Swords,
   Trash2,
   Trophy,
   Users,
@@ -55,8 +53,8 @@ export type MatchTab = 'games' | 'stats';
 
 /**
  * The top of the match page: the match's name, status, tournament and time,
- * the Admin menu, public actions (audit history, report, osu!) and the
- * Games and Stats tabs.
+ * the Admin menu, public actions (report, audit history, osu!, in the
+ * tournament hero's order) and the Games and Stats tabs.
  */
 export default function MatchHero({
   match,
@@ -165,17 +163,6 @@ export default function MatchHero({
         }
         actions={
           <>
-            <IconButton
-              asChild
-              variant="outline"
-              icon={History}
-              label="View audit history"
-            >
-              <Link
-                href={`/audit/${entityTypeToSlug(AuditEntityType.Match)}/${match.id}`}
-                prefetch={false}
-              />
-            </IconButton>
             <ReportButton
               variant="outline"
               entityType={ReportEntityType.Match}
@@ -190,6 +177,17 @@ export default function MatchHero({
                 onClick={() => setViewingNotes(true)}
               />
             ) : null}
+            <IconButton
+              asChild
+              variant="outline"
+              icon={History}
+              label="View audit history"
+            >
+              <Link
+                href={`/audit/${entityTypeToSlug(AuditEntityType.Match)}/${match.id}`}
+                prefetch={false}
+              />
+            </IconButton>
             <IconButton
               asChild
               variant="outline"
@@ -209,7 +207,6 @@ export default function MatchHero({
               {
                 value: 'games',
                 label: 'Games',
-                icon: Swords,
                 count: formatCount(games.length),
                 href: tabHref('games'),
                 testId: 'tab-trigger-games',
@@ -217,7 +214,6 @@ export default function MatchHero({
               {
                 value: 'stats',
                 label: 'Stats',
-                icon: ChartLine,
                 href: tabHref('stats'),
                 testId: 'tab-trigger-stats',
               },

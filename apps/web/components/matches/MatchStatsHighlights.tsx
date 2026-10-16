@@ -1,3 +1,4 @@
+import type { Ruleset } from '@otr/core/osu';
 import {
   Crosshair,
   Gamepad2,
@@ -14,7 +15,11 @@ import { OsuAvatar } from '@/components/ui/osu-avatar';
 import type { KitIcon } from '@/lib/kit/layout/icon';
 import { formatTierName } from '@/lib/kit/format/tier';
 
-import type { HighlightIcon, HighlightStat } from './MatchStatsUtils';
+import {
+  type HighlightIcon,
+  type HighlightStat,
+  playerProfileHref,
+} from './MatchStatsUtils';
 
 const ICONS: Record<HighlightIcon, KitIcon> = {
   Swords,
@@ -26,11 +31,17 @@ const ICONS: Record<HighlightIcon, KitIcon> = {
 };
 
 /** The line under a highlight's value: the player, the tier or a note. */
-function HighlightSub({ stat }: { stat: HighlightStat }) {
+function HighlightSub({
+  stat,
+  ruleset,
+}: {
+  stat: HighlightStat;
+  ruleset?: Ruleset;
+}) {
   if (stat.player) {
     return (
       <EntityLink
-        href={`/players/${stat.player.id}`}
+        href={playerProfileHref(stat.player.id, ruleset)}
         leading={
           <OsuAvatar
             osuId={stat.player.osuId}
@@ -60,8 +71,11 @@ function HighlightSub({ stat }: { stat: HighlightStat }) {
  */
 export default function MatchStatsHighlights({
   stats,
+  ruleset,
 }: {
   stats: readonly HighlightStat[];
+  /** The match's ruleset, which the players' links open. */
+  ruleset?: Ruleset;
 }) {
   return (
     <StatTileGrid columns={3}>
@@ -95,7 +109,7 @@ export default function MatchStatsHighlights({
               />
             ) : undefined
           }
-          sub={<HighlightSub stat={stat} />}
+          sub={<HighlightSub stat={stat} ruleset={ruleset} />}
         />
       ))}
     </StatTileGrid>

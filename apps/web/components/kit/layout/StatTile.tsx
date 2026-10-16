@@ -2,6 +2,7 @@ import type * as React from 'react';
 
 import { InfoButton } from '@/components/kit/layout/InfoButton';
 import { Tile } from '@/components/kit/layout/Tile';
+import { aboutLabel } from '@/lib/kit/layout/about-label';
 import type { KitIcon } from '@/lib/kit/layout/icon';
 import { cn } from '@/lib/utils';
 
@@ -61,7 +62,8 @@ export function StatTile({
   /** How to read the stat, shown through an info button. */
   infoText?: React.ReactNode;
   /**
-   * The info button's name. Defaults to "About {label}" for a text label;
+   * The info button's name. Defaults to "About {label}" for a text label,
+   * lower-cased mid-sentence ("About win rate");
    * set it when the label is a node.
    */
   infoLabel?: string;
@@ -83,7 +85,7 @@ export function StatTile({
       {infoText ? (
         <InfoButton
           label={
-            infoLabel ?? (textLabel !== null ? `About ${textLabel}` : 'About')
+            infoLabel ?? (textLabel !== null ? aboutLabel(textLabel) : 'About')
           }
           size="sm"
           className="-my-0.5"

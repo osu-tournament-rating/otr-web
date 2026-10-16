@@ -94,7 +94,7 @@ export default function RatingDistributionPanel({
         <EmptyState
           size="compact"
           icon={STATS_PANELS.ratingDistribution.icon}
-          title="No data available for this ruleset"
+          title="No ratings in this ruleset"
           data-testid={`chart-rating-distribution-${ruleset}`}
         />
       ) : (

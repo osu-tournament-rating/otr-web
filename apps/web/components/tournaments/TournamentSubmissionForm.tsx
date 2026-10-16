@@ -222,7 +222,7 @@ export default function TournamentSubmissionForm() {
                 </FormFieldLabel>
                 <FormControl>
                   <Input
-                    placeholder="https://osu.ppy.sh/community/forums/topics/..."
+                    placeholder="https://osu.ppy.sh/community/forums/topics/…"
                     {...field}
                     onChange={(event) =>
                       field.onChange(event.target.value.split('?')[0])
@@ -353,9 +353,14 @@ export default function TournamentSubmissionForm() {
                 <FormField
                   control={form.control}
                   name="rejectionReason"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel id={reasonLabelId}>Rejection reason</FormLabel>
+                      <FormFieldLabel
+                        groupId={reasonLabelId}
+                        invalid={fieldState.error !== undefined}
+                      >
+                        Rejection reason
+                      </FormFieldLabel>
                       <FormControl>
                         <RejectionReasonChips
                           aria-labelledby={reasonLabelId}

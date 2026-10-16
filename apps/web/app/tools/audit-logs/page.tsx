@@ -22,7 +22,7 @@ export default function AuditLogsPage() {
       <PageHeader
         icon={ClipboardList}
         title={<span data-testid="audit-logs-heading">Audit logs</span>}
-        description="Browse the history of changes made to tournaments, matches, games, and scores."
+        description="Browse the history of changes made to tournaments, matches, games, scores, and beatmaps."
       />
       {/* The feed reads its filters from the address. */}
       <Suspense

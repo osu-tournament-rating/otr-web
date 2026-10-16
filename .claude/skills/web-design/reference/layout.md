@@ -93,7 +93,7 @@ import { PageHeader } from '@/components/kit/layout/PageHeader';
 
 Props:
 
-- `icon`: the page's lucide icon. It renders muted at 28px; blue is for things you can act on.
+- `icon`: the page's lucide icon, the one its header menu item or home card uses (Trophy for tournaments, Medal for the leaderboard, Upload for submission, ClipboardList for audit logs). It renders muted at 28px; blue is for things you can act on.
 - `title`: the page's only h1.
 - `description`: one sentence.
 - `actions`: page-level buttons. They stack full width on phones and sit on the right from `sm`.
@@ -161,7 +161,7 @@ Props:
 - `status`: the verification status (`VerificationStatusBadge`), first in the row under the title. On art, pass the badge's `variant="overlay"`.
 - `meta`: HeroMetaItems (16px icon and short text) after the status.
 - `adminActions`: the single admin cluster, top right: one [AdminMenu](controls.md#adminmenu), not a row of icons. Pass it `onArt` on a hero with art.
-- `actions`: public actions (audio preview, report, open on osu!, audit history), bottom right. Icon-only ones are [IconButton](controls.md#iconbutton)s. Audit pages are public, so the audit history link goes here for everyone, never in the admin menu. On art the actions get a 112px column beside the title on phones (128px from `sm`), so a labelled action and an IconButton don't fit side by side there: stack them in `<div className="flex flex-col items-end gap-2">`, as the beatmap hero does with its audit history link and Preview button.
+- `actions`: public actions, bottom right, in one order on every hero: report, audit history, then open on osu! (the tournament and match heroes; a non-admin's read-only "Admin notes" button sits after report). The beatmap hero's art puts its audit history link above the Preview button and its osu! link in the essentials row. Icon-only ones are [IconButton](controls.md#iconbutton)s. Audit pages are public, so the audit history link goes here for everyone, never in the admin menu. On art the actions get a 112px column beside the title on phones (128px from `sm`), so a labelled action and an IconButton don't fit side by side there: stack them in `<div className="flex flex-col items-end gap-2">`, as the beatmap hero does with its audit history link and Preview button.
 
 On phones, a plain hero moves `actions` and `adminActions` into one row above the name, so a long name keeps the full width. On art they stay pinned to the corners, and every control there uses the dark pill, white in both themes, like the beatmap hero: `<AdminMenu onArt …/>`, `<Button variant="overlay">` and `<IconButton variant="overlay">` from the controls kit (the classes are `ON_ART_CONTROL_CLASSES` in `@/components/kit/controls/Button`). A status badge on art takes `variant="overlay"`, and an InfoButton takes `onArt`.
 
@@ -254,6 +254,7 @@ Do:
 Don't:
 
 - Don't put a grey segmented tab bar under a hero.
+- Don't give tabs icons. No page's tabs have them (tournament, match, audit history), so every strip reads the same.
 - Don't use hero tabs to pick a ruleset (that is the ruleset control) or to scope a list such as All / Friends (that belongs in the list toolbar).
 - Don't hide labels or counts with your own `max-sm:hidden` spans inside `label`; use `compactLabel` and `countsFrom`, which keep the full label and count for screen readers.
 
@@ -278,12 +279,10 @@ import {
     title={match.name}
     tabs={
       <HeroTabsList aria-label="Match views">
-        <HeroTabsTrigger value="games" icon={Swords} count="9">
+        <HeroTabsTrigger value="games" count="9">
           Games
         </HeroTabsTrigger>
-        <HeroTabsTrigger value="stats" icon={ChartLine}>
-          Stats
-        </HeroTabsTrigger>
+        <HeroTabsTrigger value="stats">Stats</HeroTabsTrigger>
       </HeroTabsList>
     }
   />
@@ -347,9 +346,9 @@ import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 
 Props:
 
-- `icon`: optional, always muted.
+- `icon`: always muted. It is optional in the API, but every section header on the site has one, so give yours one too.
 - `title`: sentence case. Renders as h2; pass `level={3}` (or 4) when the panel sits under another heading.
-- `infoText`: how to read the section, shown through InfoButton (named "About {title}").
+- `infoText`: how to read the section, shown through InfoButton, named "About {title}" with the title lower-cased mid-sentence ("About tier breakdown"). Every derived info button name goes through `aboutLabel` (`@/lib/kit/layout/about-label`), which keeps a leading short form or osu! term as it is ("About API keys"); hand-written names read the same way.
 - `meta`: short muted text such as a count, with separators. It is set in tabular figures.
 - `actions`: small controls for the whole section, after the meta. A `sm` (32px) button fits inside the 48px strip, so a header with actions is as tall as one without and side-by-side panels keep their dividers level.
 
@@ -499,7 +498,7 @@ Props:
 - `value`: already formatted (separators on counts, never on years or IDs). It renders 20px bold (18px semibold inline) with `leading-none`, so the value line is as tall as the text, like the beatmap tiles, and in tabular figures, so digits line up from tile to tile. Tabular figures also widen Inter's hyphen; a hyphenated word as a value (rare) takes `<span className="proportional-nums">`.
 - `adornment`: sits 4px left of the value and overhangs its 20px line, so a 20–24px icon does not push the value or sub line out of step with the next tile. The profile's tier icon goes here; there is no separate tier tile. Pass TierIcon's `tooltip`: it wraps the icon in a TapTooltip, so the tier's name opens on tap, hover and keyboard focus.
 - `sub`: one muted line under the value.
-- `infoText`: adds a small InfoButton after the label, named "About {label}". With a node as the label, name it with `infoLabel` ("About circle size").
+- `infoText`: adds a small InfoButton after the label, named "About {label}" (lower-cased: "About win rate"). With a node as the label, name it with `infoLabel` ("About circle size").
 - `layout="inline"`: the value on the label's line, with `children` (such as a gauge) underneath. For attribute grids like CS, AR, OD and HP.
 - StatTileGrid `columns`: 2, 3 or 4 from `sm`.
 
@@ -542,7 +541,7 @@ Props:
 
 - `leading`, `title` (16px medium, truncates), `description` (14px muted), `trailing` (right-aligned): the standard layout. Pass only `children` for a custom row; it keeps the 16px by 12px padding.
 - `href`: makes the whole row one link (not prefetched, like the beatmap lists) with the shared row cues from `@/lib/kit/tables/row`: `ROW_HOVER_TINT`, and `ROW_TITLE_HOVER`, which turns the title blue while the row is hovered. Every whole-row link (DataTableLinkRow, PhoneRow, RowListItem) uses these two, so they read the same. Only for lists whose rows already open as a whole (beatmap list, tournament list, pooled beatmaps, search results). The row must then hold no other link or button, so `title` is plain text; with only `children`, mark the name `data-row-title` yourself.
-- `linkLabel`: the row link's accessible name, such as "View Break The Meta Cup". Always set it with `href`, or a screen reader reads every word in the row. It replaces everything inside the row for a screen reader, the status icon and a "Not in ratings yet" line included, so put in it whatever the row must say aloud besides the name, as the tournament list does with its admin note count ("View Break The Meta Cup, 2 admin notes").
+- `linkLabel`: the row link's accessible name, such as "View Break The Meta Cup". Always set it with `href`, or a screen reader reads every word in the row. It replaces everything inside the row for a screen reader, the status icon and a "Not in ratings yet" line included, so put in it whatever the row must say aloud besides the name, in the order the row shows it, as the tournament list does (`getTournamentRowLabel` in `components/tournaments/TournamentListRow.tsx`): "View verified tournament Break The Meta Cup BTMC, osu!, 1v1, 10,000+, Dec 4 – 18, 2021, 2 admin notes".
 - `children`: with `title`, extra content under the description; without, the whole custom row.
 
 Do:

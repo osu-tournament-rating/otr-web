@@ -169,7 +169,10 @@ export default async function Page({ params, searchParams }: PageProps) {
 
       {tab === 'ratings' && (
         <div data-testid="tab-content-ratings" className="flex flex-col gap-4">
-          <TournamentRatingsView playerStats={playerStats} />
+          <TournamentRatingsView
+            playerStats={playerStats}
+            verificationStatus={tournament.verificationStatus}
+          />
         </div>
       )}
 
@@ -179,6 +182,7 @@ export default async function Page({ params, searchParams }: PageProps) {
           <TournamentPlayerStatsView
             playerStats={playerStats}
             ruleset={tournament.ruleset}
+            verificationStatus={tournament.verificationStatus}
           />
         </div>
       )}

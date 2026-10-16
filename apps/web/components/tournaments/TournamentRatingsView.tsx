@@ -1,5 +1,6 @@
 'use client';
 
+import type { VerificationStatus } from '@otr/core/osu';
 import { Download, TrendingUp } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 
@@ -22,6 +23,7 @@ import {
 import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { SortableHeader } from '@/components/kit/tables/SortableHeader';
+import { getTournamentStatsEmptyCopy } from '@/components/tournaments/statsEmptyCopy';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
 import {
   formatCount,
@@ -211,8 +213,11 @@ function downloadCsv(rows: readonly TournamentPlayerStats[]) {
  */
 export default function TournamentRatingsView({
   playerStats,
+  verificationStatus,
 }: {
   playerStats: TournamentPlayerStats[];
+  /** Says why there are no rating changes yet. */
+  verificationStatus: VerificationStatus;
 }) {
   // Every row is on the client already: a sort only rewrites the address.
   const { state, setState } = useListState(TOURNAMENT_RATING_PARAMS, {
@@ -234,7 +239,11 @@ export default function TournamentRatingsView({
       <SectionHeader
         icon={TrendingUp}
         title="Rating changes"
-        meta={formatCountOf(playerStats.length, 'player')}
+        meta={
+          playerStats.length > 0
+            ? formatCountOf(playerStats.length, 'player')
+            : undefined
+        }
         actions={
           playerStats.length > 0 ? (
             <Button
@@ -252,8 +261,7 @@ export default function TournamentRatingsView({
       {playerStats.length === 0 ? (
         <EmptyState
           icon={TrendingUp}
-          title="No rating data"
-          description="No rating data available for this tournament."
+          {...getTournamentStatsEmptyCopy(verificationStatus, 'Rating changes')}
         />
       ) : (
         <DataTable

@@ -125,11 +125,11 @@ function TournamentListDemo() {
   return (
     <Panel>
       <ListToolbar
-        label="Search tournaments"
+        label="Search and filter tournaments"
         search={
           <SearchField
-            label="Search tournaments"
-            placeholder="Search by name or abbreviation"
+            label="Search tournaments by name or abbreviation"
+            placeholder="Name or abbreviation"
             value={query}
             onSearch={setQuery}
           />
@@ -592,12 +592,10 @@ export default function LayoutSection() {
             }
             tabs={
               <HeroTabsList aria-label="Match views">
-                <HeroTabsTrigger value="games" icon={Swords} count="9">
+                <HeroTabsTrigger value="games" count="9">
                   Games
                 </HeroTabsTrigger>
-                <HeroTabsTrigger value="stats" icon={ChartLine}>
-                  Stats
-                </HeroTabsTrigger>
+                <HeroTabsTrigger value="stats">Stats</HeroTabsTrigger>
               </HeroTabsList>
             }
           />

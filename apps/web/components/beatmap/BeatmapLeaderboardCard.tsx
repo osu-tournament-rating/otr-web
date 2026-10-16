@@ -25,6 +25,7 @@ import {
   formatAccuracy,
   formatCount,
   formatCountOf,
+  formatRank,
 } from '@/lib/kit/format/number';
 import type { BeatmapTopPerformer } from '@/lib/orpc/schema/beatmapStats';
 import { cn } from '@/lib/utils';
@@ -36,7 +37,10 @@ type DisplayRank = {
   position: number;
 };
 
-/** Competition ranks with tie flags: …, 6, =7, =7, =7, 14, … */
+/**
+ * Competition ranks in the site's rank format, with tie flags:
+ * …, #6, =#7, =#7, =#7, #10, …
+ */
 function computeDisplayRanks(performers: BeatmapTopPerformer[]): DisplayRank[] {
   return performers.map((performer, index) => {
     let start = index;
@@ -47,7 +51,7 @@ function computeDisplayRanks(performers: BeatmapTopPerformer[]): DisplayRank[] {
       (index + 1 < performers.length &&
         performers[index + 1].score === performer.score);
     return {
-      label: `${tied ? '=' : ''}${formatCount(start + 1)}`,
+      label: `${tied ? '=' : ''}${formatRank(start + 1)}`,
       position: start + 1,
     };
   });
@@ -123,7 +127,9 @@ function ScoreLink({
     <Link
       href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
       prefetch={false}
-      aria-label={`View ${displayName || 'Unknown player'}'s recorded score`}
+      // Starts with the score it shows, so voice control finds the link by
+      // what it says (WCAG 2.5.3, label in name).
+      aria-label={`${formatCount(performer.score)}: view ${displayName || 'Unknown player'}'s recorded score`}
       data-testid={testId}
       className={cn(
         'inline-flex items-center justify-end gap-1.5 font-semibold tabular-nums',
@@ -210,14 +216,14 @@ export default function BeatmapLeaderboardCard({
         >
           <DataTableHeader>
             <DataTableRow>
-              <DataTableHead className="w-12">#</DataTableHead>
+              <DataTableHead className="w-16">Rank</DataTableHead>
               <DataTableHead>Player</DataTableHead>
               <DataTableHead className="w-20">Mods</DataTableHead>
               <DataTableHead numeric className="w-29">
                 Score
               </DataTableHead>
               <DataTableHead numeric className="w-20">
-                Acc
+                Accuracy
               </DataTableHead>
               <DataTableHead>Tournament</DataTableHead>
               <DataTableHead align="end" className="w-28">
@@ -229,10 +235,7 @@ export default function BeatmapLeaderboardCard({
             {performers.map((performer, index) => (
               <DataTableRow key={performer.scoreId}>
                 <DataTableCell
-                  className={cn(
-                    'text-xs tabular-nums',
-                    rankClassName(ranks[index])
-                  )}
+                  className={cn('tabular-nums', rankClassName(ranks[index]))}
                 >
                   {ranks[index].label}
                 </DataTableCell>

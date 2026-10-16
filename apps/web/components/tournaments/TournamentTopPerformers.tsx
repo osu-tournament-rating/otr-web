@@ -22,18 +22,33 @@ import { TournamentPlayerStats } from '@/lib/orpc/schema/tournament';
 /** Players need this many matches to count as a top performer. */
 const MIN_MATCHES = 3;
 
+const playerHref = (
+  player: TournamentPlayerStats['player'],
+  ruleset: Ruleset
+) => `/players/${player.id}?ruleset=${ruleset}`;
+
+/** The name, with a 24px avatar inside its link in the table. */
 function PlayerLink({
   player,
   ruleset,
+  avatar = true,
 }: {
   player: TournamentPlayerStats['player'];
   ruleset: Ruleset;
+  /** Off on phone rows, which show a 32px avatar beside the name and its line. */
+  avatar?: boolean;
 }) {
   return (
     <EntityLink
-      href={`/players/${player.id}?ruleset=${ruleset}`}
+      href={playerHref(player, ruleset)}
       leading={
-        <OsuAvatar osuId={player.osuId} username={player.username} size={24} />
+        avatar ? (
+          <OsuAvatar
+            osuId={player.osuId}
+            username={player.username}
+            size={24}
+          />
+        ) : undefined
       }
     >
       {player.username}
@@ -64,7 +79,7 @@ export default function TournamentTopPerformers({
         <EmptyState
           size="compact"
           icon={Trophy}
-          title="No qualifying performers found"
+          title="No qualifying players"
           description={`Players need at least ${MIN_MATCHES} matches to qualify.`}
         />
       ) : (
@@ -76,7 +91,21 @@ export default function TournamentTopPerformers({
                 <PhoneRow
                   key={stats.player.id}
                   rank={formatRank(index + 1)}
-                  title={<PlayerLink player={stats.player} ruleset={ruleset} />}
+                  leading={
+                    <OsuAvatar
+                      osuId={stats.player.osuId}
+                      username={stats.player.username}
+                      size={32}
+                    />
+                  }
+                  leadingHref={playerHref(stats.player, ruleset)}
+                  title={
+                    <PlayerLink
+                      player={stats.player}
+                      ruleset={ruleset}
+                      avatar={false}
+                    />
+                  }
                   description={`Avg. placement ${formatAverage(stats.averagePlacement)} · Avg. games ${formatAverage(stats.gamesPlayed / stats.matchesPlayed)}`}
                   value={formatMatchCost(stats.averageMatchCost)}
                   valueDescription="Match cost"
