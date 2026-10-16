@@ -10,9 +10,10 @@ Every formatter uses fixed en-US and UTC and is built so the server and the brow
 - [TimeRangeText](#timerangetext): two moments in a day, `15:42 – 15:45 UTC`
 - [RelativeTime](#relativetime): `3h ago`, for activity feeds only
 - [Figures in dates](#figures-in-dates): proportional, never tabular
-- [Date helpers](#date-helpers): `formatDate`, `formatDateRange`, `formatTimestamp`, `formatTimeRange`, `formatRelativeTime`, `toDate`
+- [Date helpers](#date-helpers): `formatDate`, `formatDateRange`, `formatTimestamp`, `formatTimeRange`, `formatRelativeTime`, `toDate`, and lengths with `formatDuration` and `parseDuration`
 - [Number helpers](#number-helpers): counts, ranks, ratings, percentiles, percents, years and IDs
 - [RatingDelta](#ratingdelta): a rating change, `↑ +12.3`
+- [Tier names](#tier-names): `Gold II`, `formatTierName`
 - [RulesetName and ruleset names](#rulesetname-and-ruleset-names): `osu!`, `taiko`, `catch`, `mania 4K`, `mania 7K`
 - [Field names](#field-names): the glossary, `FIELD_NAMES`
 - [Mods](#mods): `HD, HR`
@@ -29,10 +30,12 @@ Every formatter uses fixed en-US and UTC and is built so the server and the brow
 | Moment                | `Jul 20, 2024, 15:42 UTC` (24-hour)                       | `Timestamp`, `formatTimestamp`              |
 | Two moments in a day  | `15:42 – 15:45 UTC`                                       | `TimeRangeText`, `formatTimeRange`          |
 | Time since, in a feed | `3h ago`, full timestamp on hover, focus and tap          | `RelativeTime`                              |
+| Length                | `2:04`, `1:02:04`                                         | `formatDuration`                            |
 | Count                 | `12,345`                                                  | `formatCount`, `formatCountOf`              |
 | Rank                  | `#1,234`, everywhere                                      | `formatRank`                                |
 | Rating                | `1,835`; `1,834.57` in tooltips and exports               | `formatRating`, `formatRatingPrecise`       |
 | Rating change         | `+12.3`, `−4.5`, `0.0`: one decimal, coloured, with arrow | `RatingDelta`, `formatRatingDelta`          |
+| Tier                  | `Gold II`, `Elite Grandmaster`; `Gold` in a tier legend   | `formatTierName`                            |
 | Percentile            | `97th percentile` (`97th` under a "Percentile" label)     | `formatPercentile`                          |
 | Share                 | `54.2%`                                                   | `formatPercent`                             |
 | Accuracy              | `98.54%`                                                  | `formatAccuracy`                            |
@@ -203,6 +206,8 @@ import {
   formatRelativeTime,
   formatTimeRange,
   formatTimestamp,
+  formatDuration,
+  parseDuration,
   toDate,
   toDateTimeAttribute,
 } from '@/lib/kit/format/date';
@@ -213,12 +218,16 @@ formatTimestamp(created, { seconds: true });
 formatTimeRange(game.startTime, game.endTime, { seconds: true }); // "15:42:07 – 15:45:30 UTC"
 formatRelativeTime(created, Date.now());
 toDate('2024-07-20 15:42:00+00'); // Date, or null when unreadable
+formatDuration(124); // "2:04"; formatDuration(3724) is "1:02:04"
+parseDuration('1:02:04'); // 3724, or null when it isn't a length
 ```
 
 - All of them take `Date | string | number | null | undefined` and print `empty` (an em dash by default) for missing or unreadable input.
 - Strings with no zone (`2024-07-20T15:42:00`) are read as UTC. `new Date()` would read them in the visitor's zone, so always go through `toDate`.
 - Month names are written by hand, not by `Intl`, so output is identical on every engine.
 - `formatRelativeTime` depends on the clock, so the server and the browser disagree. Never print it straight into server-rendered markup; use `RelativeTime`, which handles hydration.
+- `formatDuration(seconds)` writes a length, such as a beatmap's: `m:ss` under an hour, `h:mm:ss` from an hour, fractions of a second dropped, and `empty` for missing or negative input. It is a number that sits in columns, so give it `tabular-nums` outside the kit's numeric cells. `parseDuration` reads the same text (or bare seconds) back, for a length typed into a form, and returns null for anything else.
+- Don't import `formatDuration` or `parseDuration` from `lib/utils/date.ts`; they moved here.
 
 ## Number helpers
 
@@ -289,6 +298,7 @@ import { RatingDelta } from '@/components/kit/format/RatingDelta';
 - `lowerIsBetter`: colour a fall as good, for volatility. The arrow and sign still follow the number.
 - The sign (`+`, a true minus `−`, none for zero) and the arrow carry the direction; colour only reinforces it. The arrow is `aria-hidden`.
 - Colours are tokens: `text-success-foreground` up, `text-destructive-foreground` down, `text-muted-foreground` flat. `formatRatingDelta(value)` and `getDeltaDirection(value)` in `@/lib/kit/format/number` give the text and direction for non-React uses such as chart labels.
+- Line height: the number gives the box its baseline and the arrow is centred beside it, so in running text or a `dd` it sits on the line's baseline and keeps the line's height (a 20px line stays 20px). Don't add `align-middle` or a flex wrapper to level it.
 
 Contrast of the text (WCAG 2, 4.5:1 needed):
 
@@ -314,6 +324,29 @@ Don't:
 - Don't put it in a shadcn tooltip or a TapTooltip (`bg-accent`): in dark mode a fall's red-400 is 3.9:1 there. Show the change on the page, or in a chart tooltip card (`ChartTooltipContent`, on `bg-background`) or a popover.
 
 Gallery anchor: `/admin/design#format-rating-delta`
+
+## Tier names
+
+A tier and its subtier, as the tier icon's tooltip, the leaderboard, the profile and the stats chart write it: the subtier as a roman numeral, I at the top of a tier and III at the bottom.
+
+```ts
+import { formatTierName, type TierName } from '@/lib/kit/format/tier';
+
+formatTierName('Gold', 2); // "Gold II"
+formatTierName('Bronze', 3); // "Bronze III"
+formatTierName('Platinum'); // "Platinum": no subtier, as in a tier legend
+formatTierName('Elite Grandmaster', 1); // "Elite Grandmaster": it has no subtiers
+```
+
+- `subTier` is 1, 2 or 3; anything else, `null` or `undefined` gives the tier alone.
+- Colour the name with `TIER_TEXT_CLASS[tier]` from `@/lib/kit/color/tiers` ([color.md](color.md#tier-colours)).
+- `TierName` is re-exported here, so a page imports the type and the name from one place. Working out a tier from a rating (`getTierFromRating`) still lives in `lib/utils/tierData.ts`.
+
+Don't:
+
+- Don't use `getTierString` from `lib/utils/tierData.ts` or build `${tier} ${numeral}` by hand; use `formatTierName`.
+
+Gallery anchor: `/admin/design#format-tier-name`
 
 ## RulesetName and ruleset names
 

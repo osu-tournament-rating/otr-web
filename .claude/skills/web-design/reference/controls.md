@@ -65,6 +65,7 @@ Props:
 - `pending`: swaps the icon for a spinner, disables the button and sets `aria-busy`. Change the label too ("Saving…").
 - `type`: defaults to `"button"`, so Cancel never submits a form by accident. Pass `type="submit"` on the submit button.
 - `asChild`: draws the button on its child, such as a `Link` or `a`.
+- `wrap`: lets a label that can be longer than a phone is wide wrap onto more lines instead of running out of its container, such as a cascade level's counts in the audit log ("46 matches: 45 verified, 1 rejected"). The size's height becomes a minimum, so a one-line label looks the same, and the label aligns left. Don't hand-write `h-auto whitespace-normal` on a Button. Gallery anchor: `/admin/design#controls-button-wrap`.
 
 Variants:
 
@@ -72,7 +73,7 @@ Variants:
 | --------------------- | ------------------------------- | --------------------------------------------------------------------- |
 | `default`             | Solid blue                      | The one primary action of a form, dialog or page                      |
 | `outline`             | Bordered                        | Secondary actions: Cancel, Back, Clear, a page's second action        |
-| `ghost`               | Text, fills on hover            | Quiet actions inside a panel: Clear all, Show more                    |
+| `ghost`               | Text, fills on hover            | Quiet actions inside a panel: Clear all, a Load more in an opened row |
 | `destructive`         | Red text and border, no fill    | Starts an action that deletes or overwrites data; it opens a confirm  |
 | `destructive-confirm` | Solid red (`destructive-solid`) | Only the final confirm in a dialog (ConfirmDialog already renders it) |
 | `overlay`             | Dark pill, white in both themes | Only on cover art, like the beatmap hero's preview button             |
@@ -519,8 +520,9 @@ Props:
 
 - `children`: the label text, sentence case. It turns red with the field's error, from `FormLabel`.
 - `info`: the explanation behind an InfoButton (its `md` size, the one beside 14px text), which opens on tap, hover and focus. `infoLabel` names it; it defaults to "About {label}".
-- `hint`: muted text on the right.
+- `hint`: muted text on the right. `hintId` gives it an id, so the control can point `aria-describedby` at it, such as a "Required" hint: `hint="Required" hintId={hintId}`, not a hand-made `<span id>` inside `hint`.
 - `htmlFor`: the id of the control it labels, for a field outside a `FormItem`. It then renders the plain `Label` (`FormLabel` only works inside a form field). `invalid` turns it red, as a field error does inside a form.
+- `groupId`: labels a group of controls, such as a `RadioGroup`, that a `<label>` can't point at. The label is plain text with this id, in the same 20px row and text style, and the group takes `aria-labelledby={groupId}`; each option keeps its own `Label`. `invalid` works here too.
 
 ```tsx
 const id = useId();
@@ -534,11 +536,22 @@ const id = useId();
 </Select>
 ```
 
+```tsx
+// The admin home's Priority (app/admin/AdminDashboardClient.tsx).
+const labelId = useId();
+
+<FormFieldLabel groupId={labelId}>Priority</FormFieldLabel>
+<RadioGroup aria-labelledby={labelId} value={priority} onValueChange={…}>
+  …
+</RadioGroup>
+```
+
 The label row is 20px tall with or without the info button or hint, so fields side by side in a FormGrid keep their inputs level.
 
 Don't:
 
-- Don't use `LabelWithTooltip` (`components/ui/LabelWithTooltip.tsx`, a circled "?") or the local `FieldLabel` with `hint` and the hover-only info tooltips in `components/beatmap/BeatmapAdminView.tsx`.
+- Don't use a circled "?" label or a hover-only info tooltip beside a label; use `info`.
+- Don't label a radio group with a bare `<Label id>`; it is 14px tall where every other field label is 20px. Use `groupId`.
 - Don't mix FormFieldLabel and a bare `FormLabel` in one FormGrid row; the bare label is shorter and its input sits 6px higher.
 
 Gallery anchors: `/admin/design#controls-form-field-label`, `/admin/design#controls-form-layout`

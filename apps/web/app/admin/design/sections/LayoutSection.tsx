@@ -686,7 +686,7 @@ export default function LayoutSection() {
         id="layout-abbreviation"
         name="Abbreviation"
         importPath={`${KIT}/Abbreviation`}
-        description="A short form whose full form opens on tap, hover and keyboard focus, and is what screen readers hear. It replaces <abbr title>, which only shows on a mouse hover. Use it for established short forms in labels, such as CS, AR, OD and HP."
+        description="A short form whose full form opens on tap, hover and keyboard focus, and is what screen readers hear. It replaces <abbr title>, which only shows on a mouse hover. Use it for established short forms in labels, such as CS, AR, OD and HP. Its tap target reaches at least 24px around the text without moving it."
       >
         <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-muted-foreground">
           {BEATMAP_ATTRIBUTES.map((attribute) => (

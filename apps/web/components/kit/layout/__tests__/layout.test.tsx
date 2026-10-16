@@ -3,7 +3,6 @@ import { Trophy } from 'lucide-react';
 import type * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import * as BeatmapSection from '@/components/beatmap/BeatmapSection';
 import { Abbreviation } from '@/components/kit/layout/Abbreviation';
 import { DetailHero, HeroMetaItem } from '@/components/kit/layout/DetailHero';
 import { HeroTabs } from '@/components/kit/layout/HeroTabs';
@@ -20,21 +19,12 @@ import { RowList, RowListItem } from '@/components/kit/layout/RowList';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { StatTile, StatTileGrid } from '@/components/kit/layout/StatTile';
 import { Tile } from '@/components/kit/layout/Tile';
-import { Eyebrow, typeScale } from '@/components/kit/layout/Typography';
+import { typeScale } from '@/components/kit/layout/Typography';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ROW_HOVER_TINT, ROW_TITLE_HOVER } from '@/lib/kit/tables/row';
 
 const render = (node: React.ReactNode) =>
   renderToStaticMarkup(<TooltipProvider>{node}</TooltipProvider>);
-
-describe('BeatmapSection', () => {
-  it('re-exports the kit under its old names', () => {
-    expect(BeatmapSection.SectionCard).toBe(Panel);
-    expect(BeatmapSection.SectionHeader).toBe(SectionHeader);
-    expect(BeatmapSection.Tile).toBe(Tile);
-    expect(BeatmapSection.Eyebrow).toBe(Eyebrow);
-  });
-});
 
 describe('Panel', () => {
   it('is a section with the reference surface by default', () => {
@@ -179,6 +169,19 @@ describe('Abbreviation', () => {
     expect(html).toContain('>CS</button>');
     // No hover-only title attribute.
     expect(html).not.toContain('title=');
+  });
+
+  it('has a tap target of at least 24px that moves no text', () => {
+    const html = render(<Abbreviation full="Circle size">CS</Abbreviation>);
+
+    // The trigger stays inline; an absolute ::after, centred on the text,
+    // is 24px tall and 4px wider than the text each side, never under 24px.
+    expect(html).toMatch(/<button [^>]*class="[^"]*\brelative inline\b/);
+    expect(html).toContain('after:absolute');
+    expect(html).toContain('after:h-6');
+    expect(html).toContain('after:min-w-6');
+    expect(html).toContain('after:w-[calc(100%+0.5rem)]');
+    expect(html).not.toMatch(/class="[^"]*\b(p|px|py)-\d/);
   });
 });
 

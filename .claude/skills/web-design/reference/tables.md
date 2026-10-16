@@ -34,7 +34,7 @@ Every value comes from the beatmap tables, which are the reference. Components l
 | Phones           | below tablet width the table becomes PhoneRows; nothing scrolls sideways             | a sideways-scrolling table, a forced `min-w-[44rem]`   |
 | Phone sorting    | `phoneSort` puts a SortControl on the headers' sort state above the phone rows       | a sort that disappears with the headers on a phone     |
 | Searchable lists | numbered pages in the panel footer with "1–50 of 8,412"                              | pages under the panel, infinite scroll, a silent cap   |
-| Activity feeds   | LoadMore                                                                             | "Show more (36 more)", numbered pages                  |
+| Activity feeds   | LoadMore ("Show more" for a short profile list shown in part)                        | "Show more (36 more)", numbered pages                  |
 | Sorting          | sortable headers and the toolbar's sort control share one `{ key, direction }` state | a header sort that disagrees with the dropdown         |
 
 ## DataTable
@@ -242,7 +242,7 @@ import { EntityLink } from '@/components/kit/tables/EntityLink';
 <EntityLink href={`/players/${player.id}`} leading={<OsuAvatar osuId={player.osuId} username={player.username} size={24} />}>
   {player.username}
 </EntityLink>
-<CountryFlag country={player.country} />
+<CountryFlag code={player.country} name={countryName} />
 
 <EntityLink href={`/tournaments/${tournament.id}`}>{tournament.name}</EntityLink>
 
@@ -263,7 +263,8 @@ Props that matter:
 - `href`, `children` (the name).
 - `leading`: the avatar (24px in tables, 32px in rows), cover or logo. It is `aria-hidden`; the name alone names the link.
 - `wrap`: the name wraps onto more lines instead of truncating, for names outside table rows (a hero's meta, a dialog, a tile). Table cells and phone rows keep the default truncation.
-- `variant="inline"`: a name inside running text. It is a plain inline link on the sentence's baseline that wraps like the words around it, in plain weight and the sentence's own colour, with a faint underline that turns blue with the text on hover. Without the underline a plain-weight name in a sentence would not read as a link.
+- `variant="inline"`: a name inside running text. It is a plain inline link on the sentence's baseline that wraps like the words around it, in plain weight and the sentence's own colour, with a faint underline that turns blue with the text on hover. Without the underline a plain-weight name in a sentence would not read as a link. Its `leading` (such as the audit log's 20px actor avatar) sits in a box one line tall (`h-lh`), centred, so an avatar up to the line's height neither grows the line nor sits lower than an icon beside the sentence.
+- Line height: the default variant is an `inline-flex` box aligned to the top of its line (`align-top`), so on a line of its own, such as a cell's second line under a type label, it adds nothing to the line's height and the name keeps the text's baseline. A two-line cell is then exactly as tall as TableSkeleton's `cellHeight="h-9"`; no flex-column wrapper is needed.
 - `prefetch`: off by default, because a long list would prefetch every row.
 - `title`: pass the full name when it may truncate.
 
@@ -274,10 +275,10 @@ Do:
 
 Don't:
 
-- Don't link the avatar and the name separately, or leave the avatar out of the link (`app/leaderboard/columns.tsx` and `components/filtering/FilteringResultsTable.tsx` link only the name today).
-- Don't colour names `text-primary` at rest (`app/admin/reports/AdminReportsClient.tsx` entity links).
+- Don't link the avatar and the name separately, or leave the avatar out of the link.
+- Don't colour names `text-primary` at rest.
 - Don't use it inside a row that opens as a whole; links can't nest. Mark the plain name with `data-row-title` there.
-- Don't put the default variant in a sentence: it is medium weight and an `inline-flex` box that truncates. Don't hand-style a sentence's links either (the audit event rows); use `variant="inline"`.
+- Don't put the default variant in a sentence: it is medium weight and an `inline-flex` box that truncates. Don't hand-style a sentence's links either; use `variant="inline"`.
 
 Gallery anchor: `/admin/design#tables-entity-link`
 
@@ -518,7 +519,7 @@ Gallery anchor: `/admin/design#tables-pagination`
 
 ## LoadMore
 
-The footer of an activity feed: how many entries are showing and a "Load more" button that appends the next batch, then a note once everything is showing. Only for feeds (the audit logs and an entity's audit history); searchable lists use PaginationFooter.
+The footer of an activity feed: how many entries are showing and a "Load more" button that appends the next batch, then a note once everything is showing. It is for feeds (the audit logs and an entity's audit history) and for a short list that shows its first rows and the rest on request, with `label="Show more"` (the profile's tournament history and pooled beatmaps, which are not searchable). Searchable lists use PaginationFooter.
 
 ```tsx
 import { LoadMore } from '@/components/kit/tables/LoadMore';
@@ -535,15 +536,15 @@ import { LoadMore } from '@/components/kit/tables/LoadMore';
 
 - Readout: "Showing 50 of 1,214", "Showing 50" when the total is unknown, "Showing all 214" at the end.
 - `pageSize`: the size of one batch. When the first batch already holds everything (`hasMore` is false and `shownCount` is at most `pageSize`), LoadMore renders nothing, so a feed of 12 events has no "Showing all 12" footer. Pass it whenever the feed knows its batch size.
-- `label`: the button's text, "Load more" by default. The readout already says how many entries there are, so keep counts out of the label.
+- `label`: the button's text, "Load more" by default; "Show more" for a profile list whose rows are all loaded and shown a few at a time. The readout already says how many entries there are, so keep counts out of the label.
 - `loading` disables the button and shows a spinner (the kit Button's `pending`, an outline `sm` Button); the label stays as it is.
 - It announces the new count politely to screen readers.
 - A failed batch keeps the loaded rows and shows `SectionError` (`@/components/error/SectionError`) at `size="inline"` in a `border-t px-4 py-4` strip under them, with "Try again", not a custom row.
 
 Don't:
 
-- Don't write "Show more (36 more)" (`components/player/PlayerTournamentsList.tsx`, `components/player/PlayerBeatmapsList.tsx`); those lists are not feeds, so they page or show in full.
-- Don't hand-build the button (`components/audit/AuditEventFeed.tsx`).
+- Don't put the count in the label ("Show more (36 more)"); the readout says it.
+- Don't hand-build the button or the footer.
 
 Gallery anchor: `/admin/design#tables-load-more`
 

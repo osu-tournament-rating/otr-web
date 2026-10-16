@@ -425,9 +425,11 @@ Props:
 
 It takes the colour and size of the text around it, with a dotted underline as the cue. Use it for established short forms in labels: stat tiles, table headers, filter labels. Spell out anything else.
 
+Its tap target is at least 24px square, as InfoButton's is: an absolute `::after`, centred on the text, 24px tall and 4px past the text on each side (never under 24px wide). The text itself has no padding, so it doesn't move or change the line's height. Leave about 4px between it and the next control, so the two hit areas don't overlap.
+
 Don't:
 
-- Don't use `<abbr title>` or a hover-only tooltip for a full name (the beatmap attributes in `components/beatmap/BeatmapOverviewCard.tsx` today).
+- Don't use `<abbr title>` or a hover-only tooltip for a full name.
 - Don't put it inside another button or link.
 
 Gallery anchors: `/admin/design#layout-abbreviation`, `/admin/design#layout-stat-tile-inline`

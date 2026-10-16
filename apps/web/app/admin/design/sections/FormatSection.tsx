@@ -15,6 +15,7 @@ import { TimeRangeText } from '@/components/kit/format/TimeRangeText';
 import { Timestamp } from '@/components/kit/format/Timestamp';
 import { StatTile, StatTileGrid } from '@/components/kit/layout/StatTile';
 import { getCountryOptions } from '@/lib/kit/format/country';
+import { formatDuration } from '@/lib/kit/format/date';
 import {
   FIELD_NAMES,
   type FieldName,
@@ -33,9 +34,37 @@ import {
   formatYear,
 } from '@/lib/kit/format/number';
 import { RATED_RULESETS } from '@/lib/kit/format/ruleset';
+import { formatTierName, type TierName } from '@/lib/kit/format/tier';
 
 import { GallerySection, Specimen } from '../gallery';
 import { CountryComboboxDemo } from './CountryComboboxDemo';
+
+const DURATIONS: Array<{
+  label: string;
+  seconds: number | null;
+  hint?: string;
+}> = [
+  { label: 'Beatmap length', seconds: 124, hint: 'formatDuration(124)' },
+  { label: 'An hour or more', seconds: 3724, hint: 'formatDuration(3724)' },
+  { label: 'Fractions', seconds: 124.9, hint: 'Dropped, not rounded' },
+  { label: 'No length', seconds: null, hint: 'An em dash' },
+];
+
+const TIER_NAMES: Array<{
+  label: string;
+  tier: TierName;
+  subTier?: number;
+  hint?: string;
+}> = [
+  { label: 'Top of a tier', tier: 'Gold', subTier: 1 },
+  { label: 'Bottom of a tier', tier: 'Diamond', subTier: 3 },
+  {
+    label: 'No subtier',
+    tier: 'Platinum',
+    hint: 'formatTierName(tier), for a tier legend',
+  },
+  { label: 'Elite Grandmaster', tier: 'Elite Grandmaster', subTier: 1 },
+];
 
 /** Fixed "now" for the relative times, so the gallery never changes. */
 const NOW = '2024-08-04T18:00:00Z';
@@ -372,6 +401,38 @@ export default function FormatSection() {
           {NUMBERS.map((row) => (
             <Example key={row.label} label={row.label} hint={row.hint}>
               {row.value}
+            </Example>
+          ))}
+        </Examples>
+      </Specimen>
+
+      <Specimen
+        id="format-duration"
+        name="formatDuration and parseDuration"
+        importPath="@/lib/kit/format/date"
+        description="A length in seconds, such as a beatmap's: minutes and seconds, with hours from an hour. parseDuration reads the same text back, for a length typed into a form."
+      >
+        <Examples>
+          {DURATIONS.map((row) => (
+            <Example key={row.label} label={row.label} hint={row.hint}>
+              <span className="tabular-nums">
+                {formatDuration(row.seconds)}
+              </span>
+            </Example>
+          ))}
+        </Examples>
+      </Specimen>
+
+      <Specimen
+        id="format-tier-name"
+        name="formatTierName"
+        importPath="@/lib/kit/format/tier"
+        description="A tier and its subtier as a roman numeral, I at the top of a tier and III at the bottom. Without a subtier, the tier alone, as on a chart's tier legend. Elite Grandmaster has no subtiers."
+      >
+        <Examples>
+          {TIER_NAMES.map((row) => (
+            <Example key={row.label} label={row.label} hint={row.hint}>
+              {formatTierName(row.tier, row.subTier)}
             </Example>
           ))}
         </Examples>

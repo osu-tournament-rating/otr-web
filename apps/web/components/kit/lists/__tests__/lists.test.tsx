@@ -117,6 +117,35 @@ describe('ListToolbar', () => {
     expect(html).toMatch(/class="order-4 [^"]*basis-full[^"]*">.*sort-slot/);
   });
 
+  it('keeps Filters beside a leading control when nothing else shares the strip', () => {
+    const html = render(
+      <ListToolbar
+        label="Filter audit events"
+        leading={<span>leading-slot</span>}
+        filters={<span>filters-slot</span>}
+      />
+    );
+    // As wide as the button and pushed right, so it shares the leading
+    // control's line on a phone until the two don't fit.
+    expect(html).toMatch(
+      /class="order-4 [^"]*ml-auto flex-none basis-auto[^"]*">.*filters-slot/
+    );
+    expect(html).not.toContain('basis-48');
+
+    // A sort still grows from 192px, as before.
+    const sorted = render(
+      <ListToolbar
+        label="Sort matches"
+        leading={<span>leading-slot</span>}
+        sort={<span>sort-slot</span>}
+        filters={<span>filters-slot</span>}
+      />
+    );
+    expect(sorted).toMatch(
+      /class="order-4 [^"]*flex-1 basis-48[^"]*">.*sort-slot/
+    );
+  });
+
   it('keeps the count on the scope line and drops ruleset chips below on phones', () => {
     const html = render(
       <ListToolbar

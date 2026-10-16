@@ -352,6 +352,35 @@ describe('EntityLink', () => {
     expect(html).not.toContain('text-foreground');
     expect(html).toContain('>Corsace Open 2025</a>');
   });
+
+  it('keeps an inline avatar inside the sentence line', () => {
+    const html = render(
+      <EntityLink
+        href="/players/1"
+        variant="inline"
+        leading={<span role="img" aria-label="apricot's avatar" />}
+      >
+        apricot
+      </EntityLink>
+    );
+
+    // One line box tall, at its top, with the avatar centred in it: a 20px
+    // avatar in a 20px line adds no height (align-middle added 1.17px).
+    expect(html).toContain(
+      '<span aria-hidden="true" class="mr-1.5 inline-flex h-lh items-center align-top">'
+    );
+    expect(html).not.toContain('align-middle');
+  });
+
+  it('adds no height to a line of its own', () => {
+    const html = render(<EntityLink href="/matches/1">Match 1</EntityLink>);
+
+    // align-top, not align-middle, so a cell's second line stays 20px.
+    expect(html).toMatch(
+      /<a [^>]*class="[^"]*\binline-flex\b[^"]*\balign-top\b/
+    );
+    expect(html).not.toContain('align-middle');
+  });
 });
 
 describe('ViewButton', () => {

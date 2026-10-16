@@ -164,38 +164,39 @@ Building blocks for loading screens, shaped like the kit's panels, section heade
 
 ```tsx
 import {
+  ChartPlotSkeleton,
+  HeroTabsSkeleton,
+  ListToolbarSkeleton,
+  LoadMoreSkeleton,
   PanelSkeleton,
   PhoneRowListSkeleton,
   RowListSkeleton,
+  RulesetSwitchSkeleton,
   SectionHeaderSkeleton,
+  SkeletonBlock,
   SkeletonText,
   StatTileGridSkeleton,
   TableSkeleton,
 } from '@/components/kit/feedback/Skeletons';
 
-// app/reports/loading.tsx
-export default function MyReportsLoading() {
+// app/reports/MyReportsFrame.tsx: the page and app/reports/loading.tsx share
+// the frame, so the loading screen keeps the real header.
+export function MyReportsPanelSkeleton() {
   return (
-    <PageFrame>
-      <PageHeader
-        icon={Flag}
-        title="Your reports"
-        description="Track the status of data issues you've reported"
+    <PanelSkeleton label="Loading reports">
+      <SectionHeaderSkeleton title="Reports" />
+      <TableSkeleton
+        columns={MY_REPORTS_SKELETON_COLUMNS}
+        cellHeight="h-9"
+        phoneRows={
+          <PhoneRowListSkeleton
+            description="badge"
+            value="button"
+            align="start"
+          />
+        }
       />
-      <PanelSkeleton label="Loading reports">
-        <SectionHeaderSkeleton icon={Flag} title="Reports" />
-        <TableSkeleton
-          columns={[
-            { label: 'Type', width: 'w-28' },
-            { label: 'Entity' },
-            { label: 'Reason', showFrom: 'lg' },
-            { label: 'Status', width: 'w-32' },
-            { label: 'Submitted', width: 'w-32', align: 'end' },
-          ]}
-          phoneRows={<PhoneRowListSkeleton />}
-        />
-      </PanelSkeleton>
-    </PageFrame>
+    </PanelSkeleton>
   );
 }
 ```
@@ -207,8 +208,13 @@ The parts:
 - `StatTileGridSkeleton`: the real StatTileGrid and StatTiles with their static `labels`, bars for the values, and `sub` for the line under them. Same `columns` as the loaded grid.
 - `TableSkeleton`: a real `DataTable` (fixed layout, hidden from assistive tech) with its tinted header strip and `rows` of bars. `columns` is a count, or the loaded table's columns, in DataTable's terms: `label` (the real header), `width` (a width class; columns without one share the rest), `align: 'end'` for numbers, `showFrom` for a column the loaded table hides below a breakpoint. `cellHeight` is the height of the tallest thing in a loaded cell and so sets the row height: `h-6` (default) for a 24px avatar or badge, as in the beatmap tables; `h-5` plain text; `h-8` a 32px avatar; `h-9` a two-line cell. `phoneRows` works as on DataTable. `className` goes on the table's wrapper.
 - `PhoneRowListSkeleton`: the real PhoneRowList and PhoneRows, for `phoneRows`. Match the loaded rows' parts, so each row keeps its height: `rank`; `avatar` (24px, inside the name) or `leading={32}` (a 32px avatar beside the name and its line); `description` (on by default; `"badge"` for a 20px status badge before the text, as the reports' phone rows have); `value` (on by default: the key number; `"button"` for a 32px button such as View, `"badge"` for a 20px badge); `valueDescription`; and the loaded rows' `align`.
-- `ListToolbarSkeleton`: the real ListToolbar strip with a block for each control, for a list's loading screen. Turn on the loaded toolbar's slots: `search`, `sort`, `filters` and `count` (booleans), `rulesets` (how many chips, 6 for every rated ruleset with All; each block is as wide as its loaded chip, so they wrap onto as many lines), `view` (how many toggles), and `scope` and `leading` (a width class for their block, such as `scope="w-64"`). The blocks land on the rows the loaded toolbar uses, at every width.
-- `RowListSkeleton`: the real RowList with bars for the title, `description` and `trailing` number, and a `leading` avatar, `square`, `cover` or `none`. For lists built from RowList, not for tables (their phone rows are PhoneRows, which are shorter).
+- `ListToolbarSkeleton`: the real ListToolbar strip with a block for each control, for a list's loading screen. Turn on the loaded toolbar's slots: `search`, `sort`, `filters` and `count` (booleans), `rulesets` (how many chips: 6 for RulesetChips with every rated ruleset and All, 5 for a RulesetSwitch; each block is as wide as its loaded chip, so they wrap onto as many lines), `rulesetsAll={false}` for a RulesetSwitch, which has no All chip (the leaderboard: `rulesets={5} rulesetsAll={false}`), `view` (how many toggles), and `scope` and `leading` (a width class for their block, such as `scope="w-64"`). Give `scope` a responsive width when the loaded control changes width, such as the admin report queue's `scope="w-74 sm:w-80"` (ScopeSwitch buttons are narrower below `sm`). The blocks land on the rows the loaded toolbar uses, at every width.
+- `RulesetSwitchSkeleton`: a RulesetSwitch outside a toolbar, such as the stats page's rating distribution strip: one 32px block per chip (`count`, five by default) at the loaded chip's width. Give it the strip's padding and border with `className`.
+- `ChartPlotSkeleton`: a chart's plot area, a full-width block as tall as the loaded plot (`className="h-60"`), under a real SectionHeaderSkeleton inside a PanelSkeleton with children. Use it instead of a childless PanelSkeleton when the header is static, so the real title shows.
+- `SkeletonBlock`: a plain block for a control the other parts don't cover, such as a 40px select or a 32px button. Give it the control's height, width and corners. For a line of text use SkeletonText.
+- `RowListSkeleton`: the real RowList with bars for the title, `description` and `trailing` number, and a `leading` avatar, `square`, `cover` or `none`. For lists built from RowList, not for tables (their phone rows are PhoneRows, which are shorter). `meta` adds a second muted 20px line under the description, 6px below it (`"badge"` starts it with a 20px badge, as the profile's pooled beatmap metrics). `stats` (a count) draws small stats, a 12px label over a 14px value, that sit under the text on phones and on the right from `sm`, as rows that stack on phones do (the profile's tournament history: `leading="none" stats={2} statsAction`); `statsAction` adds a 32px button after them. A stat whose value is a RatingDelta is 2px taller when loaded (RatingDelta's line is 22px).
+- `HeroTabsSkeleton`: a hero tab strip of 44px tabs, with the real `labels` when they are static or `tabs` (a count) of bars when they follow the data. Inside a panel, as an audit history's tabs, pass `className="border-b"` like the loaded HeroTabs; not a plain `h-11` bar.
+- `LoadMoreSkeleton`: LoadMore's 57px tinted footer, with a bar for the readout and a block for the button. Put it after the rows when the loaded list shows a LoadMore on first load, such as the profile's "Show more".
 - `SkeletonText`: an inline bar that keeps the height of the line it stands in for. Use it inside a real component, such as a PageHeader description whose text is not static: `description={<SkeletonText className="w-72" />}`. Inside a flex container wrap it in a `<span>`, or the line shrinks to the bar's 16px.
 
 Do:
@@ -220,14 +226,15 @@ Do:
 
 Don't:
 
-- Don't draw a whole panel as one grey block (`Skeleton className="h-[23rem] rounded-xl"` in `app/beatmaps/[id]/loading.tsx`); use PanelSkeleton at that height so the border and header strip show.
-- Don't put a spinner and "Loading…" text inside a panel (`app/reports/MyReportsClient.tsx`, `app/admin/reports/AdminReportsClient.tsx`, `components/audit/CascadeContextBanner.tsx`, `components/audit/AuditEventCard.tsx`).
-- Don't copy old page chrome into a skeleton: `Card`, blue 24px section icons and Title Case titles in `app/leaderboard/loading.tsx`, `app/admin/reports/loading.tsx` and `components/player/PlayerSectionSkeletons.tsx`.
+- Don't draw a whole panel as one grey block (a bare `Skeleton className="h-[23rem] rounded-xl"`); use PanelSkeleton at that height so the border and header strip show.
+- Don't put a spinner and "Loading…" text inside a panel.
+- Don't copy old page chrome into a skeleton: `Card`, blue 24px section icons or Title Case titles.
+- Don't keep a page's own copy of the ruleset chip widths or a hand-made plot block; use RulesetSwitchSkeleton (or `rulesetsAll={false}` in a toolbar) and ChartPlotSkeleton. `app/stats/loading.tsx` still has both (`RULESET_CHIP_WIDTHS` and `PlotSkeleton`).
 - Don't use random widths; server and client must render the same markup.
 
 The site-wide spinner in `app/loading.tsx` stays for routes without a page-shaped skeleton.
 
-Gallery anchors: `/admin/design#feedback-skeleton-panel` (with SectionHeaderSkeleton's info button and meta width), `/admin/design#feedback-skeleton-table` (TableSkeleton and PhoneRowListSkeleton), `/admin/design#feedback-skeleton-toolbar`, `/admin/design#feedback-skeleton-rows`
+Gallery anchors: `/admin/design#feedback-skeleton-panel` (with SectionHeaderSkeleton's info button and meta width), `/admin/design#feedback-skeleton-table` (TableSkeleton and PhoneRowListSkeleton), `/admin/design#feedback-skeleton-toolbar` (RulesetChips and RulesetSwitch lists), `/admin/design#feedback-skeleton-tabs` (HeroTabsSkeleton), `/admin/design#feedback-skeleton-chart` (ChartPlotSkeleton and RulesetSwitchSkeleton), `/admin/design#feedback-skeleton-rows` (with stacked rows and LoadMoreSkeleton)
 
 ## StatusPage
 

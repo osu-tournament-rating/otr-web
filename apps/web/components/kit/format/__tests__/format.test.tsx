@@ -138,6 +138,18 @@ describe('RatingDelta', () => {
     const html = render(<RatingDelta value={20} />);
     expect(html).not.toMatch(/\bbg-|rounded/);
   });
+
+  it('sits on the text baseline without growing the line', () => {
+    const html = render(<RatingDelta value={20} />);
+
+    // The number gives the box its baseline; the arrow is centred apart
+    // from it. With items-center the arrow's bottom was the baseline.
+    expect(html).toMatch(
+      /<span [^>]*class="[^"]*\binline-flex items-baseline\b/
+    );
+    expect(html).not.toContain('items-center');
+    expect(html).toMatch(/<svg [^>]*class="[^"]*\bself-center\b/);
+  });
 });
 
 describe('AuditFieldChange', () => {

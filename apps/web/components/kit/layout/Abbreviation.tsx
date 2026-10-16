@@ -8,7 +8,8 @@ import { cn } from '@/lib/utils';
  * hover and keyboard focus, and is what screen readers hear. It replaces
  * `<abbr title>`, whose title only shows on a mouse hover. Use it in labels
  * where the short form is the established name: stat tiles, table headers,
- * filter labels.
+ * filter labels. Its tap target is at least 24px square, past the text, so
+ * leave 4px between it and the next control.
  */
 export function Abbreviation({
   full,
@@ -31,7 +32,10 @@ export function Abbreviation({
       triggerAriaLabel={full}
       triggerClassName={cn(
         // Sits in the line like text; the dotted underline is the cue.
-        'inline w-auto underline decoration-muted-foreground/60 decoration-dotted underline-offset-2',
+        'relative inline w-auto underline decoration-muted-foreground/60 decoration-dotted underline-offset-2',
+        // Widens the hit area to at least 24px each way, 4px past the text
+        // on either side, without moving the text, as InfoButton does.
+        'after:absolute after:top-1/2 after:left-1/2 after:h-6 after:w-[calc(100%+0.5rem)] after:min-w-6 after:-translate-1/2',
         className
       )}
     >

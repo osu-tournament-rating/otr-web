@@ -8,7 +8,10 @@ import { cn } from '@/lib/utils';
 /**
  * The footer of an activity feed (audit logs, an entity's audit history):
  * how many entries are showing and a "Load more" button that appends the
- * next batch. Searchable lists page with PaginationFooter instead.
+ * next batch. A short list that shows its first few rows and the rest on
+ * request (the profile's tournament history and pooled beatmaps) uses it
+ * too, with `label="Show more"`. Searchable lists page with
+ * PaginationFooter instead.
  */
 export function LoadMore({
   onLoadMore,

@@ -30,13 +30,15 @@ export default function LeaderboardLoading() {
       />
       <Panel as="div" role="status" aria-label="Loading leaderboard">
         {/* The scope block stands in for All / Friends, which only
-            signed-in visitors see. */}
+            signed-in visitors see. The rulesets are a RulesetSwitch, so
+            there is no All chip. */}
         <ListToolbarSkeleton
           search
           sort
           filters
           scope="w-36"
           rulesets={5}
+          rulesetsAll={false}
           count
         />
         <TableSkeleton

@@ -3,9 +3,11 @@ import { describe, expect, it } from 'bun:test';
 import {
   formatDate,
   formatDateRange,
+  formatDuration,
   formatRelativeTime,
   formatTimeRange,
   formatTimestamp,
+  parseDuration,
   toDate,
   toDateTimeAttribute,
 } from '../date';
@@ -294,5 +296,63 @@ describe('formatTimeRange', () => {
   it('prints the empty text when both ends are missing or unreadable', () => {
     expect(formatTimeRange(null, 'not a date')).toBe(EM_DASH);
     expect(formatTimeRange(null, null, { empty: 'Unknown' })).toBe('Unknown');
+  });
+});
+
+describe('formatDuration', () => {
+  it('writes minutes and seconds under an hour', () => {
+    expect(formatDuration(0)).toBe('0:00');
+    expect(formatDuration(7)).toBe('0:07');
+    expect(formatDuration(124)).toBe('2:04');
+    expect(formatDuration(3599)).toBe('59:59');
+  });
+
+  it('adds hours from an hour', () => {
+    expect(formatDuration(3600)).toBe('1:00:00');
+    expect(formatDuration(3724)).toBe('1:02:04');
+  });
+
+  it('drops fractions of a second', () => {
+    expect(formatDuration(124.9)).toBe('2:04');
+    expect(formatDuration(3724.5)).toBe('1:02:04');
+  });
+
+  it('prints the empty text for missing, negative or unreadable input', () => {
+    expect(formatDuration(null)).toBe(EM_DASH);
+    expect(formatDuration(undefined)).toBe(EM_DASH);
+    expect(formatDuration(Number.NaN)).toBe(EM_DASH);
+    expect(formatDuration(-5)).toBe(EM_DASH);
+    expect(formatDuration(null, { empty: 'Unknown' })).toBe('Unknown');
+  });
+});
+
+describe('parseDuration', () => {
+  it('reads m:ss, h:mm:ss and bare seconds', () => {
+    expect(parseDuration('3:42')).toBe(222);
+    expect(parseDuration('0:07')).toBe(7);
+    expect(parseDuration('1:23:45')).toBe(5025);
+    expect(parseDuration('222')).toBe(222);
+    expect(parseDuration('  3:42 ')).toBe(222);
+  });
+
+  it('rejects anything that is not a duration', () => {
+    for (const input of [
+      '',
+      'abc',
+      '-1',
+      '3:60',
+      '3:',
+      ':42',
+      '1.5',
+      '3:4:5:6',
+    ]) {
+      expect(parseDuration(input)).toBeNull();
+    }
+  });
+
+  it('round-trips through formatDuration', () => {
+    for (const seconds of [0, 7, 222, 720, 3600, 5025]) {
+      expect(parseDuration(formatDuration(seconds))).toBe(seconds);
+    }
   });
 });

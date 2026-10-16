@@ -5,6 +5,7 @@ import {
   AlertCircle,
   ArrowLeft,
   ChartNoAxesColumn,
+  ChevronDown,
   ClipboardList,
   Clock,
   Compass,
@@ -34,16 +35,22 @@ import { Callout } from '@/components/kit/feedback/Callout';
 import { CalloutChip } from '@/components/kit/feedback/CalloutChip';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import {
+  ChartPlotSkeleton,
+  HeroTabsSkeleton,
   ListToolbarSkeleton,
+  LoadMoreSkeleton,
   PanelSkeleton,
   PhoneRowListSkeleton,
   RowListSkeleton,
+  RulesetSwitchSkeleton,
   SectionHeaderSkeleton,
   StatTileGridSkeleton,
   TableSkeleton,
   type TableSkeletonColumn,
 } from '@/components/kit/feedback/Skeletons';
 import { StatusPage } from '@/components/kit/feedback/StatusPage';
+import { RatingDelta } from '@/components/kit/format/RatingDelta';
+import { HeroTabs } from '@/components/kit/layout/HeroTabs';
 import { Panel, PanelBody } from '@/components/kit/layout/Panel';
 import { RowList, RowListItem } from '@/components/kit/layout/RowList';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
@@ -59,20 +66,24 @@ import {
   DataTableRow,
 } from '@/components/kit/tables/DataTable';
 import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { LoadMore } from '@/components/kit/tables/LoadMore';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { ActiveFilterChips } from '@/components/kit/lists/ActiveFilterChips';
 import { FilterButton } from '@/components/kit/lists/FilterButton';
 import { ListToolbar } from '@/components/kit/lists/ListToolbar';
 import { RulesetChips } from '@/components/kit/lists/RulesetChips';
+import { RulesetSwitch } from '@/components/kit/lists/RulesetSwitch';
 import { ScopeSwitch } from '@/components/kit/lists/ScopeSwitch';
 import { SearchField } from '@/components/kit/lists/SearchField';
 import { SortControl } from '@/components/kit/lists/SortControl';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { seriesColor } from '@/lib/kit/color/categorical';
 import { formatLobbySize } from '@/lib/kit/format/fields';
 import { formatCountOf } from '@/lib/kit/format/number';
 import { formatChoiceFilterLabel } from '@/lib/kit/lists/filters';
+import { cn } from '@/lib/utils';
 
 const KIT = '@/components/kit/feedback';
 
@@ -515,6 +526,252 @@ function ToolbarSkeletonDemo() {
   );
 }
 
+/**
+ * A RulesetSwitch list, as on the leaderboard: no All chip, so the blocks
+ * take each ruleset's width (`rulesetsAll={false}`).
+ */
+function SwitchToolbarSkeletonDemo() {
+  const [loading, setLoading] = useState(true);
+  const [ruleset, setRuleset] = useState<Ruleset>(Ruleset.Osu);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <LoadToggle loading={loading} onChange={setLoading} />
+      {loading ? (
+        <PanelSkeleton label="Loading leaderboard">
+          <ListToolbarSkeleton search rulesets={5} rulesetsAll={false} count />
+          <RowListSkeleton rows={2} />
+        </PanelSkeleton>
+      ) : (
+        <Panel>
+          <ListToolbar
+            label="Search and filter players"
+            search={
+              <SearchField
+                label="Search players"
+                placeholder="Search by username"
+                value=""
+                onSearch={() => {}}
+              />
+            }
+            rulesets={
+              <RulesetSwitch value={ruleset} onValueChange={setRuleset} />
+            }
+            count={formatCountOf(12_483, 'player')}
+          />
+          <RowList>
+            {PLAYERS.slice(0, 2).map((player) => (
+              <RowListItem
+                key={player.name}
+                leading={<PlayerAvatar name={player.name} />}
+                title={player.name}
+                description={player.country}
+                trailing={
+                  <span className="font-semibold">{player.rating}</span>
+                }
+              />
+            ))}
+          </RowList>
+        </Panel>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A chart panel with a RulesetSwitch strip, as on the stats page: the real
+ * header, RulesetSwitchSkeleton, and ChartPlotSkeleton as tall as the plot.
+ */
+function ChartSkeletonDemo() {
+  const [loading, setLoading] = useState(true);
+  const [ruleset, setRuleset] = useState<Ruleset>(Ruleset.Osu);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <LoadToggle loading={loading} onChange={setLoading} />
+      {loading ? (
+        <PanelSkeleton label="Loading rating distribution">
+          <SectionHeaderSkeleton
+            icon={ChartNoAxesColumn}
+            title="Rating distribution"
+            meta="w-22"
+          />
+          <RulesetSwitchSkeleton className="border-b px-4 py-3" />
+          <div className="p-4">
+            <ChartPlotSkeleton className="h-40" />
+          </div>
+        </PanelSkeleton>
+      ) : (
+        <Panel>
+          <SectionHeader
+            icon={ChartNoAxesColumn}
+            title="Rating distribution"
+            meta={formatCountOf(8_412, 'player')}
+          />
+          <div className="border-b px-4 py-3">
+            <RulesetSwitch value={ruleset} onValueChange={setRuleset} />
+          </div>
+          <div className="p-4">
+            <div className="flex h-40 items-end gap-1">
+              {[18, 34, 62, 88, 100, 74, 46, 28, 14, 6].map((height) => (
+                <span
+                  key={height}
+                  className="flex-1 rounded-t-sm"
+                  style={{
+                    height: `${height}%`,
+                    backgroundColor: seriesColor(0),
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </Panel>
+      )}
+    </div>
+  );
+}
+
+/**
+ * An audit history's panel, whose tabs sit at its top: HeroTabsSkeleton
+ * with the real labels, then the toolbar.
+ */
+function TabsSkeletonDemo() {
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <LoadToggle loading={loading} onChange={setLoading} />
+      {loading ? (
+        <PanelSkeleton label="Loading audit history">
+          <HeroTabsSkeleton
+            labels={['Tournament', 'Matches']}
+            className="border-b"
+          />
+          <ListToolbarSkeleton leading="w-44" count />
+        </PanelSkeleton>
+      ) : (
+        <Panel>
+          <HeroTabs
+            aria-label="Audit history views"
+            value="tournament"
+            className="border-b"
+            items={[
+              {
+                value: 'tournament',
+                label: 'Tournament',
+                href: '#feedback-skeleton-tabs',
+              },
+              {
+                value: 'matches',
+                label: 'Matches',
+                href: '#feedback-skeleton-tabs',
+              },
+            ]}
+          />
+          <ListToolbar
+            label="Filter audit events"
+            leading={
+              <span className="flex h-10 items-center text-sm font-medium">
+                Show system events
+              </span>
+            }
+            count={formatCountOf(214, 'event')}
+          />
+        </Panel>
+      )}
+    </div>
+  );
+}
+
+const HISTORY = [
+  { name: 'Corsace Open 2025', record: '5–2', change: 18.7 },
+  { name: 'Oceania Taiko Cup 2026', record: '3–3', change: -4.2 },
+];
+
+/**
+ * Rows that stack on phones, as the profile's tournament history: the name
+ * and a detail line, then small stats and a toggle, under the text on a
+ * phone and on the right from `sm`; a "Show more" footer under them.
+ */
+function StackedRowsSkeletonDemo() {
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <LoadToggle loading={loading} onChange={setLoading} />
+      {loading ? (
+        <PanelSkeleton label="Loading tournament history">
+          <SectionHeaderSkeleton icon={Trophy} title="Tournament history" />
+          <RowListSkeleton
+            rows={HISTORY.length}
+            leading="none"
+            stats={2}
+            statsAction
+          />
+          <LoadMoreSkeleton />
+        </PanelSkeleton>
+      ) : (
+        <Panel>
+          <SectionHeader
+            icon={Trophy}
+            title="Tournament history"
+            meta={formatCountOf(14, 'tournament')}
+          />
+          <RowList>
+            {HISTORY.map((tournament) => (
+              <RowListItem key={tournament.name}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                  <div className="min-w-0 flex-1">
+                    <h3 className={typeScale.rowTitle}>
+                      <EntityLink href="#feedback-skeleton-rows">
+                        {tournament.name}
+                      </EntityLink>
+                    </h3>
+                    <p className={cn('mt-1', typeScale.bodyMuted)}>
+                      osu! · 4v4 · 2025
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 sm:justify-end">
+                    <dl className="flex items-center gap-4">
+                      <div className="min-w-14 sm:text-right">
+                        <dt className="text-xs text-muted-foreground">
+                          Matches
+                        </dt>
+                        <dd className="text-sm font-semibold tabular-nums">
+                          {tournament.record}
+                        </dd>
+                      </div>
+                      <div className="min-w-14 sm:text-right">
+                        <dt className="text-xs text-muted-foreground">
+                          Rating
+                        </dt>
+                        <dd className="text-sm font-semibold">
+                          <RatingDelta value={tournament.change} />
+                        </dd>
+                      </div>
+                    </dl>
+                    <Button variant="ghost" size="sm" className="gap-1">
+                      Matches
+                      <ChevronDown aria-hidden />
+                    </Button>
+                  </div>
+                </div>
+              </RowListItem>
+            ))}
+          </RowList>
+          <LoadMore
+            label="Show more"
+            hasMore
+            shownCount={HISTORY.length}
+            totalCount={14}
+            onLoadMore={() => {}}
+          />
+        </Panel>
+      )}
+    </div>
+  );
+}
+
 function RowsSkeletonDemo() {
   const [loading, setLoading] = useState(true);
 
@@ -736,19 +993,43 @@ export default function FeedbackSection() {
         id="feedback-skeleton-toolbar"
         name="ListToolbarSkeleton"
         importPath={`${KIT}/Skeletons`}
-        description="A list's toolbar while the list loads: the real strip with a block for each control, on the rows the loaded toolbar puts them, so the rows under it start in the same place. Switch between the two states."
+        description="A list's toolbar while the list loads: the real strip with a block for each control, on the rows the loaded toolbar puts them, so the rows under it start in the same place. The second list picks one ruleset with a RulesetSwitch, which has no All chip, so its skeleton passes rulesetsAll={false}. Switch between the two states."
         stacked
       >
-        <ToolbarSkeletonDemo />
+        <div className="flex flex-col gap-6">
+          <ToolbarSkeletonDemo />
+          <SwitchToolbarSkeletonDemo />
+        </div>
+      </Specimen>
+
+      <Specimen
+        id="feedback-skeleton-tabs"
+        name="HeroTabsSkeleton"
+        importPath={`${KIT}/Skeletons`}
+        description="A tab strip while its page loads: 44px tabs with the real labels when they are static, bars when they follow the data. Inside a panel it takes the loaded strip's border. Switch between the two states."
+      >
+        <TabsSkeletonDemo />
+      </Specimen>
+
+      <Specimen
+        id="feedback-skeleton-chart"
+        name="ChartPlotSkeleton and RulesetSwitchSkeleton"
+        importPath={`${KIT}/Skeletons`}
+        description="A chart panel while it loads: the real header, a RulesetSwitch strip with one block per chip, and the plot as one block as tall as the loaded plot. Switch between the two states."
+      >
+        <ChartSkeletonDemo />
       </Specimen>
 
       <Specimen
         id="feedback-skeleton-rows"
         name="RowListSkeleton"
         importPath={`${KIT}/Skeletons`}
-        description="RowList rows while a list loads: leading avatar, cover or nothing, a title and detail line, and the key number."
+        description="RowList rows while a list loads: leading avatar, cover or nothing, a title and detail line, and the key number. Rows that stack on phones, like the profile's tournament history, take stats (under the text on a phone, on the right from sm) and LoadMoreSkeleton for their Show more footer."
       >
-        <RowsSkeletonDemo />
+        <div className="flex flex-col gap-6">
+          <RowsSkeletonDemo />
+          <StackedRowsSkeletonDemo />
+        </div>
       </Specimen>
 
       <Specimen

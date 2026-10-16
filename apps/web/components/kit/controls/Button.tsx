@@ -9,7 +9,8 @@ import { cn } from '@/lib/utils';
 /**
  * - `default`: the one primary action of a form, dialog or page.
  * - `outline`: secondary actions, such as Cancel, Back or a page's second button.
- * - `ghost`: quiet actions inside a panel, such as Clear all or Show more.
+ * - `ghost`: quiet actions inside a panel, such as Clear all or a Load more
+ *   inside an opened row. A list's own footer is LoadMore (outline).
  * - `destructive`: an action that deletes or overwrites data. Red text and
  *   border, never filled; it opens a ConfirmDialog.
  * - `destructive-confirm`: the solid red button that carries out a
@@ -69,7 +70,20 @@ export type ButtonProps = Omit<React.ComponentProps<'button'>, 'children'> & {
   pending?: boolean;
   /** Draws the button on its child, such as a `Link`. `icon` still leads. */
   asChild?: boolean;
+  /**
+   * Lets a long label wrap onto more lines instead of running out of its
+   * container on a phone: the button keeps its size's height as a minimum
+   * and grows with the label, which aligns left.
+   */
+  wrap?: boolean;
   children?: React.ReactNode;
+};
+
+// The size's height becomes a minimum, so one line still looks the same.
+const WRAP_CLASSES: Record<ButtonSize, string> = {
+  sm: 'min-h-8',
+  default: 'min-h-9',
+  lg: 'min-h-10',
 };
 
 /**
@@ -83,6 +97,7 @@ export function Button({
   icon: Icon,
   pending = false,
   asChild = false,
+  wrap = false,
   disabled,
   type,
   className,
@@ -105,7 +120,15 @@ export function Button({
       type={asChild ? type : (type ?? 'button')}
       disabled={disabled || pending}
       aria-busy={pending || undefined}
-      className={cn(VARIANT_CLASSES[variant], className)}
+      className={cn(
+        VARIANT_CLASSES[variant],
+        wrap &&
+          cn(
+            'h-auto max-w-full py-1.5 text-left whitespace-normal',
+            WRAP_CLASSES[size]
+          ),
+        className
+      )}
       {...props}
     >
       {leading}

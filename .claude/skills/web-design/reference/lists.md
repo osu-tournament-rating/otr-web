@@ -159,7 +159,7 @@ Where the toolbar puts things (`getListToolbarLayout` in `@/lib/kit/lists/toolba
 | search, scope, rulesets         | search \| …; then scope, chips … count                             | search; scope … count; chips                                                                                                |
 | search and a count, no chips    | search, count \| sort, Filters (the count beside the search box)   | the same, wrapped                                                                                                           |
 | no search: scope, sort, count   | one strip: scope … count \| sort, Filters (the admin report queue) | scope … count; sort and Filters. A scope too wide to share its line (four options) sends the count down beside sort instead |
-| no search: leading, filters     | one strip: leading … Filters                                       | leading; Filters                                                                                                            |
+| no search: leading, filters     | one strip: leading … Filters (the audit log)                       | the same line, Filters on the right; Filters wraps under, on the right, only when both don't fit                            |
 
 Loading: `ListToolbarSkeleton` from `@/components/kit/feedback/Skeletons` with the same slots switched on ([feedback.md](feedback.md#skeletons)).
 

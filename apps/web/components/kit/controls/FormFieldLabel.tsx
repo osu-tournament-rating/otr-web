@@ -5,18 +5,26 @@ import { FormLabel } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
+// The ui Label's text style, for the group label, which is not a <label>.
+const GROUP_LABEL_CLASSES =
+  'min-w-0 text-sm leading-none font-medium select-none data-[error=true]:text-destructive-foreground';
+
 /**
  * A field label with the one info button for help and an optional muted
  * hint on the right, such as a unit or "One per line". Inside a shadcn
  * FormItem it is that field's FormLabel; outside react-hook-form, pass
- * `htmlFor` with the control's id.
+ * `htmlFor` with the control's id. For a group of controls, such as a
+ * RadioGroup, pass `groupId` instead and point the group's
+ * `aria-labelledby` at it.
  */
 export function FormFieldLabel({
   children,
   info,
   infoLabel,
   hint,
+  hintId,
   htmlFor,
+  groupId,
   invalid = false,
   className,
 }: {
@@ -28,14 +36,26 @@ export function FormFieldLabel({
   infoLabel?: string;
   hint?: React.ReactNode;
   /**
+   * An id for the hint, so the control can point `aria-describedby` at it
+   * (a "Required" hint the label doesn't say otherwise).
+   */
+  hintId?: string;
+  /**
    * The id of the control this labels, for a field outside a react-hook-form
    * FormItem (a filter, a search, a field in plain state). Inside a FormItem
    * leave it out; FormLabel finds the control itself.
    */
   htmlFor?: string;
   /**
+   * Labels a group of controls, such as a RadioGroup, that no `<label>` can
+   * point at: the label is plain text with this id, in the same row, and the
+   * group takes `aria-labelledby={groupId}`. Each option keeps its own label.
+   */
+  groupId?: string;
+  /**
    * Turns the label red, as FormLabel does for a field with an error. Only
-   * with `htmlFor`; inside a FormItem the form's own error state does it.
+   * with `htmlFor` or `groupId`; inside a FormItem the form's own error state
+   * does it.
    */
   invalid?: boolean;
   className?: string;
@@ -59,6 +79,15 @@ export function FormFieldLabel({
         >
           {children}
         </Label>
+      ) : groupId !== undefined ? (
+        <span
+          id={groupId}
+          data-slot="label"
+          data-error={invalid}
+          className={GROUP_LABEL_CLASSES}
+        >
+          {children}
+        </span>
       ) : (
         <FormLabel className="min-w-0">{children}</FormLabel>
       )}
@@ -69,7 +98,10 @@ export function FormFieldLabel({
         </InfoButton>
       ) : null}
       {hint ? (
-        <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+        <span
+          id={hintId}
+          className="ml-auto shrink-0 text-xs text-muted-foreground"
+        >
           {hint}
         </span>
       ) : null}

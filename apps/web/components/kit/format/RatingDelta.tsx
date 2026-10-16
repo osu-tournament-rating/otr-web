@@ -38,7 +38,12 @@ export function RatingDelta({
     <span
       data-direction={direction}
       className={cn(
-        'inline-flex items-center gap-0.5 font-medium whitespace-nowrap tabular-nums',
+        // `items-baseline` with the arrow centred on its own: the number,
+        // not the arrow, gives the box its baseline, so it sits on the
+        // line's baseline and adds no height to the line (with
+        // `items-center` the arrow's bottom took the baseline and a 20px
+        // line grew to 22px).
+        'inline-flex items-baseline gap-0.5 font-medium whitespace-nowrap tabular-nums',
         direction === 'flat'
           ? 'text-muted-foreground'
           : improved
@@ -48,7 +53,7 @@ export function RatingDelta({
       )}
       {...props}
     >
-      <Arrow aria-hidden="true" className="size-[1em] shrink-0" />
+      <Arrow aria-hidden="true" className="size-[1em] shrink-0 self-center" />
       {formatRatingDelta(value)}
     </span>
   );

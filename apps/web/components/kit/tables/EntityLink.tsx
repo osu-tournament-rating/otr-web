@@ -61,7 +61,13 @@ export function EntityLink({
         {...props}
       >
         {leading ? (
-          <span aria-hidden="true" className="mr-1.5 inline-flex align-middle">
+          // One line tall and at the top of the line, with the leading
+          // centred in it, so an avatar up to the line's height neither
+          // grows the line nor sits off its middle.
+          <span
+            aria-hidden="true"
+            className="mr-1.5 inline-flex h-lh items-center align-top"
+          >
             {leading}
           </span>
         ) : null}
@@ -77,7 +83,10 @@ export function EntityLink({
       data-slot="entity-link"
       className={cn(
         FOCUS_RING,
-        'inline-flex max-w-full min-w-0 items-center gap-2 align-middle font-medium text-foreground transition-colors hover:text-link',
+        // `align-top`: on a line of its own (a cell's second line, under a
+        // type label) the box adds nothing to the line's height, and the
+        // name keeps the text's baseline. `align-middle` grew it by 1px.
+        'inline-flex max-w-full min-w-0 items-center gap-2 align-top font-medium text-foreground transition-colors hover:text-link',
         className
       )}
       {...props}

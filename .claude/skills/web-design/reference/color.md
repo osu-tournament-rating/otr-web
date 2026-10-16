@@ -294,8 +294,9 @@ Tier names as text, stepped per theme to clear 4.5:1 (light gold and emerald wer
 
 ```tsx
 import { TIER_PALETTE, TIER_TEXT_CLASS, getTierColor } from '@/lib/kit/color/tiers';
+import { formatTierName } from '@/lib/kit/format/tier';
 
-<span className={TIER_TEXT_CLASS[tier]}>{getTierString(tier, subTier)}</span>
+<span className={TIER_TEXT_CLASS[tier]}>{formatTierName(tier, subTier)}</span>
 <BoxPlotTrack color={getTierColor(tier)} … />
 ```
 

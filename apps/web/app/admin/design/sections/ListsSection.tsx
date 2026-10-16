@@ -2,7 +2,7 @@
 
 import { Mods, Ruleset, VerificationStatus } from '@otr/core/osu';
 import { ChartLine, LayoutGrid, Rows3, Table2, Trophy } from 'lucide-react';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type * as React from 'react';
 
 import { GallerySection, Specimen } from '../gallery';
@@ -42,6 +42,7 @@ import {
 } from '@/components/kit/status/VerificationStatusIcon';
 import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { tieredScale } from '@/lib/filters/scale';
 import { tournamentRankScale } from '@/lib/filters/tournament-rank';
@@ -861,6 +862,90 @@ function LeadingToolbarDemo() {
   );
 }
 
+const AUDIT_ACTIONS = [
+  { value: 'created', label: 'Created' },
+  { value: 'updated', label: 'Updated' },
+  { value: 'deleted', label: 'Deleted' },
+] as const;
+
+type AuditAction = (typeof AUDIT_ACTIONS)[number]['value'];
+
+/**
+ * The audit log's strip: a switch that widens the feed leads it, and the
+ * Filters button follows on the same line, on the right, even on a phone.
+ */
+function LeadingFiltersToolbarDemo() {
+  const switchId = useId();
+  const [system, setSystem] = useState(false);
+  const [actions, setActions] = useState<AuditAction[]>([]);
+
+  return (
+    <Panel>
+      <ListToolbar
+        label="Filter audit events"
+        leading={
+          <div className="flex h-10 items-center gap-2">
+            <Switch
+              id={switchId}
+              checked={system}
+              onCheckedChange={setSystem}
+            />
+            <label
+              htmlFor={switchId}
+              className="cursor-pointer text-sm font-medium"
+            >
+              Show system events
+            </label>
+          </div>
+        }
+        filters={
+          <FilterPanel
+            title="Filter audit events"
+            activeCount={actions.length > 0 ? 1 : 0}
+            onClearAll={() => setActions([])}
+          >
+            <ChoiceFilter
+              label="Action type"
+              options={AUDIT_ACTIONS}
+              value={actions}
+              onValueChange={setActions}
+            />
+          </FilterPanel>
+        }
+        activeFilters={
+          <ActiveFilterChips
+            onClearAll={() => setActions([])}
+            filters={[
+              {
+                key: 'action',
+                label: formatChoiceFilterLabel(
+                  'Action type',
+                  actions.map(
+                    (action) =>
+                      AUDIT_ACTIONS.find((option) => option.value === action)
+                        ?.label ?? action
+                  )
+                ),
+                onRemove: () => setActions([]),
+              },
+            ]}
+          />
+        }
+      />
+      <RowList>
+        {AUDIT_DEMO_EVENTS.map((event) => (
+          <RowListItem key={event} title={event} />
+        ))}
+      </RowList>
+    </Panel>
+  );
+}
+
+const AUDIT_DEMO_EVENTS = [
+  'apricot verified tournament Corsace Open 2025',
+  'Raikouhou submitted tournament Oceania Taiko Cup 2026',
+] as const;
+
 const DEMO_REPORTS = [
   {
     type: 'Match',
@@ -1580,10 +1665,13 @@ export default function ListsSection() {
         id="lists-toolbar-leading"
         name="ListToolbar with a leading control"
         importPath={`${KIT}/ListToolbar`}
-        description="A control that is not a search, such as the select-all checkbox on a tournament's matches for admins, goes in leading: first on the strip, before the scope or search. Without a search, sort and the count stay on the right of the same strip."
+        description="A control that is not a search, such as the select-all checkbox on a tournament's matches for admins, goes in leading: first on the strip, before the scope or search. Without a search, sort and the count stay on the right of the same strip. With only Filters beside it (the audit log), both stay on one line on phones too, Filters on the right, until they don't fit."
         stacked
       >
-        <LeadingToolbarDemo />
+        <div className="flex flex-col gap-6">
+          <LeadingToolbarDemo />
+          <LeadingFiltersToolbarDemo />
+        </div>
       </Specimen>
 
       <Specimen

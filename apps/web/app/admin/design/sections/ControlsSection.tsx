@@ -79,6 +79,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -1402,6 +1403,7 @@ function FormFieldLabelDemo() {
           )}
         />
         <PlainFieldLabelDemo />
+        <GroupFieldLabelDemo />
       </div>
     </Form>
   );
@@ -1436,6 +1438,42 @@ function PlainFieldLabelDemo() {
   );
 }
 
+const PRIORITIES = ['Low', 'Normal', 'High'] as const;
+
+/**
+ * A label for a group of controls, as the admin home's Priority: `groupId`
+ * on the label and `aria-labelledby` on the RadioGroup.
+ */
+function GroupFieldLabelDemo() {
+  const labelId = React.useId();
+  const [priority, setPriority] = React.useState<string>('Normal');
+  return (
+    <div className="flex flex-col gap-2 border-t pt-4">
+      <FormFieldLabel groupId={labelId} hint="groupId, a radio group">
+        Priority
+      </FormFieldLabel>
+      <RadioGroup
+        aria-labelledby={labelId}
+        value={priority}
+        onValueChange={setPriority}
+        className="flex flex-wrap gap-4"
+      >
+        {PRIORITIES.map((option) => (
+          <div key={option} className="flex items-center gap-2">
+            <RadioGroupItem value={option} id={`${labelId}-${option}`} />
+            <Label
+              htmlFor={`${labelId}-${option}`}
+              className="cursor-pointer font-normal"
+            >
+              {option}
+            </Label>
+          </div>
+        ))}
+      </RadioGroup>
+    </div>
+  );
+}
+
 export default function ControlsSection() {
   return (
     <GallerySection
@@ -1459,6 +1497,24 @@ export default function ControlsSection() {
         description="One primary action per view. Red marks an action that deletes or overwrites data; only the final confirm in a dialog is solid red."
       >
         <ButtonVariants />
+      </Specimen>
+
+      <Specimen
+        id="controls-button-wrap"
+        name="Button with a long label"
+        importPath={`${KIT}/Button`}
+        description="A label that can be longer than a phone is wide, such as a cascade level's counts in the audit log, wraps with wrap: the size's height becomes the minimum and the label aligns left."
+      >
+        <div className="flex max-w-52 flex-wrap gap-2">
+          <Button variant="outline" size="sm" wrap>
+            46 matches: 45 verified, 1 rejected
+            <ChevronDown aria-hidden />
+          </Button>
+          <Button variant="outline" size="sm" wrap>
+            12 games
+            <ChevronDown aria-hidden />
+          </Button>
+        </div>
       </Specimen>
 
       <Specimen
@@ -1541,7 +1597,7 @@ export default function ControlsSection() {
         id="controls-form-field-label"
         name="FormFieldLabel"
         importPath={`${KIT}/FormFieldLabel`}
-        description="A field label with the info button for help and an optional muted hint. Labels keep one height, so inputs side by side line up, and turn red with the field's error. Outside a react-hook-form field, pass htmlFor with the control's id (last example)."
+        description="A field label with the info button for help and an optional muted hint. Labels keep one height, so inputs side by side line up, and turn red with the field's error. Outside a react-hook-form field, pass htmlFor with the control's id; for a radio group, groupId with the group's aria-labelledby (the last two examples)."
       >
         <FormFieldLabelDemo />
       </Specimen>

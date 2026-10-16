@@ -15,6 +15,7 @@ import { GallerySection, Specimen } from '../gallery';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import TierIcon from '@/components/icons/TierIcon';
 import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
+import { CountryFlag } from '@/components/kit/country/CountryFlag';
 import { DateRangeText } from '@/components/kit/format/DateRangeText';
 import { DateText } from '@/components/kit/format/DateText';
 import { RatingDelta } from '@/components/kit/format/RatingDelta';
@@ -49,7 +50,6 @@ import { PaginationFooter } from '@/components/kit/tables/PaginationFooter';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { SortableHeader } from '@/components/kit/tables/SortableHeader';
 import { ViewButton } from '@/components/kit/tables/ViewButton';
-import CountryFlag from '@/components/shared/CountryFlag';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatLobbySize } from '@/lib/kit/format/fields';
 import {
@@ -251,11 +251,7 @@ function PlayerName({
       >
         {row.name}
       </EntityLink>
-      <CountryFlag
-        country={row.country}
-        tooltipContent={row.countryName}
-        className="shrink-0"
-      />
+      <CountryFlag code={row.country} name={row.countryName} />
       {row.you ? (
         <Badge size="sm" tone="primary">
           You

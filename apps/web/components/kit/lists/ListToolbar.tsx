@@ -112,6 +112,7 @@ export function ListToolbar({
           view={view}
           count={layout.count === 'scope' ? countText : null}
           controls={layout.controls === 'scope' ? controlsInner : null}
+          hasSort={Boolean(sort)}
         />
       ) : null}
 
@@ -184,6 +185,8 @@ function SearchRow({
  * line, and sort and Filters the last. A scope too wide to share its line
  * (four options at 390px) sends the count down beside sort and Filters
  * instead, so the count never sits on a line alone when there is a sort.
+ * A leading control or scope with only the Filters button keeps both on one
+ * line on phones too, Filters on the right, until they don't fit.
  */
 function ScopeRow({
   leading,
@@ -192,6 +195,7 @@ function ScopeRow({
   view,
   count,
   controls,
+  hasSort,
 }: {
   leading: React.ReactNode;
   scope: React.ReactNode;
@@ -199,9 +203,13 @@ function ScopeRow({
   view: React.ReactNode;
   count: React.ReactNode;
   controls: React.ReactNode;
+  hasSort: boolean;
 }) {
   const hasStart = Boolean(leading || scope);
   const hasEnd = Boolean(view || count);
+  // Just Filters after the start: as wide as the button, not a 192px
+  // column, so it shares the start's line whenever both fit.
+  const filtersOnly = hasStart && !rulesets && !hasEnd && !hasSort;
 
   // Source order is the tablet order. On phones `order` moves the count up
   // beside the scope and the ruleset chips under them. Without chips, sort
@@ -241,7 +249,11 @@ function ScopeRow({
         <div
           className={cn(
             'order-4 flex min-w-0 items-start gap-2 md:order-none md:flex-none md:shrink-0 md:basis-auto md:gap-4',
-            rulesets ? 'basis-full' : 'flex-1 basis-48',
+            rulesets
+              ? 'basis-full'
+              : filtersOnly
+                ? 'ml-auto flex-none basis-auto'
+                : 'flex-1 basis-48',
             (hasStart || rulesets || hasEnd) && 'md:border-l md:pl-4',
             !hasEnd && 'md:ml-auto'
           )}

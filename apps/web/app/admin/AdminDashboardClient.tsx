@@ -351,7 +351,7 @@ function BanReasonPicker({
 
   return (
     <div className="flex flex-col gap-2">
-      <Label id={labelId}>Ban reason</Label>
+      <FormFieldLabel groupId={labelId}>Ban reason</FormFieldLabel>
       <RadioGroup
         aria-labelledby={labelId}
         value={value ?? ''}
@@ -687,7 +687,7 @@ function MassEnqueue() {
         </FormGrid>
 
         <div className="flex flex-col gap-2">
-          <Label id={priorityLabelId}>Priority</Label>
+          <FormFieldLabel groupId={priorityLabelId}>Priority</FormFieldLabel>
           <RadioGroup
             aria-labelledby={priorityLabelId}
             value={priority}
