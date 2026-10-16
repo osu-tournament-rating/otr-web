@@ -414,12 +414,7 @@ function UserApiKeys({ playerId }: { playerId: number }) {
           />
         </div>
       ) : keys.length === 0 ? (
-        <EmptyState
-          size="compact"
-          icon={KeyRound}
-          title="No active API keys"
-          description="This user has no active API keys."
-        />
+        <EmptyState size="compact" icon={KeyRound} title="No active API keys" />
       ) : (
         <DataTable
           fixed

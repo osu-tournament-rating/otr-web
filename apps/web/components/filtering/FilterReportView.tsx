@@ -206,7 +206,6 @@ export function FilterReportView() {
             data-testid="filter-report-empty"
             icon={FileText}
             title="Look up a filter report"
-            description="Enter a report ID to view detailed filtering results for tournament participants."
           />
         ) : notFound ? (
           <EmptyState

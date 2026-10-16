@@ -303,10 +303,14 @@ function IconButtons() {
           icon={Swords}
           title="Matches"
           meta="124 matches"
-          actions={<IconButton label="Add matches" icon={Plus} />}
+          actions={
+            <Button variant="outline" size="sm" icon={Plus}>
+              Add matches
+            </Button>
+          }
         />
         <PanelBody className={typeScale.bodyMuted}>
-          In a section header strip: small and ghost.
+          A section&apos;s main action keeps its label: a small outline button.
         </PanelBody>
       </Panel>
       <DisclosureDemo />
@@ -509,7 +513,6 @@ function AdminMenuDemo() {
         }
         adminActions={
           <AdminMenu
-            title="Break The Meta Cup"
             notification="Has admin notes"
             actions={[
               {
@@ -659,9 +662,6 @@ function OnArtDemo() {
               {
                 label: 'Edit beatmap data',
                 icon: PencilLine,
-                disabled: true,
-                description:
-                  'Only beatmaps the osu! API no longer serves can be edited by hand',
               },
             ]}
           />
@@ -733,7 +733,7 @@ const GAMES = [
     status: VerificationStatus.PreRejected,
   },
   {
-    name: 'Ghost Rule [Tiebreaker]',
+    name: 'Arigatou Sayonara (PSYQUI Remix) [Tiebreaker]',
     detail: 'Team Vs · FM · 4:05',
     status: VerificationStatus.None,
   },
@@ -1148,9 +1148,7 @@ function FormLayoutDemo() {
                 rules={{ required: TOURNAMENT_NAME_REQUIRED_MESSAGE }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel info="Full tournament name (e.g. osu! World Cup 2024)">
-                      Name
-                    </FormFieldLabel>
+                    <FormFieldLabel>Name</FormFieldLabel>
                     <FormControl>
                       <Input placeholder="osu! World Cup 2024" {...field} />
                     </FormControl>
@@ -1182,9 +1180,7 @@ function FormLayoutDemo() {
                 rules={{ required: RULESET_REQUIRED_MESSAGE }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel info="Game mode the tournament is played in">
-                      Ruleset
-                    </FormFieldLabel>
+                    <FormFieldLabel>Ruleset</FormFieldLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger className="w-full">
@@ -1270,10 +1266,7 @@ function FormLayoutDemo() {
                 }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel
-                      info="osu! match IDs or URLs"
-                      hint="One per line"
-                    >
+                    <FormFieldLabel hint="IDs or URLs, one per line">
                       Matches
                     </FormFieldLabel>
                     <FormControl>
@@ -1299,10 +1292,7 @@ function FormLayoutDemo() {
                 }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel
-                      info="osu! beatmap IDs or URLs"
-                      hint="One per line"
-                    >
+                    <FormFieldLabel hint="IDs or URLs, one per line">
                       Beatmaps
                     </FormFieldLabel>
                     <FormControl>
@@ -1524,7 +1514,7 @@ export default function ControlsSection() {
         id="controls-icon-button"
         name="IconButton"
         importPath={`${KIT}/IconButton`}
-        description="Every icon-only control: an accessible name, a tooltip that repeats it, and a hover fill. Small and ghost unless it sits beside inputs. The fill stays while a menu or dialog it opens is open; a disclosure toggle (expanded) for a row that expands in place sets aria-expanded and keeps its resting look."
+        description="Every icon-only control: an accessible name, a tooltip that repeats it (except an X that closes or clears, with tooltip={false}), and a hover fill. Small and ghost unless it sits beside inputs. The fill stays while a menu or dialog it opens is open; a disclosure toggle (expanded) for a row that expands in place sets aria-expanded and keeps its resting look."
       >
         <IconButtons />
       </Specimen>
@@ -1543,7 +1533,7 @@ export default function ControlsSection() {
         id="controls-row-actions-menu"
         name="RowActionsMenu"
         importPath={`${KIT}/RowActionsMenu`}
-        description="One overflow button at the end of a row or card in place of a cluster of icons, such as each game on a match page. itemName names each button, so keep it unique per row. A notification puts the dot on the button and its text in the button's name, as on the first game."
+        description="One overflow button at the end of a row or card in place of a cluster of icons, such as each game on a match page. itemName names each button, so keep it unique per row, and heads the menu, truncated at the width the items set, as on the last game. A notification puts the dot on the button and its text in the button's name, as on the first game."
         stacked
       >
         <RowActionsDemo />

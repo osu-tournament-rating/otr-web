@@ -7,7 +7,6 @@ export const SETTINGS_COPY = {
   apiKeys: 'Use o!TR in spreadsheets and other tools via the API.',
   apiKeysReminder:
     'Remember not to leave your keys in sheet templates or other places by mistake.',
-  shortcuts: 'Ctrl+L switches between the light and dark theme.',
   deleteAccount:
     'Permanently delete your account and remove your data from o!TR. Your player profile will remain public.',
 } as const;

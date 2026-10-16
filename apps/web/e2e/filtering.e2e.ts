@@ -123,16 +123,6 @@ test.describe('Tournament Registrant Filtering', () => {
       ).toBeVisible();
     });
 
-    test('field help opens from an info button', async ({ page }) => {
-      await page.goto(ROUTES.filter);
-      await page.waitForLoadState('networkidle');
-
-      await page.getByRole('button', { name: 'About ruleset' }).click();
-      await expect(
-        page.getByText('The ruleset to filter players for').first()
-      ).toBeVisible();
-    });
-
     test('player IDs textarea accepts input', async ({ page }) => {
       await page.goto(ROUTES.filter);
       await page.waitForLoadState('networkidle');

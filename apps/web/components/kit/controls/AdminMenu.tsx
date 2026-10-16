@@ -14,7 +14,10 @@ import { cn } from '@/lib/utils';
 export type AdminMenuProps = {
   /** Falsy entries are skipped, so `isLazer && { … }` works. */
   actions: readonly (MenuAction | false | null | undefined)[];
-  /** A muted line at the top of the menu, such as the entity's name. */
+  /**
+   * A muted line at the top of the menu. Leave it out when the hero's title
+   * beside the button already names the entity.
+   */
   title?: React.ReactNode;
   /** A richer top section than `title`, as ActionMenu's `header`. */
   header?: React.ReactNode;

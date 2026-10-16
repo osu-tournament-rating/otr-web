@@ -101,15 +101,10 @@ export function ShortcutsPanelSkeleton() {
         title="Keyboard shortcuts"
         meta={false}
       />
-      <div className="flex flex-col gap-4 p-4">
-        <p className="text-sm text-muted-foreground">
-          {SETTINGS_COPY.shortcuts}
-        </p>
-        {/* The switch's 14px label, then the switch. */}
-        <div className="flex items-center justify-between gap-4">
-          <SkeletonText className="block h-3.5 w-48" />
-          <SkeletonText className="block h-5 w-9 rounded-full" />
-        </div>
+      {/* The switch's 14px label, then the switch. */}
+      <div className="flex items-center justify-between gap-4 p-4">
+        <SkeletonText className="block h-3.5 w-48" />
+        <SkeletonText className="block h-5 w-9 rounded-full" />
       </div>
     </PanelSkeleton>
   );

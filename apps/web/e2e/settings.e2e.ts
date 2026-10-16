@@ -107,6 +107,31 @@ test.describe('Settings', () => {
 
       await expect(dialogTitle).toBeHidden({ timeout: 10000 });
     });
+
+    test('arriving from the account menu leaves no tooltip on the avatar', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.home);
+      await page.waitForLoadState('networkidle');
+
+      const trigger = page.getByTestId('account-menu-trigger');
+      await trigger.click();
+      await page.getByRole('menuitem', { name: 'Settings' }).click();
+      await expect(page).toHaveURL(/\/settings/, { timeout: 10000 });
+
+      // The menu hands focus back to the avatar as it closes.
+      await expect(trigger).toBeFocused();
+      // Longer than a tooltip's open delay, so a tooltip would show.
+      await page.waitForTimeout(500);
+      await expect(page.getByRole('tooltip')).toHaveCount(0);
+
+      // Keyboard focus from the next control still shows it.
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      await expect(
+        page.getByRole('tooltip', { name: 'Account menu' })
+      ).toBeVisible();
+    });
   });
 
   test.describe('API key generation', () => {

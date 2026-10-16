@@ -199,9 +199,7 @@ export default function TournamentSubmissionForm() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormFieldLabel info="Full tournament name (e.g. osu! World Cup 2024)">
-                    Name
-                  </FormFieldLabel>
+                  <FormFieldLabel>Name</FormFieldLabel>
                   <FormControl>
                     <Input placeholder="osu! World Cup 2024" {...field} />
                   </FormControl>
@@ -239,9 +237,7 @@ export default function TournamentSubmissionForm() {
               name="ruleset"
               render={({ field }) => (
                 <FormItem>
-                  <FormFieldLabel info="The ruleset the tournament is played in">
-                    Ruleset
-                  </FormFieldLabel>
+                  <FormFieldLabel>Ruleset</FormFieldLabel>
                   <Select
                     onValueChange={(value) => field.onChange(Number(value))}
                     value={field.value?.toString() ?? ''}
@@ -379,10 +375,7 @@ export default function TournamentSubmissionForm() {
               name="ids"
               render={({ field }) => (
                 <FormItem>
-                  <FormFieldLabel
-                    info="osu! match IDs or URLs"
-                    hint="One per line"
-                  >
+                  <FormFieldLabel hint="IDs or URLs, one per line">
                     Matches
                   </FormFieldLabel>
                   <FormControl>
@@ -411,10 +404,7 @@ export default function TournamentSubmissionForm() {
               name="beatmapIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormFieldLabel
-                    info="osu! beatmap IDs or URLs"
-                    hint="One per line"
-                  >
+                  <FormFieldLabel hint="IDs or URLs, one per line">
                     Beatmaps
                   </FormFieldLabel>
                   <FormControl>

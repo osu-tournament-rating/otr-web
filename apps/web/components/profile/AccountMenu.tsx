@@ -110,12 +110,14 @@ export default function AccountMenu({
           tooltip="Account menu"
           tooltipSide="bottom"
           size="default"
-          className="relative rounded-full"
+          // The avatar fills the button and grows a little on hover and
+          // presses in on click, as it always has, in place of a fill.
+          className="relative rounded-full hover:bg-transparent data-[state=open]:bg-transparent motion-safe:hover:scale-103 motion-safe:active:scale-97"
         >
           <OsuAvatar
             osuId={user.player.osuId}
             username={user.player.username}
-            size={32}
+            size={36}
             fallback={<User className="size-4" aria-hidden />}
           />
           {hasUnread ? (

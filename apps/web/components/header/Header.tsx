@@ -66,7 +66,7 @@ export default function Header() {
             alt="o!TR home"
             width={36}
             height={36}
-            className="transition-transform hover:scale-105"
+            className="transition-transform motion-safe:hover:scale-105"
           />
         </Link>
         <DesktopNav entries={entries} />

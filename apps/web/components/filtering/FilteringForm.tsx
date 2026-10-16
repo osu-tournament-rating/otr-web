@@ -218,10 +218,7 @@ export default function FilteringForm({
               name="ruleset"
               render={({ field }) => (
                 <FormItem>
-                  <FormFieldLabel
-                    info="The ruleset to filter players for"
-                    infoLabel="About ruleset"
-                  >
+                  <FormFieldLabel>
                     Ruleset
                     <RequiredMark />
                   </FormFieldLabel>
@@ -254,11 +251,7 @@ export default function FilteringForm({
                 name="minRating"
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel
-                      info="Players below this rating will be filtered out"
-                      infoLabel="About minimum rating"
-                      hint={RATING_HINT}
-                    >
+                    <FormFieldLabel hint={RATING_HINT}>
                       Minimum rating
                     </FormFieldLabel>
                     <FormControl>
@@ -286,11 +279,7 @@ export default function FilteringForm({
                 name="maxRating"
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel
-                      info="Players above this rating will be filtered out"
-                      infoLabel="About maximum rating"
-                      hint={RATING_HINT}
-                    >
+                    <FormFieldLabel hint={RATING_HINT}>
                       Maximum rating
                     </FormFieldLabel>
                     <FormControl>
@@ -321,11 +310,7 @@ export default function FilteringForm({
               name="osuPlayerIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormFieldLabel
-                    info="Enter osu! player IDs separated by commas, spaces, or new lines"
-                    infoLabel="About osu! player IDs"
-                    hint={`Up to ${formatCount(MAX_PLAYER_IDS)}`}
-                  >
+                  <FormFieldLabel hint={`Up to ${formatCount(MAX_PLAYER_IDS)}`}>
                     osu! player IDs
                     <RequiredMark />
                   </FormFieldLabel>

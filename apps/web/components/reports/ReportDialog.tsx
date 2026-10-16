@@ -242,7 +242,7 @@ export function ReportDialog({
                   retrying={templatesValidating}
                   onRetry={() => void reloadTemplates()}
                 />
-              ) : (
+              ) : isLoadingTemplates || hasNoTemplates ? (
                 <FormDescription
                   role={hasNoTemplates ? 'alert' : 'status'}
                   aria-live="polite"
@@ -252,11 +252,9 @@ export function ReportDialog({
                 >
                   {isLoadingTemplates
                     ? 'Loading report reasons…'
-                    : hasNoTemplates
-                      ? 'No report reasons are available.'
-                      : 'Choose the option that best describes the issue.'}
+                    : 'No report reasons are available.'}
                 </FormDescription>
-              )}
+              ) : null}
               <FormMessage />
             </FormItem>
           )}
@@ -279,9 +277,6 @@ export function ReportDialog({
                   {...field}
                 />
               </FormControl>
-              <FormDescription>
-                Include anything that may help an admin review the report.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

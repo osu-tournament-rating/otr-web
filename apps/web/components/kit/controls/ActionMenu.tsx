@@ -56,7 +56,10 @@ export type ActionMenuProps = {
   trigger: React.ReactElement;
   /** Falsy entries are skipped, so `isAdmin && { … }` works. */
   actions: readonly (MenuAction | false | null | undefined)[];
-  /** A muted line at the top naming what the actions apply to. */
+  /**
+   * A muted line at the top naming what the actions apply to. It truncates
+   * at the width the items give the menu.
+   */
   title?: React.ReactNode;
   /**
    * A richer top section than `title`, such as an avatar beside a name and
@@ -121,7 +124,9 @@ export function ActionMenu({
           </div>
         ) : null}
         {title ? (
-          <DropdownMenuLabel className="max-w-72 truncate text-xs font-medium text-muted-foreground">
+          // As wide as the items make the menu and never wider: a long name
+          // truncates rather than stretching a menu of short items.
+          <DropdownMenuLabel className="w-0 min-w-full truncate text-xs font-medium text-muted-foreground">
             {title}
           </DropdownMenuLabel>
         ) : null}

@@ -104,7 +104,7 @@ The one icon-only button: a square (round on art) with a hover fill, an `aria-la
 ```tsx
 import { IconButton } from '@/components/kit/controls/IconButton';
 
-<IconButton label="Add matches" icon={Plus} onClick={openAddMatches} />;
+<IconButton label="Copy link" icon={Link2} onClick={copyLink} />;
 
 <IconButton asChild label="View audit history" icon={History}>
   <Link href={`/audit/tournaments/${id}`} />
@@ -137,13 +137,14 @@ Props:
 
 Do:
 
-- Put it inside `DialogTrigger`, `PopoverTrigger` or `DropdownMenuTrigger` with `asChild`. The tooltip lives inside IconButton, so this is the "tooltip wraps the trigger" rule already done.
+- Put it inside `DialogTrigger`, `PopoverTrigger` or `DropdownMenuTrigger` with `asChild`. The tooltip lives inside IconButton, so this is the "tooltip wraps the trigger" rule already done. Its tooltip opens on hover and on keyboard focus (Tab, or arrows inside a group), but not when the menu, popover or dialog it opened hands focus back as it closes, by a click, Escape or a chosen item: the visitor is done with it. `components/ui/tooltip.tsx` does this for every tooltip by opening on focus only right after a navigation key, so don't pass `tooltip={false}` to silence it.
 - Use `ghost` in section header strips, rows and dialog headers, and `outline` next to inputs.
+- Give a section's main action, such as "Add matches" or "Add beatmaps", a labelled `<Button variant="outline" size="sm" icon={Plus}>`. Only on phones, where the strip is tight, does it shrink to an IconButton in the style of its neighbours: outline beside a sort control (`components/tournaments/TournamentMatchesAdminView.tsx`), ghost among ghost icons (`components/tournaments/TournamentBeatmapsAdminView.tsx`).
 
 Don't:
 
 - Don't wrap `<Button variant="ghost" size="icon" className="h-6 w-6 …">` in `SimpleTooltip` by hand: a 24px target with a home-made hover fill.
-- Don't make a bare glyph clickable, and don't turn the icon blue on hover. Links that need more than an icon to explain them, such as the header's docs and API reference, are labelled items in a menu. The header's support heart is the one icon link that stays at the top right: it turns `text-support` pink and pulses on hover (`motion-safe:hover:animate-pulse`), as it always has (`components/header/SupportButton.tsx`).
+- Don't make a bare glyph clickable, and don't turn the icon blue on hover. Links that need more than an icon to explain them, such as the header's docs and API reference, are labelled items in a menu. The header's support heart is the one icon link that stays at the top right: it turns `text-support` pink and pulses on hover (`motion-safe:hover:animate-pulse`), as it always has (`components/header/SupportButton.tsx`). Beside it, the account avatar fills its 36px IconButton and, in place of the hover fill, grows a little on hover and presses in on click (`motion-safe:hover:scale-103 motion-safe:active:scale-97`), as it always has (`components/profile/AccountMenu.tsx`).
 - Don't give an X that closes or clears a tooltip ("Close", "Clear search"); pass `tooltip={false}`. Every other icon-only button keeps its tooltip.
 - Don't rely on the tooltip of a disabled IconButton: a disabled button gets no pointer events. Say why it is disabled somewhere visible, such as an AdminMenu item's `description`.
 
@@ -165,7 +166,6 @@ const [deleting, setDeleting] = useState(false);
   adminActions={
     isAdmin && (
       <AdminMenu
-        title={tournament.name}
         notification={notes.length > 0 ? 'Has admin notes' : undefined}
         actions={[
           { label: 'Edit tournament', icon: PencilLine, onSelect: () => setEditing(true) },
@@ -190,7 +190,7 @@ const [deleting, setDeleting] = useState(false);
 Props:
 
 - `actions`: MenuActions (see [ActionMenu and MenuAction](#actionmenu-and-menuaction)). Falsy entries are skipped, so `isLazer && { … }` works. With no visible actions the menu renders nothing.
-- `title`: a muted line at the top of the menu, usually the entity's name.
+- `title`: a muted line at the top of the menu. Leave it out in a hero: the title beside the button already names the entity, and the tournament and match heroes pass none.
 - `header`: a richer top section, passed to ActionMenu (see below).
 - `notification`: shows the one notification dot on the button; the string is its screen-reader text ("Has admin notes").
 - `onArt`: the dark pill, for a hero with cover art.
@@ -258,7 +258,7 @@ import { RowActionsMenu } from '@/components/kit/controls/RowActionsMenu';
 Props:
 
 - `actions`: as AdminMenu.
-- `itemName`: what the row is. It names the button for screen readers ("Actions for Hidden Chamber [Insane]") and heads the menu. Always set it in a list, or every button is just "Actions", and keep it unique per row: two games on the same beatmap need what tells them apart ("Game 3: Hidden Chamber [Insane]"), or a screen reader's list of buttons shows two identical names.
+- `itemName`: what the row is. It names the button for screen readers ("Actions for Hidden Chamber [Insane]") and heads the menu, truncated at the width the items set. Always set it in a list, or every button is just "Actions", and keep it unique per row: two games on the same beatmap need what tells them apart, or a screen reader's list of buttons shows two identical names. A game card's menu is "Game 3", its place in the match, since the beatmap's name is on the card beside it.
 - `label`: the tooltip, "Actions" by default.
 - `notification`: as AdminMenu's. It puts the one notification dot on the "…" button's corner and adds its text to the button's accessible name ("Actions for Game 3, Has admin notes"). Pair it with a count `Badge` as the matching item's `trailing`, so the menu says what is new.
 - Public items (report, audit history) are for everyone; gate only the admin items with `isAdmin &&`. With every admin item hidden, the menu still holds the public ones.
@@ -310,7 +310,7 @@ import {
 
 ActionMenu props besides `trigger` and `actions`:
 
-- `title`: the muted line at the top (AdminMenu's `title`, RowActionsMenu's `itemName`).
+- `title`: the muted line at the top (AdminMenu's `title`, RowActionsMenu's `itemName`). It takes the width the items give the menu and truncates past it (`w-0 min-w-full truncate`), so a long name never widens a menu of short items.
 - `header`: richer content above `title` and the items, over a separator, in 14px text up to 288px wide. It is not focusable, so links and buttons belong in `actions`. AdminMenu passes it through.
 - `align`, `side`, `contentClassName`, `data-testid` (on the menu content).
 
@@ -320,7 +320,7 @@ MenuAction fields:
 - `onSelect`: runs after the menu has closed and focus has returned to the trigger.
 - `href`: makes the item a link (`next/link`, not prefetched). `external` opens it in a new tab with an external-link glyph and "(opens in a new tab)" for screen readers.
 - `destructive`: red, and moved into the last group.
-- `disabled` with `description`: a muted second line that says why, such as "Only beatmaps the osu! API no longer serves can be edited by hand". The label and icon dim; the description keeps full contrast so it stays readable. A description wraps at 240px (`max-w-60`), so a long reason never widens the menu past a 390px screen.
+- `disabled` with `description`: a muted second line that says why the action is off. The label and icon dim; the description keeps full contrast so it stays readable. A description wraps at 240px (`max-w-60`), so a long reason never widens the menu past a 390px screen.
 - `trailing`: a count `Badge` or a `NotificationDot` on the right.
 - `group`: items with the same group sit together between separators, in order of first appearance.
 - `hidden`: leaves the item out. `id`: the React key when two items share a label. `testId`.
@@ -489,7 +489,7 @@ Do:
 - Use the shadcn `Input`, `Textarea`, `Select` and `Checkbox` as they are.
 - Give each field the rules its schema has: required or optional, the options it allows, its minimum and maximum, and its format (`lib/orpc/schema/tournamentSubmission.ts`, `lib/validation-schema.ts`, `components/filtering/FilteringForm.tsx`). The forum post URL is required and accepts only links that start with `https://osu.ppy.sh/community/forums/topics/` or `https://osu.ppy.sh/wiki/en/Tournaments/`; lobby sizes are 1v1 to 8v8; a rank restriction is a whole number of at least 1.
 - Write validation messages as statements about the field, as the site's schemas do: "Tournament name is required", "Rank restriction must be a whole number", "Lobby size cannot exceed 8", "Matches cannot exceed 1,000". Name the field as its label does: "Forum post URL is required", not "Forum URL is required". The tournament fields' messages are shared constants in `@/lib/orpc/schema/tournamentMessages` (`RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE`, `maxMatchIdsMessage(n)` and the rest), safe on the client; import them rather than retyping them.
-- Keep a form's existing labels, help text and placeholders when it moves onto these parts. Add a notice or help line only when the page already says it.
+- Keep a form's existing labels and placeholders, and the help that adds something, when it moves onto these parts. Add a notice or help line only when the page already says it, and drop help and captions that only restate the label, placeholder or hint: "Choose the option that best describes the issue." under a Reason select, or "Include anything that may help an admin review the report." under a textarea whose placeholder says what to add.
 
 Don't:
 
@@ -504,7 +504,7 @@ Gallery anchor: `/admin/design#controls-form-layout`
 
 ## FormFieldLabel
 
-A field label with the one info button for help and an optional muted hint on the right, such as a unit ("mm:ss" in the beatmap edit dialog) or "One per line". Inside a shadcn `FormItem` it is that field's `FormLabel`; outside react-hook-form (a filter, a settings toggle, a field held in plain state) pass `htmlFor` with the control's id.
+A field label with the one info button for help and an optional muted hint on the right, such as a unit ("mm:ss" in the beatmap edit dialog), a range ("100 – 5,000" in registrant filtering) or a format ("IDs or URLs, one per line" in tournament submission). Inside a shadcn `FormItem` it is that field's `FormLabel`; outside react-hook-form (a filter, a settings toggle, a field held in plain state) pass `htmlFor` with the control's id.
 
 ```tsx
 import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
@@ -555,6 +555,7 @@ The label row is 20px tall with or without the info button or hint, so fields si
 Don't:
 
 - Don't use a circled "?" label or a hover-only info tooltip beside a label; use `info`.
+- Don't give a field an `info` that restates its label, placeholder or hint, such as "The ruleset the tournament is played in" beside Ruleset or "Players below this rating will be filtered out" beside Minimum rating. Help is for a fact the field does not show, such as Abbreviation's lobby prefix or Rank restriction's "Use 1 for open rank"; most fields need none. A short fact that fits beside the label is a `hint` instead.
 - Don't label a radio group with a bare `<Label id>`; it is 14px tall where every other field label is 20px. Use `groupId`.
 - Don't mix FormFieldLabel and a bare `FormLabel` in one FormGrid row; the bare label is shorter and its input sits 6px higher.
 
