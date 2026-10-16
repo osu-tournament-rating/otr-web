@@ -293,24 +293,24 @@
   --score-grade-d: #7a7a7a;
 
   /* Mod marks. Every value takes black text on a solid fill. */
-  --mod-nm: #0b8d9e;
-  --mod-hd: #948000;
-  --mod-hr: #d9524f;
-  --mod-dt: #876fd5;
-  --mod-ht: #0b9360;
-  --mod-ez: #628d00;
-  --mod-fl: #6076b5;
-  --mod-hdhr: #d1528c;
-  --mod-ezhd: #bd6c00;
-  --mod-ezdt: #2b89c0;
-  --mod-hdfl: #957164;
-  --mod-hddt: #af63ba;
-  --mod-sd: #d75a21;
-  --mod-td: #9d8757;
-  --mod-rx: #279785;
-  --mod-mr: #9181b0;
-  --mod-rd: #469b4c;
-  --mod-key: #5f8fa3;
+  --mod-nm: #4589f2;
+  --mod-hd: #a18902;
+  --mod-hr: #db675e;
+  --mod-dt: #8971f4;
+  --mod-ht: #029f54;
+  --mod-ez: #1aa101;
+  --mod-fl: #6970b7;
+  --mod-hdhr: #ff3381;
+  --mod-ezhd: #b87f04;
+  --mod-ezdt: #049a9b;
+  --mod-hdfl: #4a7d91;
+  --mod-hddt: #b568e9;
+  --mod-sd: #d56f01;
+  --mod-td: #a4846f;
+  --mod-rx: #0394ce;
+  --mod-mr: #778cab;
+  --mod-rd: #5a986c;
+  --mod-key: #5590be;
 }
 
 .dark {
@@ -425,24 +425,24 @@
   --score-grade-c: #ababab;
   --score-grade-d: #808080;
 
-  --mod-nm: #4cb8c9;
-  --mod-hd: #c1aa2a;
-  --mod-hr: #ff8780;
-  --mod-dt: #b09bff;
-  --mod-ht: #4cbd88;
-  --mod-ez: #87b930;
-  --mod-fl: #758ccc;
-  --mod-hdhr: #ff80b5;
-  --mod-ezhd: #ef9437;
-  --mod-ezdt: #68c1fb;
-  --mod-hdfl: #ae887b;
-  --mod-hddt: #db8de8;
-  --mod-sd: #fd7d48;
-  --mod-td: #d9c190;
-  --mod-rx: #70d6c2;
-  --mod-mr: #d4c3f5;
-  --mod-rd: #82d785;
-  --mod-key: #a1d3e8;
+  --mod-nm: #4e93fc;
+  --mod-hd: #f4dc71;
+  --mod-hr: #f27c71;
+  --mod-dt: #8971f4;
+  --mod-ht: #3cd77d;
+  --mod-ez: #7af46c;
+  --mod-fl: #6970b7;
+  --mod-hdhr: #ff3381;
+  --mod-ezhd: #ffc365;
+  --mod-ezdt: #32c3c3;
+  --mod-hdfl: #4a7d91;
+  --mod-hddt: #bf72f3;
+  --mod-sd: #ff9238;
+  --mod-td: #cbaa94;
+  --mod-rx: #11a8e8;
+  --mod-mr: #bad1f3;
+  --mod-rd: #83c395;
+  --mod-key: #84c0f0;
 }
 
 @layer base {

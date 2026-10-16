@@ -336,7 +336,7 @@ Gallery anchor: `/admin/design#color-grades`
 
 ## Mod colours
 
-The revised mod palette. No Mod has its own colour, not the link blue; Sudden Death and Touch Device differ, every mod clears 3:1 on both cards, and every mod takes black text as a solid pill. Rare combinations get the "Other" grey.
+The mod colours the site has always used, each hue kept and only the lightness moved as far as contrast needs, so the light theme's are darker. No Mod keeps its blue under its own token. Touch Device, which once shared Sudden Death's orange, is a greyer orange. Every mod clears 3:1 on both cards and takes black text as a solid pill. Rare combinations get the "Other" grey.
 
 ```tsx
 import { MOD_FILL_FOREGROUND, getModPaletteColor } from '@/lib/kit/color/mods';
@@ -360,7 +360,8 @@ import { MOD_FILL_FOREGROUND, getModPaletteColor } from '@/lib/kit/color/mods';
 
 Don't:
 
-- Don't keep a mod colour table of your own. The old one gave No Mod and unknown combinations the link blue, gave SD and TD the same orange, and dropped several mods under 3:1 on light cards; every mod chart and the beatmap list's top mods use this palette.
+- Don't keep a mod colour table of your own; every mod chart and the beatmap list's top mods use this palette.
+- Don't swap a mod to a new hue to fix contrast or a clash. Players know these colours; move the lightness, or the chroma for a rare mod, as `mods.ts` does.
 
 Gallery anchor: `/admin/design#color-mods`
 
