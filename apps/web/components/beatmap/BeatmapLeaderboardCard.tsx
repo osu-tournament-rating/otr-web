@@ -198,18 +198,23 @@ export default function BeatmapLeaderboardCard({
                           ? formatAccuracy(performer.accuracy)
                           : null}
                       </span>
-                      <Link
-                        href={`/tournaments/${performer.tournament.id}`}
-                        prefetch={false}
-                        title={performer.tournament.name}
-                        className={cn('min-w-0 truncate', linkClassName)}
-                      >
-                        {performer.tournament.name}
-                      </Link>
                     </span>
                   }
                   value={<ScoreLink performer={performer} />}
-                />
+                  valueDescription={<DateText date={performer.playedAt} />}
+                >
+                  {/* A line of its own, so the name gets the body's width. */}
+                  <Link
+                    href={`/tournaments/${performer.tournament.id}`}
+                    prefetch={false}
+                    className={cn(
+                      'mt-0.5 block w-fit max-w-full truncate text-xs text-muted-foreground',
+                      linkClassName
+                    )}
+                  >
+                    {performer.tournament.name}
+                  </Link>
+                </PhoneRow>
               ))}
             </PhoneRowList>
           }

@@ -40,7 +40,6 @@ import { AdminMenu } from '@/components/kit/controls/AdminMenu';
 import { Button } from '@/components/kit/controls/Button';
 import { IconButton } from '@/components/kit/controls/IconButton';
 import { CountryName } from '@/components/kit/country/CountryFlag';
-import { Abbreviation } from '@/components/kit/layout/Abbreviation';
 import { DetailHero, HeroMetaItem } from '@/components/kit/layout/DetailHero';
 import { HeroTabs } from '@/components/kit/layout/HeroTabs';
 import {
@@ -298,13 +297,7 @@ export default function LayoutSection() {
               </HeroMetaItem>
             </>
           }
-          adminActions={
-            <AdminMenu
-              onArt
-              title="HAELEQUIN"
-              actions={BEATMAP_ADMIN_ACTIONS}
-            />
-          }
+          adminActions={<AdminMenu onArt actions={BEATMAP_ADMIN_ACTIONS} />}
           actions={
             <Button variant="overlay" size="sm" icon={Play}>
               Preview
@@ -351,7 +344,6 @@ export default function LayoutSection() {
           adminActions={
             <AdminMenu
               onArt
-              title="Break The Meta Cup"
               notification="Has admin notes"
               actions={TOURNAMENT_ADMIN_ACTIONS}
             />
@@ -405,13 +397,7 @@ export default function LayoutSection() {
               <HeroMetaItem icon={CalendarDays}>Jan 8 – 30, 2022</HeroMetaItem>
             </>
           }
-          adminActions={
-            <AdminMenu
-              onArt
-              title="Merami Household Winter Cup 2021"
-              actions={TOURNAMENT_ADMIN_ACTIONS}
-            />
-          }
+          adminActions={<AdminMenu onArt actions={TOURNAMENT_ADMIN_ACTIONS} />}
           actions={
             <IconButton
               asChild
@@ -450,12 +436,7 @@ export default function LayoutSection() {
               <HeroMetaItem icon={CalendarDays}>Dec 4 – 18, 2021</HeroMetaItem>
             </>
           }
-          adminActions={
-            <AdminMenu
-              title="Break The Meta Cup"
-              actions={TOURNAMENT_ADMIN_ACTIONS}
-            />
-          }
+          adminActions={<AdminMenu actions={TOURNAMENT_ADMIN_ACTIONS} />}
           actions={
             <>
               <IconButton
@@ -698,21 +679,6 @@ export default function LayoutSection() {
       </Specimen>
 
       <Specimen
-        id="layout-abbreviation"
-        name="Abbreviation"
-        importPath={`${KIT}/Abbreviation`}
-        description="A short form whose full form opens on tap, hover and keyboard focus. Screen readers hear both, short form first (“CS, circle size”). It replaces <abbr title>, which only shows on a mouse hover. Use it for established short forms in labels, such as CS, AR, OD and HP. Its tap target reaches at least 24px around the text without moving it."
-      >
-        <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-muted-foreground">
-          {BEATMAP_ATTRIBUTES.map((attribute) => (
-            <Abbreviation key={attribute.short} full={attribute.full}>
-              {attribute.short}
-            </Abbreviation>
-          ))}
-        </div>
-      </Specimen>
-
-      <Specimen
         id="layout-stat-tile"
         name="StatTile and StatTileGrid"
         importPath={`${KIT}/StatTile`}
@@ -760,7 +726,7 @@ export default function LayoutSection() {
         id="layout-stat-tile-inline"
         name="StatTile, inline layout"
         importPath={`${KIT}/StatTile`}
-        description="A short value on the label's line, with room for a gauge underneath. Use it for attribute grids. The label takes a node, here an Abbreviation whose full name opens on tap."
+        description="A short value on the label's line, with room for a gauge underneath. Use it for attribute grids. CS, AR, OD and HP show as plain text; screen readers hear the full name from an sr-only span."
       >
         <StatTileGrid columns={2}>
           {BEATMAP_ATTRIBUTES.map((attribute) => (
@@ -768,9 +734,10 @@ export default function LayoutSection() {
               key={attribute.short}
               layout="inline"
               label={
-                <Abbreviation full={attribute.full}>
-                  {attribute.short}
-                </Abbreviation>
+                <>
+                  <span aria-hidden="true">{attribute.short}</span>
+                  <span className="sr-only">{attribute.full}</span>
+                </>
               }
               value={attribute.value.toFixed(1)}
             >

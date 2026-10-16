@@ -32,8 +32,10 @@ export function isManiaRuleset(ruleset: Ruleset): boolean {
 
 /** One row of the beatmap attributes card, resolved per ruleset. */
 export interface BeatmapAttributeRow {
-  abbreviation: string;
+  /** The label on screen: osu!'s own short form, such as CS, or Keys. */
   label: string;
+  /** The full name screen readers hear in place of a short form. */
+  fullName?: string;
   key: 'cs' | 'ar' | 'od' | 'hp';
   /** Dim the row because the attribute does not affect this ruleset. */
   muted?: boolean;
@@ -43,14 +45,10 @@ export interface BeatmapAttributeRow {
   integer?: boolean;
 }
 
-const CS = { abbreviation: 'CS', label: 'Circle size', key: 'cs' } as const;
-const AR = { abbreviation: 'AR', label: 'Approach rate', key: 'ar' } as const;
-const OD = {
-  abbreviation: 'OD',
-  label: 'Overall difficulty',
-  key: 'od',
-} as const;
-const HP = { abbreviation: 'HP', label: 'HP drain', key: 'hp' } as const;
+const CS = { label: 'CS', fullName: 'Circle size', key: 'cs' } as const;
+const AR = { label: 'AR', fullName: 'Approach rate', key: 'ar' } as const;
+const OD = { label: 'OD', fullName: 'Overall difficulty', key: 'od' } as const;
+const HP = { label: 'HP', fullName: 'HP drain', key: 'hp' } as const;
 
 /** Attributes for a ruleset in reading order; inapplicable ones are muted, not dropped. */
 export function getBeatmapAttributeRows(
@@ -58,13 +56,8 @@ export function getBeatmapAttributeRows(
 ): BeatmapAttributeRow[] {
   if (isManiaRuleset(ruleset)) {
     return [
-      {
-        abbreviation: 'Keys',
-        label: 'Key count',
-        key: 'cs',
-        gauge: false,
-        integer: true,
-      },
+      // A plain word, so it needs no full name.
+      { label: 'Keys', key: 'cs', gauge: false, integer: true },
       { ...OD },
       { ...HP },
       { ...AR, muted: true, gauge: false },

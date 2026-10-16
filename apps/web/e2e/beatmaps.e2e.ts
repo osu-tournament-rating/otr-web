@@ -1568,6 +1568,30 @@ test.describe('Beatmaps Listing Page', () => {
       table.locator('thead th[aria-sort]:not([aria-sort="none"])')
     ).toHaveCount(1);
   });
+
+  test('a long title never hides the difficulty in the table', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto(ROUTES.beatmaps);
+    await page.getByTestId('beatmap-layout-table').click();
+
+    const difficulties = page
+      .getByTestId('beatmap-list')
+      .locator('table tbody [data-testid="beatmap-difficulty-name"]');
+    await expect(difficulties.first()).toBeVisible({ timeout: 10000 });
+
+    // At least 48px ("[Hyp…"), or the whole name when it is shorter.
+    const widths = await difficulties.evaluateAll((names) =>
+      names.map((name) => ({
+        width: name.getBoundingClientRect().width,
+        full: name.scrollWidth,
+      }))
+    );
+    for (const { width, full } of widths) {
+      expect(width).toBeGreaterThanOrEqual(Math.min(full, 48) - 1);
+    }
+  });
 });
 
 test.describe('Beatmap Detail Page', () => {
@@ -1729,24 +1753,20 @@ test.describe('Beatmap Detail Page', () => {
       await expect(
         card.getByRole('heading', { name: 'Attributes' })
       ).toBeVisible({ timeout: 10000 });
-      // Each short label's name starts with the short form on screen, then
-      // names the attribute in full, which opens on tap.
+      // osu!'s short forms show as plain text; screen readers hear the
+      // attribute's full name instead.
       for (const [short, name] of [
-        ['CS', 'CS, circle size'],
-        ['AR', 'AR, approach rate'],
-        ['OD', 'OD, overall difficulty'],
-        ['HP', 'HP, HP drain'],
+        ['CS', 'Circle size'],
+        ['AR', 'Approach rate'],
+        ['OD', 'Overall difficulty'],
+        ['HP', 'HP drain'],
       ]) {
-        const label = card.getByRole('button', { name, exact: true });
-        await expect(label).toHaveText(short);
+        const term = card.locator('dt').filter({ hasText: name });
+        await expect(term.locator('[aria-hidden="true"]')).toHaveText(short);
+        await expect(term.locator('.sr-only')).toHaveText(name);
       }
-
-      const circleSize = card.getByRole('button', { name: 'CS, circle size' });
-      await circleSize.click();
-      await expect(
-        page.getByRole('dialog').filter({ hasText: 'Circle size' })
-      ).toBeVisible();
-      await page.keyboard.press('Escape');
+      // Nothing to tap: the labels open no popover.
+      await expect(card.getByRole('button')).toHaveCount(0);
 
       await expect(
         page
@@ -2096,6 +2116,42 @@ test.describe('Beatmap Detail Page', () => {
         Math.max(...scoreBoxes.map(({ width }) => width)) -
           Math.min(...scoreBoxes.map(({ width }) => width))
       ).toBeLessThan(1);
+    });
+
+    test('phone leaderboard rows keep the date and the tournament name', async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 375, height: 844 });
+      await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+
+      const rows = page
+        .getByRole('list', { name: 'Beatmap leaderboard' })
+        .locator('[data-slot="phone-row"]');
+      await expect(rows.first()).toBeVisible({ timeout: 10000 });
+
+      // Measured in one pass that retries, since the list can re-render
+      // between separate reads. The tournament has a line of its own: a long
+      // name keeps most of the row's width instead of three letters.
+      await expect(async () => {
+        const measured = await rows.evaluateAll((elements) =>
+          elements.map((row) => {
+            const link = row.querySelector('a[href^="/tournaments/"]');
+            return {
+              hasDate: row.querySelector('time') !== null,
+              width: link?.getBoundingClientRect().width ?? 0,
+              full: link?.scrollWidth ?? 0,
+              hasTournament: link !== null,
+            };
+          })
+        );
+        expect(measured.length).toBeGreaterThan(0);
+        expect(measured.every((row) => row.hasDate)).toBe(true);
+        const tournaments = measured.filter((row) => row.hasTournament);
+        expect(tournaments.length).toBeGreaterThan(0);
+        for (const { width, full } of tournaments) {
+          expect(width).toBeGreaterThanOrEqual(Math.min(full - 1, 100));
+        }
+      }).toPass({ timeout: 10000 });
     });
   });
 

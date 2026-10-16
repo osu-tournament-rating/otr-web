@@ -6,7 +6,9 @@ import Link from 'next/link';
 import { Fragment, useEffect, useRef } from 'react';
 
 import AudioPreviewButton from '@/components/audio/AudioPreviewButton';
-import BeatmapAdminView from '@/components/beatmap/BeatmapAdminView';
+import BeatmapAdminView, {
+  canEditBeatmapByHand,
+} from '@/components/beatmap/BeatmapAdminView';
 import BeatmapBannerData from '@/components/beatmap/BeatmapBannerData';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import StarRatingPill from '@/components/beatmaps/StarRatingPill';
@@ -111,7 +113,12 @@ export default function BeatmapHeader({
           </HeroMetaItem>
         </>
       }
-      adminActions={<BeatmapAdminView beatmap={beatmap} onArt={onArt} />}
+      // Left out entirely, not just empty, so the hero keeps no room for it.
+      adminActions={
+        canEditBeatmapByHand(beatmap) ? (
+          <BeatmapAdminView beatmap={beatmap} onArt={onArt} />
+        ) : undefined
+      }
       actions={
         // Stacked on the art, so both fit the column the hero keeps clear
         // beside the title.
@@ -271,13 +278,15 @@ function DifficultyNavigator({
           href={`/beatmaps/${difficulty.osuId}`}
           prefetch={false}
           aria-label={accessibleLabel}
-          className="flex min-h-10 max-w-64 shrink-0 snap-start items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm transition-colors hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none sm:size-10 sm:max-w-none sm:justify-center sm:gap-0 sm:px-0 sm:py-0 dark:bg-input/40 dark:hover:bg-secondary/60"
+          // Icon-only from sm for a mouse, whose hover shows the tooltip. A
+          // tap opens the link instead, so touch screens keep the name.
+          className="flex min-h-10 max-w-64 shrink-0 snap-start items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm transition-colors hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none dark:bg-input/40 dark:hover:bg-secondary/60 pointer-fine:sm:size-10 pointer-fine:sm:max-w-none pointer-fine:sm:justify-center pointer-fine:sm:gap-0 pointer-fine:sm:px-0 pointer-fine:sm:py-0"
         >
           {difficultyIcon}
-          <span className="min-w-0 truncate font-medium sm:hidden">
+          <span className="min-w-0 truncate font-medium pointer-fine:sm:hidden">
             {difficulty.diffName}
           </span>
-          <span className="shrink-0 text-xs text-muted-foreground tabular-nums sm:hidden">
+          <span className="shrink-0 text-xs text-muted-foreground tabular-nums pointer-fine:sm:hidden">
             {formattedRating} SR
           </span>
         </Link>

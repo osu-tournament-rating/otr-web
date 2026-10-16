@@ -349,15 +349,12 @@ describe('CalloutChip', () => {
     expect(html).toContain('lucide-triangle-alert');
   });
 
-  it('opens its detail from a button', () => {
-    const html = render(
-      <CalloutChip tone="info" detail="Fetched 2 hours ago">
-        Cached
-      </CalloutChip>
-    );
+  it('is plain text, never a button', () => {
+    const html = render(<CalloutChip tone="info">Cached</CalloutChip>);
 
-    expect(html).toStartWith('<button');
+    expect(html).toStartWith('<span data-slot="callout-chip"');
     expect(html).toContain('bg-callout-info');
+    expect(html).not.toContain('<button');
   });
 });
 

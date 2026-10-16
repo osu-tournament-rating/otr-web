@@ -568,10 +568,7 @@ export default function BeatmapDistributionsCard({
                 <div className="flex flex-col items-start gap-2">
                   <Eyebrow>Tournament rank restrictions</Eyebrow>
                   {hasUnverifiedPools && rankSlices.length > 0 ? (
-                    <CalloutChip
-                      icon={ShieldQuestion}
-                      detail="Includes data that has not been verified"
-                    >
+                    <CalloutChip icon={ShieldQuestion}>
                       Includes unverified
                     </CalloutChip>
                   ) : null}

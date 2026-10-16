@@ -1258,17 +1258,14 @@ export default function FeedbackSection() {
         id="feedback-callout-chip"
         name="CalloutChip"
         importPath={`${KIT}/CalloutChip`}
-        description="A short warning inside a panel, in the callout's colours. Its detail opens on tap, hover and focus. The rows under the header show each tone at both sizes, labelled by tone."
+        description="A short warning inside a panel, in the callout's colours. Its words say it all, so nothing opens from it. The rows under the header show each tone at both sizes, labelled by tone."
       >
         <Panel>
           <SectionHeader
             icon={ChartNoAxesColumn}
             title="Tournament rank restrictions"
             actions={
-              <CalloutChip
-                icon={ShieldQuestion}
-                detail="Includes data that has not been verified"
-              >
+              <CalloutChip icon={ShieldQuestion}>
                 Includes unverified
               </CalloutChip>
             }

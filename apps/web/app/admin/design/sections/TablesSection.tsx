@@ -1597,7 +1597,7 @@ export default function TablesSection() {
         id="tables-link-row"
         name="DataTableLinkRow and DataTableLinkCell"
         importPath={`${KIT}/DataTableLinkRow`}
-        description="Only for tables whose rows already open as a whole: the beatmap list and pooled beatmaps. The row gets the hover tint and the name turns blue; a click anywhere follows the one link in the name cell. Below tablet width the rows become PhoneRows that link as a whole."
+        description="Only for tables whose rows already open as a whole: the beatmap list and pooled beatmaps. The row gets the hover tint and the name turns blue; a click anywhere follows the one link in the name cell. Below tablet width the rows become PhoneRows that link as a whole; the beatmap list's table and a pool show the list's cover rows instead (BeatmapListRows), so the audio preview, mapper and mods stay."
         stacked
       >
         <LinkRowDemo />

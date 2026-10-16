@@ -1,7 +1,28 @@
 import { describe, expect, it } from 'bun:test';
+import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
-import { formSchema, sameOsuIds } from '@/components/beatmap/BeatmapAdminView';
+import {
+  canEditBeatmapByHand,
+  formSchema,
+  sameOsuIds,
+} from '@/components/beatmap/BeatmapAdminView';
 import type { PlayerLookupResult } from '@/lib/orpc/schema/player';
+
+describe('canEditBeatmapByHand', () => {
+  it('allows only beatmaps the osu! API no longer serves', () => {
+    expect(
+      canEditBeatmapByHand({ dataFetchStatus: DataFetchStatus.NotFound })
+    ).toBe(true);
+    for (const status of [
+      DataFetchStatus.NotFetched,
+      DataFetchStatus.Fetching,
+      DataFetchStatus.Fetched,
+      DataFetchStatus.Error,
+    ]) {
+      expect(canEditBeatmapByHand({ dataFetchStatus: status })).toBe(false);
+    }
+  });
+});
 
 const player = (osuId: number): PlayerLookupResult => ({
   osuId,

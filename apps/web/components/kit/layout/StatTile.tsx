@@ -47,8 +47,8 @@ export function StatTile({
   ...props
 }: Omit<React.ComponentProps<'div'>, 'children'> & {
   /**
-   * Sentence case. Text truncates; a node, such as an `Abbreviation` whose
-   * full name opens on tap, is set as it is.
+   * Sentence case; it truncates. A node can give a short form, such as CS,
+   * its full name for screen readers in an `sr-only` span.
    */
   label: React.ReactNode;
   /** Already formatted, with separators on counts. */
@@ -72,20 +72,15 @@ export function StatTile({
   /** Extra content under everything, such as a gauge. */
   children?: React.ReactNode;
 }) {
-  const textLabel = typeof label === 'string' ? label : null;
   const term = (
     <dt className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
       {Icon ? <Icon className="size-3.5 shrink-0" aria-hidden /> : null}
-      {textLabel !== null ? (
-        <span className="truncate">{textLabel}</span>
-      ) : (
-        // A node may hold a button; truncating would clip its focus ring.
-        <span className="flex min-w-0 items-center">{label}</span>
-      )}
+      <span className="truncate">{label}</span>
       {infoText ? (
         <InfoButton
           label={
-            infoLabel ?? (textLabel !== null ? aboutLabel(textLabel) : 'About')
+            infoLabel ??
+            (typeof label === 'string' ? aboutLabel(label) : 'About')
           }
           size="sm"
           className="-my-0.5"

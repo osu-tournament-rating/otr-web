@@ -409,7 +409,7 @@ Gallery anchors: `/admin/design#feedback-callout-merge`, `/admin/design#feedback
 
 ## CalloutChip
 
-A short notice inside a panel, such as "Includes unverified" on a chart: the callout's colours on a small outlined chip (the status family's `Badge` with `shape="rounded"`). With `detail` it becomes a button whose explanation opens on tap, hover and focus.
+A short notice inside a panel, such as "Includes unverified" on a chart: the callout's colours on a small outlined chip (the status family's `Badge` with `shape="rounded"`). It is plain text: its words say it all, so nothing opens from it.
 
 ```tsx
 import { ShieldQuestion } from 'lucide-react';
@@ -419,14 +419,7 @@ import { CalloutChip } from '@/components/kit/feedback/CalloutChip';
 <SectionHeader
   icon={ChartNoAxesColumn}
   title="Tournament rank restrictions"
-  actions={
-    <CalloutChip
-      icon={ShieldQuestion}
-      detail="Includes data that has not been verified"
-    >
-      Includes unverified
-    </CalloutChip>
-  }
+  actions={<CalloutChip icon={ShieldQuestion}>Includes unverified</CalloutChip>}
 />;
 ```
 
@@ -434,7 +427,6 @@ Props that matter:
 
 - `tone`: `warning` (default), `info`, `danger`.
 - `children`: two or three words.
-- `detail`: the explanation. The chip's text is the button's accessible name.
 - `icon`: replaces the tone's glyph, such as a shield for unverified data.
 - `size`: `md` (24px, default) in a section header, `sm` (20px) beside 12px text.
 
@@ -446,5 +438,6 @@ Don't:
 
 - Don't use it as a label for an entity's attribute (a mod, a ruleset, a role); that is the status family's `Badge`.
 - Don't write a sentence in it; use a Callout.
+- Don't open a tooltip or popover from it that rewords its own label (owner decision, as for close buttons); if the chip's words aren't enough, the notice is a Callout.
 
 Gallery anchor: `/admin/design#feedback-callout-chip`

@@ -36,7 +36,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { hasAdminScope } from '@/lib/auth/roles';
-import { getBeatmapTitle } from '@/lib/beatmaps/presentation';
 import { useSession } from '@/lib/hooks/useSession';
 import { RULESET_NAMES } from '@/lib/kit/format/ruleset';
 import { aboutLabel } from '@/lib/kit/layout/about-label';
@@ -45,10 +44,6 @@ import type { BeatmapWithDetails } from '@/lib/orpc/schema/beatmapStats';
 import type { PlayerLookupResult } from '@/lib/orpc/schema/player';
 import { formatDuration, parseDuration } from '@/lib/kit/format/date';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
-
-/** Shown on the disabled menu item, and the reason the dialog exists. */
-const ONLY_DELETED_BEATMAPS =
-  'Only beatmaps the osu! API no longer serves can be edited by hand';
 
 const required = (label: string) =>
   z.string().trim().min(1, `${label} is required`);
@@ -123,9 +118,19 @@ const toPlayer = (player: {
 });
 
 /**
+ * Only beatmaps the osu! API no longer serves can be edited by hand; on any
+ * other beatmap an admin has nothing to do, so the hero shows no menu.
+ */
+export function canEditBeatmapByHand(
+  beatmap: Pick<BeatmapWithDetails, 'dataFetchStatus'>
+) {
+  return beatmap.dataFetchStatus === DataFetchStatus.NotFound;
+}
+
+/**
  * The beatmap hero's one admin control: an "Admin" menu, on the cover art
  * when there is one, and the edit dialog it opens. Renders nothing for
- * visitors.
+ * visitors, or on a beatmap the osu! API still serves.
  */
 export default function BeatmapAdminView({
   beatmap,
@@ -138,43 +143,29 @@ export default function BeatmapAdminView({
   const session = useSession();
   const [editing, setEditing] = useState(false);
 
-  if (!hasAdminScope(session?.scopes ?? [])) {
+  if (!hasAdminScope(session?.scopes ?? []) || !canEditBeatmapByHand(beatmap)) {
     return null;
   }
-
-  const isDeleted = beatmap.dataFetchStatus === DataFetchStatus.NotFound;
-  // The hero's name for the map; an empty difficulty adds no brackets.
-  const menuTitle = [
-    getBeatmapTitle(beatmap) ?? 'Unknown title',
-    beatmap.diffName ? `[${beatmap.diffName}]` : null,
-  ]
-    .filter(Boolean)
-    .join(' ');
 
   return (
     <>
       <AdminMenu
         onArt={onArt}
         data-testid="beatmap-admin-menu"
-        title={menuTitle}
         actions={[
           {
             label: 'Edit beatmap data',
             icon: PencilLine,
-            disabled: !isDeleted,
-            description: isDeleted ? undefined : ONLY_DELETED_BEATMAPS,
             onSelect: () => setEditing(true),
             testId: 'beatmap-edit-action',
           },
         ]}
       />
-      {isDeleted ? (
-        <BeatmapEditDialog
-          beatmap={beatmap}
-          open={editing}
-          onOpenChange={setEditing}
-        />
-      ) : null}
+      <BeatmapEditDialog
+        beatmap={beatmap}
+        open={editing}
+        onOpenChange={setEditing}
+      />
     </>
   );
 }

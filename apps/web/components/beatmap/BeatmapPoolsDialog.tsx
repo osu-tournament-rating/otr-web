@@ -113,15 +113,19 @@ export default function BeatmapPoolsDialog({
                 <PhoneRow
                   key={row.tournament.id}
                   title={
-                    <>
-                      <StatusIcon row={row} />
+                    // The name wraps, since its end ("#4", "2026") tells
+                    // editions apart; the icon stays level with its first line.
+                    <span className="flex min-w-0 items-start gap-1.5">
+                      <span className="flex h-5 shrink-0 items-center">
+                        <StatusIcon row={row} />
+                      </span>
                       <EntityLink
                         href={`/tournaments/${row.tournament.id}`}
-                        title={row.tournament.name}
+                        wrap
                       >
                         {row.tournament.name}
                       </EntityLink>
-                    </>
+                    </span>
                   }
                   description={[
                     formatRankRange(row.rankRangeLowerBound),

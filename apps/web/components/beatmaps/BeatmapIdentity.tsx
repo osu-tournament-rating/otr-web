@@ -135,9 +135,11 @@ export default function BeatmapIdentity({
               data-testid="beatmap-difficulty-name"
               title={diffName}
               className={cn(
-                'min-w-0 font-medium text-foreground/85',
-                // In a narrow cell the difficulty gives way before the title.
-                isTable ? 'shrink-[4] text-xs' : 'text-sm',
+                'font-medium text-foreground/85',
+                // In a narrow cell the difficulty gives way before the
+                // title, but keeps at least 48px ("[Hyp…"), so a long title
+                // never hides it.
+                isTable ? 'min-w-12 shrink-[4] text-xs' : 'min-w-0 text-sm',
                 clip
               )}
             >

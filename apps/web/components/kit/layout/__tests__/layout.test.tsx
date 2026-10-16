@@ -3,7 +3,6 @@ import { Trophy } from 'lucide-react';
 import type * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { Abbreviation } from '@/components/kit/layout/Abbreviation';
 import { DetailHero, HeroMetaItem } from '@/components/kit/layout/DetailHero';
 import { HeroTabs } from '@/components/kit/layout/HeroTabs';
 import {
@@ -157,40 +156,6 @@ describe('InfoButton', () => {
 
     expect(html).toContain('text-white/80 hover:text-white');
     expect(html).not.toContain('text-muted-foreground');
-  });
-});
-
-describe('Abbreviation', () => {
-  it('names the short form, then its full form, and opens it on tap', () => {
-    const html = render(<Abbreviation full="Circle size">CS</Abbreviation>);
-
-    // The name starts with the visible "CS" (WCAG 2.5.3, label in name).
-    expect(html).toContain(
-      '<button type="button" aria-label="CS, circle size"'
-    );
-    expect(html).toContain('decoration-dotted');
-    expect(html).toContain('>CS</button>');
-    // No hover-only title attribute.
-    expect(html).not.toContain('title=');
-  });
-
-  it('keeps the capitals of a full form that starts with a short form', () => {
-    const html = render(<Abbreviation full="HP drain">HP</Abbreviation>);
-
-    expect(html).toContain('aria-label="HP, HP drain"');
-  });
-
-  it('has a tap target of at least 24px that moves no text', () => {
-    const html = render(<Abbreviation full="Circle size">CS</Abbreviation>);
-
-    // The trigger stays inline; an absolute ::after, centred on the text,
-    // is 24px tall and 4px wider than the text each side, never under 24px.
-    expect(html).toMatch(/<button [^>]*class="[^"]*\brelative inline\b/);
-    expect(html).toContain('after:absolute');
-    expect(html).toContain('after:h-6');
-    expect(html).toContain('after:min-w-6');
-    expect(html).toContain('after:w-[calc(100%+0.5rem)]');
-    expect(html).not.toMatch(/class="[^"]*\b(p|px|py)-\d/);
   });
 });
 
@@ -406,21 +371,28 @@ describe('StatTile', () => {
     expect(html).toMatch(/<span class="-my-1 [^"]*"><span data-tier/);
   });
 
-  it('takes a node as its label, such as an abbreviation', () => {
+  it('takes a node as its label, such as a short form with its full name', () => {
     const html = render(
       <StatTile
         layout="inline"
-        label={<Abbreviation full="Circle size">CS</Abbreviation>}
+        label={
+          <>
+            <span aria-hidden="true">CS</span>
+            <span className="sr-only">Circle size</span>
+          </>
+        }
         value="4.0"
         infoText="How big the circles are."
         infoLabel="About circle size"
       />
     );
 
-    expect(html).toMatch(/<dt[^>]*>.*aria-label="CS, circle size".*<\/dt>/);
+    // Plain text on screen, nothing to tap: the full name is for screen
+    // readers only.
+    expect(html).toContain(
+      '<span class="truncate"><span aria-hidden="true">CS</span><span class="sr-only">Circle size</span></span>'
+    );
     expect(html).toContain('aria-label="About circle size"');
-    // A node is not truncated, so a button inside keeps its focus ring.
-    expect(html).not.toContain('class="truncate"');
   });
 
   it('names the info button after a text label', () => {

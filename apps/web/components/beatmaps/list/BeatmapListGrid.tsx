@@ -65,24 +65,27 @@ export default function BeatmapListGrid({
     case 'compact':
       return (
         <BeatmapListRows
-          beatmaps={beatmaps}
+          beatmaps={toBeatmapTableRows(beatmaps)}
           data-testid="beatmap-list"
           data-layout={layout}
         />
       );
 
-    case 'table':
+    case 'table': {
+      const rows = toBeatmapTableRows(beatmaps);
+
       return (
         <div data-testid="beatmap-list" data-layout={layout}>
           <BeatmapListTable
-            beatmaps={toBeatmapTableRows(beatmaps)}
+            beatmaps={rows}
             sort={sort}
             descending={descending}
             onSortChange={onSortChange}
             stickyHeader
-            phoneRows={<BeatmapListRows beatmaps={beatmaps} />}
+            phoneRows={<BeatmapListRows beatmaps={rows} />}
           />
         </div>
       );
+    }
   }
 }

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useId, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import BeatmapListRows from '@/components/beatmaps/list/BeatmapListRows';
 import BeatmapListTable, {
   type BeatmapTableSelection,
 } from '@/components/beatmaps/list/BeatmapListTable';
@@ -22,22 +23,15 @@ import {
   SortControl,
   type SortOption,
 } from '@/components/kit/lists/SortControl';
-import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { Textarea } from '@/components/ui/textarea';
 import { hasAdminScope } from '@/lib/auth/roles';
-import { getBeatmapRulesetLabel } from '@/lib/beatmaps/presentation';
 import {
   sortBeatmapTableRows,
   toTournamentBeatmapTableRows,
   type BeatmapTableRow,
 } from '@/lib/beatmaps/table-row';
 import { useSession } from '@/lib/hooks/useSession';
-import {
-  formatCount,
-  formatCountOf,
-  formatId,
-  formatNumber,
-} from '@/lib/kit/format/number';
+import { formatCount, formatCountOf, formatId } from '@/lib/kit/format/number';
 import { defineListParams, sortParam } from '@/lib/kit/lists/params';
 import { useListState } from '@/lib/kit/lists/use-list-state';
 import { orpc } from '@/lib/orpc/orpc';
@@ -99,42 +93,6 @@ function parseBeatmapId(value: string): number {
 
 const beatmapLabel = (row: BeatmapTableRow) =>
   `${row.artist} - ${row.title} [${row.diffName}]`;
-
-/**
- * The pool on phones: each row opens its beatmap as a whole, like the table
- * rows, with the game count as the number to scan.
- */
-function PoolPhoneRows({ rows }: { rows: BeatmapTableRow[] }) {
-  return (
-    <PhoneRowList aria-label="Pooled beatmaps">
-      {rows.map((row) => (
-        <PhoneRow
-          key={row.id}
-          href={`/beatmaps/${row.osuId}`}
-          linkLabel={`View ${beatmapLabel(row)}`}
-          title={
-            <span data-row-title className="min-w-0 truncate">
-              {row.title}{' '}
-              <span className="font-normal text-muted-foreground">
-                [{row.diffName}]
-              </span>
-            </span>
-          }
-          description={[
-            row.artist,
-            getBeatmapRulesetLabel(row.ruleset, row.diffName),
-            `${formatNumber(row.sr, { decimals: 2 })} SR`,
-            row.isDeleted ? 'Deleted from osu!' : null,
-          ]
-            .filter(Boolean)
-            .join(' · ')}
-          value={formatCount(row.gameCount)}
-          valueDescription={row.gameCount === 1 ? 'game' : 'games'}
-        />
-      ))}
-    </PhoneRowList>
-  );
-}
 
 /**
  * The Beatmaps tab: the tournament's pool, sortable like the beatmap list.
@@ -330,12 +288,23 @@ export default function TournamentBeatmapsAdminView({
                   onClick={() => setShowDeleted(!showDeleted)}
                 />
               )}
+              {/* Labelled from sm; phones keep the icon, the strip is tight. */}
               <IconButton
-                data-testid="tournament-beatmaps-add"
                 label="Add beatmaps"
                 icon={Plus}
                 onClick={() => setIsAddDialogOpen(true)}
+                className="sm:hidden"
               />
+              <Button
+                data-testid="tournament-beatmaps-add"
+                variant="outline"
+                size="sm"
+                icon={Plus}
+                onClick={() => setIsAddDialogOpen(true)}
+                className="max-sm:hidden"
+              >
+                Add beatmaps
+              </Button>
             </>
           ) : undefined
         }
@@ -364,8 +333,16 @@ export default function TournamentBeatmapsAdminView({
           selection={selecting ? selection : undefined}
           // Selecting keeps the table on phones, wide enough for its checkboxes.
           minWidthClassName={selecting ? 'min-w-[44rem]' : undefined}
+          // The beatmap list's phone rows: cover with its preview, mapper,
+          // star rating and mods, each row one link.
           phoneRows={
-            selecting ? undefined : <PoolPhoneRows rows={visibleRows} />
+            selecting ? undefined : (
+              <BeatmapListRows
+                beatmaps={visibleRows}
+                pool
+                aria-label="Pooled beatmaps"
+              />
+            )
           }
           phoneSort={
             <SortControl

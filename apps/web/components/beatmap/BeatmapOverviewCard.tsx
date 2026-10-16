@@ -12,7 +12,6 @@ import type * as React from 'react';
 
 import BeatmapPoolsDialog from '@/components/beatmap/BeatmapPoolsDialog';
 import BeatmapUsageSparkline from '@/components/beatmap/BeatmapUsageSparkline';
-import { Abbreviation } from '@/components/kit/layout/Abbreviation';
 import { Panel } from '@/components/kit/layout/Panel';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { StatTile, StatTileGrid } from '@/components/kit/layout/StatTile';
@@ -78,10 +77,19 @@ function AttributesGroup({ beatmap }: { beatmap: BeatmapWithDetails }) {
 
           return (
             <StatTile
-              key={row.abbreviation}
+              key={row.label}
               layout="inline"
               label={
-                <Abbreviation full={row.label}>{row.abbreviation}</Abbreviation>
+                row.fullName ? (
+                  // osu!'s own short forms read as they are on screen;
+                  // screen readers hear the full name instead.
+                  <>
+                    <span aria-hidden="true">{row.label}</span>
+                    <span className="sr-only">{row.fullName}</span>
+                  </>
+                ) : (
+                  row.label
+                )
               }
               // An attribute the ruleset doesn't use reads quieter: a muted
               // value, never a faded tile, so its 12px label keeps 4.5:1.

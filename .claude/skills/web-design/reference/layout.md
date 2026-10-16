@@ -11,7 +11,6 @@ Every value here comes from the beatmap pages, which are the reference. Import e
 - [Panel and PanelBody](#panel-and-panelbody): the one surface
 - [SectionHeader](#sectionheader): the strip at the top of a panel
 - [InfoButton](#infobutton): the one help button
-- [Abbreviation](#abbreviation): a short form whose full form opens on tap
 - [Tile](#tile): the small bordered box inside a panel
 - [StatTile and StatTileGrid](#stattile-and-stattilegrid): one number with its label
 - [RowList and RowListItem](#rowlist-and-rowlistitem): divided rows inside a panel
@@ -140,7 +139,7 @@ import { VerificationStatusBadge } from '@/components/kit/status/VerificationSta
     </>
   }
   adminActions={
-    isAdmin ? <AdminMenu title={tournament.name} actions={…} /> : null
+    isAdmin ? <AdminMenu actions={…} /> : null
   }
   actions={
     <IconButton
@@ -403,37 +402,6 @@ Don't:
 
 Gallery anchor: `/admin/design#layout-info-button`
 
-## Abbreviation
-
-A short form whose full form opens on tap, hover and keyboard focus: CS for circle size, AR, OD, HP. Screen readers hear both, short form first ("CS, circle size"), so the name starts with the text on screen and speech input that says "CS" reaches it. It replaces `<abbr title>`, whose title only shows on a mouse hover.
-
-```tsx
-import { Abbreviation } from '@/components/kit/layout/Abbreviation';
-
-<StatTile
-  layout="inline"
-  label={<Abbreviation full="Circle size">CS</Abbreviation>}
-  value="4.0"
-/>;
-```
-
-Props:
-
-- `full`: the full form in sentence case, the name the site already uses (`lib/beatmaps/presentation.ts` holds the beatmap attributes'). It is the bubble's text, and follows the short form in the button's accessible name, lower-cased after the comma unless it starts with a short form itself ("HP drain").
-- `children`: the short form shown, as plain text.
-- `side`: where the bubble opens (`top`).
-
-It takes the colour and size of the text around it, with a dotted underline as the cue. Use it for established short forms in labels: stat tiles, table headers, filter labels. Spell out anything else.
-
-Its tap target is at least 24px square, as InfoButton's is: an absolute `::after`, centred on the text, 24px tall and 4px past the text on each side (never under 24px wide). The text itself has no padding, so it doesn't move or change the line's height. Leave about 4px between it and the next control, so the two hit areas don't overlap.
-
-Don't:
-
-- Don't use `<abbr title>` or a hover-only tooltip for a full name.
-- Don't put it inside another button or link.
-
-Gallery anchors: `/admin/design#layout-abbreviation`, `/admin/design#layout-stat-tile-inline`
-
 ## Tile
 
 The small bordered box inside a panel, for one record or attribute: 8px corners, a faint tint and a border.
@@ -494,7 +462,7 @@ import { StatTile, StatTileGrid } from '@/components/kit/layout/StatTile';
 
 Props:
 
-- `label`: sentence case, 12px muted. `icon` puts a small muted icon before it. Text truncates; a node, such as an [Abbreviation](#abbreviation) (`label={<Abbreviation full="Circle size">CS</Abbreviation>}`), is set as it is, so a button inside keeps its focus ring.
+- `label`: sentence case, 12px muted, truncated. `icon` puts a small muted icon before it. A short form players know from osu!, such as CS, AR, OD or HP, shows as plain text, and screen readers hear the full name instead: `label={<><span aria-hidden="true">CS</span><span className="sr-only">Circle size</span></>}` (the beatmap attributes' names are in `lib/beatmaps/presentation.ts`). A plain word such as "Keys" needs neither.
 - `value`: already formatted (separators on counts, never on years or IDs). It renders 20px bold (18px semibold inline) with `leading-none`, so the value line is as tall as the text, like the beatmap tiles, and in tabular figures, so digits line up from tile to tile. Tabular figures also widen Inter's hyphen; a hyphenated word as a value (rare) takes `<span className="proportional-nums">`.
 - `adornment`: sits 4px left of the value and overhangs its 20px line, so a 20–24px icon does not push the value or sub line out of step with the next tile. The profile's tier icon goes here; there is no separate tier tile. Pass TierIcon's `tooltip`: it wraps the icon in a TapTooltip, so the tier's name opens on tap, hover and keyboard focus.
 - `sub`: one muted line under the value.
@@ -509,6 +477,7 @@ Do:
 Don't:
 
 - Don't make a stat tile a button; use Tile with `asChild interactive`, as the beatmap's "Pooled in" tile does (`components/beatmap/BeatmapPoolsDialog.tsx`).
+- Don't underline a label or open its full name in a tooltip or popover (owner decision, as for "Elite GM" on the home page): the visitor reads osu!'s own short forms on sight, and an underline reads as a link.
 
 Loading: `StatTileGridSkeleton` with the same static labels and `columns` ([feedback.md](feedback.md#skeletons)).
 

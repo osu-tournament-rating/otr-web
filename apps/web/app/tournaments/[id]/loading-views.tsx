@@ -136,6 +136,29 @@ const POOL_COLUMNS = [
   { label: 'Mods', width: 'w-34', showFrom: 'lg' },
 ] as const;
 
+/**
+ * The pool's phone rows: the beatmap list's cover rows (BeatmapListRows), a
+ * cover over the title, difficulty, attribution and two lines of figures.
+ */
+function PoolPhoneRowsSkeleton() {
+  return (
+    <div className="divide-y">
+      {Array.from({ length: 4 }, (_, index) => (
+        <div key={index} className="grid gap-3 p-3">
+          <SkeletonText className="block h-28 w-full rounded-lg" />
+          <div className="flex flex-col">
+            <SkeletonText className="h-5 w-3/4" />
+            <SkeletonText className="mt-1 h-4 w-2/5" />
+            <SkeletonText className="mt-1.5 h-3.5 w-3/5" />
+            <SkeletonText className="mt-2 h-6 w-48" />
+            <SkeletonText className="mt-1.5 h-5 w-32" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function BeatmapsSkeleton() {
   return (
     <PanelSkeleton>
@@ -144,7 +167,7 @@ function BeatmapsSkeleton() {
         columns={POOL_COLUMNS}
         rows={10}
         cellHeight="h-10"
-        phoneRows={<PhoneRowListSkeleton rows={8} leading={32} />}
+        phoneRows={<PoolPhoneRowsSkeleton />}
       />
     </PanelSkeleton>
   );
