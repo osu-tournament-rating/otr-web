@@ -50,4 +50,4 @@ dead_code = "allow"
 unused_variables = "allow"
 
 [profile.release]
-debug = true
+debug = "line-tables-only"
