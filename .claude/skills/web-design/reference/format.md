@@ -318,6 +318,7 @@ formatLobbySize(4); // "4v4"
 - Each entry has `label`, an optional `short` for narrow headers and tiles, and `legacy`: the names it replaces. Never render a `legacy` name; search for it to find what to migrate.
 - Keys and helpers keep the stored column's name (`rankRange` and `formatRankRange` for `rankRangeLowerBound`); only the label changes.
 - The values these write follow the forms' rules: a rank restriction is a whole number from 1 (`Open rank`), and a lobby size runs from `1v1` to `8v8`.
+- Filters use the site's short labels: "Matches", "Tiers" (the filter picks several) and "Status" (the `short` of `verificationStatus`).
 - `humanizeFieldName('drainLength')` gives `Drain length` for a raw name with no entry. Prefer adding the entry.
 
 The duplicates it settles:

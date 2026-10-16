@@ -34,7 +34,7 @@ export const FIELD_NAMES = {
   matchCost: { label: 'Match cost', legacy: ['Match Cost'] },
   winRate: { label: 'Win rate', legacy: ['Win rate %'] },
   tournamentsPlayed: { label: 'Tournaments played', short: 'Tournaments' },
-  matchesPlayed: { label: 'Matches played', short: 'Matches' },
+  matchesPlayed: { label: 'Matches', legacy: ['Matches played'] },
   gamesPlayed: { label: 'Games played', short: 'Games' },
 
   // Tournaments

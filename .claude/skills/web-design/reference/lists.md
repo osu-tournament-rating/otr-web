@@ -101,7 +101,7 @@ const { state, setState } = list;
       activeCount={list.activeFilterCount}
       onClearAll={list.clearFilters}
     >
-      <ChoiceFilter label="Verification status" … />
+      <ChoiceFilter label="Status" … />
       <RangeFilter label="Rank restriction" … />
       <DayRangeFilter label="Tournament dates" … />
     </FilterPanel>
@@ -422,7 +422,7 @@ import { tournamentRankScale } from '@/lib/filters/tournament-rank';
   onValueChange={(rank) => setState({ rank })}
 />
 <ChoiceFilter
-  label="Verification status"
+  label="Status"
   options={VERIFICATION_STATUS_ORDER.map((status) => ({
     value: status,
     label: getVerificationStatusName(status),

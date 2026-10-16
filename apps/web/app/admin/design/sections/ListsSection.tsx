@@ -367,7 +367,7 @@ function TournamentToolbarDemo() {
               onClearAll={list.clearFilters}
             >
               <ChoiceFilter
-                label="Verification status"
+                label="Status"
                 options={STATUS_OPTIONS}
                 value={state.status}
                 onValueChange={(status) => setState({ status })}
@@ -577,7 +577,7 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
               onValueChange={(rating) => setState({ rating })}
             />
             <RangeFilter
-              label="Matches played"
+              label="Matches"
               valueLabel="matches"
               min={1}
               max={1000}
@@ -586,7 +586,7 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
               onValueChange={(matches) => setState({ matches })}
             />
             <ChoiceFilter
-              label="Tier"
+              label="Tiers"
               options={TIER_OPTIONS}
               value={state.tier}
               onValueChange={(tier) => setState({ tier })}
@@ -628,13 +628,13 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
               },
               {
                 key: 'matches',
-                label: formatRangeFilterLabel('Matches played', state.matches),
+                label: formatRangeFilterLabel('Matches', state.matches),
                 onRemove: () => setState({ matches: {} }),
               },
               {
                 key: 'tier',
                 label: formatChoiceFilterLabel(
-                  'Tier',
+                  'Tiers',
                   state.tier.map(
                     (tier) =>
                       TIER_OPTIONS.find((option) => option.value === tier)
@@ -1061,7 +1061,7 @@ function TournamentFiltersDemo() {
         onValueChange={setRank}
       />
       <ChoiceFilter
-        label="Verification status"
+        label="Status"
         options={STATUS_OPTIONS}
         value={status}
         onValueChange={setStatus}
