@@ -122,6 +122,7 @@
   --color-game-frame: var(--game-frame);
   --color-score-card: var(--score-card);
   --color-notification: var(--notification);
+  --color-support: var(--support);
   --color-tier-elite-grandmaster: var(--tier-elite-grandmaster);
   --color-tier-grandmaster: var(--tier-grandmaster);
   --color-tier-master: var(--tier-master);
@@ -268,6 +269,9 @@
   /* The one notification dot colour. */
   --notification: #4589f2;
 
+  /* The support heart on hover, the pink it always had. */
+  --support: oklch(0.656 0.241 354.308);
+
   /* Tier text. */
   --tier-elite-grandmaster: #256acf;
   --tier-grandmaster: #d81821;
@@ -402,6 +406,7 @@
   --score-card: #242424;
 
   --notification: #4e93fc;
+  --support: oklch(0.656 0.241 354.308);
 
   --tier-elite-grandmaster: #4e93fc;
   --tier-grandmaster: #f9433e;

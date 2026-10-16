@@ -101,6 +101,14 @@ export const NOTIFICATION_COLOR: ThemeColor = themeColor(
   'mark'
 );
 
+/** The support heart in the header, on hover: the same pink in both themes. */
+export const SUPPORT_COLOR: ThemeColor = themeColor(
+  '--support',
+  'oklch(0.656 0.241 354.308)',
+  'oklch(0.656 0.241 354.308)',
+  'mark'
+);
+
 /** Body text. */
 export const FOREGROUND_COLOR: ThemeColor = themeColor(
   '--foreground',
@@ -267,6 +275,17 @@ export const TOKEN_GROUPS: readonly TokenGroup[] = [
         color: NOTIFICATION_COLOR,
         label: 'Notification dot',
         utility: utilityOf(NOTIFICATION_COLOR),
+      },
+    ],
+  },
+  {
+    id: 'support',
+    title: 'Support',
+    entries: [
+      {
+        color: SUPPORT_COLOR,
+        label: 'Support heart on hover',
+        utility: 'support',
       },
     ],
   },

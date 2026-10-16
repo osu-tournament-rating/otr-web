@@ -207,9 +207,7 @@ test.describe('Homepage and Global Navigation', () => {
   });
 
   test.describe('Header menus', () => {
-    test('More lists the docs, the API reference and support', async ({
-      page,
-    }) => {
+    test('More lists the docs and the API reference', async ({ page }) => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
 
@@ -223,7 +221,13 @@ test.describe('Homepage and Global Navigation', () => {
       await expect(
         nav.getByRole('link', { name: 'API reference' })
       ).toHaveAttribute('href', ROUTES.spec);
-      await expect(nav.getByRole('link', { name: /^Support/ })).toHaveAttribute(
+      await expect(nav.getByRole('link', { name: /^Support/ })).toHaveCount(0);
+    });
+
+    test('the support heart sits at the top right', async ({ page }) => {
+      await page.goto(ROUTES.home);
+
+      await expect(page.getByTestId('header-support')).toHaveAttribute(
         'href',
         'https://buymeacoffee.com/stagecodes'
       );

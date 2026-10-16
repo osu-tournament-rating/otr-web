@@ -18,12 +18,13 @@ import DesktopNav from './DesktopNav';
 import MobileNav from './MobileNav';
 import MobileNavTrigger from './MobileNavTrigger';
 import { getNavEntries } from './navigation';
+import SupportButton from './SupportButton';
 import ThemeToggle from './ThemeToggle';
 
 /**
  * The site header: the logo and navigation on the left (an Admin menu for
- * admins and a More menu for docs, the API reference and support), search,
- * the theme switch and the account menu on the right. Below laptop width
+ * admins and a More menu for the docs and the API reference), search, the
+ * theme switch, the support heart and the account menu on the right. Below laptop width
  * (1024px), where the admin's seven entries no longer fit, the navigation and
  * the account menu move into one menu with the same structure.
  */
@@ -74,6 +75,7 @@ export default function Header() {
       <div className="flex shrink-0 items-center gap-1">
         <SearchCommandDialog />
         <ThemeToggle />
+        <SupportButton />
         <div className="ml-1 hidden lg:block">
           {user ? (
             <AccountMenu

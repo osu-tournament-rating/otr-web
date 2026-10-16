@@ -66,6 +66,7 @@ Every token below has a light value in `:root` and a dark value in `.dark`; the 
 | `--game-frame`                         | `game-frame`                 | `#f4f4f4`   | `#141414`   | Recessed frame around a game's scores    |
 | `--score-card`                         | `score-card`                 | `#ffffff`   | `#242424`   | Score card inside the game frame         |
 | `--notification`                       | `notification`               | `#4589f2`   | `#4e93fc`   | The one notification dot                 |
+| `--support`                            | `support`                    | `#f6339a`   | `#f6339a`   | The header's support heart on hover      |
 | `--tier-<tier>`                        | `tier-<tier>`                | `tiers.ts`  | `tiers.ts`  | Tier names (text) and tier chart marks   |
 | `--score-grade-ss` … `--score-grade-d` | none                         | `grades.ts` | `grades.ts` | Grade chart marks                        |
 | `--mod-nm` … `--mod-key`               | none                         | `mods.ts`   | `mods.ts`   | Mod marks and solid mod pills            |

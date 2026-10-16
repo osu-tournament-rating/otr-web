@@ -5,7 +5,6 @@ import {
   FileText,
   Filter,
   Flag,
-  Heart,
   ShieldCheck,
   Trophy,
   Upload,
@@ -143,7 +142,6 @@ export function getNavEntries({
     links: [
       { title: 'Docs', href: DOCS_URL, icon: BookOpen, external: true },
       { title: 'API reference', href: '/spec', icon: FileCode },
-      { title: 'Support', href: SUPPORT_URL, icon: Heart, external: true },
     ],
   });
 

@@ -48,7 +48,6 @@ describe('getNavEntries', () => {
     expect(linkTitles(menu(entries, 'More'))).toEqual([
       'Docs',
       'API reference',
-      'Support',
     ]);
   });
 
