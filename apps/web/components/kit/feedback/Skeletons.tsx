@@ -1,6 +1,8 @@
+import { Info } from 'lucide-react';
 import type * as React from 'react';
 
 import { Panel } from '@/components/kit/layout/Panel';
+import { ListToolbar } from '@/components/kit/lists/ListToolbar';
 import { RowList, RowListItem } from '@/components/kit/layout/RowList';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { StatTile, StatTileGrid } from '@/components/kit/layout/StatTile';
@@ -13,7 +15,11 @@ import {
   DataTableHeader,
   DataTableRow,
 } from '@/components/kit/tables/DataTable';
-import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
+import {
+  PhoneRow,
+  type PhoneRowAlign,
+  PhoneRowList,
+} from '@/components/kit/tables/PhoneRow';
 import type { KitIcon } from '@/lib/kit/layout/icon';
 import type { ColumnBreakpoint } from '@/lib/kit/tables/cell';
 import { cn } from '@/lib/utils';
@@ -86,14 +92,29 @@ export function PanelSkeleton({
 }
 
 /**
- * The SectionHeader strip while a panel loads. Pass the real `title` and
- * `icon`, which are static, so nothing shifts when the content arrives;
- * without a title the strip draws a bar in its place.
+ * A block that stands in for a control, such as a 40px search box or a 32px
+ * chip. Give it the control's height, width and corners with `className`.
+ */
+function SkeletonBlock({ className }: { className?: string }) {
+  return (
+    <span
+      data-slot="skeleton"
+      aria-hidden="true"
+      className={cn('block animate-pulse rounded-md bg-accent', className)}
+    />
+  );
+}
+
+/**
+ * The SectionHeader strip while a panel loads. Pass the real `title`,
+ * `icon` and `infoText`, which are static, so nothing shifts when the
+ * content arrives; without a title the strip draws a bar in its place.
  */
 export function SectionHeaderSkeleton({
   icon: Icon,
   title,
   level = 2,
+  infoText,
   meta = true,
   actions = 0,
   className,
@@ -102,13 +123,27 @@ export function SectionHeaderSkeleton({
   /** The loaded title. */
   title?: string;
   level?: 2 | 3 | 4;
-  /** A short bar on the right, where the count goes. */
-  meta?: boolean;
+  /**
+   * The loaded header's `infoText`. Its info button is drawn (and works),
+   * so the title keeps its width and the strip wraps where the loaded one
+   * does.
+   */
+  infoText?: React.ReactNode;
+  /**
+   * A short bar on the right, where the count goes. Pass a width class,
+   * such as `w-36` for "1,368 of 1,368 scores rated", when the loaded meta
+   * is long enough to wrap the strip on a phone; `true` is `w-20`.
+   */
+  meta?: boolean | string;
   /** Button placeholders after the meta, one per section action. */
   actions?: number;
   className?: string;
 }) {
-  const metaBar = meta ? <SkeletonText className="h-3 w-20" /> : null;
+  const metaBar = meta ? (
+    <SkeletonText
+      className={cn('h-3', typeof meta === 'string' ? meta : 'w-20')}
+    />
+  ) : null;
   const actionBars =
     actions > 0 ? (
       <>
@@ -124,6 +159,7 @@ export function SectionHeaderSkeleton({
         icon={Icon}
         title={title}
         level={level}
+        infoText={infoText}
         meta={metaBar}
         actions={actionBars}
         className={className}
@@ -144,6 +180,13 @@ export function SectionHeaderSkeleton({
           <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         ) : null}
         <SkeletonText className="w-36" />
+        {infoText ? (
+          // The info button's 20px box, without a title to name it.
+          <Info
+            className="box-content size-4 shrink-0 p-0.5 text-muted-foreground"
+            aria-hidden
+          />
+        ) : null}
       </div>
       {metaBar || actionBars ? (
         <div className="flex h-6 shrink-0 items-center gap-3">
@@ -295,6 +338,26 @@ export function TableSkeleton({
 }
 
 /**
+ * What sits on the right of a loaded phone row: `text` a number on the
+ * 20px line, `button` a 32px button such as View, `badge` a 20px badge.
+ */
+export type PhoneRowSkeletonValue = 'text' | 'button' | 'badge';
+
+/** What the muted line under the name holds: `text`, or `badge` and text. */
+export type PhoneRowSkeletonDescription = 'text' | 'badge';
+
+const PHONE_VALUE_BARS: Record<PhoneRowSkeletonValue, React.ReactNode> = {
+  // In a span, so the row keeps the 20px text line.
+  text: (
+    <span>
+      <SkeletonText className="w-12" />
+    </span>
+  ),
+  button: <SkeletonBlock className="h-8 w-14" />,
+  badge: <SkeletonBlock className="h-5 w-16" />,
+};
+
+/**
  * PhoneRows while a table loads on a phone. Give it to TableSkeleton's
  * `phoneRows`, as the loaded DataTable takes a PhoneRowList, with the same
  * parts as the loaded rows so each row keeps its height.
@@ -303,9 +366,11 @@ export function PhoneRowListSkeleton({
   rows = 5,
   rank = false,
   avatar = false,
+  leading,
   description = true,
   value = true,
   valueDescription = false,
+  align,
   className,
 }: {
   rows?: number;
@@ -313,14 +378,29 @@ export function PhoneRowListSkeleton({
   rank?: boolean;
   /** Adds the 24px avatar inside the name. */
   avatar?: boolean;
-  /** Adds the muted line under the name. */
-  description?: boolean;
-  /** Adds the key number on the right. */
-  value?: boolean;
+  /** Adds a round `leading` avatar of this size (24 or 32px) beside the name and its line. */
+  leading?: 24 | 32;
+  /**
+   * Adds the muted line under the name: `true` or `text` a 12px line,
+   * `badge` a 20px badge before the text, as the reports' status line.
+   */
+  description?: boolean | PhoneRowSkeletonDescription;
+  /**
+   * Adds what sits on the right: `true` or `text` the key number, `button`
+   * a 32px button such as View, `badge` a 20px badge.
+   */
+  value?: boolean | PhoneRowSkeletonValue;
   /** Adds the muted line under the number. */
   valueDescription?: boolean;
+  /** The loaded rows' `align`. */
+  align?: PhoneRowAlign;
   className?: string;
 }) {
+  const valueKind: PhoneRowSkeletonValue | null =
+    value === true ? 'text' : value === false ? null : value;
+  const descriptionKind: PhoneRowSkeletonDescription | null =
+    description === true ? 'text' : description === false ? null : description;
+
   return (
     <PhoneRowList
       data-slot="phone-row-list-skeleton"
@@ -330,8 +410,19 @@ export function PhoneRowListSkeleton({
       {Array.from({ length: rows }, (_, row) => (
         <PhoneRow
           key={row}
+          align={align}
           // Each bar sits in a span so the row keeps the 20px text line.
           rank={rank ? <SkeletonText className="w-6" /> : undefined}
+          leading={
+            leading ? (
+              <SkeletonBlock
+                className={cn(
+                  'rounded-full',
+                  leading === 32 ? 'size-8' : 'size-6'
+                )}
+              />
+            ) : undefined
+          }
           title={
             <span className="flex min-w-0 flex-1 items-center gap-2">
               {avatar ? (
@@ -346,23 +437,117 @@ export function PhoneRowListSkeleton({
             </span>
           }
           description={
-            description ? (
+            descriptionKind === 'badge' ? (
+              <span className="flex min-w-0 items-center gap-1.5">
+                <SkeletonBlock className="h-5 w-16 shrink-0" />
+                <SkeletonText className={cn('h-3', pick(row + 2))} />
+              </span>
+            ) : descriptionKind === 'text' ? (
               <SkeletonText className={cn('h-3', pick(row + 2))} />
             ) : undefined
           }
-          value={
-            value ? (
-              <span>
-                <SkeletonText className="w-12" />
-              </span>
-            ) : undefined
-          }
+          value={valueKind ? PHONE_VALUE_BARS[valueKind] : undefined}
           valueDescription={
             valueDescription ? <SkeletonText className="h-3 w-10" /> : undefined
           }
         />
       ))}
     </PhoneRowList>
+  );
+}
+
+// The loaded RulesetChips' widths, in their order (All, osu!, taiko, catch,
+// mania 4K, mania 7K), so the blocks wrap onto as many lines as the chips.
+const RULESET_CHIP_WIDTHS = [
+  'w-15',
+  'w-18',
+  'w-19',
+  'w-20',
+  'w-27',
+  'w-27',
+] as const;
+
+/**
+ * A list's ListToolbar while the list loads: the real toolbar strip with
+ * blocks the size of each control, so the rows below start where the loaded
+ * ones will. Turn on the slots the loaded toolbar has; the blocks land on
+ * the same rows, and wrap the same way on phones.
+ */
+export function ListToolbarSkeleton({
+  leading,
+  search = false,
+  sort = false,
+  filters = false,
+  scope,
+  rulesets,
+  view,
+  count = false,
+  className,
+}: {
+  /** A width class for the `leading` control's 40px block, such as `w-40`. */
+  leading?: string;
+  /** The 40px search box. */
+  search?: boolean;
+  /** The 40px sort dropdown and its direction button. */
+  sort?: boolean;
+  /** The 40px Filters button. */
+  filters?: boolean;
+  /** A width class for the 32px scope switch, such as `w-32` for All / Friends. */
+  scope?: string;
+  /** How many 32px ruleset chips, "All" included (6 for every rated ruleset). */
+  rulesets?: number;
+  /** How many 32px view toggles. */
+  view?: number;
+  /** The result count's bar. */
+  count?: boolean;
+  className?: string;
+}) {
+  return (
+    <ListToolbar
+      label="Loading"
+      aria-hidden="true"
+      data-slot="list-toolbar-skeleton"
+      className={className}
+      leading={
+        leading ? <SkeletonBlock className={cn('h-10', leading)} /> : null
+      }
+      search={search ? <SkeletonBlock className="h-10 w-full" /> : null}
+      sort={
+        sort ? (
+          <span className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 md:flex">
+            <SkeletonBlock className="h-10 w-full md:w-48" />
+            <SkeletonBlock className="size-10" />
+          </span>
+        ) : null
+      }
+      filters={filters ? <SkeletonBlock className="h-10 w-28" /> : null}
+      scope={scope ? <SkeletonBlock className={cn('h-8', scope)} /> : null}
+      rulesets={
+        rulesets ? (
+          <span className="flex min-w-0 flex-wrap gap-1.5">
+            {Array.from({ length: rulesets }, (_, index) => (
+              <SkeletonBlock
+                key={index}
+                className={cn(
+                  'h-8 rounded-full',
+                  RULESET_CHIP_WIDTHS[index % RULESET_CHIP_WIDTHS.length]
+                )}
+              />
+            ))}
+          </span>
+        ) : null
+      }
+      view={
+        view ? (
+          <span className="flex gap-1">
+            {Array.from({ length: view }, (_, index) => (
+              <SkeletonBlock key={index} className="size-8" />
+            ))}
+          </span>
+        ) : null
+      }
+      count={count ? <SkeletonText className="h-3 w-20" /> : null}
+    />
   );
 }
 

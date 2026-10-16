@@ -11,6 +11,7 @@ import { DateRangeText } from '@/components/kit/format/DateRangeText';
 import { DateText } from '@/components/kit/format/DateText';
 import { RatingDelta } from '@/components/kit/format/RatingDelta';
 import { RelativeTime } from '@/components/kit/format/RelativeTime';
+import { TimeRangeText } from '@/components/kit/format/TimeRangeText';
 import { Timestamp } from '@/components/kit/format/Timestamp';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -57,6 +58,50 @@ describe('dates', () => {
     expect(html).toContain('<button');
     expect(html).toContain('dateTime="2024-08-04T14:51:00.000Z"');
     expect(text(html)).toBe('3h ago');
+  });
+
+  it('puts extra props on the relative time root, around the time element', () => {
+    const html = render(
+      <RelativeTime
+        date="2024-08-04T14:51:00Z"
+        now="2024-08-04T18:00:00Z"
+        data-testid="event-card-timestamp"
+        className="text-xs"
+      />
+    );
+    expect(html).toMatch(
+      /^<span class="whitespace-nowrap text-xs" data-testid="event-card-timestamp"><button[^>]*><time /
+    );
+
+    expect(render(<RelativeTime date={null} data-testid="when" />)).toContain(
+      'data-testid="when"'
+    );
+  });
+
+  it('keeps proportional figures in every date component', () => {
+    // Inter's tabular figures widen 1, the comma and the colon:
+    // "Jul 11, 2024, 11:11 UTC" grows by about a fifth.
+    const dates = [
+      <DateText key="day" date="2024-07-11" />,
+      <DateRangeText key="range" start="2024-07-11" end="2024-08-01" />,
+      <Timestamp key="moment" date="2024-07-11T11:11:00Z" />,
+      <TimeRangeText
+        key="times"
+        start="2024-07-11T11:11:00Z"
+        end="2024-07-11T11:41:00Z"
+      />,
+      <RelativeTime
+        key="relative"
+        date="2024-07-11T11:11:00Z"
+        now="2024-07-11T14:11:00Z"
+      />,
+    ];
+
+    for (const node of dates) {
+      const html = render(node);
+      expect(html).not.toContain('tabular-nums');
+      expect(html).not.toContain('proportional-nums');
+    }
   });
 });
 
@@ -146,5 +191,20 @@ describe('AuditFieldChange', () => {
 
     expect(html).toContain('[2] Pre-verified');
     expect(html).toContain('[4] Verified');
+  });
+
+  it('puts extra props on the row', () => {
+    const html = render(
+      <AuditFieldChange
+        entityType={AuditEntityType.Game}
+        field="mods"
+        change={{ originalValue: 24, newValue: 8 }}
+        data-testid="audit-change"
+      />
+    );
+
+    expect(html).toMatch(
+      /^<div data-audit-field="mods"[^>]*data-testid="audit-change"/
+    );
   });
 });

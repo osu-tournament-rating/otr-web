@@ -39,12 +39,17 @@ export function StatTile({
   adornment,
   sub,
   infoText,
+  infoLabel,
   layout = 'stacked',
   children,
   className,
   ...props
 }: Omit<React.ComponentProps<'div'>, 'children'> & {
-  label: string;
+  /**
+   * Sentence case. Text truncates; a node, such as an `Abbreviation` whose
+   * full name opens on tap, is set as it is.
+   */
+  label: React.ReactNode;
   /** Already formatted, with separators on counts. */
   value: React.ReactNode;
   /** A small muted icon before the label. */
@@ -55,17 +60,34 @@ export function StatTile({
   sub?: React.ReactNode;
   /** How to read the stat, shown through an info button. */
   infoText?: React.ReactNode;
+  /**
+   * The info button's name. Defaults to "About {label}" for a text label;
+   * set it when the label is a node.
+   */
+  infoLabel?: string;
   /** `inline` puts a short value on the label's line, for attribute grids. */
   layout?: 'stacked' | 'inline';
   /** Extra content under everything, such as a gauge. */
   children?: React.ReactNode;
 }) {
+  const textLabel = typeof label === 'string' ? label : null;
   const term = (
     <dt className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
       {Icon ? <Icon className="size-3.5 shrink-0" aria-hidden /> : null}
-      <span className="truncate">{label}</span>
+      {textLabel !== null ? (
+        <span className="truncate">{textLabel}</span>
+      ) : (
+        // A node may hold a button; truncating would clip its focus ring.
+        <span className="flex min-w-0 items-center">{label}</span>
+      )}
       {infoText ? (
-        <InfoButton label={`About ${label}`} size="sm" className="-my-0.5">
+        <InfoButton
+          label={
+            infoLabel ?? (textLabel !== null ? `About ${textLabel}` : 'About')
+          }
+          size="sm"
+          className="-my-0.5"
+        >
           {infoText}
         </InfoButton>
       ) : null}

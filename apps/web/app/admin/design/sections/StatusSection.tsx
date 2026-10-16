@@ -217,7 +217,7 @@ export default function StatusSection() {
         id="status-verification-icon"
         name="VerificationStatusIcon"
         importPath={`${KIT}/VerificationStatusIcon`}
-        description="Status without its name, for table cells, game pips and dense rows. Give it a tooltip wherever the name is not written beside it; warnings add a small triangle instead of recolouring the icon."
+        description="Status without its name, for table cells, game pips and dense rows. Give it a tooltip wherever the name is not written beside it; warnings add a small triangle instead of recolouring the icon. On cover art, the overlay variant sets the glyph on a dark disc so it reads over bright covers."
       >
         <div className="flex flex-col gap-4">
           <Row label="In text (sm)">
@@ -292,6 +292,50 @@ export default function StatusSection() {
               reviewer={REVIEWER}
               tooltip="tap"
             />
+          </Row>
+          <Row label="On cover art">
+            {/* The game card header: cover art under its scrim, then a dark disc per icon. */}
+            <div className="relative flex h-16 w-full max-w-72 items-start overflow-hidden rounded-lg p-2">
+              <Image
+                src="/images/beatmap-background-narrow.png"
+                alt=""
+                fill
+                sizes="288px"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
+              <ul
+                aria-label="Games"
+                className="dark relative flex items-center gap-2"
+              >
+                {DEMO_GAMES.slice(2, 7).map((game, index) => (
+                  <li key={index} className="inline-flex">
+                    <VerificationStatusIcon
+                      status={game.status}
+                      variant="overlay"
+                      warnings={game.warnings}
+                      rejectionReasons={game.rejectionReasons}
+                      reviewer={game.reviewer}
+                      context={`Game ${index + 3}`}
+                      tooltip="tap"
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Row>
+          <Row label="On white">
+            {/* The hardest case the disc is built for: a bright, flat cover. */}
+            <span className="flex items-center gap-2 rounded-lg bg-white p-2">
+              {VERIFICATION_STATUS_ORDER.map((status) => (
+                <VerificationStatusIcon
+                  key={status}
+                  status={status}
+                  variant="overlay"
+                  tooltip="tap"
+                />
+              ))}
+            </span>
           </Row>
         </div>
       </Specimen>

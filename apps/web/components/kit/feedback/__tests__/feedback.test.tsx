@@ -15,6 +15,7 @@ import { Callout } from '@/components/kit/feedback/Callout';
 import { CalloutChip } from '@/components/kit/feedback/CalloutChip';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import {
+  ListToolbarSkeleton,
   PanelSkeleton,
   PhoneRowListSkeleton,
   RowListSkeleton,
@@ -456,6 +457,77 @@ describe('Skeletons', () => {
     expect(full).toContain('col-start-1');
     // Rank, avatar, title, description, value and its line.
     expect(count(full, 'data-slot="skeleton"')).toBe(6);
+  });
+
+  it('matches phone rows with a button, a badge or a leading avatar', () => {
+    const reports = render(
+      <PhoneRowListSkeleton
+        rows={1}
+        description="badge"
+        value="button"
+        align="start"
+      />
+    );
+    // A 20px badge before the description text, a 32px button on the right.
+    expect(reports).toMatch(
+      /<span class="flex min-w-0 items-center gap-1.5"><span data-slot="skeleton" aria-hidden="true" class="[^"]*\bh-5\b[^"]*\bw-16\b/
+    );
+    expect(reports).toMatch(/class="[^"]*\bh-8\b[^"]*\bw-14\b/);
+    expect(reports).toContain('items-start');
+
+    const badge = render(<PhoneRowListSkeleton rows={1} value="badge" />);
+    expect(badge).toMatch(
+      /<div class="flex items-center justify-end[^"]*"><span data-slot="skeleton" aria-hidden="true" class="[^"]*\bh-5\b/
+    );
+
+    const leading = render(<PhoneRowListSkeleton rows={1} leading={32} />);
+    expect(leading).toContain('data-slot="phone-row-leading"');
+    expect(leading).toContain('rounded-full size-8');
+
+    // `true` still means a text line.
+    const text = render(<PhoneRowListSkeleton rows={1} description value />);
+    expect(text).not.toContain('h-5');
+  });
+
+  it('draws the real info button and a meta bar of the loaded width', () => {
+    const html = render(
+      <SectionHeaderSkeleton
+        title="Tier breakdown"
+        infoText="Charts NM, HD, HR and DT scores only."
+        meta="w-36"
+      />
+    );
+
+    expect(html).toContain('aria-label="About Tier breakdown"');
+    expect(html).toMatch(/data-slot="skeleton"[^>]*class="[^"]*\bh-3 w-36\b/);
+    expect(html).not.toContain('w-20');
+
+    const untitled = render(<SectionHeaderSkeleton infoText="Help" />);
+    expect(untitled).toContain('lucide-info');
+    expect(untitled).not.toContain('<button');
+  });
+
+  it('draws a toolbar with blocks where its controls go', () => {
+    const html = render(
+      <ListToolbarSkeleton search sort filters rulesets={6} count />
+    );
+
+    expect(html).toContain('role="search"');
+    expect(html).toContain('data-slot="list-toolbar-skeleton"');
+    expect(html).toContain('aria-hidden="true"');
+    expect(count(html, 'h-8 rounded-full')).toBe(6);
+    // As wide as the loaded chips, All to mania 7K, so they wrap alike.
+    expect(
+      [...html.matchAll(/h-8 rounded-full (w-\d+)/g)].map((match) => match[1])
+    ).toEqual(['w-15', 'w-18', 'w-19', 'w-20', 'w-27', 'w-27']);
+    expect(html).toContain('h-10 w-full');
+    expect(html).toContain('size-10');
+    expect(html).toContain('h-10 w-28');
+    expect(html).toContain('list-toolbar-scope-row');
+
+    const noSearch = render(<ListToolbarSkeleton sort scope="w-64" count />);
+    expect(noSearch.match(/list-toolbar-scope-row/g)).toHaveLength(1);
+    expect(noSearch).toContain('h-8 w-64');
   });
 
   it('draws list rows in the RowList', () => {

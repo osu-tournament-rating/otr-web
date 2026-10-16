@@ -16,9 +16,26 @@ export const heroTabClassName = cn(
   'data-[state=active]:text-foreground data-[state=active]:after:bg-primary'
 );
 
+/** The width from which tab counts show; below it they are read, not shown. */
+export type HeroTabCountsFrom = 'sm' | 'md';
+
+/**
+ * Hides every tab's count below the breakpoint, keeping it in the tab's
+ * accessible name, so four tabs with counts fit a 360px phone.
+ */
+export const heroTabCountsFromClassName: Record<HeroTabCountsFrom, string> = {
+  sm: 'max-sm:[&_[data-slot=hero-tab-count]]:sr-only',
+  md: 'max-md:[&_[data-slot=hero-tab-count]]:sr-only',
+};
+
 export type HeroTabItem = {
   value: string;
   label: React.ReactNode;
+  /**
+   * A shorter label shown below `sm`, such as "Tournament" for "This
+   * tournament". Screen readers always hear `label`.
+   */
+  compactLabel?: React.ReactNode;
   href: string;
   icon?: KitIcon;
   /** Already formatted, such as "1,204". */
@@ -31,18 +48,33 @@ export type HeroTabItem = {
 export function HeroTabLabel({
   icon: Icon,
   count,
+  compactLabel,
   children,
 }: {
   icon?: KitIcon;
   count?: React.ReactNode;
+  /** Shown instead of `children` below `sm`; `children` stays the accessible name. */
+  compactLabel?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <>
       {Icon ? <Icon className="size-4 shrink-0" aria-hidden /> : null}
-      {children}
+      {compactLabel != null ? (
+        <>
+          <span aria-hidden="true" className="sm:hidden">
+            {compactLabel}
+          </span>
+          <span className="max-sm:sr-only">{children}</span>
+        </>
+      ) : (
+        children
+      )}
       {count != null ? (
-        <span className="text-xs font-normal text-muted-foreground tabular-nums">
+        <span
+          data-slot="hero-tab-count"
+          className="text-xs font-normal text-muted-foreground tabular-nums"
+        >
           {count}
         </span>
       ) : null}
@@ -52,12 +84,14 @@ export function HeroTabLabel({
 
 /**
  * Tabs that switch between views of one entity, attached under its
- * DetailHero. Each tab is a link, so the view lives in the address. Never use
- * them to pick a ruleset or to scope a list.
+ * DetailHero, or at the top of the one panel of a page with a PageHeader
+ * (an audit history). Each tab is a link, so the view lives in the address.
+ * Never use them to pick a ruleset or to scope a list.
  */
 export function HeroTabs({
   items,
   value,
+  countsFrom,
   className,
   ...props
 }: Omit<React.ComponentProps<'nav'>, 'children'> & {
@@ -66,11 +100,20 @@ export function HeroTabs({
   value: string;
   /** Names the set of views, such as "Tournament views". */
   'aria-label': string;
+  /**
+   * Shows counts only from this width up; below it they stay in each tab's
+   * accessible name. `sm` fits four tabs with counts on a 360px phone.
+   */
+  countsFrom?: HeroTabCountsFrom;
 }) {
   return (
     <nav
       data-slot="hero-tabs"
-      className={cn(heroTabListClassName, className)}
+      className={cn(
+        heroTabListClassName,
+        countsFrom && heroTabCountsFromClassName[countsFrom],
+        className
+      )}
       {...props}
     >
       {items.map((item) => (
@@ -81,7 +124,11 @@ export function HeroTabs({
           aria-current={item.value === value ? 'page' : undefined}
           className={heroTabClassName}
         >
-          <HeroTabLabel icon={item.icon} count={item.count}>
+          <HeroTabLabel
+            icon={item.icon}
+            count={item.count}
+            compactLabel={item.compactLabel}
+          >
             {item.label}
           </HeroTabLabel>
         </Link>

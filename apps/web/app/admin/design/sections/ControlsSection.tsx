@@ -317,7 +317,45 @@ function IconButtons() {
           In a section header strip: small and ghost.
         </PanelBody>
       </Panel>
+      <DisclosureDemo />
     </div>
+  );
+}
+
+/**
+ * `expanded` makes an IconButton a disclosure toggle for a row that expands
+ * in place: aria-expanded, and no open fill, which belongs to menu triggers.
+ */
+function DisclosureDemo() {
+  const [open, setOpen] = React.useState(true);
+  const game = GAMES[0];
+
+  return (
+    <Panel>
+      <SectionHeader icon={Swords} title="Games" meta="1 game" />
+      <RowList>
+        <RowListItem>
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium">{game.name}</p>
+              <p className={typeScale.bodyMuted}>{game.detail}</p>
+            </div>
+            <IconButton
+              label={`Details for ${game.name}`}
+              icon={ChevronDown}
+              expanded={open}
+              onClick={() => setOpen((value) => !value)}
+              className="[&>svg]:transition-transform aria-expanded:[&>svg]:rotate-180"
+            />
+          </div>
+          {open ? (
+            <p className={cn(typeScale.bodyMuted, 'mt-3 border-t pt-3')}>
+              Expanded in place: the toggle keeps its resting look.
+            </p>
+          ) : null}
+        </RowListItem>
+      </RowList>
+    </Panel>
   );
 }
 
@@ -707,7 +745,7 @@ function RowActionsDemo() {
       <Panel>
         <SectionHeader icon={Swords} title="Games" meta="3 games" />
         <RowList>
-          {GAMES.map((game) => (
+          {GAMES.map((game, index) => (
             <RowListItem
               key={game.name}
               leading={
@@ -725,6 +763,7 @@ function RowActionsDemo() {
               trailing={
                 <RowActionsMenu
                   itemName={game.name}
+                  notification={index === 0 ? 'Has admin notes' : undefined}
                   actions={[
                     {
                       label: 'Edit game',
@@ -734,6 +773,8 @@ function RowActionsDemo() {
                     {
                       label: 'Admin notes',
                       icon: NotebookPen,
+                      trailing:
+                        index === 0 ? <Badge size="sm">1</Badge> : undefined,
                       onSelect: () => {},
                     },
                     {
@@ -1360,8 +1401,38 @@ function FormFieldLabelDemo() {
             </FormItem>
           )}
         />
+        <PlainFieldLabelDemo />
       </div>
     </Form>
+  );
+}
+
+/** A label outside react-hook-form: `htmlFor` with the control's id. */
+function PlainFieldLabelDemo() {
+  const id = React.useId();
+  const [lobbySize, setLobbySize] = React.useState('');
+  return (
+    <div className="flex flex-col gap-2 border-t pt-4">
+      <FormFieldLabel
+        htmlFor={id}
+        info="Number of players per team in each match"
+        hint="htmlFor, no form"
+      >
+        Lobby size
+      </FormFieldLabel>
+      <Select value={lobbySize} onValueChange={setLobbySize}>
+        <SelectTrigger id={id} className="w-full">
+          <SelectValue placeholder="Any" />
+        </SelectTrigger>
+        <SelectContent>
+          {LOBBY_SIZES.map((size) => (
+            <SelectItem key={size} value={String(size)}>
+              {formatLobbySize(size)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 
@@ -1394,7 +1465,7 @@ export default function ControlsSection() {
         id="controls-icon-button"
         name="IconButton"
         importPath={`${KIT}/IconButton`}
-        description="Every icon-only control: an accessible name, a tooltip that repeats it, and a hover fill. Small and ghost unless it sits beside inputs."
+        description="Every icon-only control: an accessible name, a tooltip that repeats it, and a hover fill. Small and ghost unless it sits beside inputs. The fill stays while a menu or dialog it opens is open; a disclosure toggle (expanded) for a row that expands in place sets aria-expanded and keeps its resting look."
       >
         <IconButtons />
       </Specimen>
@@ -1413,7 +1484,7 @@ export default function ControlsSection() {
         id="controls-row-actions-menu"
         name="RowActionsMenu"
         importPath={`${KIT}/RowActionsMenu`}
-        description="One overflow button at the end of a row or card in place of a cluster of icons, such as each game on a match page."
+        description="One overflow button at the end of a row or card in place of a cluster of icons, such as each game on a match page. itemName names each button, so keep it unique per row. A notification puts the dot on the button and its text in the button's name, as on the first game."
         stacked
       >
         <RowActionsDemo />
@@ -1470,7 +1541,7 @@ export default function ControlsSection() {
         id="controls-form-field-label"
         name="FormFieldLabel"
         importPath={`${KIT}/FormFieldLabel`}
-        description="A field label with the info button for help and an optional muted hint. Labels keep one height, so inputs side by side line up, and turn red with the field's error."
+        description="A field label with the info button for help and an optional muted hint. Labels keep one height, so inputs side by side line up, and turn red with the field's error. Outside a react-hook-form field, pass htmlFor with the control's id (last example)."
       >
         <FormFieldLabelDemo />
       </Specimen>

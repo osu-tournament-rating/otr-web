@@ -3,6 +3,8 @@ import type * as React from 'react';
 
 import {
   heroTabClassName,
+  type HeroTabCountsFrom,
+  heroTabCountsFromClassName,
   heroTabListClassName,
   HeroTabLabel,
 } from '@/components/kit/layout/HeroTabs';
@@ -33,13 +35,21 @@ export function HeroTabsRoot({
 
 /** The tab strip; goes in DetailHero's `tabs` slot. */
 export function HeroTabsList({
+  countsFrom,
   className,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.List>) {
+}: React.ComponentProps<typeof TabsPrimitive.List> & {
+  /** Shows counts only from this width up, as on HeroTabs. */
+  countsFrom?: HeroTabCountsFrom;
+}) {
   return (
     <TabsPrimitive.List
       data-slot="hero-tabs-list"
-      className={cn(heroTabListClassName, className)}
+      className={cn(
+        heroTabListClassName,
+        countsFrom && heroTabCountsFromClassName[countsFrom],
+        className
+      )}
       {...props}
     />
   );
@@ -49,6 +59,7 @@ export function HeroTabsList({
 export function HeroTabsTrigger({
   icon,
   count,
+  compactLabel,
   children,
   className,
   ...props
@@ -56,6 +67,8 @@ export function HeroTabsTrigger({
   icon?: KitIcon;
   /** Already formatted, such as "1,204". */
   count?: React.ReactNode;
+  /** A shorter label shown below `sm`; `children` stays the accessible name. */
+  compactLabel?: React.ReactNode;
 }) {
   return (
     <TabsPrimitive.Trigger
@@ -66,7 +79,7 @@ export function HeroTabsTrigger({
       )}
       {...props}
     >
-      <HeroTabLabel icon={icon} count={count}>
+      <HeroTabLabel icon={icon} count={count} compactLabel={compactLabel}>
         {children}
       </HeroTabLabel>
     </TabsPrimitive.Trigger>

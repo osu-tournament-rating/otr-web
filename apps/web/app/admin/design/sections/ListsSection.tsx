@@ -1,8 +1,8 @@
 'use client';
 
-import { Ruleset, VerificationStatus } from '@otr/core/osu';
-import { LayoutGrid, Rows3, Table2 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Mods, Ruleset, VerificationStatus } from '@otr/core/osu';
+import { ChartLine, LayoutGrid, Rows3, Table2, Trophy } from 'lucide-react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type * as React from 'react';
 
 import { GallerySection, Specimen } from '../gallery';
@@ -11,6 +11,7 @@ import { Button } from '@/components/kit/controls/Button';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import { Panel } from '@/components/kit/layout/Panel';
 import { RowList, RowListItem } from '@/components/kit/layout/RowList';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import {
   ActiveFilterChips,
   type ActiveFilter,
@@ -40,11 +41,13 @@ import {
   VerificationStatusIcon,
 } from '@/components/kit/status/VerificationStatusIcon';
 import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { tieredScale } from '@/lib/filters/scale';
 import { tournamentRankScale } from '@/lib/filters/tournament-rank';
 import { formatDateRange } from '@/lib/kit/format/date';
 import { formatLobbySize, formatRankRange } from '@/lib/kit/format/fields';
+import { formatMods } from '@/lib/kit/format/mods';
 import {
   formatCount,
   formatCountOf,
@@ -67,6 +70,7 @@ import {
   dayRangeParam,
   defineListParams,
   enumParam,
+  flagsParam,
   getDefaultListState,
   listStateHref,
   pageParam,
@@ -77,6 +81,7 @@ import {
   type ListState,
 } from '@/lib/kit/lists/params';
 import { normalizeSearchTerm } from '@/lib/kit/lists/search';
+import { useListState } from '@/lib/kit/lists/use-list-state';
 import {
   VERIFICATION_STATUS_ORDER,
   getVerificationStatusName,
@@ -674,6 +679,201 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
   );
 }
 
+// The admin report queue: no search, a status scope, and a date sort.
+type ReportSortKey = 'created' | 'resolvedAt';
+type ReportScope = 'all' | 'pending' | 'confirmed' | 'dismissed';
+
+const NEWEST_FIRST = { desc: 'Newest first', asc: 'Oldest first' } as const;
+
+const REPORT_SORTS: readonly SortOption<ReportSortKey>[] = [
+  { value: 'created', label: 'Date submitted', directionLabels: NEWEST_FIRST },
+  {
+    value: 'resolvedAt',
+    label: 'Date reviewed',
+    directionLabels: NEWEST_FIRST,
+  },
+];
+
+const REPORT_SCOPES: readonly { value: ReportScope; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'dismissed', label: 'Dismissed' },
+];
+
+const REPORT_COUNTS: Record<ReportScope, number> = {
+  all: 1_214,
+  pending: 48,
+  confirmed: 903,
+  dismissed: 263,
+};
+
+function ReportQueueToolbarDemo() {
+  const [scope, setScope] = useState<ReportScope>('pending');
+  const [sort, setSort] = useState<{
+    key: ReportSortKey;
+    direction: 'asc' | 'desc';
+  }>({ key: 'created', direction: 'desc' });
+
+  return (
+    <Panel>
+      <ListToolbar
+        label="Sort and filter reports"
+        scope={
+          <ScopeSwitch
+            label="Status"
+            value={scope}
+            onValueChange={setScope}
+            options={REPORT_SCOPES}
+          />
+        }
+        sort={
+          <SortControl
+            label="Sort reports by"
+            options={REPORT_SORTS}
+            value={sort}
+            onValueChange={setSort}
+          />
+        }
+        count={formatCountOf(REPORT_COUNTS[scope], 'report')}
+      />
+      <RowList>
+        {DEMO_REPORTS.map((report) => (
+          <RowListItem
+            key={report.entity}
+            title={
+              <EntityLink href="#lists-toolbar-no-search">
+                {report.entity}
+              </EntityLink>
+            }
+            description={`${report.type} · ${report.reason}`}
+          />
+        ))}
+      </RowList>
+    </Panel>
+  );
+}
+
+// A tournament's matches, for admins: the select-all checkbox is not a
+// search, so it goes in `leading`, first on the strip.
+type MatchSortKey = 'date' | 'name';
+
+const MATCH_SORTS: readonly SortOption<MatchSortKey>[] = [
+  {
+    value: 'date',
+    label: 'Date',
+    defaultDirection: 'desc',
+    directionLabels: { desc: 'Newest first', asc: 'Oldest first' },
+  },
+  {
+    value: 'name',
+    label: 'Match name',
+    defaultDirection: 'asc',
+    directionLabels: { asc: 'A to Z', desc: 'Z to A' },
+  },
+];
+
+const DEMO_MATCHES = [
+  { id: 1, name: 'CO25: (Lunar Lobster) vs (Team Rocket)', games: 9 },
+  { id: 2, name: 'CO25: (Mango Lassi) vs (Night Owls)', games: 7 },
+  { id: 3, name: 'CO25: (Tidal Wave) vs (Paper Planes)', games: 11 },
+] as const;
+
+function LeadingToolbarDemo() {
+  const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
+  const [sort, setSort] = useState<{
+    key: MatchSortKey;
+    direction: 'asc' | 'desc';
+  }>({ key: 'date', direction: 'desc' });
+  const allSelected = selected.size === DEMO_MATCHES.length;
+
+  return (
+    <Panel>
+      <ListToolbar
+        label="Sort matches"
+        leading={
+          <div className="flex items-center gap-3">
+            <Checkbox
+              checked={
+                selected.size === 0
+                  ? false
+                  : allSelected
+                    ? true
+                    : 'indeterminate'
+              }
+              onCheckedChange={(checked) =>
+                setSelected(
+                  checked === true
+                    ? new Set(DEMO_MATCHES.map((match) => match.id))
+                    : new Set()
+                )
+              }
+              aria-label="Select all matches"
+            />
+            <span
+              aria-live="polite"
+              className="text-sm text-muted-foreground tabular-nums"
+            >
+              {selected.size > 0
+                ? `${formatCount(selected.size)} selected`
+                : 'Select all'}
+            </span>
+          </div>
+        }
+        sort={
+          <SortControl
+            label="Sort matches by"
+            options={MATCH_SORTS}
+            value={sort}
+            onValueChange={setSort}
+          />
+        }
+        count={formatCountOf(DEMO_MATCHES.length, 'match', 'matches')}
+      />
+      <RowList>
+        {DEMO_MATCHES.map((match) => (
+          <RowListItem
+            key={match.id}
+            leading={
+              <Checkbox
+                checked={selected.has(match.id)}
+                onCheckedChange={(checked) =>
+                  setSelected((current) => {
+                    const next = new Set(current);
+                    if (checked === true) next.add(match.id);
+                    else next.delete(match.id);
+                    return next;
+                  })
+                }
+                aria-label={`Select ${match.name}`}
+              />
+            }
+            title={
+              <EntityLink href="#lists-toolbar-leading">
+                {match.name}
+              </EntityLink>
+            }
+            description={formatCountOf(match.games, 'game')}
+          />
+        ))}
+      </RowList>
+    </Panel>
+  );
+}
+
+const DEMO_REPORTS = [
+  {
+    type: 'Match',
+    entity: 'CO25: (Lunar Lobster) vs (Team Rocket)',
+    reason: 'Incorrect match result',
+  },
+  {
+    type: 'Tournament',
+    entity: 'Break The Meta Cup',
+    reason: 'Incorrect tournament details',
+  },
+] as const;
+
 function BeatmapToolbarDemo() {
   const [layout, setLayout] = useState('compact');
   const [sort, setSort] = useState<{
@@ -827,7 +1027,7 @@ function SortControlDemo() {
     direction: 'asc' | 'desc';
   }>({ key: 'endTime', direction: 'desc' });
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <SortControl
         label="Sort tournaments by"
         options={TOURNAMENT_SORTS}
@@ -837,6 +1037,33 @@ function SortControlDemo() {
       <p className="text-xs text-muted-foreground">
         State: {`{ key: '${sort.key}', direction: '${sort.direction}' }`}
       </p>
+      {/* size="sm": 32px, so the header strip keeps its 48px height. */}
+      <Panel>
+        <SectionHeader
+          icon={Trophy}
+          title="Tournaments"
+          actions={
+            <SortControl
+              size="sm"
+              label="Sort tournaments by"
+              options={TOURNAMENT_SORTS}
+              value={sort}
+              onValueChange={setSort}
+            />
+          }
+        />
+        <RowList>
+          {DEMO_TOURNAMENTS.slice(0, 2).map((row) => (
+            <RowListItem
+              key={row.id}
+              title={
+                <EntityLink href="#lists-sort-control">{row.name}</EntityLink>
+              }
+              description={formatDateRange(row.start, row.end)}
+            />
+          ))}
+        </RowList>
+      </Panel>
     </div>
   );
 }
@@ -878,7 +1105,58 @@ function ScopeSwitchDemo() {
           },
         ]}
       />
+      {/* The same control as a view toggle, at the top of a panel. */}
+      <Suspense fallback={null}>
+        <RatingViewToggleDemo />
+      </Suspense>
     </div>
+  );
+}
+
+// The profile's rating history views, as a shallow list state: the chart's
+// data is all on the client, so the address changes without a server render.
+const RATING_VIEW_PARAMS = defineListParams({
+  metric: enumParam(['rating', 'volatility'] as const, {
+    default: 'rating',
+    role: 'scope',
+  }),
+  view: enumParam(['chart', 'table'] as const, {
+    default: 'chart',
+    role: 'scope',
+  }),
+});
+
+function RatingViewToggleDemo() {
+  const list = useListState(RATING_VIEW_PARAMS, { shallow: true });
+  const { state, setState } = list;
+
+  return (
+    <Panel>
+      <SectionHeader icon={ChartLine} title="Rating history" />
+      <div className="flex flex-wrap items-center gap-2 px-4 pt-4">
+        <ScopeSwitch
+          label="Rating or volatility"
+          value={state.metric}
+          onValueChange={(metric) => setState({ metric })}
+          options={[
+            { value: 'rating', label: 'Rating' },
+            { value: 'volatility', label: 'Volatility' },
+          ]}
+        />
+        <ScopeSwitch
+          label="View"
+          value={state.view}
+          onValueChange={(view) => setState({ view })}
+          options={[
+            { value: 'chart', label: 'Chart' },
+            { value: 'table', label: 'Table' },
+          ]}
+        />
+      </div>
+      <p className="px-4 pt-3 pb-4 text-xs break-all text-muted-foreground">
+        Address: {list.hrefFor({})}
+      </p>
+    </Panel>
   );
 }
 
@@ -1191,7 +1469,49 @@ function Address({ href }: { href: string }) {
   ));
 }
 
+// A bitflag enum: a list of flags in state, one bitmask in the address.
+const MOD_FLAGS: readonly Mods[] = [
+  Mods.Hidden,
+  Mods.HardRock,
+  Mods.DoubleTime,
+  Mods.Flashlight,
+];
+
+const MOD_PARAMS = defineListParams({ mods: flagsParam(MOD_FLAGS) });
+
+const MOD_OPTIONS = MOD_FLAGS.map((mod) => ({
+  value: mod,
+  label: formatMods(mod),
+}));
+
+function FlagsParamDemo() {
+  const [mods, setMods] = useState<Mods[]>([Mods.Hidden, Mods.HardRock]);
+  return (
+    <div className="flex flex-col gap-2 border-t pt-4">
+      <ChoiceFilter
+        label="Mods"
+        description="flagsParam: chosen flags in state, one bitmask in the address."
+        options={MOD_OPTIONS}
+        value={mods}
+        onValueChange={setMods}
+      />
+      <p className="text-xs break-words text-muted-foreground">
+        <Address href={listStateHref('/beatmaps', MOD_PARAMS, { mods })} />
+      </p>
+    </div>
+  );
+}
+
 function ListStateDemo() {
+  return (
+    <div className="flex flex-col gap-4">
+      <AddressExamples />
+      <FlagsParamDemo />
+    </div>
+  );
+}
+
+function AddressExamples() {
   const defaults = getDefaultListState(TOURNAMENT_PARAMS);
   return (
     <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[max-content_minmax(0,1fr)] sm:items-baseline sm:gap-y-3">
@@ -1247,6 +1567,26 @@ export default function ListsSection() {
       </Specimen>
 
       <Specimen
+        id="lists-toolbar-no-search"
+        name="ListToolbar without a search"
+        importPath={`${KIT}/ListToolbar`}
+        description="The admin report queue: with no search the toolbar is one strip, the scope on the left and the count, sort and Filters on the right. On phones the count follows the scope on its line when they fit; a four-option scope like this one fills its line, so the count moves down beside sort rather than onto a line of its own."
+        stacked
+      >
+        <ReportQueueToolbarDemo />
+      </Specimen>
+
+      <Specimen
+        id="lists-toolbar-leading"
+        name="ListToolbar with a leading control"
+        importPath={`${KIT}/ListToolbar`}
+        description="A control that is not a search, such as the select-all checkbox on a tournament's matches for admins, goes in leading: first on the strip, before the scope or search. Without a search, sort and the count stay on the right of the same strip."
+        stacked
+      >
+        <LeadingToolbarDemo />
+      </Specimen>
+
+      <Specimen
         id="lists-toolbar-view"
         name="ListToolbar with view options"
         importPath={`${KIT}/ListToolbar`}
@@ -1269,7 +1609,7 @@ export default function ListsSection() {
         id="lists-sort-control"
         name="SortControl"
         importPath={`${KIT}/SortControl`}
-        description="A key dropdown and a direction button. It shares { key, direction } with sortable table headers, so both show the same choice."
+        description="A key dropdown and a direction button. It shares { key, direction } with sortable table headers, so both show the same choice. 40px in a list toolbar; size sm (32px) in a section header's actions, as below, and in a DataTable's phone sort strip."
       >
         <SortControlDemo />
       </Specimen>
@@ -1296,7 +1636,7 @@ export default function ListsSection() {
         id="lists-scope-switch"
         name="ScopeSwitch"
         importPath={`${KIT}/ScopeSwitch`}
-        description="Whose rows the list shows. An option that cannot be chosen says why through an info button."
+        description="A segmented choice of two to four options: whose rows a list shows, or which view of a section is on screen (Rating / Volatility, Chart / Table). An option that cannot be chosen says why through an info button. The rating history toggles here keep their choice in the address with useListState's shallow option; try them and the back button."
       >
         <ScopeSwitchDemo />
       </Specimen>
@@ -1354,7 +1694,7 @@ export default function ListsSection() {
         id="lists-list-state"
         name="useListState and the list params"
         importPath="@/lib/kit/lists/use-list-state"
-        description="Every control that changes a list lives in the address, described once with the builders in @/lib/kit/lists/params. Defaults are left out, invalid values are ignored, and other params such as a tab are kept."
+        description="Every control that changes a list lives in the address, described once with the builders in @/lib/kit/lists/params. Defaults are left out, invalid values are ignored, and other params such as a tab are kept. A bitflag filter (flagsParam) is a list of flags in state and one number in the address. The rating history views under ScopeSwitch use the shallow option, which changes this page's address without a server render."
         stacked
       >
         <ListStateDemo />

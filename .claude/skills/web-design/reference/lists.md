@@ -10,7 +10,7 @@ The beatmap list is the reference. Components live in their own files under `@/c
 - [SortControl](#sortcontrol): key dropdown plus direction button
 - [RulesetChips](#rulesetchips): filter a list by rulesets
 - [RulesetSwitch](#rulesetswitch): one ruleset at a time
-- [ScopeSwitch](#scopeswitch): All / Friends
+- [ScopeSwitch](#scopeswitch): All / Friends, and view toggles such as Chart / Table
 - [ChoiceChip](#choicechip): one toggle chip
 - [FilterPanel and FilterButton](#filterpanel-and-filterbutton): the Filters button and its panel
 - [Filter fields](#filter-fields): `RangeFilter`, `ChoiceFilter`, `DayRangeFilter`, `SwitchFilter`, `FilterField`
@@ -22,8 +22,8 @@ The beatmap list is the reference. Components live in their own files under `@/c
 ## Rules at a glance
 
 - Every control that changes what a list shows is in the page address: search, sort, page, filters, ruleset, scope, tab. A reload or a shared link shows the same list. Defaults are left out of the address.
-- One toolbar: search, sort and Filters on the first row; scope, ruleset chips, view options and the result count on the second; active-filter chips under both. It sits inside the list's panel, above the rows.
-- Two heights, so each row lines up: the first row is 40px (the search field, the sort dropdown, its direction IconButton and the Filters button, all at the `lg` size); the second row and the active-filter row are 32px (the scope switch, ruleset chips, layout toggles, active-filter chips and the ghost `sm` "Clear all").
+- One toolbar: search, sort and Filters on the first row; scope, ruleset chips, view options and the result count on the second; active-filter chips under both. A list without a search is one strip: scope on the left, count, sort and Filters on the right. It sits inside the list's panel, above the rows.
+- Two heights, so each row lines up: the first row is 40px (the search field, the sort dropdown, its direction IconButton and the Filters button, all at the `lg` size); the second row and the active-filter row are 32px (the scope switch, ruleset chips, layout toggles, active-filter chips and the ghost `sm` "Clear all"). Outside a toolbar, a SortControl in a SectionHeader or a DataTable's phone sort strip is `size="sm"` (32px).
 - Buttons are the controls family's: text buttons are `Button` (`@/components/kit/controls/Button`) and icon-only ones `IconButton` (`@/components/kit/controls/IconButton`), never `@/components/ui/button`. Chips, the scope switch's segments, layout toggles and calendar days are not buttons in that sense and keep their own look.
 - Search waits 400ms after the last keystroke (`SEARCH_DEBOUNCE_MS`), Enter searches at once, a spinner shows until results land, and fewer than 2 characters shows "Type at least 2 characters to search." instead of searching.
 - Sort is a dropdown plus a direction button, sharing `{ key, direction }` with sortable column headers.
@@ -145,10 +145,23 @@ import { ListToolbar } from '@/components/kit/lists/ListToolbar';
 Props that matter:
 
 - `label`: names the toolbar, which is a `search` landmark ("Search and filter tournaments").
-- First row: `search`, `sort`, `filters`. Without a sort, the Filters button stays beside the search box on phones.
+- First row: `leading`, `search`, `sort`, `filters`. Without a sort, the Filters button stays beside the search box on phones.
+- `leading`: a control that is not a search, first on the first row, such as a dropdown that picks what the list holds, or the select-all checkbox of a list with bulk actions. It sits before the search box, or before the scope when there is no search. It is not a place for a second search or for filters; those have their slots.
 - Second row: `scope` and `rulesets` on the left, `view` (layout toggles) and `count` on the right. `count` is already formatted with `formatCountOf`, set in tabular figures and announced politely. Layout toggles are a `ToggleGroup` of 32px (`size-8`) icon items with an `aria-label` each; leave tooltips off them, because a `TooltipTrigger`'s `data-state` replaces the item's `on`/`off`.
 - `activeFilters`: `ActiveFilterChips`. Its row, and the divider above it, disappear when it renders nothing.
 - When nothing matches, render `EmptyState` (`@/components/kit/feedback/EmptyState`) straight under the toolbar in place of the rows, with `clearFilters` when filter-role params are active (`activeFilterCount > 0`). Not a line of muted text.
+
+Where the toolbar puts things (`getListToolbarLayout` in `@/lib/kit/lists/toolbar`, unit-tested), so the count shares a line with other controls wherever one has room:
+
+| The list has                    | Tablet and up                                                      | Phones                                                                                                                      |
+| ------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| search, sort, filters, rulesets | search \| sort, Filters; then chips … count                        | search; sort, Filters; chips, with the count beside them when they fit and under them on the right when not                 |
+| search, scope, rulesets         | search \| …; then scope, chips … count                             | search; scope … count; chips                                                                                                |
+| search and a count, no chips    | search, count \| sort, Filters (the count beside the search box)   | the same, wrapped                                                                                                           |
+| no search: scope, sort, count   | one strip: scope … count \| sort, Filters (the admin report queue) | scope … count; sort and Filters. A scope too wide to share its line (four options) sends the count down beside sort instead |
+| no search: leading, filters     | one strip: leading … Filters                                       | leading; Filters                                                                                                            |
+
+Loading: `ListToolbarSkeleton` from `@/components/kit/feedback/Skeletons` with the same slots switched on ([feedback.md](feedback.md#skeletons)).
 
 Do:
 
@@ -160,7 +173,7 @@ Don't:
 - Don't build a toolbar by hand. `components/beatmaps/list/BeatmapListFilter.tsx` is the reference it was copied from; `components/tournaments/list/TournamentListFilter.tsx` is a hand copy; the leaderboard's card title with a Filters button above the table (`app/leaderboard/page.tsx`, `components/leaderboard/LeaderboardFilter.tsx`) and the audit pages' row of dropdowns and a checkbox (`components/audit/AuditFilterBar.tsx`) are the legacy layouts.
 - Don't let a toolbar scroll sideways or cut off its Filters button on phones (the leaderboard today).
 
-Gallery anchors: `/admin/design#lists-toolbar`, `/admin/design#lists-toolbar-scope`, `/admin/design#lists-toolbar-view`
+Gallery anchors: `/admin/design#lists-toolbar`, `/admin/design#lists-toolbar-scope`, `/admin/design#lists-toolbar-no-search`, `/admin/design#lists-toolbar-leading`, `/admin/design#lists-toolbar-view`, `/admin/design#feedback-skeleton-toolbar`
 
 ## SearchField
 
@@ -233,8 +246,25 @@ Props that matter:
 - `value`, `onValueChange`: `{ key, direction }`.
 - `options`: `value`, `label`, and optionally `defaultDirection` (the direction a key starts in when picked; otherwise the current one is kept), `directionLabels` (words for the button's tooltip; otherwise "Ascending order" and "Descending order", as on the beatmap list) and `group` (a divider between groups, like the beatmap list's counts and attributes).
 - `label`: names the dropdown ("Sort tournaments by").
+- `size`: `lg` (40px, default) in a list toolbar; `sm` (32px trigger and direction button) in a SectionHeader's `actions`, where a 32px control keeps the strip 48px tall, and in a DataTable's `phoneSort` strip ([tables.md](tables.md#sorting-on-phones)).
 
-The direction button is an outline `IconButton` at `lg` (40px) named "Sort order is descending" (or ascending), the beatmap list's wording, with "Descending order" or the option's direction label in its tooltip.
+The direction button is an outline `IconButton` at the control's size, named "Sort order is descending" (or ascending), the beatmap list's wording, with "Descending order" or the option's direction label in its tooltip.
+
+```tsx
+<SectionHeader
+  icon={Trophy}
+  title="Tournaments"
+  actions={
+    <SortControl
+      size="sm"
+      label="Sort tournaments by"
+      options={SORT_OPTIONS}
+      value={sort}
+      onValueChange={setSort}
+    />
+  }
+/>
+```
 
 Don't:
 
@@ -288,7 +318,7 @@ Gallery anchor: `/admin/design#lists-ruleset-switch`
 
 ## ScopeSwitch
 
-A segmented control that picks whose rows a list shows, such as All / Friends. It sits on the toolbar's second row, before the ruleset chips.
+A segmented control, one choice of two to four: whose rows a list shows, such as All / Friends, or which view of a section is on screen, such as Rating / Volatility or Chart / Table on the profile's rating history. In a list it sits on the toolbar's second row, before the ruleset chips. It is a radio group, so arrow keys move between options; it is 32px tall, and its options take 8px side padding below `sm` (12px from it), so four options fit a 360px phone.
 
 ```tsx
 import { ScopeSwitch } from '@/components/kit/lists/ScopeSwitch';
@@ -312,11 +342,43 @@ import { ScopeSwitch } from '@/components/kit/lists/ScopeSwitch';
 - An option with `disabled` and `disabledReason` gets an info button after the switch that says why, readable on tap.
 - Keep the scope in the address with `booleanParam({ role: 'scope' })` or `enumParam([...], { role: 'scope' })`.
 
+As a view toggle, put it at the top of the panel it changes, under the SectionHeader or in its `actions`, and name each group by what it picks:
+
+```tsx
+const RATING_VIEW_PARAMS = defineListParams({
+  metric: enumParam(['rating', 'volatility'] as const, {
+    default: 'rating',
+    role: 'scope',
+  }),
+  view: enumParam(['chart', 'table'] as const, {
+    default: 'chart',
+    role: 'scope',
+  }),
+});
+
+// The chart's data is all on the client: change the address without a server render.
+const { state, setState } = useListState(RATING_VIEW_PARAMS, { shallow: true });
+
+<ScopeSwitch
+  label="Rating or volatility"
+  value={state.metric}
+  onValueChange={(metric) => setState({ metric })}
+  options={[
+    { value: 'rating', label: 'Rating' },
+    { value: 'volatility', label: 'Volatility' },
+  ]}
+/>;
+```
+
+- A view that changes what the page shows lives in the address like any list control, so a reload or a shared link opens the same view. A device preference that only changes the layout, such as the beatmap list's card or table layout, stays in `localStorage` (see [useListState](#useliststate-and-list-params)).
+- Use HeroTabs, not a ScopeSwitch, to switch between whole views of an entity under its hero.
+
 Don't:
 
 - Don't use the grey `Tabs` bar with links (`app/leaderboard/LeaderboardTabs.tsx`) or hero tabs for a scope, and don't explain a disabled option in a hover-only tooltip.
+- Don't give it more than four options; a longer choice is a `Select` or chips.
 
-Gallery anchor: `/admin/design#lists-scope-switch`
+Gallery anchor: `/admin/design#lists-scope-switch` (with the rating history view toggles)
 
 ## ChoiceChip
 
@@ -436,8 +498,8 @@ import { tournamentRankScale } from '@/lib/filters/tournament-rank';
 <FilterField label="Country"><CountrySearchSelect … /></FilterField>
 ```
 
-- `RangeFilter`: the number boxes always sit beside the label, with a two-thumb slider under them. Boxes show the number with separators (`1,000`), accept `1000` or `1,000`, and commit on Enter or blur; Escape reverts a box without closing the panel. The slider commits on release, so a drag is one navigation. A thumb at the end of the track, or an empty box ("Any"), means no limit. `min`, `max` and `integer` must match the page's `rangeParam`. `scale` takes a non-linear track (`tieredScale` from `@/lib/filters/scale`, `tournamentRankScale`); `format` is how screen readers hear a value (a duration, say); `valueLabel` is the noun in "Minimum rank".
-- `ChoiceFilter`: chips that each switch one option on or off; nothing selected means no filter. Pair with `arrayParam`.
+- `RangeFilter`: the number boxes always sit beside the label, with a two-thumb slider under them. Boxes show the number with separators (`1,000`), accept `1000` or `1,000`, and commit on Enter or blur; Escape reverts a box without closing the panel. A typed number stays exactly what was typed, held inside `min` and `max` and on its side of the other bound (`1,234` stays 1,234 on a slider that stops every 20); only dragging a thumb snaps to the track's stops. The slider commits on release, so a drag is one navigation. A thumb at the end of the track, or an empty box ("Any"), means no limit. `min`, `max` and `integer` must match the page's `rangeParam`: with `integer` a typed fraction rounds to a whole number, because the address would drop it; it defaults to whether the track's stops are all whole numbers (`isWholeNumberScale` in `@/lib/kit/lists/range`). `scale` takes a non-linear track (`tieredScale` from `@/lib/filters/scale`, `tournamentRankScale`); `format` is how screen readers hear a value (a duration, say); `valueLabel` is the noun in "Minimum rank".
+- `ChoiceFilter`: chips that each switch one option on or off; nothing selected means no filter. Pair with `arrayParam`, or with `flagsParam` for a bitflag enum such as mods.
 - `DayRangeFilter`: "From" and "Through" calendars, both ends inclusive, as `YYYY-MM-DD` UTC days. Pair with `dayRangeParam`.
 - `SwitchFilter`: an on/off filter. Pair with `booleanParam`.
 - `FilterField`: the same label, description and info layout around any other control.
@@ -541,6 +603,7 @@ Param builders (each takes an optional `key` to override the URL key, and `role`
 | `sortParam(keys, default)`           | `SortState`                      | `sort=name&dir=asc`                      | `sort`       |
 | `enumParam(options, { default })`    | one option, or `undefined`       | `ruleset=1`                              | `filter`     |
 | `arrayParam(options)`                | options in their fixed order     | `status=0&status=4`                      | `filter`     |
+| `flagsParam(flags)`                  | the set flags, in `flags` order  | `mods=24` (one bitmask)                  | `filter`     |
 | `booleanParam({ default })`          | `boolean`                        | `verified=true`                          | `filter`     |
 | `numberParam({ min, max, integer })` | `number \| undefined`            | `report=42`                              | `filter`     |
 | `rangeParam({ min, max, integer })`  | `{ min?, max? }`                 | `minSr=5&maxSr=7` for a param named `sr` | `filter`     |
@@ -562,12 +625,31 @@ What the codecs guarantee, and the tests check:
 - `serializeListState` keeps params the spec does not own (`tab`, tracking params) ahead of its own, and output order follows the spec.
 - `defineListParams` throws when two params claim one URL key.
 - `sortParam(…, { legacyDescendingKey: 'descending' })` still reads old `descending=true|false` links, and never writes them.
+- `flagsParam` holds a bitflag enum (mods, warning flags) as a list of flags, the shape `ChoiceFilter` takes, and writes one bitmask, the number the API takes: `mods=24` for Hidden and Hard Rock. Reading keeps each listed flag whose bits are all set and drops zero, unknown bits, fractions and negatives; an empty list writes nothing. `maskToFlags(mask, flags)` and `flagsToMask(values)` convert at the API's edge. Flags must fit in 31 bits (every osu! mod does).
 
-`useListState(params)` returns:
+```ts
+const BEATMAP_PARAMS = defineListParams({
+  mods: flagsParam([Mods.Hidden, Mods.HardRock, Mods.DoubleTime, Mods.Flashlight]),
+});
+
+<ChoiceFilter
+  label="Mods"
+  options={MOD_OPTIONS}
+  value={state.mods} // Mods[]
+  onValueChange={(mods) => setState({ mods })}
+/>;
+// API input: flagsToMask(state.mods)
+```
+
+`useListState(params, options)` returns:
 
 - `state`: the address, plus any change still navigating (React's `useOptimistic`), so controls update at once.
 - `setState(patch, { history })`: merges and navigates without scrolling; `history: 'replace'` overwrites the current entry instead of adding one. `undefined` in a patch resets that param to its default.
 - `clearFilters()`, `activeFilterCount`, `isPending` (pass it to `SearchField`), and `hrefFor(patch)` for links within this list, such as pagination.
+
+`options.shallow`: for a list or view whose data is all on the client already (fetched once, or passed down whole), such as the profile's rating history toggles or a table sorted with `sortRows`. Changes write the address with `history.pushState` (or `replaceState` with `history: 'replace'`), which Next.js follows into `useSearchParams`, and the server renders nothing: the change shows at once and nothing refetches. Back, forward, a reload and a shared link still show the same state. When the address changes under it (back and forward, a link, `router.push`), the state follows; when one of its own changes lands after a newer one, the newer stays. `isPending` is always false. A shallow list changes state through `setState`, so wire its controls with callbacks (`onSortChange`, `onPageChange`); a link from `hrefFor` still works but renders on the server like any navigation. The helpers behind it (`writeShallowAddress`, `shallowSearchKey`, `landShallowAddress`, `syncShallowState`) live in `@/lib/kit/lists/shallow`, with tests.
+
+Leave `shallow` off for a list the server filters, sorts or pages: its page must render again for the new state.
 
 A link that opens another list already filtered, such as the header search's "See all", builds the address from that list's spec, so it stays valid when the list's params change:
 
@@ -591,7 +673,7 @@ Don't:
 - Don't keep list state in `useState`: `components/audit/AuditEventFeed.tsx`, `app/admin/reports/AdminReportsClient.tsx`, `components/tournaments/TournamentMatchesAdminView.tsx`.
 - Don't create the spec inside a component; it must be a stable module-level value.
 
-Gallery anchor: `/admin/design#lists-list-state`
+Gallery anchors: `/admin/design#lists-list-state` (the codecs and `flagsParam`), `/admin/design#lists-scope-switch` (a shallow list state; try the back button)
 
 ## Sort state
 

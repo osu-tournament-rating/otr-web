@@ -13,6 +13,7 @@ Every value comes from the beatmap tables, which are the reference. Components l
 - [DataTableLinkRow and DataTableLinkCell](#datatablelinkrow-and-datatablelinkcell): a table row that opens as a whole
 - [ViewButton](#viewbutton): the labelled "View" button that opens a report in a modal
 - [PhoneRowList and PhoneRow](#phonerowlist-and-phonerow): what a table becomes below tablet width
+- [Sorting on phones](#sorting-on-phones): `phoneSort`, for tables whose only sort is their headers
 - [PaginationFooter](#paginationfooter): numbered pages in the panel footer
 - [LoadMore](#loadmore): "Load more" for activity feeds
 - [MissingValue](#missingvalue): the muted em dash
@@ -31,6 +32,7 @@ Every value comes from the beatmap tables, which are the reference. Components l
 | Hover tint       | only on rows that open as a whole                                                    | a tint on rows where only the name links               |
 | Report rows      | a labelled "View" button opens the modal                                             | an eye icon, a clickable row                           |
 | Phones           | below tablet width the table becomes PhoneRows; nothing scrolls sideways             | a sideways-scrolling table, a forced `min-w-[44rem]`   |
+| Phone sorting    | `phoneSort` puts a SortControl on the headers' sort state above the phone rows       | a sort that disappears with the headers on a phone     |
 | Searchable lists | numbered pages in the panel footer with "1–50 of 8,412"                              | pages under the panel, infinite scroll, a silent cap   |
 | Activity feeds   | LoadMore                                                                             | "Show more (36 more)", numbered pages                  |
 | Sorting          | sortable headers and the toolbar's sort control share one `{ key, direction }` state | a header sort that disagrees with the dropdown         |
@@ -83,7 +85,7 @@ import { formatCount, formatRank, formatRating } from '@/lib/kit/format/number';
 
 Props that matter:
 
-- DataTable: `aria-label` (or `aria-labelledby` on the SectionHeader title) names the table. `phoneRows` takes a PhoneRowList and shows it instead of the table below tablet width (768px); `null` keeps the table at every width. `fixed` switches to a fixed layout so columns keep their widths and long names truncate. `stickyHeader`, see below. `className` goes to the `<table>`, `containerClassName` to its wrapper.
+- DataTable: `aria-label` (or `aria-labelledby` on the SectionHeader title) names the table. `phoneRows` takes a PhoneRowList and shows it instead of the table below tablet width (768px); `null` keeps the table at every width. `phoneSort` puts a sort control above the phone rows, see [Sorting on phones](#sorting-on-phones). `fixed` switches to a fixed layout so columns keep their widths and long names truncate. `stickyHeader`, see below. `className` goes to the `<table>`, `containerClassName` to its wrapper.
 - DataTableHead and DataTableCell: `numeric` right-aligns with tabular figures; `align="end"` right-aligns anything else (a date, an action). `showFrom` (`sm`, `md`, `lg`, `xl`) hides a column below that width; give the header and its cells the same value, ideally from one `COLUMN` map as `components/beatmaps/list/BeatmapListTable.tsx` does. `info` on a header adds an InfoButton beside the label.
 - DataTableCell: `muted` makes a secondary column 12px muted (dates, formats, accuracy). A cell whose content is `null`, `undefined`, `false`, blank or the formatters' `—` shows MissingValue; pass `empty={false}` for marker, selection and action columns that are meant to be blank.
 - DataTableRow: no hover tint, ever. `highlight` tints the signed-in player's own row; also say so in words (a "You" badge).
@@ -243,12 +245,25 @@ import { EntityLink } from '@/components/kit/tables/EntityLink';
 <CountryFlag country={player.country} />
 
 <EntityLink href={`/tournaments/${tournament.id}`}>{tournament.name}</EntityLink>
+
+// Outside a table row, where the whole name should show:
+<EntityLink href={`/matches/${match.id}`} wrap>{match.name}</EntityLink>
+
+// Inside a sentence, such as an audit event:
+<p>
+  apricot verified tournament{' '}
+  <EntityLink href={`/tournaments/${tournament.id}`} variant="inline">
+    {tournament.name}
+  </EntityLink>
+</p>
 ```
 
 Props that matter:
 
 - `href`, `children` (the name).
 - `leading`: the avatar (24px in tables, 32px in rows), cover or logo. It is `aria-hidden`; the name alone names the link.
+- `wrap`: the name wraps onto more lines instead of truncating, for names outside table rows (a hero's meta, a dialog, a tile). Table cells and phone rows keep the default truncation.
+- `variant="inline"`: a name inside running text. It is a plain inline link on the sentence's baseline that wraps like the words around it, in plain weight and the sentence's own colour, with a faint underline that turns blue with the text on hover. Without the underline a plain-weight name in a sentence would not read as a link.
 - `prefetch`: off by default, because a long list would prefetch every row.
 - `title`: pass the full name when it may truncate.
 
@@ -262,6 +277,7 @@ Don't:
 - Don't link the avatar and the name separately, or leave the avatar out of the link (`app/leaderboard/columns.tsx` and `components/filtering/FilteringResultsTable.tsx` link only the name today).
 - Don't colour names `text-primary` at rest (`app/admin/reports/AdminReportsClient.tsx` entity links).
 - Don't use it inside a row that opens as a whole; links can't nest. Mark the plain name with `data-row-title` there.
+- Don't put the default variant in a sentence: it is medium weight and an `inline-flex` box that truncates. Don't hand-style a sentence's links either (the audit event rows); use `variant="inline"`.
 
 Gallery anchor: `/admin/design#tables-entity-link`
 
@@ -322,8 +338,9 @@ import { ViewButton } from '@/components/kit/tables/ViewButton';
 ```
 
 - `subject` completes the accessible name: "View report #1204", the ID as the admin queue writes it. The visible label is always "View".
-- It is the controls family's `Button` (`@/components/kit/controls/Button`), outline at `sm` (32px), with `aria-haspopup="dialog"`; all other button props pass through, including `pending` and `disabled`. While its dialog is open it keeps the outline's open fill.
-- Put it in the last column, right-aligned, with a header of `<span className="sr-only">Actions</span>`. On phones it is the PhoneRow's `value`.
+- It is the controls family's `Button` (`@/components/kit/controls/Button`), outline at `sm` (32px), with `aria-haspopup="dialog"`; all other button props pass through, including `pending`, `disabled` and `data-testid`. While its dialog is open it keeps the outline's open fill.
+- It always carries `data-slot="view-button"`, also as a `DialogTrigger asChild` child (DialogTemplate's `trigger`), whose own `data-slot` would otherwise replace it. Select it in tests and styles by that.
+- Put it in the last column, right-aligned, with a header of `<span className="sr-only">Actions</span>`. On phones it is the PhoneRow's `value`, with `align="start"` so it sits on the name's line.
 - The record opens in `DialogTemplate` (`@/components/kit/controls/DialogTemplate`), the one dialog layout, never a hand-built `DialogContent` with a centred header.
 - As the dialog's trigger it gets focus back when the dialog closes. A page that keeps one shared `DialogTemplate` opened from `onClick` instead gets the same, because DialogTemplate returns focus to whatever had it when the dialog opened; keep the report in state until the close animation ends so the dialog doesn't empty as it fades.
 
@@ -336,7 +353,7 @@ Gallery anchor: `/admin/design#tables-view-button`
 
 ## PhoneRowList and PhoneRow
 
-What a table becomes below tablet width (finding 34): one row per record that keeps the key number visible and never scrolls sideways. Modelled on the phone leaderboard: rank, avatar, name with flag, one muted line, and on the right the tier icon 4px left of the rating.
+What a table becomes below tablet width (finding 34): one row per record that keeps the key number visible and never scrolls sideways. Modelled on the approved phone leaderboard: rank, a 32px avatar beside the name with its flag and the muted line under them, and on the right the tier icon 4px left of the rating.
 
 ```tsx
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
@@ -349,12 +366,11 @@ import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
         <PhoneRow
           key={row.player.id}
           rank={formatRank(row.rank)}
+          leading={<OsuAvatar osuId={row.player.osuId} size={32} />}
+          leadingHref={`/players/${row.player.id}`}
           title={
             <>
-              <EntityLink
-                href={`/players/${row.player.id}`}
-                leading={<OsuAvatar osuId={row.player.osuId} size={24} />}
-              >
+              <EntityLink href={`/players/${row.player.id}`}>
                 {row.player.username}
               </EntityLink>
               <CountryFlag country={row.player.country} />
@@ -384,8 +400,12 @@ Props that matter:
 
 - PhoneRowList: `as="ol"` when the order means something; `aria-label`. Its rows share columns (CSS subgrid), so ranks, names and values line up from row to row. The rank and value are set in tabular figures; the body is not, so a number you add elsewhere in a row takes `tabular-nums` itself.
 - PhoneRow: `rank` (formatted), `title` (an EntityLink, then a flag, status icon or badge), `description` (one muted 12px line with what the hidden columns said, joined with `·`), `value` (the number the table is about), `valueAdornment` (4px left of the value, such as a 20–24px TierIcon with `tooltip`, whose name opens on tap, hover and focus), `valueDescription` (a muted line under the value, such as a RatingDelta), `highlight`.
+- `leading`: a 24–32px avatar, cover or logo before the name that spans the name and the muted line, 12px from them, as the phone leaderboard shows. It is `aria-hidden`. Use it instead of EntityLink's `leading` when the row has a description line; a 24px avatar on a one-line row stays inside the EntityLink.
+- `leadingHref`: makes `leading` open the entity too. The avatar's link is out of the tab order and hidden from screen readers, so keyboards and screen readers meet one link per destination (the name) while a tap on the avatar still works. Ignored on a row with `href`.
+- `align`: `center` (default) centres the rank and value on the row; `start` sets them level with the name's line, for a value that belongs to the first line (a View button beside a name and a status line) or a body that runs longer than the value.
 - `href` and `linkLabel`: the whole row becomes one link with the hover tint. Only for lists whose rows open as a whole (beatmap list, tournament list, pooled beatmaps); `title` is then plain text marked `data-row-title`.
 - A missing `value` shows MissingValue.
+- Loading: `PhoneRowListSkeleton` (`@/components/kit/feedback/Skeletons`) with the same parts, including `leading`, `align` and a `value` or `description` of `button` or `badge` ([feedback.md](feedback.md#skeletons)).
 
 Do:
 
@@ -397,8 +417,51 @@ Don't:
 - Don't let a table scroll sideways on a phone: `minWidthClassName="min-w-[44rem]"` on the pool in `components/tournaments/TournamentBeatmapsAdminView.tsx` (even for visitors), the leaderboard's off-screen rating column, tournament ratings and the audit pages do today.
 - Don't hand-build phone lists per page (`<ol className="divide-y sm:hidden">` in `components/beatmap/BeatmapLeaderboardCard.tsx` and `BeatmapPoolsDialog.tsx`, the `lg:table-row` trick in `components/matches/MatchStatsPlayerRow.tsx`).
 - Don't drop the tier icon on phones; drop the tier name.
+- Don't link the avatar and the name as two links a keyboard reaches; with `leading`, use `leadingHref`.
 
-Gallery anchor: `/admin/design#tables-phone-rows`
+Gallery anchors: `/admin/design#tables-phone-rows`, `/admin/design#tables-view-button` (`align="start"`)
+
+## Sorting on phones
+
+Phone rows have no headers to click, so a table whose only sort is its SortableHeaders would lose sorting on a phone. One pattern for every such table: DataTable's `phoneSort` takes a `SortControl` at `size="sm"` on the same `SortState` as the headers, and shows it in a tinted "Sort by" strip above the phone rows, below tablet width only, where the header strip was.
+
+```tsx
+import { SortControl, type SortOption } from '@/components/kit/lists/SortControl';
+
+// Sortable columns of a tournament's ratings table, in header order.
+const SORT_OPTIONS: SortOption<RatingSort>[] = [
+  { value: 'player', label: 'Player', defaultDirection: 'asc' },
+  { value: 'matches', label: 'Matches' },
+  { value: 'after', label: 'After' },
+  { value: 'total', label: 'Total change' },
+];
+
+<DataTable
+  aria-label="Tournament ratings"
+  phoneSort={
+    <SortControl
+      size="sm"
+      label="Sort players by"
+      options={SORT_OPTIONS}
+      value={sort}
+      onValueChange={setSort} // or (sort) => list.setState({ sort })
+    />
+  }
+  phoneRows={<PhoneRowList>…</PhoneRowList>}
+>
+  <DataTableHeader>
+    <DataTableRow>
+      <SortableHeader sortKey="matches" sort={sort} onSortChange={setSort} numeric>
+        Matches
+      </SortableHeader>
+      …
+```
+
+- The options are the sortable columns, with the headers' labels, in the headers' order.
+- Make the phone row's `description` lead with the sorted column's value when the phone hides that column, so the order on screen has a visible reason (the leaderboard's phone line shows the match count when sorted by matches).
+- Leave `phoneSort` out when the list's ListToolbar already has a SortControl; that one is visible on phones.
+
+Gallery anchor: `/admin/design#tables-data-table` (at phone width)
 
 ## PaginationFooter
 
@@ -466,11 +529,14 @@ import { LoadMore } from '@/components/kit/tables/LoadMore';
   loading={isValidating}
   shownCount={events.length}
   totalCount={total}
+  pageSize={AUDIT_PAGE_SIZE}
 />;
 ```
 
 - Readout: "Showing 50 of 1,214", "Showing 50" when the total is unknown, "Showing all 214" at the end.
-- `loading` disables the button and shows a spinner (the kit Button's `pending`, an outline `sm` Button); the label stays "Load more".
+- `pageSize`: the size of one batch. When the first batch already holds everything (`hasMore` is false and `shownCount` is at most `pageSize`), LoadMore renders nothing, so a feed of 12 events has no "Showing all 12" footer. Pass it whenever the feed knows its batch size.
+- `label`: the button's text, "Load more" by default. The readout already says how many entries there are, so keep counts out of the label.
+- `loading` disables the button and shows a spinner (the kit Button's `pending`, an outline `sm` Button); the label stays as it is.
 - It announces the new count politely to screen readers.
 - A failed batch keeps the loaded rows and shows `SectionError` (`@/components/error/SectionError`) at `size="inline"` in a `border-t px-4 py-4` strip under them, with "Try again", not a custom row.
 

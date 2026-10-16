@@ -37,6 +37,19 @@ export interface SortOption<K extends SortKey> {
 }
 
 /**
+ * - `lg` (40px, default): in a list toolbar, beside the 40px search field
+ *   and Filters button.
+ * - `sm` (32px): in a SectionHeader's `actions` or a DataTable's
+ *   `phoneSort` strip.
+ */
+export type SortControlSize = 'sm' | 'lg';
+
+const SIZE_CLASSES: Record<SortControlSize, string> = {
+  lg: 'h-10 md:w-48',
+  sm: 'h-8 md:w-40',
+};
+
+/**
  * Sort for a list toolbar: a dropdown of keys plus a button that flips the
  * direction. It reads and writes the same `SortState` as sortable table
  * headers, so the two always agree.
@@ -46,6 +59,7 @@ export function SortControl<K extends SortKey>({
   onValueChange,
   options,
   label,
+  size = 'lg',
   className,
   ...props
 }: Omit<React.ComponentProps<'div'>, 'onChange' | 'children'> & {
@@ -54,6 +68,8 @@ export function SortControl<K extends SortKey>({
   options: readonly SortOption<K>[];
   /** What is sorted, such as "Sort tournaments by". Names the dropdown. */
   label: string;
+  /** `lg` (40px) in a list toolbar, `sm` (32px) in a section header. */
+  size?: SortControlSize;
 }) {
   const current = options.find((option) => option.value === value.key);
   const labels = current?.directionLabels ?? SORT_DIRECTION_LABELS;
@@ -82,7 +98,11 @@ export function SortControl<K extends SortKey>({
       >
         <SelectTrigger
           aria-label={label}
-          className="h-10 w-full min-w-0 bg-background md:w-48 dark:bg-input/50 dark:shadow-none"
+          data-size={size}
+          className={cn(
+            'w-full min-w-0 bg-background dark:bg-input/50 dark:shadow-none',
+            SIZE_CLASSES[size]
+          )}
         >
           <SelectValue />
         </SelectTrigger>
@@ -102,7 +122,7 @@ export function SortControl<K extends SortKey>({
 
       <IconButton
         variant="outline"
-        size="lg"
+        size={size}
         label={`Sort order is ${value.direction === 'asc' ? 'ascending' : 'descending'}`}
         tooltip={directionLabel}
         icon={value.direction === 'desc' ? ArrowDown : ArrowUp}

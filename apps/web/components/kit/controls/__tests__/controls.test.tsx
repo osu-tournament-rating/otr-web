@@ -160,6 +160,30 @@ describe('IconButton', () => {
     expect(html).toContain('aria-label="Audit history"');
     expect(html).toContain('lucide-history');
   });
+
+  it('keeps the open fill for menu triggers', () => {
+    const classes = classOf(render(<IconButton label="Actions" />));
+    expect(classes).toContain('data-[state=open]:bg-accent');
+    expect(render(<IconButton label="Actions" />)).not.toContain(
+      'aria-expanded'
+    );
+  });
+
+  it('is a disclosure toggle without the open fill when given expanded', () => {
+    const collapsed = render(
+      <IconButton label="Details for game 3" expanded={false} />
+    );
+    expect(collapsed).toContain('aria-expanded="false"');
+    expect(classOf(collapsed)).not.toContain('data-[state=open]');
+
+    const open = render(
+      <IconButton label="Details for game 3" variant="outline" expanded />
+    );
+    expect(open).toContain('aria-expanded="true"');
+    expect(classOf(open)).not.toContain('data-[state=open]');
+    // Hover still fills it.
+    expect(classOf(open)).toContain('hover:bg-accent');
+  });
 });
 
 describe('AdminMenu', () => {
@@ -216,6 +240,49 @@ describe('RowActionsMenu', () => {
     expect(html).toContain('aria-label="Actions for Hidden Chamber [Insane]"');
     expect(html).toContain('aria-haspopup="menu"');
     expect(html).toContain('lucide-ellipsis');
+    expect(html).not.toContain('notification-dot');
+  });
+
+  it('shows a notification dot and says so in the button name', () => {
+    const html = render(
+      <RowActionsMenu
+        itemName="Game 3"
+        notification="Has admin notes"
+        actions={[{ label: 'Admin notes', onSelect: () => {} }]}
+      />
+    );
+
+    expect(html).toContain('aria-label="Actions for Game 3, Has admin notes"');
+    expect(html).toMatch(
+      /<span data-slot="notification-dot" class="[^"]*absolute[^"]*" aria-hidden="true">/
+    );
+    expect(classOf(html)).toContain('relative');
+  });
+});
+
+describe('FormFieldLabel', () => {
+  it('labels a control by id outside a react-hook-form field', () => {
+    const html = render(
+      <FormFieldLabel htmlFor="lobby-size" info="Players per team" hint="1–8">
+        Lobby size
+      </FormFieldLabel>
+    );
+
+    expect(html).toContain('<label data-slot="label"');
+    expect(html).toContain('for="lobby-size"');
+    expect(html).toContain('data-error="false"');
+    expect(html).toContain('aria-label="About Lobby size"');
+    expect(html).toContain('1–8');
+  });
+
+  it('turns the label red when invalid', () => {
+    const html = render(
+      <FormFieldLabel htmlFor="rank" invalid>
+        Rank restriction
+      </FormFieldLabel>
+    );
+    expect(html).toContain('data-error="true"');
+    expect(html).toContain('data-[error=true]:text-destructive-foreground');
   });
 });
 

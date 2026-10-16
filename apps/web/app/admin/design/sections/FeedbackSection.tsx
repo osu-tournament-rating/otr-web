@@ -6,16 +6,19 @@ import {
   ArrowLeft,
   ChartNoAxesColumn,
   ClipboardList,
+  Clock,
   Compass,
   Copy,
   Flag,
   Gauge,
   History,
   Lock,
+  Medal,
   Music,
   RefreshCw,
   ShieldAlert,
   ShieldQuestion,
+  SlidersHorizontal,
   Trash2,
   Trophy,
   Users,
@@ -31,6 +34,7 @@ import { Callout } from '@/components/kit/feedback/Callout';
 import { CalloutChip } from '@/components/kit/feedback/CalloutChip';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import {
+  ListToolbarSkeleton,
   PanelSkeleton,
   PhoneRowListSkeleton,
   RowListSkeleton,
@@ -57,9 +61,12 @@ import {
 import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { ActiveFilterChips } from '@/components/kit/lists/ActiveFilterChips';
+import { FilterButton } from '@/components/kit/lists/FilterButton';
 import { ListToolbar } from '@/components/kit/lists/ListToolbar';
 import { RulesetChips } from '@/components/kit/lists/RulesetChips';
 import { ScopeSwitch } from '@/components/kit/lists/ScopeSwitch';
+import { SearchField } from '@/components/kit/lists/SearchField';
+import { SortControl } from '@/components/kit/lists/SortControl';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -405,6 +412,9 @@ function InlineErrorDemo() {
   );
 }
 
+const TIER_BREAKDOWN_INFO =
+  "Charts NM, HD, HR and DT scores only, grouped by each player's pre-match rating at the time of play. Tiers with fewer than 5 scores are hidden.";
+
 function OverviewSkeletonDemo() {
   const [loading, setLoading] = useState(true);
 
@@ -432,6 +442,73 @@ function OverviewSkeletonDemo() {
               <StatTile label="Matches" value="312" sub="Win rate 58.3%" />
             </StatTileGrid>
           </PanelBody>
+        </Panel>
+      )}
+      {/* The real info button, and a meta bar as wide as the loaded meta,
+          so the strip wraps on a phone where the loaded one does. */}
+      {loading ? (
+        <PanelSkeleton className="h-40">
+          <SectionHeaderSkeleton
+            icon={Medal}
+            title="Tier breakdown"
+            infoText={TIER_BREAKDOWN_INFO}
+            meta="w-40"
+          />
+        </PanelSkeleton>
+      ) : (
+        <Panel className="h-40">
+          <SectionHeader
+            icon={Medal}
+            title="Tier breakdown"
+            infoText={TIER_BREAKDOWN_INFO}
+            meta="1,368 of 1,368 scores rated"
+          />
+        </Panel>
+      )}
+    </div>
+  );
+}
+
+/** The tournament list's toolbar, loading and loaded. */
+function ToolbarSkeletonDemo() {
+  const [loading, setLoading] = useState(true);
+  const [rulesets, setRulesets] = useState<Ruleset[]>([]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <LoadToggle loading={loading} onChange={setLoading} />
+      {loading ? (
+        <PanelSkeleton label="Loading tournaments">
+          <ListToolbarSkeleton search sort filters rulesets={6} count />
+          <RowListSkeleton rows={2} leading="none" />
+        </PanelSkeleton>
+      ) : (
+        <Panel>
+          <ListToolbar
+            label="Search and filter tournaments"
+            search={
+              <SearchField
+                label="Search tournaments"
+                placeholder="Search by name or abbreviation"
+                value=""
+                onSearch={() => {}}
+              />
+            }
+            sort={
+              <SortControl
+                label="Sort tournaments by"
+                options={[{ value: 'endTime', label: 'Completion date' }]}
+                value={{ key: 'endTime', direction: 'desc' }}
+                onValueChange={() => {}}
+              />
+            }
+            filters={<FilterButton count={0} />}
+            rulesets={
+              <RulesetChips value={rulesets} onValueChange={setRulesets} />
+            }
+            count={formatCountOf(1_284, 'tournament')}
+          />
+          <TournamentRows tournaments={TOURNAMENTS.slice(0, 2)} />
         </Panel>
       )}
     </div>
@@ -487,7 +564,10 @@ function TableSkeletonDemo() {
           <TableSkeleton
             columns={REPORT_COLUMNS}
             rows={REPORTS.length}
-            phoneRows={<PhoneRowListSkeleton rows={REPORTS.length} />}
+            phoneRows={
+              // The loaded phone rows end in a 20px status badge.
+              <PhoneRowListSkeleton rows={REPORTS.length} value="badge" />
+            }
           />
         </PanelSkeleton>
       ) : (
@@ -634,7 +714,7 @@ export default function FeedbackSection() {
         id="feedback-skeleton-panel"
         name="PanelSkeleton, SectionHeaderSkeleton and StatTileGridSkeleton"
         importPath={`${KIT}/Skeletons`}
-        description="Loading screens are built from the same panels as the page, with the real static titles, so nothing shifts when the data arrives. Switch between the two states."
+        description="Loading screens are built from the same panels as the page, with the real static titles, so nothing shifts when the data arrives. A loading header keeps the loaded one's info button and a meta bar as wide as its meta. Switch between the two states."
       >
         <div className="flex flex-col gap-4">
           <OverviewSkeletonDemo />
@@ -646,10 +726,20 @@ export default function FeedbackSection() {
         id="feedback-skeleton-table"
         name="TableSkeleton and PhoneRowListSkeleton"
         importPath={`${KIT}/Skeletons`}
-        description="A DataTable while it loads: the real header strip and the loaded table's columns. Below tablet width it shows phone rows, as the loaded table does. Switch between the two states."
+        description="A DataTable while it loads: the real header strip and the loaded table's columns. Below tablet width it shows phone rows, as the loaded table does, with a badge, a 32px button or a 32px leading avatar where the loaded rows have one. Switch between the two states."
         stacked
       >
         <TableSkeletonDemo />
+      </Specimen>
+
+      <Specimen
+        id="feedback-skeleton-toolbar"
+        name="ListToolbarSkeleton"
+        importPath={`${KIT}/Skeletons`}
+        description="A list's toolbar while the list loads: the real strip with a block for each control, on the rows the loaded toolbar puts them, so the rows under it start in the same place. Switch between the two states."
+        stacked
+      >
+        <ToolbarSkeletonDemo />
       </Specimen>
 
       <Specimen
@@ -790,6 +880,37 @@ export default function FeedbackSection() {
           <SiteBannerContent maintenance signedIn />
           <SiteBannerContent maintenance={false} signedIn={false} />
           <SiteBannerContent maintenance signedIn={false} />
+        </div>
+      </Specimen>
+
+      <Specimen
+        id="feedback-callout-merge"
+        name="Two notices on one page"
+        importPath={`${KIT}/Callout`}
+        description="Never two callouts in a stack. The registrant filtering tool during the weekly maintenance window: the site banner says the window is on, the page keeps its one notice under its header (host compliance), and the notice that the tool is paused takes the place of the form it blocks, inside the panel."
+        stacked
+      >
+        <div className="flex flex-col gap-4">
+          <SiteBannerContent maintenance signedIn />
+          <Callout tone="warning" title="Host compliance">
+            Hosts must comply with the{' '}
+            <a href="#feedback-callout-merge">
+              official tournament support filtering rules
+            </a>
+            .
+          </Callout>
+          <Panel>
+            <SectionHeader icon={SlidersHorizontal} title="Filter criteria" />
+            <PanelBody>
+              <Callout
+                tone="warning"
+                icon={Clock}
+                title="Filtering is temporarily unavailable"
+              >
+                Ratings are currently recalculating, please check back later.
+              </Callout>
+            </PanelBody>
+          </Panel>
         </div>
       </Specimen>
 

@@ -65,6 +65,119 @@ describe('ListToolbar', () => {
     expect(html).toContain('empty:hidden');
     expect(html).toContain('<div class="border-t pt-3 empty:hidden"></div>');
   });
+
+  it('keeps a lone count beside the search box', () => {
+    const html = render(
+      <ListToolbar
+        label="Search players"
+        search={<span>search-slot</span>}
+        count="12,483 players"
+      />
+    );
+    expect(html).not.toContain('list-toolbar-scope-row');
+    // Search and count share the first row.
+    expect(html).toMatch(/search-slot<\/span><\/div><div[^>]*h-10[^>]*>/);
+  });
+
+  it('puts scope and sort on one strip when there is no search', () => {
+    const html = render(
+      <ListToolbar
+        label="Sort and filter reports"
+        sort={<span>sort-slot</span>}
+        scope={<span>scope-slot</span>}
+        count="12 reports"
+      />
+    );
+    expect(html.match(/list-toolbar-scope-row/g)).toHaveLength(1);
+    // Source order: scope, count, then sort after a divider.
+    expect(html.indexOf('scope-slot')).toBeLessThan(html.indexOf('12 reports'));
+    expect(html.indexOf('12 reports')).toBeLessThan(html.indexOf('sort-slot'));
+    expect(html).toContain('md:border-l md:pl-4');
+    // On phones the count follows the scope on its line; sort starts at
+    // 192px and grows, so it wraps under them or joins a wrapped count.
+    expect(html).toMatch(
+      /<div class="order-1 [^"]*md:order-none">.*scope-slot/
+    );
+    expect(html).toMatch(/class="order-2 ml-auto [^"]*">.*12 reports/);
+    expect(html).toMatch(
+      /class="order-4 [^"]*flex-1 basis-48[^"]*">.*sort-slot/
+    );
+  });
+
+  it('gives sort a line of its own under ruleset chips', () => {
+    const html = render(
+      <ListToolbar
+        label="Matches"
+        sort={<span>sort-slot</span>}
+        scope={<span>scope-slot</span>}
+        rulesets={<span>rulesets-slot</span>}
+        count="12 matches"
+      />
+    );
+    expect(html).toMatch(/class="order-4 [^"]*basis-full[^"]*">.*sort-slot/);
+  });
+
+  it('keeps the count on the scope line and drops ruleset chips below on phones', () => {
+    const html = render(
+      <ListToolbar
+        label="Search and filter players"
+        search={<span>search-slot</span>}
+        scope={<span>scope-slot</span>}
+        rulesets={<span>rulesets-slot</span>}
+        count="12,483 players"
+      />
+    );
+    // Chips drop under the scope and count on phones.
+    expect(html).toMatch(
+      /<div class="min-w-0 [^"]*order-3 basis-full">.*rulesets-slot/
+    );
+    expect(html).toMatch(/class="order-2 ml-auto [^"]*">.*12,483 players/);
+  });
+
+  it('puts the ruleset chips first when there is no scope', () => {
+    const html = render(
+      <ListToolbar
+        label="Search and filter beatmaps"
+        search={<span>search-slot</span>}
+        rulesets={<span>rulesets-slot</span>}
+        count="8,412 beatmaps"
+      />
+    );
+    // At their own width on phones, so the chips keep their lines and the
+    // count follows them on the right.
+    expect(html).toMatch(
+      /<div class="min-w-0 [^"]*order-1 grow">.*rulesets-slot/
+    );
+    expect(html).toMatch(/class="order-2 ml-auto [^"]*">.*8,412 beatmaps/);
+  });
+
+  it('puts a leading control before the search', () => {
+    const html = render(
+      <ListToolbar
+        label="Audit events"
+        leading={<span>leading-slot</span>}
+        search={<span>search-slot</span>}
+      />
+    );
+    expect(html.indexOf('leading-slot')).toBeLessThan(
+      html.indexOf('search-slot')
+    );
+    expect(html).not.toContain('list-toolbar-scope-row');
+  });
+
+  it('puts a leading control first on the strip without a search', () => {
+    const html = render(
+      <ListToolbar
+        label="Matches"
+        leading={<span>leading-slot</span>}
+        filters={<span>filters-slot</span>}
+      />
+    );
+    expect(html.match(/list-toolbar-scope-row/g)).toHaveLength(1);
+    expect(html.indexOf('leading-slot')).toBeLessThan(
+      html.indexOf('filters-slot')
+    );
+  });
 });
 
 describe('SearchField', () => {
@@ -125,6 +238,23 @@ describe('SortControl', () => {
       />
     );
     expect(html).toContain('aria-label="Sort order is ascending"');
+  });
+
+  it('has a 32px size for section headers and phone sort strips', () => {
+    const html = render(
+      <SortControl
+        size="sm"
+        label="Sort matches by"
+        value={{ key: 'date', direction: 'desc' }}
+        onValueChange={noop}
+        options={[{ value: 'date', label: 'Date' }]}
+      />
+    );
+    expect(html).toMatch(/class="[^"]*\bh-8\b[^"]*"[^>]*data-size="sm"/);
+    expect(html).not.toContain('h-10');
+    expect(html).toMatch(
+      /data-slot="icon-button"[^>]*class="[^"]*\bsize-8\b[^"]*"[^>]*aria-label="Sort order/
+    );
   });
 });
 

@@ -7,13 +7,16 @@ Every formatter uses fixed en-US and UTC and is built so the server and the brow
 - [DateText](#datetext): a calendar day, `Jul 20, 2024`
 - [DateRangeText](#daterangetext): a span of days, `Jul 20 – Aug 3, 2024`
 - [Timestamp](#timestamp): a moment, `Jul 20, 2024, 15:42 UTC`
+- [TimeRangeText](#timerangetext): two moments in a day, `15:42 – 15:45 UTC`
 - [RelativeTime](#relativetime): `3h ago`, for activity feeds only
-- [Date helpers](#date-helpers): `formatDate`, `formatDateRange`, `formatTimestamp`, `formatRelativeTime`, `toDate`
+- [Figures in dates](#figures-in-dates): proportional, never tabular
+- [Date helpers](#date-helpers): `formatDate`, `formatDateRange`, `formatTimestamp`, `formatTimeRange`, `formatRelativeTime`, `toDate`
 - [Number helpers](#number-helpers): counts, ranks, ratings, percentiles, percents, years and IDs
 - [RatingDelta](#ratingdelta): a rating change, `↑ +12.3`
 - [RulesetName and ruleset names](#rulesetname-and-ruleset-names): `osu!`, `taiko`, `catch`, `mania 4K`, `mania 7K`
 - [Field names](#field-names): the glossary, `FIELD_NAMES`
 - [Mods](#mods): `HD, HR`
+- [Countries](#countries): `CountryFlag`, `CountryName`, `CountryCombobox` and the country helpers
 - [Enum labels](#enum-labels): sentence-case names for stored enums
 - [Audit values and AuditFieldChange](#audit-values-and-auditfieldchange): labels and values for audit diffs
 
@@ -24,6 +27,7 @@ Every formatter uses fixed en-US and UTC and is built so the server and the brow
 | Day                   | `Jul 20, 2024`                                            | `DateText`, `formatDate`                    |
 | Range of days         | `Jul 20 – Aug 3, 2024`, `Jul 20 – 27, 2024`               | `DateRangeText`, `formatDateRange`          |
 | Moment                | `Jul 20, 2024, 15:42 UTC` (24-hour)                       | `Timestamp`, `formatTimestamp`              |
+| Two moments in a day  | `15:42 – 15:45 UTC`                                       | `TimeRangeText`, `formatTimeRange`          |
 | Time since, in a feed | `3h ago`, full timestamp on hover, focus and tap          | `RelativeTime`                              |
 | Count                 | `12,345`                                                  | `formatCount`, `formatCountOf`              |
 | Rank                  | `#1,234`, everywhere                                      | `formatRank`                                |
@@ -37,6 +41,7 @@ Every formatter uses fixed en-US and UTC and is built so the server and the brow
 | Lobby size            | `1v1`, `4v4`                                              | `formatLobbySize`                           |
 | Ruleset               | `osu!`, `taiko`, `catch`, `mania 4K`, `mania 7K`          | `RulesetName`, `getRulesetLabel`            |
 | Mods                  | `HD, HR`, `NM`                                            | `formatMods`                                |
+| Country               | Flag, with `South Korea` on tap; English, from the server | `CountryFlag`, `CountryName`                |
 | Missing value         | `—` (em dash), muted                                      | `EMPTY_VALUE` from `@/lib/kit/format/empty` |
 
 Never call `toLocaleString()`, `toLocaleDateString()`, `Intl.*` without a fixed locale and `timeZone: 'UTC'`, or date-fns `format()` in UI code. They follow the visitor's locale or time zone and break hydration.
@@ -119,6 +124,39 @@ Don't:
 
 Gallery anchor: `/admin/design#format-timestamp`
 
+## TimeRangeText
+
+Two moments in UTC on a 24-hour clock, such as when a game started and ended. The day is left out when both ends share it, so use it where the day is already on the page, such as a match's game cards.
+
+```tsx
+import { TimeRangeText } from '@/components/kit/format/TimeRangeText';
+
+<TimeRangeText start={game.startTime} end={game.endTime} seconds />;
+// 15:42:07 – 15:45:30 UTC
+```
+
+| Case                  | Output                                              |
+| --------------------- | --------------------------------------------------- |
+| Same UTC day          | `15:42 – 15:45 UTC`                                 |
+| Same day, `showDate`  | `Jul 20, 2024, 15:42 – 15:45 UTC`                   |
+| Across midnight (UTC) | `Jul 20, 2024, 23:58 UTC – Jul 21, 2024, 00:02 UTC` |
+| No end time           | `From Jul 20, 2024, 15:42 UTC`                      |
+| No start time         | `Until Jul 20, 2024, 15:45 UTC`                     |
+| No times              | `—` (muted, or `empty`)                             |
+
+- `start`, `end`: as `Timestamp`'s `date`.
+- `seconds`: add seconds where two events can share a minute (game times).
+- `showDate`: write the day before the times when both ends share it.
+- `empty`: the muted text when both ends are missing.
+- A range within a day does not wrap. Across midnight each end stays whole and the second may wrap after the dash, so two full timestamps fit a phone.
+- Extra props, such as `data-testid`, go on the root span. `formatTimeRange` in `@/lib/kit/format/date` gives the same text for `aria-label`s and tooltips; the component file still re-exports it.
+
+Don't:
+
+- Don't write two `Timestamp`s with a hand-made dash between them: the day repeats and the dash differs from every other range.
+
+Gallery anchor: `/admin/design#format-time-range`
+
 ## RelativeTime
 
 Time since an event, `3h ago`, with the full UTC timestamp in a tooltip that opens on hover, focus and tap. Only for activity feeds, such as the audit log and report lists. Everywhere else use `Timestamp` or `DateText`.
@@ -135,6 +173,7 @@ import { RelativeTime } from '@/components/kit/format/RelativeTime';
 - `empty`: the muted text for a missing time. Defaults to an em dash.
 - Steps: `just now` under a minute, then `5m ago`, `3h ago`, `12d ago`, then the plain date from 30 days on. Future times read `in 5m`.
 - Client component. The trigger is a button (from `TapTooltip`), so it is keyboard reachable.
+- `className` and extra props, such as `data-testid`, go on the outer span, which holds the button and the `<time>` inside it, so `[data-testid="…"] time` finds the time.
 
 Don't:
 
@@ -142,6 +181,16 @@ Don't:
 - Legacy: `components/audit/RelativeTime.tsx` and `formatRelativeTime` in `components/audit/formatRelativeTime.ts` (locale-dependent tooltip, hover only).
 
 Gallery anchor: `/admin/design#format-relative-time`
+
+## Figures in dates
+
+Every date component (`DateText`, `DateRangeText`, `Timestamp`, `TimeRangeText`, `RelativeTime`) keeps the body's proportional figures. Don't add `tabular-nums` to one or to the element around it (figures are inherited), also not in a table column: a date cell is a plain `DataTableCell`, never `numeric`.
+
+Why: a date mixes words and digits, so tabular figures never line dates up (`Jul` and `Aug` already differ in width), and Inter's tabular forms open gaps in them. Measured at one size, the tabular `1` is 78% wider than the proportional one, and the comma and colon a fifth wider: `Jul 11, 2024, 11:11 UTC` grows by 23% and reads `Jul 1 1`. A test in `components/kit/format/__tests__/format.test.tsx` keeps every date component free of figure classes.
+
+Don't:
+
+- Don't pass `className="tabular-nums"` to a date component or its wrapper. Legacy: the Submitted and Reviewed rows in `components/reports/ReportDetails.tsx`; the date range in `components/tournaments/TournamentHero.tsx` (its `HeroMetaItem`) and `components/tournaments/TournamentListRow.tsx`; both start times in `components/tournaments/MatchLedgerRow.tsx`; the date cells in `app/admin/reports/AdminReportsClient.tsx`, `app/reports/MyReportsClient.tsx`, `app/admin/AdminDashboardClient.tsx` and `app/settings/ApiKeySettingsClient.tsx`.
 
 ## Date helpers
 
@@ -152,6 +201,7 @@ import {
   formatDate,
   formatDateRange,
   formatRelativeTime,
+  formatTimeRange,
   formatTimestamp,
   toDate,
   toDateTimeAttribute,
@@ -160,6 +210,7 @@ import {
 formatDate('2024-07-20T23:30:00-05:00'); // "Jul 21, 2024" (the UTC day)
 formatDateRange(start, end, { empty: 'Unknown' });
 formatTimestamp(created, { seconds: true });
+formatTimeRange(game.startTime, game.endTime, { seconds: true }); // "15:42:07 – 15:45:30 UTC"
 formatRelativeTime(created, Date.now());
 toDate('2024-07-20 15:42:00+00'); // Date, or null when unreadable
 ```
@@ -204,7 +255,7 @@ formatId(4012345); // "4012345"
 ```
 
 - Counts, ranks, ratings and every other quantity get thousands separators. Years and IDs are labels and never do; this includes osu! IDs, beatmap IDs and chart axes of years.
-- Figures: the body sets Inter's default proportional figures, because its tabular figures also widen the hyphen (`Pre - verified`). Numbers that sit in columns or change in place take `tabular-nums`. The kit already sets it on numeric table cells, phone-row ranks and values, stat tile values, section header meta, list toolbar counts, hero tab counts, badge counts, pagination and load-more readouts, rating changes, and chart ticks and tooltips; add it yourself only to a number outside those. Never put it on prose or labels.
+- Figures: the body sets Inter's default proportional figures, because its tabular figures also widen the hyphen (`Pre - verified`). Numbers that sit in columns or change in place take `tabular-nums`. The kit already sets it on numeric table cells, phone-row ranks and values, stat tile values, section header meta, list toolbar counts, hero tab counts, badge counts, pagination and load-more readouts, rating changes, and chart ticks, tooltip values and tooltip footers; add it yourself only to a number outside those. Never put it on prose, labels or dates (see [Figures in dates](#figures-in-dates)).
 - Ratings show as whole numbers. Use `formatRatingPrecise` only where the decimals are the point (a tooltip, an export).
 - Nothing prints `-0`: values are rounded half away from zero first.
 
@@ -360,9 +411,111 @@ formatMods(Mods.FreeModAllowed); // "Freemod"
 - Acronyms follow the site's `ModsEnumHelper` (Cinema is `CM`). Key co-op, which it leaves blank, is `CO`, as the data worker reads it.
 - The beatmap pages' display rules (drop NF and SO, fold NC into DT, `HDHR` without separators) stay in `lib/utils/mods.ts` (`getBeatmapModLabel`) with the mod colours.
 
+## Countries
+
+A player's country as osu!'s flag and its English name. Components live in `@/components/kit/country/`, the helpers in `@/lib/kit/format/country`.
+
+Names come from `Intl.DisplayNames` with a fixed `en` locale, so they never follow the visitor's language. Work them out on the server: browsers carry their own region data, and some name a few regions differently (older ones still write `Turkey` for `Türkiye`), which would break hydration. The components do this for you when a server component renders them; a client component passes `name` (or the options) down from one.
+
+### CountryFlag
+
+```tsx
+import { CountryFlag } from '@/components/kit/country/CountryFlag';
+
+<CountryFlag code={player.country} />            // flag; "Australia" on tap, hover and focus
+<CountryFlag code={player.country} decorative /> // inside a link that names the country
+<CountryFlag code={score.player.country} name={countryNames[score.player.country]} /> // in a client component
+```
+
+- `code`: the code osu! stores (`AU`). Empty renders nothing; a code osu! has no flag for shows its "unknown" flag.
+- `tooltip`: on by default. The flag becomes a button named by the country, whose tooltip opens on tap, hover and keyboard focus. Its tap area reaches 4px past the flag, so keep 8px between two flags.
+- `tooltip={false}`: no button; the image's alt text is the name.
+- `decorative`: hidden from assistive tech with no tooltip, for a flag inside a link whose accessible name says the country, or beside the written name.
+- `size`: `sm` (16×11) beside 12–14px text, `md` (21×14, default) in rows and heroes. Both sides are set in CSS too, so next/image never warns that one was resized alone.
+- `name`: the English name from the server. Leave it out in server components.
+- `className`: on the button when the flag names itself, otherwise on the image.
+
+### CountryName
+
+A flag and the name, for a profile's country or the chosen value in a filter. The flag is decorative.
+
+```tsx
+import { CountryName } from '@/components/kit/country/CountryFlag';
+
+<Link href={countryLeaderboardHref} className="…">
+  <CountryName code={player.country} />
+</Link>;
+```
+
+- `truncate`: cut a long name with an ellipsis instead of wrapping it.
+- Extra props go on the root span.
+
+### CountryCombobox
+
+A searchable country picker for filters, such as the leaderboard's country filter. It searches names (case, accents, apostrophes and punctuation ignored, so `cote d'ivoire` finds `Côte d’Ivoire`), their spelled-out forms (`saint lucia` and `trinidad and tobago` find `St. Lucia` and `Trinidad & Tobago`), a few older or common names `Intl` does not use (`turkey`, `ivory coast`, `usa`, `uk`), and exact codes (`kr`). It lists the chosen country first with a check, then an exact code or name, then names starting with the term, then the rest, and clears the choice when it is chosen again.
+
+```tsx
+// Server component:
+import { getCountryOptions } from '@/lib/kit/format/country';
+<LeaderboardToolbar countries={getCountryOptions()} … />
+
+// Client component:
+import { CountryCombobox } from '@/components/kit/country/CountryCombobox';
+
+<FilterField label="Country">
+  <CountryCombobox
+    value={state.country}
+    onValueChange={(country) => setState({ country })}
+    countries={countries}
+    data-testid="leaderboard-filter-country-button"
+  />
+</FilterField>;
+```
+
+- `value`: the chosen code, or `''`. `onValueChange` gets the code, or `''` when cleared.
+- `countries`: from `getCountryOptions()` on the server, sorted by name.
+- `placeholder` (`Any country`), `searchPlaceholder` (`Search countries`), `emptyText` (`No country found.`).
+- Extra props, such as `data-testid` and `aria-label`, go on the trigger button. A chosen code the list does not offer (an old address) is still named on the button.
+
+### Country helpers
+
+```ts
+import {
+  COUNTRY_CODES,
+  filterCountryOptions,
+  getCountryFlagUrl,
+  getCountryName,
+  getCountryNames,
+  getCountryOptions,
+} from '@/lib/kit/format/country';
+
+getCountryName('KR'); // "South Korea"
+getCountryName('XX'); // "Unknown"
+getCountryNames(players.map((player) => player.country)); // { KR: "South Korea", … }
+getCountryOptions(); // [{ code: 'AF', name: 'Afghanistan' }, …]
+```
+
+- `COUNTRY_CODES`: the ISO 3166-1 alpha-2 codes and `XK` (Kosovo), 250 in all.
+- `getCountryName`: also names osu!'s older codes that are not countries: `XX` (`Unknown`) and the legacy GeoIP regions (`EU` is `Europe` there, not the European Union). An unknown code comes back as itself.
+- `getCountryNames(codes)`: a map for a server component to hand to a client one, such as a match's score cards.
+- `getCountryFlagUrl(code)`: osu!'s flag image. Codes osu!'s flag set lacks (`BQ`, `CW`, `SX`, and anything unknown) get its "unknown" flag instead of a broken image.
+- `filterCountryOptions(options, term, selected)`: the search the combobox runs, ranked as above. Its search-only aliases (`SEARCH_ALIASES` in the same file) are never shown; add one when people search for a name `Intl` does not contain.
+
+Do:
+
+- Show the country as a flag in rows and as `CountryName` where there is room, such as a profile hero.
+
+Don't:
+
+- Don't use `components/shared/CountryFlag.tsx`: its tooltip opens on hover only, its alt text is the code (`AU flag`), and next/image warns that its height was changed alone.
+- Don't use the `countries-and-timezones` library (`components/leaderboard/countries.ts`) for names. It loads a country and time zone library in the browser only for names `Intl` already has (issue #1020), and it names countries differently from the profile (`United States of America`, `Ivory Coast`).
+- Don't build a country `Intl.DisplayNames` in a page (`components/player/PlayerHero.tsx`); use `getCountryName`.
+
+Gallery anchors: `/admin/design#format-country-flag`, `/admin/design#format-country-name`, `/admin/design#format-country-combobox`
+
 ## Enum labels
 
-Sentence-case names for the stored enums people read, in `@/lib/kit/format/enum-labels`: tournament, match, game and score rejection reasons; match and game warnings; scoring type; team type (`Team Vs`); team; grade; data fetch status; and beatmap ranked status (`Graveyard` … `Loved`).
+Sentence-case names for the stored enums people read, in `@/lib/kit/format/enum-labels`: tournament, match, game and score rejection reasons; match and game warnings; scoring type; team type (`Team Vs`); team; grade; data fetch status; beatmap ranked status (`Graveyard` … `Loved`); rating adjustment type (`Initial`, `Decay`, `Match`, `Volatility decay`); and the filter tool's failure reasons, each with a sentence.
 
 ```ts
 import {
@@ -377,12 +530,38 @@ formatFlags(3, GAME_REJECTION_REASON_LABELS); // "No scores, Invalid mods"
 formatFlags(0, GAME_REJECTION_REASON_LABELS); // "None"
 getFlagLabels(3, GAME_REJECTION_REASON_LABELS); // ["No scores", "Invalid mods"]
 formatEnumValue(9, TEAM_TYPE_LABELS); // "Unknown (9)"
+RATING_ADJUSTMENT_TYPE_LABELS[point.adjustmentType]; // "Volatility decay"
+```
+
+The filter tool's failure reasons have a name and a sentence each, for a badge and its tooltip. `getSetFlags` gives the set flags in bit order, to look each one up in both tables:
+
+```tsx
+import {
+  FILTERING_FAIL_REASON_DESCRIPTIONS,
+  FILTERING_FAIL_REASON_LABELS,
+  getFlagLabels,
+  getSetFlags,
+} from '@/lib/kit/format/enum-labels';
+
+getFlagLabels(player.failureReason, FILTERING_FAIL_REASON_LABELS); // ["Low rating"], for the CSV
+getSetFlags(player.failureReason, FILTERING_FAIL_REASON_LABELS).map((flag) => (
+  <TapTooltip key={flag} content={FILTERING_FAIL_REASON_DESCRIPTIONS[flag]}>
+    <Badge tone="destructive" size="sm">
+      {FILTERING_FAIL_REASON_LABELS[flag]}
+    </Badge>
+  </TapTooltip>
+));
 ```
 
 - Every table is keyed by its enum, so a new member fails the type check until it has a name.
 - `getFlagLabels` gives one line per set flag, for tooltips and lists; unnamed bits read `Unknown (64)`.
 - Verification status names come from the status family (`getVerificationStatusName` in `@/lib/kit/status/verification`).
-- Replaces the Title Case texts in `lib/enum-helpers.ts` (`No End Time`, `Head to Head`, `Tag Co-op`) with their sentence-case forms; osu! terms keep the site's spelling (`Team Vs`). Enum numbers never change: they are a contract with the processor.
+- `getSetFlags(value, labels)`: the named flags set, lowest first; unnamed bits, zero and values that are not flags give none. `getFlagLabels` is built on it and adds `Unknown (64)` for unnamed bits.
+- Replaces the Title Case texts in `lib/enum-helpers.ts` (`No End Time`, `Head to Head`, `Tag Co-op`, `Low Rating`, `High Peak`) with their sentence-case forms; osu! terms keep the site's spelling (`Team Vs`). Enum numbers never change: they are a contract with the processor.
+
+Don't:
+
+- Don't keep a local copy of a label table. Legacy: `RATING_ADJUSTMENT_TYPE_LABELS` in `components/player/rating-adjustment.ts`, and `VISIBLE_FAILURE_REASONS` in `components/filtering/FailureReasonsBadges.tsx`. That file also limits the badges to the two reasons the tool's form can set; keep that limit in the page.
 
 ## Audit values and AuditFieldChange
 
@@ -412,6 +591,7 @@ Renders `Mods  ~~HD, HR~~ → HD`: the label in 12px muted, the old value muted 
 - `entityType`, `field`, `change`: as stored, `{ originalValue, newValue }`.
 - `users`: names for the user IDs the entry references, keyed by ID. A missing name reads `Deleted user (12)`.
 - `renderValue(value, side)`: replace a value's text, for example to put the status family's icon before a verification status (`value.status` is set for those).
+- `className` and extra props, such as `data-testid`, go on the row (the element with `data-audit-field`).
 - Values are prose, in the body's proportional figures, so `Pre-verified` keeps Inter's narrow hyphen. Don't add `tabular-nums` (it would read `Pre - verified`) or `proportional-nums` (the body already has it).
 
 The helpers behind it, in `@/lib/kit/format/audit`:

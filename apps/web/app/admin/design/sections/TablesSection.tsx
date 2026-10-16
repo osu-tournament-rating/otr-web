@@ -23,6 +23,10 @@ import { Panel } from '@/components/kit/layout/Panel';
 import { RowList, RowListItem } from '@/components/kit/layout/RowList';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { Eyebrow } from '@/components/kit/layout/Typography';
+import {
+  SortControl,
+  type SortOption,
+} from '@/components/kit/lists/SortControl';
 import { Badge } from '@/components/kit/status/Badge';
 import { NotificationDot } from '@/components/kit/status/NotificationDot';
 import { ReportStatusBadge } from '@/components/kit/status/ReportStatusBadge';
@@ -210,20 +214,40 @@ const LEADERBOARD_SORT: Record<
 const PAGE_SIZE = 50;
 const PLAYER_COUNT = 8412;
 
-/** The phone row's muted line: what the hidden columns said. */
-function playerSummary(row: LeaderboardRow) {
+const LEADERBOARD_SORT_OPTIONS: readonly SortOption<LeaderboardSortKey>[] = [
+  { value: 'rating', label: 'Rating' },
+  { value: 'tournaments', label: 'Tournaments' },
+  { value: 'matches', label: 'Matches' },
+  { value: 'winRate', label: 'Win rate' },
+];
+
+/**
+ * The phone row's muted line: what the hidden columns said, leading with
+ * the column the rows are sorted by, so a phone shows what it sorts on.
+ */
+function playerSummary(row: LeaderboardRow, sortKey?: LeaderboardSortKey) {
+  if (sortKey === 'matches') {
+    return formatCountOf(row.matches, 'match', 'matches');
+  }
   const parts = [formatCountOf(row.tournaments, 'tournament')];
   if (row.winRate !== null)
     parts.push(`${formatPercent(row.winRate)} win rate`);
   return parts.join(' · ');
 }
 
-function PlayerName({ row }: { row: LeaderboardRow }) {
+function PlayerName({
+  row,
+  avatar = true,
+}: {
+  row: LeaderboardRow;
+  /** False on a phone row, whose 32px avatar is its `leading`. */
+  avatar?: boolean;
+}) {
   return (
     <span className="flex min-w-0 items-center gap-1.5">
       <EntityLink
         href={here('tables-data-table')}
-        leading={<PlayerAvatar name={row.name} />}
+        leading={avatar ? <PlayerAvatar name={row.name} /> : undefined}
       >
         {row.name}
       </EntityLink>
@@ -262,6 +286,15 @@ function LeaderboardDemo() {
       />
       <DataTable
         aria-label="Global leaderboard"
+        phoneSort={
+          <SortControl
+            size="sm"
+            label="Sort players by"
+            options={LEADERBOARD_SORT_OPTIONS}
+            value={sort}
+            onValueChange={setSort}
+          />
+        }
         phoneRows={
           <PhoneRowList as="ol" aria-label="Global leaderboard">
             {rows.map((row) => (
@@ -269,8 +302,10 @@ function LeaderboardDemo() {
                 key={row.id}
                 highlight={row.you}
                 rank={formatRank(row.rank)}
-                title={<PlayerName row={row} />}
-                description={playerSummary(row)}
+                leading={<PlayerAvatar name={row.name} size={32} />}
+                leadingHref={here('tables-data-table')}
+                title={<PlayerName row={row} avatar={false} />}
+                description={playerSummary(row, sort.key)}
                 valueAdornment={
                   <TierMark tier={row.tier} subTier={row.subTier} size={22} />
                 }
@@ -608,46 +643,97 @@ function LinkRowDemo() {
 
 function EntityLinkDemo() {
   return (
-    <Panel>
-      <RowList>
-        <RowListItem
-          title={
-            <EntityLink
-              href={here('tables-entity-link')}
-              leading={<PlayerAvatar name="Accolibed" size={32} />}
-            >
-              Accolibed
-            </EntityLink>
-          }
-          description="Player: the avatar sits inside the name's link"
-        />
-        <RowListItem
-          title={
-            <EntityLink
-              href={here('tables-entity-link')}
-              leading={
-                <BeatmapCover
-                  alt=""
-                  sizes="56px"
-                  className="h-8 w-14 rounded-md"
-                />
-              }
-            >
-              Hotohashiru [Extra]
-            </EntityLink>
-          }
-          description="Beatmap: the cover sits inside the same link"
-        />
-        <RowListItem
-          title={
-            <EntityLink href={here('tables-entity-link')}>
+    <div className="flex flex-col gap-4">
+      <Panel>
+        <EntityLinkRows />
+      </Panel>
+      <Panel>
+        <SectionHeader icon={History} title="Audit logs" />
+        <RowList>
+          {/* variant="inline": names inside a sentence. */}
+          <RowListItem className="py-2.5 text-sm">
+            apricot verified tournament{' '}
+            <EntityLink href={here('tables-entity-link')} variant="inline">
               Corsace Open 2025
             </EntityLink>
-          }
-          description="Tournament: no image, the name alone"
-        />
-      </RowList>
-    </Panel>
+          </RowListItem>
+          <RowListItem className="py-2.5 text-sm">
+            apricot rejected match{' '}
+            <EntityLink href={here('tables-entity-link')} variant="inline">
+              CO25: (Lunar Lobster) vs (Team Rocket)
+            </EntityLink>{' '}
+            in{' '}
+            <EntityLink href={here('tables-entity-link')} variant="inline">
+              Corsace Open 2025
+            </EntityLink>
+          </RowListItem>
+        </RowList>
+      </Panel>
+      {/* wrap: a long name outside a table row keeps every word. */}
+      <Panel className="max-w-60">
+        <RowList>
+          <RowListItem
+            title={
+              <EntityLink href={here('tables-entity-link')} wrap>
+                CO25: (Lunar Lobster) vs (Team Rocket)
+              </EntityLink>
+            }
+            description="wrap"
+          />
+          <RowListItem
+            title={
+              <EntityLink href={here('tables-entity-link')}>
+                CO25: (Lunar Lobster) vs (Team Rocket)
+              </EntityLink>
+            }
+            description="Default: truncates"
+          />
+        </RowList>
+      </Panel>
+    </div>
+  );
+}
+
+function EntityLinkRows() {
+  return (
+    <RowList>
+      <RowListItem
+        title={
+          <EntityLink
+            href={here('tables-entity-link')}
+            leading={<PlayerAvatar name="Accolibed" size={32} />}
+          >
+            Accolibed
+          </EntityLink>
+        }
+        description="Player: the avatar sits inside the name's link"
+      />
+      <RowListItem
+        title={
+          <EntityLink
+            href={here('tables-entity-link')}
+            leading={
+              <BeatmapCover
+                alt=""
+                sizes="56px"
+                className="h-8 w-14 rounded-md"
+              />
+            }
+          >
+            Hotohashiru [Extra]
+          </EntityLink>
+        }
+        description="Beatmap: the cover sits inside the same link"
+      />
+      <RowListItem
+        title={
+          <EntityLink href={here('tables-entity-link')}>
+            Corsace Open 2025
+          </EntityLink>
+        }
+        description="Tournament: no image, the name alone"
+      />
+    </RowList>
   );
 }
 
@@ -753,6 +839,8 @@ function ReportsDemo() {
             {REPORTS.map((report) => (
               <PhoneRow
                 key={report.id}
+                // The View button belongs to the name's line.
+                align="start"
                 title={
                   <>
                     {report.unread ? (
@@ -856,7 +944,9 @@ function PhoneRowsDemo() {
             <PhoneRow
               key={row.id}
               rank={formatRank(row.rank)}
-              title={<PlayerName row={row} />}
+              leading={<PlayerAvatar name={row.name} size={32} />}
+              leadingHref={here('tables-phone-rows')}
+              title={<PlayerName row={row} avatar={false} />}
               description={playerSummary(row)}
               valueAdornment={
                 <TierMark tier={row.tier} subTier={row.subTier} size={22} />
@@ -999,6 +1089,44 @@ const EVENTS = [
 const EVENT_BATCH = 30;
 
 function LoadMoreDemo() {
+  return (
+    <div className="flex flex-col gap-4">
+      <AuditFeedDemo />
+      <ShortFeedDemo />
+    </div>
+  );
+}
+
+/** A feed whose first batch holds everything: LoadMore renders nothing. */
+function ShortFeedDemo() {
+  const events = EVENTS.slice(0, 3);
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Panel>
+        <SectionHeader icon={History} title="Audit history" />
+        <RowList>
+          {events.map((event) => (
+            <RowListItem key={event} className="py-2.5 text-sm">
+              {event}
+            </RowListItem>
+          ))}
+        </RowList>
+        <LoadMore
+          hasMore={false}
+          shownCount={events.length}
+          totalCount={events.length}
+          pageSize={EVENT_BATCH}
+          onLoadMore={() => {}}
+        />
+      </Panel>
+      <p className="text-xs text-muted-foreground">
+        pageSize: the first batch held all 3 events, so there is no footer.
+      </p>
+    </div>
+  );
+}
+
+function AuditFeedDemo() {
   const [shown, setShown] = useState(EVENT_BATCH);
   const [loading, setLoading] = useState(false);
 
@@ -1025,6 +1153,7 @@ function LoadMoreDemo() {
         loading={loading}
         shownCount={shown}
         totalCount={EVENTS.length}
+        pageSize={EVENT_BATCH}
         onLoadMore={() => {
           setLoading(true);
           window.setTimeout(() => {
@@ -1242,7 +1371,7 @@ export default function TablesSection() {
         id="tables-data-table"
         name="DataTable"
         importPath={`${KIT}/DataTable`}
-        description="The one table style: muted 12px headers on a tinted strip, right-aligned numbers, no stripes, edge to edge in its panel. This one has sortable columns, numbered pages and phone rows below tablet width; only the names link, so rows get no hover tint."
+        description="The one table style: muted 12px headers on a tinted strip, right-aligned numbers, no stripes, edge to edge in its panel. This one has sortable columns, numbered pages and phone rows below tablet width, where `phoneSort` puts a SortControl on the same sort state above the rows; only the names link, so rows get no hover tint."
         stacked
       >
         <LeaderboardDemo />
@@ -1281,7 +1410,7 @@ export default function TablesSection() {
         id="tables-entity-link"
         name="EntityLink"
         importPath={`${KIT}/EntityLink`}
-        description="The name as a link, with its avatar or cover inside the same link: one link per destination. Use it wherever only the name opens the entity."
+        description="The name as a link, with its avatar or cover inside the same link: one link per destination. Use it wherever only the name opens the entity. The `inline` variant is for names inside a sentence, such as audit events; `wrap` keeps a long name whole outside table rows."
       >
         <EntityLinkDemo />
       </Specimen>
@@ -1290,7 +1419,7 @@ export default function TablesSection() {
         id="tables-view-button"
         name="ViewButton"
         importPath={`${KIT}/ViewButton`}
-        description="A labelled View button that opens a report in a modal, on My reports and the admin queue. The row is not clickable; its entity link still works on its own."
+        description="A labelled View button that opens a report in a modal, on My reports and the admin queue. The row is not clickable; its entity link still works on its own. On phones the button is the row's value, set on the name's line with align `start`."
         stacked
       >
         <ReportsDemo />
@@ -1300,7 +1429,7 @@ export default function TablesSection() {
         id="tables-phone-rows"
         name="PhoneRowList and PhoneRow"
         importPath={`${KIT}/PhoneRow`}
-        description="What a table becomes below tablet width: rank, name with avatar and flag, one muted line, and the key number on the right with the tier icon 4px to its left. Nothing scrolls sideways. Whole-row links only where the rows already open as a whole."
+        description="What a table becomes below tablet width: rank, a 32px avatar beside the name and flag and the muted line under them, and the key number on the right with the tier icon 4px to its left. Nothing scrolls sideways. Whole-row links only where the rows already open as a whole."
       >
         <PhoneRowsDemo />
       </Specimen>
@@ -1319,7 +1448,7 @@ export default function TablesSection() {
         id="tables-load-more"
         name="LoadMore"
         importPath={`${KIT}/LoadMore`}
-        description="Only for activity feeds, such as the audit log: a count and a Load more button that appends the next batch, then a note once everything is showing."
+        description="Only for activity feeds, such as the audit log: a count and a Load more button that appends the next batch, then a note once everything is showing. With `pageSize`, a feed whose first batch holds everything gets no footer at all."
       >
         <LoadMoreDemo />
       </Specimen>

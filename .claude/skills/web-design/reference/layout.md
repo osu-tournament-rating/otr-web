@@ -6,11 +6,12 @@ Every value here comes from the beatmap pages, which are the reference. Import e
 - [PageFrame](#pageframe): the root of every page, loading and error screen
 - [PageHeader](#pageheader): the top of a list or tool page
 - [DetailHero and HeroMetaItem](#detailhero-and-herometaitem): the top of a detail page
-- [HeroTabs](#herotabs): link tabs under a hero
+- [HeroTabs](#herotabs): link tabs under a hero, or at the top of a page's one panel
 - [HeroTabsRoot, HeroTabsList, HeroTabsTrigger, HeroTabsContent](#herotabsroot-herotabslist-herotabstrigger-herotabscontent): in-page tabs under a hero
 - [Panel and PanelBody](#panel-and-panelbody): the one surface
 - [SectionHeader](#sectionheader): the strip at the top of a panel
 - [InfoButton](#infobutton): the one help button
+- [Abbreviation](#abbreviation): a short form whose full form opens on tap
 - [Tile](#tile): the small bordered box inside a panel
 - [StatTile and StatTileGrid](#stattile-and-stattilegrid): one number with its label
 - [RowList and RowListItem](#rowlist-and-rowlistitem): divided rows inside a panel
@@ -157,7 +158,7 @@ import { VerificationStatusBadge } from '@/components/kit/status/VerificationSta
 
 Props:
 
-- `art`: cover art that fills its box (a `fill` image, or an element with `absolute inset-0`, such as `<BeatmapCover className="absolute inset-0" … />`). The hero then draws a 192px (224px from `sm`) strip with a dark matte, and everything on it is white in both themes. Leave it out when there is no art; never show a placeholder image.
+- `art`: cover art that fills its box (a `fill` image, or an element with `absolute inset-0`, such as `<BeatmapCover className="absolute inset-0" … />`). The hero then draws a strip at least 192px (224px from `sm`) tall with a dark matte, and everything on it is white in both themes. A long name grows the strip instead of being clipped, and with `adminActions` the Admin pill's corner row stays clear (the name starts 64px from the top, 72px from `sm`), so a name never runs under the pill on a phone. Leave it out when there is no art; never show a placeholder image.
 - `title`, `titleSuffix`: the name (h1, 30px bold) and muted text after it, such as a difficulty name or an abbreviation.
 - `leading`: an avatar or logo before the title, for players.
 - `status`: the verification status (`VerificationStatusBadge`), first in the row under the title. On art, pass the badge's `variant="overlay"`.
@@ -165,7 +166,7 @@ Props:
 - `adminActions`: the single admin cluster, top right: one [AdminMenu](controls.md#adminmenu), not a row of icons. Pass it `onArt` on a hero with art.
 - `actions`: public actions (audio preview, report, open on osu!, audit history), bottom right. Icon-only ones are [IconButton](controls.md#iconbutton)s. Audit pages are public, so the audit history link goes here for everyone, never in the admin menu.
 
-On phones, a plain hero moves `actions` and `adminActions` into one row above the name, so a long name keeps the full width. On art they stay pinned to the corners, and every control there uses the dark pill, white in both themes, like the beatmap hero: `<AdminMenu onArt …/>`, `<Button variant="overlay">` and `<IconButton variant="overlay">` from the controls kit (the classes are `ON_ART_CONTROL_CLASSES` in `@/components/kit/controls/Button`). A status badge on art takes `variant="overlay"`.
+On phones, a plain hero moves `actions` and `adminActions` into one row above the name, so a long name keeps the full width. On art they stay pinned to the corners, and every control there uses the dark pill, white in both themes, like the beatmap hero: `<AdminMenu onArt …/>`, `<Button variant="overlay">` and `<IconButton variant="overlay">` from the controls kit (the classes are `ON_ART_CONTROL_CLASSES` in `@/components/kit/controls/Button`). A status badge on art takes `variant="overlay"`, and an InfoButton takes `onArt`.
 
 - `children`: extra full-width rows under the title block, divided from each other, such as the beatmap's essentials row and difficulty picker.
 - `tabs`: HeroTabs or HeroTabsList.
@@ -182,11 +183,11 @@ Don't:
 - Don't hand-write the dark pill classes on art controls (`components/beatmap/BeatmapHeader.tsx` passes them to `AudioPreviewButton` today); use the controls kit's `overlay` variants.
 - Don't use a 36px title; the hero title follows the type scale (`components/beatmap/BeatmapHeader.tsx` uses `sm:text-4xl` today and moves to 30px when it adopts DetailHero).
 
-Gallery anchors: `/admin/design#layout-detail-hero-art`, `/admin/design#layout-detail-hero-art-status`, `/admin/design#layout-detail-hero-tabs`, `/admin/design#layout-detail-hero-player`
+Gallery anchors: `/admin/design#layout-detail-hero-art`, `/admin/design#layout-detail-hero-art-status`, `/admin/design#layout-detail-hero-art-long`, `/admin/design#layout-detail-hero-tabs`, `/admin/design#layout-detail-hero-player`
 
 ## HeroTabs
 
-Link tabs attached under a DetailHero that switch between views of one entity. The view lives in the address, so it survives a reload and can be shared.
+Link tabs that switch between views of one entity: attached under its DetailHero, or, on a page with a PageHeader such as an entity's audit history, at the top of the page's one panel. The view lives in the address, so it survives a reload and can be shared.
 
 ```tsx
 import { HeroTabs } from '@/components/kit/layout/HeroTabs';
@@ -220,20 +221,44 @@ Props:
 
 - `aria-label`: names the set of views. Required.
 - `value`: the current tab; that link gets `aria-current="page"` and the blue underline.
-- `items`: `value`, `label`, `href`, optional `icon`, `count` (already formatted; shown muted in tabular figures) and `testId`.
+- `items`: `value`, `label`, `href`, optional `icon`, `count` (already formatted, such as `1,000+`; shown muted in tabular figures), `compactLabel` and `testId`.
+- `compactLabel`: a shorter label shown below `sm`, such as "Tournament" for "This tournament". Screen readers always hear `label`.
+- `countsFrom`: `sm` or `md` shows the counts only from that width up; below it each count stays in its tab's accessible name. With `compactLabel`, `countsFrom="sm"` fits four tabs with counts on a 360px phone.
 
 `parseHeroTab(raw, tabs, fallback)` reads `?tab=` and falls back for a missing or unknown value.
 
+At the top of a panel, under a PageHeader, give the strip a divider and let the panel's toolbar and rows follow:
+
+```tsx
+<PageHeader icon={History} title={tournament.name} back={{ href: `/tournaments/${id}`, label: 'View tournament' }} />
+<Panel>
+  <HeroTabs
+    aria-label="Audit history views"
+    value={tab}
+    countsFrom="sm"
+    className="border-b"
+    items={[
+      { value: 'self', label: 'This tournament', compactLabel: 'Tournament', href: hrefFor({ tab: 'self' }) },
+      { value: 'matches', label: 'Matches', count: formatCount(matchCount), href: hrefFor({ tab: 'matches' }) },
+      …
+    ]}
+  />
+  <ListToolbar … />
+  …
+</Panel>
+```
+
 Do:
 
-- Use it only to switch views of the entity in the hero.
+- Use it only to switch views of one entity: the one in the hero, or the one the page is about.
 
 Don't:
 
 - Don't use the grey segmented `Tabs` bar from `components/ui/tabs.tsx` under a hero (`app/tournaments/[id]/page.tsx`, `app/matches/[id]/page.tsx` today).
 - Don't use hero tabs to pick a ruleset (that is the ruleset control) or to scope a list such as All / Friends (that belongs in the list toolbar).
+- Don't hide labels or counts with your own `max-sm:hidden` spans inside `label` (the audit history tabs today); use `compactLabel` and `countsFrom`, which keep the full label and count for screen readers.
 
-Gallery anchor: `/admin/design#layout-detail-hero-tabs`
+Gallery anchors: `/admin/design#layout-detail-hero-tabs`, `/admin/design#layout-hero-tabs-panel`
 
 ## HeroTabsRoot, HeroTabsList, HeroTabsTrigger, HeroTabsContent
 
@@ -267,7 +292,7 @@ import {
 ```
 
 - HeroTabsRoot wraps the hero and the views, with the 16px panel gap. Use `defaultValue` for uncontrolled tabs, or `value` with `onValueChange`.
-- HeroTabsTrigger takes `value`, an optional `icon` and a `count` (already formatted), like a HeroTabs item.
+- HeroTabsTrigger takes `value`, an optional `icon`, a `count` (already formatted) and a `compactLabel`, like a HeroTabs item; HeroTabsList takes `countsFrom`.
 - HeroTabsContent stacks its panels 16px apart.
 - None of these files has `'use client'`, so a server page can pass lucide icons; controlling the value needs a client parent.
 
@@ -361,6 +386,7 @@ Props:
 - `label`: the accessible name, such as "About lobby size". Required.
 - `children`: the explanation, a sentence or two.
 - `size`: `md` (16px glyph) beside 14px and 16px text, `sm` (14px) beside 12px labels.
+- `onArt`: on a DetailHero's art, white at 80% and full white on hover, with a white focus ring, like the other controls there.
 - `side`, `align`: where the bubble opens.
 
 Do:
@@ -376,6 +402,35 @@ Don't:
 - Don't put it inside another button or link, such as a sortable column header; it is a button itself, so place it beside that control.
 
 Gallery anchor: `/admin/design#layout-info-button`
+
+## Abbreviation
+
+A short form whose full form opens on tap, hover and keyboard focus, and is what screen readers hear: CS for circle size, AR, OD, HP. It replaces `<abbr title>`, whose title only shows on a mouse hover.
+
+```tsx
+import { Abbreviation } from '@/components/kit/layout/Abbreviation';
+
+<StatTile
+  layout="inline"
+  label={<Abbreviation full="Circle size">CS</Abbreviation>}
+  value="4.0"
+/>;
+```
+
+Props:
+
+- `full`: the full form in sentence case, the name the site already uses (`lib/beatmaps/presentation.ts` holds the beatmap attributes'). It is the button's accessible name and the bubble's text.
+- `children`: the short form shown.
+- `side`: where the bubble opens (`top`).
+
+It takes the colour and size of the text around it, with a dotted underline as the cue. Use it for established short forms in labels: stat tiles, table headers, filter labels. Spell out anything else.
+
+Don't:
+
+- Don't use `<abbr title>` or a hover-only tooltip for a full name (the beatmap attributes in `components/beatmap/BeatmapOverviewCard.tsx` today).
+- Don't put it inside another button or link.
+
+Gallery anchors: `/admin/design#layout-abbreviation`, `/admin/design#layout-stat-tile-inline`
 
 ## Tile
 
@@ -437,11 +492,11 @@ import { StatTile, StatTileGrid } from '@/components/kit/layout/StatTile';
 
 Props:
 
-- `label`: sentence case, 12px muted. `icon` puts a small muted icon before it.
+- `label`: sentence case, 12px muted. `icon` puts a small muted icon before it. Text truncates; a node, such as an [Abbreviation](#abbreviation) (`label={<Abbreviation full="Circle size">CS</Abbreviation>}`), is set as it is, so a button inside keeps its focus ring.
 - `value`: already formatted (separators on counts, never on years or IDs). It renders 20px bold (18px semibold inline) with `leading-none`, so the value line is as tall as the text, like the beatmap tiles, and in tabular figures, so digits line up from tile to tile. Tabular figures also widen Inter's hyphen; a hyphenated word as a value (rare) takes `<span className="proportional-nums">`.
 - `adornment`: sits 4px left of the value and overhangs its 20px line, so a 20–24px icon does not push the value or sub line out of step with the next tile. The profile's tier icon goes here; there is no separate tier tile. Pass TierIcon's `tooltip`: it wraps the icon in a TapTooltip, so the tier's name opens on tap, hover and keyboard focus.
 - `sub`: one muted line under the value.
-- `infoText`: adds a small InfoButton after the label.
+- `infoText`: adds a small InfoButton after the label, named "About {label}". With a node as the label, name it with `infoLabel` ("About circle size").
 - `layout="inline"`: the value on the label's line, with `children` (such as a gauge) underneath. For attribute grids like CS, AR, OD and HP.
 - StatTileGrid `columns`: 2, 3 or 4 from `sm`.
 

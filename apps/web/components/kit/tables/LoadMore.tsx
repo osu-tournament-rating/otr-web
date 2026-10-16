@@ -16,6 +16,8 @@ export function LoadMore({
   loading = false,
   shownCount,
   totalCount,
+  pageSize,
+  label = 'Load more',
   className,
   ...props
 }: Omit<React.ComponentProps<'div'>, 'children'> & {
@@ -28,7 +30,24 @@ export function LoadMore({
   shownCount?: number;
   /** Every entry, when the server knows it. */
   totalCount?: number | null;
+  /**
+   * The size of one batch. When the first batch already holds everything
+   * (`hasMore` is false and `shownCount` is at most this), the footer
+   * renders nothing: a list that never had more needs no end note.
+   */
+  pageSize?: number;
+  /** The button's text, "Load more" by default. It stays while loading. */
+  label?: string;
 }) {
+  if (
+    !hasMore &&
+    pageSize !== undefined &&
+    shownCount !== undefined &&
+    shownCount <= pageSize
+  ) {
+    return null;
+  }
+
   const readout = hasMore
     ? shownCount !== undefined
       ? `Showing ${formatLoadedReadout(shownCount, totalCount)}`
@@ -59,7 +78,7 @@ export function LoadMore({
           onClick={onLoadMore}
           pending={loading}
         >
-          Load more
+          {label}
         </Button>
       ) : null}
     </div>

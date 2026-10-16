@@ -133,10 +133,45 @@ export function formatTimestamp(
   const date = toDate(input);
   if (!date) return empty;
 
+  return `${fullDate(date)}, ${clockTime(date, seconds)} UTC`;
+}
+
+function clockTime(date: Date, seconds: boolean): string {
   const time = `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
-  return `${fullDate(date)}, ${time}${
-    seconds ? `:${pad(date.getUTCSeconds())}` : ''
-  } UTC`;
+  return seconds ? `${time}:${pad(date.getUTCSeconds())}` : time;
+}
+
+/**
+ * Two moments, such as a game's start and end, in UTC on a 24-hour clock:
+ *
+ * - `15:42 – 15:45 UTC` when both fall on the same UTC day, with the day
+ *   left out unless `showDate` asks for it (`Jul 20, 2024, 15:42 – 15:45 UTC`)
+ * - `Jul 20, 2024, 23:58 UTC – Jul 21, 2024, 00:02 UTC` across days
+ * - `From …` or `Until …` with the full timestamp when one end is missing
+ * - `empty` (an em dash) when both are
+ */
+export function formatTimeRange(
+  start: DateInput | null | undefined,
+  end: DateInput | null | undefined,
+  {
+    seconds = false,
+    showDate = false,
+    empty = EMPTY_VALUE,
+  }: { seconds?: boolean; showDate?: boolean; empty?: string } = {}
+): string {
+  const from = toDate(start);
+  const to = toDate(end);
+
+  if (!from && !to) return empty;
+  if (!to) return `From ${formatTimestamp(from, { seconds })}`;
+  if (!from) return `Until ${formatTimestamp(to, { seconds })}`;
+
+  if (fullDate(from) !== fullDate(to)) {
+    return `${formatTimestamp(from, { seconds })}${RANGE_SEPARATOR}${formatTimestamp(to, { seconds })}`;
+  }
+
+  const times = `${clockTime(from, seconds)}${RANGE_SEPARATOR}${clockTime(to, seconds)} UTC`;
+  return showDate ? `${fullDate(from)}, ${times}` : times;
 }
 
 /**

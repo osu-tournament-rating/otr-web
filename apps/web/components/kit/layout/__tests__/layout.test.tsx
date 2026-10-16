@@ -4,8 +4,14 @@ import type * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import * as BeatmapSection from '@/components/beatmap/BeatmapSection';
+import { Abbreviation } from '@/components/kit/layout/Abbreviation';
 import { DetailHero, HeroMetaItem } from '@/components/kit/layout/DetailHero';
 import { HeroTabs } from '@/components/kit/layout/HeroTabs';
+import {
+  HeroTabsList,
+  HeroTabsRoot,
+  HeroTabsTrigger,
+} from '@/components/kit/layout/HeroTabsList';
 import { InfoButton } from '@/components/kit/layout/InfoButton';
 import { PageFrame } from '@/components/kit/layout/PageFrame';
 import { PageHeader } from '@/components/kit/layout/PageHeader';
@@ -149,6 +155,30 @@ describe('InfoButton', () => {
       '<button type="button" aria-label="About percentile"'
     );
     expect(html).toContain('aria-hidden="true"');
+    expect(html).toContain('text-muted-foreground hover:text-foreground');
+  });
+
+  it('turns white on art', () => {
+    const html = render(
+      <InfoButton label="About star rating" onArt>
+        Explanation
+      </InfoButton>
+    );
+
+    expect(html).toContain('text-white/80 hover:text-white');
+    expect(html).not.toContain('text-muted-foreground');
+  });
+});
+
+describe('Abbreviation', () => {
+  it('names the short form by its full form and opens it on tap', () => {
+    const html = render(<Abbreviation full="Circle size">CS</Abbreviation>);
+
+    expect(html).toContain('<button type="button" aria-label="Circle size"');
+    expect(html).toContain('decoration-dotted');
+    expect(html).toContain('>CS</button>');
+    // No hover-only title attribute.
+    expect(html).not.toContain('title=');
   });
 });
 
@@ -215,6 +245,26 @@ describe('DetailHero', () => {
     expect(html).toContain('Admin');
   });
 
+  it('keeps a long title clear of the Admin pill on art', () => {
+    const withAdmin = render(
+      <DetailHero
+        title="A tournament name long enough to wrap onto three lines"
+        art={<span data-art />}
+        adminActions={<button type="button">Admin</button>}
+      />
+    );
+    // The strip grows with its content instead of clipping it, and the
+    // pill's corner row stays empty.
+    expect(withAdmin).toContain('min-h-48');
+    expect(withAdmin).toContain('sm:min-h-56');
+    expect(withAdmin).toContain('pt-16 sm:pt-[4.5rem]');
+
+    const withoutAdmin = render(
+      <DetailHero title="HAELEQUIN" art={<span data-art />} />
+    );
+    expect(withoutAdmin).not.toContain('pt-16');
+  });
+
   it('attaches tabs below a divider', () => {
     const html = render(
       <DetailHero title="Match" tabs={<nav aria-label="Match views" />} />
@@ -249,6 +299,70 @@ describe('HeroTabs', () => {
     expect(html.match(/aria-current="page"/g)).toHaveLength(1);
     expect(html).toMatch(/data-testid="tab-beatmaps" aria-current="page"/);
     expect(html).toMatch(/class="[^"]*\btabular-nums\b[^"]*">62</);
+    expect(html).not.toContain('sr-only');
+  });
+
+  it('shows a compact label on phones and keeps the full one for screen readers', () => {
+    const html = render(
+      <HeroTabs
+        aria-label="Audit history views"
+        value="self"
+        items={[
+          {
+            value: 'self',
+            label: 'This tournament',
+            compactLabel: 'Tournament',
+            href: '?tab=self',
+          },
+        ]}
+      />
+    );
+
+    expect(html).toContain(
+      '<span aria-hidden="true" class="sm:hidden">Tournament</span><span class="max-sm:sr-only">This tournament</span>'
+    );
+  });
+
+  it('hides counts below sm but keeps them in the name', () => {
+    const html = render(
+      <HeroTabs
+        aria-label="Audit history views"
+        value="matches"
+        countsFrom="sm"
+        items={[
+          {
+            value: 'matches',
+            label: 'Matches',
+            count: '1,000+',
+            href: '?tab=matches',
+          },
+        ]}
+      />
+    );
+
+    expect(html).toContain('max-sm:[&amp;_[data-slot=hero-tab-count]]:sr-only');
+    expect(html).toContain('data-slot="hero-tab-count"');
+    expect(html).toContain('1,000+');
+  });
+});
+
+describe('HeroTabsList', () => {
+  it('takes the same compact labels and count breakpoint', () => {
+    const html = render(
+      <HeroTabsRoot defaultValue="games">
+        <HeroTabsList aria-label="Match views" countsFrom="md">
+          <HeroTabsTrigger value="games" count="9" compactLabel="Games">
+            All games
+          </HeroTabsTrigger>
+        </HeroTabsList>
+      </HeroTabsRoot>
+    );
+
+    expect(html).toContain('max-md:[&amp;_[data-slot=hero-tab-count]]:sr-only');
+    expect(html).toContain(
+      '<span aria-hidden="true" class="sm:hidden">Games</span>'
+    );
+    expect(html).toContain('All games');
   });
 });
 
@@ -278,6 +392,31 @@ describe('StatTile', () => {
     );
 
     expect(html).toMatch(/<span class="-my-1 [^"]*"><span data-tier/);
+  });
+
+  it('takes a node as its label, such as an abbreviation', () => {
+    const html = render(
+      <StatTile
+        layout="inline"
+        label={<Abbreviation full="Circle size">CS</Abbreviation>}
+        value="4.0"
+        infoText="How big the circles are."
+        infoLabel="About circle size"
+      />
+    );
+
+    expect(html).toMatch(/<dt[^>]*>.*aria-label="Circle size".*<\/dt>/);
+    expect(html).toContain('aria-label="About circle size"');
+    // A node is not truncated, so a button inside keeps its focus ring.
+    expect(html).not.toContain('class="truncate"');
+  });
+
+  it('names the info button after a text label', () => {
+    const html = render(
+      <StatTile label="Win rate" value="62%" infoText="Matches won." />
+    );
+    expect(html).toContain('<span class="truncate">Win rate</span>');
+    expect(html).toContain('aria-label="About Win rate"');
   });
 
   it('puts the value on the label line in the inline layout', () => {

@@ -17,10 +17,12 @@ export function ViewButton({
     <Button
       variant="outline"
       size="sm"
-      data-slot="view-button"
       aria-haspopup="dialog"
       aria-label={subject ? `View ${subject}` : undefined}
       {...props}
+      // Last, so it reaches the DOM even as a `DialogTrigger asChild` child,
+      // whose own `data-slot="dialog-trigger"` would otherwise replace it.
+      data-slot="view-button"
     >
       View
     </Button>

@@ -6,9 +6,10 @@ Import each component from its own file under `@/components/kit/feedback/`; the 
 - [Choosing a state](#choosing-a-state): which component for which situation
 - [EmptyState](#emptystate): nothing to show, with Clear filters when filters caused it
 - [SectionError](#sectionerror): a failed request, at regular, compact and inline size
-- [Skeletons](#skeletons): `PanelSkeleton`, `SectionHeaderSkeleton`, `StatTileGridSkeleton`, `TableSkeleton`, `PhoneRowListSkeleton`, `RowListSkeleton`, `SkeletonText`
+- [Skeletons](#skeletons): `PanelSkeleton`, `SectionHeaderSkeleton`, `StatTileGridSkeleton`, `TableSkeleton`, `PhoneRowListSkeleton`, `ListToolbarSkeleton`, `RowListSkeleton`, `SkeletonText`
 - [StatusPage](#statuspage): 404, unauthorized, banned and error pages
 - [Callout](#callout): the one notice box, in info, warning and danger
+- [When two notices meet](#when-two-notices-meet): never a stack of callouts
 - [CalloutChip](#calloutchip): a short warning inside a panel
 - [Legacy inventory](#legacy-inventory): every old pattern and its replacement
 
@@ -26,6 +27,7 @@ Import each component from its own file under `@/components/kit/feedback/`; the 
 | The visitor should know something before acting            | `Callout`                                      |
 | A panel's data has a caveat ("Includes unverified")        | `CalloutChip`                                  |
 | A site-wide notice (the weekly maintenance window)         | `Callout variant="banner"`                     |
+| A second notice where one already shows                    | one notice: merge or move it (below)           |
 | The result of an action (saved, deleted, could not save)   | a toast (`toast` from `sonner`), not a callout |
 
 Sizes for empty and error states, by container:
@@ -201,10 +203,11 @@ export default function MyReportsLoading() {
 The parts:
 
 - `PanelSkeleton`: the Panel surface. Give it children, or none for a header strip and a body block (charts, or any panel that is hard to sketch); then set its height to the loaded panel's, such as `className="h-[23rem]"`. `label` makes it the screen's `role="status"` region.
-- `SectionHeaderSkeleton`: renders the real SectionHeader with the static `title` and `icon`, and bars for the meta (`meta`, on by default) and `actions` (a count of 32px button placeholders). Without a title it draws a bar in the title's place.
+- `SectionHeaderSkeleton`: renders the real SectionHeader with the static `title`, `icon` and `infoText` (its info button is drawn and works, so the title keeps its width), and bars for the meta (`meta`, on by default) and `actions` (a count of 32px button placeholders). Give `meta` a width class as wide as the loaded meta, such as `meta="w-40"` for "1,368 of 1,368 scores rated", so a loading strip wraps on a phone where the loaded one does. Without a title it draws a bar in the title's place.
 - `StatTileGridSkeleton`: the real StatTileGrid and StatTiles with their static `labels`, bars for the values, and `sub` for the line under them. Same `columns` as the loaded grid.
 - `TableSkeleton`: a real `DataTable` (fixed layout, hidden from assistive tech) with its tinted header strip and `rows` of bars. `columns` is a count, or the loaded table's columns, in DataTable's terms: `label` (the real header), `width` (a width class; columns without one share the rest), `align: 'end'` for numbers, `showFrom` for a column the loaded table hides below a breakpoint. `cellHeight` is the height of the tallest thing in a loaded cell and so sets the row height: `h-6` (default) for a 24px avatar or badge, as in the beatmap tables; `h-5` plain text; `h-8` a 32px avatar; `h-9` a two-line cell. `phoneRows` works as on DataTable. `className` goes on the table's wrapper.
-- `PhoneRowListSkeleton`: the real PhoneRowList and PhoneRows, for `phoneRows`. Match the loaded rows' parts: `rank`, `avatar` (24px, inside the name), `description` (on by default), `value` (on by default) and `valueDescription`.
+- `PhoneRowListSkeleton`: the real PhoneRowList and PhoneRows, for `phoneRows`. Match the loaded rows' parts, so each row keeps its height: `rank`; `avatar` (24px, inside the name) or `leading={32}` (a 32px avatar beside the name and its line); `description` (on by default; `"badge"` for a 20px status badge before the text, as the reports' phone rows have); `value` (on by default: the key number; `"button"` for a 32px button such as View, `"badge"` for a 20px badge); `valueDescription`; and the loaded rows' `align`.
+- `ListToolbarSkeleton`: the real ListToolbar strip with a block for each control, for a list's loading screen. Turn on the loaded toolbar's slots: `search`, `sort`, `filters` and `count` (booleans), `rulesets` (how many chips, 6 for every rated ruleset with All; each block is as wide as its loaded chip, so they wrap onto as many lines), `view` (how many toggles), and `scope` and `leading` (a width class for their block, such as `scope="w-64"`). The blocks land on the rows the loaded toolbar uses, at every width.
 - `RowListSkeleton`: the real RowList with bars for the title, `description` and `trailing` number, and a `leading` avatar, `square`, `cover` or `none`. For lists built from RowList, not for tables (their phone rows are PhoneRows, which are shorter).
 - `SkeletonText`: an inline bar that keeps the height of the line it stands in for. Use it inside a real component, such as a PageHeader description whose text is not static: `description={<SkeletonText className="w-72" />}`. Inside a flex container wrap it in a `<span>`, or the line shrinks to the bar's 16px.
 
@@ -224,7 +227,7 @@ Don't:
 
 The site-wide spinner in `app/loading.tsx` stays for routes without a page-shaped skeleton.
 
-Gallery anchors: `/admin/design#feedback-skeleton-panel`, `/admin/design#feedback-skeleton-table` (TableSkeleton and PhoneRowListSkeleton), `/admin/design#feedback-skeleton-rows`
+Gallery anchors: `/admin/design#feedback-skeleton-panel` (with SectionHeaderSkeleton's info button and meta width), `/admin/design#feedback-skeleton-table` (TableSkeleton and PhoneRowListSkeleton), `/admin/design#feedback-skeleton-toolbar`, `/admin/design#feedback-skeleton-rows`
 
 ## StatusPage
 
@@ -357,11 +360,22 @@ Do:
 Don't:
 
 - Don't build notices from palette classes (`orange-*`, `amber-*`, `yellow-*`, `blue-*`) or tint shadcn `Alert` with overrides. `@/components/ui/alert` stays as a primitive; new code uses Callout.
-- Don't stack several callouts; merge them, or move the less important one into the page. The site banner does this: during the weekly maintenance window a signed-out visitor gets one warning strip that ends with "Some features are not available while signed out.", never the info strip stacked over it (`SiteBannerContent` in `components/banner/SiteBanner.tsx`, which the root layout renders once).
+- Don't stack several callouts; merge them, or move the less important one into the page (see [When two notices meet](#when-two-notices-meet)). The site banner does this: during the weekly maintenance window a signed-out visitor gets one warning strip that ends with "Some features are not available while signed out.", never the info strip stacked over it (`SiteBannerContent` in `components/banner/SiteBanner.tsx`, which the root layout renders once).
 - Don't use a callout for an action's result; that is a toast.
 - Don't use a callout for "Not in ratings yet" on a detail page; that is `NotInRatings variant="notice"` from the status family.
 
 Gallery anchors: `/admin/design#feedback-callout`, `/admin/design#feedback-callout-action`, `/admin/design#feedback-callout-banner`
+
+## When two notices meet
+
+Owner decision: don't stack callouts; merge them, or move the less important one into the page. Each place shows at most one notice: the site banner under the site header, one Callout under the PageHeader or DetailHero, and one at the top of each panel. When a second notice would land in a place that already has one:
+
+1. **Site-wide and site-wide** (the maintenance window and the signed-out note): one banner. `SiteBannerContent` already merges them into the warning strip, so never render a second `variant="banner"`.
+2. **The maintenance window and a page notice**: the banner already says the window is on, so a page never repeats it. When the window blocks something on the page, say what is blocked and when it comes back, in the place of the thing it blocks: a Callout at the top of that panel in place of its form or rows, or the disabled control's own reason (an AdminMenu item's `description`, a ScopeSwitch's `disabledReason`). The page's own notice under its header stays as it is. The registrant filtering tool: "Host compliance" stays under the PageHeader, and "Filtering is temporarily unavailable" takes the form's place inside its panel, not a second callout under the first.
+3. **Two notices about the page itself**: merge them into one Callout with the stronger tone (danger over warning over info), the more important point first, both in a sentence or two. If one is about a single section, move it to the top of that panel or FormSection instead.
+4. **A notice about a single field**: it is the field's help (`FormFieldLabel` `info`, `FormDescription`) or its error (`FormMessage`), never a Callout.
+
+Gallery anchors: `/admin/design#feedback-callout-merge`, `/admin/design#feedback-callout-banner`
 
 ## CalloutChip
 

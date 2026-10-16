@@ -120,6 +120,17 @@ Props:
 - `size`: `sm` (32px, the default), `default` (36px), `lg` (40px), matching the button heights.
 - `variant`: `ghost` (default) muted icon that fills on hover; `outline` bordered, beside inputs and outline buttons; `overlay` the round dark pill on cover art.
 - `destructive`: red icon and red fill on hover, for a single destructive action outside a menu, such as deleting one admin note. Ignored on `overlay`.
+- `expanded`: makes it a disclosure toggle for content that expands in place, such as a profile tournament card's matches or an audit row's details. It sets `aria-expanded` and drops the open-state fill: that fill stays on a ghost or outline button while the menu, popover or dialog it opens is open, and an expanded row is not an open menu (Radix Collapsible sets the same `data-state="open"`). Hover and focus still fill it. Keep the `label` the same in both states ("Details for Game 3"); `aria-expanded` says whether it is open. For a chevron that turns, add `className="[&>svg]:transition-transform aria-expanded:[&>svg]:rotate-180"`.
+
+```tsx
+<IconButton
+  label={`Details for ${game.name}`}
+  icon={ChevronDown}
+  expanded={open}
+  onClick={() => setOpen((value) => !value)}
+  className="[&>svg]:transition-transform aria-expanded:[&>svg]:rotate-180"
+/>
+```
 
 Do:
 
@@ -241,8 +252,9 @@ import { RowActionsMenu } from '@/components/kit/controls/RowActionsMenu';
 Props:
 
 - `actions`: as AdminMenu.
-- `itemName`: what the row is. It names the button for screen readers ("Actions for Hidden Chamber [Insane]") and heads the menu. Always set it in a list, or every button is just "Actions".
+- `itemName`: what the row is. It names the button for screen readers ("Actions for Hidden Chamber [Insane]") and heads the menu. Always set it in a list, or every button is just "Actions", and keep it unique per row: two games on the same beatmap need what tells them apart ("Game 3: Hidden Chamber [Insane]"), or a screen reader's list of buttons shows two identical names.
 - `label`: the tooltip, "Actions" by default.
+- `notification`: as AdminMenu's. It puts the one notification dot on the "…" button's corner and adds its text to the button's accessible name ("Actions for Game 3, Has admin notes"). Pair it with a count `Badge` as the matching item's `trailing`, so the menu says what is new.
 - Public items (report, audit history) are for everyone; gate only the admin items with `isAdmin &&`. With every admin item hidden, the menu still holds the public ones.
 - `onArt`: the round dark pill, for a card header on cover art (`components/games/GameCardHeader.tsx`).
 - `size`: `sm` (default) or `default`.
@@ -301,7 +313,7 @@ MenuAction fields:
 - `onSelect`: runs after the menu has closed and focus has returned to the trigger.
 - `href`: makes the item a link (`next/link`, not prefetched). `external` opens it in a new tab with an external-link glyph and "(opens in a new tab)" for screen readers.
 - `destructive`: red, and moved into the last group.
-- `disabled` with `description`: a muted second line that says why, such as "Only beatmaps the osu! API no longer serves can be edited by hand". The label and icon dim; the description keeps full contrast so it stays readable.
+- `disabled` with `description`: a muted second line that says why, such as "Only beatmaps the osu! API no longer serves can be edited by hand". The label and icon dim; the description keeps full contrast so it stays readable. A description wraps at 240px (`max-w-60`), so a long reason never widens the menu past a 390px screen.
 - `trailing`: a count `Badge` or a `NotificationDot` on the right.
 - `group`: items with the same group sit together between separators, in order of first appearance.
 - `hidden`: leaves the item out. `id`: the React key when two items share a label. `testId`.
@@ -487,7 +499,7 @@ Gallery anchor: `/admin/design#controls-form-layout`
 
 ## FormFieldLabel
 
-A field label inside a shadcn `FormItem`, with the one info button for help and an optional muted hint on the right, such as a unit ("mm:ss" in the beatmap edit dialog) or "One per line".
+A field label with the one info button for help and an optional muted hint on the right, such as a unit ("mm:ss" in the beatmap edit dialog) or "One per line". Inside a shadcn `FormItem` it is that field's `FormLabel`; outside react-hook-form (a filter, a settings toggle, a field held in plain state) pass `htmlFor` with the control's id.
 
 ```tsx
 import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
@@ -508,6 +520,19 @@ Props:
 - `children`: the label text, sentence case. It turns red with the field's error, from `FormLabel`.
 - `info`: the explanation behind an InfoButton (its `md` size, the one beside 14px text), which opens on tap, hover and focus. `infoLabel` names it; it defaults to "About {label}".
 - `hint`: muted text on the right.
+- `htmlFor`: the id of the control it labels, for a field outside a `FormItem`. It then renders the plain `Label` (`FormLabel` only works inside a form field). `invalid` turns it red, as a field error does inside a form.
+
+```tsx
+const id = useId();
+
+<FormFieldLabel htmlFor={id} info="Number of players per team in each match">
+  Lobby size
+</FormFieldLabel>
+<Select value={lobbySize} onValueChange={setLobbySize}>
+  <SelectTrigger id={id}>…</SelectTrigger>
+  …
+</Select>
+```
 
 The label row is 20px tall with or without the info button or hint, so fields side by side in a FormGrid keep their inputs level.
 

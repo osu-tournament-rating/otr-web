@@ -18,6 +18,7 @@ export interface ChartTooltipRow {
 /**
  * The readout inside every chart tooltip: an optional title, one row per
  * series (marker, muted name, value on the right) and an optional footer.
+ * Values and the footer take tabular figures, since they change in place.
  * Use it bare inside a `TapTooltip`; Recharts charts use `ChartTooltipContent`.
  */
 export function ChartTooltipBody({
@@ -50,7 +51,8 @@ export function ChartTooltipBody({
         </div>
       ) : null}
       {footer ? (
-        <div className="border-t border-foreground/15 pt-1.5 text-foreground/70">
+        // A total or share that changes as the pointer moves: tabular, like the values.
+        <div className="border-t border-foreground/15 pt-1.5 text-foreground/70 tabular-nums">
           {footer}
         </div>
       ) : null}

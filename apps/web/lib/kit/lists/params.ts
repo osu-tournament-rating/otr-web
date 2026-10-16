@@ -313,6 +313,60 @@ export function arrayParam<T extends EnumValue>(
   };
 }
 
+/** The flags set in `mask`, in the order of `flags`. Zero and unknown bits are dropped. */
+export function maskToFlags<T extends number>(
+  mask: number,
+  flags: readonly T[]
+): T[] {
+  return flags.filter((flag) => flag !== 0 && (mask & flag) === flag);
+}
+
+/** The bitmask of `values`, ORed together. */
+export function flagsToMask(values: readonly number[]): number {
+  return values.reduce((mask, flag) => mask | flag, 0);
+}
+
+/**
+ * Any number of flags from a bitflag enum, held in state as a list (for
+ * `ChoiceFilter`) and written to the address as one bitmask
+ * (`mods=24` for Hidden and Hard Rock), the way the API takes it. Empty
+ * means no filter. Each of `flags` must be a single bit or a fixed
+ * combination; zero, unknown bits and invalid numbers are dropped, and the
+ * order always follows `flags`.
+ */
+export function flagsParam<T extends number>(
+  flags: readonly T[],
+  config: BaseOptions = {}
+): ListParamDefinition<T[]> {
+  const known = flags.filter((flag) => Number.isInteger(flag) && flag > 0);
+  const canonical = (values: readonly T[]) =>
+    maskToFlags(flagsToMask(values), known);
+
+  return {
+    resolve: (name) => {
+      const key = config.key ?? name;
+      return createParam<T[]>({
+        name,
+        keys: [key],
+        role: config.role ?? 'filter',
+        defaultValue: [],
+        parse: (params) => {
+          const mask = parseDecimal(firstValue(params, key));
+          return mask !== undefined && Number.isSafeInteger(mask) && mask > 0
+            ? maskToFlags(mask, known)
+            : [];
+        },
+        write: (value, params) => {
+          const mask = flagsToMask(canonical(value));
+          if (mask > 0) params.set(key, String(mask));
+        },
+        equals: (a, b) =>
+          flagsToMask(canonical(a)) === flagsToMask(canonical(b)),
+      });
+    },
+  };
+}
+
 /** An optional number such as a report ID. Values outside the bounds are ignored. */
 export function numberParam(
   options: BaseOptions & { min?: number; max?: number; integer?: boolean } = {}

@@ -15,6 +15,7 @@ export function InfoButton({
   side = 'bottom',
   align = 'center',
   size = 'md',
+  onArt = false,
   className,
 }: {
   /** Accessible name, such as "About tier breakdown". */
@@ -25,6 +26,11 @@ export function InfoButton({
   align?: 'start' | 'center' | 'end';
   /** `sm` sits beside 12px labels, `md` beside 14px and 16px text. */
   size?: 'sm' | 'md';
+  /**
+   * On cover art (a DetailHero with `art`): white at 80%, full white on
+   * hover, with a white focus ring, like the other controls there.
+   */
+  onArt?: boolean;
   className?: string;
 }) {
   return (
@@ -33,7 +39,10 @@ export function InfoButton({
       align={align}
       triggerAriaLabel={label}
       triggerClassName={cn(
-        'relative flex w-auto shrink-0 items-center rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground',
+        'relative flex w-auto shrink-0 items-center rounded-full p-0.5 transition-colors',
+        onArt
+          ? 'text-white/80 hover:text-white focus-visible:ring-white/40'
+          : 'text-muted-foreground hover:text-foreground',
         // Widens the hit area to at least 24px without moving the glyph.
         'after:absolute after:-inset-1 after:rounded-full',
         className

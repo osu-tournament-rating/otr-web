@@ -17,9 +17,10 @@ Tokens live in `apps/web/app/globals.css`; every value is mirrored, with its lig
 - [Mod colours](#mod-colours): `MOD_PALETTE`, `getModPaletteColor`
 - [Star rating colours](#star-rating-colours): `getStarRatingMarkColor`
 - [Contrast helpers](#contrast-helpers): `contrastRatio`, `colorDistance`
-- [Tick rule](#tick-rule): `getNiceTicks`, `getTimeTicks`
+- [Tick rule](#tick-rule): `getNiceTicks`, `getCategoryTicks`, `getTimeTicks`
 - [Axis formatters](#axis-formatters): `formatCountTick`, `formatYearTick` and friends
-- [Recharts axis props](#recharts-axis-props): `chartAxisProps`, `chartValueAxisProps`, `niceAxisProps`
+- [Recharts axis props](#recharts-axis-props): `chartAxisProps`, `chartValueAxisProps`, `niceAxisProps`, and the row bar parts
+- [CountBarChart](#countbarchart): a count per category, in columns or rows
 - [ChartTooltipContent](#charttooltipcontent): the one chart tooltip
 - [ChartLegend and SeriesMarker](#chartlegend-and-seriesmarker): the key for two or more series
 - [Chart card](#chart-card): Panel, SectionHeader and a chart
@@ -301,6 +302,7 @@ import { TIER_PALETTE, TIER_TEXT_CLASS, getTierColor } from '@/lib/kit/color/tie
 - `TIER_TEXT_CLASS[tier]`: the `text-tier-…` class, spelled out so Tailwind finds it.
 - `getTierColor(tier)` / `TIER_PALETTE[tier].css`: the colour for a fill or SVG. This is not the `getTierColor` in `lib/utils/tierData.ts`, which returns the legacy text class and glow; alias one of them when a file needs both.
 - Tier glows (`tierColors[…].gradient` in `lib/utils/tierData.ts`) are decoration and stay.
+- Diamond and Master are hard to tell apart as neighbouring marks, such as touching bars in the rating distribution: OKLab ΔE 5.8 in light and 5.4 in dark (3.6 to 5.4 for protan and deutan readers), against the 15 (and 8) the categorical palette keeps between neighbours. Both are violets of the same lightness 14° apart. Until the owner settles new values, a chart that colours by tier also names the tier in its legend and tooltip, as the rating distribution does.
 
 Don't:
 
@@ -406,6 +408,7 @@ One tick rule site-wide: steps of 1, 2, 2.5 or 5 times a power of ten (the beatm
 import {
   DEFAULT_MAX_TICKS,
   NARROW_MAX_TICKS,
+  getCategoryTicks,
   getNiceTicks,
   getTimeTicks,
 } from '@/lib/kit/charts/ticks';
@@ -414,13 +417,16 @@ const y = getNiceTicks(0, maxCount, { integer: true });
 // { min: 0, max: 1500, step: 500, ticks: [0, 500, 1000, 1500] }
 const maxTicks = useIsNarrowChart() ? NARROW_MAX_TICKS : DEFAULT_MAX_TICKS;
 const x = getTimeTicks(firstTimestamp, lastTimestamp, maxTicks);
+const years = getCategoryTicks([2015, 2016, /* … */ 2026], maxTicks);
+// [2016, 2018, 2020, 2022, 2024, 2026]
 ```
 
 - `getNiceTicks(min, max, options)`: covers the data with round ticks. Non-negative data never gets a negative tick; bar charts pass `0` as `min`.
   - `integer`: whole steps only, for counts.
   - `within`: keep the domain on the data and put ticks only inside it, for category axes, histogram buckets and `dataMin`–`dataMax` axes.
   - `maxTicks`: 6 by default; on a horizontal axis pass `NARROW_MAX_TICKS` below `sm` (`useIsNarrowChart` from `@/lib/hooks/useMediaQuery`).
-  - A flat series is padded, so the axis never collapses.
+  - A flat series (`min === max`) is padded, so the axis never collapses. With `within`, its one tick is the value itself (one year of data ticks `2024`, never a padded `2023` or `2025`); the domain keeps its padding so a numeric axis still centres the point.
+- `getCategoryTicks(values, maxTicks)`: ticks for a category axis of evenly spaced whole numbers in ascending order (years, rating bucket starts): every value when they all fit, otherwise the rule's round values that are in the data, so every tick names a bar.
 - `getTimeTicks(minTime, maxTime, maxTicks)`: ticks on UTC calendar boundaries (days, then 1, 2, 3 or 6 months counted from January, then years), with the `unit` to format them.
 - `getNiceAxis` and friends in `lib/beatmaps/chart-axis.ts` follow the same rule; the beatmap box plots and scales keep using them.
 
@@ -498,6 +504,7 @@ import {
 - `niceAxisProps(ticks)`: `type`, `domain`, `ticks`, `interval: 0` and `allowDecimals` from `getNiceTicks`.
 - `chartGridProps`: dashed, horizontal only. `ChartContainer` paints it in the border colour at half strength, so always render inside `ChartContainer` (`@/components/ui/chart`). The container also gives tick labels tabular figures (the body no longer does) and paints the bar cursor. `globals.css` gives Recharts' hidden measuring span (`#recharts_measurement_span`) tabular figures too, so the labels Recharts decides to show are spaced for the width it draws; keep the two together.
 - `CHART_BAR_RADIUS` (4px data ends, square at the baseline), `CHART_LINE_WIDTH` (2px), `CHART_MARGIN`, `CHART_CURSOR.bar` and `.line`.
+- Row (horizontal) bars, `layout="vertical"` in Recharts, with the categories on the left: `chartRowGridProps` (dashed vertical gridlines, one per count tick), `CHART_ROW_BAR_RADIUS` (`[0, 4, 4, 0]`, the data end on the right) and `CHART_ROW_MARGIN` (20px on the right, so the last count label, which centres on the plot's edge, is not cut to `1,50`). `CountBarChart` uses all three.
 - Stacked bars: a 1px `stroke="var(--card)"` separates segments; round only the top series.
 - `CHART_CURSOR.bar` is a band behind the hovered bar, `accent` at half strength (`--muted` matches the dark panel, so a muted band vanished there). `ChartContainer` paints the band the same way, so it also covers charts that pass `cursor` without it; pass it anyway so the intent is explicit.
 - Turn off animation (`isAnimationActive={false}`) as the beatmap charts do.
@@ -506,6 +513,45 @@ Don't:
 
 - Don't render Recharts outside `ChartContainer` (`components/stats/TournamentsByYearChart.tsx` uses a bare `ResponsiveContainer`, so its labels fall back to 16px and `#666`).
 - Don't set tick font sizes or colours per chart (`fontSize: 14` and `fill: 'var(--foreground)'` in `components/stats/TournamentVerificationChart.tsx`).
+
+## CountBarChart
+
+A count per category on the shared chart parts: tournaments per year, per ruleset, per lobby size or per verification group. `columns` stand on a category axis along the bottom; `rows` put the categories on the left, for long names. One series in slot 1 of the categorical palette, unless the bars bring their own colour.
+
+```tsx
+import {
+  CountBarChart,
+  type CountBarDatum,
+} from '@/components/kit/charts/CountBarChart';
+
+<Panel>
+  <SectionHeader icon={ChartColumn} title="Tournaments by lobby size" />
+  <PanelBody>
+    <CountBarChart data={bars} valueName="Tournaments" />
+  </PanelBody>
+</Panel>;
+
+<CountBarChart
+  data={verificationBars} // each with fill: getStatusHueColor(group.hue)
+  layout="rows"
+  valueName="Tournaments"
+  footer={(bar) => `${formatPercent(bar.count / total)} of all tournaments`}
+/>;
+```
+
+- `data`: `CountBarDatum[]`, each `{ key, label, count, fill? }`. `label` is the formatted category (`formatYear`, `formatLobbySize`, `getRulesetLabel`).
+- `layout`: `columns` (default) or `rows`. Rows round their right end, draw vertical gridlines, leave room for the last count label and thin the count axis to four ticks on phones; columns keep six on their value axis.
+- `valueName`: what is counted, the tooltip row's name.
+- `categoryTicks`: the labels to tick when not all fit, such as `getCategoryTicks(years, maxTicks).map(formatYearTick)`.
+- `footer(bar)`: a tooltip footer for the hovered bar, such as its share.
+- `className`: the chart box, 240px tall (`h-60`) by default.
+- The pure rules behind it, `getCountAxisTicks` and `hasOwnFills`, are in `@/lib/kit/charts/count-bars`.
+
+Don't:
+
+- Don't keep a copy for one page. `components/stats/CountBarChart.tsx` is the stats page's copy this replaces; its `CountBar` type is the same shape as `CountBarDatum`.
+
+Gallery anchor: `/admin/design#color-chart-count-bars`
 
 ## ChartTooltipContent
 
@@ -533,7 +579,7 @@ import { ChartTooltip } from '@/components/ui/chart';
 - `labelFormatter`: the title from the hovered x value. `valueFormatter`: each value, usually an axis formatter; `formatNumberTick` by default. `nameFormatter`: series key to display name.
 - The marker takes the series' `fill` (or a line's `stroke`). Bars coloured per `Cell` have no series fill, so give each data row a `fill` field, as the beatmap mod charts do, and the marker uses it.
 - `marker`: `square` (default), `line`, `dashed` or `dot`, matching the mark.
-- `reverse`: list a vertical stack top to bottom. `footer`: a total or a note.
+- `reverse`: list a vertical stack top to bottom. `footer`: a total or a share. Values and the footer take tabular figures, as they change while the pointer moves; don't wrap a footer in your own `tabular-nums` span.
 - `ChartTooltipBody`: the same readout without the card, for a `TapTooltip` around a chart drawn without Recharts (box plots). `ChartTooltipCard`: the card around it, for static use.
 
 Don't:
@@ -605,4 +651,4 @@ Don't:
 
 - Don't use `Card`, `CardHeader` and `CardDescription` with a 24px blue icon for charts (every chart in `components/stats/` and the player charts today).
 
-Gallery anchors: `/admin/design#color-chart-line`, `/admin/design#color-chart-bar`, `/admin/design#color-chart-stacked`, `/admin/design#color-chart-distribution`
+Gallery anchors: `/admin/design#color-chart-line`, `/admin/design#color-chart-bar`, `/admin/design#color-chart-stacked`, `/admin/design#color-chart-distribution`, `/admin/design#color-chart-count-bars`

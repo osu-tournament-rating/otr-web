@@ -100,6 +100,7 @@ Props that matter:
 
 - `status`: a `VerificationStatus`.
 - `size`: `sm` (14px) inside a line of text, `md` (16px, default) in rows and cells, `lg` (20px) next to a page or section heading.
+- `variant`: `default`, or `overlay` on cover art only. The overlay sets the glyph on a dark disc (80% black with a faint white ring, a 24px disc around the 16px glyph) and gives it the dark theme's lighter colours whatever the page's theme, so every state keeps 3:1 even over a white cover; a test checks it. Warnings make the disc a pill.
 - `tooltip`: `tap` opens on tap, hover and focus (it renders a button); `hover` adds no button, for an icon inside a link. Leave it out only when the name is written next to the icon.
 - `warnings`, `rejectionReasons`, `reviewer`, `context`: what the tooltip lists. Any warning shows the marker.
 - `decorative`: hides the icon from assistive tech when the name is already beside it.
@@ -112,11 +113,13 @@ Do:
 - Use `context` when several icons sit together, such as the game pips of a match row, so each one is named ("Game 3: Rejected").
 - Keep tap icons at least 8px apart (`gap-2`): the icon is a 16px target, and the gap gives each one the 24px tap area WCAG 2.5.8 asks for.
 - Inside a whole-row link, use `tooltip="hover"` and make sure the row also says the status in words, or use `NotInRatings`.
+- On cover art (the game card header), use `variant="overlay"`, as `VerificationStatusBadge` uses its `overlay` variant there.
 
 Don't:
 
 - Don't put the icon in a tinted chip or a coloured square. The old `VerificationBadge` (`components/badges/VerificationBadge.tsx`) does that with `size="pip"|"xsmall"|"small"` and `minimal`; all of those become this icon.
 - Don't colour a status with `text-orange-500` for warnings (the old badge does). Pass `warnings` instead.
+- Don't set a bare glyph on cover art and rely on the scrim: over a bright cover the 16px glyph drops under 3:1. Legacy: `components/games/GameCardHeader.tsx`.
 - Don't pick status glyphs from lucide by hand (`CircleCheck` or its alias `CheckCircle2`, `CircleX` or `XCircle`, `AlertTriangle`, `Square`); the old badge used a square for Pre-verified and a triangle for Pre-rejected. Render this component, or `VerificationStatusGlyph` in a legend.
 
 Gallery anchor: `/admin/design#status-verification-icon`

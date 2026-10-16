@@ -2,6 +2,7 @@
 
 import { Team, VerificationStatus } from '@otr/core/osu';
 import {
+  ChartBarBig,
   ChartColumn,
   ChartColumnStacked,
   ChartLine,
@@ -26,6 +27,10 @@ import {
 
 import { GallerySection, Specimen } from '../gallery';
 import { ChartLegend } from '@/components/kit/charts/ChartLegend';
+import {
+  CountBarChart,
+  type CountBarDatum,
+} from '@/components/kit/charts/CountBarChart';
 import {
   ChartTooltipBody,
   ChartTooltipCard,
@@ -86,7 +91,7 @@ import {
   getTeamTintClass,
 } from '@/lib/kit/color/teams';
 import type { ThemeColor } from '@/lib/kit/color/theme-color';
-import { TIER_TEXT_CLASS } from '@/lib/kit/color/tiers';
+import { TIER_TEXT_CLASS, getTierColor } from '@/lib/kit/color/tiers';
 import {
   ACCENT_SURFACE_CLASSES,
   CALLOUT_COLORS,
@@ -100,7 +105,8 @@ import {
   getVerificationStatusCopy,
 } from '@/lib/kit/status/verification';
 import { formatDate } from '@/lib/kit/format/date';
-import { formatCount } from '@/lib/kit/format/number';
+import { formatLobbySize } from '@/lib/kit/format/fields';
+import { formatCount, formatPercent } from '@/lib/kit/format/number';
 import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
 import { cn } from '@/lib/utils';
 import { tierNames } from '@/lib/utils/tierData';
@@ -808,6 +814,110 @@ function DistributionDemo() {
   );
 }
 
+const LOBBY_SIZE_COUNTS = [612, 1_840, 455, 1_288, 61, 132, 9, 27];
+
+const TOURNAMENTS_BY_LOBBY_SIZE: CountBarDatum[] = LOBBY_SIZE_COUNTS.map(
+  (count, index) => ({
+    key: String(index + 1),
+    label: formatLobbySize(index + 1),
+    count,
+  })
+);
+
+const TOURNAMENTS_BY_RULESET: CountBarDatum[] = RULESETS.map(
+  (ruleset, index) => ({
+    key: ruleset.key,
+    label: ruleset.label,
+    count: [5_812, 921, 604, 1_377, 233][index],
+  })
+);
+
+/** The ratings groups, each bar in its own verification colour. */
+const TOURNAMENTS_BY_STATUS: CountBarDatum[] = RATINGS_GROUPS.map((group) => ({
+  key: group.key,
+  label: group.label,
+  count: VERIFICATION_COUNTS[group.key],
+  fill: getStatusHueColor(group.hue),
+}));
+
+const STATUS_TOTAL = TOURNAMENTS_BY_STATUS.reduce(
+  (sum, bar) => sum + bar.count,
+  0
+);
+
+function CountBarDemo() {
+  return (
+    <div className="@container">
+      <div className="grid gap-4 @2xl:grid-cols-2">
+        <Panel>
+          <SectionHeader
+            icon={ChartColumn}
+            title="Tournaments by lobby size"
+            level={4}
+          />
+          <PanelBody>
+            <CountBarChart
+              data={TOURNAMENTS_BY_LOBBY_SIZE}
+              valueName="Tournaments"
+            />
+          </PanelBody>
+        </Panel>
+        <Panel>
+          <SectionHeader
+            icon={ChartBarBig}
+            title="Tournaments by ruleset"
+            level={4}
+          />
+          <PanelBody>
+            <CountBarChart
+              data={TOURNAMENTS_BY_RULESET}
+              layout="rows"
+              valueName="Tournaments"
+            />
+          </PanelBody>
+        </Panel>
+        <Panel className="@2xl:col-span-2">
+          <SectionHeader
+            icon={ChartBarBig}
+            title="Tournaments by status"
+            level={4}
+            meta={`${formatCount(STATUS_TOTAL)} tournaments`}
+          />
+          <PanelBody>
+            <CountBarChart
+              data={TOURNAMENTS_BY_STATUS}
+              layout="rows"
+              valueName="Tournaments"
+              className="h-44"
+              footer={(bar) =>
+                `${formatPercent(bar.count / STATUS_TOTAL)} of all tournaments`
+              }
+            />
+          </PanelBody>
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Tier marks side by side, in tier order as named above, the way the rating
+ * distribution draws neighbouring buckets.
+ */
+function TierMarks() {
+  return (
+    <div className="flex h-8 gap-px overflow-hidden rounded-md" aria-hidden>
+      {tierNames.map((tier) => (
+        <span
+          key={tier}
+          className="flex-1"
+          style={{ backgroundColor: getTierColor(tier) }}
+        />
+      ))}
+    </div>
+  );
+}
+
 const TICK_EXAMPLES: {
   data: string;
   min: number;
@@ -953,7 +1063,7 @@ export default function ColorSection() {
         id="color-tiers"
         name="Tier colours"
         importPath={`${COLOR_LIB}/tiers`}
-        description="Tier names as text, stepped per theme to clear 4.5:1. Use the text-tier-* classes."
+        description="Tier names as text, stepped per theme to clear 4.5:1, and the same colours as chart marks. Use the text-tier-* classes for text and getTierColor for fills."
       >
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
@@ -963,6 +1073,7 @@ export default function ColorSection() {
               </span>
             ))}
           </div>
+          <TierMarks />
           <TokenList groupId="tiers" />
         </div>
       </Specimen>
@@ -1069,6 +1180,16 @@ export default function ColorSection() {
         description="A histogram with touching bars and ticks from the shared rule on both axes."
       >
         <DistributionDemo />
+      </Specimen>
+
+      <Specimen
+        id="color-chart-count-bars"
+        name="CountBarChart"
+        importPath={`${CHARTS}/CountBarChart`}
+        description="A count per category: columns on a category axis, or rows with the categories on the left for long names. Rows round their right end, draw vertical gridlines and leave room for the last count label. Bars can bring their own colour, as the verification groups do."
+        stacked
+      >
+        <CountBarDemo />
       </Specimen>
 
       <Specimen

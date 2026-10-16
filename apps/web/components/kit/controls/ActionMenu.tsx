@@ -35,7 +35,10 @@ export type MenuAction = {
   /** Red, and moved into the last group. For actions that delete or overwrite data. */
   destructive?: boolean;
   disabled?: boolean;
-  /** A muted second line, such as why the item is disabled. */
+  /**
+   * A muted second line, such as why the item is disabled. It wraps at
+   * 240px, so the menu stays inside a 390px screen.
+   */
   description?: React.ReactNode;
   /** Right-aligned extra, such as a count Badge or a NotificationDot. */
   trailing?: React.ReactNode;
@@ -178,7 +181,14 @@ function ActionMenuItem({
       <span className="flex min-w-0 flex-1 flex-col">
         <span className={dim || undefined}>{label}</span>
         {description ? (
-          <span className="text-xs text-muted-foreground">{description}</span>
+          // Capped so a long reason wraps instead of widening the menu
+          // past a phone's screen.
+          <span
+            data-slot="action-menu-description"
+            className="max-w-60 text-xs text-muted-foreground"
+          >
+            {description}
+          </span>
         ) : null}
       </span>
       {external ? (

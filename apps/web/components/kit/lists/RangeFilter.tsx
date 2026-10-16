@@ -18,9 +18,15 @@ import {
 } from '@/lib/filters/scale';
 import { formatFilterNumber } from '@/lib/kit/lists/filters';
 import { normalizeRange, type NumberRange } from '@/lib/kit/lists/params';
+import {
+  isWholeNumberScale,
+  parseRangeBox,
+  type RangeBound,
+  resolveTypedBound,
+} from '@/lib/kit/lists/range';
 import { cn } from '@/lib/utils';
 
-type Bound = 'min' | 'max';
+type Bound = RangeBound;
 
 /** A bound being typed or dragged: `text` is shown, `value` is tracked. */
 interface DraftBound {
@@ -39,26 +45,22 @@ function dropBound(draft: Draft, bound: Bound): Draft {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
-/** Accepts `1,000` and `1000`; anything else is not a number. */
-function parseBox(text: string): number | undefined {
-  const cleaned = text.replace(/,/g, '').trim();
-  if (!/^-?\d*\.?\d+$/.test(cleaned)) return undefined;
-  const value = Number(cleaned);
-  return Number.isFinite(value) ? value : undefined;
-}
+const parseBox = parseRangeBox;
 
 /**
  * A numeric range: the label with two number boxes beside it, and a
  * two-thumb slider underneath. Boxes commit on Enter or blur, the slider on
- * release, so each change navigates once. A bound at the end of the track
- * means "no limit". The boxes always sit beside the label, and long labels
- * wrap instead of truncating.
+ * release, so each change navigates once. A typed number stays exactly as
+ * typed (inside the domain); only the slider snaps to its stops. A bound at
+ * the end of the track means "no limit". The boxes always sit beside the
+ * label, and long labels wrap instead of truncating.
  */
 export function RangeFilter({
   min,
   max,
   step,
   scale: scaleProp,
+  integer: integerProp,
   value,
   onValueChange,
   format = formatFilterNumber,
@@ -73,6 +75,12 @@ export function RangeFilter({
   step?: number;
   /** A non-linear track, such as `tieredScale` or the rank scale, from `@/lib/filters`. */
   scale?: NumericScale;
+  /**
+   * Whole numbers only, as the page's `rangeParam({ integer: true })`: a
+   * typed fraction rounds to the nearest whole number. Defaults to whether
+   * the track's stops are all whole numbers.
+   */
+  integer?: boolean;
   value: NumberRange;
   onValueChange: (value: NumberRange) => void;
   /** How screen readers hear a value, such as a duration. The boxes always show the plain number. */
@@ -87,6 +95,7 @@ export function RangeFilter({
     () => scaleProp ?? linearScale({ min, max, step }),
     [scaleProp, min, max, step]
   );
+  const integer = integerProp ?? isWholeNumberScale(scale);
 
   // A navigation landed, so any edit in flight is stale.
   useEffect(() => {
@@ -129,7 +138,17 @@ export function RangeFilter({
       setDraft((current) => dropBound(current, bound));
       return;
     }
-    commit(bound, scale.snap(parsed));
+    // Exactly what was typed, inside the domain: no snapping to stops.
+    commit(
+      bound,
+      resolveTypedBound(parsed, {
+        bound,
+        min,
+        max,
+        other: bound === 'min' ? maxValue : minValue,
+        integer,
+      })
+    );
   };
 
   // An open bound pins its thumb to that end of the track.

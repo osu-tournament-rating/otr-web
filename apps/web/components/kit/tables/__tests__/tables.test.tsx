@@ -21,6 +21,7 @@ import { PaginationFooter } from '@/components/kit/tables/PaginationFooter';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { SortableHeader } from '@/components/kit/tables/SortableHeader';
 import { ViewButton } from '@/components/kit/tables/ViewButton';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { formatCount } from '@/lib/kit/format/number';
 import { ROW_HOVER_TINT, ROW_TITLE_HOVER } from '@/lib/kit/tables/row';
@@ -66,6 +67,34 @@ describe('DataTable', () => {
     const html = render(<DataTable phoneRows={null} />);
     expect(html).not.toContain('hidden md:block');
     expect(html).not.toContain('data-table-phone');
+  });
+
+  it('puts the phone sort in a strip above the phone rows', () => {
+    const html = render(
+      <DataTable
+        phoneRows={<PhoneRowList aria-label="Rows" />}
+        phoneSort={<span data-sort-control />}
+      />
+    );
+
+    expect(html).toContain(
+      '<div data-slot="data-table-phone" class="md:hidden"><div data-slot="data-table-phone-sort"'
+    );
+    expect(html).toContain('Sort by');
+    expect(html).toContain('<span data-sort-control="true"></span>');
+    // The strip comes before the rows.
+    expect(html.indexOf('data-sort-control')).toBeLessThan(
+      html.indexOf('data-slot="phone-row-list"')
+    );
+  });
+
+  it('has no phone sort strip without phone rows or a sort', () => {
+    expect(
+      render(<DataTable phoneSort={<span data-sort-control />} />)
+    ).not.toContain('data-table-phone-sort');
+    expect(
+      render(<DataTable phoneRows={<PhoneRowList aria-label="Rows" />} />)
+    ).not.toContain('data-table-phone-sort');
   });
 
   it('sticks the header under the site header or in its scroll box', () => {
@@ -287,6 +316,42 @@ describe('EntityLink', () => {
     expect(html).toContain('<span class="min-w-0 truncate">mrekk</span>');
     expect(html).toContain('hover:text-link');
   });
+
+  it('wraps a long name instead of truncating it when asked', () => {
+    const html = render(
+      <EntityLink href="/tournaments/1" wrap>
+        osu! World Cup 2025
+      </EntityLink>
+    );
+
+    // whitespace-normal: it wraps even inside a parent that truncates.
+    expect(html).toContain(
+      '<span class="min-w-0 break-words whitespace-normal">osu! World Cup 2025</span>'
+    );
+    expect(html).not.toContain('truncate');
+  });
+
+  it('sits in a sentence as a plain-weight underlined link', () => {
+    const html = render(
+      <p>
+        apricot verified{' '}
+        <EntityLink href="/tournaments/1" variant="inline">
+          Corsace Open 2025
+        </EntityLink>
+      </p>
+    );
+
+    expect(html).toContain('data-variant="inline"');
+    expect(html).toContain('font-normal');
+    expect(html).toContain('underline');
+    expect(html).toContain('hover:text-link');
+    expect(html).toContain('hover:decoration-link');
+    // Inline: no flex box, no truncation, and the sentence's own colour.
+    expect(html).not.toContain('inline-flex');
+    expect(html).not.toContain('truncate');
+    expect(html).not.toContain('text-foreground');
+    expect(html).toContain('>Corsace Open 2025</a>');
+  });
 });
 
 describe('ViewButton', () => {
@@ -299,6 +364,21 @@ describe('ViewButton', () => {
     expect(html).toContain('type="button"');
     expect(html).toContain('data-variant="outline"');
     expect(html).toContain('h-8');
+    expect(html).toContain('data-slot="view-button"');
+  });
+
+  it('keeps its data-slot as a dialog trigger', () => {
+    const html = render(
+      <Dialog>
+        <DialogTrigger asChild>
+          <ViewButton subject="report 1204" />
+        </DialogTrigger>
+      </Dialog>
+    );
+
+    expect(html).toContain('data-slot="view-button"');
+    expect(html).not.toContain('data-slot="dialog-trigger"');
+    expect(html).toContain('aria-haspopup="dialog"');
   });
 });
 
@@ -347,6 +427,79 @@ describe('PhoneRow', () => {
     expect(linked).toContain('aria-label="View Corsace Open 2025"');
     expect(linked).toContain(ROW_HOVER_TINT);
     expect(linked).toContain(ROW_TITLE_HOVER.replaceAll('&', '&amp;'));
+  });
+
+  it('spans a leading avatar across the name and its line', () => {
+    const html = render(
+      <PhoneRow
+        rank="#1"
+        leading={<span data-avatar />}
+        title="mrekk"
+        description="58 tournaments"
+        value="3,121"
+      />
+    );
+
+    expect(html).toContain(
+      '<div class="col-start-2 min-w-0 flex gap-3 items-center"><span data-slot="phone-row-leading" aria-hidden="true" class="flex shrink-0"><span data-avatar="true"></span></span><div class="min-w-0 flex-1"><div class="flex min-w-0 items-center gap-1.5 text-sm font-medium">mrekk</div>'
+    );
+    expect(html).not.toContain('<a ');
+  });
+
+  it('keeps the plain body without a leading avatar', () => {
+    const html = render(<PhoneRow title="mrekk" />);
+    expect(html).toContain(
+      '<div class="col-start-2 min-w-0"><div class="flex min-w-0 items-center gap-1.5 text-sm font-medium">mrekk</div></div>'
+    );
+    expect(html).not.toContain('phone-row-leading');
+  });
+
+  it('links a leading avatar for pointers only', () => {
+    const html = render(
+      <PhoneRow
+        leading={<span data-avatar />}
+        leadingHref="/players/1"
+        title={<EntityLink href="/players/1">mrekk</EntityLink>}
+      />
+    );
+
+    // The avatar's link is hidden and out of the tab order; the name's link
+    // is the row's one link for keyboards and screen readers.
+    expect(html).toMatch(
+      /<span data-slot="phone-row-leading" aria-hidden="true" class="flex shrink-0"><a [^>]*tabindex="-1"[^>]*href="\/players\/1"/
+    );
+    expect(html.match(/<a /g)).toHaveLength(2);
+  });
+
+  it('ignores leadingHref on a row that links as a whole', () => {
+    const html = render(
+      <PhoneRow
+        href="/tournaments/1"
+        linkLabel="View Corsace Open 2025"
+        leading={<span data-cover />}
+        leadingHref="/tournaments/1"
+        title="Corsace Open 2025"
+      />
+    );
+
+    expect(html.match(/<a /g)).toHaveLength(1);
+    expect(html).toContain('data-slot="phone-row-leading"');
+  });
+
+  it('sets the rank and value on the first line with align="start"', () => {
+    const centred = render(<PhoneRow title="mrekk" value="3,121" />);
+    expect(centred).toContain('items-center px-4 py-2.5');
+
+    const top = render(
+      <PhoneRow
+        align="start"
+        leading={<span data-avatar />}
+        title="mrekk"
+        value="3,121"
+      />
+    );
+    expect(top).toContain('grid-cols-subgrid items-start px-4 py-2.5');
+    expect(top).toContain('flex gap-3 items-start');
   });
 });
 
@@ -462,6 +615,66 @@ describe('LoadMore', () => {
     );
     expect(html).toContain('Showing all 214');
     expect(html).not.toContain('Load more');
+  });
+
+  it('takes its own button text', () => {
+    const html = render(
+      <LoadMore
+        onLoadMore={noop}
+        hasMore
+        loading
+        shownCount={10}
+        totalCount={46}
+        label="Show more"
+      />
+    );
+    expect(html).toContain('Show more');
+    expect(html).not.toContain('Load more');
+    expect(html).toContain('Showing 10 of 46');
+  });
+
+  it('renders nothing when the first batch already holds everything', () => {
+    expect(
+      render(
+        <LoadMore
+          onLoadMore={noop}
+          hasMore={false}
+          shownCount={8}
+          totalCount={8}
+          pageSize={10}
+        />
+      )
+    ).toBe('');
+    expect(
+      render(
+        <LoadMore
+          onLoadMore={noop}
+          hasMore={false}
+          shownCount={10}
+          pageSize={10}
+        />
+      )
+    ).toBe('');
+  });
+
+  it('keeps the end note once a second batch has loaded', () => {
+    const html = render(
+      <LoadMore
+        onLoadMore={noop}
+        hasMore={false}
+        shownCount={14}
+        totalCount={14}
+        pageSize={10}
+      />
+    );
+    expect(html).toContain('Showing all 14');
+  });
+
+  it('keeps the button while more remain, even inside the first batch', () => {
+    const html = render(
+      <LoadMore onLoadMore={noop} hasMore shownCount={10} pageSize={10} />
+    );
+    expect(html).toContain('Load more');
   });
 });
 

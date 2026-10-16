@@ -40,6 +40,7 @@ import type { MenuAction } from '@/components/kit/controls/ActionMenu';
 import { AdminMenu } from '@/components/kit/controls/AdminMenu';
 import { Button } from '@/components/kit/controls/Button';
 import { IconButton } from '@/components/kit/controls/IconButton';
+import { Abbreviation } from '@/components/kit/layout/Abbreviation';
 import { DetailHero, HeroMetaItem } from '@/components/kit/layout/DetailHero';
 import { HeroTabs } from '@/components/kit/layout/HeroTabs';
 import {
@@ -90,6 +91,14 @@ const TOURNAMENT_ADMIN_ACTIONS: MenuAction[] = [
     destructive: true,
     onSelect: noop,
   },
+];
+
+/** The beatmap attributes, by the names the beatmap page gives them. */
+const BEATMAP_ATTRIBUTES = [
+  { short: 'CS', full: 'Circle size', value: 4 },
+  { short: 'AR', full: 'Approach rate', value: 8 },
+  { short: 'OD', full: 'Overall difficulty', value: 6.5 },
+  { short: 'HP', full: 'HP drain', value: 6 },
 ];
 
 const TOURNAMENTS = [
@@ -331,6 +340,55 @@ export default function LayoutSection() {
       </Specimen>
 
       <Specimen
+        id="layout-detail-hero-art-long"
+        name="DetailHero with art and a long title"
+        importPath={`${KIT}/DetailHero`}
+        description="A long name never runs under the Admin pill: the pill's corner row stays clear, and the strip grows past 192px (224px from sm) instead of clipping the name. An InfoButton on art takes `onArt`."
+        stacked
+      >
+        <DetailHero
+          art={<HeroArt />}
+          title="Merami Household Winter Cup 2021: Double Elimination Bracket Stage"
+          titleSuffix="MHWC21"
+          status={
+            <VerificationStatusBadge
+              status={VerificationStatus.PreVerified}
+              variant="overlay"
+              tooltip="tap"
+            />
+          }
+          meta={
+            <>
+              <span className="inline-flex items-center gap-1">
+                <HeroMetaItem icon={Users}>2v2</HeroMetaItem>
+                <InfoButton onArt label="About lobby size">
+                  Number of players per team in each match
+                </InfoButton>
+              </span>
+              <HeroMetaItem icon={CalendarDays}>Jan 8 – 30, 2022</HeroMetaItem>
+            </>
+          }
+          adminActions={
+            <AdminMenu
+              onArt
+              title="Merami Household Winter Cup 2021"
+              actions={TOURNAMENT_ADMIN_ACTIONS}
+            />
+          }
+          actions={
+            <IconButton
+              asChild
+              variant="overlay"
+              icon={History}
+              label="View audit history"
+            >
+              <a href="#layout-detail-hero-art-long" />
+            </IconButton>
+          }
+        />
+      </Specimen>
+
+      <Specimen
         id="layout-detail-hero-tabs"
         name="DetailHero with HeroTabs"
         importPath={`${KIT}/HeroTabs`}
@@ -442,6 +500,59 @@ export default function LayoutSection() {
             />
           }
         />
+      </Specimen>
+
+      <Specimen
+        id="layout-hero-tabs-panel"
+        name="HeroTabs at the top of a panel"
+        importPath={`${KIT}/HeroTabs`}
+        description="A page with a PageHeader, such as an entity's audit history, puts its view tabs at the top of its one panel, over a divider (a `border-b` className). `compactLabel` and `countsFrom` sm let four tabs with counts fit a 360px phone; the counts stay in each tab's accessible name."
+        stacked
+      >
+        <div className="flex flex-col gap-4">
+          <PageHeader
+            icon={History}
+            title="Corsace Open 2025"
+            back={{ href: '#layout-hero-tabs-panel', label: 'View tournament' }}
+          />
+          <Panel>
+            <HeroTabs
+              aria-label="Audit history views"
+              value="self"
+              countsFrom="sm"
+              className="border-b"
+              items={[
+                {
+                  value: 'self',
+                  label: 'This tournament',
+                  compactLabel: 'Tournament',
+                  href: '#layout-hero-tabs-panel',
+                },
+                {
+                  value: 'matches',
+                  label: 'Matches',
+                  count: '412',
+                  href: '#layout-hero-tabs-panel',
+                },
+                {
+                  value: 'games',
+                  label: 'Games',
+                  count: '3,104',
+                  href: '#layout-hero-tabs-panel',
+                },
+                {
+                  value: 'scores',
+                  label: 'Scores',
+                  count: '1,000+',
+                  href: '#layout-hero-tabs-panel',
+                },
+              ]}
+            />
+            <PanelBody className={typeScale.bodyMuted}>
+              Toolbar and events
+            </PanelBody>
+          </Panel>
+        </div>
       </Specimen>
 
       <Specimen
@@ -561,6 +672,28 @@ export default function LayoutSection() {
               Highest rating ever reached
             </InfoButton>
           </div>
+          {/* onArt: on a hero's dark matte, white in both themes. */}
+          <div className="flex items-center gap-1.5 rounded-md bg-black/60 px-3 py-2 text-sm font-medium text-white">
+            Lobby size
+            <InfoButton label="About lobby size" onArt>
+              Number of players per team in each match
+            </InfoButton>
+          </div>
+        </div>
+      </Specimen>
+
+      <Specimen
+        id="layout-abbreviation"
+        name="Abbreviation"
+        importPath={`${KIT}/Abbreviation`}
+        description="A short form whose full form opens on tap, hover and keyboard focus, and is what screen readers hear. It replaces <abbr title>, which only shows on a mouse hover. Use it for established short forms in labels, such as CS, AR, OD and HP."
+      >
+        <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-muted-foreground">
+          {BEATMAP_ATTRIBUTES.map((attribute) => (
+            <Abbreviation key={attribute.short} full={attribute.full}>
+              {attribute.short}
+            </Abbreviation>
+          ))}
         </div>
       </Specimen>
 
@@ -612,19 +745,18 @@ export default function LayoutSection() {
         id="layout-stat-tile-inline"
         name="StatTile, inline layout"
         importPath={`${KIT}/StatTile`}
-        description="A short value on the label's line, with room for a gauge underneath. Use it for attribute grids."
+        description="A short value on the label's line, with room for a gauge underneath. Use it for attribute grids. The label takes a node, here an Abbreviation whose full name opens on tap."
       >
         <StatTileGrid columns={2}>
-          {[
-            { label: 'Circle size', value: 4 },
-            { label: 'Approach rate', value: 8 },
-            { label: 'Overall difficulty', value: 6.5 },
-            { label: 'HP drain', value: 6 },
-          ].map((attribute) => (
+          {BEATMAP_ATTRIBUTES.map((attribute) => (
             <StatTile
-              key={attribute.label}
+              key={attribute.short}
               layout="inline"
-              label={attribute.label}
+              label={
+                <Abbreviation full={attribute.full}>
+                  {attribute.short}
+                </Abbreviation>
+              }
               value={attribute.value.toFixed(1)}
             >
               <Progress
