@@ -510,7 +510,7 @@ export default function BeatmapListFilter({
               >
                 <Filter aria-hidden="true" />
                 {activeCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-xs leading-none text-primary-foreground shadow-xs">
+                  <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary-solid text-xs leading-none text-primary-foreground shadow-xs">
                     {activeCount}
                   </span>
                 )}

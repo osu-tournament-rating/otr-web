@@ -32,6 +32,7 @@ export const ROUTES = {
   reports: '/reports',
   admin: '/admin',
   adminReports: '/admin/reports',
+  adminDesign: '/admin/design',
   filter: '/tools/filter',
   filterReports: '/tools/filter-reports',
   spec: '/spec',

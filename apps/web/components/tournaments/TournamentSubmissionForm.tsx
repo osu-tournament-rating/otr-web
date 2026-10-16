@@ -513,7 +513,7 @@ export default function TournamentSubmissionForm() {
           <Button
             data-testid="tournament-submit-button"
             type="submit"
-            className="w-full rounded-md bg-primary py-5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl sm:py-6 sm:text-lg"
+            className="w-full rounded-md bg-primary-solid py-5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary-solid/90 hover:shadow-xl sm:py-6 sm:text-lg"
             disabled={isSubmitting}
           >
             {isSubmitting ? (

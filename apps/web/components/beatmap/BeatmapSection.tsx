@@ -1,12 +1,6 @@
-import {
-  ChevronLeft,
-  FoldHorizontal,
-  Info,
-  UnfoldHorizontal,
-} from 'lucide-react';
+import { ChevronLeft, FoldHorizontal, UnfoldHorizontal } from 'lucide-react';
 import type * as React from 'react';
 
-import TapTooltip from '@/components/tap-tooltip';
 import { Toggle } from '@/components/ui/toggle';
 import type {
   BoxPlotMarks,
@@ -18,32 +12,12 @@ import { formatChartNumber } from '@/lib/utils/chart';
 
 export type { ScaleTick };
 
-/** Card chrome shared by the beatmap detail page's sections. */
-export function SectionCard({
-  as: Tag = 'section',
-  className,
-  ...props
-}: React.ComponentProps<'section'> & { as?: 'section' | 'header' }) {
-  return (
-    <Tag
-      className={cn(
-        'overflow-clip rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none',
-        className
-      )}
-      {...props}
-    />
-  );
-}
-
-/** The shared tile chrome behind the page's stat grids. */
-export function Tile({ className, ...props }: React.ComponentProps<'div'>) {
-  return (
-    <div
-      className={cn('rounded-lg border bg-muted/25 px-3 py-2.5', className)}
-      {...props}
-    />
-  );
-}
+// The beatmap kit became the shared layout kit; these names stay for the
+// beatmap and tournament pages that import them from here.
+export { Panel as SectionCard } from '@/components/kit/layout/Panel';
+export { SectionHeader } from '@/components/kit/layout/SectionHeader';
+export { Tile } from '@/components/kit/layout/Tile';
+export { Eyebrow } from '@/components/kit/layout/Typography';
 
 /** The color chip that fronts every mod, grade, and rank-bracket label. */
 export function Swatch({ color }: { color: string }) {
@@ -53,49 +27,6 @@ export function Swatch({ color }: { color: string }) {
       style={{ backgroundColor: color }}
       aria-hidden="true"
     />
-  );
-}
-
-export function SectionHeader({
-  icon: Icon,
-  title,
-  infoText,
-  meta,
-  className,
-}: {
-  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  title: string;
-  /** Static, per-card explanation of how to read the chart. */
-  infoText?: string;
-  meta?: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        'flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b px-4 py-3',
-        className
-      )}
-    >
-      <div className="flex min-w-0 items-center gap-2">
-        <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-        <h2 className="truncate font-semibold">{title}</h2>
-        {infoText ? (
-          <TapTooltip
-            side="bottom"
-            align="start"
-            triggerAriaLabel={`About ${title}`}
-            triggerClassName="flex w-auto shrink-0 items-center rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
-            content={<span className="block max-w-56">{infoText}</span>}
-          >
-            <Info className="size-4" aria-hidden />
-          </TapTooltip>
-        ) : null}
-      </div>
-      {meta ? (
-        <span className="shrink-0 text-xs text-muted-foreground">{meta}</span>
-      ) : null}
-    </div>
   );
 }
 
@@ -368,15 +299,5 @@ export function TileStat({
         ) : null}
       </span>
     </>
-  );
-}
-
-/** Small muted caption used for column and group labels. */
-export function Eyebrow({ className, ...props }: React.ComponentProps<'span'>) {
-  return (
-    <span
-      className={cn('text-xs font-medium text-muted-foreground', className)}
-      {...props}
-    />
   );
 }

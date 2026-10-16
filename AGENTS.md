@@ -153,6 +153,11 @@ checkout's services on ports 5432, 5672, and 3000. This is a rule.
 
 ## UI conventions
 
+- Before you build or change UI in `apps/web`, load the `web-design` skill.
+  It documents the shared component library with do and don't examples. A
+  change to a shared component, token, or pattern updates the skill in the
+  same pull request, and when you find part of the skill out of date, fix that
+  part.
 - All user-facing text uses the Inter sans font, including chart axes,
   tooltips, table headers, and numbers. Use sentence case: no `uppercase` and
   no `tracking-wide`. `text-xs` is the minimum size; fix smaller overrides when
@@ -160,8 +165,8 @@ checkout's services on ports 5432, 5672, and 3000. This is a rule.
 - Color text with semantic tokens, never palette classes like
   `text-orange-500`. Status tokens (`success`, `warning`, `destructive`) are for
   fills, borders, and icons. Their `*-foreground` tokens are for text.
-  `text-primary-foreground` goes only on `bg-primary`. On a solid `bg-success`
-  fill, use `text-green-950`.
+  `text-primary-foreground` goes only on `bg-primary-solid`, and blue text uses
+  `text-link`. On a solid `bg-success` fill, use `text-green-950`.
 - Never put a `z-*` class on shadcn overlay content (popover, dropdown,
   tooltip); it overrides the portal's stacking. Wrap a tooltip around
   `DialogTrigger`, never around `Dialog`.
@@ -192,7 +197,8 @@ follow the `pull-request` skill in `.claude/skills/pull-request/SKILL.md`.
 
 Open an issue for anything you notice outside your task, such as an unrelated
 bug, a risk, dead code, or documentation that no longer matches the code. Do not
-fix it in the current change.
+fix it in the current change. The one exception is the `web-design` skill: fix
+an out-of-date part of it in place, in the change you are making.
 
 Before you open, edit, or label an issue, read and follow the `issue` skill in
 `.claude/skills/issue/SKILL.md`.

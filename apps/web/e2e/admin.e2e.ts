@@ -183,6 +183,38 @@ test.describe('Admin pages', () => {
         expect(page.url()).toContain(href);
       });
     });
+
+    test.describe('Design reference', () => {
+      test('renders every gallery section without page errors', async ({
+        page,
+      }) => {
+        const errors: string[] = [];
+        page.on('pageerror', (error) => errors.push(error.message));
+
+        await page.goto(ROUTES.adminDesign);
+        await page.waitForLoadState('networkidle');
+
+        await expect(
+          page.getByRole('heading', { level: 1, name: 'Design reference' })
+        ).toBeVisible({ timeout: 15000 });
+        for (const section of [
+          'layout',
+          'status',
+          'color',
+          'lists',
+          'tables',
+          'feedback',
+          'controls',
+          'format',
+        ]) {
+          await expect(
+            page.locator(`[data-gallery-section="${section}"]`)
+          ).toBeVisible();
+        }
+        await expect(page.locator('[data-specimen]').first()).toBeVisible();
+        expect(errors).toEqual([]);
+      });
+    });
   });
 
   test.describe('Regular user role', () => {
@@ -190,6 +222,13 @@ test.describe('Admin pages', () => {
 
     test('is redirected away from the admin reports page', async ({ page }) => {
       await page.goto(ROUTES.adminReports);
+      await page.waitForLoadState('networkidle');
+
+      await expect(page).toHaveURL(/\/unauthorized/, { timeout: 10000 });
+    });
+
+    test('is redirected away from the design reference', async ({ page }) => {
+      await page.goto(ROUTES.adminDesign);
       await page.waitForLoadState('networkidle');
 
       await expect(page).toHaveURL(/\/unauthorized/, { timeout: 10000 });

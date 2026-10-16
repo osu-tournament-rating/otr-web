@@ -719,7 +719,7 @@ export default function TournamentListFilter({
                   <Filter aria-hidden="true" />
                   <span>Filters</span>
                   {activeFilterCount > 0 && (
-                    <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                    <span className="flex size-5 items-center justify-center rounded-full bg-primary-solid text-xs text-primary-foreground">
                       {activeFilterCount}
                     </span>
                   )}
