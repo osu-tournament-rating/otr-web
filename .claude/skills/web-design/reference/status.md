@@ -17,18 +17,18 @@ The glyph carries the meaning and colour only reinforces it, so every status sti
 
 ## Status sheet
 
-| State        | Glyph                | Hue     | Badge                   | Group                 |
-| ------------ | -------------------- | ------- | ----------------------- | --------------------- |
-| Verified     | circled check        | green   | filled                  | Counts toward ratings |
-| Pre-verified | dashed circled check | green   | dashed outline, no fill | Not in ratings yet    |
-| Pending      | clock                | neutral | filled                  | Not in ratings yet    |
-| Pre-rejected | dashed circled cross | red     | dashed outline, no fill | Not in ratings yet    |
-| Rejected     | circled cross        | red     | filled                  | Not counted           |
+| State        | Glyph                | Hue     | Badge                   | Group              |
+| ------------ | -------------------- | ------- | ----------------------- | ------------------ |
+| Verified     | circled check        | green   | filled                  | Verified           |
+| Pre-verified | dashed circled check | green   | dashed outline, no fill | Not in ratings yet |
+| Pending      | clock                | neutral | filled                  | Not in ratings yet |
+| Pre-rejected | dashed circled cross | red     | dashed outline, no fill | Not in ratings yet |
+| Rejected     | circled cross        | red     | filled                  | Rejected           |
 
 - The glyph says the outcome; a dashed outline says an automated check decided, a solid one says an admin did. The badge repeats this: filled for a person's decision, a dashed outline with no fill for an automated check.
-- Each state has exactly one name, everywhere: never "Awaiting review", "Pre-Verified" or "Pre-approved".
+- Each state has exactly one name, everywhere: never "Awaiting review" or "Pre-Verified".
 - Pending is `VerificationStatus.None`. Statuses are compared by identity only. Their numbers are not ordered by meaning, so never write `status < VerificationStatus.Verified` or sort by the number; use `VERIFICATION_STATUS_ORDER` for display order.
-- Icons and badges take the outcome's hue, so Pre-verified is green and Pre-rejected red. Charts, summaries and filters group the states into three: Verified, "Not in ratings yet" (one neutral bar for Pending, Pre-verified and Pre-rejected) and Rejected. Pending is never a bar or series of its own.
+- Icons and badges take the outcome's hue, so Pre-verified is green and Pre-rejected red. Charts and summaries group the states into three: Verified, "Not in ratings yet" (one neutral bar for Pending, Pre-verified and Pre-rejected) and Rejected. Pending is never a bar or series of its own. A status filter offers all five states, as the tournament list's Status filter does.
 - Colours come from the verification palette in `globals.css` (`--verification-verified`, `--verification-rejected`, `--verification-neutral`), not from mods, tiers or the categorical chart palette. Outside these components, use the colour family's helpers in `@/lib/kit/color/verification`: `getVerificationStatusColor(status)` for a status mark and `getRatingsGroupColor(status)` for a chart fill.
 
 Gallery anchor: `/admin/design#status-sheet`
@@ -198,7 +198,7 @@ import { NotInRatings } from '@/components/kit/status/NotInRatings';
 
 Props that matter:
 
-- `variant`: `label` (default) is muted 12px text, "Not in ratings yet"; `notice` is a muted 14px sentence ending in a "Read the rating FAQ" link.
+- `variant`: `label` (default) is muted 12px text, "Not in ratings yet"; `notice` is a muted 14px sentence, "This tournament is not in ratings yet.", followed by a "Read our rating FAQ" link.
 - `subject`: `tournament` (default) or `match`, the noun the notice uses.
 
 Do:
@@ -236,7 +236,7 @@ Props that matter:
 - `size`: `sm` 20px, `md` 24px (default), `lg` 32px. A lucide icon as a direct child is sized for you (12, 14 or 16px).
 - `shape`: `pill` (default) or `rounded` (6px corners). Use `rounded` only where a pill would read as a button, such as a row of chips next to real buttons.
 - `customColor`: `{ background, foreground }` for a solid domain fill (mods, star rating). Pass CSS colours, usually `var(--…)` from a palette helper.
-- `swatch`: a domain colour shown as the 8px chip in front of the label (mod share, tiers, grades, rank ranges, teams).
+- `swatch`: a domain colour shown as the 8px chip in front of the label (mod share, tiers, grades, rank restrictions, teams).
 
 When to pick each:
 
@@ -244,7 +244,7 @@ When to pick each:
 - Mods: `customColor` with `getModPaletteColor(mods)` and `MOD_FILL_FOREGROUND` from `@/lib/kit/color/mods` (the reviewed mod palette; every entry takes black text), or `swatch={getModPaletteColor(mods)}` beside a count. The label comes from `getBeatmapModLabel` in `@/lib/utils/mods`. The older `getModColor` and `getModForegroundColor` in that file are the legacy palette.
 - Tiers: `swatch={getTierColor(tierName)}` from `@/lib/kit/color/tiers`.
 - Rulesets: neutral soft with `RulesetIcon` (`className="fill-current"`) and the label from `getRulesetLabel` (`@/lib/kit/format/ruleset`): osu!, taiko, catch, mania 4K, mania 7K.
-- Roles: neutral soft with an icon (`ShieldCheck` Admin, `UserCheck` Verifier). Never red.
+- Roles: neutral soft with an icon: `ShieldCheck` for Admin, the one role the profile shows (`components/profile/ProfileRoleBadge.tsx`). Never red.
 - Tags: `lazer` is neutral outline. "Includes unverified" is a notice, not a tag: use `CalloutChip icon={ShieldQuestion}` with `detail` from `@/components/kit/feedback/CalloutChip` (see [feedback.md](feedback.md#calloutchip)).
 - Counts: solid primary `sm` inside a Filters button (`FilterButton` from `@/components/kit/lists/FilterButton` already renders it) or next to a menu item; neutral soft for a plain total ("1,204 matches"). Format with `formatBadgeCount` or the format family's `formatCount`, never a bare number above 999.
 - Failure reasons and other problems: destructive soft, `sm`.

@@ -122,13 +122,13 @@ describe('AuditFieldChange', () => {
         entityType={AuditEntityType.Match}
         field="verifiedByUserId"
         change={{ originalValue: null, newValue: 12 }}
-        users={{ '12': { username: 'Stage' } }}
+        users={{ '12': { username: 'apricot' } }}
       />
     );
 
     expect(html).toContain('<span class="sr-only">No value</span>');
     expect(html).not.toContain('<del');
-    expect(html).toMatch(/<ins[^>]*>Stage<\/ins>/);
+    expect(html).toMatch(/<ins[^>]*>apricot<\/ins>/);
   });
 
   it('lets the page replace a value, with the status it carries', () => {

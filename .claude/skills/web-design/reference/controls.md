@@ -53,7 +53,7 @@ import { Button } from '@/components/kit/controls/Button';
 </Button>;
 
 <Button asChild variant="outline" icon={ExternalLink}>
-  <Link href="/docs">Acceptance criteria</Link>
+  <Link href={ACCEPTANCE_CRITERIA_URL}>Read our acceptance criteria</Link>
 </Button>;
 ```
 
@@ -101,9 +101,9 @@ The one icon-only button: a square (round on art) with a hover fill, an `aria-la
 ```tsx
 import { IconButton } from '@/components/kit/controls/IconButton';
 
-<IconButton label="Refresh matches" icon={RefreshCw} onClick={refresh} />;
+<IconButton label="Add matches" icon={Plus} onClick={openAddMatches} />;
 
-<IconButton asChild label="Audit history" icon={History}>
+<IconButton asChild label="View audit history" icon={History}>
   <Link href={`/audit/tournaments/${id}`} />
 </IconButton>;
 
@@ -163,7 +163,7 @@ const [deleting, setDeleting] = useState(false);
     )
   }
   actions={
-    <IconButton asChild variant="outline" label="Audit history" icon={History}>
+    <IconButton asChild variant="outline" label="View audit history" icon={History}>
       <Link href={`/audit/tournaments/${tournament.id}`} />
     </IconButton>
   }
@@ -184,7 +184,7 @@ How dialogs open: render each dialog next to the menu, controlled by state, and 
 
 Do:
 
-- Label every item with a verb and the noun: "Edit tournament", "Refetch match data", "Delete pooled beatmaps".
+- Label every item with a verb and the noun: "Edit tournament", "Refetch match data", "Unlink pooled beatmaps".
 - Group with `group`: edit and notes first, then data operations, then (automatically) the destructive group.
 - Keep public actions (report, open on osu!, audio preview, audit history) in the hero's `actions`, not in the admin menu.
 
@@ -211,12 +211,12 @@ import { RowActionsMenu } from '@/components/kit/controls/RowActionsMenu';
       itemName={beatmapLabel}
       actions={[
         {
-          label: 'Report a problem',
+          label: 'Report an issue',
           icon: Flag,
           onSelect: () => setReporting(true),
         },
         {
-          label: 'Audit history',
+          label: 'View audit history',
           icon: History,
           href: `/audit/games/${game.id}`,
         },
@@ -279,7 +279,7 @@ MenuAction fields:
 - `onSelect`: runs after the menu has closed and focus has returned to the trigger.
 - `href`: makes the item a link (`next/link`, not prefetched). `external` opens it in a new tab with an external-link glyph and "(opens in a new tab)" for screen readers.
 - `destructive`: red, and moved into the last group.
-- `disabled` with `description`: a muted second line that says why, such as "Only beatmaps the osu! API no longer serves". The label and icon dim; the description keeps full contrast so it stays readable.
+- `disabled` with `description`: a muted second line that says why, such as "Only beatmaps the osu! API no longer serves can be edited by hand". The label and icon dim; the description keeps full contrast so it stays readable.
 - `trailing`: a count `Badge` or a `NotificationDot` on the right.
 - `group`: items with the same group sit together between separators, in order of first appearance.
 - `hidden`: leaves the item out. `id`: the React key when two items share a label. `testId`.
@@ -299,7 +299,7 @@ import { Form } from '@/components/ui/form';
     open={open}
     onOpenChange={setOpen}
     title="Edit tournament"
-    description="Changes apply on the next rating run."
+    description={`Editing ${tournament.name}`}
     size="lg"
     onSubmit={form.handleSubmit(save)}
     footer={
@@ -324,7 +324,7 @@ Props:
 - `trigger`: the button that opens it, wrapped in `DialogTrigger`. Leave it out when an AdminMenu item opens the dialog.
 - `title`: sentence case, 16px semibold. `description`: one or two muted sentences under it.
 - `children`: the body, 24px padding, children 16px apart. It scrolls when the dialog is taller than the screen; the header and footer stay.
-- `footer`: the actions, right-aligned, primary last. `footerStart`: muted text or a quiet action on the left ("Last edited Oct 14, 2026").
+- `footer`: the actions, right-aligned, primary last. `footerStart`: muted text or a quiet action on the left, such as "Pin this beatmap permanently?" beside the beatmap edit dialog's final buttons.
 - `notice`: a Callout or error line above the actions that must stay in view, such as "Saving is permanent" in the beatmap edit dialog.
 - `size`: `sm` 448px, `md` 512px (default), `lg` 672px for long forms.
 - `onSubmit`: makes the body and footer one `<form>`, so a `type="submit"` button in `footer` submits it and Enter in a field works.
@@ -359,18 +359,17 @@ import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
   description={
     <>
       <p>
-        This deletes <strong>{tournament.name}</strong> with its{' '}
-        {formatCount(matchCount)} matches, {formatCount(gameCount)} games and{' '}
-        {formatCount(scoreCount)} scores.
+        This action will cascade to all children. All associated data will be
+        permanently removed.
       </p>
-      <p>This cannot be undone.</p>
+      <p>This action cannot be undone.</p>
     </>
   }
   confirmLabel="Delete tournament"
   pendingLabel="Deleting…"
   onConfirm={async () => {
     await orpc.tournaments.admin.delete({ id: tournament.id });
-    toast.success('Tournament deleted');
+    toast.success('Tournament deleted successfully');
     router.push('/tournaments');
   }}
 />;
@@ -379,11 +378,11 @@ import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
 Props:
 
 - `title`: a question in sentence case: "Delete this tournament?", "Reset automated checks?", "Discard your changes?".
-- `description`: what happens, what it reaches (with counts), and whether it can be undone. Paragraphs, not `<br />`.
-- `children`: options under the description, such as a checkbox ("Also reset verified and rejected data").
+- `description`: what happens and whether it can be undone. Paragraphs, not `<br />`. Reuse the sentences the site already has for that action.
+- `children`: options under the description, such as a checkbox ("Reset verified and rejected data").
 - `confirmLabel`: verb and noun, matching the action that opened it. `pendingLabel`: shown with a spinner while `onConfirm` runs. `cancelLabel`: "Cancel" by default ("Keep editing" for a discard).
-- `onConfirm`: return a promise and the dialog stays open with a spinner (Cancel and Escape disabled) until it settles. It closes when the promise resolves; when it rejects, it stays open and shows `errorText` ("Something went wrong. Try again." by default). Show your own success toast inside `onConfirm`.
-- `tone`: `destructive` (default, solid red confirm) for anything that deletes or overwrites data; `default` (blue) for a consequential action that loses nothing, such as queueing a refetch or continuing without beatmaps.
+- `onConfirm`: return a promise and the dialog stays open with a spinner (Cancel and Escape disabled) until it settles. It closes when the promise resolves; when it rejects, it stays open and shows `errorText` ("Something went wrong. Try again." by default; pass the action's own message, such as "Failed to delete match"). Show your own success toast inside `onConfirm`.
+- `tone`: `destructive` (default, solid red confirm) for anything that deletes or overwrites data, including a refetch, which can lose a match's data if osu! has since deleted it; `default` (blue) for a consequential action that loses nothing, such as continuing a submission without beatmaps.
 - `trigger`: for a self-contained confirm; otherwise control it with `open` from an AdminMenu item.
 - `confirmDisabled`: holds the confirm button until a required option is set.
 
@@ -397,7 +396,7 @@ Gallery anchor: `/admin/design#controls-confirm-dialog`
 
 ## FormPanel, FormSection, FormGrid and FormActions
 
-The layout of a page form, such as tournament submission or registrant filtering: the standard PageHeader, any page notice as a Callout, then one panel holding the form. Sections are split by section header strips, and the actions sit in a strip at the bottom right.
+The layout of a page form, such as tournament submission or registrant filtering: the standard PageHeader, any page notice the page already has as a Callout, then one panel holding the form. Sections are split by section header strips, and the actions sit in a strip at the bottom right.
 
 ```tsx
 import {
@@ -406,7 +405,6 @@ import {
   FormPanel,
   FormSection,
 } from '@/components/kit/controls/FormPanel';
-import { Callout } from '@/components/kit/feedback/Callout';
 import { PageFrame } from '@/components/kit/layout/PageFrame';
 import { PageHeader } from '@/components/kit/layout/PageHeader';
 import { Form } from '@/components/ui/form';
@@ -414,25 +412,22 @@ import { Form } from '@/components/ui/form';
 <PageFrame>
   <PageHeader
     icon={Trophy}
-    title="Submit a tournament"
-    description="Add a tournament's matches so they can be verified and rated."
+    title="Tournament submission"
+    description="Use this form to submit a new tournament for verification and tracking."
   />
-  <Callout tone="info" title="Before you submit">
-    …
-  </Callout>
   <Form {...form}>
     <FormPanel onSubmit={form.handleSubmit(submit)} data-testid="tournament-submission-form">
-      <FormSection icon={Trophy} title="Tournament">
+      <FormSection icon={Trophy} title="Information">
         <FormGrid>
           <FormField … />
           <FormField … />
         </FormGrid>
         <FormField … />
       </FormSection>
-      <FormSection icon={Database} title="Data" description="Paste osu! links or IDs, one per line.">
+      <FormSection icon={Database} title="Data">
         …
       </FormSection>
-      <FormActions start="An admin reviews every submission before it counts.">
+      <FormActions>
         <Button variant="outline" onClick={() => form.reset()}>Clear</Button>
         <Button type="submit" pending={submitting}>Submit tournament</Button>
       </FormActions>
@@ -445,7 +440,7 @@ Parts:
 
 - FormPanel: a Panel holding the `<form>`. Props other than `panelClassName` go to the form (`onSubmit`, `noValidate`, `data-testid`). It renders no `Form` provider; wrap it in shadcn's `Form` for react-hook-form.
 - FormSection: a group (`role="group"`, named by its title) with a SectionHeader strip and the fields 16px apart in 16px padding. Takes `icon` (muted), `title`, `level`, `description` (one muted line above the fields), `infoText` and `actions` (passed to the strip), `bodyClassName`. Sections after the first get a divider.
-- FormGrid: fields side by side, one column on phones. `columns` 2 (default), 3 or 4; 4 is for short fields such as a rank range and keeps two columns on phones. Fields align to the top, so an error under one does not shift its neighbour.
+- FormGrid: fields side by side, one column on phones. `columns` 2 (default), 3 or 4; 4 is for short fields such as CS, HP, OD and AR in the beatmap edit dialog and keeps two columns on phones. Fields align to the top, so an error under one does not shift its neighbour.
 - FormActions: the bottom strip. `default`-size buttons on the right with the primary last; `start` holds a muted note on the left. On phones the buttons stack full width with the primary on top.
 
 Notices: a page-level notice is a Callout between the PageHeader and the panel; a notice about one section is a Callout at the top of that FormSection; a field's help is its FormFieldLabel `info` or a `FormDescription`; errors are `FormMessage`.
@@ -453,6 +448,9 @@ Notices: a page-level notice is a Callout between the PageHeader and the panel; 
 Do:
 
 - Use the shadcn `Input`, `Textarea`, `Select` and `Checkbox` as they are.
+- Give each field the rules its schema has: required or optional, the options it allows, its minimum and maximum, and its format (`lib/orpc/schema/tournamentSubmission.ts`, `lib/validation-schema.ts`, `components/filtering/FilteringForm.tsx`). The forum post URL is required and accepts only links that start with `https://osu.ppy.sh/community/forums/topics/` or `https://osu.ppy.sh/wiki/en/Tournaments/`; lobby sizes are 1v1 to 8v8; a rank restriction is a whole number of at least 1.
+- Write validation messages as statements about the field, as the site's schemas do: "Tournament name is required", "Rank restriction must be at least 1", "Lobby size cannot exceed 8". Where a schema's message is imperative or zod's default, write the same shape: "Rank restriction must be a whole number", not "Enter a rank as a whole number"; "Ruleset is required". Name the field as its label does: "Forum post URL is required", not "Forum URL is required".
+- Keep a form's existing labels, help text and placeholders when it moves onto these parts. Add a notice or help line only when the page already says it.
 
 Don't:
 
@@ -465,16 +463,13 @@ Gallery anchor: `/admin/design#controls-form-layout`
 
 ## FormFieldLabel
 
-A field label inside a shadcn `FormItem`, with the one info button for help and an optional muted hint on the right ("Optional", "One per line", a unit).
+A field label inside a shadcn `FormItem`, with the one info button for help and an optional muted hint on the right, such as a unit ("mm:ss" in the beatmap edit dialog) or "One per line".
 
 ```tsx
 import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
 
 <FormItem>
-  <FormFieldLabel
-    info="The prefix of each lobby, such as OWC2024."
-    hint="Required"
-  >
+  <FormFieldLabel info="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)">
     Abbreviation
   </FormFieldLabel>
   <FormControl>

@@ -21,9 +21,11 @@ describe('report status copy', () => {
   });
 
   it('writes each tooltip as "<name>: <plain-language line>"', () => {
-    expect(getReportStatusTooltip(ReportStatus.Rejected)).toBe(
-      'Dismissed: an admin reviewed it and found nothing to change.'
-    );
+    expect(REPORT_STATUS_ORDER.map(getReportStatusTooltip)).toEqual([
+      'Pending: waiting for an admin to review it.',
+      'Confirmed: an admin agreed with the report and acted on it.',
+      'Dismissed: an admin reviewed it and found nothing to change.',
+    ]);
   });
 
   it('falls back instead of throwing on an unknown value', () => {

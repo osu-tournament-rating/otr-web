@@ -2,7 +2,7 @@
 
 import { ReportStatus } from '@otr/core/osu';
 import {
-  Activity,
+  ClipboardList,
   Flag,
   History,
   ListOrdered,
@@ -17,6 +17,7 @@ import TierIcon from '@/components/icons/TierIcon';
 import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
 import { DateRangeText } from '@/components/kit/format/DateRangeText';
 import { DateText } from '@/components/kit/format/DateText';
+import { RatingDelta } from '@/components/kit/format/RatingDelta';
 import { Timestamp } from '@/components/kit/format/Timestamp';
 import { Panel } from '@/components/kit/layout/Panel';
 import { RowList, RowListItem } from '@/components/kit/layout/RowList';
@@ -47,6 +48,7 @@ import { ViewButton } from '@/components/kit/tables/ViewButton';
 import CountryFlag from '@/components/shared/CountryFlag';
 import TapTooltip from '@/components/tap-tooltip';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { formatLobbySize } from '@/lib/kit/format/fields';
 import {
   formatAccuracy,
   formatCount,
@@ -263,13 +265,13 @@ function LeaderboardDemo() {
     <Panel>
       <SectionHeader
         icon={ListOrdered}
-        title="Leaderboard"
+        title="Global leaderboard"
         meta={`${formatCount(PLAYER_COUNT)} players`}
       />
       <DataTable
-        aria-label="Leaderboard"
+        aria-label="Global leaderboard"
         phoneRows={
-          <PhoneRowList as="ol" aria-label="Leaderboard">
+          <PhoneRowList as="ol" aria-label="Global leaderboard">
             {rows.map((row) => (
               <PhoneRow
                 key={row.id}
@@ -320,7 +322,6 @@ function LeaderboardDemo() {
               sort={sort}
               onSortChange={setSort}
               numeric
-              info="Share of verified matches won, across every ruleset."
             >
               Win rate
             </SortableHeader>
@@ -373,7 +374,7 @@ type TournamentRow = {
   start: string;
   end: string;
   matches: number;
-  players: number | null;
+  lobbySize: number;
 };
 
 const TOURNAMENTS: TournamentRow[] = [
@@ -383,7 +384,7 @@ const TOURNAMENTS: TournamentRow[] = [
     start: '2025-09-06',
     end: '2025-10-19',
     matches: 412,
-    players: 1536,
+    lobbySize: 4,
   },
   {
     id: 2,
@@ -391,7 +392,7 @@ const TOURNAMENTS: TournamentRow[] = [
     start: '2025-11-01',
     end: '2025-12-14',
     matches: 128,
-    players: 412,
+    lobbySize: 4,
   },
   {
     id: 3,
@@ -399,11 +400,11 @@ const TOURNAMENTS: TournamentRow[] = [
     start: '2024-07-20',
     end: '2024-08-03',
     matches: 96,
-    players: null,
+    lobbySize: 1,
   },
 ];
 
-type TournamentSortKey = 'name' | 'matches' | 'players';
+type TournamentSortKey = 'name' | 'matches' | 'lobbySize';
 
 const TOURNAMENT_SORT: Record<
   TournamentSortKey,
@@ -411,7 +412,7 @@ const TOURNAMENT_SORT: Record<
 > = {
   name: (row) => row.name,
   matches: (row) => row.matches,
-  players: (row) => row.players,
+  lobbySize: (row) => row.lobbySize,
 };
 
 function SortableHeaderDemo() {
@@ -437,14 +438,14 @@ function SortableHeaderDemo() {
             </SortableHeader>
             <DataTableHead showFrom="sm">Dates</DataTableHead>
             <SortableHeader
-              sortKey="players"
+              sortKey="lobbySize"
               sort={sort}
               onSortChange={setSort}
               numeric
               showFrom="sm"
-              info="Players with at least one verified score."
+              info="Number of players per team in each match"
             >
-              Players
+              Lobby size
             </SortableHeader>
             <SortableHeader
               sortKey="matches"
@@ -468,7 +469,7 @@ function SortableHeaderDemo() {
                 <DateRangeText start={row.start} end={row.end} />
               </DataTableCell>
               <DataTableCell numeric showFrom="sm">
-                {formatCount(row.players)}
+                {formatLobbySize(row.lobbySize)}
               </DataTableCell>
               <DataTableCell numeric>{formatCount(row.matches)}</DataTableCell>
             </DataTableRow>
@@ -484,7 +485,6 @@ function SortableHeaderDemo() {
 const POOL = [
   {
     id: 1,
-    slot: 'NM1',
     title: 'Hotohashiru',
     diff: 'Extra',
     artist: 'ORESAMA',
@@ -496,7 +496,6 @@ const POOL = [
   },
   {
     id: 2,
-    slot: 'HD1',
     title: 'sense',
     diff: "LC's Insane",
     artist: 'Mami Kawada',
@@ -508,7 +507,6 @@ const POOL = [
   },
   {
     id: 3,
-    slot: 'DT1',
     title: 'Nostalgic Blood of the Strife',
     diff: 'MAXIMUM',
     artist: 'Laur',
@@ -543,7 +541,6 @@ function LinkRowDemo() {
                 key={map.id}
                 href={here('tables-link-row')}
                 linkLabel={`View ${map.artist} - ${map.title} [${map.diff}]`}
-                rank={map.slot}
                 title={
                   <span className="truncate" data-row-title>
                     {map.title}{' '}
@@ -562,7 +559,6 @@ function LinkRowDemo() {
       >
         <DataTableHeader>
           <DataTableRow>
-            <DataTableHead className="w-16">Slot</DataTableHead>
             <DataTableHead>Beatmap</DataTableHead>
             <DataTableHead numeric className="w-16">
               SR
@@ -581,7 +577,6 @@ function LinkRowDemo() {
         <DataTableBody>
           {POOL.map((map) => (
             <DataTableLinkRow key={map.id}>
-              <DataTableCell className="font-medium">{map.slot}</DataTableCell>
               <DataTableLinkCell
                 href={here('tables-link-row')}
                 label={`View ${map.artist} - ${map.title} [${map.diff}]`}
@@ -674,7 +669,7 @@ type ReportRow = {
   status: ReportStatus;
   created: string;
   unread: boolean;
-  details: string;
+  additionalInformation: string | null;
 };
 
 const REPORTS: ReportRow[] = [
@@ -682,32 +677,32 @@ const REPORTS: ReportRow[] = [
     id: 1204,
     type: 'Match',
     entity: 'CO25: (Lunar Lobster) vs (Team Rocket)',
-    reason: 'Wrong winner',
+    reason: 'Incorrect match result',
     status: ReportStatus.Pending,
     created: '2025-10-12T18:42:00Z',
     unread: true,
-    details:
-      'Game 4 was replayed after a disconnect; the first attempt counts.',
+    additionalInformation: 'Game 4 was replayed after a disconnect.',
   },
   {
     id: 1187,
     type: 'Tournament',
     entity: 'Break The Meta Cup',
-    reason: 'Wrong rank range',
+    reason: 'Incorrect tournament details',
     status: ReportStatus.Approved,
     created: '2025-10-03T09:15:00Z',
     unread: false,
-    details: 'The forum post lists a 10,000+ rank range, not open rank.',
+    additionalInformation:
+      'The forum post lists a 10,000+ rank restriction, not open rank.',
   },
   {
     id: 1162,
     type: 'Score',
-    entity: 'Score 4012345',
-    reason: 'Not a tournament score',
+    entity: "lifeline's score",
+    reason: 'Invalid score',
     status: ReportStatus.Rejected,
     created: '2025-09-28T21:03:00Z',
     unread: false,
-    details: 'This score came from a warmup map.',
+    additionalInformation: null,
   },
 ];
 
@@ -718,23 +713,11 @@ const REPORTS: ReportRow[] = [
 function ReportView({ report }: { report: ReportRow }) {
   return (
     <DialogTemplate
-      trigger={<ViewButton subject={`report ${formatId(report.id)}`} />}
-      title={`Report ${formatId(report.id)}`}
-      description={
-        <>
-          {report.type} · <Timestamp date={report.created} />
-        </>
-      }
+      trigger={<ViewButton subject={`report #${formatId(report.id)}`} />}
+      title="Report details"
+      description={`${report.type} · ${report.entity}`}
     >
       <dl className="grid grid-cols-[auto_1fr] items-baseline gap-x-4 gap-y-2 text-sm">
-        <dt>
-          <Eyebrow>Entity</Eyebrow>
-        </dt>
-        <dd>{report.entity}</dd>
-        <dt>
-          <Eyebrow>Reason</Eyebrow>
-        </dt>
-        <dd>{report.reason}</dd>
         <dt>
           <Eyebrow>Status</Eyebrow>
         </dt>
@@ -742,9 +725,26 @@ function ReportView({ report }: { report: ReportRow }) {
           <ReportStatusBadge status={report.status} size="sm" />
         </dd>
         <dt>
-          <Eyebrow>Details</Eyebrow>
+          <Eyebrow>Entity</Eyebrow>
         </dt>
-        <dd>{report.details}</dd>
+        <dd>{report.entity}</dd>
+        <dt>
+          <Eyebrow>Submitted</Eyebrow>
+        </dt>
+        <dd>
+          <Timestamp date={report.created} />
+        </dd>
+        <dt>
+          <Eyebrow>Reason</Eyebrow>
+        </dt>
+        <dd>{report.reason}</dd>
+        <dt>
+          <Eyebrow>Additional information</Eyebrow>
+        </dt>
+        <dd>
+          {report.additionalInformation ??
+            'No additional information was provided.'}
+        </dd>
       </dl>
     </DialogTemplate>
   );
@@ -858,8 +858,8 @@ function PhoneRowsDemo() {
   return (
     <div className="flex max-w-sm flex-col gap-4">
       <Panel>
-        <SectionHeader icon={ListOrdered} title="Leaderboard" />
-        <PhoneRowList as="ol" aria-label="Leaderboard">
+        <SectionHeader icon={ListOrdered} title="Global leaderboard" />
+        <PhoneRowList as="ol" aria-label="Global leaderboard">
           {LEADERBOARD.slice(0, 4).map((row) => (
             <PhoneRow
               key={row.id}
@@ -912,6 +912,8 @@ const RESULTS = [
   { name: 'Break The Meta Cup', format: 'osu! · 1v1 · 10,000+' },
 ];
 const TOURNAMENT_COUNT = 1284;
+/** The tournament list loads 30 tournaments at a time. */
+const TOURNAMENT_PAGE_SIZE = 30;
 
 function PaginationDemo() {
   const [page, setPage] = useState(1);
@@ -939,7 +941,7 @@ function PaginationDemo() {
         </RowList>
         <PaginationFooter
           page={page}
-          pageSize={50}
+          pageSize={TOURNAMENT_PAGE_SIZE}
           totalCount={TOURNAMENT_COUNT}
           onPageChange={setPage}
           label="Tournament pages"
@@ -949,41 +951,60 @@ function PaginationDemo() {
         <PaginationFooter
           className="border-t-0"
           page={13}
-          pageSize={50}
+          pageSize={TOURNAMENT_PAGE_SIZE}
           totalCount={TOURNAMENT_COUNT}
           getPageHref={(target) => `?page=${target}#tables-pagination`}
-          label="Pages, as links"
+          label="Tournament pages"
         />
       </Panel>
       <Panel>
         <PaginationFooter
           className="border-t-0"
-          page={26}
-          pageSize={50}
+          page={43}
+          pageSize={TOURNAMENT_PAGE_SIZE}
           totalCount={TOURNAMENT_COUNT}
           getPageHref={(target) => `?page=${target}#tables-pagination`}
-          label="Last page"
+          label="Tournament pages"
         />
       </Panel>
     </div>
   );
 }
 
+/** Older tournaments for the rest of the feed: name, matches, submitter. */
+const OLDER_TOURNAMENTS = [
+  ['osu! World Cup 2024', 131, 'lifeline'],
+  ['Corsace Open 2024', 398, 'Accolibed'],
+  ['Taiko World Cup 2024', 84, 'Raikouhou'],
+  ['Mania 4K World Cup 2024', 158, 'distantmemory'],
+  ['Catch the Beat World Cup 2024', 72, 'mrekk'],
+  ['Taiko Classic 2024', 66, 'lifeline'],
+  ['5 Digit United States Cup 2025', 143, 'distantmemory'],
+  ['osu! World Cup 2023', 127, 'Accolibed'],
+] as const;
+
+/** Audit events as the audit logs word them: who, then what they did. */
 const EVENTS = [
-  'Stage verified Corsace Open 2025',
-  'Stage edited the rank range of Break The Meta Cup',
-  'Automated checks pre-verified 412 matches',
-  'Yasui reported a score in osu! World Cup 2025',
-  'Stage rejected game 4 of CO25: (Lunar Lobster) vs (Team Rocket)',
-  'distantmemory submitted Taiko Classic 2025',
-  'Automated checks pre-rejected 3 games',
-  'Stage confirmed report 1187',
-  'Stage merged two matches',
-  'Stage edited the forum post of Corsace Open 2025',
-  'Automated checks pre-verified 96 matches',
-  'mrekk submitted Break The Meta Cup',
+  'apricot verified tournament Corsace Open 2025',
+  'apricot updated tournament Break The Meta Cup (Rank restriction)',
+  'System pre-verified 412 matches in Corsace Open 2025',
+  'lifeline submitted tournament Taiko Classic 2025',
+  'apricot rejected match CO25: (Lunar Lobster) vs (Team Rocket) in Corsace Open 2025',
+  'System pre-rejected 3 games in Break The Meta Cup',
+  'apricot updated tournament Corsace Open 2025 (Abbreviation)',
+  'System pre-verified 96 matches in Break The Meta Cup',
+  'mrekk submitted tournament Break The Meta Cup',
+  'apricot verified tournament osu! World Cup 2025',
+  'System pre-verified 128 matches in osu! World Cup 2025',
+  'distantmemory submitted tournament osu! World Cup 2025',
+  ...OLDER_TOURNAMENTS.flatMap(([name, matches, submitter]) => [
+    `apricot verified tournament ${name}`,
+    `System pre-verified ${formatCount(matches)} matches in ${name}`,
+    `${submitter} submitted tournament ${name}`,
+  ]),
 ];
-const EVENT_BATCH = 5;
+/** The audit logs load 30 events at a time. */
+const EVENT_BATCH = 30;
 
 function LoadMoreDemo() {
   const [shown, setShown] = useState(EVENT_BATCH);
@@ -991,14 +1012,22 @@ function LoadMoreDemo() {
 
   return (
     <Panel>
-      <SectionHeader icon={Activity} title="Recent activity" />
-      <RowList>
-        {EVENTS.slice(0, shown).map((event) => (
-          <RowListItem key={event} className="py-2.5 text-sm">
-            {event}
-          </RowListItem>
-        ))}
-      </RowList>
+      <SectionHeader icon={ClipboardList} title="Audit logs" />
+      {/* Gallery only: the feed scrolls in a box, so the button stays in view. */}
+      <div
+        role="region"
+        aria-label="Audit events"
+        tabIndex={0}
+        className="max-h-80 overflow-y-auto focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset"
+      >
+        <RowList>
+          {EVENTS.slice(0, shown).map((event) => (
+            <RowListItem key={event} className="py-2.5 text-sm">
+              {event}
+            </RowListItem>
+          ))}
+        </RowList>
+      </div>
       <LoadMore
         hasMore={shown < EVENTS.length}
         loading={loading}
@@ -1018,60 +1047,125 @@ function LoadMoreDemo() {
 
 // Sticky header -----------------------------------------------------------------
 
-/** One player's osu! rating after each tournament, newest first. */
-const RATING_HISTORY = [
-  { tournament: 'osu! World Cup 2025', date: '2025-12-14', matches: 9 },
-  { tournament: 'Corsace Open 2025', date: '2025-10-19', matches: 7 },
-  { tournament: 'osu! World Cup 2024', date: '2024-12-15', matches: 11 },
-  { tournament: 'Corsace Open 2024', date: '2024-10-20', matches: 6 },
-  { tournament: 'osu! World Cup 2023', date: '2023-12-17', matches: 8 },
-  { tournament: 'Corsace Open 2023', date: '2023-10-22', matches: 5 },
-  { tournament: 'osu! World Cup 2022', date: '2022-12-18', matches: 10 },
-  { tournament: 'Corsace Open 2022', date: '2022-10-23', matches: 4 },
-].map((event, index) => ({
-  ...event,
-  id: index,
-  rating: 2615.3 - index * 41.7,
-}));
+/**
+ * One player's rating adjustments, oldest first, as the profile's rating
+ * history table lists them. Type names are the site's adjustment types.
+ */
+const RATING_ADJUSTMENTS: {
+  date: string;
+  type: 'Initial' | 'Match' | 'Decay';
+  match: string | null;
+  change: number;
+}[] = [
+  { date: '2024-11-09', type: 'Initial', match: null, change: 0 },
+  {
+    date: '2024-11-09',
+    type: 'Match',
+    match: 'OWC2024: (Chile) vs (Canada)',
+    change: 18.6,
+  },
+  {
+    date: '2024-11-16',
+    type: 'Match',
+    match: 'OWC2024: (Peru) vs (Canada)',
+    change: -9.2,
+  },
+  { date: '2025-06-03', type: 'Decay', match: null, change: -14.5 },
+  {
+    date: '2025-09-13',
+    type: 'Match',
+    match: 'CO25: (Kiwi) vs (Maple)',
+    change: 24.1,
+  },
+  {
+    date: '2025-09-20',
+    type: 'Match',
+    match: 'CO25: (Orbit) vs (Maple)',
+    change: 11.3,
+  },
+  {
+    date: '2025-09-27',
+    type: 'Match',
+    match: 'CO25: (Comet) vs (Maple)',
+    change: -6.8,
+  },
+  {
+    date: '2025-11-08',
+    type: 'Match',
+    match: 'OWC2025: (Japan) vs (Canada)',
+    change: 15.9,
+  },
+  {
+    date: '2025-11-15',
+    type: 'Match',
+    match: 'OWC2025: (Brazil) vs (Canada)',
+    change: -12.4,
+  },
+  {
+    date: '2025-11-22',
+    type: 'Match',
+    match: 'OWC2025: (Chile) vs (Canada)',
+    change: 9.7,
+  },
+];
+
+/** Newest first, each with the rating it left the player at. */
+const RATING_HISTORY = RATING_ADJUSTMENTS.reduce<
+  ((typeof RATING_ADJUSTMENTS)[number] & { id: number; rating: number })[]
+>((rows, adjustment, index) => {
+  const before = rows[0]?.rating ?? 2400;
+  return [
+    { ...adjustment, id: index, rating: before + adjustment.change },
+    ...rows,
+  ];
+}, []);
 
 function StickyHeaderDemo() {
   return (
     <Panel>
-      <SectionHeader
-        icon={History}
-        title="Rating history"
-        meta={formatCountOf(RATING_HISTORY.length, 'tournament')}
-      />
+      <SectionHeader icon={History} title="Rating history" />
       {/* Focusable so the box scrolls by keyboard. */}
       <div
         tabIndex={0}
         className="max-h-72 overflow-y-auto focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset"
       >
-        <DataTable aria-label="Rating history" stickyHeader="scroll-area">
+        <DataTable aria-label="Rating history" stickyHeader="scroll-area" fixed>
           <DataTableHeader>
             <DataTableRow>
-              <DataTableHead>Tournament</DataTableHead>
-              <DataTableHead showFrom="sm">Date</DataTableHead>
-              <DataTableHead numeric>Matches</DataTableHead>
-              <DataTableHead numeric>Rating</DataTableHead>
+              <DataTableHead className="w-26">Date</DataTableHead>
+              <DataTableHead showFrom="sm">Match</DataTableHead>
+              <DataTableHead showFrom="md" className="w-16">
+                Type
+              </DataTableHead>
+              <DataTableHead numeric className="w-16">
+                Rating
+              </DataTableHead>
+              <DataTableHead numeric className="w-20">
+                Change
+              </DataTableHead>
             </DataTableRow>
           </DataTableHeader>
           <DataTableBody>
             {RATING_HISTORY.map((event) => (
               <DataTableRow key={event.id}>
-                <DataTableCell>
-                  <EntityLink href={here('tables-sticky-header')}>
-                    {event.tournament}
-                  </EntityLink>
-                </DataTableCell>
-                <DataTableCell muted showFrom="sm">
+                <DataTableCell muted>
                   <DateText date={event.date} />
                 </DataTableCell>
-                <DataTableCell numeric>
-                  {formatCount(event.matches)}
+                <DataTableCell showFrom="sm">
+                  {event.match ? (
+                    <EntityLink href={here('tables-sticky-header')}>
+                      {event.match}
+                    </EntityLink>
+                  ) : null}
                 </DataTableCell>
+                <DataTableCell showFrom="md">{event.type}</DataTableCell>
                 <DataTableCell numeric className="font-semibold">
                   {formatRating(event.rating)}
+                </DataTableCell>
+                <DataTableCell numeric>
+                  {event.type === 'Initial' ? null : (
+                    <RatingDelta value={event.change} />
+                  )}
                 </DataTableCell>
               </DataTableRow>
             ))}
@@ -1103,7 +1197,7 @@ const SCORES = [
 function MissingValueDemo() {
   return (
     <Panel>
-      <DataTable aria-label="Top scores">
+      <DataTable aria-label="Leaderboard">
         <DataTableHeader>
           <DataTableRow>
             <DataTableHead>Player</DataTableHead>
@@ -1139,7 +1233,7 @@ function MissingValueDemo() {
         </DataTableBody>
       </DataTable>
       <p className="border-t px-4 py-3 text-sm">
-        Peak rating: <MissingValue label="No peak rating yet" />
+        Peak rating: <MissingValue />
       </p>
     </Panel>
   );
@@ -1224,7 +1318,7 @@ export default function TablesSection() {
         name="PaginationFooter"
         importPath={`${KIT}/PaginationFooter`}
         stacked
-        description="Numbered pages in the panel's footer with a 1–50 of 1,284 readout, for every searchable list. A footer narrower than 36rem keeps only the arrows and the page count. Links for lists paged in the address, buttons for lists paged in state."
+        description="Numbered pages in the panel's footer with a 1–30 of 1,284 readout, for every searchable list. A footer narrower than 36rem keeps only the arrows and the page count. Links for lists paged in the address, buttons for lists paged in state."
       >
         <PaginationDemo />
       </Specimen>

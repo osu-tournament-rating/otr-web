@@ -1,7 +1,7 @@
 /**
  * Labels for active-filter chips, so every list words them the same way:
- * `SR: 5 – 7`, `Rank range: at least 1,000`, `Status: Pending, Verified +1`,
- * `Dates: Jul 20 – Aug 3, 2024`.
+ * `SR: 5 – 7`, `Rank restriction: at least 1,000`,
+ * `Status: Pending, Verified +1`, `Dates: Jul 20 – Aug 3, 2024`.
  */
 
 import { RANGE_SEPARATOR, formatDateRange } from '@/lib/kit/format/date';

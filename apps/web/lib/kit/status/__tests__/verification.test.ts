@@ -135,6 +135,9 @@ describe('not in ratings yet', () => {
       VerificationStatus.PreRejected,
       VerificationStatus.PreVerified,
     ]);
+    expect([...NOT_IN_RATINGS_YET_STATUSES].sort()).toEqual(
+      ALL_STATUSES.filter(isNotInRatingsYet).sort()
+    );
     expect(NOT_IN_RATINGS_YET_LABEL).toBe('Not in ratings yet');
   });
 

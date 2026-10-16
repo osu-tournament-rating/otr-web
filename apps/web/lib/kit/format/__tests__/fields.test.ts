@@ -14,7 +14,8 @@ const entries = Object.entries(FIELD_NAMES) as Array<[string, FieldName]>;
 describe('glossary', () => {
   it('uses the agreed names', () => {
     expect(fieldLabel('lobbySize')).toBe('Lobby size');
-    expect(fieldLabel('rankRange')).toBe('Rank range');
+    expect(fieldLabel('rankRange')).toBe('Rank restriction');
+    expect(fieldLabel('forumUrl')).toBe('Forum post URL');
     expect(fieldLabel('ruleset')).toBe('Ruleset');
     expect(fieldLabel('starRating', { short: true })).toBe('SR');
     expect(fieldLabel('ruleset', { short: true })).toBe('Ruleset');
@@ -47,7 +48,8 @@ describe('glossary', () => {
 
   it('retires the duplicate names the review found', () => {
     expect(FIELD_NAMES.lobbySize.legacy).toContain('Team size');
-    expect(FIELD_NAMES.rankRange.legacy).toContain('Rank restriction');
+    expect(FIELD_NAMES.rankRange.legacy).toContain('Rank range');
+    expect(FIELD_NAMES.forumUrl.legacy).toContain('Forum URL');
   });
 });
 
@@ -83,7 +85,7 @@ describe('humanizeFieldName', () => {
   it('turns raw names into sentence case', () => {
     expect(humanizeFieldName('drainLength')).toBe('Drain length');
     expect(humanizeFieldName('processingStatus')).toBe('Processing status');
-    expect(humanizeFieldName('rank_range')).toBe('Rank range');
+    expect(humanizeFieldName('lobby_size')).toBe('Lobby size');
     expect(humanizeFieldName('name')).toBe('Name');
   });
 });

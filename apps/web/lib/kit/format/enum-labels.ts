@@ -43,7 +43,7 @@ export const MATCH_REJECTION_REASON_LABELS: Readonly<
   [MatchRejectionReason.NoData]: 'No data',
   [MatchRejectionReason.NoGames]: 'No games',
   [MatchRejectionReason.NamePrefixMismatch]: 'Prefix mismatch',
-  [MatchRejectionReason.FailedTeamVsConversion]: 'Failed Team VS conversion',
+  [MatchRejectionReason.FailedTeamVsConversion]: 'Failed Team Vs conversion',
   [MatchRejectionReason.NoValidGames]: 'No valid games',
   [MatchRejectionReason.UnexpectedGameCount]: 'Unexpected game count',
   [MatchRejectionReason.NoEndTime]: 'No end time',
@@ -70,7 +70,7 @@ export const GAME_REJECTION_REASON_LABELS: Readonly<
   [GameRejectionReason.RulesetMismatch]: 'Ruleset mismatch',
   [GameRejectionReason.InvalidScoringType]: 'Invalid scoring type',
   [GameRejectionReason.InvalidTeamType]: 'Invalid team type',
-  [GameRejectionReason.FailedTeamVsConversion]: 'Failed Team VS conversion',
+  [GameRejectionReason.FailedTeamVsConversion]: 'Failed Team Vs conversion',
   [GameRejectionReason.NoValidScores]: 'No valid scores',
   [GameRejectionReason.LobbySizeMismatch]: 'Lobby size mismatch',
   [GameRejectionReason.NoEndTime]: 'No end time',
@@ -106,8 +106,8 @@ export const SCORING_TYPE_LABELS: Readonly<Record<ScoringType, string>> = {
 export const TEAM_TYPE_LABELS: Readonly<Record<TeamType, string>> = {
   [TeamType.HeadToHead]: 'Head to head',
   [TeamType.TagCoop]: 'Tag co-op',
-  [TeamType.TeamVs]: 'Team VS',
-  [TeamType.TagTeamVs]: 'Tag team VS',
+  [TeamType.TeamVs]: 'Team Vs',
+  [TeamType.TagTeamVs]: 'Tag team Vs',
 };
 
 export const TEAM_LABELS: Readonly<Record<Team, string>> = {

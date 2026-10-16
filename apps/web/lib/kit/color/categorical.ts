@@ -20,8 +20,8 @@ function slot(
 }
 
 /**
- * The fixed categorical palette for neutral series, rank ranges and teams.
- * The order keeps neighbours apart for red-green colour blindness (checked
+ * The fixed categorical palette for neutral series, rank restriction buckets
+ * and teams. The order keeps neighbours apart for red-green colour blindness (checked
  * with the dataviz palette validator), so assign slots in order and never
  * reorder or cycle them. Slot 1 is the brand blue a single series uses.
  */

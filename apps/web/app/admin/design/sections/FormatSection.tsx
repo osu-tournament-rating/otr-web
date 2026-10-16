@@ -36,6 +36,9 @@ import { GallerySection, Specimen } from '../gallery';
 /** Fixed "now" for the relative times, so the gallery never changes. */
 const NOW = '2024-08-04T18:00:00Z';
 
+/** The admin in the demo feed and audit values. */
+const REVIEWER = 'apricot';
+
 /** A label beside its value, the way the specimens list examples. */
 function Example({
   label,
@@ -82,15 +85,15 @@ const RANGES: Array<{
 /** Newest first, as feeds are. */
 const FEED = [
   {
-    who: 'Stage',
+    who: REVIEWER,
     action: 'verified',
-    what: 'OWC 2024: (US) vs (KR)',
+    what: 'OWC2024: (United States) vs (South Korea)',
     at: '2024-08-04T17:38:00Z',
   },
   {
-    who: 'Automated checks',
+    who: 'System',
     action: 'pre-verified',
-    what: 'OWC 2024: (US) vs (KR)',
+    what: 'OWC2024: (United States) vs (South Korea)',
     at: '2024-08-04T14:51:00Z',
   },
   {
@@ -100,9 +103,9 @@ const FEED = [
     at: '2024-07-29T09:12:00Z',
   },
   {
-    who: 'Stage',
+    who: REVIEWER,
     action: 'rejected',
-    what: '5WC 2023 qualifiers',
+    what: '5WC2023: (Germany) vs (Poland)',
     at: '2024-06-02T21:05:00Z',
   },
 ];
@@ -131,7 +134,7 @@ const NUMBERS: Array<{ label: string; value: string; hint: string }> = [
     hint: 'formatAccuracy(0.98543)',
   },
   {
-    label: 'Rank range',
+    label: 'Rank restriction',
     value: `${formatRankRange(1)}, ${formatRankRange(10000)}`,
     hint: 'formatRankRange(1), formatRankRange(10000)',
   },
@@ -166,7 +169,7 @@ const RETIRED_NAMES = (Object.values(FIELD_NAMES) as FieldName[])
   }))
   .filter((entry) => entry.replaces.length > 0);
 
-const AUDIT_USERS = { '12': { username: 'Stage' } };
+const AUDIT_USERS = { '12': { username: REVIEWER } };
 
 const AUDIT_CHANGES: Array<{
   entityType: AuditEntityType;
@@ -232,11 +235,8 @@ export default function FormatSection() {
         description="A calendar day in UTC. Use it when the day matters and the time does not."
       >
         <Examples>
-          <Example label="Tournament start">
-            <DateText date="2024-07-20T00:00:00Z" />
-          </Example>
-          <Example label="Joined">
-            <DateText date="2021-03-02T08:14:00Z" />
+          <Example label="Played">
+            <DateText date="2024-07-20T15:42:07Z" />
           </Example>
           <Example label="No date">
             <DateText date={null} />
@@ -266,13 +266,13 @@ export default function FormatSection() {
         description="A moment in UTC on a 24-hour clock, with the zone written out. Add seconds only where two events can share a minute."
       >
         <Examples>
-          <Example label="Match started">
+          <Example label="Start time">
             <Timestamp date="2024-07-20T15:42:07Z" />
           </Example>
           <Example label="With seconds">
             <Timestamp date="2024-07-20T15:42:07Z" seconds />
           </Example>
-          <Example label="Not played">
+          <Example label="No time">
             <Timestamp date={null} />
           </Example>
         </Examples>
@@ -380,10 +380,16 @@ export default function FormatSection() {
               <RulesetName key={ruleset} ruleset={ruleset} iconOnly />
             ))}
           </div>
-          <p className="text-sm">
-            Played in <RulesetName ruleset={Ruleset.Mania4k} showIcon={false} />{' '}
-            only.
-          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs font-medium text-muted-foreground">
+              Without icon
+            </span>
+            <RulesetName
+              ruleset={Ruleset.Mania4k}
+              showIcon={false}
+              className="text-sm"
+            />
+          </div>
         </div>
       </Specimen>
 

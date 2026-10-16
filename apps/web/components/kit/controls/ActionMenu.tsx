@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 /** One item in an AdminMenu or RowActionsMenu. */
 export type MenuAction = {
-  /** Sentence case, verb first: "Edit tournament", "Audit history". */
+  /** Sentence case, verb first: "Edit tournament", "View audit history". */
   label: string;
   /** A lucide icon. It renders muted, or red on a destructive item. */
   icon?: KitIcon;

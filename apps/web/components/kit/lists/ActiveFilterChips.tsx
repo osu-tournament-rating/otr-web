@@ -48,7 +48,7 @@ export function ActiveFilterChips({
           key={filter.key}
           type="button"
           onClick={filter.onRemove}
-          aria-label={`Remove filter: ${filter.label}`}
+          aria-label={`Remove ${filter.label} filter`}
           className="inline-flex min-h-8 max-w-full cursor-pointer items-center gap-1.5 rounded-full border bg-background py-1 pr-2 pl-2.5 text-xs font-medium proportional-nums transition-colors outline-none hover:border-foreground/30 hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/50"
         >
           {/* Long labels wrap inside the chip; they never truncate. */}

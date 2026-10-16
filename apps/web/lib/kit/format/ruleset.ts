@@ -18,15 +18,16 @@ export const RULESET_NAMES: Readonly<Record<Ruleset, RulesetNameEntry>> = {
   [Ruleset.Catch]: { label: 'catch', fullName: 'osu!catch' },
   [Ruleset.ManiaOther]: {
     label: 'mania (other)',
-    fullName: 'osu!mania, other key counts',
+    fullName: 'osu!mania (other)',
   },
   [Ruleset.Mania4k]: { label: 'mania 4K', fullName: 'osu!mania 4K' },
   [Ruleset.Mania7k]: { label: 'mania 7K', fullName: 'osu!mania 7K' },
 };
 
 /**
- * The rulesets players are rated in, in display order. `ManiaOther` only
- * describes beatmaps and games, so pickers and filters leave it out.
+ * The rulesets players are rated in, in display order, as list filters and
+ * the filter tool offer them. Admin pickers (the edit dialogs, and the
+ * submission form for admins) also offer `ManiaOther`.
  */
 export const RATED_RULESETS: readonly Ruleset[] = [
   Ruleset.Osu,

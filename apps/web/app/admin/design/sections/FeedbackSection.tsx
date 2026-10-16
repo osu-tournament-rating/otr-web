@@ -2,11 +2,12 @@
 
 import { ReportStatus, Ruleset } from '@otr/core/osu';
 import {
-  Activity,
   AlertCircle,
   ArrowLeft,
   ChartNoAxesColumn,
+  ClipboardList,
   Compass,
+  Copy,
   Flag,
   Gauge,
   History,
@@ -54,11 +55,16 @@ import {
 } from '@/components/kit/tables/DataTable';
 import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
+import { ActiveFilterChips } from '@/components/kit/lists/ActiveFilterChips';
 import { ListToolbar } from '@/components/kit/lists/ListToolbar';
 import { RulesetChips } from '@/components/kit/lists/RulesetChips';
 import { ScopeSwitch } from '@/components/kit/lists/ScopeSwitch';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatLobbySize } from '@/lib/kit/format/fields';
 import { formatCountOf } from '@/lib/kit/format/number';
+import { formatChoiceFilterLabel } from '@/lib/kit/lists/filters';
 
 const KIT = '@/components/kit/feedback';
 
@@ -66,27 +72,31 @@ const TOURNAMENTS = [
   {
     name: 'Corsace Open 2025',
     ruleset: Ruleset.Osu,
+    lobbySize: 4,
     meta: 'osu! · 4v4 · Open rank',
     dates: 'Jul 20 – Aug 3, 2025',
   },
   {
     name: 'Oceania Taiko Cup 2026',
     ruleset: Ruleset.Taiko,
+    lobbySize: 2,
     meta: 'taiko · 2v2 · 10,000+',
     dates: 'Feb 7 – 28, 2026',
   },
   {
     name: 'Mania 4K World Cup 2026',
     ruleset: Ruleset.Mania4k,
+    lobbySize: 4,
     meta: 'mania 4K · 4v4 · Open rank',
     dates: 'Mar 14 – Apr 26, 2026',
   },
 ];
 
-const ACTIVITY = [
-  'Stage verified Corsace Open 2025',
-  'Automated checks pre-verified 412 matches',
-  'Raikouhou submitted Oceania Taiko Cup 2026',
+// Worded as the audit log words its events.
+const AUDIT_EVENTS = [
+  'apricot verified tournament Corsace Open 2025',
+  'System pre-verified 412 matches in Corsace Open 2025',
+  'Raikouhou submitted tournament Oceania Taiko Cup 2026',
 ];
 
 const PLAYERS = [
@@ -110,7 +120,7 @@ const REPORTS = [
     id: 1204,
     type: 'Match',
     entity: 'CO25: (Lunar Lobster) vs (Team Rocket)',
-    reason: 'Wrong winner',
+    reason: 'Incorrect match result',
     status: ReportStatus.Pending,
     submitted: 'Oct 12, 2025',
   },
@@ -118,15 +128,15 @@ const REPORTS = [
     id: 1187,
     type: 'Tournament',
     entity: 'Break The Meta Cup',
-    reason: 'Wrong rank range',
+    reason: 'Incorrect tournament details',
     status: ReportStatus.Approved,
     submitted: 'Oct 3, 2025',
   },
   {
     id: 1162,
     type: 'Score',
-    entity: 'Score 4012345',
-    reason: 'Not a tournament score',
+    entity: "Yasui's score",
+    reason: 'Invalid score',
     status: ReportStatus.Rejected,
     submitted: 'Sep 28, 2025',
   },
@@ -214,13 +224,20 @@ function LoadToggle({
   );
 }
 
-/** A filterable list's panel: its toolbar, then the rows or the empty state. */
+/**
+ * A filterable list's panel: its toolbar, then the rows or the empty state.
+ * The lobby size filter empties the list; the ruleset is a scope, so Clear
+ * filters leaves it alone.
+ */
 function FilteredEmptyDemo() {
-  const [rulesets, setRulesets] = useState<Ruleset[]>([Ruleset.Mania7k]);
+  const [rulesets, setRulesets] = useState<Ruleset[]>([Ruleset.Taiko]);
+  const [lobbySizes, setLobbySizes] = useState<number[]>([1]);
   const shown = TOURNAMENTS.filter(
     (tournament) =>
-      rulesets.length === 0 || rulesets.includes(tournament.ruleset)
+      (rulesets.length === 0 || rulesets.includes(tournament.ruleset)) &&
+      (lobbySizes.length === 0 || lobbySizes.includes(tournament.lobbySize))
   );
+  const clearFilters = () => setLobbySizes([]);
 
   return (
     <Panel>
@@ -228,12 +245,29 @@ function FilteredEmptyDemo() {
         label="Filter tournaments"
         rulesets={<RulesetChips value={rulesets} onValueChange={setRulesets} />}
         count={formatCountOf(shown.length, 'tournament')}
+        activeFilters={
+          <ActiveFilterChips
+            filters={[
+              {
+                key: 'lobbySize',
+                label: formatChoiceFilterLabel(
+                  'Lobby size',
+                  lobbySizes.map((size) => formatLobbySize(size))
+                ),
+                onRemove: clearFilters,
+              },
+            ]}
+            onClearAll={clearFilters}
+          />
+        }
       />
       {shown.length === 0 ? (
         <EmptyState
           title="No tournaments match"
           description="Try a different name, ruleset, or fewer filters."
-          clearFilters={{ onClick: () => setRulesets([]) }}
+          clearFilters={
+            lobbySizes.length > 0 ? { onClick: clearFilters } : undefined
+          }
         />
       ) : (
         <TournamentRows tournaments={shown} />
@@ -292,7 +326,6 @@ function CompactErrorDemo() {
           size="compact"
           icon={ChartNoAxesColumn}
           title="Not enough data"
-          description="The chart appears once 10 scores are verified."
         />
       </Panel>
     </div>
@@ -307,9 +340,9 @@ function InlineErrorDemo() {
   return (
     <div className="flex flex-col gap-4">
       <Panel>
-        <SectionHeader icon={Activity} title="Recent activity" />
+        <SectionHeader icon={ClipboardList} title="Audit logs" />
         <RowList>
-          {ACTIVITY.map((event) => (
+          {AUDIT_EVENTS.map((event) => (
             <RowListItem key={event} className="py-2.5 text-sm">
               {event}
             </RowListItem>
@@ -318,7 +351,7 @@ function InlineErrorDemo() {
         <div className="border-t px-4 py-4">
           <SectionError
             size="inline"
-            title="More activity could not load"
+            title="More audit events could not load"
             retrying={list.retrying}
             onRetry={list.retry}
             className="justify-center"
@@ -329,7 +362,8 @@ function InlineErrorDemo() {
         <SectionHeader icon={History} title="Audit history" />
         <div className="flex flex-col gap-2 px-4 py-3">
           <p className="text-sm">
-            <span className="font-medium">Stage</span> rejected 9 matches
+            <span className="font-medium">apricot</span> rejected 9 matches in
+            Break The Meta Cup
           </p>
           <SectionError
             size="inline"
@@ -340,9 +374,24 @@ function InlineErrorDemo() {
         </div>
       </Panel>
       <Panel>
-        <SectionHeader icon={Flag} title="Report a problem" />
+        <SectionHeader icon={Flag} title="Report a data issue" />
         <PanelBody className="flex flex-col gap-2">
-          <span className="text-sm font-medium">Reason</span>
+          <Label htmlFor="feedback-report-reason">
+            Reason{' '}
+            <span aria-hidden="true" className="text-destructive-foreground">
+              *
+            </span>
+            <span className="sr-only"> (required)</span>
+          </Label>
+          <Select disabled>
+            <SelectTrigger
+              id="feedback-report-reason"
+              aria-required="true"
+              className="w-full"
+            >
+              <SelectValue placeholder="Select a reason" />
+            </SelectTrigger>
+          </Select>
           <SectionError
             size="inline"
             title="Report reasons could not load"
@@ -379,7 +428,7 @@ function OverviewSkeletonDemo() {
                 value="#1,024"
                 sub="98th percentile"
               />
-              <StatTile label="Matches" value="312" sub="58.3% won" />
+              <StatTile label="Matches" value="312" sub="Win rate 58.3%" />
             </StatTileGrid>
           </PanelBody>
         </Panel>
@@ -395,13 +444,17 @@ function RowsSkeletonDemo() {
     <div className="flex flex-col gap-3">
       <LoadToggle loading={loading} onChange={setLoading} />
       {loading ? (
-        <PanelSkeleton label="Loading teammates">
-          <SectionHeaderSkeleton icon={Users} title="Teammates" />
+        <PanelSkeleton label="Loading frequent teammates">
+          <SectionHeaderSkeleton icon={Users} title="Frequent teammates" />
           <RowListSkeleton rows={3} />
         </PanelSkeleton>
       ) : (
         <Panel>
-          <SectionHeader icon={Users} title="Teammates" meta="3 players" />
+          <SectionHeader
+            icon={Users}
+            title="Frequent teammates"
+            meta="3 players"
+          />
           <RowList>
             {PLAYERS.map((player) => (
               <RowListItem
@@ -540,7 +593,7 @@ export default function FeedbackSection() {
         id="feedback-empty-state-filtered"
         name="EmptyState with Clear filters"
         importPath={`${KIT}/EmptyState`}
-        description="When the visitor's filters emptied the list, add Clear filters. It clears filters only, never the search, sort or tab. Try it."
+        description="When the visitor's filters emptied the list, add Clear filters. It clears filters only, never the search, sort, ruleset or tab. Try it."
       >
         <FilteredEmptyDemo />
       </Specimen>
@@ -607,19 +660,14 @@ export default function FeedbackSection() {
         id="feedback-status-page"
         name="StatusPage"
         importPath={`${KIT}/StatusPage`}
-        description="The one layout for not found, unauthorized, banned and error pages: icon, short heading, one sentence, one action. The 404 keeps its blurred background."
+        description="The one layout for not found, unauthorized, banned and error pages: icon, short heading, one sentence, and an action when the page has one. The 404 keeps its blurred background."
         stacked
       >
         <StatusPage
           icon={Compass}
           title="Page not found"
-          description="This page does not exist or has moved."
+          description="Sorry, we don't have that page!"
           background={<NotFoundBackground />}
-          action={
-            <Button asChild>
-              <a href="#feedback-status-page">Go to the home page</a>
-            </Button>
-          }
           className="min-h-80"
         />
       </Specimen>
@@ -634,25 +682,20 @@ export default function FeedbackSection() {
         <div className="grid divide-y lg:grid-cols-3 lg:divide-x lg:divide-y-0">
           <StatusPage
             icon={Lock}
-            title="You can't view this page"
-            description="Only admins can open this page."
-            action={
-              <Button asChild>
-                <a href="#feedback-status-page-variants">Go to the home page</a>
-              </Button>
-            }
+            title="Unauthorized"
+            description="You are not authorized to access this page."
             className="min-h-0 py-10"
           />
           <StatusPage
             icon={ShieldAlert}
             tone="destructive"
             title="Account suspended"
-            description="Contact the admins if you think this is a mistake."
+            description="Your osu! Tournament Rating account has been temporarily disabled. If you believe this is an error, please contact the administrators."
             className="min-h-0 py-10"
           >
             <p className="text-muted-foreground">
               <span className="font-medium text-foreground">Reason:</span>{' '}
-              Multi-accounting
+              Submissions abuse
             </p>
           </StatusPage>
           <StatusPage
@@ -681,22 +724,19 @@ export default function FeedbackSection() {
         description="The one notice box. Info for context, warning for something to check before acting, danger for something that cannot be undone. Each tone has its own glyph."
       >
         <div className="flex flex-col gap-3">
-          <Callout tone="info" title="Ratings update weekly">
-            New verified matches count from the next Tuesday update at 12:00
-            UTC.
+          <Callout tone="info">
+            Only verified data is included in ratings.
           </Callout>
           <Callout tone="warning" title="Host compliance">
-            Get written permission from osu! support before filtering an
-            officially supported tournament.{' '}
-            <a href="#feedback-callout">Read the filtering rules</a>
+            Hosts must comply with the{' '}
+            <a href="#feedback-callout">
+              official tournament support filtering rules
+            </a>
+            .
           </Callout>
           <Callout tone="danger" title="Saving is permanent">
             This beatmap stops receiving osu! API updates for good. Nothing can
             undo it.
-          </Callout>
-          <Callout tone="info">
-            Submitted tournaments count toward ratings once an admin verifies
-            them.
           </Callout>
         </div>
       </Specimen>
@@ -712,23 +752,24 @@ export default function FeedbackSection() {
             tone="danger"
             action={
               <Button variant="destructive" size="sm" icon={Trash2}>
-                Delete account
+                Delete my account
               </Button>
             }
           >
-            Deleting your account removes your API keys and reports for good.
-            Your player profile stays public.
+            Permanently delete your account and remove your data from o!TR. Your
+            player profile will remain public.
           </Callout>
           <Callout
-            tone="warning"
-            title="Filtering is unavailable"
+            tone="info"
+            title="Filtering information"
             action={
-              <Button asChild variant="outline" size="sm">
-                <a href="#feedback-callout-action">Rating FAQ</a>
+              <Button variant="outline" size="sm" icon={Copy}>
+                Copy to clipboard
               </Button>
             }
           >
-            Ratings are recalculating. Check back after 12:15 UTC.
+            o!TR Filtering performed at: 2026-10-13 18:42:07 UTC (Report ID:
+            4821)
           </Callout>
         </div>
       </Specimen>
@@ -741,7 +782,7 @@ export default function FeedbackSection() {
         stacked
       >
         <Callout tone="warning" variant="banner" role="status">
-          Ratings are recalculating. The site may be slow until 12:15 UTC.
+          Ratings are pending recalculation, performance may be degraded
         </Callout>
       </Specimen>
 
@@ -749,13 +790,12 @@ export default function FeedbackSection() {
         id="feedback-callout-chip"
         name="CalloutChip"
         importPath={`${KIT}/CalloutChip`}
-        description="A short warning inside a panel, in the callout's colours. Its detail opens on tap, hover and focus."
+        description="A short warning inside a panel, in the callout's colours. Its detail opens on tap, hover and focus. The rows under the header show each tone at both sizes, labelled by tone."
       >
         <Panel>
           <SectionHeader
             icon={ChartNoAxesColumn}
-            title="Mod distribution"
-            meta="1,368 scores"
+            title="Tournament rank restrictions"
             actions={
               <CalloutChip
                 icon={ShieldQuestion}
@@ -767,19 +807,19 @@ export default function FeedbackSection() {
           />
           <PanelBody className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <CalloutChip tone="info">Verified only</CalloutChip>
-              <CalloutChip tone="warning">Partial data</CalloutChip>
-              <CalloutChip tone="danger">Includes rejected</CalloutChip>
+              <CalloutChip tone="info">Info</CalloutChip>
+              <CalloutChip tone="warning">Warning</CalloutChip>
+              <CalloutChip tone="danger">Danger</CalloutChip>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <CalloutChip tone="info" size="sm">
-                Verified only
+                Info
               </CalloutChip>
               <CalloutChip tone="warning" size="sm">
-                Partial data
+                Warning
               </CalloutChip>
               <CalloutChip tone="danger" size="sm">
-                Includes rejected
+                Danger
               </CalloutChip>
             </div>
           </PanelBody>

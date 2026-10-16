@@ -27,7 +27,10 @@ export interface SortOption<K extends SortKey> {
   label: string;
   /** The direction this key starts in when picked. Keeps the current one if unset. */
   defaultDirection?: SortDirection;
-  /** Plain words for each direction, such as "Newest first". */
+  /**
+   * Words for each direction in the button's tooltip, such as "Newest
+   * first". Defaults to "Ascending order" and "Descending order".
+   */
   directionLabels?: Readonly<Record<SortDirection, string>>;
   /** Options with different groups get a divider between them. */
   group?: string;
@@ -100,7 +103,7 @@ export function SortControl<K extends SortKey>({
       <IconButton
         variant="outline"
         size="lg"
-        label={`Sort direction: ${directionLabel}`}
+        label={`Sort order is ${value.direction === 'asc' ? 'ascending' : 'descending'}`}
         tooltip={directionLabel}
         icon={value.direction === 'desc' ? ArrowDown : ArrowUp}
         onClick={() =>

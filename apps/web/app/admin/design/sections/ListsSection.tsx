@@ -87,35 +87,15 @@ const KIT = '@/components/kit/lists';
 
 // --- Demo data ----------------------------------------------------------------
 
-type TournamentSortKey = 'endTime' | 'startTime' | 'name' | 'lobbySize';
+type TournamentSortKey = 'endTime' | 'startTime' | 'submitted' | 'lobbySize';
 
+// The tournament list's own sort keys. Like the list, a new key keeps the
+// current direction.
 const TOURNAMENT_SORTS: readonly SortOption<TournamentSortKey>[] = [
-  {
-    value: 'endTime',
-    label: 'End date',
-    defaultDirection: 'desc',
-    directionLabels: { asc: 'Oldest first', desc: 'Newest first' },
-  },
-  {
-    value: 'startTime',
-    label: 'Start date',
-    defaultDirection: 'desc',
-    directionLabels: { asc: 'Oldest first', desc: 'Newest first' },
-  },
-  {
-    value: 'name',
-    label: 'Name',
-    defaultDirection: 'asc',
-    directionLabels: { asc: 'A to Z', desc: 'Z to A' },
-    group: 'name',
-  },
-  {
-    value: 'lobbySize',
-    label: 'Lobby size',
-    defaultDirection: 'asc',
-    directionLabels: { asc: 'Smallest first', desc: 'Largest first' },
-    group: 'name',
-  },
+  { value: 'endTime', label: 'Completion date' },
+  { value: 'startTime', label: 'Start date' },
+  { value: 'submitted', label: 'Submission date' },
+  { value: 'lobbySize', label: 'Lobby size' },
 ];
 
 const LOBBY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8] as const;
@@ -133,7 +113,7 @@ const TOURNAMENT_PARAMS = defineListParams({
   lobbySize: arrayParam(LOBBY_SIZES),
   rank: rangeParam({ min: 1, max: 1_000_000, integer: true }),
   date: dayRangeParam(),
-  lazer: booleanParam(),
+  verified: booleanParam(),
 });
 
 type TournamentState = ListState<typeof TOURNAMENT_PARAMS>;
@@ -147,8 +127,8 @@ interface DemoTournament {
   rank: number;
   start: string;
   end: string;
+  submitted: string;
   status: VerificationStatus;
-  lazer: boolean;
 }
 
 const DEMO_TOURNAMENTS: readonly DemoTournament[] = [
@@ -161,8 +141,8 @@ const DEMO_TOURNAMENTS: readonly DemoTournament[] = [
     rank: 1,
     start: '2025-11-01',
     end: '2025-12-14',
+    submitted: '2025-10-02',
     status: VerificationStatus.Verified,
-    lazer: false,
   },
   {
     id: 2,
@@ -173,8 +153,8 @@ const DEMO_TOURNAMENTS: readonly DemoTournament[] = [
     rank: 1,
     start: '2025-09-06',
     end: '2025-10-19',
+    submitted: '2025-08-11',
     status: VerificationStatus.PreVerified,
-    lazer: false,
   },
   {
     id: 3,
@@ -185,8 +165,8 @@ const DEMO_TOURNAMENTS: readonly DemoTournament[] = [
     rank: 1,
     start: '2025-06-14',
     end: '2025-08-03',
+    submitted: '2025-05-20',
     status: VerificationStatus.Verified,
-    lazer: false,
   },
   {
     id: 4,
@@ -197,8 +177,8 @@ const DEMO_TOURNAMENTS: readonly DemoTournament[] = [
     rank: 10_000,
     start: '2026-06-26',
     end: '2026-08-09',
+    submitted: '2026-06-01',
     status: VerificationStatus.None,
-    lazer: true,
   },
   {
     id: 5,
@@ -209,8 +189,8 @@ const DEMO_TOURNAMENTS: readonly DemoTournament[] = [
     rank: 1,
     start: '2025-03-01',
     end: '2025-04-20',
+    submitted: '2025-02-03',
     status: VerificationStatus.Verified,
-    lazer: false,
   },
   {
     id: 6,
@@ -221,8 +201,8 @@ const DEMO_TOURNAMENTS: readonly DemoTournament[] = [
     rank: 1,
     start: '2025-05-03',
     end: '2025-06-22',
+    submitted: '2025-04-07',
     status: VerificationStatus.PreRejected,
-    lazer: true,
   },
 ];
 
@@ -250,9 +230,10 @@ function filterTournaments(state: TournamentState): DemoTournament[] {
         state.lobbySize.some((size) => size === row.lobbySize)) &&
       (state.rank.min === undefined || row.rank >= state.rank.min) &&
       (state.rank.max === undefined || row.rank <= state.rank.max) &&
-      (!state.date.from || row.end >= state.date.from) &&
-      (!state.date.to || row.start <= state.date.to) &&
-      (!state.lazer || row.lazer)
+      // Like the list: started on or after From, ended on or before Through.
+      (!state.date.from || row.start >= state.date.from) &&
+      (!state.date.to || row.end <= state.date.to) &&
+      (!state.verified || row.status === VerificationStatus.Verified)
   );
 
   const sortValue: Record<
@@ -261,7 +242,7 @@ function filterTournaments(state: TournamentState): DemoTournament[] {
   > = {
     endTime: (row) => row.end,
     startTime: (row) => row.start,
-    name: (row) => row.name,
+    submitted: (row) => row.submitted,
     lobbySize: (row) => row.lobbySize,
   };
   const read = sortValue[state.sort.key];
@@ -294,7 +275,7 @@ function tournamentActiveFilters(
     },
     {
       key: 'rank',
-      label: formatRangeFilterLabel('Rank range', state.rank),
+      label: formatRangeFilterLabel('Rank restriction', state.rank),
       onRemove: () => update({ rank: {} }),
     },
     {
@@ -303,9 +284,9 @@ function tournamentActiveFilters(
       onRemove: () => update({ date: {} }),
     },
     {
-      key: 'lazer',
-      label: state.lazer ? 'Lazer only' : '',
-      onRemove: () => update({ lazer: false }),
+      key: 'verified',
+      label: state.verified ? 'Verified only' : '',
+      onRemove: () => update({ verified: false }),
     },
   ];
 }
@@ -398,9 +379,9 @@ function TournamentToolbarDemo() {
                 onValueChange={(lobbySize) => setState({ lobbySize })}
               />
               <RangeFilter
-                label="Rank range"
+                label="Rank restriction"
                 valueLabel="rank"
-                description="Open-rank tournaments start at 1."
+                description="Use 1 for open-rank tournaments."
                 min={1}
                 max={1_000_000}
                 scale={tournamentRankScale}
@@ -408,16 +389,14 @@ function TournamentToolbarDemo() {
                 onValueChange={(rank) => setState({ rank })}
               />
               <DayRangeFilter
-                label="Dates"
-                info="Shows tournaments that ran on any day in this range. Both ends are included."
+                label="Tournament dates"
                 value={state.date}
                 onValueChange={(date) => setState({ date })}
               />
               <SwitchFilter
-                label="Lazer only"
-                description="Tournaments played on osu!(lazer)."
-                checked={state.lazer}
-                onCheckedChange={(lazer) => setState({ lazer })}
+                label="Verified only"
+                checked={state.verified}
+                onCheckedChange={(verified) => setState({ verified })}
               />
             </FilterPanel>
           }
@@ -627,8 +606,7 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
                 value: 'friends',
                 label: 'Friends',
                 disabled: !hasFriends,
-                disabledReason:
-                  'Sync your osu! friends in settings to rank them here.',
+                disabledReason: 'Sync friends in settings to enable',
               },
             ]}
           />
@@ -699,7 +677,8 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
 function BeatmapToolbarDemo() {
   const [layout, setLayout] = useState('compact');
   const [sort, setSort] = useState<{
-    key: 'gameCount' | 'tournamentCount' | 'sr' | 'bpm' | 'length';
+    key:
+      'gameCount' | 'tournamentCount' | 'sr' | 'bpm' | 'cs' | 'ar' | 'length';
     direction: 'asc' | 'desc';
   }>({ key: 'gameCount', direction: 'desc' });
   const [rulesets, setRulesets] = useState<Ruleset[]>([Ruleset.Osu]);
@@ -712,7 +691,7 @@ function BeatmapToolbarDemo() {
         search={
           <SearchField
             label="Search beatmaps"
-            placeholder="Title, artist, mapper or ID"
+            placeholder="Search title, artist, difficulty, mapper, or ID"
             value={query}
             onSearch={setQuery}
           />
@@ -727,6 +706,8 @@ function BeatmapToolbarDemo() {
               { value: 'tournamentCount', label: 'Tournaments' },
               { value: 'sr', label: 'SR', group: 'attributes' },
               { value: 'bpm', label: 'BPM', group: 'attributes' },
+              { value: 'cs', label: 'CS', group: 'attributes' },
+              { value: 'ar', label: 'AR', group: 'attributes' },
               { value: 'length', label: 'Length', group: 'attributes' },
             ]}
           />
@@ -828,10 +809,11 @@ function SearchFieldDemo() {
         }}
       />
       <p className="text-xs text-muted-foreground">
-        {term ? `Showing results for "${term}".` : 'Showing every tournament.'}
+        State: {`{ q: '${term}' }`}
       </p>
       <SearchField
-        label="Search tournaments (too short)"
+        label="Search tournaments"
+        placeholder="Search by name or abbreviation"
         value="c"
         onSearch={() => {}}
       />
@@ -860,7 +842,7 @@ function SortControlDemo() {
 }
 
 function RulesetChipsDemo() {
-  const [value, setValue] = useState<Ruleset[]>([Ruleset.Osu, Ruleset.Mania4k]);
+  const [value, setValue] = useState<Ruleset[]>([Ruleset.Osu]);
   return <RulesetChips value={value} onValueChange={setValue} />;
 }
 
@@ -883,7 +865,7 @@ function ScopeSwitchDemo() {
         ]}
       />
       <ScopeSwitch
-        label="Players to show, friends unavailable"
+        label="Players to show"
         value="all"
         onValueChange={() => {}}
         options={[
@@ -892,8 +874,7 @@ function ScopeSwitchDemo() {
             value: 'friends',
             label: 'Friends',
             disabled: true,
-            disabledReason:
-              'Sync your osu! friends in settings to rank them here.',
+            disabledReason: 'Sync friends in settings to enable',
           },
         ]}
       />
@@ -902,13 +883,13 @@ function ScopeSwitchDemo() {
 }
 
 function ChoiceChipDemo() {
-  const [lazer, setLazer] = useState(true);
+  const [teams, setTeams] = useState(true);
   const [verified, setVerified] = useState(true);
   const [solo, setSolo] = useState(false);
   return (
     <div className="flex flex-wrap gap-1.5">
-      <ChoiceChip selected={lazer} onClick={() => setLazer(!lazer)}>
-        Lazer
+      <ChoiceChip selected={teams} onClick={() => setTeams(!teams)}>
+        {formatLobbySize(4)}
       </ChoiceChip>
       {/* A status glyph keeps its own colour when selected. */}
       <ChoiceChip
@@ -1011,9 +992,8 @@ function BeatmapFiltersDemo() {
         onValueChange={setSr}
       />
       <RangeFilter
-        label="Length"
-        valueLabel="length in seconds"
-        description="In seconds."
+        label="Length (seconds)"
+        valueLabel="length"
         min={0}
         max={1800}
         scale={lengthScale}
@@ -1052,12 +1032,12 @@ function TournamentFiltersDemo() {
     from: '2025-06-01',
     to: '2025-08-31',
   });
-  const [lazer, setLazer] = useState(false);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const active =
     (isRangeSet(rank) ? 1 : 0) +
     (status.length ? 1 : 0) +
     (dates.from || dates.to ? 1 : 0) +
-    (lazer ? 1 : 0);
+    (verifiedOnly ? 1 : 0);
 
   return (
     <OpenFilterPanel
@@ -1067,13 +1047,13 @@ function TournamentFiltersDemo() {
         setRank({});
         setStatus([]);
         setDates({});
-        setLazer(false);
+        setVerifiedOnly(false);
       }}
     >
       <RangeFilter
-        label="Rank range"
+        label="Rank restriction"
         valueLabel="rank"
-        info="The best osu! rank a player may have to register. 1 means open rank."
+        info="The 'best' global rank allowed to participate. Use 1 for open rank."
         min={1}
         max={1_000_000}
         scale={tournamentRankScale}
@@ -1086,12 +1066,15 @@ function TournamentFiltersDemo() {
         value={status}
         onValueChange={setStatus}
       />
-      <DayRangeFilter label="Dates" value={dates} onValueChange={setDates} />
+      <DayRangeFilter
+        label="Tournament dates"
+        value={dates}
+        onValueChange={setDates}
+      />
       <SwitchFilter
-        label="Lazer only"
-        description="Tournaments played on osu!(lazer)."
-        checked={lazer}
-        onCheckedChange={setLazer}
+        label="Verified only"
+        checked={verifiedOnly}
+        onCheckedChange={setVerifiedOnly}
       />
     </OpenFilterPanel>
   );
@@ -1111,13 +1094,13 @@ function DateFieldDemo() {
   return (
     <div className="flex flex-col gap-4">
       <div className="max-w-56">
-        <DateField label="Start date" value={day} onValueChange={setDay} />
+        <DateField label="From" value={day} onValueChange={setDay} />
       </div>
       <div className="w-fit rounded-xl border bg-popover p-3 text-popover-foreground shadow-md">
         <Calendar
           value={day}
           onSelect={setDay}
-          highlight={{ from: '2025-07-14', to: day }}
+          highlight={{ from: day, to: '2025-08-03' }}
         />
       </div>
     </div>
@@ -1158,18 +1141,14 @@ function ActiveFilterChipsDemo() {
   return keys.length ? (
     <ActiveFilterChips filters={filters} onClearAll={() => setKeys([])} />
   ) : (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs text-muted-foreground">
-        All filters removed.
-      </span>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setKeys(initial.map((filter) => filter.key))}
-      >
-        Show them again
-      </Button>
-    </div>
+    // Gallery only: brings the removed chips back.
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => setKeys(initial.map((filter) => filter.key))}
+    >
+      Reset
+    </Button>
   );
 }
 
@@ -1177,7 +1156,7 @@ const ADDRESS_EXAMPLES: { note: string; state: Partial<TournamentState> }[] = [
   { note: 'Defaults write nothing', state: {} },
   {
     note: 'Search and sort',
-    state: { q: 'world cup', sort: { key: 'name', direction: 'asc' } },
+    state: { q: 'world cup', sort: { key: 'startTime', direction: 'desc' } },
   },
   {
     note: 'Only the direction changed',
@@ -1188,8 +1167,10 @@ const ADDRESS_EXAMPLES: { note: string; state: Partial<TournamentState> }[] = [
     state: {
       ruleset: [Ruleset.Taiko, Ruleset.Osu],
       status: [VerificationStatus.Verified, VerificationStatus.None],
+      lobbySize: [4, 1],
     },
   },
+  { note: 'A switch writes true', state: { verified: true } },
   {
     note: 'Ranges and days',
     state: {
@@ -1324,7 +1305,7 @@ export default function ListsSection() {
         id="lists-choice-chip"
         name="ChoiceChip"
         importPath={`${KIT}/ChoiceChip`}
-        description="One toggle chip, for chip filters that are not rulesets, such as Lazer, a status or a lobby size. Selected chips get a blue edge and tint; a status glyph keeps its own colour."
+        description="One toggle chip, for chip filters that are not rulesets, such as a verification status or a lobby size. Selected chips get a blue edge and tint; a status glyph keeps its own colour."
       >
         <ChoiceChipDemo />
       </Specimen>
@@ -1345,7 +1326,7 @@ export default function ListsSection() {
         id="lists-filter-panel"
         name="FilterPanel and its fields"
         importPath={`${KIT}/FilterPanel`}
-        description="One panel layout for every list: the beatmap list's range fields, with CS and AR at half width, and the tournament list's ChoiceFilter, DayRangeFilter and SwitchFilter. Fields apply as you change them; number boxes sit beside the label and long labels wrap. Clear all resets that panel's fields only. Each panel is drawn open under its button, where the popover opens."
+        description="One panel layout for every list: the beatmap list's range fields, with CS and AR at half width, and tournament filters built from ChoiceFilter, DayRangeFilter and SwitchFilter. Fields apply as you change them; number boxes sit beside the label and long labels wrap. Clear all resets that panel's fields only. Each panel is drawn open under its button, where the popover opens."
         stacked
       >
         <FilterFieldsDemo />

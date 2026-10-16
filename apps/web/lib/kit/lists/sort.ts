@@ -17,9 +17,10 @@ export interface SortState<K extends SortKey = string> {
 /** Most columns read best biggest first: ratings, counts, dates. */
 export const DEFAULT_SORT_DIRECTION: SortDirection = 'desc';
 
+/** The direction button's tooltip, as the beatmap list words it. */
 export const SORT_DIRECTION_LABELS: Readonly<Record<SortDirection, string>> = {
-  asc: 'Ascending',
-  desc: 'Descending',
+  asc: 'Ascending order',
+  desc: 'Descending order',
 };
 
 export function isSortDirection(value: unknown): value is SortDirection {

@@ -177,21 +177,23 @@ function TokenList({ groupId }: { groupId: string }) {
   );
 }
 
+// The site's own notices: the home page, the maintenance banner and the
+// account deletion card in settings.
 const CALLOUT_DEMO: Record<
   CalloutTone,
   { icon: React.ComponentType<{ className?: string }>; text: string }
 > = {
   info: {
     icon: Info,
-    text: 'Ratings update every Tuesday at 12:00 UTC.',
+    text: 'Ratings are recalculated every Tuesday at 12:00 UTC',
   },
   warning: {
     icon: TriangleAlert,
-    text: 'This tournament is not in ratings yet. An admin still has to verify it.',
+    text: 'Ratings are pending recalculation, performance may be degraded',
   },
   danger: {
     icon: OctagonAlert,
-    text: 'Deleting your account removes your API keys and reports.',
+    text: 'Permanently delete your account and remove your data from o!TR. Your player profile will remain public.',
   },
 };
 
@@ -282,15 +284,7 @@ function MatchSurfaceDemo() {
 }
 
 function AccentRule() {
-  const [selected, setSelected] = React.useState<ReadonlySet<string>>(
-    () => new Set(['osu'])
-  );
-  const toggle = (key: string) =>
-    setSelected((current) => {
-      const next = new Set(current);
-      if (!next.delete(key)) next.add(key);
-      return next;
-    });
+  const [selected, setSelected] = React.useState('osu');
 
   return (
     <div className="@container grid gap-4">
@@ -298,7 +292,11 @@ function AccentRule() {
         <div className="flex flex-col gap-2">
           <p className="text-xs font-medium text-muted-foreground">Do</p>
           <Panel>
-            <SectionHeader icon={Trophy} title="Tournaments" meta="12 played" />
+            <SectionHeader
+              icon={Trophy}
+              title="Tournament history"
+              meta="12 tournaments"
+            />
             <PanelBody className="flex flex-col gap-3 text-sm">
               <a
                 href="#color-accent-rule"
@@ -308,19 +306,19 @@ function AccentRule() {
               </a>
               <div className="flex flex-wrap items-center gap-2">
                 <Button size="sm">Submit tournament</Button>
-                {RULESETS.slice(0, 2).map((ruleset) => (
+                {RULESET_FILTER.map((ruleset) => (
                   <ChoiceChip
                     key={ruleset.key}
-                    selected={selected.has(ruleset.key)}
-                    onClick={() => toggle(ruleset.key)}
+                    selected={selected === ruleset.key}
+                    onClick={() => setSelected(ruleset.key)}
                   >
                     {ruleset.label}
                   </ChoiceChip>
                 ))}
               </div>
               <span className="flex items-center gap-1.5">
-                Admin
-                <NotificationDot label="Unseen reports" />
+                Reports
+                <NotificationDot label="Unread report updates" />
               </span>
             </PanelBody>
           </Panel>
@@ -332,7 +330,7 @@ function AccentRule() {
           <Panel>
             <div className="flex items-center gap-2 border-b px-4 py-3">
               <Trophy className="size-4 text-primary" aria-hidden />
-              <h4 className="font-semibold">Tournaments</h4>
+              <h4 className="font-semibold">Tournament history</h4>
             </div>
             <PanelBody className="flex flex-col gap-3 text-sm">
               <span className="w-fit font-medium text-primary">
@@ -454,6 +452,9 @@ const RULESETS = [
   { key: 'mania4k', label: 'mania 4K' },
   { key: 'mania7k', label: 'mania 7K' },
 ] as const;
+
+/** A few chips to show the selected state; one is selected at a time. */
+const RULESET_FILTER = [{ key: 'all', label: 'All' }, ...RULESETS.slice(0, 2)];
 
 const MATCHES_BY_RULESET = [2019, 2020, 2021, 2022, 2023, 2024, 2025].map(
   (year, index) => ({
@@ -697,7 +698,7 @@ function DistributionDemo() {
     <Panel>
       <SectionHeader
         icon={ChartNoAxesColumn}
-        title="Players by rating"
+        title="Rating distribution"
         level={4}
         meta={`${formatCount(PLAYERS_BY_RATING.reduce((sum, entry) => sum + entry.players, 0))} players`}
       />
@@ -811,7 +812,7 @@ export default function ColorSection() {
         id="color-categorical-palette"
         name="Categorical palette"
         importPath={`${COLOR_LIB}/categorical`}
-        description="Eight hues in a fixed order for neutral series, rank ranges and match teams. Assign slots in order and never cycle; a single series uses slot 1."
+        description="Eight hues in a fixed order for neutral series, rank restriction buckets and match teams. Assign slots in order and never cycle; a single series uses slot 1."
       >
         <div className="flex flex-col gap-3">
           <div className="flex h-8 gap-0.5 overflow-hidden rounded-md">
@@ -1063,18 +1064,13 @@ export default function ColorSection() {
               color: seriesColor(index),
             }))}
           />
+          {/* The player rating chart's line and its peak rule. */}
           <ChartLegend
             items={[
               {
-                key: 'you',
-                label: 'You',
+                key: 'rating',
+                label: 'Rating',
                 color: seriesColor(0),
-                marker: 'line',
-              },
-              {
-                key: 'teammates',
-                label: 'Teammates',
-                color: seriesColor(1),
                 marker: 'line',
               },
               {
@@ -1082,12 +1078,6 @@ export default function ColorSection() {
                 label: 'Peak',
                 color: 'var(--muted-foreground)',
                 marker: 'dashed',
-              },
-              {
-                key: 'match',
-                label: 'Match',
-                color: seriesColor(2),
-                marker: 'dot',
               },
             ]}
           />

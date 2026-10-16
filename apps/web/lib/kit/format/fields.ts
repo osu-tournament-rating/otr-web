@@ -40,8 +40,8 @@ export const FIELD_NAMES = {
   // Tournaments
   ruleset: { label: 'Ruleset', legacy: ['Game mode', 'Mode'] },
   rankRange: {
-    label: 'Rank range',
-    legacy: ['Rank restriction', 'Rank Range'],
+    label: 'Rank restriction',
+    legacy: ['Rank range', 'Rank Range'],
   },
   lobbySize: {
     label: 'Lobby size',
@@ -49,8 +49,8 @@ export const FIELD_NAMES = {
   },
   abbreviation: { label: 'Abbreviation' },
   forumUrl: {
-    label: 'Forum post',
-    legacy: ['Forum URL', 'Forum post URL'],
+    label: 'Forum post URL',
+    legacy: ['Forum URL'],
   },
   dates: { label: 'Dates' },
   startTime: { label: 'Start time', legacy: ['Start Time'] },
@@ -119,7 +119,7 @@ export function fieldLabel(
 /** `rankRangeLowerBound` of 1 means anyone can play. */
 export const OPEN_RANK_LABEL = 'Open rank';
 
-/** A tournament's rank range: `Open rank`, or `10,000+` for a lower bound. */
+/** A tournament's rank restriction: `Open rank`, or `10,000+` for a lower bound. */
 export function formatRankRange(
   lowerBound: number | null | undefined,
   { empty = EMPTY_VALUE }: { empty?: string } = {}

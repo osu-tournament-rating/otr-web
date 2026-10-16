@@ -53,7 +53,7 @@ import { VERIFICATION_STATUS_ORDER } from '@/lib/kit/status/verification';
 export const TOURNAMENT_LIST_PARAMS = defineListParams({
   q: searchParam(),
   page: pageParam(),
-  sort: sortParam(['endTime', 'startTime', 'name'], {
+  sort: sortParam(['endTime', 'startTime', 'submitted', 'lobbySize'], {
     key: 'endTime',
     direction: 'desc',
   }),
@@ -102,8 +102,8 @@ const { state, setState } = list;
       onClearAll={list.clearFilters}
     >
       <ChoiceFilter label="Verification status" … />
-      <RangeFilter label="Rank range" … />
-      <DayRangeFilter label="Dates" … />
+      <RangeFilter label="Rank restriction" … />
+      <DayRangeFilter label="Tournament dates" … />
     </FilterPanel>
   }
   rulesets={
@@ -195,7 +195,7 @@ Don't:
 - Don't debounce by hand: `useDebounce(query, 500)` in `components/search/SearchCommandDialog.tsx`, `FILTER_APPLY_DELAY` (600ms) in `components/filters/useDeferredFilterApply.ts`.
 - Don't search without a minimum or a spinner (the tournament list today), and don't make search wait for a button (admin player search in `app/admin/AdminDashboardClient.tsx`; a lookup by exact ID may keep a submit button, but it is then not a list search).
 - Don't leave a list without search: the leaderboard needs a player search.
-- Don't write a placeholder longer than about 30 characters; the box is about 290px wide on a phone and cuts it off. The beatmap list's "Search title, artist, difficulty, mapper, or ID" does; "Title, artist, mapper or ID" fits. The `label` carries the full name.
+- Don't write a placeholder longer than about 30 characters; the box is about 290px wide on a phone and cuts it off, as it does the beatmap list's "Search title, artist, difficulty, mapper, or ID". The `label` carries the full name.
 
 Gallery anchor: `/admin/design#lists-search-field`
 
@@ -209,19 +209,15 @@ import {
   type SortOption,
 } from '@/components/kit/lists/SortControl';
 
-const SORT_OPTIONS: SortOption<'endTime' | 'name'>[] = [
-  {
-    value: 'endTime',
-    label: 'End date',
-    defaultDirection: 'desc',
-    directionLabels: { asc: 'Oldest first', desc: 'Newest first' },
-  },
-  {
-    value: 'name',
-    label: 'Name',
-    defaultDirection: 'asc',
-    directionLabels: { asc: 'A to Z', desc: 'Z to A' },
-  },
+// The tournament list's sort keys, with its own labels. A new key keeps the
+// current direction, as on the list today.
+const SORT_OPTIONS: SortOption<
+  'endTime' | 'startTime' | 'submitted' | 'lobbySize'
+>[] = [
+  { value: 'endTime', label: 'Completion date' },
+  { value: 'startTime', label: 'Start date' },
+  { value: 'submitted', label: 'Submission date' },
+  { value: 'lobbySize', label: 'Lobby size' },
 ];
 
 <SortControl
@@ -235,14 +231,14 @@ const SORT_OPTIONS: SortOption<'endTime' | 'name'>[] = [
 Props that matter:
 
 - `value`, `onValueChange`: `{ key, direction }`.
-- `options`: `value`, `label`, and optionally `defaultDirection` (the direction a key starts in when picked; otherwise the current one is kept), `directionLabels` (plain words for the button's tooltip and name; otherwise "Ascending" and "Descending") and `group` (a divider between groups, like the beatmap list's counts and attributes).
+- `options`: `value`, `label`, and optionally `defaultDirection` (the direction a key starts in when picked; otherwise the current one is kept), `directionLabels` (words for the button's tooltip; otherwise "Ascending order" and "Descending order", as on the beatmap list) and `group` (a divider between groups, like the beatmap list's counts and attributes).
 - `label`: names the dropdown ("Sort tournaments by").
 
-The direction button is an outline `IconButton` at `lg` (40px) named "Sort direction: Newest first", with the plain words in its tooltip.
+The direction button is an outline `IconButton` at `lg` (40px) named "Sort order is descending" (or ascending), the beatmap list's wording, with "Descending order" or the option's direction label in its tooltip.
 
 Don't:
 
-- Don't bake the direction into each option ("Newest", "Oldest") or offer only header clicks (`components/tournaments/TournamentMatchesAdminView.tsx`, `components/beatmaps/list/BeatmapSortableHead.tsx` alone).
+- Don't bake the direction into each option ("Date, newest first" and "Date, oldest first" in `components/tournaments/TournamentMatchesLedger.tsx`) or offer only header clicks (`components/tournaments/TournamentMatchesAdminView.tsx`, `components/beatmaps/list/BeatmapSortableHead.tsx` alone).
 - Don't leave a list unsorted when its rows have an order people care about (leaderboard, reports, audit).
 
 Gallery anchor: `/admin/design#lists-sort-control`
@@ -307,7 +303,7 @@ import { ScopeSwitch } from '@/components/kit/lists/ScopeSwitch';
       value: 'friends',
       label: 'Friends',
       disabled: !hasFriends,
-      disabledReason: 'Sync your osu! friends in settings to rank them here.',
+      disabledReason: 'Sync friends in settings to enable',
     },
   ]}
 />;
@@ -324,16 +320,25 @@ Gallery anchor: `/admin/design#lists-scope-switch`
 
 ## ChoiceChip
 
-One pill that toggles an option on or off (`aria-pressed`). `RulesetChips` and `ChoiceFilter` are built from it; use it alone only for a chip filter that is not a ruleset, such as "Lazer".
+One pill that toggles an option on or off (`aria-pressed`). `RulesetChips` and `ChoiceFilter` are built from it; use it alone only for a chip filter that is not a ruleset, such as a lobby size.
 
 ```tsx
 import { ChoiceChip } from '@/components/kit/lists/ChoiceChip';
+import { formatLobbySize } from '@/lib/kit/format/fields';
+
+const selected = state.lobbySize.includes(4);
 
 <ChoiceChip
-  selected={state.lazer}
-  onClick={() => setState({ lazer: !state.lazer })}
+  selected={selected}
+  onClick={() =>
+    setState({
+      lobbySize: selected
+        ? state.lobbySize.filter((size) => size !== 4)
+        : [...state.lobbySize, 4],
+    })
+  }
 >
-  Lazer
+  {formatLobbySize(4)}
 </ChoiceChip>;
 ```
 
@@ -407,8 +412,9 @@ import { CountrySearchSelect } from '@/components/leaderboard/CountryFilter';
 import { tournamentRankScale } from '@/lib/filters/tournament-rank';
 
 <RangeFilter
-  label="Rank range"
+  label="Rank restriction"
   valueLabel="rank"
+  description="Use 1 for open-rank tournaments."
   min={1}
   max={1_000_000}
   scale={tournamentRankScale}
@@ -425,8 +431,8 @@ import { tournamentRankScale } from '@/lib/filters/tournament-rank';
   value={state.status}
   onValueChange={(status) => setState({ status })}
 />
-<DayRangeFilter label="Dates" value={state.date} onValueChange={(date) => setState({ date })} />
-<SwitchFilter label="Lazer only" checked={state.lazer} onCheckedChange={(lazer) => setState({ lazer })} />
+<DayRangeFilter label="Tournament dates" value={state.date} onValueChange={(date) => setState({ date })} />
+<SwitchFilter label="Verified only" checked={state.verified} onCheckedChange={(verified) => setState({ verified })} />
 <FilterField label="Country"><CountrySearchSelect … /></FilterField>
 ```
 
@@ -439,7 +445,7 @@ import { tournamentRankScale } from '@/lib/filters/tournament-rank';
 Don't:
 
 - Don't put a dropdown of checkboxes inside the panel for a handful of options (`MultiSelectDropdown` in `FilterPopover.tsx`); use `ChoiceFilter`. Keep dropdowns for long lists such as countries.
-- Don't label with legacy names ("Team size", "Rank restriction", "Win rate %"); use the glossary in `@/lib/kit/format/fields`.
+- Don't label with legacy names ("Team size", "Rank range", "Win rate %"); use the glossary in `@/lib/kit/format/fields`.
 
 Gallery anchor: `/admin/design#lists-filter-panel`
 
@@ -450,12 +456,7 @@ A UTC day picked from a month calendar, replacing `<input type="date">`, which l
 ```tsx
 import { Calendar, DateField } from '@/components/kit/lists/DateField';
 
-<DateField
-  label="Start date"
-  value={day}
-  onValueChange={setDay}
-  min="2007-01-01"
-/>;
+<DateField label="From" value={day} onValueChange={setDay} />;
 ```
 
 - `value`: `YYYY-MM-DD` or `undefined`. The button shows `Jul 20, 2024` (the format family's `formatDate`) or the placeholder ("Any date").
@@ -505,8 +506,8 @@ import {
 ```
 
 - A filter whose `label` is empty is left out, so pass every filter and let the helpers return `''` for inactive ones.
-- Label helpers: `formatRangeFilterLabel` (`SR: 5 – 7`, `Rank range: at least 1,000`, `BPM: at most 180`), `formatChoiceFilterLabel` (`Status: Pending, Verified +1`), `formatDayRangeFilterLabel` (`Dates: Jul 20 – Aug 3, 2024`, `Dates: from Jul 20, 2024`).
-- Each chip is named "Remove filter: SR: 5 – 7". Long labels wrap inside the chip.
+- Label helpers: `formatRangeFilterLabel` (`SR: 5 – 7`, `Rank restriction: at least 1,000`, `BPM: at most 180`), `formatChoiceFilterLabel` (`Status: Pending, Verified +1`), `formatDayRangeFilterLabel` (`Dates: Jul 20 – Aug 3, 2024`, `Dates: from Jul 20, 2024`).
+- Each chip is named "Remove SR: 5 – 7 filter", as the beatmap list's chips are. Long labels wrap inside the chip.
 - Chips are at least 32px tall, the height of the ghost `sm` "Clear all" Button after them and of the ruleset chips above.
 
 Don't:
@@ -540,7 +541,7 @@ Param builders (each takes an optional `key` to override the URL key, and `role`
 | `sortParam(keys, default)`           | `SortState`                      | `sort=name&dir=asc`                      | `sort`       |
 | `enumParam(options, { default })`    | one option, or `undefined`       | `ruleset=1`                              | `filter`     |
 | `arrayParam(options)`                | options in their fixed order     | `status=0&status=4`                      | `filter`     |
-| `booleanParam({ default })`          | `boolean`                        | `lazer=true`                             | `filter`     |
+| `booleanParam({ default })`          | `boolean`                        | `verified=true`                          | `filter`     |
 | `numberParam({ min, max, integer })` | `number \| undefined`            | `report=42`                              | `filter`     |
 | `rangeParam({ min, max, integer })`  | `{ min?, max? }`                 | `minSr=5&maxSr=7` for a param named `sr` | `filter`     |
 | `dayRangeParam()`                    | `{ from?, to? }` as `YYYY-MM-DD` | `dateFrom=2024-07-20` for `date`         | `filter`     |

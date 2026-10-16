@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * A field label inside a shadcn FormItem, with the one info button for help
- * and an optional muted hint on the right, such as a unit or "Optional".
+ * and an optional muted hint on the right, such as a unit or "One per line".
  */
 export function FormFieldLabel({
   children,

@@ -81,7 +81,7 @@ import { PageHeader } from '@/components/kit/layout/PageHeader';
 <PageHeader
   icon={Trophy}
   title="Tournaments"
-  description="Browse tournament submissions and their review status."
+  description="Browse tournament submissions and their review status. Only verified data is included in ratings."
   actions={
     <Button asChild>
       <Link href="/tournaments/submit">
@@ -148,7 +148,7 @@ import { VerificationStatusBadge } from '@/components/kit/status/VerificationSta
     <IconButton
       variant="outline"
       icon={ExternalLink}
-      label="View on the osu! forum"
+      label="View tournament on osu! website"
     />
   }
   tabs={<HeroTabs aria-label="Tournament views" value={tab} items={…} />}
@@ -315,8 +315,8 @@ import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 <SectionHeader
   icon={Medal}
   title="Tier breakdown"
-  infoText="Charts NM, HD, HR and DT scores only."
-  meta="1,368 scores"
+  infoText="Charts NM, HD, HR and DT scores only, grouped by each player's pre-match rating at the time of play. Tiers with fewer than 5 scores are hidden."
+  meta="1,368 of 1,368 scores rated"
 />;
 ```
 
@@ -349,16 +349,16 @@ The one help affordance: a muted circled "i" beside the thing it explains. It op
 import { InfoButton } from '@/components/kit/layout/InfoButton';
 
 <span className="flex items-center gap-1.5">
-  Rank restriction
-  <InfoButton label="About rank restriction">
-    Players ranked better than this cannot register.
+  Lobby size
+  <InfoButton label="About lobby size">
+    Number of players per team in each match
   </InfoButton>
 </span>;
 ```
 
 Props:
 
-- `label`: the accessible name, such as "About rank restriction". Required.
+- `label`: the accessible name, such as "About lobby size". Required.
 - `children`: the explanation, a sentence or two.
 - `size`: `md` (16px glyph) beside 14px and 16px text, `sm` (14px) beside 12px labels.
 - `side`, `align`: where the bubble opens.

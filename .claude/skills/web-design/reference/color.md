@@ -119,7 +119,7 @@ Gallery anchor: `/admin/design#color-accent-rule`
 
 ## Categorical palette
 
-Eight hues in a fixed order for neutral series: rank ranges, teams (red and blue), rulesets, teammates and opponents, any "series 1, 2, 3". The order keeps neighbours apart for protanopia and deuteranopia (Machado 2009 simulation, adjacent OKLab ΔE ≥ 8) and for full colour vision (ΔE ≥ 15), in both themes; the tests check it.
+Eight hues in a fixed order for neutral series: rank restriction buckets, teams (red and blue), rulesets, teammates and opponents, any "series 1, 2, 3". The order keeps neighbours apart for protanopia and deuteranopia (Machado 2009 simulation, adjacent OKLab ΔE ≥ 8) and for full colour vision (ΔE ≥ 15), in both themes; the tests check it.
 
 ```tsx
 import {
@@ -147,11 +147,11 @@ import {
 - Assign by a stable index (the series' place in a fixed list), not by rank, so a filter that removes a series never repaints the others.
 - A single series is slot 1 and needs no legend. Two or more get a `ChartLegend`.
 - In scatter plots and small multiples any two colours can touch, so use at most three slots there and fold the rest into "Other".
-- Rank ranges keep their symbol and dash pattern from `lib/beatmaps/rankRange.ts` as the second channel.
+- Rank restriction buckets keep their symbol and dash pattern from `lib/beatmaps/rankRange.ts` as the second channel.
 
 Do:
 
-- Rank ranges take slots 1 to 5 in bucket order (Open, <1k, 1k+, 10k+, 100k+).
+- Rank restriction buckets take slots 1 to 5 in bucket order (Open, <1k, 1k+, 10k+, 100k+).
 - Teammates and opponents take slots 1 and 2.
 
 Don't:
@@ -556,7 +556,7 @@ import { ChartContainer } from '@/components/ui/chart';
     icon={ChartColumn}
     title="Tournaments by year"
     meta="8,042 verified"
-    infoText="Verified tournaments, by the year they started."
+    infoText="Number of verified tournaments by year"
   />
   <PanelBody className="flex flex-col gap-3">
     <ChartLegend items={…} />

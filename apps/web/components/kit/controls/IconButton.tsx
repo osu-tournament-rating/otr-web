@@ -42,7 +42,7 @@ export type IconButtonProps = Omit<
   React.ComponentProps<'button'>,
   'children'
 > & {
-  /** The accessible name and the tooltip, in sentence case: "Audit history". */
+  /** The accessible name and the tooltip, in sentence case: "View audit history". */
   label: string;
   /** The lucide glyph. With `asChild` it goes inside the child element. */
   icon?: KitIcon;

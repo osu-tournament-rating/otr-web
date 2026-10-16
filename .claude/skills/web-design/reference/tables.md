@@ -52,8 +52,8 @@ import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { formatCount, formatRank, formatRating } from '@/lib/kit/format/number';
 
 <Panel>
-  <SectionHeader icon={ListOrdered} title="Leaderboard" meta="8,412 players" />
-  <DataTable aria-label="Leaderboard" phoneRows={phoneRows}>
+  <SectionHeader icon={ListOrdered} title="Global leaderboard" meta="8,412 players" />
+  <DataTable aria-label="Global leaderboard" phoneRows={phoneRows}>
     <DataTableHeader>
       <DataTableRow>
         <DataTableHead className="w-16">Rank</DataTableHead>
@@ -149,19 +149,19 @@ const [sort, setSort] = useState<SortState<'rating' | 'matches' | 'name'>>({
 // A list sorted in the address, from the server page, with the list's
 // `defineListParams` spec (lists family). Page 1 is the default, so it drops out of the URL.
 <SortableHeader
-  sortKey="matches"
+  sortKey="lobbySize"
   sort={state.sort}
   getSortHref={(sort) =>
     listStateHref('/tournaments', TOURNAMENT_LIST_PARAMS, { ...state, sort, page: 1 })
   }
   numeric
 >
-  Matches
+  Lobby size
 </SortableHeader>
 
 // The same from a client component: `useListState`'s `hrefFor` resets the page for you.
-<SortableHeader sortKey="matches" sort={list.state.sort} getSortHref={(sort) => list.hrefFor({ sort })} numeric>
-  Matches
+<SortableHeader sortKey="lobbySize" sort={list.state.sort} getSortHref={(sort) => list.hrefFor({ sort })} numeric>
+  Lobby size
 </SortableHeader>
 ```
 
@@ -182,7 +182,7 @@ Do:
 Don't:
 
 - Don't build a sort header by hand: `components/beatmaps/list/BeatmapSortableHead.tsx`, the sort buttons in `components/matches/MatchStatsView.tsx` and the local `SortableHeader` in `components/filtering/FilteringResultsTable.tsx` all become this component.
-- Don't bake the direction into dropdown options ("Newest first") while headers flip a separate flag.
+- Don't bake the direction into dropdown options ("Date, newest first") while headers flip a separate flag.
 - Don't put an InfoButton inside the header's button; use `info`, which places it beside.
 
 Gallery anchor: `/admin/design#tables-sortable-header`
@@ -290,7 +290,7 @@ import {
 - A click anywhere else on the row follows that link (cmd, ctrl, shift or middle click opens a new tab). Clicks on a button, input or link inside the row keep their own behaviour, and so does selecting text.
 - Mark the name with `data-row-title`; it turns blue while the row is hovered.
 - A control inside the link cell (an audio preview, a checkbox) needs `relative z-20` to sit above the overlay.
-- Below tablet width, give the DataTable `phoneRows` of `PhoneRow`s with `href` and `linkLabel`, the slot or rank as `rank` and the key number as `value`; a fixed table squeezed to a phone truncates every name.
+- Below tablet width, give the DataTable `phoneRows` of `PhoneRow`s with `href` and `linkLabel`, the rank, when the list has one, as `rank` and the key number as `value`; a fixed table squeezed to a phone truncates every name.
 - Client component (the row listens for clicks).
 
 Don't:
@@ -312,16 +312,16 @@ import { ViewButton } from '@/components/kit/tables/ViewButton';
 // content only while it is open, so a long table costs nothing.
 <DataTableCell align="end">
   <DialogTemplate
-    trigger={<ViewButton subject={`report ${formatId(report.id)}`} />}
-    title={`Report ${formatId(report.id)}`}
-    description={<Timestamp date={report.created} />}
+    trigger={<ViewButton subject={`report #${formatId(report.id)}`} />}
+    title="Report details"
+    description={`${entityTypeName} · ${report.entityDisplayName}`}
   >
     <ReportDetails report={report} />
   </DialogTemplate>
 </DataTableCell>;
 ```
 
-- `subject` completes the accessible name: "View report 1204". The visible label is always "View".
+- `subject` completes the accessible name: "View report #1204", the ID as the admin queue writes it. The visible label is always "View".
 - It is the controls family's `Button` (`@/components/kit/controls/Button`), outline at `sm` (32px), with `aria-haspopup="dialog"`; all other button props pass through, including `pending` and `disabled`. While its dialog is open it keeps the outline's open fill.
 - Put it in the last column, right-aligned, with a header of `<span className="sr-only">Actions</span>`. On phones it is the PhoneRow's `value`.
 - The record opens in `DialogTemplate` (`@/components/kit/controls/DialogTemplate`), the one dialog layout, never a hand-built `DialogContent` with a centred header.
@@ -342,9 +342,9 @@ What a table becomes below tablet width (finding 34): one row per record that ke
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 
 <DataTable
-  aria-label="Leaderboard"
+  aria-label="Global leaderboard"
   phoneRows={
-    <PhoneRowList as="ol" aria-label="Leaderboard">
+    <PhoneRowList as="ol" aria-label="Global leaderboard">
       {rows.map((row) => (
         <PhoneRow
           key={row.player.id}
@@ -429,8 +429,9 @@ const data = await orpc.leaderboard.list(toApiFilter(state)); // toApiFilter: th
 // From a client component with useListState:
 <PaginationFooter … getPageHref={(page) => list.hrefFor({ page })} />
 
-// Paged in component state, such as rows a dialog already holds:
-<PaginationFooter page={page} pageSize={25} totalCount={reports.length} onPageChange={setPage} />
+// Paged in component state, such as rows a dialog already holds. PAGE_SIZE is
+// that list's own page size.
+<PaginationFooter page={page} pageSize={PAGE_SIZE} totalCount={rows.length} onPageChange={setPage} />
 ```
 
 Props that matter:
@@ -460,7 +461,7 @@ Gallery anchor: `/admin/design#tables-pagination`
 
 ## LoadMore
 
-The footer of an activity feed: how many entries are showing and a "Load more" button that appends the next batch, then a note once everything is showing. Only for feeds (the audit log, a player's recent activity); searchable lists use PaginationFooter.
+The footer of an activity feed: how many entries are showing and a "Load more" button that appends the next batch, then a note once everything is showing. Only for feeds (the audit logs and an entity's audit history); searchable lists use PaginationFooter.
 
 ```tsx
 import { LoadMore } from '@/components/kit/tables/LoadMore';
@@ -493,11 +494,10 @@ A muted em dash for a missing value, read by screen readers as "No value". DataT
 ```tsx
 import { MissingValue } from '@/components/kit/tables/MissingValue';
 
-<MissingValue />
-<MissingValue label="No peak rating yet" />
+<MissingValue />;
 ```
 
-- `label`: what a screen reader says instead of the dash.
+- `label`: what a screen reader says instead of the dash; "No value" unless you pass one.
 - The format helpers print the same dash (`EMPTY_VALUE`) as plain text; inside a cell it is recognised and muted.
 
 Don't:

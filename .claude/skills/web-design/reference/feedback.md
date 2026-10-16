@@ -39,7 +39,7 @@ Both block sizes go straight into the panel in place of the rows, directly under
 Copy:
 
 - Empty titles say what is missing: "No beatmaps match" when filtered, "No pooled beatmaps" or "No tournaments yet" otherwise. The description says why or what to try, in one sentence.
-- Error titles name the thing: "Tournaments could not load", "More activity could not load". No "Unable to", "Failed to" or "Please", and no full stop in a title.
+- Error titles name the thing: "Tournaments could not load", "More tournaments could not load". No "Unable to", "Failed to" or "Please", and no full stop in a title.
 - Retry buttons always read "Try again", never "Retry".
 
 ## EmptyState
@@ -75,12 +75,7 @@ import { ListToolbar } from '@/components/kit/lists/ListToolbar';
 </Panel>;
 
 // A chart with too little data:
-<EmptyState
-  size="compact"
-  icon={ChartNoAxesColumn}
-  title="Not enough data"
-  description="The chart appears once 10 scores are verified."
-/>;
+<EmptyState size="compact" icon={ChartNoAxesColumn} title="Not enough data" />;
 ```
 
 Props that matter:
@@ -128,11 +123,11 @@ import SectionError from '@/components/error/SectionError';
   onRetry={retry}
 />;
 
-// A failed "Load more" at the end of an activity feed, centred under the rows:
+// A failed "Load more" at the end of the tournament list, centred under the rows:
 <div className="border-t px-4 py-4">
   <SectionError
     size="inline"
-    title="More activity could not load"
+    title="More tournaments could not load"
     retrying={isValidating}
     onRetry={() => void mutate()}
     className="justify-center"
@@ -176,17 +171,17 @@ import {
   TableSkeleton,
 } from '@/components/kit/feedback/Skeletons';
 
-// app/admin/reports/loading.tsx
-export default function AdminReportsLoading() {
+// app/reports/loading.tsx
+export default function MyReportsLoading() {
   return (
     <PageFrame>
       <PageHeader
         icon={Flag}
-        title="Reports"
-        description="Review and resolve data reports."
+        title="Your reports"
+        description="Track the status of data issues you've reported"
       />
       <PanelSkeleton label="Loading reports">
-        <SectionHeaderSkeleton icon={ListChecks} title="Open reports" />
+        <SectionHeaderSkeleton icon={Flag} title="Reports" />
         <TableSkeleton
           columns={[
             { label: 'Type', width: 'w-28' },
@@ -233,14 +228,12 @@ Gallery anchors: `/admin/design#feedback-skeleton-panel`, `/admin/design#feedbac
 
 ## StatusPage
 
-The one layout for pages that are an outcome rather than content: not found, unauthorized, banned, and route errors. An icon, a short h1, one sentence and one action, centred in the content column like the route error screen.
+The one layout for pages that are an outcome rather than content: not found, unauthorized, banned, and route errors. An icon, a short h1, one sentence and, when the page offers a way forward, one action, centred in the content column like the route error screen.
 
 ```tsx
 import Image from 'next/image';
-import Link from 'next/link';
 import { Compass } from 'lucide-react';
 
-import { Button } from '@/components/kit/controls/Button';
 import { StatusPage } from '@/components/kit/feedback/StatusPage';
 
 // app/not-found.tsx
@@ -249,7 +242,7 @@ export default function NotFound() {
     <StatusPage
       icon={Compass}
       title="Page not found"
-      description="This page does not exist or has moved."
+      description="Sorry, we don't have that page!"
       background={
         <Image
           src="/images/error-background.svg"
@@ -261,11 +254,6 @@ export default function NotFound() {
           className="object-contain object-top sm:object-cover sm:object-center"
         />
       }
-      action={
-        <Button asChild>
-          <Link href="/">Go to the home page</Link>
-        </Button>
-      }
     />
   );
 }
@@ -275,7 +263,7 @@ export default function NotFound() {
   icon={ShieldAlert}
   tone="destructive"
   title={<span data-testid="banned-heading">Account suspended</span>}
-  description="Contact the admins if you think this is a mistake."
+  description="Your osu! Tournament Rating account has been temporarily disabled. If you believe this is an error, please contact the administrators."
 >
   {reason ? (
     <p className="text-muted-foreground">
@@ -291,7 +279,7 @@ Props that matter:
 - `icon`, `tone`: `neutral` (default; a muted icon on a grey disc) for not found and unauthorized, `destructive` (red icon) for bans and failures.
 - `title`: the page's h1, a few words in sentence case. It takes a node, so a test id can sit on a span inside it.
 - `description`: one sentence.
-- `action`: one kit `Button` at `default` size, like EmptyState's and Callout's `action`. A route error may put a way back before its Try again (pass both in a fragment: `<Button asChild variant="outline" icon={ArrowLeft}>` on the link, then `<Button icon={RefreshCw}>Try again</Button>`), as `RouteError` does; nothing else gets two.
+- `action`: one kit `Button` at `default` size, like EmptyState's and Callout's `action`, and only when the page offers a way forward. A route error has Try again, and may put a way back before it (pass both in a fragment: `<Button asChild variant="outline" icon={ArrowLeft}>` on the link, then `<Button icon={RefreshCw}>Try again</Button>`), as `RouteError` does; nothing else gets two. Not found, unauthorized and banned have no action.
 - `background`: decorative art behind the content, hidden from assistive tech. The 404's blurred shapes go here; give the image `alt=""`.
 - `children`: one detail between the sentence and the action, such as a ban reason. It is centred in 14px text, up to 384px wide.
 - Other props (`role`, `data-testid`, `className`) go on the root. Pass `role="alert"` for an error screen.
@@ -299,7 +287,8 @@ Props that matter:
 Do:
 
 - Render it straight from the page; the root layout's `main` already provides the margins.
-- Use the primary button for the one way forward.
+- Use the primary button for the one way forward, when the page has one.
+- Title the 404 "Page not found" and keep its sentence, "Sorry, we don't have that page!".
 
 Don't:
 
@@ -317,8 +306,8 @@ The one notice box. Info for context, warning for something to check before acti
 import { Callout } from '@/components/kit/feedback/Callout';
 
 <Callout tone="warning" title="Host compliance">
-  Get written permission from osu! support before filtering an officially
-  supported tournament. <Link href={RULES_URL}>Read the filtering rules</Link>
+  Hosts must comply with the{' '}
+  <Link href={RULES_URL}>official tournament support filtering rules</Link>.
 </Callout>;
 
 // Button is the controls family's: @/components/kit/controls/Button
@@ -326,12 +315,12 @@ import { Callout } from '@/components/kit/feedback/Callout';
   tone="danger"
   action={
     <Button variant="destructive" size="sm" icon={Trash2}>
-      Delete account
+      Delete my account
     </Button>
   }
 >
-  Deleting your account removes your API keys and reports for good. Your player
-  profile stays public.
+  Permanently delete your account and remove your data from o!TR. Your player
+  profile will remain public.
 </Callout>;
 
 // components/banner/MaintenanceBanner.tsx
@@ -341,7 +330,7 @@ import { Callout } from '@/components/kit/feedback/Callout';
   role="status"
   data-testid="maintenance-window-banner"
 >
-  Ratings are recalculating. The site may be slow until 12:15 UTC.
+  Ratings are pending recalculation, performance may be degraded
 </Callout>;
 ```
 
@@ -381,8 +370,7 @@ import { CalloutChip } from '@/components/kit/feedback/CalloutChip';
 
 <SectionHeader
   icon={ChartNoAxesColumn}
-  title="Mod distribution"
-  meta="1,368 scores"
+  title="Tournament rank restrictions"
   actions={
     <CalloutChip
       icon={ShieldQuestion}
@@ -435,8 +423,8 @@ Every empty, error, loading, status and notice pattern that exists today, and wh
 | Card skeletons with blue icons and Title Case titles                       | `app/leaderboard/loading.tsx`, `app/admin/reports/loading.tsx`, `components/player/PlayerSectionSkeletons.tsx`                                                                                                                                                                                                                                                                                                                                                                                                       | `PanelSkeleton` with `SectionHeaderSkeleton` and the matching table, rows or tiles                                                                                       |
 | Whole-panel grey blocks                                                    | `app/beatmaps/[id]/loading.tsx` and other `loading.tsx` files                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `PanelSkeleton` at the same height                                                                                                                                       |
 | No loading screen                                                          | `app/reports` (My reports)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | a `loading.tsx` built from the skeletons                                                                                                                                 |
-| Blue "404 Not Found" over the background art                               | `app/not-found.tsx` (`e2e/player-profile.e2e.ts` looks for its text)                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `StatusPage` with `background`; update the test                                                                                                                          |
-| "Unauthorized" card with a blue heading                                    | `app/unauthorized/page.tsx` (test ids and text in `e2e/static-pages.e2e.ts`)                                                                                                                                                                                                                                                                                                                                                                                                                                         | `StatusPage icon={Lock}`, keeping `unauthorized-container` and `unauthorized-heading`; update the expected text                                                          |
+| Blue "404 Not Found" over the background art                               | `app/not-found.tsx` (`e2e/player-profile.e2e.ts` looks for its text)                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `StatusPage` with `background` and the heading "Page not found"; update the text the e2e test looks for                                                                  |
+| "Unauthorized" card with a blue heading                                    | `app/unauthorized/page.tsx` (test ids and text in `e2e/static-pages.e2e.ts`)                                                                                                                                                                                                                                                                                                                                                                                                                                         | `StatusPage icon={Lock}`, keeping `unauthorized-container`, `unauthorized-heading` and the heading's text                                                                |
 | "Account Suspended" card with a red reason box                             | `app/auth/banned/page.tsx` (test ids and text in `e2e/static-pages.e2e.ts`)                                                                                                                                                                                                                                                                                                                                                                                                                                          | `StatusPage tone="destructive"`, reason in `children`, keeping `banned-heading` and `banned-reason`; the test expects "Account Suspended", so change it to sentence case |
 | Route error screen with `container mx-auto`                                | `components/error/RouteError.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `RouteError` renders `StatusPage tone="destructive" role="alert"`                                                                                                        |
 | "Host Compliance" `Alert` tinted `warning` with `dark:text-yellow-*`       | `app/tools/filter/FilteringPageClient.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `Callout tone="warning" title="Host compliance"`                                                                                                                         |

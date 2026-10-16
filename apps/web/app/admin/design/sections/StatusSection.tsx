@@ -1,12 +1,11 @@
 import { Mods, Ruleset, VerificationStatus } from '@otr/core/osu';
-import { ChevronDown, ShieldCheck, StickyNote, UserCheck } from 'lucide-react';
+import { ChevronDown, ShieldCheck, StickyNote, User } from 'lucide-react';
 import Image from 'next/image';
 import type * as React from 'react';
 
 import { GallerySection, Specimen } from '../gallery';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { IconButton } from '@/components/kit/controls/IconButton';
-import { DateText } from '@/components/kit/format/DateText';
 import { FilterButton } from '@/components/kit/lists/FilterButton';
 import { Badge } from '@/components/kit/status/Badge';
 import { NotificationDot } from '@/components/kit/status/NotificationDot';
@@ -32,11 +31,13 @@ import {
   RATINGS_GROUPS,
   VERIFICATION_STATUS_ORDER,
   getVerificationStatusCopy,
-  type RatingsGroupKey,
 } from '@/lib/kit/status/verification';
 import { getBeatmapModLabel } from '@/lib/utils/mods';
 
 const KIT = '@/components/kit/status';
+
+/** The admin who verified or rejected the demo data. */
+const REVIEWER = 'apricot';
 
 const DEMO_MODS = [
   Mods.None,
@@ -97,7 +98,7 @@ const DEMO_GAMES = [
   {
     status: VerificationStatus.Rejected,
     rejectionReasons: ['Beatmap not pooled'],
-    reviewer: 'Stage',
+    reviewer: REVIEWER,
   },
   { status: VerificationStatus.Verified },
   {
@@ -126,19 +127,13 @@ function Row({
   );
 }
 
-const GROUP_HEADINGS: Record<RatingsGroupKey, string> = {
-  verified: 'Counts toward ratings',
-  notInRatingsYet: 'Not in ratings yet',
-  rejected: 'Not counted',
-};
-
 function StatusSheet() {
   return (
     <div className="flex flex-col gap-4">
       {RATINGS_GROUPS.map((group) => (
         <div key={group.key} className="flex flex-col gap-1">
           <p className="text-xs font-medium text-muted-foreground">
-            {GROUP_HEADINGS[group.key]}
+            {group.label}
           </p>
           <ul className="divide-y rounded-lg border">
             {VERIFICATION_STATUS_ORDER.filter((status) =>
@@ -163,7 +158,7 @@ function StatusSheet() {
                       {name}
                     </span>
                   </div>
-                  <p className="text-sm text-pretty text-muted-foreground">
+                  <p className="text-sm text-pretty text-muted-foreground proportional-nums">
                     {summary.charAt(0).toUpperCase() + summary.slice(1)}
                   </p>
                 </li>
@@ -229,14 +224,14 @@ export default function StatusSection() {
         <div className="flex flex-col gap-4">
           <Row label="In text (sm)">
             <p className="text-sm">
-              Grand finals{' '}
+              {REVIEWER} verified{' '}
               <VerificationStatusIcon
                 status={VerificationStatus.Verified}
                 size="sm"
-                reviewer="Stage"
+                reviewer={REVIEWER}
                 tooltip="tap"
               />{' '}
-              was verified on <DateText date="2026-10-12T14:20:00Z" />.
+              Corsace Open 2025
             </p>
           </Row>
           <Row label="Rows (md)">
@@ -296,7 +291,7 @@ export default function StatusSection() {
             <VerificationStatusIcon
               status={VerificationStatus.Verified}
               warnings={['Overlapping rosters found']}
-              reviewer="Stage"
+              reviewer={REVIEWER}
               tooltip="tap"
             />
           </Row>
@@ -332,7 +327,7 @@ export default function StatusSection() {
           <Row label="Tooltip">
             <VerificationStatusBadge
               status={VerificationStatus.Verified}
-              reviewer="Stage"
+              reviewer={REVIEWER}
               tooltip="tap"
             />
             <VerificationStatusBadge
@@ -343,7 +338,7 @@ export default function StatusSection() {
             <VerificationStatusBadge
               status={VerificationStatus.Rejected}
               rejectionReasons={['Abnormal win condition']}
-              reviewer="Stage"
+              reviewer={REVIEWER}
               tooltip="tap"
             />
           </Row>
@@ -516,10 +511,6 @@ export default function StatusSection() {
               <ShieldCheck aria-hidden="true" />
               Admin
             </Badge>
-            <Badge>
-              <UserCheck aria-hidden="true" />
-              Verifier
-            </Badge>
           </Row>
           <Row label="Tags">
             <Badge variant="outline">lazer</Badge>
@@ -563,14 +554,16 @@ export default function StatusSection() {
           </Row>
           <Row label="Inline">
             <span className="inline-flex items-center gap-2 text-sm">
-              Report 1042 · Match 118042316
+              CO25: (Mafumafu) vs (Rafis)
               <NotificationDot label="Unread admin update" />
             </span>
           </Row>
           <Row label="Corner">
             <span className="relative inline-flex">
               <Avatar className="size-9">
-                <AvatarFallback className="text-xs">ST</AvatarFallback>
+                <AvatarFallback>
+                  <User className="size-4" aria-hidden="true" />
+                </AvatarFallback>
               </Avatar>
               <NotificationDot
                 placement="corner"

@@ -59,9 +59,9 @@ export function VerificationStatusDetails({
   return (
     <div className="flex max-w-64 flex-col gap-1.5 text-left text-pretty">
       {context ? <p className="font-semibold">{context}</p> : null}
-      <p>
-        <span className="font-semibold proportional-nums">{name}:</span>{' '}
-        {summary}
+      {/* No digits; proportional figures keep Inter's hyphen narrow. */}
+      <p className="proportional-nums">
+        <span className="font-semibold">{name}:</span> {summary}
       </p>
       {reviewer && reviewerLabel ? (
         <p className="flex items-center gap-1.5">

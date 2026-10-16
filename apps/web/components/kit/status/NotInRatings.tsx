@@ -50,15 +50,14 @@ export function NotInRatings({
       data-slot="not-in-ratings"
       className={cn('text-sm text-pretty text-muted-foreground', className)}
     >
-      {SUBJECTS[subject]} is not in ratings yet. If an admin verifies it, it
-      counts from the next Tuesday update.{' '}
+      {SUBJECTS[subject]} is not in ratings yet.{' '}
       <a
         href={RATING_FAQ_URL}
         target="_blank"
         rel="noopener noreferrer"
         className="rounded-sm underline underline-offset-2 transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
       >
-        Read the rating FAQ
+        Read our rating FAQ
         <span className="sr-only"> (opens in a new tab)</span>
       </a>
     </p>

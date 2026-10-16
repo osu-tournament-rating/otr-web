@@ -10,7 +10,7 @@ export function ViewButton({
   subject,
   ...props
 }: Omit<ButtonProps, 'children' | 'variant' | 'size' | 'icon' | 'asChild'> & {
-  /** What opens, for screen readers: "report 1204" reads "View report 1204". */
+  /** What opens, for screen readers: "report #1204" reads "View report #1204". */
   subject?: string;
 }) {
   return (

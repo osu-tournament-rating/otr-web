@@ -17,7 +17,7 @@ import {
 
 describe('formatEnumValue', () => {
   it('names a value', () => {
-    expect(formatEnumValue(TeamType.TeamVs, TEAM_TYPE_LABELS)).toBe('Team VS');
+    expect(formatEnumValue(TeamType.TeamVs, TEAM_TYPE_LABELS)).toBe('Team Vs');
     expect(formatEnumValue(-2, RANKED_STATUS_LABELS)).toBe('Graveyard');
     expect(formatEnumValue(4, RANKED_STATUS_LABELS)).toBe('Loved');
   });
@@ -94,7 +94,7 @@ describe('label wording', () => {
       for (const label of Object.values(labels)) {
         for (const word of label.split(' ').slice(1)) {
           expect(
-            word === word.toLowerCase() || ['Team', 'VS'].includes(word)
+            word === word.toLowerCase() || ['Team', 'Vs'].includes(word)
           ).toBe(true);
         }
       }

@@ -16,12 +16,14 @@ import {
   NotebookPen,
   PencilLine,
   Play,
+  Plus,
   RefreshCw,
   RotateCcw,
   Swords,
   Target,
   Trash2,
   Trophy,
+  Unlink,
   UserRound,
   Users,
   X,
@@ -50,7 +52,6 @@ import {
 } from '@/components/kit/controls/FormPanel';
 import { IconButton } from '@/components/kit/controls/IconButton';
 import { RowActionsMenu } from '@/components/kit/controls/RowActionsMenu';
-import { Callout } from '@/components/kit/feedback/Callout';
 import { DetailHero, HeroMetaItem } from '@/components/kit/layout/DetailHero';
 import { PageHeader } from '@/components/kit/layout/PageHeader';
 import { Panel, PanelBody } from '@/components/kit/layout/Panel';
@@ -78,7 +79,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { formatLobbySize } from '@/lib/kit/format/fields';
+import { formatCount } from '@/lib/kit/format/number';
 import { RATED_RULESETS, RULESET_NAMES } from '@/lib/kit/format/ruleset';
+import { MAX_SUBMISSION_IDS } from '@/lib/orpc/schema/tournamentSubmission';
 import { cn } from '@/lib/utils';
 
 const KIT = '@/components/kit/controls';
@@ -91,6 +95,17 @@ const wait = (ms: number) =>
 function Caption({ children }: { children: React.ReactNode }) {
   return <span className={typeScale.meta}>{children}</span>;
 }
+
+/** The delete confirmation's wording, from components/shared/DeleteButton.tsx. */
+const DELETE_DESCRIPTION = (
+  <>
+    <p>
+      This action will cascade to all children. All associated data will be
+      permanently removed.
+    </p>
+    <p>This action cannot be undone.</p>
+  </>
+);
 
 const SIZES: { size: ButtonSize; name: string; use: string }[] = [
   {
@@ -184,7 +199,7 @@ function ButtonVariants() {
       caption: 'Drawn on a link',
       control: (
         <Button asChild variant="outline" icon={ExternalLink}>
-          <a href="#controls-button-variants">Acceptance criteria</a>
+          <a href="#controls-button-variants">Read our acceptance criteria</a>
         </Button>
       ),
     },
@@ -210,9 +225,13 @@ function IconButtons() {
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <IconButton size="sm" label="Audit history" icon={History} />
-            <IconButton size="default" label="Audit history" icon={History} />
-            <IconButton size="lg" label="Audit history" icon={History} />
+            <IconButton size="sm" label="View audit history" icon={History} />
+            <IconButton
+              size="default"
+              label="View audit history"
+              icon={History}
+            />
+            <IconButton size="lg" label="View audit history" icon={History} />
           </div>
           <Caption>Ghost, the default: 32, 36 and 40px</Caption>
         </div>
@@ -221,19 +240,22 @@ function IconButtons() {
             <IconButton
               size="sm"
               variant="outline"
-              label="Sort descending"
+              label="Sort order is descending"
+              tooltip="Descending order"
               icon={ArrowDownWideNarrow}
             />
             <IconButton
               size="default"
               variant="outline"
-              label="Sort descending"
+              label="Sort order is descending"
+              tooltip="Descending order"
               icon={ArrowDownWideNarrow}
             />
             <IconButton
               size="lg"
               variant="outline"
-              label="Sort descending"
+              label="Sort order is descending"
+              tooltip="Descending order"
               icon={ArrowDownWideNarrow}
             />
           </div>
@@ -247,7 +269,12 @@ function IconButtons() {
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <IconButton asChild label="View on osu!" icon={ExternalLink}>
+            <IconButton
+              asChild
+              label="View beatmap on osu! website"
+              tooltip="View beatmap on osu!"
+              icon={ExternalLink}
+            >
               <a
                 href="https://osu.ppy.sh/beatmaps/1872396"
                 target="_blank"
@@ -263,7 +290,7 @@ function IconButtons() {
           icon={Swords}
           title="Matches"
           meta="124 matches"
-          actions={<IconButton label="Refresh matches" icon={RefreshCw} />}
+          actions={<IconButton label="Add matches" icon={Plus} />}
         />
         <PanelBody className={typeScale.bodyMuted}>
           In a section header strip: small and ghost.
@@ -272,6 +299,47 @@ function IconButtons() {
     </div>
   );
 }
+
+// The tournament fields' rules, from lib/orpc/schema/tournamentSubmission.ts
+// (submission) and tournamentEditFormSchema in lib/validation-schema.ts
+// (edit). Messages name the field as its label does, and a missing value
+// reads "… is required" in place of zod's default message.
+const NAME_REQUIRED = 'Tournament name is required';
+const ABBREVIATION_REQUIRED = 'Tournament abbreviation is required';
+const FORUM_POST_URL_REQUIRED = 'Forum post URL is required';
+const FORUM_POST_URL_PATTERN =
+  /^(https:\/\/osu\.ppy\.sh\/(community\/forums\/topics\/\d+|wiki\/en\/Tournaments\/[^?#]*))(\?.*)?$/;
+const FORUM_POST_URL_PREFIXES = [
+  'https://osu.ppy.sh/community/forums/topics/',
+  'https://osu.ppy.sh/wiki/en/Tournaments/',
+];
+
+/** The edit dialog's rule: a link under either prefix. */
+function validateEditedForumPostUrl(value: string) {
+  if (value.trim() === '') return FORUM_POST_URL_REQUIRED;
+  return (
+    FORUM_POST_URL_PREFIXES.some((prefix) => value.startsWith(prefix)) ||
+    'Forum post URL must be from "https://osu.ppy.sh/community/forums/topics/" or "https://osu.ppy.sh/wiki/en/Tournaments/"'
+  );
+}
+
+/** The submission form's rule: a forum topic or a tournament wiki page. */
+function validateSubmittedForumPostUrl(value: string) {
+  const url = value.trim();
+  if (url === '') return FORUM_POST_URL_REQUIRED;
+  return (
+    FORUM_POST_URL_PATTERN.test(url) ||
+    "Forum post URL must be from osu.ppy.sh forums or the osu! wiki's tournaments section"
+  );
+}
+
+type EditValues = { abbreviation: string; name: string; forumUrl: string };
+
+const EDIT_DEFAULTS: EditValues = {
+  abbreviation: 'BTMC',
+  name: 'Break The Meta Cup',
+  forumUrl: 'https://osu.ppy.sh/community/forums/topics/1446216',
+};
 
 function EditTournamentDialog({
   open,
@@ -282,59 +350,87 @@ function EditTournamentDialog({
   onOpenChange?: (open: boolean) => void;
   trigger?: React.ReactElement;
 }) {
-  const id = React.useId();
   const [saving, setSaving] = React.useState(false);
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
+  const form = useForm<EditValues>({ defaultValues: EDIT_DEFAULTS });
   const isOpen = open ?? uncontrolledOpen;
   const setOpen = (next: boolean) => {
+    if (!next) form.reset();
     setUncontrolledOpen(next);
     onOpenChange?.(next);
   };
 
   return (
-    <DialogTemplate
-      open={isOpen}
-      onOpenChange={setOpen}
-      trigger={trigger}
-      title="Edit tournament"
-      description="Changes apply on the next rating run."
-      onSubmit={async (event) => {
-        event.preventDefault();
-        setSaving(true);
-        await wait(1200);
-        setSaving(false);
-        setOpen(false);
-      }}
-      footerStart="Last edited Oct 14, 2026"
-      footer={
-        <>
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
-          <Button type="submit" pending={saving}>
-            {saving ? 'Saving…' : 'Save changes'}
-          </Button>
-        </>
-      }
-    >
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`${id}-abbreviation`}>Abbreviation</Label>
-          <Input id={`${id}-abbreviation`} defaultValue="BTMC" />
+    <Form {...form}>
+      <DialogTemplate
+        open={isOpen}
+        onOpenChange={setOpen}
+        trigger={trigger}
+        title="Edit tournament"
+        description="Editing Break The Meta Cup"
+        onSubmit={form.handleSubmit(async () => {
+          setSaving(true);
+          await wait(1200);
+          setSaving(false);
+          setOpen(false);
+        })}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" pending={saving}>
+              Save
+            </Button>
+          </>
+        }
+      >
+        <div className="grid items-start gap-4 sm:grid-cols-3">
+          <FormField
+            control={form.control}
+            name="abbreviation"
+            rules={{ required: ABBREVIATION_REQUIRED }}
+            render={({ field }) => (
+              <FormItem>
+                <FormFieldLabel>Abbreviation</FormFieldLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="name"
+            rules={{ required: NAME_REQUIRED }}
+            render={({ field }) => (
+              <FormItem className="sm:col-span-2">
+                <FormFieldLabel>Name</FormFieldLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
-        <div className="flex flex-col gap-2 sm:col-span-2">
-          <Label htmlFor={`${id}-name`}>Name</Label>
-          <Input id={`${id}-name`} defaultValue="Break The Meta Cup" />
-        </div>
-      </div>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor={`${id}-forum`}>Forum post URL</Label>
-        <Input
-          id={`${id}-forum`}
-          defaultValue="https://osu.ppy.sh/community/forums/topics/1446216"
+        <FormField
+          control={form.control}
+          name="forumUrl"
+          rules={{ validate: validateEditedForumPostUrl }}
+          render={({ field }) => (
+            <FormItem>
+              <FormFieldLabel>Forum post URL</FormFieldLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-    </DialogTemplate>
+      </DialogTemplate>
+    </Form>
   );
 }
 
@@ -342,7 +438,7 @@ function AdminMenuDemo() {
   const [editOpen, setEditOpen] = React.useState(false);
   const [resetOpen, setResetOpen] = React.useState(false);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
-  const [deletePoolOpen, setDeletePoolOpen] = React.useState(false);
+  const [unlinkPoolOpen, setUnlinkPoolOpen] = React.useState(false);
   const [includeVerified, setIncludeVerified] = React.useState(false);
   const checkboxId = React.useId();
 
@@ -354,7 +450,7 @@ function AdminMenuDemo() {
         status={
           <VerificationStatusBadge
             status={VerificationStatus.Verified}
-            reviewer="Stage"
+            reviewer="apricot"
             tooltip="tap"
           />
         }
@@ -383,7 +479,7 @@ function AdminMenuDemo() {
                 onSelect: () => {},
               },
               {
-                label: 'Accept pre-verified data',
+                label: 'Accept pre-verification statuses',
                 icon: ListChecks,
                 group: 'data',
                 onSelect: () => {},
@@ -407,10 +503,10 @@ function AdminMenuDemo() {
                 onSelect: () => setDeleteOpen(true),
               },
               {
-                label: 'Delete pooled beatmaps',
-                icon: Trash2,
+                label: 'Unlink pooled beatmaps',
+                icon: Unlink,
                 destructive: true,
-                onSelect: () => setDeletePoolOpen(true),
+                onSelect: () => setUnlinkPoolOpen(true),
               },
             ]}
           />
@@ -419,7 +515,7 @@ function AdminMenuDemo() {
           <IconButton
             asChild
             variant="outline"
-            label="View on the osu! forum"
+            label="View tournament on osu! website"
             icon={ExternalLink}
           >
             <a
@@ -438,12 +534,12 @@ function AdminMenuDemo() {
         onOpenChange={setResetOpen}
         title="Reset automated checks?"
         description={
-          <p>
-            Every match, game and score in <strong>Break The Meta Cup</strong>{' '}
-            goes back to Pending and the automated checks run again.
-          </p>
+          <>
+            <p>This action will cascade to all children.</p>
+            <p>This action cannot be undone.</p>
+          </>
         }
-        confirmLabel="Reset checks"
+        confirmLabel="Reset automated checks"
         pendingLabel="Resetting…"
         onConfirm={() => wait(1200)}
       >
@@ -453,9 +549,7 @@ function AdminMenuDemo() {
             checked={includeVerified}
             onCheckedChange={(checked) => setIncludeVerified(checked === true)}
           />
-          <Label htmlFor={checkboxId}>
-            Also reset verified and rejected data
-          </Label>
+          <Label htmlFor={checkboxId}>Reset verified and rejected data</Label>
         </div>
       </ConfirmDialog>
 
@@ -463,36 +557,26 @@ function AdminMenuDemo() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title="Delete this tournament?"
-        description={
-          <>
-            <p>
-              This deletes <strong>Break The Meta Cup</strong> with its 124
-              matches, 1,031 games and 8,240 scores.
-            </p>
-            <p>This cannot be undone.</p>
-          </>
-        }
+        description={DELETE_DESCRIPTION}
         confirmLabel="Delete tournament"
         pendingLabel="Deleting…"
         onConfirm={() => wait(1200)}
       />
 
       <ConfirmDialog
-        open={deletePoolOpen}
-        onOpenChange={setDeletePoolOpen}
-        title="Delete the pooled beatmaps?"
+        open={unlinkPoolOpen}
+        onOpenChange={setUnlinkPoolOpen}
+        title="Unlink pooled beatmaps?"
         description={
           <>
             <p>
-              This removes all 56 pooled beatmaps from{' '}
-              <strong>Break The Meta Cup</strong>. The beatmaps and their scores
-              stay.
+              This action unlinks all beatmaps from the tournament. The beatmaps
+              themselves will not be deleted from the system.
             </p>
-            <p>This cannot be undone.</p>
+            <p>This action cannot be undone.</p>
           </>
         }
-        confirmLabel="Delete pooled beatmaps"
-        pendingLabel="Deleting…"
+        confirmLabel="Unlink pooled beatmaps"
         onConfirm={() => wait(1200)}
       />
     </>
@@ -528,16 +612,17 @@ function OnArtDemo() {
             onArt
             actions={[
               {
-                label: 'Edit beatmap',
+                label: 'Edit beatmap data',
                 icon: PencilLine,
                 disabled: true,
-                description: 'Only beatmaps the osu! API no longer serves',
+                description:
+                  'Only beatmaps the osu! API no longer serves can be edited by hand',
               },
             ]}
           />
         }
         actions={
-          <IconButton variant="overlay" label="Preview audio" icon={Play} />
+          <IconButton variant="overlay" label="Play preview" icon={Play} />
         }
       />
 
@@ -545,7 +630,7 @@ function OnArtDemo() {
         {ART}
         <div className="absolute inset-0 bg-black/60" aria-hidden />
         <div className="relative flex items-center justify-between gap-2">
-          <span className="text-sm text-white/80">Team vs · Score v2</span>
+          <span className="text-sm text-white/80">Team vs · ScoreV2</span>
           <RowActionsMenu
             onArt
             itemName="HAELEQUIN [alacat's Light Insane]"
@@ -553,13 +638,13 @@ function OnArtDemo() {
               { label: 'Edit game', icon: PencilLine, onSelect: () => {} },
               { label: 'Admin notes', icon: NotebookPen, onSelect: () => {} },
               {
-                label: 'Audit history',
+                label: 'View audit history',
                 icon: History,
                 href: '#controls-on-art',
               },
-              { label: 'Report a problem', icon: Flag, onSelect: () => {} },
+              { label: 'Report an issue', icon: Flag, onSelect: () => {} },
               {
-                label: 'Merge with another game',
+                label: 'Merge games',
                 icon: GitMerge,
                 group: 'data',
                 onSelect: () => {},
@@ -637,12 +722,12 @@ function RowActionsDemo() {
                       onSelect: () => {},
                     },
                     {
-                      label: 'Audit history',
+                      label: 'View audit history',
                       icon: History,
                       href: '#controls-row-actions-menu',
                     },
                     {
-                      label: 'Merge with another game',
+                      label: 'Merge games',
                       icon: GitMerge,
                       group: 'data',
                       onSelect: () => {},
@@ -666,14 +751,7 @@ function RowActionsDemo() {
           if (!open) setDeleting(null);
         }}
         title="Delete this game?"
-        description={
-          <>
-            <p>
-              This deletes <strong>{deleting}</strong> and its 8 scores.
-            </p>
-            <p>This cannot be undone.</p>
-          </>
-        }
+        description={DELETE_DESCRIPTION}
         confirmLabel="Delete game"
         pendingLabel="Deleting…"
         onConfirm={() => wait(1000)}
@@ -733,12 +811,11 @@ function DialogTemplateDemo() {
     <div className="flex flex-col items-start gap-4">
       <DialogAnatomy
         title="Edit tournament"
-        description="Changes apply on the next rating run."
-        footerStart="Last edited Oct 14, 2026"
+        description="Editing Break The Meta Cup"
         footer={
           <>
             <Button variant="outline">Cancel</Button>
-            <Button>Save changes</Button>
+            <Button>Save</Button>
           </>
         }
       >
@@ -756,7 +833,7 @@ function DialogTemplateDemo() {
       <EditTournamentDialog
         trigger={
           <Button variant="outline" icon={PencilLine}>
-            Open the dialog
+            Edit tournament
           </Button>
         }
       />
@@ -765,9 +842,6 @@ function DialogTemplateDemo() {
 }
 
 function ConfirmDialogDemo() {
-  const [refetchVerified, setRefetchVerified] = React.useState(false);
-  const checkboxId = React.useId();
-
   return (
     <div className="flex flex-col items-start gap-4">
       <DialogAnatomy
@@ -782,11 +856,7 @@ function ConfirmDialogDemo() {
         }
       >
         <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-          <p>
-            This deletes <strong>Break The Meta Cup</strong> with its 124
-            matches, 1,031 games and 8,240 scores.
-          </p>
-          <p>This cannot be undone.</p>
+          {DELETE_DESCRIPTION}
         </div>
       </DialogAnatomy>
       <div className="flex flex-wrap gap-2">
@@ -797,48 +867,24 @@ function ConfirmDialogDemo() {
             </Button>
           }
           title="Delete this tournament?"
-          description={
-            <>
-              <p>
-                This deletes <strong>Break The Meta Cup</strong> with its 124
-                matches, 1,031 games and 8,240 scores.
-              </p>
-              <p>This cannot be undone.</p>
-            </>
-          }
+          description={DELETE_DESCRIPTION}
           confirmLabel="Delete tournament"
           pendingLabel="Deleting…"
           onConfirm={() => wait(1200)}
         />
         <ConfirmDialog
           tone="default"
-          trigger={
-            <Button variant="outline" icon={RefreshCw}>
-              Refetch match data
-            </Button>
-          }
-          title="Refetch match data?"
+          trigger={<Button variant="outline">Submit tournament</Button>}
+          title="Continue without beatmaps?"
           description={
             <p>
-              The data worker fetches all 124 matches from osu! again. Scores
-              that changed go back to Pending.
+              You are submitting a tournament without any beatmap links. This is
+              strongly discouraged.
             </p>
           }
-          confirmLabel="Refetch match data"
-          pendingLabel="Queueing…"
+          confirmLabel="Continue without beatmaps"
           onConfirm={() => wait(800)}
-        >
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id={checkboxId}
-              checked={refetchVerified}
-              onCheckedChange={(checked) =>
-                setRefetchVerified(checked === true)
-              }
-            />
-            <Label htmlFor={checkboxId}>Include verified matches</Label>
-          </div>
-        </ConfirmDialog>
+        />
         <ConfirmDialog
           trigger={
             <Button variant="destructive" icon={Trash2}>
@@ -846,9 +892,10 @@ function ConfirmDialogDemo() {
             </Button>
           }
           title="Delete this match?"
-          description={<p>This deletes the match and its 9 games.</p>}
+          description={DELETE_DESCRIPTION}
           confirmLabel="Delete match"
           pendingLabel="Deleting…"
+          errorText="Failed to delete match"
           onConfirm={() =>
             wait(800).then(() => Promise.reject(new Error('demo')))
           }
@@ -858,12 +905,67 @@ function ConfirmDialogDemo() {
   );
 }
 
+// Help text and placeholders from components/tournaments/TournamentSubmissionForm.tsx.
+const ABBREVIATION_INFO =
+  "The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)";
+const RANK_RESTRICTION_INFO =
+  "The 'best' global rank allowed to participate. Use 1 for open rank.";
+const FORUM_URL_PLACEHOLDER = 'https://osu.ppy.sh/community/forums/topics/...';
+const MATCHES_PLACEHOLDER =
+  'https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890';
+const BEATMAPS_PLACEHOLDER =
+  'https://osu.ppy.sh/b/12345\nhttps://osu.ppy.sh/beatmapsets/123#osu/456';
+/** The submission form's lobby sizes, 1v1 to 8v8. */
+const LOBBY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8];
+
+/** Validates a whole-number rank restriction of at least 1. */
+function validateRankRestriction(value: string) {
+  if (value.trim() === '') return 'Rank restriction is required';
+  const rank = Number(value);
+  if (!Number.isInteger(rank)) return 'Rank restriction must be a whole number';
+  return rank >= 1 || 'Rank restriction must be at least 1';
+}
+
+// The submission form's link formats: an ID or an osu! URL on each line.
+const MATCH_LINK_PATTERN =
+  /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp|multiplayer\/rooms)\/(\d+)(?:\/events)?)$/;
+const BEATMAP_LINK_PATTERN =
+  /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/b\/(\d+)|https:\/\/osu\.ppy\.sh\/beatmapsets\/\d+#(?:osu|fruits|mania|taiko)\/(\d+))$/;
+const MAX_BEATMAP_ID = 20_000_000;
+
+/** The ID on each line, or 0 for a line that is not a valid link. */
+function parseLinkIds(value: string, pattern: RegExp, maxId = Infinity) {
+  if (value.trim() === '') return [];
+  return value.split('\n').map((line) => {
+    const match = pattern.exec(line.trim());
+    const id = Number(match?.slice(1).find(Boolean) ?? 0);
+    return id > maxId ? 0 : id;
+  });
+}
+
+/**
+ * The submission schema's checks on a list of links. Its limit message,
+ * "Submit at most 1000 matches", is reworded as a statement.
+ */
+function validateLinkIds(ids: number[], noun: 'match' | 'beatmap') {
+  if (ids.some((id) => id === 0)) {
+    return `All ${noun} links must be valid osu! ${noun} IDs or URLs`;
+  }
+  if (ids.length > MAX_SUBMISSION_IDS) {
+    return `${noun === 'match' ? 'Matches' : 'Beatmaps'} cannot exceed ${formatCount(MAX_SUBMISSION_IDS)}`;
+  }
+  return (
+    new Set(ids).size === ids.length || `Duplicate ${noun} IDs are not allowed`
+  );
+}
+
 type SubmissionValues = {
   abbreviation: string;
   name: string;
   forumUrl: string;
   ruleset: string;
-  rankRange: string;
+  lobbySize: string;
+  rankRangeLowerBound: string;
   // Not "matches": a control with that name would shadow form.matches().
   matchIds: string;
   beatmapIds: string;
@@ -877,7 +979,8 @@ function FormLayoutDemo() {
       name: '',
       forumUrl: '',
       ruleset: '',
-      rankRange: '',
+      lobbySize: '',
+      rankRangeLowerBound: '',
       matchIds: '',
       beatmapIds: '',
     },
@@ -887,8 +990,8 @@ function FormLayoutDemo() {
     <div className="flex flex-col gap-4">
       <PageHeader
         icon={Trophy}
-        title="Submit a tournament"
-        description="Add a tournament's matches so they can be verified and rated."
+        title="Tournament submission"
+        description="Use this form to submit a new tournament for verification and tracking."
         actions={
           <Button asChild variant="outline" icon={ExternalLink}>
             <a
@@ -896,15 +999,11 @@ function FormLayoutDemo() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Acceptance criteria
+              Read our acceptance criteria
             </a>
           </Button>
         }
       />
-      <Callout tone="info" title="Before you submit">
-        Submit each tournament once, with the matches from every stage. An admin
-        checks it against the acceptance criteria before it counts.
-      </Callout>
       <Form {...form}>
         <FormPanel
           noValidate
@@ -915,15 +1014,15 @@ function FormLayoutDemo() {
             form.reset();
           })}
         >
-          <FormSection icon={Trophy} title="Tournament">
+          <FormSection icon={Trophy} title="Information">
             <FormGrid>
               <FormField
                 control={form.control}
                 name="abbreviation"
-                rules={{ required: 'Enter the lobby prefix' }}
+                rules={{ required: 'Tournament abbreviation is required' }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel info="The prefix of each lobby, such as OWC2024 in “OWC2024: (United States) vs (Canada)”.">
+                    <FormFieldLabel info={ABBREVIATION_INFO}>
                       Abbreviation
                     </FormFieldLabel>
                     <FormControl>
@@ -936,10 +1035,10 @@ function FormLayoutDemo() {
               <FormField
                 control={form.control}
                 name="name"
-                rules={{ required: 'Enter the tournament name' }}
+                rules={{ required: 'Tournament name is required' }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel info="The full name, such as osu! World Cup 2024.">
+                    <FormFieldLabel info="Full tournament name (e.g. osu! World Cup 2024)">
                       Name
                     </FormFieldLabel>
                     <FormControl>
@@ -953,32 +1052,33 @@ function FormLayoutDemo() {
             <FormField
               control={form.control}
               name="forumUrl"
+              rules={{ validate: validateSubmittedForumPostUrl }}
               render={({ field }) => (
                 <FormItem>
-                  <FormFieldLabel hint="Optional">
+                  <FormFieldLabel info="Forum post URL or wiki page for the tournament">
                     Forum post URL
                   </FormFieldLabel>
                   <FormControl>
-                    <Input
-                      placeholder="https://osu.ppy.sh/community/forums/topics/…"
-                      {...field}
-                    />
+                    <Input placeholder={FORUM_URL_PLACEHOLDER} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormGrid>
+            <FormGrid columns={3}>
               <FormField
                 control={form.control}
                 name="ruleset"
+                rules={{ required: 'Ruleset is required' }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel>Ruleset</FormFieldLabel>
+                    <FormFieldLabel info="Game mode the tournament is played in">
+                      Ruleset
+                    </FormFieldLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Pick a ruleset" />
+                          <SelectValue placeholder="Select ruleset" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -995,16 +1095,45 @@ function FormLayoutDemo() {
               />
               <FormField
                 control={form.control}
-                name="rankRange"
+                name="lobbySize"
+                rules={{ required: 'Lobby size is required' }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel info="The best rank allowed to register. Leave it empty for an open-rank tournament.">
+                    <FormFieldLabel info="Number of players per team in each match">
+                      Lobby size
+                    </FormFieldLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select size" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {LOBBY_SIZES.map((size) => (
+                          <SelectItem key={size} value={String(size)}>
+                            {formatLobbySize(size)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="rankRangeLowerBound"
+                rules={{ validate: validateRankRestriction }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldLabel info={RANK_RESTRICTION_INFO}>
                       Rank restriction
                     </FormFieldLabel>
                     <FormControl>
                       <Input
-                        inputMode="numeric"
-                        placeholder="Open rank"
+                        type="number"
+                        min={1}
+                        placeholder="Enter rank restriction"
                         {...field}
                       />
                     </FormControl>
@@ -1015,23 +1144,32 @@ function FormLayoutDemo() {
             </FormGrid>
           </FormSection>
 
-          <FormSection
-            icon={Database}
-            title="Data"
-            description="Paste osu! match and beatmap links, or their IDs."
-          >
+          <FormSection icon={Database} title="Data">
             <FormGrid>
               <FormField
                 control={form.control}
                 name="matchIds"
-                rules={{ required: 'Add at least one match' }}
+                rules={{
+                  validate: (value) => {
+                    const ids = parseLinkIds(value, MATCH_LINK_PATTERN);
+                    if (ids.length === 0) {
+                      return 'At least one valid match link is required';
+                    }
+                    return validateLinkIds(ids, 'match');
+                  },
+                }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel hint="One per line">Matches</FormFieldLabel>
+                    <FormFieldLabel
+                      info="osu! match IDs or URLs"
+                      hint="One per line"
+                    >
+                      Matches
+                    </FormFieldLabel>
                     <FormControl>
                       <Textarea
                         className="min-h-28"
-                        placeholder="https://osu.ppy.sh/community/matches/115253744"
+                        placeholder={MATCHES_PLACEHOLDER}
                         {...field}
                       />
                     </FormControl>
@@ -1042,15 +1180,25 @@ function FormLayoutDemo() {
               <FormField
                 control={form.control}
                 name="beatmapIds"
+                rules={{
+                  validate: (value) =>
+                    validateLinkIds(
+                      parseLinkIds(value, BEATMAP_LINK_PATTERN, MAX_BEATMAP_ID),
+                      'beatmap'
+                    ),
+                }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel hint="One per line">
+                    <FormFieldLabel
+                      info="osu! beatmap IDs or URLs"
+                      hint="One per line"
+                    >
                       Beatmaps
                     </FormFieldLabel>
                     <FormControl>
                       <Textarea
                         className="min-h-28"
-                        placeholder="https://osu.ppy.sh/b/4448541"
+                        placeholder={BEATMAPS_PLACEHOLDER}
                         {...field}
                       />
                     </FormControl>
@@ -1061,7 +1209,7 @@ function FormLayoutDemo() {
             </FormGrid>
           </FormSection>
 
-          <FormActions start="An admin reviews every submission before it counts.">
+          <FormActions>
             <Button
               variant="outline"
               disabled={submitting}
@@ -1070,7 +1218,7 @@ function FormLayoutDemo() {
               Clear
             </Button>
             <Button type="submit" pending={submitting}>
-              {submitting ? 'Submitting…' : 'Submit tournament'}
+              Submit tournament
             </Button>
           </FormActions>
         </FormPanel>
@@ -1079,16 +1227,26 @@ function FormLayoutDemo() {
   );
 }
 
-type LabelValues = { abbreviation: string; forumUrl: string; rank: string };
+type LabelValues = {
+  abbreviation: string;
+  forumUrl: string;
+  rankRangeLowerBound: string;
+};
 
 function FormFieldLabelDemo() {
   const form = useForm<LabelValues>({
-    defaultValues: { abbreviation: 'BTMC', forumUrl: '', rank: 'top 10k' },
+    defaultValues: {
+      abbreviation: 'BTMC',
+      forumUrl: '',
+      rankRangeLowerBound: '1000.5',
+    },
   });
   const { setError } = form;
 
   React.useEffect(() => {
-    setError('rank', { message: 'Enter a rank as a whole number' });
+    setError('rankRangeLowerBound', {
+      message: 'Rank restriction must be a whole number',
+    });
   }, [setError]);
 
   return (
@@ -1100,7 +1258,7 @@ function FormFieldLabelDemo() {
             name="abbreviation"
             render={({ field }) => (
               <FormItem>
-                <FormFieldLabel info="The prefix of each lobby, such as OWC2024.">
+                <FormFieldLabel info={ABBREVIATION_INFO}>
                   Abbreviation
                 </FormFieldLabel>
                 <FormControl>
@@ -1114,9 +1272,9 @@ function FormFieldLabelDemo() {
             name="forumUrl"
             render={({ field }) => (
               <FormItem>
-                <FormFieldLabel hint="Optional">Forum post URL</FormFieldLabel>
+                <FormFieldLabel>Forum post URL</FormFieldLabel>
                 <FormControl>
-                  <Input placeholder="https://osu.ppy.sh/…" {...field} />
+                  <Input placeholder={FORUM_URL_PLACEHOLDER} {...field} />
                 </FormControl>
               </FormItem>
             )}
@@ -1124,14 +1282,14 @@ function FormFieldLabelDemo() {
         </FormGrid>
         <FormField
           control={form.control}
-          name="rank"
+          name="rankRangeLowerBound"
           render={({ field }) => (
             <FormItem>
-              <FormFieldLabel info="The best rank allowed to register. Leave it empty for an open-rank tournament.">
+              <FormFieldLabel info={RANK_RESTRICTION_INFO}>
                 Rank restriction
               </FormFieldLabel>
               <FormControl>
-                <Input inputMode="numeric" {...field} />
+                <Input type="number" min={1} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -1180,7 +1338,7 @@ export default function ControlsSection() {
         id="controls-admin-menu"
         name="AdminMenu"
         importPath={`${KIT}/AdminMenu`}
-        description="The one admin control in a detail hero. Every admin action, labelled, with destructive items last and red. Edit, reset and delete open their dialogs."
+        description="The one admin control in a detail hero. Every admin action, labelled, with destructive items last and red. Edit, reset, unlink and delete open their dialogs."
         stacked
       >
         <AdminMenuDemo />

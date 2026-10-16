@@ -6,7 +6,7 @@ import { formatLoadedReadout } from '@/lib/kit/tables/pagination';
 import { cn } from '@/lib/utils';
 
 /**
- * The footer of an activity feed (audit events, a player's recent matches):
+ * The footer of an activity feed (audit logs, an entity's audit history):
  * how many entries are showing and a "Load more" button that appends the
  * next batch. Searchable lists page with PaginationFooter instead.
  */

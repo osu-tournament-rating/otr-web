@@ -97,31 +97,31 @@ describe('SortControl', () => {
         options={[
           {
             value: 'endTime',
-            label: 'End date',
+            label: 'Completion date',
             directionLabels: { asc: 'Oldest first', desc: 'Newest first' },
           },
-          { value: 'name', label: 'Name' },
+          { value: 'startTime', label: 'Start date' },
         ]}
       />
     );
     expect(html).toContain('aria-label="Sort tournaments by"');
-    expect(html).toContain('aria-label="Sort direction: Newest first"');
+    expect(html).toContain('aria-label="Sort order is descending"');
     // The direction is a 40px IconButton, the toolbar's first-row height.
     expect(html).toMatch(
-      /data-slot="icon-button"[^>]*class="[^"]*\bsize-10\b[^"]*"[^>]*aria-label="Sort direction/
+      /data-slot="icon-button"[^>]*class="[^"]*\bsize-10\b[^"]*"[^>]*aria-label="Sort order/
     );
   });
 
-  it('falls back to ascending and descending', () => {
+  it('names an ascending sort', () => {
     const html = render(
       <SortControl
         label="Sort"
-        value={{ key: 'name', direction: 'asc' }}
+        value={{ key: 'startTime', direction: 'asc' }}
         onValueChange={noop}
-        options={[{ value: 'name', label: 'Name' }]}
+        options={[{ value: 'startTime', label: 'Start date' }]}
       />
     );
-    expect(html).toContain('aria-label="Sort direction: Ascending"');
+    expect(html).toContain('aria-label="Sort order is ascending"');
   });
 });
 
@@ -207,7 +207,7 @@ describe('filters', () => {
   it('shows range bounds with separators, open ends as Any', () => {
     const html = render(
       <RangeFilter
-        label="Rank range"
+        label="Rank restriction"
         valueLabel="rank"
         min={1}
         max={1_000_000}
@@ -241,9 +241,9 @@ describe('filters', () => {
 
   it('labels a switch filter', () => {
     const html = render(
-      <SwitchFilter label="Lazer only" checked onCheckedChange={noop} />
+      <SwitchFilter label="Verified only" checked onCheckedChange={noop} />
     );
-    expect(html).toContain('Lazer only');
+    expect(html).toContain('Verified only');
     expect(html).toContain('role="switch"');
     expect(html).toContain('aria-checked="true"');
   });
@@ -251,7 +251,7 @@ describe('filters', () => {
   it('picks dates with buttons, never a native date input', () => {
     const html = render(
       <DayRangeFilter
-        label="Dates"
+        label="Tournament dates"
         value={{ from: '2024-07-20' }}
         onValueChange={noop}
       />
@@ -293,8 +293,8 @@ describe('filters', () => {
         ]}
       />
     );
-    expect(html).toContain('aria-label="Remove filter: SR: 5 – 7"');
-    expect(html.match(/Remove filter/g)).toHaveLength(1);
+    expect(html).toContain('aria-label="Remove SR: 5 – 7 filter"');
+    expect(html.match(/aria-label="Remove /g)).toHaveLength(1);
     // Chips and the ghost sm Clear all share one 32px height.
     expect(html).toContain('min-h-8');
     expect(html).toMatch(
@@ -303,7 +303,7 @@ describe('filters', () => {
   });
 
   it('renders a selected chip as a pressed toggle', () => {
-    expect(render(<ChoiceChip selected>Lazer</ChoiceChip>)).toContain(
+    expect(render(<ChoiceChip selected>4v4</ChoiceChip>)).toContain(
       'aria-pressed="true"'
     );
   });

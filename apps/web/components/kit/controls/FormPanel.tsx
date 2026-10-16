@@ -46,7 +46,7 @@ export function FormSection({
 }: Omit<React.ComponentProps<'div'>, 'title'> & {
   /** Muted, never blue. */
   icon?: KitIcon;
-  /** Sentence case: "Tournament details". */
+  /** Sentence case: "Difficulty and timing". */
   title: string;
   level?: 2 | 3 | 4;
   /** One muted line at the top of the section. */
@@ -92,7 +92,7 @@ const GRID_COLUMNS = {
 
 /**
  * Fields side by side inside a FormSection, one column on phones. `4` is for
- * short fields such as a rank range, and keeps two columns on phones.
+ * short fields such as CS, HP, OD and AR, and keeps two columns on phones.
  */
 export function FormGrid({
   columns = 2,
@@ -120,7 +120,7 @@ export function FormActions({
   children,
   ...props
 }: React.ComponentProps<'div'> & {
-  /** Muted text or a quiet action on the left, such as "Changes apply on the next rating run". */
+  /** Muted text or a quiet action on the left. */
   start?: React.ReactNode;
 }) {
   return (

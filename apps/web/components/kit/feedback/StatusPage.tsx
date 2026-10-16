@@ -6,8 +6,9 @@ import { cn } from '@/lib/utils';
 
 /**
  * The one layout for whole-page outcomes: not found, unauthorized, banned
- * and route errors. An icon, a short h1, one sentence and one action,
- * centred in the content column, matching the route error screen.
+ * and route errors. An icon, a short h1, one sentence and, when the page
+ * offers a way forward, one action, centred in the content column,
+ * matching the route error screen.
  */
 export function StatusPage({
   icon: Icon,

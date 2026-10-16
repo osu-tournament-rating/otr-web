@@ -74,9 +74,12 @@ describe('AUDIT_FIELDS', () => {
   it('uses the glossary names', () => {
     expect(
       getAuditFieldLabel(AuditEntityType.Tournament, 'rankRangeLowerBound')
-    ).toBe('Rank range');
+    ).toBe('Rank restriction');
     expect(getAuditFieldLabel(AuditEntityType.Tournament, 'lobbySize')).toBe(
       'Lobby size'
+    );
+    expect(getAuditFieldLabel(AuditEntityType.Tournament, 'forumUrl')).toBe(
+      'Forum post URL'
     );
     expect(getAuditFieldLabel(AuditEntityType.Match, 'submittedByUserId')).toBe(
       'Submitted by'
@@ -153,7 +156,7 @@ describe('formatAuditValue', () => {
     expect(format(AuditEntityType.Game, 'ruleset', Ruleset.Taiko)).toBe(
       'taiko'
     );
-    expect(format(AuditEntityType.Game, 'teamType', 2)).toBe('Team VS');
+    expect(format(AuditEntityType.Game, 'teamType', 2)).toBe('Team Vs');
     expect(format(AuditEntityType.Beatmap, 'rankedStatus', 1)).toBe('Ranked');
     expect(format(AuditEntityType.Match, 'dataFetchStatus', 2)).toBe('Fetched');
     expect(format(AuditEntityType.Score, 'grade', 3)).toBe('S');
@@ -216,9 +219,9 @@ describe('formatAuditValue', () => {
   });
 
   it('names referenced users', () => {
-    const users = { '12': { username: 'mrekk' }, '13': { username: null } };
+    const users = { '12': { username: 'apricot' }, '13': { username: null } };
     expect(format(AuditEntityType.Match, 'verifiedByUserId', 12, users)).toBe(
-      'mrekk'
+      'apricot'
     );
     expect(format(AuditEntityType.Match, 'verifiedByUserId', 13, users)).toBe(
       'Deleted user (13)'

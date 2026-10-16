@@ -33,7 +33,7 @@ Every formatter uses fixed en-US and UTC and is built so the server and the brow
 | Share                 | `54.2%`                                                   | `formatPercent`                             |
 | Accuracy              | `98.54%`                                                  | `formatAccuracy`                            |
 | Year, ID              | `2024`, `4012345`: never separated                        | `formatYear`, `formatId`                    |
-| Rank range            | `Open rank`, `10,000+`                                    | `formatRankRange`                           |
+| Rank restriction      | `Open rank`, `10,000+`                                    | `formatRankRange`                           |
 | Lobby size            | `1v1`, `4v4`                                              | `formatLobbySize`                           |
 | Ruleset               | `osu!`, `taiko`, `catch`, `mania 4K`, `mania 7K`          | `RulesetName`, `getRulesetLabel`            |
 | Mods                  | `HD, HR`, `NM`                                            | `formatMods`                                |
@@ -43,7 +43,7 @@ Never call `toLocaleString()`, `toLocaleDateString()`, `Intl.*` without a fixed 
 
 ## DateText
 
-A calendar day in UTC. Use it wherever the day matters and the time does not: tournament start, joined date, a beatmap's ranked date.
+A calendar day in UTC. Use it wherever the day matters and the time does not, such as the day on a match card or the "Played" column of a beatmap leaderboard.
 
 ```tsx
 import { DateText } from '@/components/kit/format/DateText';
@@ -121,7 +121,7 @@ Gallery anchor: `/admin/design#format-timestamp`
 
 ## RelativeTime
 
-Time since an event, `3h ago`, with the full UTC timestamp in a tooltip that opens on hover, focus and tap. Only for activity feeds: the audit log, report lists, notifications. Everywhere else use `Timestamp` or `DateText`.
+Time since an event, `3h ago`, with the full UTC timestamp in a tooltip that opens on hover, focus and tap. Only for activity feeds, such as the audit log and report lists. Everywhere else use `Timestamp` or `DateText`.
 
 ```tsx
 import { RelativeTime } from '@/components/kit/format/RelativeTime';
@@ -158,7 +158,7 @@ import {
 } from '@/lib/kit/format/date';
 
 formatDate('2024-07-20T23:30:00-05:00'); // "Jul 21, 2024" (the UTC day)
-formatDateRange(start, end, { empty: 'Dates unknown' });
+formatDateRange(start, end, { empty: 'Unknown' });
 formatTimestamp(created, { seconds: true });
 formatRelativeTime(created, Date.now());
 toDate('2024-07-20 15:42:00+00'); // Date, or null when unreadable
@@ -282,7 +282,7 @@ import {
 ```
 
 - `RulesetName` is a label, not a control. `iconOnly` adds a tooltip that opens on hover, focus and tap, with the full name as its `aria-label`. The icon is muted.
-- `RATED_RULESETS` is the order for chips, tabs and legends. It leaves out `Ruleset.ManiaOther` (`mania (other)`), which only describes beatmaps and games with other key counts.
+- `RATED_RULESETS` is the order for chips, tabs, legends and ruleset filters. It leaves out `Ruleset.ManiaOther` (`mania (other)`), as the tournament list, beatmap list, leaderboard and filter tool do. Only admin pickers offer it: the tournament, game and beatmap edit dialogs, and the submission form when an admin is signed in.
 - `RULESET_NAMES[ruleset]` is `{ label, fullName }` (type `RulesetNameEntry`) for every `Ruleset`.
 - `getRulesetLabel(n)` and `getRulesetFullName(n)` take any number and return `Unknown ruleset` outside the enum. Always go through `Ruleset` from `@otr/core/osu`; never hard-code `0`–`5`.
 - `RulesetIcon` (`components/icons/RulesetIcon.tsx`) stays: `RulesetName` uses it.
@@ -308,6 +308,7 @@ import {
 } from '@/lib/kit/format/fields';
 
 fieldLabel('lobbySize'); // "Lobby size"
+fieldLabel('rankRange'); // "Rank restriction"
 fieldLabel('starRating', { short: true }); // "SR"
 formatRankRange(1); // "Open rank"
 formatRankRange(10000); // "10,000+"
@@ -315,6 +316,8 @@ formatLobbySize(4); // "4v4"
 ```
 
 - Each entry has `label`, an optional `short` for narrow headers and tiles, and `legacy`: the names it replaces. Never render a `legacy` name; search for it to find what to migrate.
+- Keys and helpers keep the stored column's name (`rankRange` and `formatRankRange` for `rankRangeLowerBound`); only the label changes.
+- The values these write follow the forms' rules: a rank restriction is a whole number from 1 (`Open rank`), and a lobby size runs from `1v1` to `8v8`.
 - `humanizeFieldName('drainLength')` gives `Drain length` for a raw name with no entry. Prefer adding the entry.
 
 The duplicates it settles:
@@ -322,9 +325,9 @@ The duplicates it settles:
 | Use               | Not                              | Seen in                                                                                                                                                                  |
 | ----------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Lobby size        | Team size, Team Size, Lobby Size | `tournaments/list/TournamentListFilter.tsx`, `beatmap/BeatmapPoolsDialog.tsx`, `stats/TournamentsByLobbySizeChart.tsx`, audit                                            |
-| Rank range        | Rank restriction, Rank Range     | `tournaments/TournamentAdminView.tsx`, `TournamentSubmissionForm.tsx`, `tournaments/list/TournamentListFilter.tsx`, audit                                                |
+| Rank restriction  | Rank range, Rank Range           | `beatmap/BeatmapPoolsDialog.tsx`, audit                                                                                                                                  |
 | Open rank (value) | Open                             | `player/PlayerTournamentCard.tsx`, the tournament page (`apps/web/app/tournaments/[id]/page.tsx`), `formatRankRangeBound` in `lib/beatmaps/rankRange.ts`                 |
-| Forum post        | Forum URL, Forum post URL        | `tournaments/TournamentAdminView.tsx`, `TournamentSubmissionForm.tsx`, audit                                                                                             |
+| Forum post URL    | Forum URL                        | `tournaments/TournamentAdminView.tsx`, audit, and the validation messages in `lib/validation-schema.ts` and `lib/orpc/schema/tournament*.ts`                             |
 | Ruleset           | Game mode, Mode                  | form tooltips in `tournaments/TournamentSubmissionForm.tsx`, `filtering/FilteringForm.tsx`                                                                               |
 | Peak rating       | Highest rating                   | `player/PlayerRatingChart.tsx`                                                                                                                                           |
 | Match cost        | Match Cost                       | `tournaments/TournamentTopPerformers.tsx`; the match page highlight `Top Match Cost` (`matches/MatchStatsUtils.ts`) names the best value, so it becomes `Top match cost` |
@@ -352,11 +355,12 @@ formatMods(Mods.FreeModAllowed); // "Freemod"
 ```
 
 - This is the faithful form: it keeps NF, SO, V2 and key mods, and drops only a flag another implies (DT under NC, SD under PF). Use it for data views and audit values.
+- Acronyms follow the site's `ModsEnumHelper` (Cinema is `CM`). Key co-op, which it leaves blank, is `CO`, as the data worker reads it.
 - The beatmap pages' display rules (drop NF and SO, fold NC into DT, `HDHR` without separators) stay in `lib/utils/mods.ts` (`getBeatmapModLabel`) with the mod colours.
 
 ## Enum labels
 
-Sentence-case names for the stored enums people read, in `@/lib/kit/format/enum-labels`: tournament, match, game and score rejection reasons; match and game warnings; scoring type; team type (`Team VS`); team; grade; data fetch status; and beatmap ranked status (`Graveyard` … `Loved`).
+Sentence-case names for the stored enums people read, in `@/lib/kit/format/enum-labels`: tournament, match, game and score rejection reasons; match and game warnings; scoring type; team type (`Team Vs`); team; grade; data fetch status; and beatmap ranked status (`Graveyard` … `Loved`).
 
 ```ts
 import {
@@ -376,7 +380,7 @@ formatEnumValue(9, TEAM_TYPE_LABELS); // "Unknown (9)"
 - Every table is keyed by its enum, so a new member fails the type check until it has a name.
 - `getFlagLabels` gives one line per set flag, for tooltips and lists; unnamed bits read `Unknown (64)`.
 - Verification status names come from the status family (`getVerificationStatusName` in `@/lib/kit/status/verification`).
-- Replaces the Title Case texts in `lib/enum-helpers.ts` (`No End Time`, `Head to Head`, `Team Vs`). Enum numbers never change: they are a contract with the processor.
+- Replaces the Title Case texts in `lib/enum-helpers.ts` (`No End Time`, `Head to Head`, `Tag Co-op`) with their sentence-case forms; osu! terms keep the site's spelling (`Team Vs`). Enum numbers never change: they are a contract with the processor.
 
 ## Audit values and AuditFieldChange
 
@@ -418,7 +422,7 @@ import {
   listAuditFields,
 } from '@/lib/kit/format/audit';
 
-getAuditFieldLabel(AuditEntityType.Tournament, 'rankRangeLowerBound'); // "Rank range"
+getAuditFieldLabel(AuditEntityType.Tournament, 'rankRangeLowerBound'); // "Rank restriction"
 formatAuditValue(AuditEntityType.Game, 'mods', 24).text; // "HD, HR"
 formatAuditValue(
   AuditEntityType.Match,
@@ -429,7 +433,7 @@ formatAuditValue(
 listAuditFields(); // [{ entityType, field, label }], for a field filter
 ```
 
-- `AUDIT_FIELDS` gives each field a glossary label and a format: mods, timestamps (with seconds, so a correction of a few seconds still shows), durations (`3:42`), rulesets, rank ranges, lobby sizes, verification statuses, enums, bitflags, users, counts with separators, IDs without.
+- `AUDIT_FIELDS` gives each field a glossary label and a format: mods, timestamps (with seconds, so a correction of a few seconds still shows), durations (`3:42`), rulesets, rank restrictions, lobby sizes, verification statuses, enums, bitflags, users, counts with separators, IDs without.
 - A test compares it with the schema, so a new audited column fails until it has an entry.
 - Unknown fields (such as the retired `processingStatus`) fall back to a humanized label and the raw value.
 

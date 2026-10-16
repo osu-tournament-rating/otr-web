@@ -15,8 +15,8 @@ describe('formatRangeFilterLabel', () => {
   });
 
   it('words open ends', () => {
-    expect(formatRangeFilterLabel('Rank range', { min: 1000 })).toBe(
-      'Rank range: at least 1,000'
+    expect(formatRangeFilterLabel('Rank restriction', { min: 1000 })).toBe(
+      'Rank restriction: at least 1,000'
     );
     expect(formatRangeFilterLabel('BPM', { max: 180 })).toBe(
       'BPM: at most 180'

@@ -49,6 +49,7 @@ describe('ruleset names', () => {
   it('keeps unrated mania out of the rated list', () => {
     expect(RATED_RULESETS).not.toContain(Ruleset.ManiaOther);
     expect(getRulesetLabel(Ruleset.ManiaOther)).toBe('mania (other)');
+    expect(getRulesetFullName(Ruleset.ManiaOther)).toBe('osu!mania (other)');
   });
 
   it('handles values outside the enum', () => {

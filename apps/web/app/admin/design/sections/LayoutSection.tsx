@@ -5,6 +5,7 @@ import {
   Activity,
   ArrowUpRight,
   CalendarDays,
+  ChartCandlestick,
   ChartLine,
   ChevronRight,
   Clock3,
@@ -14,7 +15,6 @@ import {
   Gauge,
   Globe,
   History,
-  ListOrdered,
   Medal,
   Music2,
   PencilLine,
@@ -34,6 +34,7 @@ import * as React from 'react';
 
 import { GallerySection, Specimen } from '../gallery';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
+import StarRatingPill from '@/components/beatmaps/StarRatingPill';
 import TierIcon from '@/components/icons/TierIcon';
 import type { MenuAction } from '@/components/kit/controls/ActionMenu';
 import { AdminMenu } from '@/components/kit/controls/AdminMenu';
@@ -78,7 +79,7 @@ const PLAYERS = [
 const noop = () => {};
 
 const BEATMAP_ADMIN_ACTIONS: MenuAction[] = [
-  { label: 'Edit beatmap', icon: PencilLine, onSelect: noop },
+  { label: 'Edit beatmap data', icon: PencilLine, onSelect: noop },
 ];
 
 const TOURNAMENT_ADMIN_ACTIONS: MenuAction[] = [
@@ -119,7 +120,7 @@ function TournamentListDemo() {
         search={
           <SearchField
             label="Search tournaments"
-            placeholder="Search by name"
+            placeholder="Search by name or abbreviation"
             value={query}
             onSearch={setQuery}
           />
@@ -215,7 +216,7 @@ export default function LayoutSection() {
         <PageHeader
           icon={Trophy}
           title="Tournaments"
-          description="Browse tournament submissions and their review status."
+          description="Browse tournament submissions and their review status. Only verified data is included in ratings."
           actions={<Button icon={Upload}>Submit</Button>}
         />
       </Specimen>
@@ -229,8 +230,7 @@ export default function LayoutSection() {
         <PageHeader
           icon={History}
           title="Break The Meta Cup"
-          description="Every change to this tournament and its matches."
-          back={{ href: '#layout-page-header-back', label: 'Tournament' }}
+          back={{ href: '#layout-page-header-back', label: 'View tournament' }}
         />
       </Specimen>
 
@@ -267,7 +267,11 @@ export default function LayoutSection() {
           }
         >
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 p-4 text-sm font-semibold">
-            <HeroMetaItem icon={Gauge}>4.28 stars</HeroMetaItem>
+            <StarRatingPill
+              starRating={4.28}
+              size="md"
+              valueClassName="font-bold"
+            />
             <HeroMetaItem icon={Activity}>167 BPM</HeroMetaItem>
             <HeroMetaItem icon={Clock3}>2:16</HeroMetaItem>
           </div>
@@ -289,7 +293,7 @@ export default function LayoutSection() {
             <VerificationStatusBadge
               status={VerificationStatus.Verified}
               variant="overlay"
-              reviewer="Stage"
+              reviewer="apricot"
               tooltip="tap"
             />
           }
@@ -303,7 +307,7 @@ export default function LayoutSection() {
             <AdminMenu
               onArt
               title="Break The Meta Cup"
-              notification="Has unseen reports"
+              notification="Has admin notes"
               actions={TOURNAMENT_ADMIN_ACTIONS}
             />
           }
@@ -313,14 +317,14 @@ export default function LayoutSection() {
                 asChild
                 variant="overlay"
                 icon={History}
-                label="Audit history"
+                label="View audit history"
               >
                 <a href="#layout-detail-hero-art-status" />
               </IconButton>
               <IconButton
                 variant="overlay"
                 icon={ExternalLink}
-                label="View on the osu! forum"
+                label="View tournament on osu! website"
               />
             </>
           }
@@ -340,7 +344,7 @@ export default function LayoutSection() {
           status={
             <VerificationStatusBadge
               status={VerificationStatus.Verified}
-              reviewer="Stage"
+              reviewer="apricot"
               tooltip="tap"
             />
           }
@@ -364,14 +368,14 @@ export default function LayoutSection() {
                 asChild
                 variant="outline"
                 icon={History}
-                label="Audit history"
+                label="View audit history"
               >
                 <a href="#layout-detail-hero-tabs" />
               </IconButton>
               <IconButton
                 variant="outline"
                 icon={ExternalLink}
-                label="View on the osu! forum"
+                label="View tournament on osu! website"
               />
             </>
           }
@@ -435,7 +439,7 @@ export default function LayoutSection() {
             <IconButton
               variant="outline"
               icon={ExternalLink}
-              label="View on osu!"
+              label="View profile on osu! website"
             />
           }
         />
@@ -478,7 +482,7 @@ export default function LayoutSection() {
           </HeroTabsContent>
           <HeroTabsContent value="stats">
             <Panel>
-              <SectionHeader icon={ChartLine} title="Match stats" />
+              <SectionHeader icon={ChartLine} title="Match statistics" />
               <PanelBody className={typeScale.bodyMuted}>Tiles</PanelBody>
             </Panel>
           </HeroTabsContent>
@@ -492,9 +496,9 @@ export default function LayoutSection() {
         description="The one surface. A panel starts with a SectionHeader (a list's panel starts with its ListToolbar instead) and holds rows, tiles, a table or a chart, never another card. PanelBody adds the 16px padding."
       >
         <Panel>
-          <SectionHeader icon={Gauge} title="Overview" meta="1,368 scores" />
-          <PanelBody className={typeScale.body}>
-            Played in 62 tournaments since 2019, most often as a DT pick.
+          <SectionHeader icon={Gauge} title="Overview" />
+          <PanelBody className={typeScale.bodyMuted}>
+            Rows, tiles, a table or a chart
           </PanelBody>
         </Panel>
       </Specimen>
@@ -510,26 +514,30 @@ export default function LayoutSection() {
             <SectionHeader
               icon={Medal}
               title="Tier breakdown"
-              infoText="Charts NM, HD, HR and DT scores only, grouped by each player's pre-match rating at the time of play."
+              infoText="Charts NM, HD, HR and DT scores only, grouped by each player's pre-match rating at the time of play. Tiers with fewer than 5 scores are hidden."
               meta="1,368 of 1,368 scores rated"
             />
             <PanelBody className={typeScale.bodyMuted}>Chart</PanelBody>
           </Panel>
           <Panel>
             <SectionHeader
-              icon={ListOrdered}
-              title="Leaderboard"
-              meta="top 25 of 1,368 scores"
+              icon={ChartCandlestick}
+              title="Score distribution"
+              meta="1,368 scores"
               actions={
                 <Button variant="outline" size="sm">
                   Full range
                 </Button>
               }
             />
-            <PanelBody className={typeScale.bodyMuted}>Table</PanelBody>
+            <PanelBody className={typeScale.bodyMuted}>Chart</PanelBody>
           </Panel>
           <Panel>
-            <SectionHeader title="Recent matches" level={3} meta="9 matches" />
+            <SectionHeader
+              title="Pooled beatmaps"
+              level={3}
+              meta="62 beatmaps"
+            />
             <PanelBody className={typeScale.bodyMuted}>Rows</PanelBody>
           </Panel>
         </div>
@@ -543,16 +551,15 @@ export default function LayoutSection() {
       >
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-1.5">
-            <span className="text-sm font-medium">Rank restriction</span>
-            <InfoButton label="About rank restriction">
-              Players ranked better than this cannot register.
+            <span className="text-sm font-medium">Lobby size</span>
+            <InfoButton label="About lobby size">
+              Number of players per team in each match
             </InfoButton>
           </div>
           <div className="flex items-center gap-1">
-            <Eyebrow>Percentile</Eyebrow>
-            <InfoButton label="About percentile" size="sm">
-              Share of active players rated below this player in the same
-              ruleset.
+            <Eyebrow>Peak rating</Eyebrow>
+            <InfoButton label="About peak rating" size="sm">
+              Highest rating ever reached
             </InfoButton>
           </div>
         </div>
@@ -594,14 +601,9 @@ export default function LayoutSection() {
                 icon={Globe}
                 label="Global rank"
                 value="#12"
-                sub="#3 in United States"
+                sub="Country rank #3"
               />
-              <StatTile
-                icon={Percent}
-                label="Percentile"
-                value="99th"
-                infoText="Share of active players rated below this player in the same ruleset."
-              />
+              <StatTile icon={Percent} label="Percentile" value="99th" />
               <StatTile icon={Swords} label="Matches" value="1,204" />
               <StatTile icon={Trophy} label="Tournaments" value="86" />
               <StatTile
@@ -697,7 +699,11 @@ export default function LayoutSection() {
       >
         <div className="flex flex-col gap-4">
           <Panel>
-            <SectionHeader icon={Users} title="Teammates" meta="3 players" />
+            <SectionHeader
+              icon={Users}
+              title="Frequent teammates"
+              meta="3 players"
+            />
             <RowList>
               {PLAYERS.map((player) => (
                 <RowListItem
@@ -732,7 +738,7 @@ export default function LayoutSection() {
               ['pageTitle', 'Tournaments', 'PageTitle'],
               ['sectionTitle', 'Tier breakdown', 'SectionTitle'],
               ['rowTitle', 'Break The Meta Cup', 'RowTitle'],
-              ['body', 'Verified data counts from the next Tuesday run.', null],
+              ['body', 'Only verified data is included in ratings.', null],
               ['bodyMuted', 'osu! · 1v1 · Open rank', null],
               ['label', 'Mod distribution', 'Eyebrow'],
               ['meta', '1,368 scores', null],

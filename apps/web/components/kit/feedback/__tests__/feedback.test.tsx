@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'bun:test';
-import { Lock, ShieldQuestion } from 'lucide-react';
+import {
+  AlertCircle,
+  Compass,
+  Lock,
+  ShieldAlert,
+  ShieldQuestion,
+} from 'lucide-react';
 import Link from 'next/link';
 import type * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -191,30 +197,55 @@ describe('EmptyState', () => {
 });
 
 describe('StatusPage', () => {
-  it('is an icon, an h1, a sentence and an action', () => {
+  it('is an icon, an h1 and a sentence, with no action unless given', () => {
     const html = render(
       <StatusPage
         icon={Lock}
-        title="You can't view this page"
-        description="Only admins can open it."
-        action={<Link href="/">Go to the home page</Link>}
+        title="Unauthorized"
+        description="You are not authorized to access this page."
         data-testid="unauthorized-container"
       />
     );
 
     expect(html).toContain('data-testid="unauthorized-container"');
     expect(html).toContain('<h1 class="text-xl font-semibold text-balance">');
-    expect(html).toContain('Only admins can open it.');
-    expect(html).toContain('href="/"');
+    expect(html).toContain('You are not authorized to access this page.');
     expect(html).toContain('bg-muted');
     expect(html).not.toContain('destructive');
+    expect(html).not.toContain('mt-5');
+    expect(html).not.toContain('href=');
     expect(classOf(html, 'div')).not.toMatch(/\bcontainer\b|mx-auto/);
+  });
+
+  it('holds a route error action: a way back, then Try again', () => {
+    const html = render(
+      <StatusPage
+        icon={AlertCircle}
+        tone="destructive"
+        title="Tournament could not load"
+        description="Something went wrong on our side. Try again in a moment."
+        role="alert"
+        action={
+          <>
+            <Link href="/tournaments">Tournaments</Link>
+            <button type="button">Try again</button>
+          </>
+        }
+      />
+    );
+
+    expect(html).toContain('role="alert"');
+    expect(html).toContain('mt-5');
+    expect(html).toContain('href="/tournaments"');
+    expect(html.indexOf('Tournaments</a>')).toBeLessThan(
+      html.indexOf('Try again</button>')
+    );
   });
 
   it('puts the background behind the content, hidden from assistive tech', () => {
     const html = render(
       <StatusPage
-        icon={Lock}
+        icon={Compass}
         title="Page not found"
         background={<span>art</span>}
       />
@@ -228,14 +259,18 @@ describe('StatusPage', () => {
 
   it('turns red for failures and holds details', () => {
     const html = render(
-      <StatusPage icon={Lock} tone="destructive" title="Account suspended">
-        <p>Reason: Multi-accounting</p>
+      <StatusPage
+        icon={ShieldAlert}
+        tone="destructive"
+        title="Account suspended"
+      >
+        <p>Reason: Submissions abuse</p>
       </StatusPage>
     );
 
     expect(html).toContain('bg-destructive/10');
     expect(html).toContain('text-destructive');
-    expect(html).toContain('<p>Reason: Multi-accounting</p>');
+    expect(html).toContain('<p>Reason: Submissions abuse</p>');
     // The detail stays centred with the rest of the page.
     expect(html).not.toContain('text-left');
   });
