@@ -15,7 +15,7 @@ Every value comes from the beatmap tables, which are the reference. Components l
 - [PhoneRowList and PhoneRow](#phonerowlist-and-phonerow): what a table becomes below tablet width
 - [Sorting on phones](#sorting-on-phones): `phoneSort`, for tables whose only sort is their headers
 - [PaginationFooter](#paginationfooter): numbered pages in the panel footer
-- [LoadMore](#loadmore): "Load more" for activity feeds
+- [LoadMore](#loadmore): "Load more" for activity feeds, "Show more" for a short list shown in part
 - [MissingValue](#missingvalue): the muted em dash
 - [Pagination helpers](#pagination-helpers): `getPageItems`, `formatPageReadout` and friends
 
@@ -33,8 +33,9 @@ Every value comes from the beatmap tables, which are the reference. Components l
 | Report rows      | a labelled "View" button opens the modal                                             | an eye icon, a clickable row                           |
 | Phones           | below tablet width the table becomes PhoneRows; nothing scrolls sideways             | a sideways-scrolling table, a forced `min-w-[44rem]`   |
 | Phone sorting    | `phoneSort` puts a SortControl on the headers' sort state above the phone rows       | a sort that disappears with the headers on a phone     |
-| Searchable lists | numbered pages in the panel footer with "1–50 of 8,412"                              | pages under the panel, infinite scroll, a silent cap   |
-| Activity feeds   | LoadMore ("Show more" for a short profile list shown in part)                        | "Show more (36 more)", numbered pages                  |
+| Searchable lists | numbered pages in the panel footer with "1–50 of 8,412" (PaginationFooter)           | pages under the panel, infinite scroll, a silent cap   |
+| Activity feeds   | LoadMore: "Load more" appends the next batch, with or without filters                | numbered pages, infinite scroll                        |
+| Short lists      | LoadMore with `label="Show more"`: the first rows, the rest on request               | "Show more (36 more)", a silent cap                    |
 | Sorting          | sortable headers and the toolbar's sort control share one `{ key, direction }` state | a header sort that disagrees with the dropdown         |
 
 ## DataTable
@@ -54,7 +55,7 @@ import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { formatCount, formatRank, formatRating } from '@/lib/kit/format/number';
 
 <Panel>
-  <SectionHeader icon={ListOrdered} title="Global leaderboard" meta="8,412 players" />
+  <ListToolbar label="Search and filter players" search={…} count="8,412 players" />
   <DataTable aria-label="Global leaderboard" phoneRows={phoneRows}>
     <DataTableHeader>
       <DataTableRow>
@@ -86,7 +87,7 @@ import { formatCount, formatRank, formatRating } from '@/lib/kit/format/number';
 Props that matter:
 
 - DataTable: `aria-label` (or `aria-labelledby` on the SectionHeader title) names the table. `phoneRows` takes a PhoneRowList and shows it instead of the table below tablet width (768px); `null` keeps the table at every width. `phoneSort` puts a sort control above the phone rows, see [Sorting on phones](#sorting-on-phones). `fixed` switches to a fixed layout so columns keep their widths and long names truncate. `stickyHeader`, see below. `className` goes to the `<table>`, `containerClassName` to its wrapper.
-- DataTableHead and DataTableCell: `numeric` right-aligns with tabular figures; `align="end"` right-aligns anything else (a date, an action). `showFrom` (`sm`, `md`, `lg`, `xl`) hides a column below that width; give the header and its cells the same value, ideally from one `COLUMN` map as `components/beatmaps/list/BeatmapListTable.tsx` does. `info` on a header adds an InfoButton beside the label.
+- DataTableHead and DataTableCell: `numeric` right-aligns with tabular figures; `align="end"` right-aligns anything else (a date, an action). `showFrom` (`sm`, `md`, `lg`, `xl`) hides a column below that width; give the header and its cells the same value, ideally from one `COLUMN` map as `components/beatmaps/list/BeatmapListTable.tsx` does. `info` on a header adds an InfoButton beside the label, named "About {label}" (`infoLabel` to name it when the label is not plain text).
 - DataTableCell: `muted` makes a secondary column 12px muted (dates, formats, accuracy). A cell whose content is `null`, `undefined`, `false`, blank or the formatters' `—` shows MissingValue; pass `empty={false}` for marker, selection and action columns that are meant to be blank.
 - DataTableRow: no hover tint, ever. `highlight` tints the signed-in player's own row; also say so in words (a "You" badge).
 
@@ -100,11 +101,11 @@ Do:
 
 Don't:
 
-- Don't wrap a table in a second frame (`overflow-x-auto rounded-lg border`): `app/leaderboard/data-table.tsx`, `app/reports/MyReportsClient.tsx`, `app/admin/reports/AdminReportsClient.tsx`, `components/tournaments/TournamentRatingsView.tsx`, `components/filtering/FilteringResultsTable.tsx`, `components/matches/MatchStatsView.tsx`.
-- Don't stripe rows (`index % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'` in `app/leaderboard/data-table.tsx`, `TournamentRatingsView.tsx`, `FilteringResultsTable.tsx`).
-- Don't bold or whiten headers (`className="font-semibold text-foreground"` on `TableHead` in `app/leaderboard/data-table.tsx`) or centre numbers (`text-center` throughout `app/leaderboard/columns.tsx`, `components/matches/MatchStatsView.tsx`, `MatchStatsPlayerRow.tsx`, `components/player/PlayerTournamentMatchTable.tsx`).
-- Don't print `#${rank}`, `{count}` or `rating.toFixed(0)` (`app/leaderboard/columns.tsx`); use the number helpers.
-- Don't import `@/components/ui/table` in a page. It stays as the primitive this is built on; `Eyebrow` inside a `TableHead` with `h-8` by hand (the beatmap tables today) is what DataTableHead now does for you.
+- Don't wrap a table in a second frame (`overflow-x-auto rounded-lg border`).
+- Don't stripe rows (`index % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'`).
+- Don't bold or whiten headers (`font-semibold text-foreground`) or centre numbers (`text-center`).
+- Don't print `#${rank}`, `{count}` or `rating.toFixed(0)`; use the number helpers.
+- Don't import `@/components/ui/table` in a page. It stays as the primitive this is built on, and DataTableHead already sets the 32px, 12px muted header that pages used to build from `Eyebrow` and `h-8`.
 
 Gallery anchors: `/admin/design#tables-data-table`, `/admin/design#tables-missing-value`
 
@@ -183,7 +184,7 @@ Do:
 
 Don't:
 
-- Don't build a sort header by hand: `components/beatmaps/list/BeatmapSortableHead.tsx`, the sort buttons in `components/matches/MatchStatsView.tsx` and the local `SortableHeader` in `components/filtering/FilteringResultsTable.tsx` all become this component.
+- Don't build a sort header or sort buttons by hand.
 - Don't bake the direction into dropdown options ("Date, newest first") while headers flip a separate flag.
 - Don't put an InfoButton inside the header's button; use `info`, which places it beside.
 
@@ -223,12 +224,12 @@ Owner decision (finding 28, 15 Oct): no new whole-row links or row dialogs.
 | Leaderboard, filter results, match lists, tournament matches, everything else | only the name links (`EntityLink`), secondary links stay inline                          | no   |
 | My reports, admin reports                                                     | a labelled "View" button opens the modal; the entity link works on its own               | no   |
 
-The hover tint is `ROW_HOVER_TINT` from `@/lib/kit/tables/row`: `hover:bg-muted/40`, `dark:hover:bg-secondary/70`, the same tint RowList and the tournament list use. A tint promises that a click anywhere on the row goes somewhere. `ROW_TITLE_HOVER` goes beside it and turns the name marked `data-row-title` blue while the row is hovered; DataTableLinkRow and a PhoneRow with `href` apply both for you.
+The hover tint is `ROW_HOVER_TINT` from `@/lib/kit/tables/row`: `hover:bg-muted/40`, `dark:hover:bg-secondary/70`, the same tint RowList and the tournament list use. A tint promises that a click anywhere on the row goes somewhere. `ROW_TITLE_HOVER` goes beside it and turns the name marked `data-row-title` blue while the row is hovered; DataTableLinkRow and a PhoneRow with `href` apply both for you. `ROW_HIGHLIGHT` (`bg-primary/10`) is the signed-in player's own row, which `highlight` on DataTableRow, DataTableLinkRow and PhoneRow applies.
 
 Don't:
 
-- Don't tint rows where only the name links: `hover:bg-muted/25` on `components/beatmap/BeatmapLeaderboardCard.tsx` and `BeatmapPoolsDialog.tsx` rows, `hover:bg-muted/50` in `components/tournaments/MatchLedgerRow.tsx` and `components/matches/MatchStatsPlayerRow.tsx`, `hover:bg-muted/30` in `components/player/PlayerTournamentMatchTable.tsx`, `hover:bg-muted` in `components/player/PlayerRatingChartTable.tsx`.
-- Don't make a row clickable with `onClick` (My reports today) or add a new whole-row link.
+- Don't tint rows where only the name links (`hover:bg-muted/25`, `hover:bg-muted/50` and the like).
+- Don't make a row clickable with `onClick` or add a new whole-row link.
 
 Gallery anchors: `/admin/design#tables-data-table` (name links, no tint), `/admin/design#tables-link-row` (opens as a whole, tint)
 
@@ -312,7 +313,7 @@ import {
 
 Don't:
 
-- Don't use it to add a whole-row link to a table that doesn't open as a whole today.
+- Don't use it to make a table open as a whole when its rows didn't before (owner decision, finding 28).
 - Don't put a second link to the same entity in the row.
 
 Gallery anchor: `/admin/design#tables-link-row`
@@ -347,7 +348,7 @@ import { ViewButton } from '@/components/kit/tables/ViewButton';
 
 Don't:
 
-- Don't use an icon-only eye button (`Eye` in `app/admin/reports/AdminReportsClient.tsx`) or open the dialog from a row click (`onClick` on `TableRow` in `app/reports/MyReportsClient.tsx`).
+- Don't use an icon-only eye button or open the dialog from a row click.
 - Don't wrap `Dialog` in a tooltip; wrap `DialogTrigger` if you need one.
 
 Gallery anchor: `/admin/design#tables-view-button`
@@ -374,10 +375,18 @@ import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
               <EntityLink href={`/players/${row.player.id}`}>
                 {row.player.username}
               </EntityLink>
-              <CountryFlag country={row.player.country} />
+              {/* The flag links to the country's leaderboard; the link's
+                  label names the country, so the flag is decorative. */}
+              <Link
+                href={countryHref}
+                aria-label={`${countryRank} in ${countryName}`}
+              >
+                <CountryFlag code={row.player.country} decorative />
+              </Link>
             </>
           }
-          description={`${formatCountOf(row.tournaments, 'tournament')} · ${formatPercent(row.winRate)} win rate`}
+          // "61% win rate", or the sorted column's count when sorted by it.
+          description={getPhoneDescription(row, sort.key)}
           valueAdornment={
             <TierIcon
               tier={tier}
@@ -406,6 +415,7 @@ Props that matter:
 - `align`: `center` (default) centres the rank and value on the row; `start` sets them level with the name's line, for a value that belongs to the first line (a View button beside a name and a status line) or a body that runs longer than the value.
 - `href` and `linkLabel`: the whole row becomes one link with the hover tint. Only for lists whose rows open as a whole (beatmap list, tournament list, pooled beatmaps); `title` is then plain text marked `data-row-title`.
 - A missing `value` shows MissingValue.
+- `children`: extra content under the description, inside the body column.
 - Loading: `PhoneRowListSkeleton` (`@/components/kit/feedback/Skeletons`) with the same parts, including `leading`, `align` and a `value` or `description` of `button` or `badge` ([feedback.md](feedback.md#skeletons)).
 
 Do:
@@ -415,8 +425,8 @@ Do:
 
 Don't:
 
-- Don't let a table scroll sideways on a phone: `minWidthClassName="min-w-[44rem]"` on the pool in `components/tournaments/TournamentBeatmapsAdminView.tsx` (even for visitors), the leaderboard's off-screen rating column, tournament ratings and the audit pages do today.
-- Don't hand-build phone lists per page (`<ol className="divide-y sm:hidden">` in `components/beatmap/BeatmapLeaderboardCard.tsx` and `BeatmapPoolsDialog.tsx`, the `lg:table-row` trick in `components/matches/MatchStatsPlayerRow.tsx`).
+- Don't let a table scroll sideways on a phone or force a minimum width (`min-w-[44rem]`) on visitors. The one exception is a tournament pool in an admin's select mode, where the checkbox column needs the room.
+- Don't hand-build phone lists per page (`<ol className="divide-y sm:hidden">`, a `lg:table-row` trick).
 - Don't drop the tier icon on phones; drop the tier name.
 - Don't link the avatar and the name as two links a keyboard reaches; with `leading`, use `leadingHref`.
 
@@ -429,12 +439,14 @@ Phone rows have no headers to click, so a table whose only sort is its SortableH
 ```tsx
 import { SortControl, type SortOption } from '@/components/kit/lists/SortControl';
 
-// Sortable columns of a tournament's ratings table, in header order.
-const SORT_OPTIONS: SortOption<RatingSort>[] = [
+// Sortable columns of a tournament's ratings table, in header order
+// (components/tournaments/TournamentRatingsView.tsx).
+const RATING_SORT_OPTIONS: SortOption<RatingSortKey>[] = [
   { value: 'player', label: 'Player', defaultDirection: 'asc' },
-  { value: 'matches', label: 'Matches' },
-  { value: 'after', label: 'After' },
-  { value: 'total', label: 'Total change' },
+  { value: 'matches', label: 'Matches', defaultDirection: 'desc' },
+  { value: 'before', label: 'Rating before', defaultDirection: 'desc' },
+  { value: 'after', label: 'Rating after', defaultDirection: 'desc' },
+  { value: 'total', label: 'Total change', defaultDirection: 'desc' },
 ];
 
 <DataTable
@@ -443,7 +455,7 @@ const SORT_OPTIONS: SortOption<RatingSort>[] = [
     <SortControl
       size="sm"
       label="Sort players by"
-      options={SORT_OPTIONS}
+      options={RATING_SORT_OPTIONS}
       value={sort}
       onValueChange={setSort} // or (sort) => list.setState({ sort })
     />
@@ -458,15 +470,15 @@ const SORT_OPTIONS: SortOption<RatingSort>[] = [
       …
 ```
 
-- The options are the sortable columns, with the headers' labels, in the headers' order.
-- Make the phone row's `description` lead with the sorted column's value when the phone hides that column, so the order on screen has a visible reason (the leaderboard's phone line shows the match count when sorted by matches).
+- The options are the sortable columns, in the headers' order, each starting in its header's direction. Use the header's label, or the full field name where the header is abbreviated because a column has no room: on a phone there is no column to give "Change" or "Before" its context, so the options read "Rating change" and "Rating before" (the match stats and a tournament's ratings).
+- Make the phone row's `description` lead with the sorted column's value when the phone hides that column, so the order on screen has a visible reason: a tournament's ratings lead with the games record when sorted by games, and the leaderboard's phone line shows the match count when sorted by matches.
 - Leave `phoneSort` out when the list's ListToolbar already has a SortControl; that one is visible on phones.
 
 Gallery anchor: `/admin/design#tables-data-table` (at phone width)
 
 ## PaginationFooter
 
-Numbered pages inside the panel's footer with a "1–50 of 8,412" readout, for every searchable or filterable list (finding 25). It renders nothing when everything fits on one page.
+Numbered pages inside the panel's footer with a "1–50 of 8,412" readout, for every searchable or filterable list (finding 25) except the activity feeds, which [load more](#loadmore). It renders nothing when everything fits on one page.
 
 ```tsx
 import { PaginationFooter } from '@/components/kit/tables/PaginationFooter';
@@ -474,7 +486,7 @@ import { listStateHref, parseListState } from '@/lib/kit/lists/params';
 
 // Paged in the address (server page). The page comes from the list's spec, `page: pageParam()`.
 const state = parseListState(LEADERBOARD_LIST_PARAMS, await searchParams);
-const data = await orpc.leaderboard.list(toApiFilter(state)); // toApiFilter: the page's own mapping
+const data = await fetchLeaderboard(state); // the page's own call, built from the state
 
 <PaginationFooter
   page={state.page}
@@ -511,42 +523,64 @@ Do:
 
 Don't:
 
-- Don't page under the panel (`app/leaderboard/page.tsx`) or hand-build pagers (`BeatmapPagination` in `app/beatmaps/page.tsx`, `renderPageNumbers` in `app/leaderboard/page.tsx`).
-- Don't scroll a searchable list forever (`components/tournaments/list/TournamentList.tsx`).
-- Don't silently cap a list: `pageSize: 100` in `app/admin/reports/AdminReportsClient.tsx` drops everything after the first hundred without saying so.
+- Don't page under the panel or hand-build a pager.
+- Don't scroll a searchable list forever.
+- Don't silently cap a list: a fixed `pageSize: 100` with no pages drops everything after the first hundred without saying so.
 
 Gallery anchor: `/admin/design#tables-pagination`
 
 ## LoadMore
 
-The footer of an activity feed: how many entries are showing and a "Load more" button that appends the next batch, then a note once everything is showing. It is for feeds (the audit logs and an entity's audit history) and for a short list that shows its first rows and the rest on request, with `label="Show more"` (the profile's tournament history and pooled beatmaps, which are not searchable). Searchable lists use PaginationFooter.
+The footer that grows a list in place: how many entries are showing, a button that adds the next batch under them, and a note once everything is showing. Two kinds of list use it, and nothing else does:
+
+- An activity feed, with the default "Load more": the audit log and an entity's audit history, newest first, where people read from the top and rarely go far. The button appends the next batch from the server.
+- A short list on a detail page that shows its first rows and the rest on request, with `label="Show more"`: a profile's tournament history (all loaded, shown a few at a time) and its pooled beatmaps (the server's first batch, then 25 at a time). These lists have no search or filters.
+
+Every other list, the ones people search or page through to find something (tournaments, beatmaps, the leaderboard, reports), pages with [PaginationFooter](#paginationfooter), so a position can be shared and the total is always on screen. Filters don't turn a feed into such a list: the audit log has Filters and still loads more.
 
 ```tsx
 import { LoadMore } from '@/components/kit/tables/LoadMore';
 
+// An activity feed (components/audit/AuditEntityTimeline.tsx):
 <LoadMore
-  onLoadMore={() => setSize(size + 1)}
   hasMore={hasMore}
-  loading={isValidating}
-  shownCount={events.length}
-  totalCount={total}
-  pageSize={AUDIT_PAGE_SIZE}
+  loading={isValidating && size > responsePages.length}
+  shownCount={allItems.length}
+  totalCount={totalCount}
+  pageSize={TIMELINE_BATCH}
+  onLoadMore={() => void setSize(size + 1)}
+/>;
+
+// A short list shown in part (components/player/PlayerTournamentsList.tsx):
+<LoadMore
+  label="Show more"
+  hasMore={shownCount < tournaments.length}
+  shownCount={shownCount}
+  totalCount={tournaments.length}
+  pageSize={INITIAL_COUNT}
+  onLoadMore={() =>
+    setDisplayCount((count) =>
+      Math.min(count + LOAD_MORE_COUNT, tournaments.length)
+    )
+  }
 />;
 ```
 
-- Readout: "Showing 50 of 1,214", "Showing 50" when the total is unknown, "Showing all 214" at the end.
-- `pageSize`: the size of one batch. When the first batch already holds everything (`hasMore` is false and `shownCount` is at most `pageSize`), LoadMore renders nothing, so a feed of 12 events has no "Showing all 12" footer. Pass it whenever the feed knows its batch size.
-- `label`: the button's text, "Load more" by default; "Show more" for a profile list whose rows are all loaded and shown a few at a time. The readout already says how many entries there are, so keep counts out of the label.
+- Readout: "Showing 50 of 1,214", "Showing 50" when the total is unknown (`totalCount` `null` or left out), "Showing all 214" at the end, or "You’ve reached the end" there when `shownCount` is left out.
+- `pageSize`: the size of the first batch. When it already holds everything (`hasMore` is false and `shownCount` is at most `pageSize`), LoadMore renders nothing, so a feed of 12 events has no "Showing all 12" footer. Pass it whenever the list knows that size.
+- `label`: the button's text, "Load more" by default, "Show more" for a short list shown in part. The readout already says how many entries there are, so keep counts out of the label.
 - `loading` disables the button and shows a spinner (the kit Button's `pending`, an outline `sm` Button); the label stays as it is.
-- It announces the new count politely to screen readers.
+- The readout is announced politely to screen readers. Extra props, such as `data-testid`, go on the footer.
 - A failed batch keeps the loaded rows and shows `SectionError` (`@/components/error/SectionError`) at `size="inline"` in a `border-t px-4 py-4` strip under them, with "Try again", not a custom row.
+- Loading: `LoadMoreSkeleton` after the skeleton rows, when the loaded list shows the footer on first load ([feedback.md](feedback.md#skeletons)).
 
 Don't:
 
 - Don't put the count in the label ("Show more (36 more)"); the readout says it.
+- Don't use it on a searchable list, and don't scroll a list forever instead.
 - Don't hand-build the button or the footer.
 
-Gallery anchor: `/admin/design#tables-load-more`
+Gallery anchors: `/admin/design#tables-load-more`, `/admin/design#tables-load-more-show-more`
 
 ## MissingValue
 
@@ -559,11 +593,11 @@ import { MissingValue } from '@/components/kit/tables/MissingValue';
 ```
 
 - `label`: what a screen reader says instead of the dash; "No value" unless you pass one.
-- The format helpers print the same dash (`EMPTY_VALUE`) as plain text; inside a cell it is recognised and muted.
+- The format helpers print the same dash (`EMPTY_VALUE`) as plain text; inside a cell it is recognised and muted. `isMissingValue(node)` in `@/lib/kit/tables/cell` is that test (`null`, `undefined`, `false`, blank text or the dash; `0` is a value), and `showFromClass(breakpoint)` there gives a `showFrom` column's classes for markup outside DataTable.
 
 Don't:
 
-- Don't write `'—'` or `'N/A'` by hand (`components/beatmap/BeatmapLeaderboardCard.tsx`, `BeatmapPoolsDialog.tsx`), and don't show `0` for a value that doesn't exist.
+- Don't write `'—'` or `'N/A'` by hand, and don't show `0` for a value that doesn't exist.
 
 Gallery anchor: `/admin/design#tables-missing-value`
 

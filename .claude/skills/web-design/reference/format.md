@@ -16,7 +16,7 @@ Every formatter uses fixed en-US and UTC and is built so the server and the brow
 - [Tier names](#tier-names): `Gold II`, `formatTierName`
 - [RulesetName and ruleset names](#rulesetname-and-ruleset-names): `osu!`, `taiko`, `catch`, `mania 4K`, `mania 7K`
 - [Field names](#field-names): the glossary, `FIELD_NAMES`
-- [Mods](#mods): `HD, HR`
+- [Mods](#mods): `HD, HR`, `formatMods`
 - [Countries](#countries): `CountryFlag`, `CountryName`, `CountryCombobox` and the country helpers
 - [Enum labels](#enum-labels): sentence-case names for stored enums
 - [Audit values and AuditFieldChange](#audit-values-and-auditfieldchange): labels and values for audit diffs
@@ -70,8 +70,8 @@ Do:
 
 Don't:
 
-- Don't render `formatUTCDate` (`2024-07-20`) to people. It stays for URL parameters and form values only. Legacy displays: `components/player/PlayerTournamentCard.tsx`, `components/matches/MatchCard.tsx`, `components/beatmap/BeatmapLeaderboardCard.tsx`, the date chips in `components/tournaments/list/TournamentListFilter.tsx`.
-- Don't use `components/dates/FormattedDate.tsx`: it formats in en-GB and the visitor's own time zone, and renders nothing on the server.
+- Don't show an ISO day (`2024-07-20`) to people. It is for URL parameters, form values and file names only.
+- Don't format a date in another locale or the visitor's own time zone, or render nothing on the server and fill it in on the client.
 
 Gallery anchor: `/admin/design#format-date`
 
@@ -101,9 +101,8 @@ import { DateRangeText } from '@/components/kit/format/DateRangeText';
 
 Don't:
 
-- Don't write `2024-07-20 - 2024-08-03` or `2024-07-20 – 2024-08-03`. Legacy: the tournament page header (`app/tournaments/[id]/page.tsx`), `components/player/PlayerTournamentCard.tsx`, `components/beatmap/BeatmapPoolsDialog.tsx`.
-- Don't add weekdays (`Sat, Jul 20 – Sun, Jul 21, 2024`). Legacy: `formatUTCDateRange` and `formatUTCDayRange` in `lib/utils/date.ts`.
-- `formatTournamentDates` in `components/tournaments/TournamentListRow.tsx` is the closest legacy version; replace it with this.
+- Don't write `2024-07-20 - 2024-08-03` or `2024-07-20 – 2024-08-03`.
+- Don't add weekdays (`Sat, Jul 20 – Sun, Jul 21, 2024`).
 
 Gallery anchor: `/admin/design#format-date-range`
 
@@ -123,7 +122,7 @@ import { Timestamp } from '@/components/kit/format/Timestamp';
 
 Don't:
 
-- Don't show local time, 12-hour clocks or offsets such as `UTC+02:00`. Legacy: `components/dates/FormattedDate.tsx`, `formatExactTime` in `components/audit/formatRelativeTime.ts`, `formatUTCDateFull` (`2023-10-05 14:30:45 UTC`) in `lib/utils/date.ts`.
+- Don't show local time, 12-hour clocks, offsets such as `UTC+02:00`, or `2023-10-05 14:30:45 UTC`.
 
 Gallery anchor: `/admin/design#format-timestamp`
 
@@ -181,7 +180,7 @@ import { RelativeTime } from '@/components/kit/format/RelativeTime';
 Don't:
 
 - Don't use relative time in tables, headers or detail pages. People compare and copy those values.
-- Legacy: `components/audit/RelativeTime.tsx` and `formatRelativeTime` in `components/audit/formatRelativeTime.ts` (locale-dependent tooltip, hover only).
+- Don't put the full time in a hover-only `title`; RelativeTime's tooltip opens on tap and focus too.
 
 Gallery anchor: `/admin/design#format-relative-time`
 
@@ -193,7 +192,7 @@ Why: a date mixes words and digits, so tabular figures never line dates up (`Jul
 
 Don't:
 
-- Don't pass `className="tabular-nums"` to a date component or its wrapper. Legacy: the Submitted and Reviewed rows in `components/reports/ReportDetails.tsx`; the date range in `components/tournaments/TournamentHero.tsx` (its `HeroMetaItem`) and `components/tournaments/TournamentListRow.tsx`; both start times in `components/tournaments/MatchLedgerRow.tsx`; the date cells in `app/admin/reports/AdminReportsClient.tsx`, `app/reports/MyReportsClient.tsx`, `app/admin/AdminDashboardClient.tsx` and `app/settings/ApiKeySettingsClient.tsx`.
+- Don't pass `className="tabular-nums"` to a date component or its wrapper, such as a HeroMetaItem holding a date range or a table cell holding a timestamp.
 
 ## Date helpers
 
@@ -226,8 +225,9 @@ parseDuration('1:02:04'); // 3724, or null when it isn't a length
 - Strings with no zone (`2024-07-20T15:42:00`) are read as UTC. `new Date()` would read them in the visitor's zone, so always go through `toDate`.
 - Month names are written by hand, not by `Intl`, so output is identical on every engine.
 - `formatRelativeTime` depends on the clock, so the server and the browser disagree. Never print it straight into server-rendered markup; use `RelativeTime`, which handles hydration.
-- `formatDuration(seconds)` writes a length, such as a beatmap's: `m:ss` under an hour, `h:mm:ss` from an hour, fractions of a second dropped, and `empty` for missing or negative input. It is a number that sits in columns, so give it `tabular-nums` outside the kit's numeric cells. `parseDuration` reads the same text (or bare seconds) back, for a length typed into a form, and returns null for anything else.
-- Don't import `formatDuration` or `parseDuration` from `lib/utils/date.ts`; they moved here.
+- `formatDuration(seconds)` writes a length, such as a beatmap's: `m:ss` under an hour, `h:mm:ss` from an hour, fractions of a second dropped, and `empty` for missing or negative input. It is a number that sits in columns, so give it `tabular-nums` outside the kit's numeric cells. `parseDuration` reads the same text (or bare seconds) back, for a length typed into a form (the beatmap edit dialog's length), and returns null for anything else. Every beatmap length, audit values included, goes through these two. A span of days is a count (`formatCountOf(days, 'day')`, `59 days`), not a length.
+- `toDateTimeAttribute(date, { dateOnly })` gives a `<time dateTime>` value in UTC; the components set it for you.
+- `RANGE_SEPARATOR` is the spaced en dash every range uses, and `RELATIVE_TIME_MAX_DAYS` (30) is where relative time turns into the plain date.
 
 ## Number helpers
 
@@ -277,9 +277,9 @@ The percentile style, and why: a whole ordinal, `97th percentile`, rounded down 
 
 Don't:
 
-- Don't write `#1234` (legacy: `app/leaderboard/columns.tsx`) or `#${rank.toLocaleString()}` (legacy: `components/player/PlayerRatingStatsCard.tsx`); use `formatRank`.
-- Don't render counts bare. Legacy: tournament and match counts on the leaderboard and the profile, and the year, ruleset and lobby-size chart axes.
-- Don't use `formatPercentage` (`lib/utils/chart.ts`) for percentiles, `formatChartNumber` (locale-dependent `toLocaleString()`), the local `ordinal` in `components/beatmap/BeatmapMarginCard.tsx`, or `formatAccuracy` from `lib/utils/format.ts` in new code.
+- Don't write `#1234` or `#${rank.toLocaleString()}`; use `formatRank`.
+- Don't render counts bare (`{count}`), on a page or on a chart axis.
+- Don't print a percentile as a share (`97.53%`), format numbers with `toLocaleString()`, or write a local ordinal or accuracy helper; these helpers cover them.
 
 Gallery anchor: `/admin/design#format-numbers`
 
@@ -319,8 +319,8 @@ Do:
 
 Don't:
 
-- Don't wrap it in a tinted pill or badge. Legacy: `components/rating/RatingDelta.tsx` (pill, `text-green-500` on a 10% tint, about 2.2:1 in light mode), used by the profile match table, profile tournament cards and match stats.
-- Don't show two decimals. Legacy: `components/player/PlayerRatingChartTable.tsx` and `PlayerRatingChartTooltip.tsx`.
+- Don't wrap it in a tinted pill or badge: `text-green-500` on a 10% green tint is about 2.2:1 in light mode.
+- Don't show two decimals; `RATING_DELTA_DECIMALS` is 1, and the sign is the true minus (`MINUS_SIGN`).
 - Don't put it in a shadcn tooltip or a TapTooltip (`bg-accent`): in dark mode a fall's red-400 is 3.9:1 there. Show the change on the page, or in a chart tooltip card (`ChartTooltipContent`, on `bg-background`) or a popover.
 
 Gallery anchor: `/admin/design#format-rating-delta`
@@ -344,7 +344,7 @@ formatTierName('Elite Grandmaster', 1); // "Elite Grandmaster": it has no subtie
 
 Don't:
 
-- Don't use `getTierString` from `lib/utils/tierData.ts` or build `${tier} ${numeral}` by hand; use `formatTierName`.
+- Don't build `${tier} ${numeral}` by hand or write the subtier as a digit (`Gold 2`); use `formatTierName`.
 
 Gallery anchor: `/admin/design#format-tier-name`
 
@@ -368,15 +368,16 @@ import {
 
 - `RulesetName` is a label, not a control. `iconOnly` adds a tooltip that opens on hover, focus and tap, with the full name as its `aria-label`. The icon is muted.
 - `RATED_RULESETS` is the order for chips, tabs, legends and ruleset filters. It leaves out `Ruleset.ManiaOther` (`mania (other)`), as the tournament list, beatmap list, leaderboard and filter tool do. Only admin pickers offer it: the tournament, game and beatmap edit dialogs, and the submission form when an admin is signed in.
+- `isRuleset(value)` checks a value read from outside (an address, a payload) against every `Ruleset`, `mania (other)` included; a list param built on `RATED_RULESETS` (`enumParam`, `arrayParam`) already drops it.
 - `RULESET_NAMES[ruleset]` is `{ label, fullName }` (type `RulesetNameEntry`) for every `Ruleset`.
 - `getRulesetLabel(n)` and `getRulesetFullName(n)` take any number and return `Unknown ruleset` outside the enum. Always go through `Ruleset` from `@otr/core/osu`; never hard-code `0`–`5`.
 - `RulesetIcon` (`components/icons/RulesetIcon.tsx`) stays: `RulesetName` uses it.
 
 Don't:
 
-- Don't use `RulesetEnumHelper` text (`osu!taiko`, `osu!mania 4K`, `osu!mania (other)`) as a visible label. Legacy users: `components/select/RulesetSelectContent.tsx`, `components/buttons/RulesetButton.tsx` and `RulesetSelector.tsx`, `components/leaderboard/LeaderboardFilter.tsx`, `components/beatmaps/list/BeatmapListFilter.tsx`, `components/stats/RatingDistributionTabs.tsx` and `TournamentsByRulesetChart.tsx`, `components/filtering/FilterReportView.tsx`, `components/matches/MergeMatchButton.tsx`, `components/search/results/PlayerResultContent.tsx` and `TournamentResultContent.tsx`, `cohortName` in `components/beatmap/BeatmapMarginCard.tsx`.
-- Don't strip the prefix by hand (`.replace('osu!', '')`, legacy in `components/tournaments/TournamentListRow.tsx`).
-- `getBeatmapRulesetLabel` (`lib/beatmaps/presentation.ts`) and `RulesetPill` (`components/beatmaps/RulesetPill.tsx`) still print the long names; keep `getBeatmapDisplayRuleset` for reading 4K and 7K from a difficulty name, then label the result with `getRulesetLabel`.
+- Don't show the full names (`osu!taiko`, `osu!mania 4K`) as a visible label; they are for tooltips and accessible names.
+- Don't strip the prefix by hand (`.replace('osu!', '')`).
+- A beatmap stored as `mania (other)` reads 4K or 7K from its difficulty name: `getBeatmapDisplayRuleset` in `lib/beatmaps/presentation.ts` does that, and `getBeatmapRulesetLabel` there labels the result with `getRulesetLabel` (the beatmap list's `RulesetPill` uses it).
 
 Gallery anchor: `/admin/design#format-ruleset`
 
@@ -400,30 +401,32 @@ formatRankRange(10000); // "10,000+"
 formatLobbySize(4); // "4v4"
 ```
 
-- Each entry has `label`, an optional `short` for narrow headers and tiles, and `legacy`: the names it replaces. Never render a `legacy` name; search for it to find what to migrate.
-- Keys and helpers keep the stored column's name (`rankRange` and `formatRankRange` for `rankRangeLowerBound`); only the label changes.
+- Each entry has `label`, an optional `short` for narrow headers and tiles, and `legacy`: the names it replaces. Never render a `legacy` name; search for one to find a page that slipped back.
+- Keys and helpers keep the stored column's name (`rankRange` and `formatRankRange` for `rankRangeLowerBound`); only the label changes. `OPEN_RANK_LABEL` is the `Open rank` text on its own.
 - The values these write follow the forms' rules: a rank restriction is a whole number from 1 (`Open rank`), and a lobby size runs from `1v1` to `8v8`.
 - Filters use the site's short labels: "Matches", "Tiers" (the filter picks several) and "Status" (the `short` of `verificationStatus`).
 - `humanizeFieldName('drainLength')` gives `Drain length` for a raw name with no entry. Prefer adding the entry.
 
-The duplicates it settles:
+The names it settles, each with what it replaced (the entries' `legacy`):
 
-| Use               | Not                              | Seen in                                                                                                                                                                  |
-| ----------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Lobby size        | Team size, Team Size, Lobby Size | `tournaments/list/TournamentListFilter.tsx`, `beatmap/BeatmapPoolsDialog.tsx`, `stats/TournamentsByLobbySizeChart.tsx`, audit                                            |
-| Rank restriction  | Rank range, Rank Range           | `beatmap/BeatmapPoolsDialog.tsx`, audit                                                                                                                                  |
-| Open rank (value) | Open                             | `player/PlayerTournamentCard.tsx`, the tournament page (`apps/web/app/tournaments/[id]/page.tsx`), `formatRankRangeBound` in `lib/beatmaps/rankRange.ts`                 |
-| Forum post URL    | Forum URL                        | `tournaments/TournamentAdminView.tsx`, audit (the validation messages already say Forum post URL, from `lib/orpc/schema/tournamentMessages.ts`)                          |
-| Ruleset           | Game mode, Mode                  | form tooltips in `tournaments/TournamentSubmissionForm.tsx`, `filtering/FilteringForm.tsx`                                                                               |
-| Peak rating       | Highest rating                   | `player/PlayerRatingChart.tsx`                                                                                                                                           |
-| Match cost        | Match Cost                       | `tournaments/TournamentTopPerformers.tsx`; the match page highlight `Top Match Cost` (`matches/MatchStatsUtils.ts`) names the best value, so it becomes `Top match cost` |
-| Win rate          | Win rate %                       | `leaderboard/LeaderboardFilter.tsx`                                                                                                                                      |
-| osu! rank         | osu! Global Rank                 | `leaderboard/LeaderboardFilter.tsx` (the osu! rank, not the o!TR rank)                                                                                                   |
-| Global rank       | Global, Global Rank              | `player/PlayerRatingStatsCard.tsx`; `short` is `Rank`                                                                                                                    |
-| Mappers           | Creators                         | audit                                                                                                                                                                    |
-| Length            | Total length                     | audit                                                                                                                                                                    |
+| Use               | Not                              |
+| ----------------- | -------------------------------- |
+| Lobby size        | Team size, Team Size, Lobby Size |
+| Rank restriction  | Rank range, Rank Range           |
+| Open rank (value) | Open                             |
+| Forum post URL    | Forum URL                        |
+| Ruleset           | Game mode, Mode                  |
+| Peak rating       | Highest rating                   |
+| Match cost        | Match Cost                       |
+| Win rate          | Win rate %                       |
+| osu! rank         | osu! Global Rank                 |
+| Global rank       | Global, Global Rank              |
+| Mappers           | Creators                         |
+| Length            | Total length                     |
 
-Paths are under `apps/web/components/`. Other values: `formatRankRange` in `lib/utils/number.ts` and `formatRankRangeBound` call `toLocaleString()` without a locale; `LobbySizeEnumHelper` prints `Unknown` where the kit prints an em dash.
+- `osu! rank` is the player's rank on osu!, not the o!TR rank; `Global rank`'s `short` is `Rank`.
+- The match page's best value is "Top match cost", not "Top Match Cost".
+- The tournament fields' validation messages say "Forum post URL" too (`lib/orpc/schema/tournamentMessages.ts`).
 
 Gallery anchor: `/admin/design#format-field-names`
 
@@ -442,7 +445,8 @@ formatMods(Mods.FreeModAllowed); // "Freemod"
 
 - This is the faithful form: it keeps NF, SO, V2 and key mods, and drops only a flag another implies (DT under NC, SD under PF). Use it for data views and audit values.
 - Acronyms follow the site's `ModsEnumHelper` (Cinema is `CM`). Key co-op, which it leaves blank, is `CO`, as the data worker reads it.
-- The beatmap pages' display rules (drop NF and SO, fold NC into DT, `HDHR` without separators) stay in `lib/utils/mods.ts` (`getBeatmapModLabel`) with the mod colours.
+- `MOD_ACRONYMS` is the bit-order table, and `NO_MOD_LABEL` (`NM`) and `FREEMOD_LABEL` (`Freemod`) the two words it can print; a value carrying the whole freemod mask reads `Freemod` plus whatever else is set.
+- The beatmap pages' display rules (drop NF and SO, fold NC into DT, `HDHR` without separators) stay in `lib/utils/mods.ts` (`getBeatmapModLabel`); their colours are the mod palette in `@/lib/kit/color/mods` ([color.md](color.md#mod-colours)).
 
 ## Countries
 
@@ -464,7 +468,7 @@ import { CountryFlag } from '@/components/kit/country/CountryFlag';
 - `tooltip`: on by default. The flag becomes a button named by the country, whose tooltip opens on tap, hover and keyboard focus. Its tap area reaches 4px past the flag, so keep 8px between two flags.
 - `tooltip={false}`: no button; the image's alt text is the name.
 - `decorative`: hidden from assistive tech with no tooltip, for a flag inside a link whose accessible name says the country, or beside the written name.
-- `size`: `sm` (16×11) beside 12–14px text, `md` (21×14, default) in rows and heroes. Both sides are set in CSS too, so next/image never warns that one was resized alone.
+- `size`: `sm` (16×11) beside 12–14px text, `md` (21×14, default) in rows and heroes (`COUNTRY_FLAG_SIZES`). Both sides are set in CSS too, so next/image never warns that one was resized alone.
 - `name`: the English name from the server. Leave it out in server components.
 - `className`: on the button when the flag names itself, otherwise on the image.
 
@@ -475,13 +479,18 @@ A flag and the name, for a profile's country or the chosen value in a filter. Th
 ```tsx
 import { CountryName } from '@/components/kit/country/CountryFlag';
 
-<Link href={countryLeaderboardHref} className="…">
+// The profile hero (components/player/PlayerHero.tsx):
+<Link
+  href={countryLeaderboardHref}
+  aria-label={`${getCountryName(player.country)} leaderboard`}
+  className="…"
+>
   <CountryName code={player.country} />
 </Link>;
 ```
 
 - `truncate`: cut a long name with an ellipsis instead of wrapping it.
-- Extra props go on the root span.
+- `name` and `size` work as on CountryFlag. Extra props go on the root span.
 
 ### CountryCombobox
 
@@ -528,7 +537,7 @@ getCountryNames(players.map((player) => player.country)); // { KR: "South Korea"
 getCountryOptions(); // [{ code: 'AF', name: 'Afghanistan' }, …]
 ```
 
-- `COUNTRY_CODES`: the ISO 3166-1 alpha-2 codes and `XK` (Kosovo), 250 in all.
+- `COUNTRY_CODES`: the ISO 3166-1 alpha-2 codes and `XK` (Kosovo), 250 in all. `normalizeCountryCode(code)` trims and upper-cases a stored code or one from an address. `UNKNOWN_COUNTRY_CODE` is `XX`, osu!'s code for no country.
 - `getCountryName`: also names osu!'s older codes that are not countries: `XX` (`Unknown`) and the legacy GeoIP regions (`EU` is `Europe` there, not the European Union). An unknown code comes back as itself.
 - `getCountryNames(codes)`: a map for a server component to hand to a client one, such as a match's score cards.
 - `getCountryFlagUrl(code)`: osu!'s flag image. Codes osu!'s flag set lacks (`BQ`, `CW`, `SX`, and anything unknown) get its "unknown" flag instead of a broken image.
@@ -540,9 +549,9 @@ Do:
 
 Don't:
 
-- Don't use `components/shared/CountryFlag.tsx`: its tooltip opens on hover only, its alt text is the code (`AU flag`), and next/image warns that its height was changed alone.
-- Don't use the `countries-and-timezones` library (`components/leaderboard/countries.ts`) for names. It loads a country and time zone library in the browser only for names `Intl` already has (issue #1020), and it names countries differently from the profile (`United States of America`, `Ivory Coast`).
-- Don't build a country `Intl.DisplayNames` in a page (`components/player/PlayerHero.tsx`); use `getCountryName`.
+- Don't draw a flag with a hover-only tooltip or the code as its alt text (`AU flag`).
+- Don't bring in a country library for names `Intl` already has (issue #1020); a second source names countries differently from the profile (`United States of America`, `Ivory Coast`).
+- Don't build a country `Intl.DisplayNames` in a page; use `getCountryName`, as the profile hero does.
 
 Gallery anchors: `/admin/design#format-country-flag`, `/admin/design#format-country-name`, `/admin/design#format-country-combobox`
 
@@ -590,11 +599,12 @@ getSetFlags(player.failureReason, FILTERING_FAIL_REASON_LABELS).map((flag) => (
 - `getFlagLabels` gives one line per set flag, for tooltips and lists; unnamed bits read `Unknown (64)`.
 - Verification status names come from the status family (`getVerificationStatusName` in `@/lib/kit/status/verification`).
 - `getSetFlags(value, labels)`: the named flags set, lowest first; unnamed bits, zero and values that are not flags give none. `getFlagLabels` is built on it and adds `Unknown (64)` for unnamed bits.
-- Replaces the Title Case texts in `lib/enum-helpers.ts` (`No End Time`, `Head to Head`, `Tag Co-op`, `Low Rating`, `High Peak`) with their sentence-case forms; osu! terms keep the site's spelling (`Team Vs`). Enum numbers never change: they are a contract with the processor.
+- Every name is sentence case (`No end time`, `Head to head`, `Tag co-op`, `Low rating`), except osu! terms, which keep the site's spelling (`Team Vs`). Enum numbers never change: they are a contract with the processor.
+- The other tables: `TOURNAMENT_REJECTION_REASON_LABELS`, `MATCH_REJECTION_REASON_LABELS`, `SCORE_REJECTION_REASON_LABELS`, `MATCH_WARNING_FLAG_LABELS`, `GAME_WARNING_FLAG_LABELS`, `SCORING_TYPE_LABELS`, `TEAM_LABELS`, `SCORE_GRADE_LABELS`, `DATA_FETCH_STATUS_LABELS` and `RANKED_STATUS_LABELS`. The status family's `getWarningTexts` and `getRejectionReasonTexts` read the flag tables for you.
 
 Don't:
 
-- Don't keep a local copy of a label table. Legacy: `RATING_ADJUSTMENT_TYPE_LABELS` in `components/player/rating-adjustment.ts`, and `VISIBLE_FAILURE_REASONS` in `components/filtering/FailureReasonsBadges.tsx`. That file also limits the badges to the two reasons the tool's form can set; keep that limit in the page.
+- Don't keep a local copy of a label table. A page may still choose which entries to show: the filter tool's `components/filtering/FailureReasonsBadges.tsx` shows only the two reasons its form can set, with the names from here.
 
 ## Audit values and AuditFieldChange
 
@@ -648,7 +658,7 @@ formatAuditValue(
 listAuditFields(); // [{ entityType, field, label }], for a field filter
 ```
 
-- `AUDIT_FIELDS` gives each field a glossary label and a format: mods, timestamps (with seconds, so a correction of a few seconds still shows), durations (`3:42`), rulesets, rank restrictions, lobby sizes, verification statuses, enums, bitflags, users, counts with separators, IDs without.
+- `AUDIT_FIELDS` (one entry per field, read with `getAuditFieldSpec(entityType, field)`) gives each field a glossary label and a format: mods, timestamps (with seconds, so a correction of a few seconds still shows), durations (`3:42`), rulesets, rank restrictions, lobby sizes, verification statuses, enums, bitflags, users, counts with separators, IDs without.
 - A test compares it with the schema, so a new audited column fails until it has an entry.
 - Unknown fields (such as the retired `processingStatus`) fall back to a humanized label and the raw value.
 
@@ -656,6 +666,6 @@ Don't:
 
 - Don't show raw field names, Title Case labels or numbers (`processingStatus 2 → 1`, `Mods 24 → 8`).
 - Don't colour old and new values red and green; only the strike-through and the arrow mark the change.
-- Legacy: `components/audit/auditFieldConfig.ts` and `components/audit/AuditDiffDisplay.tsx`. The audit pages move onto these in the next pull request.
+- Don't keep an audit field table or diff renderer of your own; the audit log and every audit history page use these.
 
 Gallery anchor: `/admin/design#format-audit-change`

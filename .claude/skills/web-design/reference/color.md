@@ -70,7 +70,7 @@ Every token below has a light value in `:root` and a dark value in `.dark`; the 
 | `--score-grade-ss` … `--score-grade-d` | none                         | `grades.ts` | `grades.ts` | Grade chart marks                        |
 | `--mod-nm` … `--mod-key`               | none                         | `mods.ts`   | `mods.ts`   | Mod marks and solid mod pills            |
 
-The other existing tokens (`muted`, `accent`, `success`, `warning`, `destructive`, `chart-1` … `chart-5` and the rest) keep their values. The four text tokens at the top of the table are mirrored in `@/lib/kit/color/tokens` and tested like the library's own (see [Theme text](#theme-text)). The legacy palettes that pages still read (`--mod-hard-rock` and the other long mod names, `--text-<tier>` with the `.text-gold` utilities, `--grade-*`, `--rank-range-*`, `--team-red`, `--team-blue`, `--team-no-team`, `--color-status-*`) are replaced by the tokens above in the second pull request; don't use them in new code.
+The brand blue (`primary`, `primary-solid`, `link`) has its own table under [Brand blue](#brand-blue). The shadcn base tokens (`background`, `card`, `popover`, `muted`, `accent`, `secondary`, `border`, `input`, `ring`, `success`, `warning`, `destructive`, `destructive-solid`) keep their values. The four text tokens at the top of the table are mirrored in `@/lib/kit/color/tokens` and tested like the library's own (see [Theme text](#theme-text)). There are no other palettes: the old long mod names, `--text-<tier>`, `--grade-*`, `--rank-range-*`, `--team-*`, `--color-status-*` and `--chart-*` are gone, so a colour that is not in this table or the brand blue's is not a token.
 
 A light subtree inside a dark page (`.theme-light`, the gallery only) gets the light values of every token above, and of `success` and `warning`.
 
@@ -114,6 +114,7 @@ Three tokens carry the brand blue, because one blue can't be both a fill behind 
 - White text on `primary-solid` measures 4.5:1 in both themes. In light mode `#3a71e2` is the passing blue closest to the original `#4e93fc`, which only reached 3:1 with white text.
 - `link` reaches 4.5:1 on the background, cards and grey panels in both themes. Light mode needs it a step darker than `primary` for that; dark mode keeps the original blue.
 - `primary` is a mark colour: 3:1 or better on every surface, in both themes.
+- The values are mirrored in `@/lib/kit/color/tokens` as `PRIMARY_COLOR`, `PRIMARY_SOLID_COLOR` and `LINK_COLOR` (with `NOTIFICATION_COLOR` for the dot), and tested with the other tokens (`TOKEN_GROUPS`, flattened as `ALL_TOKENS`).
 
 Do:
 
@@ -123,7 +124,9 @@ Do:
 Don't:
 
 - Don't put white text on `bg-primary`: in dark mode it is the original blue, 3:1 with white.
-- Don't colour text `text-primary`; it is under 4.5:1 on light cards. Pages still doing it move to `text-link` in the second pull request.
+- Don't colour text `text-primary`; it is under 4.5:1 on light cards. `primary` is for icons, borders, rings and selected tints; blue text is `text-link`.
+
+Gallery anchor: `/admin/design#color-accent-rule` (with the three brand tokens)
 
 ## Accent rule
 
@@ -141,10 +144,10 @@ Do:
 
 Don't:
 
-- Don't colour section icons `text-primary` (most non-beatmap pages today, such as `components/player/PlayerTournamentsList.tsx`, `components/tournaments/TournamentRatingsView.tsx`, `components/filtering/FilterReportView.tsx`, `components/stats/*Chart.tsx`).
-- Don't colour every name in an event as a link (`components/audit/*`); only real links, and only on hover.
-- Don't use a second dot colour: `bg-blue-500` in `app/reports/MyReportsClient.tsx` and `bg-yellow-600 dark:bg-yellow-400` in `components/admin-notes/AdminNoteView.tsx` both become `NotificationDot`.
-- Don't use blue for an info notice (`components/filtering/FilterComplianceNotice.tsx`, `components/audit/CascadeContextBanner.tsx`).
+- Don't colour section or page icons `text-primary`.
+- Don't colour every name in a sentence as a link; only real links turn blue, and only on hover (EntityLink's `inline` variant, as the audit log uses).
+- Don't use a second dot colour; every "something new" dot is `NotificationDot`.
+- Don't use blue for an info notice; the info callout is slate.
 
 Gallery anchor: `/admin/design#color-accent-rule`
 
@@ -174,7 +177,7 @@ import {
 | 8    | Red     | `#e34948` | `#e66767` |
 
 - `seriesColor(index)`: `var(--series-N)` for a 0-based index; past the eighth slot it returns the "Other" grey, never a repeat.
-- `CATEGORICAL_PALETTE`: the slots with `token`, `css`, `light`, `dark`, `slot` and `name`. `CATEGORICAL_OTHER` is the grey for an "Other" bucket.
+- `CATEGORICAL_PALETTE`: the slots, each a `ThemeColor` (`token`, `css`, `light`, `dark` and its contrast `role`, from `@/lib/kit/color/theme-color`) with its `slot` and `name`. `CATEGORICAL_OTHER` is the grey for an "Other" bucket.
 - Assign by a stable index (the series' place in a fixed list), not by rank, so a filter that removes a series never repaints the others.
 - A single series is slot 1 and needs no legend. Two or more get a `ChartLegend`.
 - In scatter plots and small multiples any two colours can touch, so use at most three slots there and fold the rest into "Other".
@@ -187,8 +190,8 @@ Do:
 
 Don't:
 
-- Don't give neutral data a judgement colour: `components/player/PlayerFrequencyChart.tsx` paints teammates blue (`--chart-1`) and opponents red (`--chart-2`).
-- Don't invent series colours: the rating chart's `#3b82f6` and `#8b5cf6` in `components/player/PlayerRatingChartView.tsx`, `--rank-range-*` in `globals.css`.
+- Don't give neutral data a judgement colour, such as red for opponents; teammates and opponents are `seriesColor(0)` and `seriesColor(1)`, as the profile's teammates and opponents charts have them.
+- Don't invent series colours (a hex such as `#3b82f6`, or a token of your own for one chart).
 - Don't reuse a status colour for a series, or a series colour for a status.
 
 Gallery anchor: `/admin/design#color-categorical-palette`
@@ -219,7 +222,7 @@ import {
 
 Don't:
 
-- Don't use `--color-status-awaiting` (yellow) or a separate Pending bar: `components/stats/TournamentVerificationChart.tsx` does both, and labels the group "Awaiting Review".
+- Don't give the undecided states a yellow "awaiting" colour or Pending a bar of its own; the stats page's verification chart shows the three groups (`RATINGS_GROUPS`, each bar filled with `getStatusHueColor(group.hue)`).
 - Don't use `success`/`destructive` fills or `green-400`/`yellow-400` for verification in charts.
 
 Gallery anchor: `/admin/design#color-verification`
@@ -240,7 +243,7 @@ Fill, border and text-plus-icon for the info, warning and danger callouts. The c
 
 Don't:
 
-- Don't build notices from palette classes: `border-orange-500/50 bg-orange-500/15` in `app/tools/filter/FilteringPageClient.tsx`, `bg-blue-50/50` in `components/filtering/FilterComplianceNotice.tsx`, `bg-amber-50/30` in `components/audit/AuditNoteItem.tsx`.
+- Don't build notices from palette classes (`border-orange-500/50 bg-orange-500/15`, `bg-blue-50/50`, `bg-amber-50/30`); use the Callout or these tokens.
 
 Gallery anchor: `/admin/design#color-callout-tones`
 
@@ -271,20 +274,20 @@ import {
 - `getTeamColor(team)`: the mark colour (`--match-red`, `--match-blue`, `--match-no-team`) for the edge, swatches and chart lines.
 - `getTeamTextColor(team)`: the text step; `var(--foreground)` for no team.
 - `getTeamTintClass(team)` / `MATCH_TEAM_TINT_CLASS`: the card tint, `bg-match-red/6` and so on. `MATCH_TEAM_TINT` (6%) is the strength the tests check.
-- Classes: `bg-match-red`, `text-match-red-foreground`, `bg-game-frame`, `bg-score-card`.
+- Classes: `bg-match-red`, `text-match-red-foreground`, `bg-game-frame`, `bg-score-card`. `MATCH_SURFACES` holds the two surfaces' values for tests.
 - Foreground, muted and team text clear 4.5:1 on the game frame, the score card and the tinted score card, in both themes.
 
 Do:
 
-- Keep the score card layout, team tint, coloured edge and result line (owner decision, 15 Oct); only the surfaces and colours change.
+- Keep the score card's team tint, coloured edge and result line (owner decision, 15 Oct), as the match page's score cards have them.
 - Use the standard `border` on both surfaces.
 
 Don't:
 
-- Don't hard-code the surfaces: `bg-white dark:bg-neutral-800` and `border-neutral-300` in `components/games/ScoreCard.tsx`, `bg-secondary` in `components/games/GameCard.tsx`.
-- Don't tint at 10% as `ScoreCard.tsx` does today (`bg-[var(--team-color)]/10`): muted text on the light card drops under 4.5:1.
-- Don't use deeper reds and blues for the same teams: `bg-red-500/10 text-red-600` in `components/tournaments/MatchLedgerRow.tsx`, `text-red-600 dark:text-red-400` on the outcome in `GameCard.tsx`.
-- Don't use `--team-no-team: #333`, which is not theme-aware.
+- Don't hard-code the surfaces (`bg-white dark:bg-neutral-800`, `border-neutral-300`, `bg-secondary`); use `bg-game-frame` and `bg-score-card`.
+- Don't tint more than `MATCH_TEAM_TINT` (6%): at 10% muted text on the light card drops under 4.5:1.
+- Don't use other reds and blues for the same teams (`bg-red-500/10 text-red-600`, `text-red-600 dark:text-red-400`); every team mark and text comes from these helpers.
+- Don't use a fixed grey such as `#333` for no team; `--match-no-team` follows the theme.
 
 Gallery anchor: `/admin/design#color-match`
 
@@ -301,13 +304,13 @@ import { formatTierName } from '@/lib/kit/format/tier';
 ```
 
 - `TIER_TEXT_CLASS[tier]`: the `text-tier-…` class, spelled out so Tailwind finds it.
-- `getTierColor(tier)` / `TIER_PALETTE[tier].css`: the colour for a fill or SVG. This is not the `getTierColor` in `lib/utils/tierData.ts`, which returns the legacy text class and glow; alias one of them when a file needs both.
-- Tier glows (`tierColors[…].gradient` in `lib/utils/tierData.ts`) are decoration and stay.
+- `getTierColor(tier)` / `TIER_PALETTE[tier].css`: the colour for a fill or SVG. This is not the `getTierColor` in `lib/utils/tierData.ts`, which returns the tier ladder's glow classes (`gradient`); alias one of them when a file needs both.
+- The tier ladder's glows are decoration and stay in `lib/utils/tierData.ts`.
 - Diamond and Master are hard to tell apart as neighbouring marks, such as touching bars in the rating distribution: OKLab ΔE 5.8 in light and 5.4 in dark (3.6 to 5.4 for protan and deutan readers), against the 15 (and 8) the categorical palette keeps between neighbours. Both are violets of the same lightness 14° apart. Until the owner settles new values, a chart that colours by tier also names the tier in its legend and tooltip, as the rating distribution does.
 
 Don't:
 
-- Don't use `tierColors[…].textClass` (`.text-gold` and friends over `--text-<tier>`) or `TIER_CHART_COLOR` in `components/beatmap/BeatmapTierBreakdownCard.tsx` in new code.
+- Don't keep a page's own tier colour table or text classes; tier names and marks both come from this module, as in the beatmap tier breakdown and the rating distribution.
 
 Gallery anchor: `/admin/design#color-tiers`
 
@@ -326,13 +329,13 @@ import { GRADE_PALETTE, getGradeColor } from '@/lib/kit/color/grades';
 
 Don't:
 
-- Don't use `--grade-*` (`components/beatmap/BeatmapDistributionsCard.tsx`); its light S and A are 2.4:1 and 1.6:1.
+- Don't use osu!'s badge colours as they are: on a light card its S and A measure 2.4:1 and 1.6:1. `getGradeColor` has the stepped ones; `getGradeKey(scoreGrade)` gives the palette key.
 
 Gallery anchor: `/admin/design#color-grades`
 
 ## Mod colours
 
-The revised mod palette. No Mod has its own colour (it used to fall back to the link blue), Sudden Death and Touch Device differ, every mod clears 3:1 on both cards, and every mod takes black text as a solid pill. Rare combinations get the "Other" grey.
+The revised mod palette. No Mod has its own colour, not the link blue; Sudden Death and Touch Device differ, every mod clears 3:1 on both cards, and every mod takes black text as a solid pill. Rare combinations get the "Other" grey.
 
 ```tsx
 import { MOD_FILL_FOREGROUND, getModPaletteColor } from '@/lib/kit/color/mods';
@@ -356,7 +359,7 @@ import { MOD_FILL_FOREGROUND, getModPaletteColor } from '@/lib/kit/color/mods';
 
 Don't:
 
-- Don't use `getModColor` and `getModForegroundColor` from `lib/utils/mods.ts` or the `--mod-hard-rock` style tokens in new code. They give No Mod and unknown combinations `--chart-1` (the link blue), give SD and TD the same orange, and several drop under 3:1 on light cards. All five mod charts and `components/beatmaps/BeatmapTopMods.tsx` switch in the second pull request.
+- Don't keep a mod colour table of your own. The old one gave No Mod and unknown combinations the link blue, gave SD and TD the same orange, and dropped several mods under 3:1 on light cards; every mod chart and the beatmap list's top mods use this palette.
 
 Gallery anchor: `/admin/design#color-mods`
 
@@ -380,7 +383,7 @@ import {
 
 Don't:
 
-- Don't use `getStarRatingIconColor` from `lib/beatmaps/star-rating-color.ts` on light cards; it only clamps for dark ones.
+- Don't put the solid pill colour (`getStarRatingColor`) on an icon or text on a card; some steps drop under 3:1 there. Use `getStarRatingMarkColor`.
 
 Gallery anchor: `/admin/design#color-star-rating`
 
@@ -395,8 +398,8 @@ import { SURFACES } from '@/lib/kit/color/surfaces';
 contrastRatio('#4589f2', SURFACES.light.card) >= CONTRAST_MARK;
 ```
 
-- `parseColor` reads hex, `rgb()`, `hsl()` and `oklch()`; `contrastRatio(fg, bg)` is WCAG 2 (a translucent foreground is painted over the background first); `formatContrast` rounds down.
-- `colorDistance(a, b, vision)`: OKLab ΔE ×100 for `normal`, `protan` or `deutan` readers; `worstAdjacentDistance` checks a palette's neighbours.
+- `parseColor` reads hex, `rgb()`, `hsl()` and `oklch()`; `contrastRatio(fg, bg)` is WCAG 2 (a translucent foreground is painted over the background first); `formatContrast` rounds down. `CONTRAST_TEXT` (4.5) and `CONTRAST_MARK` (3) are the two thresholds. The steps behind them are exported too: `composite`, `relativeLuminance`, `toHex`, `rgbToOklab` and `oklabToRgb`.
+- `colorDistance(a, b, vision)`: OKLab ΔE ×100 for `normal`, `protan` or `deutan` readers; `worstAdjacentDistance` checks a palette's neighbours against `CVD_SEPARATION_TARGET` (8) and `NORMAL_SEPARATION_FLOOR` (15).
 - `SURFACES`: the light card (`--card`) and the dark panel (`--muted` at 75% over `--background`), plus each theme's muted, popover and accent (tooltip) surfaces. `TEXT_COLORS`: each theme's foreground and muted text, as hex. A test resolves both from `globals.css`.
 
 Adding a colour token: add it to both blocks in `globals.css` (and to `@theme inline` if it needs a class), add the `themeColor(...)` entry to its module and to `TOKEN_GROUPS` in `@/lib/kit/color/tokens`, run `bun test apps/web/lib/kit/color`, and check the gallery.
@@ -433,9 +436,9 @@ const years = getCategoryTicks([2015, 2016, /* … */ 2026], maxTicks);
 
 Don't:
 
-- Don't write a local tick rule. The rating chart's `calculateReadableTickInterval` (`components/player/PlayerRatingChartView.tsx`) scales by powers of 5 and produces steps such as 13 and 125; its time axis spaces ticks evenly between arbitrary timestamps.
-- Don't hard-code ticks (`components/player/PlayerModStatsChart.tsx`, `components/matches/MatchTeamScoresChart.tsx`, the `roundToNice` in `components/stats/TournamentsByYearChart.tsx`).
-- Don't leave a value axis to Recharts' automatic ticks: the beatmap Misses chart (`components/beatmap/BeatmapPerformanceCard.tsx`) gets steps of 150 that way. Pass `niceAxisProps(getNiceTicks(…))`.
+- Don't write a local tick rule. One that scales by powers of 5 produces steps such as 13 and 125, and a time axis that spaces ticks evenly between arbitrary timestamps lands them on no calendar day.
+- Don't hard-code ticks or round a maximum by hand.
+- Don't leave a value axis to Recharts' automatic ticks, which give steps such as 150. Pass `niceAxisProps(getNiceTicks(…))`, as the beatmap Misses chart does.
 
 Gallery anchor: `/admin/design#color-chart-ticks`
 
@@ -467,7 +470,7 @@ import {
 
 Don't:
 
-- Don't use `formatChartNumber` from `lib/utils/chart.ts` (locale-dependent `toLocaleString()`), date-fns `format()` (local time) or a bare `String(value)` on a count axis (the year, ruleset and lobby-size stats charts today).
+- Don't format ticks with `toLocaleString()` (the visitor's locale), date-fns `format()` (local time) or a bare `String(value)` on a count axis.
 
 ## Recharts axis props
 
@@ -512,8 +515,8 @@ import {
 
 Don't:
 
-- Don't render Recharts outside `ChartContainer` (`components/stats/TournamentsByYearChart.tsx` uses a bare `ResponsiveContainer`, so its labels fall back to 16px and `#666`).
-- Don't set tick font sizes or colours per chart (`fontSize: 14` and `fill: 'var(--foreground)'` in `components/stats/TournamentVerificationChart.tsx`).
+- Don't render Recharts outside `ChartContainer`: in a bare `ResponsiveContainer` its labels fall back to 16px and `#666`.
+- Don't set tick font sizes or colours per chart (`fontSize: 14`, `fill: 'var(--foreground)'`); `chartAxisProps` carries `CHART_TICK_STYLE`.
 
 ## CountBarChart
 
@@ -532,15 +535,17 @@ import {
   </PanelBody>
 </Panel>;
 
+// The stats page's verification chart: one bar per RATINGS_GROUPS entry,
+// each with `fill: getStatusHueColor(group.hue)`.
 <CountBarChart
-  data={verificationBars} // each with fill: getStatusHueColor(group.hue)
+  data={bars}
   layout="rows"
   valueName="Tournaments"
   footer={(bar) => `${formatPercent(bar.count / total)} of all tournaments`}
 />;
 ```
 
-- `data`: `CountBarDatum[]`, each `{ key, label, count, fill? }`. `label` is the formatted category (`formatYear`, `formatLobbySize`, `getRulesetLabel`).
+- `data`: `CountBarDatum[]`, each `{ key, label, count, fill? }`. `label` is the formatted category (`formatYear`, `formatLobbySize`, `getRulesetLabel`). A `fill` on any bar colours every bar by its own `fill`; without, all take slot 1.
 - `layout`: `columns` (default) or `rows`. Rows round their right end, draw vertical gridlines, leave room for the last count label and thin the count axis to four ticks on phones; columns keep six on their value axis.
 - `valueName`: what is counted, the tooltip row's name.
 - `categoryTicks`: the labels to tick when not all fit, such as `getCategoryTicks(years, maxTicks).map(formatYearTick)`.
@@ -550,7 +555,7 @@ import {
 
 Don't:
 
-- Don't keep a copy for one page. `components/stats/CountBarChart.tsx` is the stats page's copy this replaces; its `CountBar` type is the same shape as `CountBarDatum`.
+- Don't keep a copy for one page; the stats page's year, ruleset, lobby size and verification charts all use this one.
 
 Gallery anchor: `/admin/design#color-chart-count-bars`
 
@@ -568,7 +573,7 @@ import { ChartTooltip } from '@/components/ui/chart';
     <ChartTooltipContent
       reverse
       labelFormatter={(label) => formatYearTick(label)}
-      nameFormatter={(key) => RULESET_LABELS[key]}
+      nameFormatter={(key) => getRulesetLabel(Number(key))}
       valueFormatter={formatCountTick}
       footer={(payload) => `Total ${formatCountTick(sum(payload))}`}
     />
@@ -585,8 +590,8 @@ import { ChartTooltip } from '@/components/ui/chart';
 
 Don't:
 
-- Don't write a per-chart tooltip component (`CustomTooltip` in `components/stats/TournamentsByYearChart.tsx`, `components/player/PlayerRatingChartTooltip.tsx`).
-- Don't import the shadcn `ChartTooltipContent` from `@/components/ui/chart` in new charts (the beatmap cards still do). It now formats numbers as en-US with up to three decimals, never the visitor's locale, but it has no `valueFormatter`, footer or kit marker.
+- Don't write a per-chart tooltip component.
+- Don't import the shadcn `ChartTooltipContent` from `@/components/ui/chart`; no chart uses it. It formats numbers as en-US with up to three decimals, never the visitor's locale, but it has no `valueFormatter`, footer or kit marker.
 - Don't print values with `toLocaleString()`; pass a formatter.
 
 Gallery anchor: `/admin/design#color-chart-tooltip`
@@ -600,9 +605,9 @@ import { ChartLegend } from '@/components/kit/charts/ChartLegend';
 import { SeriesMarker } from '@/components/kit/charts/SeriesMarker';
 
 <ChartLegend
-  items={RULESETS.map((ruleset, index) => ({
-    key: ruleset.key,
-    label: ruleset.label,
+  items={RATED_RULESETS.map((ruleset, index) => ({
+    key: String(ruleset),
+    label: getRulesetLabel(ruleset),
     color: seriesColor(index),
   }))}
 />;
@@ -615,7 +620,7 @@ import { SeriesMarker } from '@/components/kit/charts/SeriesMarker';
 
 Don't:
 
-- Don't use Recharts' default `<Legend />` (`components/player/PlayerRatingChartView.tsx`), which renders below the plot in the series colour.
+- Don't use Recharts' default `<Legend />`, which renders below the plot in the series colour.
 
 Gallery anchor: `/admin/design#color-chart-legend`
 
@@ -650,6 +655,6 @@ import { ChartContainer } from '@/components/ui/chart';
 
 Don't:
 
-- Don't use `Card`, `CardHeader` and `CardDescription` with a 24px blue icon for charts (every chart in `components/stats/` and the player charts today).
+- Don't give a chart a card of its own, a 24px blue icon or a description line under its title; the SectionHeader's `infoText` explains it.
 
 Gallery anchors: `/admin/design#color-chart-line`, `/admin/design#color-chart-bar`, `/admin/design#color-chart-stacked`, `/admin/design#color-chart-distribution`, `/admin/design#color-chart-count-bars`

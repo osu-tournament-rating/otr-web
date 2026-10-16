@@ -38,6 +38,7 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GallerySection, Specimen } from '../gallery';
+import { DELETE_CASCADE_DESCRIPTION } from '@/components/admin-forms/adminFormFields';
 import { ActionMenu } from '@/components/kit/controls/ActionMenu';
 import { AdminMenu } from '@/components/kit/controls/AdminMenu';
 import { Button, type ButtonSize } from '@/components/kit/controls/Button';
@@ -117,17 +118,6 @@ const wait = (ms: number) =>
 function Caption({ children }: { children: React.ReactNode }) {
   return <span className={typeScale.meta}>{children}</span>;
 }
-
-/** The delete confirmation's wording, from components/shared/DeleteButton.tsx. */
-const DELETE_DESCRIPTION = (
-  <>
-    <p>
-      This action will cascade to all children. All associated data will be
-      permanently removed.
-    </p>
-    <p>This action cannot be undone.</p>
-  </>
-);
 
 const SIZES: { size: ButtonSize; name: string; use: string }[] = [
   {
@@ -611,7 +601,7 @@ function AdminMenuDemo() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title="Delete this tournament?"
-        description={DELETE_DESCRIPTION}
+        description={DELETE_CASCADE_DESCRIPTION}
         confirmLabel="Delete tournament"
         pendingLabel="Deleting…"
         onConfirm={() => wait(1200)}
@@ -808,7 +798,7 @@ function RowActionsDemo() {
           if (!open) setDeleting(null);
         }}
         title="Delete this game?"
-        description={DELETE_DESCRIPTION}
+        description={DELETE_CASCADE_DESCRIPTION}
         confirmLabel="Delete game"
         pendingLabel="Deleting…"
         onConfirm={() => wait(1000)}
@@ -964,7 +954,7 @@ function ConfirmDialogDemo() {
         }
       >
         <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-          {DELETE_DESCRIPTION}
+          {DELETE_CASCADE_DESCRIPTION}
         </div>
       </DialogAnatomy>
       <div className="flex flex-wrap gap-2">
@@ -975,7 +965,7 @@ function ConfirmDialogDemo() {
             </Button>
           }
           title="Delete this tournament?"
-          description={DELETE_DESCRIPTION}
+          description={DELETE_CASCADE_DESCRIPTION}
           confirmLabel="Delete tournament"
           pendingLabel="Deleting…"
           onConfirm={() => wait(1200)}
@@ -1000,7 +990,7 @@ function ConfirmDialogDemo() {
             </Button>
           }
           title="Delete this match?"
-          description={DELETE_DESCRIPTION}
+          description={DELETE_CASCADE_DESCRIPTION}
           confirmLabel="Delete match"
           pendingLabel="Deleting…"
           errorText="Failed to delete match"

@@ -922,7 +922,7 @@ const TICK_EXAMPLES: {
   data: string;
   min: number;
   max: number;
-  /** What the player rating chart's own rule drew. */
+  /** What a local powers-of-5 rule draws for the same data. */
   before?: string;
 }[] = [
   {
@@ -961,7 +961,7 @@ function TickRuleDemo() {
               </span>
               {example.before ? (
                 <span className="text-xs text-muted-foreground">
-                  Rating chart before: {example.before}
+                  A powers-of-5 rule: {example.before}
                 </span>
               ) : null}
             </span>
@@ -1290,7 +1290,7 @@ export default function ColorSection() {
         id="color-chart-ticks"
         name="Tick rule"
         importPath="@/lib/kit/charts/ticks"
-        description="Steps of 1, 2, 2.5 or 5 times a power of ten, at most six ticks. The rating chart's old rule produced steps like 13 and 125."
+        description="Steps of 1, 2, 2.5 or 5 times a power of ten, at most six ticks. A local rule that scales by powers of 5 gives steps like 13 and 125; the first two show it for comparison."
       >
         <TickRuleDemo />
       </Specimen>

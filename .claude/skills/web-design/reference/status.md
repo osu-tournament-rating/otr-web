@@ -13,7 +13,6 @@ The glyph carries the meaning and colour only reinforces it, so every status sti
 - [ReportStatusBadge](#reportstatusbadge): a data report's state
 - [NotificationDot](#notificationdot): the one "something new" dot
 - [CircleDashedX](#circledashedx): the Pre-rejected glyph lucide lacks
-- [Legacy inventory](#legacy-inventory): every old badge and dot, with its replacement
 
 ## Status sheet
 
@@ -35,7 +34,7 @@ Gallery anchor: `/admin/design#status-sheet`
 
 ## Status copy
 
-Plain TypeScript in `@/lib/kit/status/verification`, `report`, `reasons` and `count`, with unit tests. Use it instead of `VerificationStatusEnumHelper` or `ReportStatusEnumHelper` text in new UI.
+Plain TypeScript in `@/lib/kit/status/verification`, `report`, `reasons` and `count`, with unit tests. Every status name and line on the site comes from here.
 
 ```ts
 import {
@@ -61,14 +60,14 @@ getWarningTexts('match', match.warningFlags); // ["Low game count", …]
 formatBadgeCount(140); // "99+"
 ```
 
-- `getVerificationStatusName(status)`: the one name. `getVerificationStatusTooltip(status)`: "<name>: <plain-language line>", for a title, a chart tooltip or an `aria-description`.
+- `getVerificationStatusName(status)`: the one name. `getVerificationStatusTooltip(status)`: "<name>: <plain-language line>", for a title, a chart tooltip or an `aria-description`. `getVerificationStatusCopy(status)` (from `VERIFICATION_STATUS_COPY`) gives both parts.
 - `getVerificationStatusLabel(status, { context, hasWarnings })`: the accessible name of an icon on its own, such as "Game 3: Pre-verified, with warnings".
 - `isNotInRatingsYet(status)`, `NOT_IN_RATINGS_YET_STATUSES` and `NOT_IN_RATINGS_YET_LABEL`: the group of the three undecided states.
 - `getVerificationStatusHue(status)` and `isAutomatedCheckStatus(status)`: the hue of an icon or badge (`success`, `neutral`, `destructive`) and whether it gets the dashed outline.
-- `RATINGS_GROUPS` and `getRatingsGroup(status)`: the three chart groups in order, with a label and a hue (`success`, `neutral`, `destructive`).
+- `RATINGS_GROUPS` and `getRatingsGroup(status)`: the three chart groups in order, each with a `key`, a `label`, a `hue` (`success`, `neutral`, `destructive`) and the `statuses` it counts.
 - `RATING_FAQ_URL`: the Rating FAQ answer on why a tournament is not in ratings.
-- `getWarningTexts(entityType, flags)` and `getRejectionReasonTexts(entityType, reason)`: one sentence-case line per set bitflag: the entity's labels from the format family, split by its `getFlagLabels`. They replace the switch statements inside the old `VerificationBadge`.
-- `REPORT_STATUS_COPY` and `getReportStatusTooltip(status)`: Pending, Confirmed and Dismissed, with their tones.
+- `getWarningTexts(entityType, flags)` and `getRejectionReasonTexts(entityType, reason)`: one sentence-case line per set bitflag: the entity's labels from the format family, split by its `getFlagLabels`.
+- `REPORT_STATUS_COPY`, `getReportStatusCopy(status)` and `getReportStatusTooltip(status)`: Pending, Confirmed and Dismissed, with their tones. `REPORT_STATUS_ORDER` is their order in filters and legends, such as the admin queue's status switch.
 - `formatBadgeCount(count, max = 99)`: a count for a badge, with thousands separators, capped as "99+".
 
 Don't:
@@ -100,7 +99,7 @@ Props that matter:
 
 - `status`: a `VerificationStatus`.
 - `size`: `sm` (14px) inside a line of text, `md` (16px, default) in rows and cells, `lg` (20px) next to a page or section heading.
-- `variant`: `default`, or `overlay` on cover art only. The overlay sets the glyph on a dark disc (80% black with a faint white ring, a 24px disc around the 16px glyph) and gives it the dark theme's lighter colours whatever the page's theme, so every state keeps 3:1 even over a white cover; a test checks it. Warnings make the disc a pill.
+- `variant`: `default`, or `overlay` on cover art only. The overlay sets the glyph on a dark disc (80% black, `OVERLAY_DISC_ALPHA`, with a faint white ring, a 24px disc around the 16px glyph) and gives it the dark theme's lighter colours whatever the page's theme, so every state keeps 3:1 even over a white cover; a test checks it. Warnings make the disc a pill.
 - `tooltip`: `tap` opens on tap, hover and focus (it renders a button); `hover` adds no button, for an icon inside a link. Leave it out only when the name is written next to the icon.
 - `warnings`, `rejectionReasons`, `reviewer`, `context`: what the tooltip lists. Any warning shows the marker.
 - `decorative`: hides the icon from assistive tech when the name is already beside it.
@@ -112,15 +111,15 @@ Do:
 - Give every icon on its own a tooltip. Without one it still has an accessible name (`role="img"`), but sighted visitors cannot learn what the glyph means.
 - Use `context` when several icons sit together, such as the game pips of a match row, so each one is named ("Game 3: Rejected").
 - Keep tap icons at least 8px apart (`gap-2`): the icon is a 16px target, and the gap gives each one the 24px tap area WCAG 2.5.8 asks for.
-- Inside a whole-row link, use `tooltip="hover"` and make sure the row also says the status in words, or use `NotInRatings`.
+- Inside a whole-row link, use `tooltip="hover"`: the row is one link, so it can hold no button. The row link's `linkLabel` replaces the row's content for screen readers, icon included, so a status the row must say aloud goes into the label as well ([RowListItem](layout.md#rowlist-and-rowlistitem)).
 - On cover art (the game card header), use `variant="overlay"`, as `VerificationStatusBadge` uses its `overlay` variant there.
 
 Don't:
 
-- Don't put the icon in a tinted chip or a coloured square. The old `VerificationBadge` (`components/badges/VerificationBadge.tsx`) does that with `size="pip"|"xsmall"|"small"` and `minimal`; all of those become this icon.
-- Don't colour a status with `text-orange-500` for warnings (the old badge does). Pass `warnings` instead.
-- Don't set a bare glyph on cover art and rely on the scrim: over a bright cover the 16px glyph drops under 3:1. Legacy: `components/games/GameCardHeader.tsx`.
-- Don't pick status glyphs from lucide by hand (`CircleCheck` or its alias `CheckCircle2`, `CircleX` or `XCircle`, `AlertTriangle`, `Square`); the old badge used a square for Pre-verified and a triangle for Pre-rejected. Render this component, or `VerificationStatusGlyph` in a legend.
+- Don't put the icon in a tinted chip or a coloured square.
+- Don't colour a status with a palette class such as `text-orange-500` for warnings. Pass `warnings` instead.
+- Don't set a bare glyph on cover art and rely on the scrim: over a bright cover the 16px glyph drops under 3:1.
+- Don't pick status glyphs from lucide by hand (`CircleCheck`, `CircleX`, `TriangleAlert`, a square or a triangle for the automated states). Render this component, or `VerificationStatusGlyph` in a legend.
 
 Gallery anchor: `/admin/design#status-verification-icon`
 
@@ -180,10 +179,10 @@ import {
 </VerificationStatusTooltip>;
 ```
 
-- `mode="tap"` uses `TapTooltip` (a button that opens on tap, hover and focus); `mode="hover"` uses `SimpleTooltip` and adds no button.
+- `mode="tap"` uses `TapTooltip` (a button that opens on tap, hover and focus); `mode="hover"` uses `SimpleTooltip` and adds no button. `side` places the bubble, and `triggerClassName` styles the tap button.
 - `VerificationStatusDetails` is the body on its own, for a chart tooltip or a popover that already exists.
 
-Gallery anchor: `/admin/design#status-verification-icon`
+Gallery anchors: `/admin/design#status-verification-icon`, `/admin/design#status-verification-badge` (the body on its own)
 
 ## NotInRatings
 
@@ -211,14 +210,14 @@ Do:
 
 Don't:
 
-- Don't show the amber "Awaiting review" pill with a dot (`components/tournaments/TournamentListRow.tsx`). It is replaced by this label.
+- Don't show an amber "Awaiting review" pill; this label says it.
 - Don't colour the label; it is information, not a warning.
 
 Gallery anchor: `/admin/design#status-not-in-ratings`
 
 ## Badge
 
-The one small label. It replaces about 15 hand-made label styles: pick a tone for meaning, a size for the line it sits in, and `customColor` or `swatch` for a domain palette. It is a `span`, not a control.
+The one small label: pick a tone for meaning, a size for the line it sits in, and `customColor` or `swatch` for a domain palette. It is a `span`, not a control.
 
 ```tsx
 import { Badge } from '@/components/kit/status/Badge';
@@ -244,7 +243,7 @@ Props that matter:
 When to pick each:
 
 - Status: never by hand; use `VerificationStatusBadge` or `ReportStatusBadge`.
-- Mods: `customColor` with `getModPaletteColor(mods)` and `MOD_FILL_FOREGROUND` from `@/lib/kit/color/mods` (the reviewed mod palette; every entry takes black text), or `swatch={getModPaletteColor(mods)}` beside a count. The label comes from `getBeatmapModLabel` in `@/lib/utils/mods`. The older `getModColor` and `getModForegroundColor` in that file are the legacy palette.
+- Mods: `customColor` with `getModPaletteColor(mods)` and `MOD_FILL_FOREGROUND` from `@/lib/kit/color/mods` (the reviewed mod palette; every entry takes black text), or `swatch={getModPaletteColor(mods)}` beside a count. The label comes from `getBeatmapModLabel` in `@/lib/utils/mods`.
 - Tiers: `swatch={getTierColor(tierName)}` from `@/lib/kit/color/tiers`.
 - Rulesets: neutral soft with `RulesetIcon` (`className="fill-current"`) and the label from `getRulesetLabel` (`@/lib/kit/format/ruleset`): osu!, taiko, catch, mania 4K, mania 7K.
 - Roles: neutral soft with an icon: `ShieldCheck` for Admin, the one role the profile shows (`components/profile/ProfileRoleBadge.tsx`). Never red.
@@ -280,7 +279,7 @@ import { ReportStatusBadge } from '@/components/kit/status/ReportStatusBadge';
 
 Don't:
 
-- Don't keep the two copies of `getStatusBadge` in `app/reports/MyReportsClient.tsx` and `app/admin/reports/AdminReportsClient.tsx` (secondary, `bg-success text-green-950` and solid red). Both become this component.
+- Don't build a report state from `Badge` or a solid fill; My reports and the admin queue both render this component.
 
 Gallery anchor: `/admin/design#status-report-badge`
 
@@ -315,7 +314,7 @@ Do:
 
 Don't:
 
-- Don't draw dots by hand: `bg-blue-500` in `app/reports/MyReportsClient.tsx`, `bg-yellow-600 dark:bg-yellow-400` in `components/admin-notes/AdminNoteView.tsx`.
+- Don't draw dots by hand or in a second colour (`bg-blue-500`, a yellow notes dot).
 - Don't use the dot for status or as a bullet; it only means "new since you last looked".
 
 Gallery anchor: `/admin/design#status-notification-dot`
@@ -327,33 +326,3 @@ The Pre-rejected glyph, a lucide-style icon drawn locally because lucide has non
 ```tsx
 import { CircleDashedX } from '@/components/kit/status/CircleDashedX';
 ```
-
-## Legacy inventory
-
-Every label, status and dot style that exists today, and what replaces it in the migration.
-
-| Today                                                             | Where                                                                                                                                                                                                                                                                                                             | Replacement                                                                                                                                      |
-| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `VerificationBadge` with `displayText`                            | `components/badges/VerificationBadge.tsx`, used in `app/tournaments/[id]/page.tsx`, `components/matches/MatchCard.tsx`, `components/matches/MergeMatchButton.tsx`, `components/player/PlayerTournamentCard.tsx`, `components/search/results/TournamentResultContent.tsx`, `components/audit/AuditDiffDisplay.tsx` | `VerificationStatusBadge` (`overlay` on cover art); `strikethrough` becomes `className="line-through"`                                           |
-| `VerificationBadge` without text, `pip`, `minimal`                | `components/games/GameCardHeader.tsx`, `components/games/ScoreCard.tsx`, `components/tournaments/MatchLedgerRow.tsx`, `components/beatmap/BeatmapPoolsDialog.tsx`, `components/audit/CascadeContextBanner.tsx`                                                                                                    | `VerificationStatusIcon` with `tooltip="tap"`; `interactive={false}` becomes `tooltip="hover"`; `gameIndex` becomes `context="Game N"`           |
-| `warningFlags`, `rejectionReason`, `entityType` props             | same                                                                                                                                                                                                                                                                                                              | `warnings={getWarningTexts(type, flags)}`, `rejectionReasons={getRejectionReasonTexts(type, reason)}`                                            |
-| Amber "Awaiting review" pill                                      | `components/tournaments/TournamentListRow.tsx`                                                                                                                                                                                                                                                                    | `NotInRatings` label                                                                                                                             |
-| `LazerBadge`                                                      | `components/badges/LazerBadge.tsx`                                                                                                                                                                                                                                                                                | `<Badge variant="outline">lazer</Badge>`                                                                                                         |
-| `UnverifiedDataBadge`                                             | `components/badges/UnverifiedDataBadge.tsx`, in `components/beatmap/BeatmapDistributionsCard.tsx`                                                                                                                                                                                                                 | `CalloutChip icon={ShieldQuestion} detail=…` from `@/components/kit/feedback/CalloutChip`                                                        |
-| `StatusIcon` (pass or fail, `text-green-600` / `text-red-600`)    | `components/filtering/StatusIcon.tsx`, in `FilteringResultsTable.tsx`                                                                                                                                                                                                                                             | Not a verification status: `<Badge tone="success" size="sm"><Check />Passed</Badge>` / `<Badge tone="destructive" size="sm"><X />Failed</Badge>` |
-| `FailureReasonsBadges` (solid red)                                | `components/filtering/FailureReasonsBadges.tsx`                                                                                                                                                                                                                                                                   | `Badge tone="destructive" size="sm"` (soft)                                                                                                      |
-| Report `getStatusBadge`                                           | `app/reports/MyReportsClient.tsx`, `app/admin/reports/AdminReportsClient.tsx`                                                                                                                                                                                                                                     | `ReportStatusBadge`                                                                                                                              |
-| "Legacy report details" field badges                              | `app/admin/reports/AdminReportsClient.tsx`                                                                                                                                                                                                                                                                        | `Badge` neutral                                                                                                                                  |
-| Banned or Active badge, API key count                             | `app/admin/AdminDashboardClient.tsx`                                                                                                                                                                                                                                                                              | `Badge tone="destructive"` "Banned" / neutral "Active"; `Badge variant="outline"` count                                                          |
-| Unread dots (`bg-blue-500`)                                       | `app/reports/MyReportsClient.tsx`                                                                                                                                                                                                                                                                                 | `NotificationDot`                                                                                                                                |
-| Admin notes dot (yellow)                                          | `components/admin-notes/AdminNoteView.tsx`                                                                                                                                                                                                                                                                        | `NotificationDot placement="corner"`                                                                                                             |
-| Audit action badges (`ACTION_BADGE_COLORS`, `ACTION_TEXT_COLORS`) | `components/audit/AuditEntryRow.tsx`, `lib/audit-actions.ts`                                                                                                                                                                                                                                                      | One `VerificationStatusIcon` for verification events; plain text verbs otherwise (audit redesign)                                                |
-| Audit filter counts (`secondary h-5 px-1`)                        | `components/audit/AuditFilterBar.tsx`                                                                                                                                                                                                                                                                             | `Badge variant="solid" tone="primary" size="sm"`                                                                                                 |
-| Filter count bubbles (`bg-primary-solid size-5 rounded-full`)     | `components/tournaments/list/TournamentListFilter.tsx`, `components/beatmaps/list/BeatmapListFilter.tsx`                                                                                                                                                                                                          | `Badge variant="solid" tone="primary" size="sm"`                                                                                                 |
-| Mod pills (`li` with `getModColor`)                               | `components/beatmaps/BeatmapTopMods.tsx`                                                                                                                                                                                                                                                                          | `Badge customColor` with `getModPaletteColor` inside the `li`                                                                                    |
-| Freemod picks (outline badge and `Swatch`)                        | `components/beatmap/BeatmapDistributionsCard.tsx`                                                                                                                                                                                                                                                                 | `Badge variant="outline" swatch=…`                                                                                                               |
-| Team and Winner badges (outline, `bg-popover`)                    | `components/matches/MatchStatsPlayerRow.tsx`                                                                                                                                                                                                                                                                      | `Badge variant="outline" swatch="var(--team-red)"`; `<Badge><Trophy />Winner</Badge>`                                                            |
-| `RulesetPill`, `StarRatingPill`, `beatmapPillVariants`            | `components/beatmaps/`                                                                                                                                                                                                                                                                                            | Equivalent to `Badge` `md`/`lg` with `neutral`, `overlay` or `customColor`; new code uses `Badge`                                                |
-| `RankBadge`                                                       | `components/beatmap/BeatmapLeaderboardCard.tsx`                                                                                                                                                                                                                                                                   | Stays: it is a rank cell, not a label                                                                                                            |
-| Removable player chips, multi-select values                       | `components/beatmap/PlayerPicker.tsx`, `components/select/multiple-select.tsx`                                                                                                                                                                                                                                    | Not badges: these are input chips, a control (see the lists and controls references)                                                             |
-| shadcn `Badge`                                                    | `components/ui/badge.tsx`                                                                                                                                                                                                                                                                                         | Leave the file; new code imports `@/components/kit/status/Badge`                                                                                 |

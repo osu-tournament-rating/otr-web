@@ -1,6 +1,11 @@
 'use client';
 
-import { ReportStatus } from '@otr/core/osu';
+import {
+  AuditActionType,
+  AuditEntityType,
+  ReportStatus,
+  VerificationStatus,
+} from '@otr/core/osu';
 import {
   ClipboardList,
   Flag,
@@ -12,6 +17,10 @@ import {
 import { useState } from 'react';
 
 import { GallerySection, Specimen } from '../gallery';
+import AuditEntryRow, {
+  AuditSubmissionRow,
+} from '@/components/audit/AuditEntryRow';
+import AuditNoteItem from '@/components/audit/AuditNoteItem';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import TierIcon from '@/components/icons/TierIcon';
 import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
@@ -63,6 +72,11 @@ import {
 } from '@/lib/kit/format/number';
 import type { SortState } from '@/lib/kit/lists/sort';
 import { sortRows } from '@/lib/kit/tables/sort';
+import type {
+  AuditActionUser,
+  AuditAdminNote,
+  AuditEntry,
+} from '@/lib/orpc/schema/audit';
 import type { TierName } from '@/lib/utils/tierData';
 
 const KIT = '@/components/kit/tables';
@@ -1162,6 +1176,193 @@ function AuditFeedDemo() {
   );
 }
 
+// Show more -----------------------------------------------------------------
+
+/** A player's tournaments, newest first, with the rating change from each. */
+const PLAYER_TOURNAMENTS: {
+  id: number;
+  name: string;
+  lobbySize: number;
+  start: string;
+  end: string;
+  change: number;
+}[] = [
+  ['osu! World Cup 2025', 4, '2025-10-25', '2025-12-14', 41.2],
+  ['Corsace Open 2025', 4, '2025-09-06', '2025-11-02', -12.6],
+  ['Break The Meta Cup', 2, '2025-07-12', '2025-08-17', 18.9],
+  ['Taiko Classic 2025', 1, '2025-06-07', '2025-07-06', 6.4],
+  ['5 Digit United States Cup 2025', 2, '2025-04-19', '2025-05-25', -3.1],
+  ['osu! World Cup 2024', 4, '2024-10-26', '2024-12-15', 27.5],
+  ['Corsace Open 2024', 4, '2024-09-07', '2024-11-03', 9.8],
+  ['Taiko World Cup 2024', 4, '2024-08-03', '2024-09-22', -7.7],
+  ['Mania 4K World Cup 2024', 4, '2024-06-01', '2024-07-21', 14.2],
+  ['Catch the Beat World Cup 2024', 4, '2024-04-13', '2024-06-02', 5.5],
+  ['osu! World Cup 2023', 4, '2023-10-28', '2023-12-17', 22.1],
+  ['Taiko Classic 2024', 1, '2024-02-03', '2024-03-03', -1.9],
+].map(([name, lobbySize, start, end, change], index) => ({
+  id: index + 1,
+  name: name as string,
+  lobbySize: lobbySize as number,
+  start: start as string,
+  end: end as string,
+  change: change as number,
+}));
+
+/** The profile's tournament history shows five, then the rest 25 at a time. */
+const INITIAL_TOURNAMENTS = 5;
+const MORE_TOURNAMENTS = 25;
+
+/**
+ * A short list on a detail page, shown in part: the profile's tournament
+ * history. It has no search or filters, so it grows in place with "Show
+ * more" instead of paging.
+ */
+function ShowMoreDemo() {
+  const [shown, setShown] = useState(INITIAL_TOURNAMENTS);
+
+  return (
+    <Panel>
+      <SectionHeader
+        icon={Trophy}
+        title="Tournament history"
+        meta={formatCountOf(PLAYER_TOURNAMENTS.length, 'tournament')}
+      />
+      <RowList>
+        {PLAYER_TOURNAMENTS.slice(0, shown).map((tournament) => (
+          <RowListItem
+            key={tournament.id}
+            title={
+              <EntityLink href={here('tables-load-more-show-more')}>
+                {tournament.name}
+              </EntityLink>
+            }
+            description={
+              <>
+                {formatLobbySize(tournament.lobbySize)} ·{' '}
+                <DateRangeText start={tournament.start} end={tournament.end} />
+              </>
+            }
+            trailing={<RatingDelta value={tournament.change} />}
+          />
+        ))}
+      </RowList>
+      <LoadMore
+        label="Show more"
+        hasMore={shown < PLAYER_TOURNAMENTS.length}
+        shownCount={shown}
+        totalCount={PLAYER_TOURNAMENTS.length}
+        pageSize={INITIAL_TOURNAMENTS}
+        onLoadMore={() =>
+          setShown((count) =>
+            Math.min(count + MORE_TOURNAMENTS, PLAYER_TOURNAMENTS.length)
+          )
+        }
+      />
+    </Panel>
+  );
+}
+
+// Audit history rows ------------------------------------------------------------
+
+const APRICOT: AuditActionUser = {
+  id: 12,
+  playerId: null,
+  osuId: null,
+  username: 'apricot',
+};
+const HOBBES: AuditActionUser = {
+  id: 31,
+  playerId: null,
+  osuId: null,
+  username: 'Hobbes',
+};
+
+function auditEntry(
+  entry: Pick<AuditEntry, 'id' | 'actionType' | 'changes' | 'created'> &
+    Partial<AuditEntry>
+): AuditEntry {
+  return {
+    entityType: AuditEntityType.Tournament,
+    referenceIdLock: 401,
+    referenceId: 401,
+    actionUserId: entry.actionUser?.id ?? null,
+    actionUser: null,
+    referencedUsers: { '12': APRICOT, '31': HOBBES },
+    ...entry,
+  };
+}
+
+/** One tournament's history, newest first, as the audit history page lists it. */
+const AUDIT_ENTRIES = {
+  verified: auditEntry({
+    id: 9004,
+    actionType: AuditActionType.Updated,
+    actionUser: APRICOT,
+    created: '2026-10-14T15:42:07Z',
+    changes: {
+      verificationStatus: {
+        originalValue: VerificationStatus.PreVerified,
+        newValue: VerificationStatus.Verified,
+      },
+      verifiedByUserId: { originalValue: null, newValue: 12 },
+    },
+  }),
+  preVerified: auditEntry({
+    id: 9002,
+    actionType: AuditActionType.Updated,
+    created: '2026-10-09T03:15:44Z',
+    changes: {
+      verificationStatus: {
+        originalValue: VerificationStatus.None,
+        newValue: VerificationStatus.PreVerified,
+      },
+    },
+  }),
+  edited: auditEntry({
+    id: 9001,
+    actionType: AuditActionType.Updated,
+    actionUser: HOBBES,
+    created: '2026-10-08T21:05:12Z',
+    changes: {
+      rankRangeLowerBound: { originalValue: 1000, newValue: 1 },
+      lobbySize: { originalValue: 4, newValue: 2 },
+    },
+  }),
+};
+
+const AUDIT_NOTE: AuditAdminNote = {
+  id: 77,
+  note: 'Checked the bracket against the forum post; the qualifier lobbies are left out on purpose.',
+  created: '2026-10-12T09:30:00Z',
+  updated: null,
+  adminUser: APRICOT,
+};
+
+/**
+ * The live audit history rows with static data: a verification (its one
+ * status icon, details closed), an admin note, the automated check, an edit
+ * whose changed fields open in place, and the submission read from the
+ * tournament record. The rows take ids from their entries, so each themed
+ * copy offsets them to keep the page's ids unique.
+ */
+function AuditRowsDemo({ idOffset }: { idOffset: number }) {
+  const entry = (item: AuditEntry) => ({ ...item, id: item.id + idOffset });
+
+  return (
+    <Panel>
+      <RowList aria-label="Audit history">
+        <AuditEntryRow entry={entry(AUDIT_ENTRIES.verified)} />
+        <AuditNoteItem note={{ ...AUDIT_NOTE, id: AUDIT_NOTE.id + idOffset }} />
+        <AuditEntryRow entry={entry(AUDIT_ENTRIES.preVerified)} />
+        <AuditEntryRow entry={entry(AUDIT_ENTRIES.edited)} />
+        <AuditSubmissionRow
+          submission={{ created: '2026-10-01T12:00:00Z', submittedBy: HOBBES }}
+        />
+      </RowList>
+    </Panel>
+  );
+}
+
 // Sticky header -----------------------------------------------------------------
 
 /**
@@ -1444,9 +1645,27 @@ export default function TablesSection() {
         id="tables-load-more"
         name="LoadMore"
         importPath={`${KIT}/LoadMore`}
-        description="Only for activity feeds, such as the audit log: a count and a Load more button that appends the next batch, then a note once everything is showing. With `pageSize`, a feed whose first batch holds everything gets no footer at all."
+        description="The footer of an activity feed, such as the audit log, filtered or not: a count and a Load more button that appends the next batch, then a note once everything is showing. With `pageSize`, a feed whose first batch holds everything gets no footer at all. Searchable lists page instead."
       >
         <LoadMoreDemo />
+      </Specimen>
+
+      <Specimen
+        id="tables-load-more-show-more"
+        name="LoadMore, Show more"
+        importPath={`${KIT}/LoadMore`}
+        description={`The same footer with label="Show more", for a short list on a detail page that shows its first rows and the rest on request, such as a profile's tournament history (five, then 25 at a time). The count stays in the readout, never in the label.`}
+      >
+        <ShowMoreDemo />
+      </Specimen>
+
+      <Specimen
+        id="tables-audit-rows"
+        name="Audit history rows"
+        importPath="@/components/audit/AuditEntryRow, @/components/audit/AuditNoteItem"
+        description="The real rows of an entity's audit history, with static data. Each row is a sentence: the one status icon for a verification, who (System for automated checks), what, and the time in a feed's relative form. Changed fields open in place under the Details disclosure (IconButton `expanded`), as AuditFieldChange lines: open at first for an edit or an automated check, closed for an admin's verification, whose icon already says what changed."
+      >
+        {(theme) => <AuditRowsDemo idOffset={theme === 'dark' ? 100_000 : 0} />}
       </Specimen>
 
       <Specimen

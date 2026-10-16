@@ -13,6 +13,7 @@ import { NotInRatings } from '@/components/kit/status/NotInRatings';
 import { ReportStatusBadge } from '@/components/kit/status/ReportStatusBadge';
 import { VerificationStatusBadge } from '@/components/kit/status/VerificationStatusBadge';
 import { VerificationStatusIcon } from '@/components/kit/status/VerificationStatusIcon';
+import { VerificationStatusDetails } from '@/components/kit/status/VerificationStatusTooltip';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -21,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MOD_FILL_FOREGROUND, getModPaletteColor } from '@/lib/kit/color/mods';
+import { ACCENT_SURFACE_CLASSES } from '@/lib/kit/color/tokens';
 import { getTierColor } from '@/lib/kit/color/tiers';
 import { formatLobbySize, formatRankRange } from '@/lib/kit/format/fields';
 import { formatCount, formatCountOf } from '@/lib/kit/format/number';
@@ -32,6 +34,7 @@ import {
   VERIFICATION_STATUS_ORDER,
   getVerificationStatusCopy,
 } from '@/lib/kit/status/verification';
+import { cn } from '@/lib/utils';
 import { getBeatmapModLabel } from '@/lib/utils/mods';
 
 const KIT = '@/components/kit/status';
@@ -383,6 +386,22 @@ export default function StatusSection() {
               reviewer={REVIEWER}
               tooltip="tap"
             />
+          </Row>
+          {/* VerificationStatusDetails is the tooltip's body on its own, for
+              a chart tooltip or a popover; here on the tooltip's surface. */}
+          <Row label="Tooltip body">
+            <div
+              className={cn(
+                'rounded-md px-3 py-1.5 text-xs',
+                ACCENT_SURFACE_CLASSES
+              )}
+            >
+              <VerificationStatusDetails
+                status={VerificationStatus.Rejected}
+                rejectionReasons={['Abnormal win condition']}
+                reviewer={REVIEWER}
+              />
+            </div>
           </Row>
           <Row label="On cover art">
             <div className="relative flex h-24 w-full max-w-72 items-start overflow-hidden rounded-lg p-2">

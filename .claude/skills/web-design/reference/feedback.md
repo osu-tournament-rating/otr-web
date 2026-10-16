@@ -1,17 +1,16 @@
 # Empty, error, loading and notices
 
 What a page shows when there is nothing to show, when a request fails, while it loads, when the whole page is an outcome (not found, unauthorized, banned), and when the visitor needs to know something first.
-Import each component from its own file under `@/components/kit/feedback/`; the section error stays at `@/components/error/SectionError`.
+Import each component from its own file under `@/components/kit/feedback/`; the section error stays at `@/components/error/SectionError`. The classes they share live in `@/lib/kit/feedback/`, with tests: `STATE_LAYOUT` and `STATE_TONE` (the frame, icon and title sizes that EmptyState, SectionError and StatusPage have in common) and `CALLOUT_TONE_CLASSES` and `CALLOUT_TONE_ICONS` (each callout tone's colours and glyph, for the tones in `CALLOUT_TONES`).
 
 - [Choosing a state](#choosing-a-state): which component for which situation
 - [EmptyState](#emptystate): nothing to show, with Clear filters when filters caused it
 - [SectionError](#sectionerror): a failed request, at regular, compact and inline size
-- [Skeletons](#skeletons): `PanelSkeleton`, `SectionHeaderSkeleton`, `StatTileGridSkeleton`, `TableSkeleton`, `PhoneRowListSkeleton`, `ListToolbarSkeleton`, `RowListSkeleton`, `SkeletonText`
+- [Skeletons](#skeletons): `PanelSkeleton`, `SectionHeaderSkeleton`, `StatTileGridSkeleton`, `TableSkeleton`, `PhoneRowListSkeleton`, `ListToolbarSkeleton`, `RulesetSwitchSkeleton`, `ChartPlotSkeleton`, `RowListSkeleton`, `HeroTabsSkeleton`, `LoadMoreSkeleton`, `SkeletonText`, `SkeletonBlock`
 - [StatusPage](#statuspage): 404, unauthorized, banned and error pages
 - [Callout](#callout): the one notice box, in info, warning and danger
 - [When two notices meet](#when-two-notices-meet): never a stack of callouts
 - [CalloutChip](#calloutchip): a short warning inside a panel
-- [Legacy inventory](#legacy-inventory): every old pattern and its replacement
 
 ## Choosing a state
 
@@ -41,7 +40,7 @@ Both block sizes go straight into the panel in place of the rows, directly under
 Copy:
 
 - Empty titles say what is missing: "No beatmaps match" when filtered, "No pooled beatmaps" or "No tournaments yet" otherwise. The description says why or what to try, in one sentence.
-- Error titles name the thing: "Tournaments could not load", "More tournaments could not load". No "Unable to", "Failed to" or "Please", and no full stop in a title.
+- Error titles name the thing: "Tournaments could not load", "More audit events could not load". No "Unable to", "Failed to" or "Please", and no full stop in a title.
 - Retry buttons always read "Try again", never "Retry".
 
 ## EmptyState
@@ -93,7 +92,7 @@ Props that matter:
 Do:
 
 - Put it inside the panel, in place of the rows, under the panel's SectionHeader or the list's ListToolbar.
-- Make "Clear filters" clear filters only. It never resets the search, sort, ruleset or tab (finding 22). Today the beatmap and tournament lists link to the bare list address, which also drops the search; build the `href` from the current address minus the filter parameters.
+- Make "Clear filters" clear filters only. It never resets the search, sort, ruleset or tab (finding 22). Build the `href` from the current state with `clearListFilters(PARAMS, state)` and the list's href helper, as the tournament list and the leaderboard do, or pass `{ onClick: list.clearFilters }` from a client component.
 
 Don't:
 
@@ -106,7 +105,7 @@ Gallery anchors: `/admin/design#feedback-empty-state`, `/admin/design#feedback-e
 
 ## SectionError
 
-Takes the place of a section whose data failed to load, with Try again, so a failure never reads as an empty list. It is a default export and already used by the tournament list, the reports pages, the audit timelines and `SectionErrorBoundary`.
+Takes the place of a section whose data failed to load, with Try again, so a failure never reads as an empty list. It is a default export, used by the tournament list, the reports pages, the audit feeds and `SectionErrorBoundary`.
 
 ```tsx
 import SectionError from '@/components/error/SectionError';
@@ -125,11 +124,12 @@ import SectionError from '@/components/error/SectionError';
   onRetry={retry}
 />;
 
-// A failed "Load more" at the end of the tournament list, centred under the rows:
+// A failed "Load more" at the end of the audit log, centred under the rows
+// (components/audit/AuditEventFeed.tsx):
 <div className="border-t px-4 py-4">
   <SectionError
     size="inline"
-    title="More tournaments could not load"
+    title="More audit events could not load"
     retrying={isValidating}
     onRetry={() => void mutate()}
     className="justify-center"
@@ -153,7 +153,7 @@ Do:
 
 Don't:
 
-- Don't build a Retry row by hand (see the legacy inventory) or colour the message `text-destructive`; the icon carries the red.
+- Don't build a Retry row by hand or colour the message `text-destructive`; the icon carries the red.
 - Don't show a toast for a failed load; toasts are for actions.
 
 Gallery anchors: `/admin/design#feedback-section-error`, `/admin/design#feedback-empty-state-compact`, `/admin/design#feedback-section-error-inline`
@@ -179,8 +179,9 @@ import {
   TableSkeleton,
 } from '@/components/kit/feedback/Skeletons';
 
-// app/reports/MyReportsFrame.tsx: the page and app/reports/loading.tsx share
-// the frame, so the loading screen keeps the real header.
+// app/reports/MyReportsFrame.tsx (with MyReportsTableSkeleton inlined): the
+// page and app/reports/loading.tsx share the frame, so the loading screen
+// keeps the real header.
 export function MyReportsPanelSkeleton() {
   return (
     <PanelSkeleton label="Loading reports">
@@ -204,7 +205,7 @@ export function MyReportsPanelSkeleton() {
 The parts:
 
 - `PanelSkeleton`: the Panel surface. Give it children, or none for a header strip and a body block (charts, or any panel that is hard to sketch); then set its height to the loaded panel's, such as `className="h-[23rem]"`. `label` makes it the screen's `role="status"` region.
-- `SectionHeaderSkeleton`: renders the real SectionHeader with the static `title`, `icon` and `infoText` (its info button is drawn and works, so the title keeps its width), and bars for the meta (`meta`, on by default) and `actions` (a count of 32px button placeholders). Give `meta` a width class as wide as the loaded meta, such as `meta="w-40"` for "1,368 of 1,368 scores rated", so a loading strip wraps on a phone where the loaded one does. Without a title it draws a bar in the title's place.
+- `SectionHeaderSkeleton`: renders the real SectionHeader with the static `title`, `icon` and `infoText` (its info button is drawn and works, so the title keeps its width), and bars for the meta (`meta`, on by default, 80px wide; `false` for none) and `actions` (a count of 32px button placeholders). Give `meta` a width class as wide as the loaded meta, such as `meta="w-40"` for "1,368 of 1,368 scores rated", so a loading strip wraps on a phone where the loaded one does. `level` matches the loaded header's. Without a title it draws a bar in the title's place.
 - `StatTileGridSkeleton`: the real StatTileGrid and StatTiles with their static `labels`, bars for the values, and `sub` for the line under them. Same `columns` as the loaded grid.
 - `TableSkeleton`: a real `DataTable` (fixed layout, hidden from assistive tech) with its tinted header strip and `rows` of bars. `columns` is a count, or the loaded table's columns, in DataTable's terms: `label` (the real header), `width` (a width class; columns without one share the rest), `align: 'end'` for numbers, `showFrom` for a column the loaded table hides below a breakpoint. `cellHeight` is the height of the tallest thing in a loaded cell and so sets the row height: `h-6` (default) for a 24px avatar or badge, as in the beatmap tables; `h-5` plain text; `h-8` a 32px avatar; `h-9` a two-line cell. `phoneRows` works as on DataTable. `className` goes on the table's wrapper.
 - `PhoneRowListSkeleton`: the real PhoneRowList and PhoneRows, for `phoneRows`. Match the loaded rows' parts, so each row keeps its height: `rank`; `avatar` (24px, inside the name) or `leading={32}` (a 32px avatar beside the name and its line); `description` (on by default; `"badge"` for a 20px status badge before the text, as the reports' phone rows have); `value` (on by default: the key number; `"button"` for a 32px button such as View, `"badge"` for a 20px badge); `valueDescription`; and the loaded rows' `align`.
@@ -217,6 +218,24 @@ The parts:
 - `LoadMoreSkeleton`: LoadMore's 57px tinted footer, with a bar for the readout and a block for the button. Put it after the rows when the loaded list shows a LoadMore on first load, such as the profile's "Show more".
 - `SkeletonText`: an inline bar that keeps the height of the line it stands in for. Use it inside a real component, such as a PageHeader description whose text is not static: `description={<SkeletonText className="w-72" />}`. Inside a flex container wrap it in a `<span>`, or the line shrinks to the bar's 16px.
 
+A block whose height follows static text that wraps, such as a Callout, can't be matched with a fixed height at every width. Lay the real component out inside one pulsing block and hide it, so the block wraps as the text does; the settings page's danger zone does this (`DangerZonePanelSkeleton` in `app/settings/SettingsFrame.tsx`):
+
+```tsx
+<span
+  data-slot="skeleton"
+  aria-hidden="true"
+  className="block animate-pulse rounded-lg bg-accent"
+>
+  <Callout
+    tone="danger"
+    className="invisible"
+    action={<span className="block h-8 w-42" />}
+  >
+    {SETTINGS_COPY.deleteAccount}
+  </Callout>
+</span>
+```
+
 Do:
 
 - Build `loading.tsx` from the same PageFrame, PageHeader or DetailHero and panels as the page, with the real static text (titles, labels, column headers), and change it whenever the page's layout changes.
@@ -228,13 +247,13 @@ Don't:
 
 - Don't draw a whole panel as one grey block (a bare `Skeleton className="h-[23rem] rounded-xl"`); use PanelSkeleton at that height so the border and header strip show.
 - Don't put a spinner and "Loading…" text inside a panel.
-- Don't copy old page chrome into a skeleton: `Card`, blue 24px section icons or Title Case titles.
-- Don't keep a page's own copy of the ruleset chip widths or a hand-made plot block; use RulesetSwitchSkeleton (or `rulesetsAll={false}` in a toolbar) and ChartPlotSkeleton. `app/stats/loading.tsx` still has both (`RULESET_CHIP_WIDTHS` and `PlotSkeleton`).
+- Don't give a skeleton chrome the page doesn't have: a card of its own, blue 24px section icons or Title Case titles.
+- Don't keep a page's own copy of the ruleset chip widths or a hand-made plot block; use RulesetSwitchSkeleton (or `rulesetsAll={false}` in a toolbar) and ChartPlotSkeleton, as `app/stats/loading.tsx` does.
 - Don't use random widths; server and client must render the same markup.
 
 The site-wide spinner in `app/loading.tsx` stays for routes without a page-shaped skeleton.
 
-Gallery anchors: `/admin/design#feedback-skeleton-panel` (with SectionHeaderSkeleton's info button and meta width), `/admin/design#feedback-skeleton-table` (TableSkeleton and PhoneRowListSkeleton), `/admin/design#feedback-skeleton-toolbar` (RulesetChips and RulesetSwitch lists), `/admin/design#feedback-skeleton-tabs` (HeroTabsSkeleton), `/admin/design#feedback-skeleton-chart` (ChartPlotSkeleton and RulesetSwitchSkeleton), `/admin/design#feedback-skeleton-rows` (with stacked rows and LoadMoreSkeleton)
+Gallery anchors: `/admin/design#feedback-skeleton-panel` (with SectionHeaderSkeleton's info button and meta width), `/admin/design#feedback-skeleton-table` (TableSkeleton and PhoneRowListSkeleton), `/admin/design#feedback-skeleton-toolbar` (RulesetChips and RulesetSwitch lists), `/admin/design#feedback-skeleton-tabs` (HeroTabsSkeleton), `/admin/design#feedback-skeleton-chart` (ChartPlotSkeleton and RulesetSwitchSkeleton), `/admin/design#feedback-skeleton-rows` (with stacked rows and LoadMoreSkeleton), `/admin/design#feedback-skeleton-text` (SkeletonText and SkeletonBlock)
 
 ## StatusPage
 
@@ -305,7 +324,7 @@ Do:
 
 Don't:
 
-- Don't use a large blue heading (`text-4xl text-primary`, as the old 404 and unauthorized pages did) or a card around the message.
+- Don't use a large blue heading (`text-4xl text-primary`) or a card around the message.
 - Don't render another `<main>` inside the layout's.
 - Don't use `container mx-auto` or padding of your own; the layout's `main` already frames the page.
 - Don't crop the 404 art with `object-cover`; its outer shapes end in a hard edge.
@@ -319,12 +338,15 @@ The one notice box. Info for context, warning for something to check before acti
 ```tsx
 import { Callout } from '@/components/kit/feedback/Callout';
 
+// app/tools/filter/FilteringPageClient.tsx
 <Callout tone="warning" title="Host compliance">
   Hosts must comply with the{' '}
-  <Link href={RULES_URL}>official tournament support filtering rules</Link>.
+  <a href={FILTERING_RULES_URL}>official tournament support filtering rules</a>:
+  …
 </Callout>;
 
-// Button is the controls family's: @/components/kit/controls/Button
+// app/settings/AccountDeletionClient.tsx, where the Button is a ConfirmDialog's
+// trigger. Button is the controls family's: @/components/kit/controls/Button
 <Callout
   tone="danger"
   action={
@@ -366,7 +388,7 @@ Do:
 
 Don't:
 
-- Don't build notices from palette classes (`orange-*`, `amber-*`, `yellow-*`, `blue-*`) or tint shadcn `Alert` with overrides. `@/components/ui/alert` stays as a primitive; new code uses Callout.
+- Don't build notices from palette classes (`orange-*`, `amber-*`, `yellow-*`, `blue-*`) or a tinted box of your own; every notice is a Callout.
 - Don't stack several callouts; merge them, or move the less important one into the page (see [When two notices meet](#when-two-notices-meet)). The site banner does this: during the weekly maintenance window a signed-out visitor gets one warning strip that ends with "Some features are not available while signed out.", never the info strip stacked over it (`SiteBannerContent` in `components/banner/SiteBanner.tsx`, which the root layout renders once).
 - Don't use a callout for an action's result; that is a toast.
 - Don't use a callout for "Not in ratings yet" on a detail page; that is `NotInRatings variant="notice"` from the status family.
@@ -378,7 +400,7 @@ Gallery anchors: `/admin/design#feedback-callout`, `/admin/design#feedback-callo
 Owner decision: don't stack callouts; merge them, or move the less important one into the page. Each place shows at most one notice: the site banner under the site header, one Callout under the PageHeader or DetailHero, and one at the top of each panel. When a second notice would land in a place that already has one:
 
 1. **Site-wide and site-wide** (the maintenance window and the signed-out note): one banner. `SiteBannerContent` already merges them into the warning strip, so never render a second `variant="banner"`.
-2. **The maintenance window and a page notice**: the banner already says the window is on, so a page never repeats it. When the window blocks something on the page, say what is blocked and when it comes back, in the place of the thing it blocks: a Callout at the top of that panel in place of its form or rows, or the disabled control's own reason (an AdminMenu item's `description`, a ScopeSwitch's `disabledReason`). The page's own notice under its header stays as it is. The registrant filtering tool: "Host compliance" stays under the PageHeader, and "Filtering is temporarily unavailable" takes the form's place inside its panel, not a second callout under the first.
+2. **The maintenance window and a page notice**: the banner already says the window is on, so a page never repeats it. When the window blocks something on the page, say what is blocked and when it comes back, in the place of the thing it blocks: a Callout at the top of that panel in place of its form or rows, or the disabled control's own reason (an AdminMenu item's `description`, a ScopeSwitch's `disabledReason`). The page's own notice under its header stays as it is, unless the window blocks the whole page. The registrant filtering tool (owner decision, 16 Oct): during the window it shows only "Filtering is temporarily unavailable" under its PageHeader, in place of "Host compliance" and the form; the compliance rules apply only while the tool is on.
 3. **Two notices about the page itself**: merge them into one Callout with the stronger tone (danger over warning over info), the more important point first, both in a sentence or two. If one is about a single section, move it to the top of that panel or FormSection instead.
 4. **A notice about a single field**: it is the field's help (`FormFieldLabel` `info`, `FormDescription`) or its error (`FormMessage`), never a Callout.
 
@@ -425,32 +447,3 @@ Don't:
 - Don't write a sentence in it; use a Callout.
 
 Gallery anchor: `/admin/design#feedback-callout-chip`
-
-## Legacy inventory
-
-Every empty, error, loading, status and notice pattern that exists today, and what replaces it in the migration.
-
-| Today                                                                      | Where                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Replacement                                                                                                                              |
-| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `BeatmapEmptyState` (`testId`, `body`, `action`)                           | `components/beatmaps/BeatmapEmptyState.tsx`, used by `components/beatmaps/list/BeatmapListGrid.tsx`, `components/player/PlayerBeatmapsList.tsx`, `components/tournaments/TournamentBeatmapsAdminView.tsx`                                                                                                                                                                                                                                                               | `EmptyState` (same frame): `data-testid`, `description`, `clearFilters` or `action`                                                      |
-| Tournament list `EmptyState` with a Clear filters link                     | `components/tournaments/list/TournamentList.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                        | `EmptyState` with `clearFilters={{ href }}`                                                                                              |
-| Faded 48px `ClipboardList` empty states                                    | `EmptyState` in `components/audit/AuditEventFeed.tsx`, `TimelineEmptyState` in `components/audit/AuditEntityTimeline.tsx`                                                                                                                                                                                                                                                                                                                                               | `EmptyState icon={ClipboardList}`; the filtered feed adds `clearFilters`                                                                 |
-| "Not enough data" line in beatmap charts                                   | `EmptyState` in `components/beatmap/BeatmapSection.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                 | `EmptyState size="compact"`                                                                                                              |
-| Bare empty text                                                            | `app/reports/MyReportsClient.tsx`, `app/admin/reports/AdminReportsClient.tsx`, `app/leaderboard/data-table.tsx`, `components/tournaments/TournamentRatingsView.tsx`, `components/tournaments/TournamentMatchesLedger.tsx`, `components/tournaments/TournamentTopPerformers.tsx`, `components/player/PlayerTournamentMatchTable.tsx`, `components/player/PlayerTournamentCard.tsx`, `components/stats/RatingDistributionChart.tsx`, `app/admin/AdminDashboardClient.tsx` | `EmptyState`: regular for a whole panel, compact in a chart, card, table cell area or dialog                                             |
-| `LoadMoreError` (outline "Retry")                                          | `components/tournaments/list/TournamentList.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                        | `SectionError size="inline"` with `className="justify-center"`                                                                           |
-| Retry button under "Report reasons could not be loaded."                   | `components/reports/ReportButton.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                                   | `SectionError size="inline"` in place of the description and button                                                                      |
-| "Unable to load affected …" in red text with Retry                         | `components/audit/CascadeContextBanner.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                             | `SectionError size="inline"`                                                                                                             |
-| "Unable to load audit entries." with Retry                                 | `components/audit/AuditEventCard.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                                   | `SectionError size="inline"`                                                                                                             |
-| "Failed to load more beatmaps. Please try again." line                     | `components/player/PlayerBeatmapsList.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                              | `SectionError size="inline"` with `onRetry={handleLoadMore}`                                                                             |
-| Spinner and "Loading…" text inside a panel                                 | `app/reports/MyReportsClient.tsx`, `app/admin/reports/AdminReportsClient.tsx`, `components/audit/CascadeContextBanner.tsx`, `components/audit/AuditEventCard.tsx`                                                                                                                                                                                                                                                                                                       | `TableSkeleton` with `PhoneRowListSkeleton` in the panel; two `RowListSkeleton` rows in an expanded row                                  |
-| Card skeletons with blue icons and Title Case titles                       | `app/leaderboard/loading.tsx`, `app/admin/reports/loading.tsx`, `components/player/PlayerSectionSkeletons.tsx`                                                                                                                                                                                                                                                                                                                                                          | `PanelSkeleton` with `SectionHeaderSkeleton` and the matching table, rows or tiles                                                       |
-| Whole-panel grey blocks                                                    | `app/beatmaps/[id]/loading.tsx` and other `loading.tsx` files                                                                                                                                                                                                                                                                                                                                                                                                           | `PanelSkeleton` at the same height                                                                                                       |
-| No loading screen                                                          | `app/reports` (My reports)                                                                                                                                                                                                                                                                                                                                                                                                                                              | a `loading.tsx` built from the skeletons                                                                                                 |
-| "Host Compliance" `Alert` tinted `warning` with `dark:text-yellow-*`       | `app/tools/filter/FilteringPageClient.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                              | `Callout tone="warning" title="Host compliance"`                                                                                         |
-| "Filtering is temporarily unavailable" `Alert` in `orange-*`               | `app/tools/filter/FilteringPageClient.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                              | `Callout tone="warning"`                                                                                                                 |
-| Blue "Filtering Information" `Alert`                                       | `components/filtering/FilterComplianceNotice.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                       | `Callout tone="info"` with the copy button as `action`; the time and report ID go in tiles                                               |
-| "Saving is permanent" `Alert variant="destructive"` with overrides         | `components/beatmap/BeatmapAdminView.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                               | `Callout tone="danger"`                                                                                                                  |
-| "Something went wrong" `Alert variant="destructive"` after a failed action | `app/settings/ApiKeySettingsClient.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                                 | a toast, or `Callout tone="danger"` when the error must stay on screen                                                                   |
-| Red-bordered "Delete Account" card with a solid red button                 | `app/settings/AccountDeletionClient.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                                | a settings panel with `Callout tone="danger"` and a `destructive` (red outline) Button as `action`; solid red only in the confirm dialog |
-| Blue cascade banner (`bg-blue-50/50 border-l-blue-400`)                    | `components/audit/CascadeContextBanner.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                             | `Callout tone="info"` (the audit redesign may make it a plain row)                                                                       |
-| `UnverifiedDataBadge` (shadcn `Badge` tinted `warning`)                    | `components/badges/UnverifiedDataBadge.tsx`, in `components/beatmap/BeatmapDistributionsCard.tsx`                                                                                                                                                                                                                                                                                                                                                                       | `CalloutChip icon={ShieldQuestion} detail=…`                                                                                             |

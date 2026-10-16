@@ -585,7 +585,7 @@ export default function FormatSection() {
         id="format-field-names"
         name="Field names"
         importPath="@/lib/kit/format/fields"
-        description="One name per field, in sentence case. These replace different names for the same thing found on the site; the full glossary, Title Case variants included, is FIELD_NAMES."
+        description="One name per field, in sentence case. Each name here settles a different name the site once used for the same thing (its `legacy`, never rendered); the full glossary, Title Case variants included, is FIELD_NAMES."
       >
         <ul className="flex flex-col divide-y text-sm">
           {RETIRED_NAMES.map((entry) => (

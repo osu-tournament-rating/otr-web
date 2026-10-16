@@ -1,7 +1,7 @@
 # Layout and surfaces
 
 How a page is put together: the frame, the page header or detail hero, panels with their section headers, and what goes inside a panel (rows and tiles).
-Every value here comes from the beatmap pages, which are the reference. Import each component from its own file under `@/components/kit/layout/`.
+Every value here comes from the beatmap pages, which are the reference. Import each component from its own file under `@/components/kit/layout/`. Icon props across the kit take a `KitIcon` (`@/lib/kit/layout/icon`): any lucide icon, or an SVG component with the same `className` and `aria-hidden` props, such as `CircleDashedX`.
 
 - [PageFrame](#pageframe): the root of every page, loading and error screen
 - [PageHeader](#pageheader): the top of a list or tool page
@@ -67,8 +67,8 @@ Do:
 
 Don't:
 
-- Don't use `container`, `mx-auto`, `px-4 sm:px-0` or `py-6 sm:py-0` on a page root. `container` caps the width at tablet sizes, and with the layout's own margin a page's `px-4` doubles the phone gutter to 32px. Pages that still have them (the beatmap, tournament, leaderboard, player and match pages, tournament submission, filter reports, audit logs, `app/audit/layout.tsx` and most `loading.tsx` files) drop them when they move onto PageFrame.
-- Don't use `gap-2`, `md:gap-2`, `gap-10` or `space-y-*` between panels (leaderboard, player, match, tournament, filter reports, admin, reports and settings pages do today).
+- Don't use `container`, `mx-auto`, `px-4 sm:px-0` or `py-6 sm:py-0` on a page root. `container` caps the width at tablet sizes, and with the layout's own margin a page's `px-4` doubles the phone gutter to 32px.
+- Don't use `gap-2`, `gap-10` or `space-y-*` between panels; PageFrame's 16px is the only gap.
 
 Gallery anchor: `/admin/design#layout-page-frame`
 
@@ -84,11 +84,8 @@ import { PageHeader } from '@/components/kit/layout/PageHeader';
   title="Tournaments"
   description="Browse tournament submissions and their review status. Only verified data is included in ratings."
   actions={
-    <Button asChild>
-      <Link href="/tournaments/submit">
-        <Upload aria-hidden />
-        Submit
-      </Link>
+    <Button asChild icon={Upload}>
+      <Link href="/tournaments/submit">Submit</Link>
     </Button>
   }
 />;
@@ -109,9 +106,9 @@ Do:
 
 Don't:
 
-- Don't hand-build a header. The ones in `app/beatmaps/page.tsx` and `app/tournaments/page.tsx` are what this component was copied from; the admin, settings, reports and filtering pages, and the centred blue title in `components/tournaments/TournamentSubmissionForm.tsx`, are the legacy versions it replaces.
-- Don't colour the icon `text-primary` (the beatmap and tournament list headers do today).
-- Don't use breadcrumbs (audit pages do today); use `back`.
+- Don't hand-build a header, or centre a blue title above a form.
+- Don't colour the icon; PageHeader keeps it muted.
+- Don't use breadcrumbs; use `back`, as the audit history pages do.
 
 Gallery anchors: `/admin/design#layout-page-header`, `/admin/design#layout-page-header-back`
 
@@ -164,7 +161,7 @@ Props:
 - `status`: the verification status (`VerificationStatusBadge`), first in the row under the title. On art, pass the badge's `variant="overlay"`.
 - `meta`: HeroMetaItems (16px icon and short text) after the status.
 - `adminActions`: the single admin cluster, top right: one [AdminMenu](controls.md#adminmenu), not a row of icons. Pass it `onArt` on a hero with art.
-- `actions`: public actions (audio preview, report, open on osu!, audit history), bottom right. Icon-only ones are [IconButton](controls.md#iconbutton)s. Audit pages are public, so the audit history link goes here for everyone, never in the admin menu.
+- `actions`: public actions (audio preview, report, open on osu!, audit history), bottom right. Icon-only ones are [IconButton](controls.md#iconbutton)s. Audit pages are public, so the audit history link goes here for everyone, never in the admin menu. On art the actions get a 112px column beside the title on phones (128px from `sm`), so a labelled action and an IconButton don't fit side by side there: stack them in `<div className="flex flex-col items-end gap-2">`, as the beatmap hero does with its audit history link and Preview button.
 
 On phones, a plain hero moves `actions` and `adminActions` into one row above the name, so a long name keeps the full width. On art they stay pinned to the corners, and every control there uses the dark pill, white in both themes, like the beatmap hero: `<AdminMenu onArt …/>`, `<Button variant="overlay">` and `<IconButton variant="overlay">` from the controls kit (the classes are `ON_ART_CONTROL_CLASSES` in `@/components/kit/controls/Button`). A status badge on art takes `variant="overlay"`, and an InfoButton takes `onArt`.
 
@@ -178,10 +175,10 @@ Do:
 
 Don't:
 
-- Don't build a hero from `Card` with its own padding (`TournamentHeader` in `app/tournaments/[id]/page.tsx`, `components/matches/MatchCard.tsx`) or put the status in a separate row above the title.
-- Don't scatter admin icons in different colours across the hero (tournament and match pages today); put one [AdminMenu](controls.md#adminmenu) in `adminActions`.
-- Don't hand-write the dark pill classes on art controls (`components/beatmap/BeatmapHeader.tsx` passes them to `AudioPreviewButton` today); use the controls kit's `overlay` variants.
-- Don't use a 36px title; the hero title follows the type scale (`components/beatmap/BeatmapHeader.tsx` uses `sm:text-4xl` today and moves to 30px when it adopts DetailHero).
+- Don't build a hero from a padded card of your own or put the status in a separate row above the title.
+- Don't scatter admin icons in different colours across the hero; put one [AdminMenu](controls.md#adminmenu) in `adminActions`.
+- Don't hand-write the dark pill classes on art controls; use the controls kit's `overlay` variants.
+- Don't make the title larger than 30px; it follows the type scale, beatmap titles included.
 
 Gallery anchors: `/admin/design#layout-detail-hero-art`, `/admin/design#layout-detail-hero-art-status`, `/admin/design#layout-detail-hero-art-long`, `/admin/design#layout-detail-hero-tabs`, `/admin/design#layout-detail-hero-player`
 
@@ -227,6 +224,8 @@ Props:
 
 `parseHeroTab(raw, tabs, fallback)` reads `?tab=` and falls back for a missing or unknown value.
 
+`HeroTabs.tsx` also exports the parts the tab strips share: `HeroTabLabel` (label, compact label and count) and the classes `heroTabListClassName`, `heroTabClassName` and `heroTabCountsFromClassName`, which HeroTabsList and HeroTabsSkeleton use. A page never needs them.
+
 At the top of a panel, under a PageHeader, give the strip a divider and let the panel's toolbar and rows follow:
 
 ```tsx
@@ -254,9 +253,11 @@ Do:
 
 Don't:
 
-- Don't use the grey segmented `Tabs` bar from `components/ui/tabs.tsx` under a hero (`app/tournaments/[id]/page.tsx`, `app/matches/[id]/page.tsx` today).
+- Don't put a grey segmented tab bar under a hero.
 - Don't use hero tabs to pick a ruleset (that is the ruleset control) or to scope a list such as All / Friends (that belongs in the list toolbar).
-- Don't hide labels or counts with your own `max-sm:hidden` spans inside `label` (the audit history tabs today); use `compactLabel` and `countsFrom`, which keep the full label and count for screen readers.
+- Don't hide labels or counts with your own `max-sm:hidden` spans inside `label`; use `compactLabel` and `countsFrom`, which keep the full label and count for screen readers.
+
+Loading: `HeroTabsSkeleton` ([feedback.md](feedback.md#skeletons)).
 
 Gallery anchors: `/admin/design#layout-detail-hero-tabs`, `/admin/design#layout-hero-tabs-panel`
 
@@ -323,10 +324,9 @@ Do:
 
 Don't:
 
-- Don't use `Card` from `components/ui/card.tsx` as a page section (`<Card className="p-6 font-sans">` on the tournament page, the profile, match and stats pages today). It is the darker shadowed surface in dark mode.
-- Don't put a card, a padded box or a bordered table frame inside a panel (the profile's tournament cards, the match page's nested frames, the six tables in a second bordered box).
-- Don't pad a panel 24px or 48px. The home feature cards are the one stated exception.
-- `SectionCard` from `components/beatmap/BeatmapSection.tsx` is the same component under its old name; new code imports Panel.
+- Don't build a section surface of your own, such as a padded, shadowed card; it reads darker than a panel in dark mode.
+- Don't put a card, a padded box or a bordered table frame inside a panel.
+- Don't pad a panel 24px or 48px. The home page's feature cards are the one stated exception.
 
 Gallery anchor: `/admin/design#layout-panel`
 
@@ -360,9 +360,10 @@ Do:
 
 Don't:
 
-- Don't colour section icons blue (`text-primary` on most non-beatmap pages today, such as "Tournament Statistics" in `app/tournaments/[id]/page.tsx`), and don't use 24px icons or 18px titles.
+- Don't colour section icons blue, and don't use 24px icons or 18px titles.
 - Don't put the title in Title Case.
-- `SectionHeader` from `components/beatmap/BeatmapSection.tsx` re-exports this one; new code imports it from the kit.
+
+Loading: `SectionHeaderSkeleton` ([feedback.md](feedback.md#skeletons)) draws the real strip with its static title.
 
 Gallery anchor: `/admin/design#layout-section-header`
 
@@ -396,16 +397,16 @@ Do:
 
 Don't:
 
-- Don't use a circled question mark (`HelpCircle` in `components/ui/LabelWithTooltip.tsx`, the submission and filtering forms, `components/player/PlayerTournamentMatchTable.tsx`, `components/matches/MatchStatsHighlightCard.tsx`).
-- Don't use a hover-only tooltip for an explanation (the match-page stat highlights and the beatmap edit dialog hints in `components/beatmap/BeatmapAdminView.tsx` today).
-- Don't colour the glyph `text-primary`.
+- Don't use a circled question mark (lucide's `CircleHelp`).
+- Don't explain anything in a hover-only tooltip or a `title` attribute.
+- Don't colour the glyph blue.
 - Don't put it inside another button or link, such as a sortable column header; it is a button itself, so place it beside that control.
 
 Gallery anchor: `/admin/design#layout-info-button`
 
 ## Abbreviation
 
-A short form whose full form opens on tap, hover and keyboard focus, and is what screen readers hear: CS for circle size, AR, OD, HP. It replaces `<abbr title>`, whose title only shows on a mouse hover.
+A short form whose full form opens on tap, hover and keyboard focus: CS for circle size, AR, OD, HP. Screen readers hear both, short form first ("CS, circle size"), so the name starts with the text on screen and speech input that says "CS" reaches it. It replaces `<abbr title>`, whose title only shows on a mouse hover.
 
 ```tsx
 import { Abbreviation } from '@/components/kit/layout/Abbreviation';
@@ -419,8 +420,8 @@ import { Abbreviation } from '@/components/kit/layout/Abbreviation';
 
 Props:
 
-- `full`: the full form in sentence case, the name the site already uses (`lib/beatmaps/presentation.ts` holds the beatmap attributes'). It is the button's accessible name and the bubble's text.
-- `children`: the short form shown.
+- `full`: the full form in sentence case, the name the site already uses (`lib/beatmaps/presentation.ts` holds the beatmap attributes'). It is the bubble's text, and follows the short form in the button's accessible name, lower-cased after the comma unless it starts with a short form itself ("HP drain").
+- `children`: the short form shown, as plain text.
 - `side`: where the bubble opens (`top`).
 
 It takes the colour and size of the text around it, with a dotted underline as the cue. Use it for established short forms in labels: stat tiles, table headers, filter labels. Spell out anything else.
@@ -466,7 +467,7 @@ Do:
 
 Don't:
 
-- Don't use the grey shadowed `StatCard` (`components/shared/StatCard.tsx`, on the tournament stats tab, the filter report and the profile) or borderless grey boxes (match stats).
+- Don't use a grey shadowed stat card or a borderless grey box; a number with its label is a StatTile.
 - Don't put a tile on the page by itself, outside a panel.
 
 Gallery anchor: `/admin/design#layout-tile`
@@ -508,7 +509,9 @@ Do:
 
 Don't:
 
-- Don't make a stat tile a button; use Tile with `asChild interactive` (the beatmap "Pooled in" tile, which uses `TileStat` from `components/beatmap/BeatmapSection.tsx`).
+- Don't make a stat tile a button; use Tile with `asChild interactive`, as the beatmap's "Pooled in" tile does (`components/beatmap/BeatmapPoolsDialog.tsx`).
+
+Loading: `StatTileGridSkeleton` with the same static labels and `columns` ([feedback.md](feedback.md#skeletons)).
 
 Gallery anchors: `/admin/design#layout-stat-tile`, `/admin/design#layout-stat-tile-inline`
 
@@ -539,7 +542,8 @@ Props:
 
 - `leading`, `title` (16px medium, truncates), `description` (14px muted), `trailing` (right-aligned): the standard layout. Pass only `children` for a custom row; it keeps the 16px by 12px padding.
 - `href`: makes the whole row one link (not prefetched, like the beatmap lists) with the shared row cues from `@/lib/kit/tables/row`: `ROW_HOVER_TINT`, and `ROW_TITLE_HOVER`, which turns the title blue while the row is hovered. Every whole-row link (DataTableLinkRow, PhoneRow, RowListItem) uses these two, so they read the same. Only for lists whose rows already open as a whole (beatmap list, tournament list, pooled beatmaps, search results). The row must then hold no other link or button, so `title` is plain text; with only `children`, mark the name `data-row-title` yourself.
-- `linkLabel`: the row link's accessible name, such as "View Break The Meta Cup". Always set it with `href`, or a screen reader reads every word in the row.
+- `linkLabel`: the row link's accessible name, such as "View Break The Meta Cup". Always set it with `href`, or a screen reader reads every word in the row. It replaces everything inside the row for a screen reader, the status icon and a "Not in ratings yet" line included, so put in it whatever the row must say aloud besides the name, as the tournament list does with its admin note count ("View Break The Meta Cup, 2 admin notes").
+- `children`: with `title`, extra content under the description; without, the whole custom row.
 
 Do:
 
@@ -549,7 +553,9 @@ Do:
 Don't:
 
 - Don't add new whole-row links or row dialogs.
-- Don't render each item as a card inside the panel (`components/player/PlayerTournamentCard.tsx` today).
+- Don't render each item as a card inside the panel.
+
+Loading: `RowListSkeleton` ([feedback.md](feedback.md#skeletons)), with `stats` for rows that stack on phones.
 
 Gallery anchor: `/admin/design#layout-row-list`
 
@@ -584,7 +590,7 @@ import {
 - `PageTitle` is the h1 for the rare page without PageHeader or DetailHero.
 - `SectionTitle` takes `level` (2 by default).
 - `RowTitle` takes `as` (`p` by default).
-- `Eyebrow` is the 12px muted label; `Eyebrow` from `components/beatmap/BeatmapSection.tsx` re-exports it.
+- `Eyebrow` is the 12px muted label.
 
 Do:
 
@@ -594,6 +600,6 @@ Do:
 Don't:
 
 - Don't use `uppercase`, `tracking-wide`, Title Case headings ("Tournament Statistics", "Peak Day") or sizes below `text-xs`.
-- Don't make a row title larger than its section title (the profile's tournament names today).
+- Don't make a row title larger than its section title.
 
 Gallery anchor: `/admin/design#layout-typography`

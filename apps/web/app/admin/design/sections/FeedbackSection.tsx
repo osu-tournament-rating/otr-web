@@ -25,7 +25,7 @@ import {
   Users,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import { GallerySection, Specimen } from '../gallery';
 import { SiteBannerContent } from '@/components/banner/SiteBanner';
@@ -44,6 +44,8 @@ import {
   RowListSkeleton,
   RulesetSwitchSkeleton,
   SectionHeaderSkeleton,
+  SkeletonBlock,
+  SkeletonText,
   StatTileGridSkeleton,
   TableSkeleton,
   type TableSkeletonColumn,
@@ -51,6 +53,7 @@ import {
 import { StatusPage } from '@/components/kit/feedback/StatusPage';
 import { RatingDelta } from '@/components/kit/format/RatingDelta';
 import { HeroTabs } from '@/components/kit/layout/HeroTabs';
+import { PageHeader } from '@/components/kit/layout/PageHeader';
 import { Panel, PanelBody } from '@/components/kit/layout/Panel';
 import { RowList, RowListItem } from '@/components/kit/layout/RowList';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
@@ -352,6 +355,7 @@ function CompactErrorDemo() {
 }
 
 function InlineErrorDemo() {
+  const reasonId = useId();
   const list = useRetryDemo(false);
   const row = useRetryDemo(false);
   const field = useRetryDemo(false);
@@ -395,7 +399,7 @@ function InlineErrorDemo() {
       <Panel>
         <SectionHeader icon={Flag} title="Report a data issue" />
         <PanelBody className="flex flex-col gap-2">
-          <Label htmlFor="feedback-report-reason">
+          <Label htmlFor={reasonId}>
             Reason{' '}
             <span aria-hidden="true" className="text-destructive-foreground">
               *
@@ -404,7 +408,7 @@ function InlineErrorDemo() {
           </Label>
           <Select disabled>
             <SelectTrigger
-              id="feedback-report-reason"
+              id={reasonId}
               aria-required="true"
               className="w-full"
             >
@@ -475,6 +479,41 @@ function OverviewSkeletonDemo() {
             meta="1,368 of 1,368 scores rated"
           />
         </Panel>
+      )}
+    </div>
+  );
+}
+
+/**
+ * An audit history's header, whose name and description follow the entity:
+ * SkeletonText keeps each line's height inside the real PageHeader, and
+ * SkeletonBlock stands in for the 36px button.
+ */
+function TextSkeletonDemo() {
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <LoadToggle loading={loading} onChange={setLoading} />
+      {loading ? (
+        <PageHeader
+          icon={History}
+          title={<SkeletonText className="h-7 w-56" />}
+          description={<SkeletonText className="w-40" />}
+          // Page actions stack full width on phones.
+          actions={<SkeletonBlock className="h-9 w-full sm:w-28" />}
+        />
+      ) : (
+        <PageHeader
+          icon={History}
+          title="Break The Meta Cup"
+          description="Tournament #401"
+          actions={
+            <Button variant="outline" icon={Flag}>
+              Report
+            </Button>
+          }
+        />
       )}
     </div>
   );
@@ -962,7 +1001,7 @@ export default function FeedbackSection() {
         id="feedback-section-error-inline"
         name="SectionError, inline"
         importPath="@/components/error/SectionError"
-        description="The inline size is one line with Try again beside it, for a failure inside a list, an expanded row or a form field. It replaces the hand-built Retry rows."
+        description="The inline size is one line with Try again beside it, for a failure inside content that otherwise loaded: the next batch of a feed, an expanded row or a form field's options. The loaded rows stay above it."
       >
         <InlineErrorDemo />
       </Specimen>
@@ -1030,6 +1069,15 @@ export default function FeedbackSection() {
           <RowsSkeletonDemo />
           <StackedRowsSkeletonDemo />
         </div>
+      </Specimen>
+
+      <Specimen
+        id="feedback-skeleton-text"
+        name="SkeletonText and SkeletonBlock"
+        importPath={`${KIT}/Skeletons`}
+        description="For text and controls inside a real component whose content follows the data, such as an audit history's header: SkeletonText is an inline bar that keeps its line's height, SkeletonBlock a block with a control's height, width and corners."
+      >
+        <TextSkeletonDemo />
       </Specimen>
 
       <Specimen
@@ -1135,17 +1183,21 @@ export default function FeedbackSection() {
             Permanently delete your account and remove your data from o!TR. Your
             player profile will remain public.
           </Callout>
+          {/* The filter tool's forum post text: hosts paste this exact
+              format, so it keeps its ISO time. */}
           <Callout
             tone="info"
-            title="Filtering information"
+            title="Forum post text"
             action={
               <Button variant="outline" size="sm" icon={Copy}>
-                Copy to clipboard
+                Copy
               </Button>
             }
           >
-            o!TR Filtering performed at: 2026-10-13 18:42:07 UTC (Report ID:
-            4821)
+            <code className="font-sans [overflow-wrap:anywhere]">
+              o!TR Filtering performed at: 2026-10-13 18:42:07 UTC (Report ID:
+              4821)
+            </code>
           </Callout>
         </div>
       </Specimen>
@@ -1168,30 +1220,37 @@ export default function FeedbackSection() {
         id="feedback-callout-merge"
         name="Two notices on one page"
         importPath={`${KIT}/Callout`}
-        description="Never two callouts in a stack. The registrant filtering tool during the weekly maintenance window: the site banner says the window is on, the page keeps its one notice under its header (host compliance), and the notice that the tool is paused takes the place of the form it blocks, inside the panel."
+        description="Never two callouts in a stack. The registrant filtering tool (owner decision, 16 Oct): outside the weekly maintenance window it shows its one notice, Host compliance, above the form. During the window the site banner says the window is on, and the page shows only the notice that the tool is paused, in place of Host compliance and the form; the compliance rules apply only while the tool is on."
         stacked
       >
         <div className="flex flex-col gap-4">
-          <SiteBannerContent maintenance signedIn />
-          <Callout tone="warning" title="Host compliance">
-            Hosts must comply with the{' '}
-            <a href="#feedback-callout-merge">
-              official tournament support filtering rules
-            </a>
-            .
-          </Callout>
-          <Panel>
-            <SectionHeader icon={SlidersHorizontal} title="Filter criteria" />
-            <PanelBody>
-              <Callout
-                tone="warning"
-                icon={Clock}
-                title="Filtering is temporarily unavailable"
-              >
-                Ratings are currently recalculating, please check back later.
-              </Callout>
-            </PanelBody>
-          </Panel>
+          <div className="flex flex-col gap-2">
+            <span className={typeScale.meta}>Outside the window</span>
+            <Callout tone="warning" title="Host compliance">
+              Hosts must comply with the{' '}
+              <a href="#feedback-callout-merge">
+                official tournament support filtering rules
+              </a>
+              .
+            </Callout>
+            <Panel>
+              <SectionHeader icon={SlidersHorizontal} title="Filter criteria" />
+              <PanelBody className={typeScale.bodyMuted}>
+                The filtering form.
+              </PanelBody>
+            </Panel>
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className={typeScale.meta}>During the window</span>
+            <SiteBannerContent maintenance signedIn />
+            <Callout
+              tone="warning"
+              icon={Clock}
+              title="Filtering is temporarily unavailable"
+            >
+              Ratings are currently recalculating, please check back later.
+            </Callout>
+          </div>
         </div>
       </Specimen>
 

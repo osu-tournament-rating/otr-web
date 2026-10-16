@@ -1,6 +1,6 @@
 'use client';
 
-import { VerificationStatus } from '@otr/core/osu';
+import { Ruleset, VerificationStatus } from '@otr/core/osu';
 import {
   Activity,
   ArrowUpRight,
@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Clock3,
   ExternalLink,
-  Flag,
   Gamepad2,
   Gauge,
   Globe,
@@ -40,6 +39,7 @@ import type { MenuAction } from '@/components/kit/controls/ActionMenu';
 import { AdminMenu } from '@/components/kit/controls/AdminMenu';
 import { Button } from '@/components/kit/controls/Button';
 import { IconButton } from '@/components/kit/controls/IconButton';
+import { CountryName } from '@/components/kit/country/CountryFlag';
 import { Abbreviation } from '@/components/kit/layout/Abbreviation';
 import { DetailHero, HeroMetaItem } from '@/components/kit/layout/DetailHero';
 import { HeroTabs } from '@/components/kit/layout/HeroTabs';
@@ -59,6 +59,7 @@ import { StatTile, StatTileGrid } from '@/components/kit/layout/StatTile';
 import { Tile } from '@/components/kit/layout/Tile';
 import { Eyebrow, typeScale } from '@/components/kit/layout/Typography';
 import { ListToolbar } from '@/components/kit/lists/ListToolbar';
+import { RulesetSwitch } from '@/components/kit/lists/RulesetSwitch';
 import { SearchField } from '@/components/kit/lists/SearchField';
 import { VerificationStatusBadge } from '@/components/kit/status/VerificationStatusBadge';
 import { EntityLink } from '@/components/kit/tables/EntityLink';
@@ -150,6 +151,42 @@ function TournamentListDemo() {
         ))}
       </RowList>
     </Panel>
+  );
+}
+
+/** The profile's hero: avatar, name, country link and ruleset switch. */
+function PlayerHeroDemo() {
+  const [ruleset, setRuleset] = React.useState<Ruleset>(Ruleset.Osu);
+
+  return (
+    <DetailHero
+      leading={
+        <Avatar className="size-16">
+          <AvatarFallback className="text-lg font-semibold">D</AvatarFallback>
+        </Avatar>
+      }
+      title="distantmemory"
+      meta={
+        <a
+          href="#layout-detail-hero-player"
+          aria-label="United States leaderboard"
+          className="inline-flex min-w-0 rounded-sm transition-colors outline-none hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        >
+          <CountryName code="US" name="United States" />
+        </a>
+      }
+      actions={
+        <IconButton
+          variant="outline"
+          icon={ExternalLink}
+          label="View profile on osu! website"
+        />
+      }
+    >
+      <div className="px-4 py-3 sm:px-6">
+        <RulesetSwitch value={ruleset} onValueChange={setRuleset} />
+      </div>
+    </DetailHero>
   );
 }
 
@@ -440,6 +477,9 @@ export default function LayoutSection() {
             <HeroTabs
               aria-label="Tournament views"
               value="matches"
+              // As on the tournament page: four tabs with counts fit a
+              // 360px phone once the counts stay in the names below sm.
+              countsFrom="sm"
               items={[
                 {
                   value: 'matches',
@@ -473,33 +513,10 @@ export default function LayoutSection() {
         id="layout-detail-hero-player"
         name="DetailHero with a leading avatar"
         importPath={`${KIT}/DetailHero`}
-        description="Player pages put the avatar in `leading`, before the name. The rating tiles follow in their own panel, not inside the hero."
+        description="The profile puts the 64px avatar in `leading`, before the name, and the country as a CountryName that opens the country's leaderboard. Its ruleset switch is a row under the title block (`children`); the rating tiles follow in their own panel, not inside the hero."
         stacked
       >
-        <DetailHero
-          leading={
-            <Avatar className="size-14 sm:size-16">
-              <AvatarFallback className="text-lg font-semibold">
-                D
-              </AvatarFallback>
-            </Avatar>
-          }
-          title="distantmemory"
-          meta={
-            <>
-              <HeroMetaItem icon={Flag}>United States</HeroMetaItem>
-              <HeroMetaItem icon={Trophy}>86 tournaments</HeroMetaItem>
-              <HeroMetaItem icon={Swords}>1,204 matches</HeroMetaItem>
-            </>
-          }
-          actions={
-            <IconButton
-              variant="outline"
-              icon={ExternalLink}
-              label="View profile on osu! website"
-            />
-          }
-        />
+        <PlayerHeroDemo />
       </Specimen>
 
       <Specimen
@@ -657,7 +674,7 @@ export default function LayoutSection() {
         id="layout-info-button"
         name="InfoButton"
         importPath={`${KIT}/InfoButton`}
-        description="The one help button: a muted circled i that opens on hover, keyboard focus and tap. It replaces every circled question mark and hover-only icon."
+        description="The one help button: a muted circled i that opens on hover, keyboard focus and tap. Never a circled question mark or an explanation that opens on hover only."
       >
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-1.5">
@@ -686,7 +703,7 @@ export default function LayoutSection() {
         id="layout-abbreviation"
         name="Abbreviation"
         importPath={`${KIT}/Abbreviation`}
-        description="A short form whose full form opens on tap, hover and keyboard focus, and is what screen readers hear. It replaces <abbr title>, which only shows on a mouse hover. Use it for established short forms in labels, such as CS, AR, OD and HP. Its tap target reaches at least 24px around the text without moving it."
+        description="A short form whose full form opens on tap, hover and keyboard focus. Screen readers hear both, short form first (“CS, circle size”). It replaces <abbr title>, which only shows on a mouse hover. Use it for established short forms in labels, such as CS, AR, OD and HP. Its tap target reaches at least 24px around the text without moving it."
       >
         <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-muted-foreground">
           {BEATMAP_ATTRIBUTES.map((attribute) => (
@@ -818,7 +835,7 @@ export default function LayoutSection() {
         id="layout-row-list"
         name="RowList and RowListItem"
         importPath={`${KIT}/RowList`}
-        description="Lists inside a panel are divided rows. Link the name; give a row `href` only where the whole row already opens today. Such rows get the shared hover tint and their title turns blue on hover."
+        description="Lists inside a panel are divided rows. Link the name; give a row `href` only on lists whose rows open as a whole (the tournament list, the beatmap list, search results), and say in `linkLabel` whatever the row must say aloud. Such rows get the shared hover tint and their title turns blue on hover."
       >
         <div className="flex flex-col gap-4">
           <Panel>

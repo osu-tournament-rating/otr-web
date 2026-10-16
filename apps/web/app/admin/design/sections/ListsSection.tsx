@@ -2,10 +2,17 @@
 
 import { Mods, Ruleset, VerificationStatus } from '@otr/core/osu';
 import { ChartLine, LayoutGrid, Rows3, Table2, Trophy } from 'lucide-react';
-import { Suspense, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type * as React from 'react';
 
 import { GallerySection, Specimen } from '../gallery';
+import {
+  LEADERBOARD_LIST_PARAMS,
+  LEADERBOARD_MATCHES_SCALE,
+  LEADERBOARD_RANGES,
+  LEADERBOARD_TIER_LABELS,
+} from '@/app/leaderboard/list-params';
+import { AuditSystemSwitch } from '@/components/audit/AuditSystemSwitch';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import { Button } from '@/components/kit/controls/Button';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
@@ -41,8 +48,6 @@ import {
   VerificationStatusIcon,
 } from '@/components/kit/status/VerificationStatusIcon';
 import { EntityLink } from '@/components/kit/tables/EntityLink';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { tieredScale } from '@/lib/filters/scale';
 import { tournamentRankScale } from '@/lib/filters/tournament-rank';
@@ -83,6 +88,10 @@ import {
 } from '@/lib/kit/lists/params';
 import { normalizeSearchTerm } from '@/lib/kit/lists/search';
 import { useListState } from '@/lib/kit/lists/use-list-state';
+import {
+  leaderboardTierKeys,
+  type LeaderboardSort,
+} from '@/lib/orpc/schema/leaderboard';
 import {
   VERIFICATION_STATUS_ORDER,
   getVerificationStatusName,
@@ -509,48 +518,23 @@ const DEMO_BEATMAPS = [
   },
 ] as const;
 
-const LEADERBOARD_PARAMS = defineListParams({
-  q: searchParam(),
-  page: pageParam(),
-  friends: booleanParam({ role: 'scope' }),
-  ruleset: enumParam(RATED_RULESETS, { default: Ruleset.Osu, role: 'scope' }),
-  rating: rangeParam({ min: 100, max: 3500, integer: true }),
-  matches: rangeParam({ min: 1, max: 1000, integer: true }),
-  tier: arrayParam([
-    'bronze',
-    'silver',
-    'gold',
-    'platinum',
-    'emerald',
-    'diamond',
-    'master',
-    'grandmaster',
-    'eliteGrandmaster',
-  ] as const),
-});
+// The leaderboard's own spec, sort options and tier chips
+// (components/leaderboard/LeaderboardToolbar.tsx); its osu! rank, win rate
+// and country filters are left out here.
+const LEADERBOARD_SORTS: readonly SortOption<LeaderboardSort>[] = [
+  { value: 'rating', label: 'Rating', defaultDirection: 'desc' },
+  { value: 'tournaments', label: 'Tournaments', defaultDirection: 'desc' },
+  { value: 'matches', label: 'Matches', defaultDirection: 'desc' },
+  { value: 'winRate', label: 'Win rate', defaultDirection: 'desc' },
+];
 
-const TIER_OPTIONS = [
-  { value: 'bronze', label: 'Bronze' },
-  { value: 'silver', label: 'Silver' },
-  { value: 'gold', label: 'Gold' },
-  { value: 'platinum', label: 'Platinum' },
-  { value: 'emerald', label: 'Emerald' },
-  { value: 'diamond', label: 'Diamond' },
-  { value: 'master', label: 'Master' },
-  { value: 'grandmaster', label: 'Grandmaster' },
-  { value: 'eliteGrandmaster', label: 'Elite Grandmaster' },
-] as const;
-
-const matchesScale = tieredScale({
-  tiers: [
-    { start: 1, end: 50, step: 1 },
-    { start: 50, end: 200, step: 5 },
-    { start: 200, end: 1000, step: 25 },
-  ],
-});
+const TIER_OPTIONS = leaderboardTierKeys.map((tier) => ({
+  value: tier,
+  label: LEADERBOARD_TIER_LABELS[tier],
+}));
 
 function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
-  const list = useDemoListState(LEADERBOARD_PARAMS, {
+  const list = useDemoListState(LEADERBOARD_LIST_PARAMS, {
     rating: { min: 1500 },
   });
   const { state, setState } = list;
@@ -568,6 +552,14 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
             onSearch={(q) => setState({ q })}
           />
         }
+        sort={
+          <SortControl
+            label="Sort players by"
+            options={LEADERBOARD_SORTS}
+            value={state.sort}
+            onValueChange={(sort) => setState({ sort })}
+          />
+        }
         filters={
           <FilterPanel
             title="Filter players"
@@ -576,8 +568,8 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
           >
             <RangeFilter
               label="Rating"
-              min={100}
-              max={3500}
+              valueLabel="rating"
+              {...LEADERBOARD_RANGES.rating}
               step={20}
               value={state.rating}
               onValueChange={(rating) => setState({ rating })}
@@ -585,27 +577,24 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
             <RangeFilter
               label="Matches"
               valueLabel="matches"
-              min={1}
-              max={1000}
-              scale={matchesScale}
+              {...LEADERBOARD_RANGES.matches}
+              scale={LEADERBOARD_MATCHES_SCALE}
               value={state.matches}
               onValueChange={(matches) => setState({ matches })}
             />
             <ChoiceFilter
               label="Tiers"
               options={TIER_OPTIONS}
-              value={state.tier}
-              onValueChange={(tier) => setState({ tier })}
+              value={state.tiers}
+              onValueChange={(tiers) => setState({ tiers })}
             />
           </FilterPanel>
         }
         scope={
           <ScopeSwitch
             label="Players to show"
-            value={state.friends ? 'friends' : 'all'}
-            onValueChange={(scope) =>
-              setState({ friends: scope === 'friends' })
-            }
+            value={state.friend ? 'friends' : 'all'}
+            onValueChange={(scope) => setState({ friend: scope === 'friends' })}
             options={[
               { value: 'all', label: 'All' },
               {
@@ -638,16 +627,12 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
                 onRemove: () => setState({ matches: {} }),
               },
               {
-                key: 'tier',
+                key: 'tiers',
                 label: formatChoiceFilterLabel(
                   'Tiers',
-                  state.tier.map(
-                    (tier) =>
-                      TIER_OPTIONS.find((option) => option.value === tier)
-                        ?.label ?? tier
-                  )
+                  state.tiers.map((tier) => LEADERBOARD_TIER_LABELS[tier])
                 ),
-                onRemove: () => setState({ tier: [] }),
+                onRemove: () => setState({ tiers: [] }),
               },
             ]}
             onClearAll={list.clearFilters}
@@ -755,107 +740,31 @@ function ReportQueueToolbarDemo() {
   );
 }
 
-// A tournament's matches, for admins: the select-all checkbox is not a
-// search, so it goes in `leading`, first on the strip.
-type MatchSortKey = 'date' | 'name';
-
-const MATCH_SORTS: readonly SortOption<MatchSortKey>[] = [
-  {
-    value: 'date',
-    label: 'Date',
-    defaultDirection: 'desc',
-    directionLabels: { desc: 'Newest first', asc: 'Oldest first' },
-  },
-  {
-    value: 'name',
-    label: 'Match name',
-    defaultDirection: 'asc',
-    directionLabels: { asc: 'A to Z', desc: 'Z to A' },
-  },
-];
-
-const DEMO_MATCHES = [
-  { id: 1, name: 'CO25: (Lunar Lobster) vs (Team Rocket)', games: 9 },
-  { id: 2, name: 'CO25: (Mango Lassi) vs (Night Owls)', games: 7 },
-  { id: 3, name: 'CO25: (Tidal Wave) vs (Paper Planes)', games: 11 },
+// An entity's audit history (components/audit/AuditEntityTimeline.tsx):
+// "Show system events" widens the list rather than filtering it, so it leads
+// the strip, and the count stays on the right of the same line.
+const AUDIT_HISTORY_ROWS = [
+  { sentence: 'apricot verified', system: false },
+  { sentence: 'System pre-verified', system: true },
+  { sentence: 'Hobbes updated', system: false },
 ] as const;
 
-function LeadingToolbarDemo() {
-  const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
-  const [sort, setSort] = useState<{
-    key: MatchSortKey;
-    direction: 'asc' | 'desc';
-  }>({ key: 'date', direction: 'desc' });
-  const allSelected = selected.size === DEMO_MATCHES.length;
+function AuditHistoryToolbarDemo() {
+  const [system, setSystem] = useState(false);
+  const rows = AUDIT_HISTORY_ROWS.filter((row) => system || !row.system);
 
   return (
     <Panel>
       <ListToolbar
-        label="Sort matches"
+        label="Filter audit history"
         leading={
-          <div className="flex items-center gap-3">
-            <Checkbox
-              checked={
-                selected.size === 0
-                  ? false
-                  : allSelected
-                    ? true
-                    : 'indeterminate'
-              }
-              onCheckedChange={(checked) =>
-                setSelected(
-                  checked === true
-                    ? new Set(DEMO_MATCHES.map((match) => match.id))
-                    : new Set()
-                )
-              }
-              aria-label="Select all matches"
-            />
-            <span
-              aria-live="polite"
-              className="text-sm text-muted-foreground tabular-nums"
-            >
-              {selected.size > 0
-                ? `${formatCount(selected.size)} selected`
-                : 'Select all'}
-            </span>
-          </div>
+          <AuditSystemSwitch checked={system} onCheckedChange={setSystem} />
         }
-        sort={
-          <SortControl
-            label="Sort matches by"
-            options={MATCH_SORTS}
-            value={sort}
-            onValueChange={setSort}
-          />
-        }
-        count={formatCountOf(DEMO_MATCHES.length, 'match', 'matches')}
+        count={formatCountOf(rows.length, 'change')}
       />
       <RowList>
-        {DEMO_MATCHES.map((match) => (
-          <RowListItem
-            key={match.id}
-            leading={
-              <Checkbox
-                checked={selected.has(match.id)}
-                onCheckedChange={(checked) =>
-                  setSelected((current) => {
-                    const next = new Set(current);
-                    if (checked === true) next.add(match.id);
-                    else next.delete(match.id);
-                    return next;
-                  })
-                }
-                aria-label={`Select ${match.name}`}
-              />
-            }
-            title={
-              <EntityLink href="#lists-toolbar-leading">
-                {match.name}
-              </EntityLink>
-            }
-            description={formatCountOf(match.games, 'game')}
-          />
+        {rows.map((row) => (
+          <RowListItem key={row.sentence} title={row.sentence} />
         ))}
       </RowList>
     </Panel>
@@ -875,7 +784,6 @@ type AuditAction = (typeof AUDIT_ACTIONS)[number]['value'];
  * Filters button follows on the same line, on the right, even on a phone.
  */
 function LeadingFiltersToolbarDemo() {
-  const switchId = useId();
   const [system, setSystem] = useState(false);
   const [actions, setActions] = useState<AuditAction[]>([]);
 
@@ -884,19 +792,7 @@ function LeadingFiltersToolbarDemo() {
       <ListToolbar
         label="Filter audit events"
         leading={
-          <div className="flex h-10 items-center gap-2">
-            <Switch
-              id={switchId}
-              checked={system}
-              onCheckedChange={setSystem}
-            />
-            <label
-              htmlFor={switchId}
-              className="cursor-pointer text-sm font-medium"
-            >
-              Show system events
-            </label>
-          </div>
+          <AuditSystemSwitch checked={system} onCheckedChange={setSystem} />
         }
         filters={
           <FilterPanel
@@ -975,8 +871,9 @@ function BeatmapToolbarDemo() {
         label="Search and filter beatmaps"
         search={
           <SearchField
-            label="Search beatmaps"
-            placeholder="Search title, artist, difficulty, mapper, or ID"
+            // The short placeholder fits a phone; the name keeps the full scope.
+            label="Search beatmaps by title, artist, difficulty, mapper or ID"
+            placeholder="Title, artist, mapper or ID"
             value={query}
             onSearch={setQuery}
           />
@@ -1200,6 +1097,7 @@ function ScopeSwitchDemo() {
 
 // The profile's rating history views, as a shallow list state: the chart's
 // data is all on the client, so the address changes without a server render.
+// The decay chip is on by default, so only `decay=false` is ever written.
 const RATING_VIEW_PARAMS = defineListParams({
   metric: enumParam(['rating', 'volatility'] as const, {
     default: 'rating',
@@ -1209,6 +1107,7 @@ const RATING_VIEW_PARAMS = defineListParams({
     default: 'chart',
     role: 'scope',
   }),
+  decay: booleanParam({ default: true, role: 'scope' }),
 });
 
 function RatingViewToggleDemo() {
@@ -1237,6 +1136,12 @@ function RatingViewToggleDemo() {
             { value: 'table', label: 'Table' },
           ]}
         />
+        <ChoiceChip
+          selected={state.decay}
+          onClick={() => setState({ decay: !state.decay })}
+        >
+          Display decay
+        </ChoiceChip>
       </div>
       <p className="px-4 pt-3 pb-4 text-xs break-all text-muted-foreground">
         Address: {list.hrefFor({})}
@@ -1645,7 +1550,7 @@ export default function ListsSection() {
         id="lists-toolbar-scope"
         name="ListToolbar with a scope and one ruleset"
         importPath={`${KIT}/ListToolbar`}
-        description="The leaderboard: All / Friends and a ruleset switch share the second row. Clear all keeps the scope, ruleset and search."
+        description="The leaderboard, with its own list spec: search, sort and Filters, then All / Friends and a ruleset switch on the second row with the count. Clear all keeps the scope, ruleset, sort and search."
         stacked
       >
         <LeaderboardToolbarDemo hasFriends />
@@ -1665,11 +1570,11 @@ export default function ListsSection() {
         id="lists-toolbar-leading"
         name="ListToolbar with a leading control"
         importPath={`${KIT}/ListToolbar`}
-        description="A control that is not a search, such as the select-all checkbox on a tournament's matches for admins, goes in leading: first on the strip, before the scope or search. Without a search, sort and the count stay on the right of the same strip. With only Filters beside it (the audit log), both stay on one line on phones too, Filters on the right, until they don't fit."
+        description="A control that is neither a search nor a filter goes in leading: first on the strip, before the scope or search. The audit pages' Show system events switch widens the list rather than filtering it, so it leads. Without a search the count, sort and Filters stay on the right of the same strip: an entity's audit history puts its count there, and the audit log its Filters, on one line on phones too until they don't fit."
         stacked
       >
         <div className="flex flex-col gap-6">
-          <LeadingToolbarDemo />
+          <AuditHistoryToolbarDemo />
           <LeadingFiltersToolbarDemo />
         </div>
       </Specimen>
@@ -1724,7 +1629,7 @@ export default function ListsSection() {
         id="lists-scope-switch"
         name="ScopeSwitch"
         importPath={`${KIT}/ScopeSwitch`}
-        description="A segmented choice of two to four options: whose rows a list shows, or which view of a section is on screen (Rating / Volatility, Chart / Table). An option that cannot be chosen says why through an info button. The rating history toggles here keep their choice in the address with useListState's shallow option; try them and the back button."
+        description="A segmented choice of two to four options: whose rows a list shows, or which view of a section is on screen (Rating / Volatility, Chart / Table). An option that cannot be chosen says why through an info button. The rating history toggles here, with its Display decay chip, keep their choice in the address with useListState's shallow option, as the profile does; try them and the back button."
       >
         <ScopeSwitchDemo />
       </Specimen>
@@ -1756,6 +1661,9 @@ export default function ListsSection() {
         importPath={`${KIT}/FilterPanel`}
         description="One panel layout for every list: the beatmap list's range fields, with CS and AR at half width, and tournament filters built from ChoiceFilter, DayRangeFilter and SwitchFilter. Fields apply as you change them; number boxes sit beside the label and long labels wrap. Clear all resets that panel's fields only. Each panel is drawn open under its button, where the popover opens."
         stacked
+        // On a phone the popover is the screen's width less 32px; the frame
+        // drops its side padding so the panel is as wide here.
+        frameClassName="max-sm:px-0"
       >
         <FilterFieldsDemo />
       </Specimen>

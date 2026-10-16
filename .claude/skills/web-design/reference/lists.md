@@ -34,15 +34,17 @@ The beatmap list is the reference. Components live in their own files under `@/c
 
 ## A list page, end to end
 
-Define the list's params once, at module level, in a file both the server page and the client toolbar import:
+The tournament list is the worked example. Define the list's params once, at module level, in a file both the server page and the client toolbar import (simplified from `app/tournaments/list-params.ts`):
 
 ```ts
 // app/tournaments/list-params.ts
 import { RATED_RULESETS } from '@/lib/kit/format/ruleset';
 import {
   arrayParam,
+  booleanParam,
   dayRangeParam,
   defineListParams,
+  flagsParam,
   pageParam,
   rangeParam,
   searchParam,
@@ -59,20 +61,24 @@ export const TOURNAMENT_LIST_PARAMS = defineListParams({
   }),
   ruleset: arrayParam(RATED_RULESETS, { role: 'scope' }),
   status: arrayParam(VERIFICATION_STATUS_ORDER),
+  reason: flagsParam(TOURNAMENT_REJECTION_REASONS, { key: 'rejectionReason' }),
   rank: rangeParam({ min: 1, max: 1_000_000, integer: true }),
   date: dayRangeParam(),
+  verified: booleanParam(),
 });
+
+/** The procedure's input for a list state. */
+export function toTournamentListRequest(state: TournamentListState) { … }
 ```
 
 The server page parses it and fetches; the client toolbar reads and writes it:
 
 ```tsx
-// page.tsx (server)
+// app/tournaments/page.tsx (server)
 const state = parseListState(TOURNAMENT_LIST_PARAMS, await searchParams);
-// toApiFilter is the page's own mapping from list state to the procedure's input.
-const data = await orpc.tournaments.list(toApiFilter(state));
+const data = await orpc.tournaments.listPage(toTournamentListRequest(state));
 
-// TournamentToolbar.tsx ('use client')
+// components/tournaments/list/TournamentListToolbar.tsx ('use client')
 const list = useListState(TOURNAMENT_LIST_PARAMS);
 const { state, setState } = list;
 
@@ -112,7 +118,8 @@ const { state, setState } = list;
       onValueChange={(ruleset) => setState({ ruleset })}
     />
   }
-  count={formatCountOf(data.total, 'tournament', 'tournaments')}
+  // From the server page: formatCountOf(data.totalCount, 'tournament', 'tournaments')
+  count={count}
   activeFilters={
     <ActiveFilterChips filters={…} onClearAll={list.clearFilters} />
   }
@@ -146,7 +153,7 @@ Props that matter:
 
 - `label`: names the toolbar, which is a `search` landmark ("Search and filter tournaments").
 - First row: `leading`, `search`, `sort`, `filters`. Without a sort, the Filters button stays beside the search box on phones.
-- `leading`: a control that is not a search, first on the first row, such as a dropdown that picks what the list holds, or the select-all checkbox of a list with bulk actions. It sits before the search box, or before the scope when there is no search. It is not a place for a second search or for filters; those have their slots.
+- `leading`: a control that is not a search and not a filter, first on the first row, such as the audit pages' "Show system events" switch (`components/audit/AuditSystemSwitch.tsx`), which widens the list rather than filtering it, or the select-all checkbox of a list with bulk actions. It sits before the search box, or before the scope when there is no search. It is not a place for a second search or for filters; those have their slots.
 - Second row: `scope` and `rulesets` on the left, `view` (layout toggles) and `count` on the right. `count` is already formatted with `formatCountOf`, set in tabular figures and announced politely. Layout toggles are a `ToggleGroup` of 32px (`size-8`) icon items with an `aria-label` each; leave tooltips off them, because a `TooltipTrigger`'s `data-state` replaces the item's `on`/`off`.
 - `activeFilters`: `ActiveFilterChips`. Its row, and the divider above it, disappear when it renders nothing.
 - When nothing matches, render `EmptyState` (`@/components/kit/feedback/EmptyState`) straight under the toolbar in place of the rows, with `clearFilters` when filter-role params are active (`activeFilterCount > 0`). Not a line of muted text.
@@ -170,8 +177,8 @@ Do:
 
 Don't:
 
-- Don't build a toolbar by hand. `components/beatmaps/list/BeatmapListFilter.tsx` is the reference it was copied from; `components/tournaments/list/TournamentListFilter.tsx` is a hand copy; the leaderboard's card title with a Filters button above the table (`app/leaderboard/page.tsx`, `components/leaderboard/LeaderboardFilter.tsx`) and the audit pages' row of dropdowns and a checkbox (`components/audit/AuditFilterBar.tsx`) are the legacy layouts.
-- Don't let a toolbar scroll sideways or cut off its Filters button on phones (the leaderboard today).
+- Don't build a toolbar by hand, put a Filters button in a card title above the table, or lay filters out as a row of dropdowns.
+- Don't let a toolbar scroll sideways or cut off its Filters button on phones.
 
 Gallery anchors: `/admin/design#lists-toolbar`, `/admin/design#lists-toolbar-scope`, `/admin/design#lists-toolbar-no-search`, `/admin/design#lists-toolbar-leading`, `/admin/design#lists-toolbar-view`, `/admin/design#feedback-skeleton-toolbar`
 
@@ -197,18 +204,21 @@ Props that matter:
 - `onSearch(term)`: called 400ms after the last keystroke, on Enter, or at once when cleared. `term` is trimmed, and `''` when the text is shorter than `minLength`.
 - `label`: the accessible name. Required, since the placeholder is not a label.
 - `pending`: `isPending` from `useListState`; the spinner stays until results land.
-- `minLength` (2) and `maxLength` (200) match `MIN_SEARCH_LENGTH` and `MAX_SEARCH_LENGTH` in `@/lib/kit/lists/search`.
+- `delay`: the debounce, `SEARCH_DEBOUNCE_MS` by default. Lists keep the default; it exists for tests.
+- `autoFocus` passes to the input. A list page's search never takes it: focus would skip the page's header and raise a phone's keyboard on load.
+- `inputClassName` styles the input; `className` and other props go on the wrapper.
+- `minLength` (2) and `maxLength` (200) match `MIN_SEARCH_LENGTH` and `MAX_SEARCH_LENGTH` in `@/lib/kit/lists/search`, which also has the field's rules as plain functions (`normalizeSearchTerm`, `isBelowSearchMinimum`, `getSearchMinimumHint`) for a search box outside a list.
 
 Behaviour: Escape clears the text (inside a dialog, the dialog closes instead), and the clear button (a ghost `IconButton` inside the box, with a "Clear search" tooltip) returns focus to the box. The box is 40px tall, the toolbar's first-row height.
 
-Why 400ms: most people leave 150–300ms between keystrokes, so 400ms waits out a word and sends one query per pause instead of one per letter. It is 200ms sooner than the lists' old 600ms, and with the server render on top results still land within about a second of the last keystroke. The header search (`components/search/SearchCommandDialog.tsx`) waits the same `SEARCH_DEBOUNCE_MS`.
+Why 400ms: most people leave 150–300ms between keystrokes, so 400ms waits out a word and sends one query per pause instead of one per letter, and with the server render on top results still land within about a second of the last keystroke. The header search (`components/search/SearchCommandDialog.tsx`) waits the same `SEARCH_DEBOUNCE_MS`.
 
 Don't:
 
-- Don't debounce by hand with your own delay: `FILTER_APPLY_DELAY` (600ms) in `components/filters/useDeferredFilterApply.ts`. A search outside a list waits `SEARCH_DEBOUNCE_MS` from `@/lib/kit/lists/search`, as the header search does.
-- Don't search without a minimum or a spinner (the tournament list today), and don't make search wait for a button (admin player search in `app/admin/AdminDashboardClient.tsx`; a lookup by exact ID may keep a submit button, but it is then not a list search).
-- Don't leave a list without search: the leaderboard needs a player search.
-- Don't write a placeholder longer than about 30 characters; the box is about 290px wide on a phone and cuts it off, as it does the beatmap list's "Search title, artist, difficulty, mapper, or ID". The `label` carries the full name.
+- Don't debounce by hand with your own delay. A search outside a list waits `SEARCH_DEBOUNCE_MS` from `@/lib/kit/lists/search`, as the header search does.
+- Don't search without a minimum or a spinner, and don't make a list's search wait for a button. A lookup by exact ID may keep a submit button, but it is then not a list search.
+- Don't leave a searchable list without its search box.
+- Don't write a placeholder longer than about 30 characters; the box is about 290px wide on a phone and cuts it off ("Search title, artist, difficulty, mapper, or ID" is too long). The `label` carries the full name, as on the beatmap list: `label="Search beatmaps by title, artist, difficulty, mapper or ID"` with `placeholder="Title, artist, mapper or ID"`.
 
 Gallery anchor: `/admin/design#lists-search-field`
 
@@ -223,7 +233,7 @@ import {
 } from '@/components/kit/lists/SortControl';
 
 // The tournament list's sort keys, with its own labels. A new key keeps the
-// current direction, as on the list today.
+// current direction, as the tournament list does.
 const SORT_OPTIONS: SortOption<
   'endTime' | 'startTime' | 'submitted' | 'lobbySize'
 >[] = [
@@ -268,7 +278,8 @@ The direction button is an outline `IconButton` at the control's size, named "So
 
 Don't:
 
-- Don't bake the direction into each option ("Date, newest first" and "Date, oldest first" in `components/tournaments/TournamentMatchesLedger.tsx`) or offer only header clicks (`components/tournaments/TournamentMatchesAdminView.tsx`, `components/beatmaps/list/BeatmapSortableHead.tsx` alone).
+- Don't bake the direction into each option ("Date, newest first" and "Date, oldest first"); give the option `directionLabels` ("Newest first", "Oldest first") instead, as the tournament matches list does.
+- Don't offer only header clicks: a list with a toolbar has a SortControl, and a table without one has `phoneSort`, because phones have no headers to click.
 - Don't leave a list unsorted when its rows have an order people care about (leaderboard, reports, audit).
 
 Gallery anchor: `/admin/design#lists-sort-control`
@@ -306,12 +317,14 @@ import { RulesetSwitch } from '@/components/kit/lists/RulesetSwitch';
 />;
 ```
 
-Pair it with `enumParam(RATED_RULESETS, { default: Ruleset.Osu, role: 'scope' })`.
+- Pair it with `enumParam(RATED_RULESETS, { default: Ruleset.Osu, role: 'scope' })`.
+- `rulesets` (the five rated ones by default) and `label` (the group's accessible name, "Ruleset" by default) work as on RulesetChips.
+- Outside a toolbar, such as the stats page's rating distribution strip, its loading block is `RulesetSwitchSkeleton`; in a toolbar it is ListToolbarSkeleton's `rulesets={5} rulesetsAll={false}` ([feedback.md](feedback.md#skeletons)).
 
 Don't (for both ruleset controls):
 
-- Don't use the other four ruleset pickers: bare round icons (`components/buttons/RulesetButton.tsx`, `components/buttons/RulesetSelector.tsx`), square toggles in a popover (`components/leaderboard/LeaderboardFilter.tsx`), full-width tabs (`components/stats/RatingDistributionTabs.tsx`) or a dropdown (`components/select/RulesetSelectContent.tsx`).
-- Don't hide ruleset chips inside the filter panel on phones (`BeatmapListFilter.tsx` does); they wrap.
+- Don't build another ruleset picker: bare round icons, square toggles in a popover, full-width tabs or a dropdown.
+- Don't hide ruleset chips inside the filter panel on phones; they wrap.
 - Don't write ruleset labels by hand (`.replace('osu!', '')`); the chips use `getRulesetLabel`.
 
 Gallery anchor: `/admin/design#lists-ruleset-switch`
@@ -325,8 +338,8 @@ import { ScopeSwitch } from '@/components/kit/lists/ScopeSwitch';
 
 <ScopeSwitch
   label="Players to show"
-  value={state.friends ? 'friends' : 'all'}
-  onValueChange={(scope) => setState({ friends: scope === 'friends' })}
+  value={state.friend ? 'friends' : 'all'}
+  onValueChange={(scope) => setState({ friend: scope === 'friends' })}
   options={[
     { value: 'all', label: 'All' },
     {
@@ -370,12 +383,12 @@ const { state, setState } = useListState(RATING_VIEW_PARAMS, { shallow: true });
 />;
 ```
 
-- A view that changes what the page shows lives in the address like any list control, so a reload or a shared link opens the same view. A device preference that only changes the layout, such as the beatmap list's card or table layout, stays in `localStorage` (see [useListState](#useliststate-and-list-params)).
+- A view that changes what the page shows lives in the address like any list control, so a reload or a shared link opens the same view. The profile's rating history keeps three there: `metric` and `view` as above, and its "Display decay" chip as `decay: booleanParam({ default: true, role: 'scope' })`, written only when off (`decay=false`). A device preference that only changes the layout, such as the beatmap list's card or table layout, stays in `localStorage` (see [useListState](#useliststate-and-list-params)).
 - Use HeroTabs, not a ScopeSwitch, to switch between whole views of an entity under its hero.
 
 Don't:
 
-- Don't use the grey `Tabs` bar with links (`app/leaderboard/LeaderboardTabs.tsx`) or hero tabs for a scope, and don't explain a disabled option in a hover-only tooltip.
+- Don't use a grey tab bar of links or hero tabs for a scope, and don't explain a disabled option in a hover-only tooltip.
 - Don't give it more than four options; a longer choice is a `Select` or chips.
 
 Gallery anchor: `/admin/design#lists-scope-switch` (with the rating history view toggles)
@@ -411,7 +424,7 @@ const selected = state.lobbySize.includes(4);
 
 Don't:
 
-- Don't use `components/filters/FilterChip.tsx` (blue label text) in new code.
+- Don't colour a selected chip's label blue; the edge, tint and icon carry the selection.
 - Don't use a chip as a badge or a badge as a chip: a `Badge` never acts.
 
 Gallery anchor: `/admin/design#lists-choice-chip`
@@ -440,6 +453,7 @@ Props that matter:
 - `activeCount`: `activeFilterCount` from `useListState`, the number of filter-role params that are set. Ruleset, scope, search and sort are visible in the toolbar and are not counted.
 - `onClearAll`: `clearFilters` from `useListState`. It resets filter-role params only.
 - `open`, `onOpenChange`: to control the popover.
+- `triggerLabel`: the button's text, "Filters" by default.
 - `FilterPanelContent` is the inside on its own, for a filter sidebar or the gallery.
 - `FilterButton` (`@/components/kit/lists/FilterButton`) is the trigger: the kit `Button`, outline at `lg` (40px, beside the search field and sort), with a funnel, "Filters" and a solid primary count badge. Its accessible name is "Filters, 2 active". It passes other button props through, so it works as a `PopoverTrigger asChild` child.
 - "Clear all" in the panel's header strip is a ghost `sm` Button, disabled while nothing is active.
@@ -452,9 +466,9 @@ Do:
 
 Don't:
 
-- Don't use the legacy panels: `components/filters/FilterPopover.tsx` (with `FilterRangeField.tsx`, which truncates "Rank restriction", and native date inputs) and the leaderboard's own popover in `components/leaderboard/LeaderboardFilter.tsx` (Clear at the bottom, inputs under the slider).
-- Don't let "Clear all" reset search, sort, ruleset or tab. Today the tournament list's Clear all resets all of them, and the beatmap list's active-filter row also empties the search and ruleset.
-- Don't use an icon-only Filters button with a corner badge (the beatmap list today).
+- Don't build another filter popover: an Apply button, Clear at the bottom, number boxes under the slider, truncated labels or native date inputs.
+- Don't let "Clear all" reset search, sort, ruleset, scope or tab.
+- Don't use an icon-only Filters button with a corner badge.
 
 Gallery anchors: `/admin/design#lists-filter-button`, `/admin/design#lists-filter-panel`
 
@@ -470,7 +484,7 @@ import {
   SwitchFilter,
 } from '@/components/kit/lists/FilterPanel';
 import { RangeFilter } from '@/components/kit/lists/RangeFilter';
-import { CountrySearchSelect } from '@/components/leaderboard/CountryFilter';
+import { CountryCombobox } from '@/components/kit/country/CountryCombobox';
 import { tournamentRankScale } from '@/lib/filters/tournament-rank';
 
 <RangeFilter
@@ -495,18 +509,20 @@ import { tournamentRankScale } from '@/lib/filters/tournament-rank';
 />
 <DayRangeFilter label="Tournament dates" value={state.date} onValueChange={(date) => setState({ date })} />
 <SwitchFilter label="Verified only" checked={state.verified} onCheckedChange={(verified) => setState({ verified })} />
-<FilterField label="Country"><CountrySearchSelect … /></FilterField>
+<FilterField label="Country">
+  <CountryCombobox value={state.country} onValueChange={(country) => setState({ country })} countries={countries} />
+</FilterField>
 ```
 
-- `RangeFilter`: the number boxes always sit beside the label, with a two-thumb slider under them. Boxes show the number with separators (`1,000`), accept `1000` or `1,000`, and commit on Enter or blur; Escape reverts a box without closing the panel. A typed number stays exactly what was typed, held inside `min` and `max` and on its side of the other bound (`1,234` stays 1,234 on a slider that stops every 20); only dragging a thumb snaps to the track's stops. The slider commits on release, so a drag is one navigation. A thumb at the end of the track, or an empty box ("Any"), means no limit. `min`, `max` and `integer` must match the page's `rangeParam`: with `integer` a typed fraction rounds to a whole number, because the address would drop it; it defaults to whether the track's stops are all whole numbers (`isWholeNumberScale` in `@/lib/kit/lists/range`). `scale` takes a non-linear track (`tieredScale` from `@/lib/filters/scale`, `tournamentRankScale`); `format` is how screen readers hear a value (a duration, say); `valueLabel` is the noun in "Minimum rank".
+- `RangeFilter`: the number boxes always sit beside the label, with a two-thumb slider under them. Boxes show the number with separators (`1,000`), accept `1000` or `1,000`, and commit on Enter or blur; Escape reverts a box without closing the panel. A typed number stays exactly what was typed, held inside `min` and `max` and on its side of the other bound (`1,234` stays 1,234 on a slider that stops every 20); only dragging a thumb snaps to the track's stops. The slider commits on release, so a drag is one navigation. A thumb at the end of the track, or an empty box ("Any"), means no limit. `min`, `max` and `integer` must match the page's `rangeParam`: with `integer` a typed fraction rounds to a whole number, because the address would drop it; it defaults to whether the track's stops are all whole numbers (`isWholeNumberScale` in `@/lib/kit/lists/range`, which also holds the boxes' rules as plain functions with tests: `parseRangeBox` reads `1,000` or `1000`, `resolveTypedBound` keeps a typed bound in range). `scale` takes a non-linear track (`tieredScale` from `@/lib/filters/scale`, `tournamentRankScale`); `format` is how screen readers hear a value (a duration, say); `valueLabel` is the noun in "Minimum rank".
 - `ChoiceFilter`: chips that each switch one option on or off; nothing selected means no filter. Pair with `arrayParam`, or with `flagsParam` for a bitflag enum such as mods.
-- `DayRangeFilter`: "From" and "Through" calendars, both ends inclusive, as `YYYY-MM-DD` UTC days. Pair with `dayRangeParam`.
+- `DayRangeFilter`: "From" and "Through" calendars, both ends inclusive, as `YYYY-MM-DD` UTC days. `min` and `max` limit the days that can be picked, as on DateField. Pair with `dayRangeParam`.
 - `SwitchFilter`: an on/off filter. Pair with `booleanParam`.
-- `FilterField`: the same label, description and info layout around any other control.
+- `FilterField`: the same label, description and info layout around any other control, such as the leaderboard's `CountryCombobox` ([format.md](format.md#countrycombobox)). `aside` sits at the end of the label row, as RangeFilter's number boxes do.
 
 Don't:
 
-- Don't put a dropdown of checkboxes inside the panel for a handful of options (`MultiSelectDropdown` in `FilterPopover.tsx`); use `ChoiceFilter`. Keep dropdowns for long lists such as countries.
+- Don't put a dropdown of checkboxes inside the panel for a handful of options; use `ChoiceFilter`. Keep dropdowns for long lists such as countries.
 - Don't label with legacy names ("Team size", "Rank range", "Win rate %"); use the glossary in `@/lib/kit/format/fields`.
 
 Gallery anchor: `/admin/design#lists-filter-panel`
@@ -527,6 +543,7 @@ import { Calendar, DateField } from '@/components/kit/lists/DateField';
 - The calendar opens on the selected day, or today in UTC. Arrow keys move by day and week, Page Up and Page Down by month (with Shift, by year), Home and End to the ends of the week. Month and year dropdowns jump further. "Clear" (a ghost `sm` Button) empties the field.
 - The field is an outline `sm` Button (32px, the height of the filter panel's number boxes); the month arrows are `IconButton`s with "Previous month" and "Next month" tooltips. The day cells are grid cells with their own roving focus, not Buttons.
 - `Calendar` is the grid on its own.
+- The day maths (UTC `YYYY-MM-DD` days, month grids, `todayIsoDay`, `formatLongDay` for a day cell's name) lives in `@/lib/kit/lists/calendar`, with tests.
 
 Gallery anchor: `/admin/design#lists-date-field`
 
@@ -568,13 +585,13 @@ import {
 ```
 
 - A filter whose `label` is empty is left out, so pass every filter and let the helpers return `''` for inactive ones.
-- Label helpers: `formatRangeFilterLabel` (`SR: 5 – 7`, `Rank restriction: at least 1,000`, `BPM: at most 180`), `formatChoiceFilterLabel` (`Status: Pending, Verified +1`), `formatDayRangeFilterLabel` (`Dates: Jul 20 – Aug 3, 2024`, `Dates: from Jul 20, 2024`).
+- Label helpers: `formatRangeFilterLabel` (`SR: 5 – 7`, `Rank restriction: at least 1,000`, `BPM: at most 180`), `formatChoiceFilterLabel` (`Status: Pending, Verified +1`), `formatDayRangeFilterLabel` (`Dates: Jul 20 – Aug 3, 2024`, `Dates: from Jul 20, 2024`). `formatFilterNumber` is the number style they share (separators, up to two decimals: `1,000`, `5.25`), for a RangeFilter's `format` that adds a unit, as the leaderboard's win rate does (`55.5%`).
 - Each chip is named "Remove SR: 5 – 7 filter", as the beatmap list's chips are. Long labels wrap inside the chip.
 - Chips are at least 32px tall, the height of the ghost `sm` "Clear all" Button after them and of the ruleset chips above.
 
 Don't:
 
-- Don't truncate chip labels (`truncate` in `TournamentListFilter.tsx`), write `SR: 5 – Any`, or show raw dates (`2024-07-20`).
+- Don't truncate chip labels, write `SR: 5 – Any`, or show raw dates (`2024-07-20`).
 
 Gallery anchor: `/admin/design#lists-active-filter-chips`
 
@@ -594,7 +611,7 @@ import {
 import { useListState } from '@/lib/kit/lists/use-list-state';
 ```
 
-Param builders (each takes an optional `key` to override the URL key, and `role`):
+Param builders. Each takes an optional `role` and `key` (the URL key, when it differs from the param's name, so old links keep working). `rangeParam` and `dayRangeParam` take `keys`, a `[min, max]` or `[from, to]` pair, as the tournament list's `keys: ['minRankRange', 'maxRankRange']`; `sortParam` takes `key`, `directionKey` and `legacyDescendingKey` and is always `sort`; `pageParam` is always `page`.
 
 | Builder                              | Value                            | Address                                  | Default role |
 | ------------------------------------ | -------------------------------- | ---------------------------------------- | ------------ |
@@ -644,7 +661,7 @@ const BEATMAP_PARAMS = defineListParams({
 `useListState(params, options)` returns:
 
 - `state`: the address, plus any change still navigating (React's `useOptimistic`), so controls update at once.
-- `setState(patch, { history })`: merges and navigates without scrolling; `history: 'replace'` overwrites the current entry instead of adding one. `undefined` in a patch resets that param to its default.
+- `setState(patch, { history })`: merges and navigates without scrolling; `history: 'replace'` overwrites the current entry instead of adding one. `undefined` in a patch resets that param to its default. `patch` may also be a function of the current state, `(current) => patch`, for a change that depends on it, such as toggling one chip in a list.
 - `clearFilters()`, `activeFilterCount`, `isPending` (pass it to `SearchField`), and `hrefFor(patch)` for links within this list, such as pagination.
 
 `options.shallow`: for a list or view whose data is all on the client already (fetched once, or passed down whole), such as the profile's rating history toggles or a table sorted with `sortRows`. Changes write the address with `history.pushState` (or `replaceState` with `history: 'replace'`), which Next.js follows into `useSearchParams`, and the server renders nothing: the change shows at once and nothing refetches. Back, forward, a reload and a shared link still show the same state. When the address changes under it (back and forward, a link, `router.push`), the state follows; when one of its own changes lands after a newer one, the newer stays. `isPending` is always false. A shallow list changes state through `setState`, so wire its controls with callbacks (`onSortChange`, `onPageChange`); a link from `hrefFor` still works but renders on the server like any navigation. The helpers behind it (`writeShallowAddress`, `shallowSearchKey`, `landShallowAddress`, `syncShallowState`) live in `@/lib/kit/lists/shallow`, with tests.
@@ -663,15 +680,17 @@ listStateHref('/tournaments', TOURNAMENT_LIST_PARAMS, {
 
 Do:
 
-- Keep every list control in the spec: the audit filters, the admin report status, the tournament match sort, the stats tab and the filter-report ID reset on reload today.
+- Keep every list control in the spec, including the ones on lists the client holds whole: the audit filters, the admin report status, a tournament's match sort, the stats page's ruleset and the filter report's ID all survive a reload.
 - Keep a device preference, such as the beatmap list's card or table layout, in `localStorage`, not the address.
 - Use `formatCountOf` for the toolbar's result count.
 
 Don't:
 
-- Don't hand-roll URL building: `buildBeatmapSearchParams` in `lib/beatmaps/list-params.ts`, `createSearchParamsFromSchema` in `lib/utils/leaderboard.ts`, `setFlattenedParams` in `lib/utils/urlParams.ts` and `submitValues` in `TournamentListFilter.tsx` move onto the spec.
-- Don't keep list state in `useState`: `components/audit/AuditEventFeed.tsx`, `app/admin/reports/AdminReportsClient.tsx`, `components/tournaments/TournamentMatchesAdminView.tsx`.
+- Don't hand-roll URL building or parsing; read with `parseListState` and write with `hrefFor` or `listStateHref`.
+- Don't keep list state in `useState`; a list the client holds whole uses `{ shallow: true }`.
 - Don't create the spec inside a component; it must be a stable module-level value.
+
+Other exports of `@/lib/kit/lists/params`, for tests and edge cases: `applyListPatch` (what `setState` does to a state), `listStatesEqual`, `rangesEqual` and `dayRangesEqual`, `isFilterActive`, `normalizeRange` and `normalizeDayRange` (the codecs' clean-up on its own), `isIsoDay`, and `toSearchParams` (any `searchParams` shape to `URLSearchParams`).
 
 Gallery anchors: `/admin/design#lists-list-state` (the codecs and `flagsParam`), `/admin/design#lists-scope-switch` (a shallow list state; try the back button)
 
@@ -696,6 +715,6 @@ getAriaSort(sort, 'rating'); // 'descending'
 ```
 
 - Keys can be strings or numeric enum members (`TournamentQuerySortType`).
-- `SORT_DIRECTION_LABELS`, `flipSortDirection`, `isSortDirection` and `sortStatesEqual` cover the rest.
+- `SORT_DIRECTION_LABELS`, `DEFAULT_SORT_DIRECTION` (`desc`), `flipSortDirection`, `isSortDirection` and `sortStatesEqual` cover the rest.
 
 Gallery anchor: `/admin/design#lists-sort-control`

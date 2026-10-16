@@ -78,6 +78,8 @@ Variants:
 | `destructive-confirm` | Solid red (`destructive-solid`) | Only the final confirm in a dialog (ConfirmDialog already renders it) |
 | `overlay`             | Dark pill, white in both themes | Only on cover art, like the beatmap hero's preview button             |
 
+A list's own footer, "Load more" or "Show more", is [LoadMore](tables.md#loadmore), which draws an outline `sm` Button; don't build that footer from a ghost button.
+
 Do:
 
 - Keep the primary last in a row of buttons (right on desktop, top when they stack on phones).
@@ -85,11 +87,11 @@ Do:
 
 Don't:
 
-- Don't import `Button` from `@/components/ui/button` in new UI. It has a fourth size (`icon`), a grey `secondary`, a solid red `destructive` that belongs only in the final confirm, and no `pending` or open-state fill. Its `ghost` now fills on hover (`hover:bg-accent`), so drop the fills pages bolted on when it had none (`hover:bg-black/15 … dark:hover:bg-white/20` in `components/audit/AuditButton.tsx`, `components/tournaments/TournamentAdminView.tsx`, `app/tournaments/[id]/page.tsx`).
-- Don't use the large lifted buttons (`py-5 sm:py-6 text-base sm:text-lg shadow-lg hover:-translate-y-0.5`) in `components/tournaments/TournamentSubmissionForm.tsx` and `components/filtering/FilteringForm.tsx`; a form's buttons are `default` size in FormActions.
-- Don't use `variant="secondary"` (the grey Clear in `TournamentAdminView.tsx`, Reset in `FilteringForm.tsx`); use `outline`.
-- Don't make a trigger solid red (`components/shared/DeleteButton.tsx`, `app/settings/AccountDeletionClient.tsx`) or blue (`components/tournaments/ResetAutomatedChecksButton.tsx`). Use `destructive`, or an AdminMenu item.
-- Don't recolour `AlertDialogAction` with `bg-destructive text-white` (`TournamentSubmissionForm.tsx`, `AccountDeletionClient.tsx`); use ConfirmDialog.
+- Don't import `Button` from `@/components/ui/button` in a page. It is the primitive the kit builds on: it has a fourth size (`icon`), a grey `secondary`, a solid red `destructive` that belongs only in the final confirm, and no `pending` or open-state fill. Its `ghost` fills on hover (`hover:bg-accent`), so a ghost button needs no hover fill of its own.
+- Don't use large lifted buttons (`py-5 sm:py-6 text-base sm:text-lg shadow-lg hover:-translate-y-0.5`); a form's buttons are `default` size in FormActions.
+- Don't use a grey `secondary` button for Clear or Reset; use `outline`.
+- Don't make the button that opens a destructive action solid red, or blue. Use `destructive`, or an AdminMenu item.
+- Don't recolour `AlertDialogAction` with `bg-destructive text-white`; use ConfirmDialog.
 - Don't put white text on `bg-destructive`. Dark mode's `--destructive` (red-500) gives white 14px text only about 3.8:1, so `destructive-confirm` fills with `bg-destructive-solid` (`hover:bg-destructive-solid/90`): red-600 in dark mode and the usual destructive red in light. The shadcn `destructive` variants of `components/ui/button.tsx` and `components/ui/badge.tsx` use it too; any other solid red fill behind white text needs the same token.
 - Don't hand-roll a spinner (`<Loader2 className="mr-2 h-4 w-4 animate-spin" />Deleting...`); use `pending`.
 
@@ -97,7 +99,7 @@ Gallery anchors: `/admin/design#controls-button-sizes`, `/admin/design#controls-
 
 ## IconButton
 
-The one icon-only button: a square (round on art) with a hover fill, an `aria-label`, and a tooltip that repeats it. It supersedes `iconButtonStyle` in `components/buttons/IconButton.tsx`, which only styled the glyph and left the hit area, hover and name to each caller.
+The one icon-only button: a square (round on art) with a hover fill, an `aria-label`, and a tooltip that repeats it.
 
 ```tsx
 import { IconButton } from '@/components/kit/controls/IconButton';
@@ -117,11 +119,11 @@ Props:
 
 - `label`: required. The accessible name and the tooltip, in sentence case.
 - `icon`: the lucide glyph. With `asChild` it is placed inside the child element.
-- `tooltip`: tooltip text when it should differ from `label` (RowActionsMenu uses it to keep the tooltip short while the name says which row).
+- `tooltip`: tooltip text when it should differ from `label` (RowActionsMenu uses it to keep the tooltip short while the name says which row). `tooltipSide`: where it opens, `top` by default.
 - `size`: `sm` (32px, the default), `default` (36px), `lg` (40px), matching the button heights.
 - `variant`: `ghost` (default) muted icon that fills on hover; `outline` bordered, beside inputs and outline buttons; `overlay` the round dark pill on cover art.
 - `destructive`: red icon and red fill on hover, for a single destructive action outside a menu, such as deleting one admin note. Ignored on `overlay`.
-- `expanded`: makes it a disclosure toggle for content that expands in place, such as a profile tournament card's matches or an audit row's details. It sets `aria-expanded` and drops the open-state fill: that fill stays on a ghost or outline button while the menu, popover or dialog it opens is open, and an expanded row is not an open menu (Radix Collapsible sets the same `data-state="open"`). Hover and focus still fill it. Keep the `label` the same in both states ("Details for Game 3"); `aria-expanded` says whether it is open. For a chevron that turns, add `className="[&>svg]:transition-transform aria-expanded:[&>svg]:rotate-180"`.
+- `expanded`: makes it a disclosure toggle for content that expands in place, such as an audit row's details. It sets `aria-expanded` and drops the open-state fill: that fill stays on a ghost or outline button while the menu, popover or dialog it opens is open, and an expanded row is not an open menu (Radix Collapsible sets the same `data-state="open"`). Hover and focus still fill it. Keep the `label` the same in both states ("Details for Game 3"); `aria-expanded` says whether it is open. For a chevron that turns, add `className="[&>svg]:transition-transform aria-expanded:[&>svg]:rotate-180"`. The audit rows' `AuditRowToggle` (`components/audit/AuditRow.tsx`) is a live one: a constant "Details" label inside `CollapsibleTrigger asChild`.
 
 ```tsx
 <IconButton
@@ -140,8 +142,8 @@ Do:
 
 Don't:
 
-- Don't wrap `<Button variant="ghost" size="icon" className="h-6 w-6 …">` in `SimpleTooltip` by hand (`components/audit/AuditButton.tsx`, `components/games/GameCardHeader.tsx`, `components/admin-notes/AdminNoteView.tsx`, `components/reports/ReportButton.tsx`). Those are 24px targets with home-made hover fills.
-- Don't put `iconButtonStyle()` on a bare glyph, and don't turn the icon blue on hover. The header's docs, API reference and support glyphs did both; they are now labelled links in its More menu, and `components/buttons/DocsButton.tsx`, `SpecButton.tsx` and `SupportButton.tsx` are unused.
+- Don't wrap `<Button variant="ghost" size="icon" className="h-6 w-6 …">` in `SimpleTooltip` by hand: a 24px target with a home-made hover fill.
+- Don't make a bare glyph clickable, and don't turn the icon blue on hover. Links that need more than an icon to explain them, such as the header's docs, API reference and support, are labelled items in a menu.
 - Don't rely on the tooltip of a disabled IconButton: a disabled button gets no pointer events. Say why it is disabled somewhere visible, such as an AdminMenu item's `description`.
 
 Gallery anchor: `/admin/design#controls-icon-button`
@@ -191,6 +193,7 @@ Props:
 - `header`: a richer top section, passed to ActionMenu (see below).
 - `notification`: shows the one notification dot on the button; the string is its screen-reader text ("Has admin notes").
 - `onArt`: the dark pill, for a hero with cover art.
+- `label`: the button's text, "Admin". Keep it unless a page has two admin menus.
 - `data-testid`: on the button; the menu content gets `{testid}-content`.
 
 How dialogs open: render each dialog next to the menu, controlled by state, and open it from the item's `onSelect`. The menu runs `onSelect` after it has closed and focus is back on the Admin button, and DialogTemplate and ConfirmDialog return focus there when they close. Never nest a `Dialog` inside a menu item.
@@ -203,10 +206,10 @@ Do:
 
 Don't:
 
-- Don't build a row of admin icons in different colours (`app/tournaments/[id]/page.tsx`: AuditButton, AdminNoteView, TournamentAdminView; `components/matches/MatchCard.tsx`; the pill cluster in `components/beatmap/BeatmapAdminView.tsx`).
-- Don't hide operations inside an edit dialog's button bar (the Accept, Reset, Refetch and Delete icons in `TournamentAdminView.tsx`); each becomes a menu item with its own ConfirmDialog.
+- Don't build a row of admin icons in different colours, or a cluster of admin pills on art.
+- Don't hide operations inside an edit dialog's button bar (Accept, Reset, Refetch and Delete icons beside Save); each is a menu item with its own ConfirmDialog.
 - Don't colour admin items or their icons; icons are muted, only destructive items are red.
-- Don't put audit history in the admin menu or behind an admin check. Audit pages are public; the link belongs in the hero's `actions` for everyone. Only tournaments, matches, games and scores link to one.
+- Don't put audit history in the admin menu or behind an admin check. Audit pages are public; the link belongs in the hero's `actions` for everyone, on tournaments, matches and beatmaps, and in each game's and score's RowActionsMenu.
 
 Gallery anchors: `/admin/design#controls-admin-menu`, `/admin/design#controls-on-art`
 
@@ -262,7 +265,7 @@ Props:
 
 Don't:
 
-- Don't repeat a cluster of external-link, report, audit, notes and edit icons on every card (`components/games/GameCardHeader.tsx`, `components/games/ScoreCard.tsx`).
+- Don't repeat a cluster of external-link, report, audit, notes and edit icons on every card.
 - Don't put it inside a whole-row link; a linked row holds no other button.
 
 Gallery anchors: `/admin/design#controls-row-actions-menu`, `/admin/design#controls-on-art`
@@ -366,8 +369,9 @@ Props:
 - `size`: `sm` 448px, `md` 512px (default), `lg` 672px for long forms.
 - `onSubmit`: makes the body and footer one `<form>`, so a `type="submit"` button in `footer` submits it and Enter in a field works.
 - `closable`: `false` hides the close button and ignores clicks outside. Escape still closes, so guard unsaved changes in `onOpenChange`.
+- `bodyClassName`: classes for the body, such as a tighter gap.
 
-Anatomy, shared with ConfirmDialog through `DIALOG_CLASSES`: header `border-b px-6 py-4`, body `p-6`, footer `border-t bg-muted/30 px-6 py-4`, surface `rounded-xl border bg-background shadow-lg`, backdrop `bg-black/50`. The close button is last in the DOM, so keyboard focus starts on the first field, and is drawn in the header's corner.
+Anatomy, shared with ConfirmDialog through `DIALOG_CLASSES` (and `DIALOG_SIZE_CLASSES` for the widths): header `border-b px-6 py-4`, body `p-6`, footer `border-t bg-muted/30 px-6 py-4`, surface `rounded-xl border bg-background shadow-lg`, backdrop `bg-black/50`. The close button is last in the DOM, so keyboard focus starts on the first field, and is drawn in the header's corner. `DialogFooterStrip` is the footer on its own (notice, start and actions), and `useReturnFocus()` gives the content's `onOpenAutoFocus` and `onCloseAutoFocus` handlers that return focus to whatever had it when the dialog opened, such as a menu's trigger (Radix would return it only to the dialog's own trigger).
 
 Do:
 
@@ -376,9 +380,9 @@ Do:
 
 Don't:
 
-- Don't pad `DialogContent` yourself (`className="p-4"` in `TournamentAdminView.tsx`, `AdminNoteView.tsx`, `MatchAdminView.tsx`) or build your own strips (`px-5` in `BeatmapAdminView.tsx`).
-- Don't use Title Case ("Report Details" in `app/reports/MyReportsClient.tsx`) or prefix titles with "Confirm" ("Confirm delete tournament" in `DeleteButton.tsx`, "Confirm match data refetch" in `RefetchMatchDataButton.tsx`).
-- Don't use the shadcn `DialogContent` directly in new UI: it has no header and footer strips and pads itself. Its backdrop matches now (black at 50%, as for alert dialogs and sheets), so a page that still uses it needs no backdrop override either.
+- Don't pad `DialogContent` yourself (`className="p-4"`) or build your own header and footer strips.
+- Don't use Title Case ("Report Details") or prefix titles with "Confirm" ("Confirm delete tournament").
+- Don't use the shadcn `DialogContent` directly: it has no header and footer strips and pads itself. Its backdrop is the same black at 50% as every dialog, alert dialog and sheet, so never override a backdrop.
 
 Gallery anchor: `/admin/design#controls-dialog-template`
 
@@ -387,27 +391,22 @@ Gallery anchor: `/admin/design#controls-dialog-template`
 Confirms one consequential action before it runs: delete, reset, refetch, merge, discard. Built on AlertDialog, so it cannot be dismissed by clicking outside, and Cancel takes the initial focus. Its confirm button is the only solid red button on the site.
 
 ```tsx
+import { DELETE_CASCADE_DESCRIPTION } from '@/components/admin-forms/adminFormFields';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
 
 <ConfirmDialog
   open={deleting}
   onOpenChange={setDeleting}
   title="Delete this tournament?"
-  description={
-    <>
-      <p>
-        This action will cascade to all children. All associated data will be
-        permanently removed.
-      </p>
-      <p>This action cannot be undone.</p>
-    </>
-  }
+  // "This action will cascade to all children. …" and "This action cannot be undone."
+  description={DELETE_CASCADE_DESCRIPTION}
   confirmLabel="Delete tournament"
   pendingLabel="Deleting…"
+  errorText="Failed to delete tournament"
   onConfirm={async () => {
     await orpc.tournaments.admin.delete({ id: tournament.id });
     toast.success('Tournament deleted successfully');
-    router.push('/tournaments');
+    router.replace('/tournaments');
   }}
 />;
 ```
@@ -425,9 +424,9 @@ Props:
 
 Don't:
 
-- Don't write "Are you sure you want to …?" with bullet lists of side effects (`components/shared/DeleteButton.tsx`, `components/tournaments/ResetAutomatedChecksButton.tsx`); say what happens in plain sentences.
+- Don't write "Are you sure you want to …?" with bullet lists of side effects; say what happens in plain sentences.
 - Don't label the confirm "Confirm", "OK" or "Continue".
-- Don't use a plain `Dialog` for a confirmation (`DeleteButton.tsx`, `RefetchMatchDataButton.tsx`, `DeleteTournamentBeatmapsButton.tsx`, the merge confirms in `MergeGameButton.tsx` and `MergeMatchButton.tsx`).
+- Don't use a plain `Dialog` for a confirmation, merges included.
 
 Gallery anchor: `/admin/design#controls-confirm-dialog`
 
@@ -477,7 +476,7 @@ Parts:
 
 - FormPanel: a Panel holding the `<form>`. Props other than `panelClassName` go to the form (`onSubmit`, `noValidate`, `data-testid`). It renders no `Form` provider; wrap it in shadcn's `Form` for react-hook-form.
 - FormSection: a group (`role="group"`, named by its title) with a SectionHeader strip and the fields 16px apart in 16px padding. Takes `icon` (muted), `title`, `level`, `description` (one muted line above the fields), `infoText` and `actions` (passed to the strip), `bodyClassName`. Sections after the first get a divider.
-- FormGrid: fields side by side, one column on phones. `columns` 2 (default), 3 or 4; 4 is for short fields such as CS, HP, OD and AR in the beatmap edit dialog and keeps two columns on phones. Fields align to the top, so an error under one does not shift its neighbour.
+- FormGrid: fields side by side, one column on phones. `columns` 2 (default), 3 (two from `sm`, three from `lg`) or 4; 4 is for short fields such as CS, HP, OD and AR in the beatmap edit dialog and keeps two columns on phones. `1` stacks the fields at every width with the grid's 16px gap. Fields align to the top, so an error under one does not shift its neighbour.
 - FormActions: the bottom strip. `default`-size buttons on the right with the primary last; `start` holds a muted note on the left. On phones the buttons stack full width with the primary on top.
 
 Notices: a page-level notice is a Callout between the PageHeader and the panel; a notice about one section is a Callout at the top of that FormSection; a field's help is its FormFieldLabel `info` or a `FormDescription`; errors are `FormMessage`.
@@ -491,10 +490,12 @@ Do:
 
 Don't:
 
-- Don't centre a blue title above the form (`app/tournaments/submit/page.tsx`) or stack a padded Card inside the page (`TournamentSubmissionForm.tsx`, `FilteringForm.tsx` with `px-4 py-4 sm:px-6 sm:py-6 lg:px-8`).
-- Don't hand-build section headings with `size-6 text-primary` icons and `text-lg sm:text-xl` titles (the local `FormSection` in both forms); FormSection uses the standard strip.
-- Don't restyle inputs (`border-2 shadow-sm bg-card focus-visible:ring-primary` from `getFieldClassName` in `TournamentSubmissionForm.tsx`, the same classes in `FilteringForm.tsx`).
-- Don't build notices from palette classes (`border-orange-500/50 bg-orange-500/15` in `app/tools/filter/FilteringPageClient.tsx`, the warning-yellow `Alert` above it); use Callout.
+- Don't centre a blue title above the form or stack a padded card inside the page (`px-4 py-4 sm:px-6 sm:py-6 lg:px-8`).
+- Don't hand-build section headings with `size-6 text-primary` icons and `text-lg sm:text-xl` titles; FormSection uses the standard strip.
+- Don't restyle inputs (`border-2 shadow-sm bg-card focus-visible:ring-primary`).
+- Don't build notices from palette classes (`border-orange-500/50 bg-orange-500/15`); use Callout.
+
+Admin edit dialogs share their parts in `components/admin-forms/adminFormFields.tsx`: `VerifyChildrenChoices` (with `VERIFY_CHILDREN_TITLE` and `VERIFY_CHILDREN_DESCRIPTION`), `LabelSelectContent` and `VerificationStatusSelectContent` for enum selects (`ALL_RULESET_LABELS` is every ruleset, `mania (other)` included, for admin pickers), `flagOptions` and `combineFlags` for bitflag fields, `changedFieldClass` for a field the admin changed, and `DELETE_CASCADE_DESCRIPTION`, the delete confirmations' shared wording. Import them from there rather than copying them into a dialog. The tournament submission form and edit dialog share their own pickers in `components/tournaments/TournamentFieldOptions.tsx`: `RulesetSelectContent` (`includeManiaOther` for admins), `LobbySizeSelectContent`, `VerificationStatusSelectContent` (with each state's glyph) and `RejectionReasonChips`.
 
 Gallery anchor: `/admin/design#controls-form-layout`
 
