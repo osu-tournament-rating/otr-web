@@ -11,7 +11,7 @@ import {
 } from '@/lib/kit/color/star-rating';
 import { formatCountOf, formatNumber } from '@/lib/kit/format/number';
 import type { PlayerBeatmapStats } from '@/lib/orpc/schema/playerBeatmaps';
-import { formatDuration } from '@/lib/utils/date';
+import { formatDuration } from '@/lib/kit/format/date';
 
 /**
  * One beatmap the player mapped that was pooled in a tournament. The whole

@@ -25,7 +25,7 @@ import {
 import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
 import { formatCount } from '@/lib/kit/format/number';
 import { cn } from '@/lib/utils';
-import { formatDuration } from '@/lib/utils/date';
+import { formatDuration } from '@/lib/kit/format/date';
 
 interface BeatmapListCardsProps extends ComponentProps<'div'> {
   beatmaps: BeatmapListItem[];

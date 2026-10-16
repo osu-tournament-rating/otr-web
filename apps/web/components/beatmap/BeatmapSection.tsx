@@ -17,15 +17,6 @@ import type {
 import { formatCountOf } from '@/lib/kit/format/number';
 import { cn } from '@/lib/utils';
 
-export type { ScaleTick };
-
-// The beatmap kit became the shared layout kit. These old names stay only for
-// pages that still import them from here; beatmap code imports the kit.
-export { Panel as SectionCard } from '@/components/kit/layout/Panel';
-export { SectionHeader } from '@/components/kit/layout/SectionHeader';
-export { Tile } from '@/components/kit/layout/Tile';
-export { Eyebrow } from '@/components/kit/layout/Typography';
-
 /** A beatmap chart with too little data to draw: the kit's compact empty state. */
 export function NotEnoughData({
   description,

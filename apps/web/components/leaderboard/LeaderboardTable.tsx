@@ -36,7 +36,7 @@ import type {
   LeaderboardEntry,
   LeaderboardSort,
 } from '@/lib/orpc/schema/leaderboard';
-import { type TierName, getTierString } from '@/lib/utils/tierData';
+import { type TierName, formatTierName } from '@/lib/kit/format/tier';
 
 /** The player's profile, on the leaderboard's ruleset. */
 function getPlayerHref(entry: LeaderboardEntry): string {
@@ -51,7 +51,7 @@ function getWinRate(entry: LeaderboardEntry): number | null {
 function getTier(entry: LeaderboardEntry) {
   const tier = entry.tierProgress.currentTier as TierName;
   const subTier = entry.tierProgress.currentSubTier ?? undefined;
-  return { tier, subTier, name: getTierString(tier, subTier) };
+  return { tier, subTier, name: formatTierName(tier, subTier) };
 }
 
 function TierMark({ entry, size }: { entry: LeaderboardEntry; size: number }) {

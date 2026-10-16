@@ -33,7 +33,7 @@ import {
   formatRangeFilterLabel,
 } from '@/lib/kit/lists/filters';
 import type { UseListStateResult } from '@/lib/kit/lists/use-list-state';
-import { formatDuration } from '@/lib/utils/date';
+import { formatDuration } from '@/lib/kit/format/date';
 
 type BeatmapList = UseListStateResult<typeof BEATMAP_LIST_PARAMS>;
 

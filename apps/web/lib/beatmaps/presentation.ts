@@ -1,6 +1,6 @@
 import { Ruleset } from '@otr/core/osu';
 
-import { getRulesetFullName, getRulesetLabel } from '@/lib/kit/format/ruleset';
+import { getRulesetLabel } from '@/lib/kit/format/ruleset';
 
 export function getBeatmapDisplayRuleset(
   ruleset: Ruleset,
@@ -20,14 +20,6 @@ export function getBeatmapRulesetLabel(
   difficultyName: string
 ): string {
   return getRulesetLabel(getBeatmapDisplayRuleset(ruleset, difficultyName));
-}
-
-/** The full name (`osu!mania 4K`), for tooltips and an icon's accessible name. */
-export function getBeatmapRulesetFullName(
-  ruleset: Ruleset,
-  difficultyName: string
-): string {
-  return getRulesetFullName(getBeatmapDisplayRuleset(ruleset, difficultyName));
 }
 
 export function isManiaRuleset(ruleset: Ruleset): boolean {

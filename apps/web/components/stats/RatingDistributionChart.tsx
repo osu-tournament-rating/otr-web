@@ -36,7 +36,7 @@ import {
 import { getTierColor } from '@/lib/kit/color/tiers';
 import { formatPercent } from '@/lib/kit/format/number';
 import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
-import { getTierString } from '@/lib/utils/tierData';
+import { formatTierName } from '@/lib/kit/format/tier';
 
 import {
   type RatingBucket,
@@ -102,7 +102,7 @@ export default function RatingDistributionChart({
         items={[
           ...tiers.map((tier) => ({
             key: tier,
-            label: getTierString(tier, undefined),
+            label: formatTierName(tier, undefined),
             color: getTierColor(tier),
           })),
           ...(showUser
@@ -154,7 +154,7 @@ export default function RatingDistributionChart({
                         height={16}
                         className="shrink-0"
                       />
-                      {getTierString(bucket.tier, bucket.subTier)}
+                      {formatTierName(bucket.tier, bucket.subTier)}
                     </span>
                   );
                 }}

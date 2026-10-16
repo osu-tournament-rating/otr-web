@@ -34,7 +34,7 @@ import { formatCount, formatNumber } from '@/lib/kit/format/number';
 import { fromDescending, type SortState } from '@/lib/kit/lists/sort';
 import type { ColumnBreakpoint } from '@/lib/kit/tables/cell';
 import { cn } from '@/lib/utils';
-import { formatDuration } from '@/lib/utils/date';
+import { formatDuration } from '@/lib/kit/format/date';
 
 /** Row selection, for the surfaces that let an admin act on a set of rows. */
 export interface BeatmapTableSelection {

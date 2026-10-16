@@ -42,7 +42,7 @@ import { RULESET_NAMES } from '@/lib/kit/format/ruleset';
 import { orpc } from '@/lib/orpc/orpc';
 import type { BeatmapWithDetails } from '@/lib/orpc/schema/beatmapStats';
 import type { PlayerLookupResult } from '@/lib/orpc/schema/player';
-import { formatDuration, parseDuration } from '@/lib/utils/date';
+import { formatDuration, parseDuration } from '@/lib/kit/format/date';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 
 /** Shown on the disabled menu item, and the reason the dialog exists. */

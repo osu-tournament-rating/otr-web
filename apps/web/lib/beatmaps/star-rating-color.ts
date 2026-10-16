@@ -67,16 +67,6 @@ export function getStarRatingColor(starRating: number): string {
   return difficultyColourSpectrum(normalizedRating);
 }
 
-/** Above this the spectrum dives toward black, which disappears as a tint. */
-const ICON_TINT_MAX_RATING = 6.7;
-
-/** Spectrum color for tinting icons and text, clamped so it stays visible on dark surfaces. */
-export function getStarRatingIconColor(starRating: number): string {
-  const normalizedRating = Number.isNaN(starRating) ? 0 : starRating;
-
-  return getStarRatingColor(Math.min(normalizedRating, ICON_TINT_MAX_RATING));
-}
-
 /** Returns whichever neutral foreground has stronger contrast on the pill. */
 export function getStarRatingForegroundColor(starRating: number): string {
   const background = parseCssColor(getStarRatingColor(starRating));

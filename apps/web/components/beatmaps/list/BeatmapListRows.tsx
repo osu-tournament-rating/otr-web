@@ -26,7 +26,7 @@ import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
 import { formatCount } from '@/lib/kit/format/number';
 import { ROW_HOVER_TINT } from '@/lib/kit/tables/row';
 import { cn } from '@/lib/utils';
-import { formatDuration } from '@/lib/utils/date';
+import { formatDuration } from '@/lib/kit/format/date';
 
 interface BeatmapListRowsProps extends ComponentProps<'div'> {
   beatmaps: BeatmapListItem[];

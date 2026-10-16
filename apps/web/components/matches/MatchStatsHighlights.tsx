@@ -12,7 +12,7 @@ import { StatTile, StatTileGrid } from '@/components/kit/layout/StatTile';
 import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
 import type { KitIcon } from '@/lib/kit/layout/icon';
-import { getTierString } from '@/lib/utils/tierData';
+import { formatTierName } from '@/lib/kit/format/tier';
 
 import type { HighlightIcon, HighlightStat } from './MatchStatsUtils';
 
@@ -47,7 +47,7 @@ function HighlightSub({ stat }: { stat: HighlightStat }) {
   }
 
   if (stat.tierIcon) {
-    return getTierString(stat.tierIcon.tier, stat.tierIcon.subTier);
+    return formatTierName(stat.tierIcon.tier, stat.tierIcon.subTier);
   }
 
   return stat.sublabel ?? null;

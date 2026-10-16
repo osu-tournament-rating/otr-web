@@ -15,7 +15,7 @@ const readMessage = (value: unknown): string | null => {
   return null;
 };
 
-export const extractErrorMessage = (error: unknown): string | null => {
+const extractErrorMessage = (error: unknown): string | null => {
   if (typeof error === 'string') {
     return error;
   }

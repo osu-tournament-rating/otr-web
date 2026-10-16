@@ -11,7 +11,7 @@ export function notifyReportChange() {
 }
 
 /** A count as loaded, with whose count it is. */
-export type LoadedReportCount = { owner: string; count: number };
+type LoadedReportCount = { owner: string; count: number };
 
 /** Whose count a loaded value belongs to. */
 export const reportCountOwner = (userId: number, isAdmin: boolean) =>

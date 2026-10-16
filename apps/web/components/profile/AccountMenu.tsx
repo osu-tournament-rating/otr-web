@@ -5,8 +5,8 @@ import Link from 'next/link';
 import type * as React from 'react';
 
 import { IconButton } from '@/components/kit/controls/IconButton';
+import { CountryFlag } from '@/components/kit/country/CountryFlag';
 import { NotificationDot } from '@/components/kit/status/NotificationDot';
-import CountryFlag from '@/components/shared/CountryFlag';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,15 +69,7 @@ export function AccountIdentity({
           <span className="truncate text-sm font-semibold text-foreground">
             {player.username}
           </span>
-          {player.country ? (
-            <CountryFlag
-              country={player.country}
-              width={16}
-              height={11}
-              showTooltip={false}
-              className="shrink-0"
-            />
-          ) : null}
+          <CountryFlag code={player.country} size="sm" tooltip={false} />
         </span>
         <ProfileRoleBadge scopes={scopes} />
       </span>

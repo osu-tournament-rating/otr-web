@@ -2,7 +2,7 @@ import TierIcon from '@/components/icons/TierIcon';
 import TRText from '@/components/rating/TRText';
 import { formatRating } from '@/lib/kit/format/number';
 import type { PlayerRatingStats } from '@/lib/orpc/schema/playerStats';
-import { getTierString, type TierName } from '@/lib/utils/tierData';
+import { formatTierName, type TierName } from '@/lib/kit/format/tier';
 
 // Sub-tiers in the order a player climbs them.
 const SUB_TIERS = [3, 2, 1] as const;
@@ -29,7 +29,7 @@ export default function PlayerTierProgress({
 
   const currentTier = tierProgress.currentTier as TierName;
   const nextTier = tierProgress.nextMajorTier as TierName;
-  const nextTierName = getTierString(nextTier, 3);
+  const nextTierName = formatTierName(nextTier, 3);
   const fill = tierProgress.majorTierFillPercentage ?? 0;
   const ratingNeeded = Math.max(
     0,

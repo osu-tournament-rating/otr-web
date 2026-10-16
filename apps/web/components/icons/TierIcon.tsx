@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import TapTooltip from '../tap-tooltip';
-import { getTierString } from '@/lib/utils/tierData';
+import { formatTierName } from '@/lib/kit/format/tier';
 import { cn } from '@/lib/utils';
 
 export const validTiers = [
@@ -33,7 +33,7 @@ export default function TierIcon({
     tier === 'Elite Grandmaster'
       ? 'Elite Grandmaster'
       : `${tier}${subTier ?? ''}`;
-  const tierString = getTierString(tier, subTier);
+  const tierString = formatTierName(tier, subTier);
 
   if (!tooltip) {
     return (
