@@ -1,50 +1,38 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { ClipboardList } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Card } from '@/components/ui/card';
-import AuditEventFeed from '@/components/audit/AuditEventFeed';
+
+import AuditEventFeed, {
+  AuditFeedRowsSkeleton,
+} from '@/components/audit/AuditEventFeed';
+import { PanelSkeleton } from '@/components/kit/feedback/Skeletons';
+import { PageFrame } from '@/components/kit/layout/PageFrame';
+import { PageHeader } from '@/components/kit/layout/PageHeader';
 
 export const metadata: Metadata = {
-  title: 'Audit Logs',
+  title: 'Audit logs',
 };
-
-function FilterBarSkeleton() {
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Skeleton className="h-9 w-[200px]" />
-      <Skeleton className="h-9 w-[140px]" />
-      <Skeleton className="h-9 w-[130px]" />
-      <Skeleton className="h-9 w-[140px]" />
-      <Skeleton className="h-9 w-[200px]" />
-    </div>
-  );
-}
 
 export default function AuditLogsPage() {
   return (
-    <div data-testid="audit-logs-page" className="container mx-auto py-6">
-      <Card className="p-6">
-        <div className="mb-3 flex items-center gap-3">
-          <ClipboardList className="h-6 w-6 text-primary" />
-          <div>
-            <h1
-              data-testid="audit-logs-heading"
-              className="text-xl font-semibold"
-            >
-              Audit Logs
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Browse the history of changes made to tournaments, matches, games,
-              and scores.
-            </p>
-          </div>
-        </div>
-
-        <Suspense fallback={<FilterBarSkeleton />}>
-          <AuditEventFeed />
-        </Suspense>
-      </Card>
-    </div>
+    <PageFrame data-testid="audit-logs-page">
+      <PageHeader
+        icon={ClipboardList}
+        title={<span data-testid="audit-logs-heading">Audit logs</span>}
+        description="Browse the history of changes made to tournaments, matches, games, and scores."
+      />
+      {/* The feed reads its filters from the address. */}
+      <Suspense
+        fallback={
+          <PanelSkeleton label="Loading audit events">
+            {/* The toolbar strip: the system events switch and Filters. */}
+            <div className="box-content h-16 border-b bg-muted/20 sm:h-[4.5rem] dark:bg-muted" />
+            <AuditFeedRowsSkeleton />
+          </PanelSkeleton>
+        }
+      >
+        <AuditEventFeed />
+      </Suspense>
+    </PageFrame>
   );
 }

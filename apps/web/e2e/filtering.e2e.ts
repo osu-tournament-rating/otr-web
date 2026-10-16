@@ -60,7 +60,10 @@ test.describe('Tournament Registrant Filtering', () => {
       await page.waitForLoadState('networkidle');
 
       await expect(
-        page.getByRole('heading', { name: 'Tournament Registrant Filtering' })
+        page.getByRole('heading', {
+          name: 'Tournament registrant filtering',
+          exact: true,
+        })
       ).toBeVisible({ timeout: 10000 });
     });
 
@@ -77,6 +80,57 @@ test.describe('Tournament Registrant Filtering', () => {
         await option.click();
         await expect(ruleset).toContainText('osu!', { timeout: 10000 });
       }
+    });
+
+    test('an empty form reports each field rule without submitting', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.filter);
+      await page.waitForLoadState('networkidle');
+
+      await page.locator('[data-testid="filter-submit-button"]').click();
+
+      const form = page.locator('[data-testid="filter-form"]');
+      await expect(form.getByText('Ruleset is required')).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(
+        form.getByText('A minimum or maximum rating is required')
+      ).toBeVisible();
+      await expect(
+        form.getByText('At least one osu! player ID is required')
+      ).toBeVisible();
+      await expect(page.locator('[data-testid="filter-results"]')).toHaveCount(
+        0
+      );
+    });
+
+    test('rating bounds are checked as whole numbers in range', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.filter);
+      await page.waitForLoadState('networkidle');
+
+      const min = page.locator('[data-testid="filter-minRating"]');
+      await expect(min).toBeVisible({ timeout: 10000 });
+      await min.fill('50');
+      await expect(
+        page.getByText('Minimum rating must be at least 100')
+      ).toBeVisible();
+      await min.fill('500.5');
+      await expect(
+        page.getByText('Minimum rating must be a whole number')
+      ).toBeVisible();
+    });
+
+    test('field help opens from an info button', async ({ page }) => {
+      await page.goto(ROUTES.filter);
+      await page.waitForLoadState('networkidle');
+
+      await page.getByRole('button', { name: 'About ruleset' }).click();
+      await expect(
+        page.getByText('The ruleset to filter players for').first()
+      ).toBeVisible();
     });
 
     test('player IDs textarea accepts input', async ({ page }) => {
@@ -179,7 +233,7 @@ test.describe('Filter Reports', () => {
       expect(page.url()).toContain('/tools/filter-reports');
 
       await expect(
-        page.getByRole('heading', { name: 'Filter Reports' })
+        page.getByRole('heading', { name: 'Filter reports', exact: true })
       ).toBeVisible({ timeout: 10000 });
     });
 
@@ -198,7 +252,7 @@ test.describe('Filter Reports', () => {
       ).toBeVisible({ timeout: 10000 });
     });
 
-    test('nonexistent report id surfaces an error without crashing', async ({
+    test('nonexistent report id goes in the address and says so', async ({
       page,
     }) => {
       await page.goto(ROUTES.filterReports);
@@ -210,17 +264,26 @@ test.describe('Filter Reports', () => {
       await input.fill('2147483647');
       await page.locator('[data-testid="filter-report-submit"]').click();
 
+      await expect(page).toHaveURL(/[?&]report=2147483647/, {
+        timeout: 10000,
+      });
       await expect(
-        page.locator('[data-testid="filter-report-view"]')
-      ).toBeVisible({ timeout: 10000 });
-      await expect(input).toBeVisible({ timeout: 10000 });
+        page.locator('[data-testid="filter-report-not-found"]')
+      ).toContainText('Filter report does not exist', { timeout: 10000 });
+      await expect(input).toBeVisible();
+      await expect(input).toHaveValue('2147483647');
+    });
 
-      const errorToast = page
-        .getByText(/does not exist|Failed to load/i)
-        .first();
-      if (await errorToast.isVisible({ timeout: 10000 }).catch(() => false)) {
-        await expect(errorToast).toBeVisible();
-      }
+    test('a report id in the address loads on arrival', async ({ page }) => {
+      await page.goto(`${ROUTES.filterReports}?report=2147483647`);
+      await page.waitForLoadState('networkidle');
+
+      await expect(
+        page.locator('[data-testid="filter-report-id-input"]')
+      ).toHaveValue('2147483647', { timeout: 10000 });
+      await expect(
+        page.locator('[data-testid="filter-report-not-found"]')
+      ).toBeVisible({ timeout: 10000 });
     });
 
     test('invalid (non-numeric) report id shows a validation message', async ({
@@ -238,14 +301,10 @@ test.describe('Filter Reports', () => {
         page.locator('[data-testid="filter-report-view"]')
       ).toBeVisible({ timeout: 10000 });
 
-      const validationMessage = page
-        .getByText(/must be a number|Report ID is required/i)
-        .first();
-      if (
-        await validationMessage.isVisible({ timeout: 10000 }).catch(() => false)
-      ) {
-        await expect(validationMessage).toBeVisible();
-      }
+      await expect(page.getByText('Report ID must be a number')).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page).not.toHaveURL(/report=/);
     });
   });
 });

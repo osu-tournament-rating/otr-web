@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { z } from 'zod';
 import { AuditEntityType } from '@otr/core/osu';
-import AuditPageHeader from '@/components/audit/AuditPageHeader';
-import AuditEntityView from '@/components/audit/AuditEntityView';
+import AuditHistoryPage from '@/components/audit/AuditHistoryPage';
+import { getAuditEntityTitle } from '@/components/audit/AuditPageHeader';
 import {
   fetchOrpcOptional,
   parseParamsOrNotFound,
@@ -31,12 +31,12 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const parsed = paramsSchema.safeParse(await params);
-  if (!parsed.success) return { title: 'Audit History' };
+  if (!parsed.success) return { title: 'Audit history' };
 
   const name = await getMatchName(parsed.data.id);
 
   return {
-    title: name ? `Audit: ${name}` : `Match #${parsed.data.id} Audit`,
+    title: `Audit: ${getAuditEntityTitle(AuditEntityType.Match, parsed.data.id, name)}`,
   };
 }
 
@@ -46,13 +46,10 @@ export default async function MatchAuditPage({ params }: PageProps) {
   const name = await getMatchName(id);
 
   return (
-    <>
-      <AuditPageHeader
-        entityType={AuditEntityType.Match}
-        entityId={id}
-        entityName={name ?? undefined}
-      />
-      <AuditEntityView entityType={AuditEntityType.Match} entityId={id} />
-    </>
+    <AuditHistoryPage
+      entityType={AuditEntityType.Match}
+      entityId={id}
+      entityName={name ?? undefined}
+    />
   );
 }

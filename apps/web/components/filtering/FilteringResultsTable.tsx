@@ -1,268 +1,226 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Check, Download, ListFilter, X } from 'lucide-react';
+
+import { Button } from '@/components/kit/controls/Button';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { Badge } from '@/components/kit/status/Badge';
 import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  SortingState,
-  useReactTable,
-} from '@tanstack/react-table';
-import { CheckCircle2, XCircle, ListFilter, Download } from 'lucide-react';
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from '@/components/kit/tables/DataTable';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
+import { SortableHeader } from '@/components/kit/tables/SortableHeader';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
 import {
+  formatCountOf,
+  formatId,
+  formatRatingPrecise,
+} from '@/lib/kit/format/number';
+import type { SortState } from '@/lib/kit/lists/sort';
+import { sortRows, type SortValue } from '@/lib/kit/tables/sort';
+import type {
   FilteringResult,
   PlayerFilteringResult,
 } from '@/lib/orpc/schema/filtering';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import FailureReasonsBadges from './FailureReasonsBadges';
-import PlayerCell from './PlayerCell';
-import StatusIcon from './StatusIcon';
-import { SortableHeader, NumericCell } from './tableHelpers';
-import { stickyTableHeader } from '@/lib/utils/table';
+import FailureReasonsBadges, {
+  getFailureReasons,
+} from './FailureReasonsBadges';
 
-interface FilteringResultsTableProps {
-  results: FilteringResult;
-  onDownloadCSV: () => void;
-  hideCard?: boolean;
+type SortKey = 'status' | 'player' | 'osuId' | 'rating';
+
+/** Failed players first, as the results have always opened. */
+const DEFAULT_SORT: SortState<SortKey> = { key: 'status', direction: 'asc' };
+
+const SORT_ACCESSORS = {
+  status: (row: PlayerFilteringResult) => (row.isSuccess ? 1 : 0),
+  player: (row: PlayerFilteringResult) => row.username,
+  osuId: (row: PlayerFilteringResult) => row.osuId,
+  rating: (row: PlayerFilteringResult) => row.currentRating,
+} satisfies Record<SortKey, (row: PlayerFilteringResult) => SortValue>;
+
+function rowKey(row: PlayerFilteringResult, index: number): string {
+  return `${row.osuId ?? 'unknown'}-${index}`;
 }
 
+function StatusBadge({ passed }: { passed: boolean }) {
+  return passed ? (
+    <Badge tone="success" size="sm">
+      <Check aria-hidden />
+      Passed
+    </Badge>
+  ) : (
+    <Badge tone="destructive" size="sm">
+      <X aria-hidden />
+      Failed
+    </Badge>
+  );
+}
+
+/** The player's name and avatar as one link, or "Unknown" when o!TR has no player. */
+function PlayerName({ row }: { row: PlayerFilteringResult }) {
+  if (!row.username || !row.playerId || row.osuId === null) {
+    return <span className="font-medium text-muted-foreground">Unknown</span>;
+  }
+
+  return (
+    <EntityLink
+      href={`/players/${row.playerId}`}
+      leading={
+        <OsuAvatar osuId={row.osuId} username={row.username} size={24} />
+      }
+    >
+      {row.username}
+    </EntityLink>
+  );
+}
+
+/**
+ * The players a filter checked: status, why each failed, the player and
+ * their rating to two decimals, as the tool has always shown it, so a
+ * rating near a bound reads closer than a whole number would. Below tablet
+ * width the rows keep the rating in view.
+ */
 export default function FilteringResultsTable({
   results,
   onDownloadCSV,
-  hideCard = false,
-}: FilteringResultsTableProps) {
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: 'isSuccess', desc: false },
-  ]);
-
-  const columns: ColumnDef<PlayerFilteringResult>[] = useMemo(
-    () => [
-      {
-        accessorKey: 'isSuccess',
-        header: ({ column }) => (
-          <SortableHeader column={column}>✓</SortableHeader>
-        ),
-        cell: ({ row }) => <StatusIcon isSuccess={row.original.isSuccess} />,
-      },
-      {
-        accessorKey: 'failureReason',
-        header: () => (
-          <div className="text-center text-sm font-semibold">Failures</div>
-        ),
-        cell: ({ row }) => (
-          <FailureReasonsBadges
-            failureReason={row.original.failureReason ?? undefined}
-          />
-        ),
-        enableSorting: false,
-      },
-      {
-        accessorKey: 'osuId',
-        header: ({ column }) => (
-          <SortableHeader column={column}>osu! ID</SortableHeader>
-        ),
-        cell: ({ getValue }) => (
-          <NumericCell value={getValue() as number | undefined | null} />
-        ),
-      },
-      {
-        accessorKey: 'username',
-        header: ({ column }) => (
-          <SortableHeader column={column}>Player</SortableHeader>
-        ),
-        cell: ({ row }) => <PlayerCell result={row.original} />,
-        sortingFn: (rowA, rowB) => {
-          const usernameA = rowA.original.username || '';
-          const usernameB = rowB.original.username || '';
-          return usernameA.localeCompare(usernameB, undefined, {
-            sensitivity: 'base',
-          });
-        },
-      },
-      {
-        accessorKey: 'currentRating',
-        header: ({ column }) => (
-          <SortableHeader column={column}>Rating</SortableHeader>
-        ),
-        cell: ({ getValue }) => (
-          <NumericCell
-            value={getValue() as number | undefined | null}
-            format={(v) => v.toFixed(2)}
-          />
-        ),
-      },
-    ],
-    []
+}: {
+  results: FilteringResult;
+  onDownloadCSV: () => void;
+}) {
+  const [sort, setSort] = useState<SortState<SortKey>>(DEFAULT_SORT);
+  const rows = useMemo(
+    () => sortRows(results.filteringResults ?? [], sort, SORT_ACCESSORS),
+    [results.filteringResults, sort]
   );
 
-  const safeData =
-    results && Array.isArray(results.filteringResults)
-      ? results.filteringResults
-      : [];
+  return (
+    <Panel data-testid="filter-results-table">
+      <SectionHeader
+        icon={ListFilter}
+        title="Results"
+        meta={formatCountOf(rows.length, 'player')}
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Download}
+            onClick={onDownloadCSV}
+            disabled={rows.length === 0}
+          >
+            Download CSV
+          </Button>
+        }
+      />
 
-  const table = useReactTable({
-    data: safeData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    onSortingChange: setSorting,
-    state: { sorting },
-  });
-
-  if (!results || !results.filteringResults) {
-    const noResultsContent = (
-      <div className="p-8 text-center text-muted-foreground">
-        No filtering results to display.
-      </div>
-    );
-    return hideCard ? (
-      noResultsContent
-    ) : (
-      <Card className="w-full">{noResultsContent}</Card>
-    );
-  }
-
-  const tableContent = (
-    <>
-      {!hideCard && (
-        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <ListFilter className="size-4 text-primary" />
-            <h3 className="text-base font-semibold text-foreground">
-              Filtering Results
-            </h3>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-green-600 dark:text-green-400" />
-                <span>Passed: {results.playersPassed ?? 0}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <XCircle className="size-4 text-red-600 dark:text-red-400" />
-                <span>Failed: {results.playersFailed ?? 0}</span>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              onClick={onDownloadCSV}
-              className="flex items-center gap-2"
-            >
-              <Download className="size-4" />
-              Download CSV
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {safeData.length === 0 ? (
-        <div className="py-8 text-center text-muted-foreground">
-          No players to display.
-        </div>
+      {rows.length === 0 ? (
+        <EmptyState title="No players to display" />
       ) : (
-        <div
-          className={cn(
-            'w-fit max-w-full overflow-x-auto rounded-lg border [&_[data-slot=table-container]]:w-fit [&_table]:w-auto',
-            stickyTableHeader,
-            hideCard && 'bg-background'
-          )}
-        >
-          <Table className="w-auto">
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow
-                  key={headerGroup.id}
-                  className="bg-muted hover:bg-muted"
-                >
-                  {headerGroup.headers.map((header) => {
-                    const getHeaderClass = () => {
-                      switch (header.column.id) {
-                        case 'isSuccess':
-                          return 'w-8 text-center';
-                        case 'failureReason':
-                          return 'text-center';
-                        case 'osuId':
-                          return 'w-[70px] text-center';
-                        case 'player':
-                          return 'min-w-[60px]';
-                        case 'currentRating':
-                          return 'w-[50px] text-center';
-                        default:
-                          return '';
-                      }
-                    };
-
-                    return (
-                      <TableHead
-                        key={header.id}
-                        className={cn(
-                          'px-2 font-semibold text-foreground',
-                          getHeaderClass()
-                        )}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row, index) => {
-                const isFailed = row.original?.isSuccess === false;
+        <DataTable
+          aria-label="Filtering results"
+          stickyHeader
+          phoneRows={
+            <PhoneRowList aria-label="Filtering results">
+              {rows.map((row, index) => {
+                const reasons = getFailureReasons(row.failureReason);
                 return (
-                  <TableRow
-                    key={row.id}
-                    className={cn(
-                      isFailed
-                        ? 'bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20 dark:hover:bg-red-950/30'
-                        : index % 2 === 0
-                          ? 'bg-background/50'
-                          : 'bg-muted/10'
-                    )}
-                  >
-                    {row.getVisibleCells().map((cell) => {
-                      return (
-                        <TableCell
-                          key={cell.id}
-                          className={cn('px-2 py-1.5 text-center')}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
+                  <PhoneRow
+                    key={rowKey(row, index)}
+                    title={
+                      <>
+                        <PlayerName row={row} />
+                        <StatusBadge passed={row.isSuccess} />
+                      </>
+                    }
+                    description={[
+                      ...reasons,
+                      row.osuId !== null
+                        ? `osu! ID ${formatId(row.osuId)}`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                    value={formatRatingPrecise(row.currentRating)}
+                  />
                 );
               })}
-            </TableBody>
-          </Table>
-        </div>
+            </PhoneRowList>
+          }
+        >
+          <DataTableHeader>
+            <DataTableRow>
+              <SortableHeader
+                sortKey="status"
+                sort={sort}
+                onSortChange={setSort}
+                defaultDirection="asc"
+                className="w-28"
+              >
+                Status
+              </SortableHeader>
+              <SortableHeader
+                sortKey="player"
+                sort={sort}
+                onSortChange={setSort}
+                defaultDirection="asc"
+              >
+                Player
+              </SortableHeader>
+              <DataTableHead>Failures</DataTableHead>
+              <SortableHeader
+                sortKey="osuId"
+                sort={sort}
+                onSortChange={setSort}
+                defaultDirection="asc"
+                numeric
+                className="w-32"
+              >
+                osu! ID
+              </SortableHeader>
+              <SortableHeader
+                sortKey="rating"
+                sort={sort}
+                onSortChange={setSort}
+                numeric
+                className="w-28"
+              >
+                Rating
+              </SortableHeader>
+            </DataTableRow>
+          </DataTableHeader>
+          <DataTableBody>
+            {rows.map((row, index) => (
+              <DataTableRow key={rowKey(row, index)}>
+                <DataTableCell>
+                  <StatusBadge passed={row.isSuccess} />
+                </DataTableCell>
+                <DataTableCell className="max-w-64">
+                  <PlayerName row={row} />
+                </DataTableCell>
+                <DataTableCell>
+                  {getFailureReasons(row.failureReason).length > 0 ? (
+                    <FailureReasonsBadges failureReason={row.failureReason} />
+                  ) : null}
+                </DataTableCell>
+                <DataTableCell numeric>
+                  {row.osuId !== null ? formatId(row.osuId) : null}
+                </DataTableCell>
+                <DataTableCell numeric>
+                  {formatRatingPrecise(row.currentRating)}
+                </DataTableCell>
+              </DataTableRow>
+            ))}
+          </DataTableBody>
+        </DataTable>
       )}
-    </>
-  );
-
-  return hideCard ? (
-    tableContent
-  ) : (
-    <Card className="w-full overflow-y-clip p-4">{tableContent}</Card>
+    </Panel>
   );
 }

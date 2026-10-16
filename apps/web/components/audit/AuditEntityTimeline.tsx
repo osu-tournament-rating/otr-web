@@ -2,16 +2,20 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import useSWRInfinite from 'swr/infinite';
-import { ClipboardList, Loader2 } from 'lucide-react';
+import { ClipboardList } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
 import type { EntityTimelineItem } from '@/lib/orpc/schema/audit';
 import SectionError from '@/components/error/SectionError';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { RowListSkeleton } from '@/components/kit/feedback/Skeletons';
+import { RowList } from '@/components/kit/layout/RowList';
+import { ListToolbar } from '@/components/kit/lists/ListToolbar';
+import { LoadMore } from '@/components/kit/tables/LoadMore';
+import { ENTITY_TYPE_LABELS } from '@/lib/audit-entity-types';
+import { formatCountOf } from '@/lib/kit/format/number';
 import { orpc } from '@/lib/orpc/orpc';
 import AuditEntryRow, { AuditSubmissionRow } from './AuditEntryRow';
 import AuditNoteItem from './AuditNoteItem';
-import RelativeTime from './RelativeTime';
 
 type TimelineResponse = {
   page: number;
@@ -21,112 +25,79 @@ type TimelineResponse = {
   items: EntityTimelineItem[];
 };
 
+/** Entries load 50 at a time. */
+export const TIMELINE_BATCH = 50;
+
+/** Placeholder rows while a history loads, inside its panel. */
 export function TimelineSkeleton(): React.JSX.Element {
   return (
-    <div
-      data-testid="audit-timeline-loading"
-      className="divide-y divide-border rounded-lg border border-border"
-    >
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 px-3 py-2.5">
-          <Skeleton className="h-4 w-4 rounded-full" />
-          <Skeleton className="h-5 w-16 rounded" />
-          <Skeleton className="h-4 w-20" />
-          <div className="flex-1" />
-          <Skeleton className="h-4 w-16" />
-        </div>
-      ))}
+    <div data-testid="audit-timeline-loading" aria-hidden="true">
+      <RowListSkeleton rows={5} leading="none" trailing={false} />
     </div>
   );
 }
 
-export function TimelineEmptyState({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}): React.JSX.Element {
-  return (
-    <div
-      data-testid="audit-timeline-empty"
-      className="flex flex-col items-center justify-center py-16"
-    >
-      <ClipboardList className="mb-4 h-12 w-12 text-muted-foreground/50" />
-      <h3 className="text-lg font-medium">{title}</h3>
-      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-    </div>
-  );
-}
-
-export function TimelineSummary({
+/** The history's toolbar strip: the system events switch and the count. */
+export function TimelineToolbar({
+  systemSwitch,
   total,
-  hasMore,
-  latestChange,
-  capped,
+  capped = false,
 }: {
-  total: number;
-  hasMore: boolean;
-  latestChange: string | null;
+  systemSwitch: React.ReactNode;
+  /** Every change, once the first batch has loaded. */
+  total?: number;
+  /** The count hit the server's cap and is a lower bound. */
   capped?: boolean;
 }): React.JSX.Element {
   return (
-    <div
-      data-testid="timeline-summary"
-      className="flex items-center gap-2 text-sm text-muted-foreground"
-    >
-      <span>
-        {total} change{total !== 1 ? 's' : ''}
-        {(hasMore || capped) && '+'}
-      </span>
-      {latestChange && (
-        <>
-          <span>&middot;</span>
-          <span>
-            Last modified <RelativeTime dateString={latestChange} />
+    <ListToolbar
+      label="Filter audit history"
+      scope={systemSwitch}
+      count={
+        total === undefined ? undefined : (
+          <span data-testid="timeline-summary">
+            {formatCountOf(total, 'change')}
+            {capped ? '+' : null}
           </span>
-        </>
-      )}
-    </div>
+        )
+      }
+    />
   );
 }
 
-export function LoadMoreButton({
-  onClick,
-  disabled,
-}: {
-  onClick: () => void;
-  disabled: boolean;
-}): React.JSX.Element {
-  return (
-    <div className="flex justify-center pt-2">
-      <Button
-        data-testid="timeline-load-more"
-        variant="outline"
-        size="sm"
-        onClick={onClick}
-        disabled={disabled}
-      >
-        {disabled && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Load more
-      </Button>
-    </div>
-  );
+/** Scrolls to the entry or note a link points at (`#audit-12`) and tints it briefly. */
+function useScrollToHash(ready: boolean) {
+  const scrolled = useRef(false);
+
+  useEffect(() => {
+    if (!ready || scrolled.current) return;
+    const hash = window.location.hash;
+    if (!hash) return;
+    const el = document.querySelector(hash);
+    if (!el) return;
+    scrolled.current = true;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('bg-primary/5');
+    const timer = setTimeout(() => el.classList.remove('bg-primary/5'), 2000);
+    return () => clearTimeout(timer);
+  }, [ready]);
 }
 
 type AuditEntityTimelineProps = {
   entityType: AuditEntityType;
   entityId: number;
   showSystem?: boolean;
+  /** The switch for the toolbar strip, owned by the page. */
+  systemSwitch: React.ReactNode;
 };
 
+/** An entity's own audit history, newest first, with its admin notes. */
 export default function AuditEntityTimeline({
   entityType,
   entityId,
   showSystem = false,
+  systemSwitch,
 }: AuditEntityTimelineProps): React.JSX.Element {
-  const scrollTargetRef = useRef(false);
-
   const getKey = useCallback(
     (pageIndex: number, previousPageData: TimelineResponse | null) => {
       if (previousPageData && pageIndex >= previousPageData.pages) return null;
@@ -149,7 +120,7 @@ export default function AuditEntityTimeline({
           entityType: eType,
           entityId: eId,
           showSystem: withSystem,
-          pageSize: 50,
+          pageSize: TIMELINE_BATCH,
           page,
         }),
       {
@@ -168,79 +139,59 @@ export default function AuditEntityTimeline({
   const unauditedSubmission = responsePages[0]?.unauditedSubmission ?? null;
   const isEmpty =
     !isLoading && allItems.length === 0 && unauditedSubmission === null;
-  const totalCount = responsePages[0]?.total ?? allItems.length;
+  const totalCount = responsePages[0]?.total;
 
-  const firstItem = allItems[0] ?? null;
-  const latestChange = firstItem
-    ? firstItem.type === 'audit'
-      ? firstItem.data.entry.created
-      : firstItem.data.created
-    : null;
+  useScrollToHash(allItems.length > 0);
 
-  useEffect(() => {
-    if (
-      typeof window === 'undefined' ||
-      !allItems.length ||
-      scrollTargetRef.current
-    )
-      return;
-    const hash = window.location.hash;
-    if (hash) {
-      const el = document.querySelector(hash);
-      if (el) {
-        scrollTargetRef.current = true;
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('bg-primary/5');
-        const timer = setTimeout(
-          () => el.classList.remove('bg-primary/5'),
-          2000
-        );
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [allItems.length]);
+  const toolbar = (
+    <TimelineToolbar systemSwitch={systemSwitch} total={totalCount} />
+  );
 
   if (isLoading) {
-    return <TimelineSkeleton />;
+    return (
+      <>
+        {toolbar}
+        <TimelineSkeleton />
+      </>
+    );
   }
 
   if (error && !data) {
     return (
-      <SectionError
-        title="Audit history could not load"
-        retrying={isValidating}
-        onRetry={() => void mutate()}
-      />
+      <>
+        {toolbar}
+        <SectionError
+          title="Audit history could not load"
+          retrying={isValidating}
+          onRetry={() => void mutate()}
+        />
+      </>
     );
   }
 
   if (isEmpty) {
     return (
-      <TimelineEmptyState
-        title="No audit history found"
-        description={
-          showSystem
-            ? 'No changes have been recorded for this entity yet.'
-            : 'No manual changes have been recorded. Enable system events to see automated processing.'
-        }
-      />
+      <>
+        {toolbar}
+        <EmptyState
+          data-testid="audit-timeline-empty"
+          icon={ClipboardList}
+          title="No audit history found"
+          description={
+            showSystem
+              ? `No changes have been recorded for this ${ENTITY_TYPE_LABELS[entityType]} yet.`
+              : 'No manual changes have been recorded. Enable system events to see automated processing.'
+          }
+        />
+      </>
     );
   }
 
   return (
-    <div data-testid="audit-timeline" className="space-y-4">
-      {allItems.length > 0 && (
-        <TimelineSummary
-          total={totalCount}
-          hasMore={hasMore}
-          latestChange={latestChange}
-        />
-      )}
+    <div data-testid="audit-timeline" className="contents">
+      {toolbar}
 
-      <div
-        data-testid="timeline-entry-list"
-        className="divide-y divide-border rounded-lg border border-border"
-      >
+      <RowList data-testid="timeline-entry-list" aria-label="Audit history">
         {allItems.map((item) => {
           if (item.type === 'audit') {
             return (
@@ -255,17 +206,31 @@ export default function AuditEntityTimeline({
           return <AuditNoteItem key={`n-${item.data.id}`} note={item.data} />;
         })}
         {/* Every tournament without a creation entry predates its other history. */}
-        {!hasMore && unauditedSubmission && (
+        {!hasMore && unauditedSubmission ? (
           <AuditSubmissionRow submission={unauditedSubmission} />
-        )}
-      </div>
+        ) : null}
+      </RowList>
 
-      {hasMore && (
-        <LoadMoreButton
-          onClick={() => setSize(size + 1)}
-          disabled={isValidating}
+      {/* A failed "Load more" keeps the entries already showing. */}
+      {error ? (
+        <div className="border-t px-4 py-4">
+          <SectionError
+            size="inline"
+            title="More audit history could not load"
+            retrying={isValidating}
+            onRetry={() => void mutate()}
+            className="justify-center"
+          />
+        </div>
+      ) : allItems.length > 0 ? (
+        <LoadMore
+          hasMore={hasMore}
+          loading={isValidating && size > responsePages.length}
+          shownCount={allItems.length}
+          totalCount={totalCount}
+          onLoadMore={() => void setSize(size + 1)}
         />
-      )}
+      ) : null}
     </div>
   );
 }

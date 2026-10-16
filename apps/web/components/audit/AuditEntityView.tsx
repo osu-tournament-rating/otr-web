@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import useSWR from 'swr';
 import { AuditEntityType } from '@otr/core/osu';
 import {
@@ -8,25 +7,37 @@ import {
   ENTITY_TYPE_PLURALS,
   getDescendantTypes,
 } from '@/lib/audit-entity-types';
+import { HeroTabs, type HeroTabItem } from '@/components/kit/layout/HeroTabs';
+import { Panel } from '@/components/kit/layout/Panel';
+import { formatCount } from '@/lib/kit/format/number';
+import { useListState } from '@/lib/kit/lists/use-list-state';
 import { orpc } from '@/lib/orpc/orpc';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AuditDescendantTimeline from './AuditDescendantTimeline';
 import AuditEntityTimeline from './AuditEntityTimeline';
-
-const numberFormat = new Intl.NumberFormat('en-US');
+import { AUDIT_HISTORY_PARAMS, getEntityTypeName } from './auditParams';
+import { AuditSystemSwitch } from './AuditSystemSwitch';
 
 type AuditEntityViewProps = {
   entityType: AuditEntityType;
   entityId: number;
 };
 
+/**
+ * An entity's audit history on one panel: tabs for its own changes and its
+ * descendants' (matches, games, scores), then the toolbar strip with the
+ * system events switch, the rows and "Load more". The tab and the switch
+ * live in the page address.
+ */
 export default function AuditEntityView({
   entityType,
   entityId,
 }: AuditEntityViewProps): React.JSX.Element {
-  const [showSystem, setShowSystem] = useState(false);
+  const list = useListState(AUDIT_HISTORY_PARAMS);
+  const showSystem = list.state.system;
   const descendantTypes = getDescendantTypes(entityType);
+  const descendantType = descendantTypes.find(
+    (type) => ENTITY_TYPE_PLURALS[type] === list.state.tab
+  );
 
   const { data: descendantCounts } = useSWR(
     descendantTypes.length > 0
@@ -45,86 +56,85 @@ export default function AuditEntityView({
     }
   );
 
-  const systemToggle = (
-    <div className="flex items-center gap-2">
-      <Checkbox
-        data-testid="audit-show-system"
-        id="audit-show-system"
-        checked={showSystem}
-        onCheckedChange={(checked) => setShowSystem(checked === true)}
-      />
-      <label
-        htmlFor="audit-show-system"
-        className="cursor-pointer text-sm text-muted-foreground"
-      >
-        Show system events
-      </label>
-    </div>
+  const systemSwitch = (
+    <AuditSystemSwitch
+      data-testid="audit-show-system"
+      checked={showSystem}
+      onCheckedChange={(system) => list.setState({ system })}
+    />
   );
 
-  if (descendantTypes.length === 0) {
-    return (
-      <div className="flex flex-col gap-4">
-        <div className="flex justify-end">{systemToggle}</div>
-        <AuditEntityTimeline
-          entityType={entityType}
-          entityId={entityId}
-          showSystem={showSystem}
-        />
-      </div>
-    );
-  }
+  // On phones the tabs drop "This" and their counts so all four fit without
+  // scrolling; the toolbar still counts the open tab's changes.
+  const tabs: HeroTabItem[] = [
+    {
+      value: 'self',
+      label: (
+        <>
+          <span className="max-sm:hidden">
+            This {ENTITY_TYPE_LABELS[entityType]}
+          </span>
+          <span className="sm:hidden">{getEntityTypeName(entityType)}</span>
+        </>
+      ),
+      href: list.hrefFor({ tab: 'self' }),
+      testId: 'audit-tab-self',
+    },
+    ...descendantTypes.map((type) => {
+      const plural = ENTITY_TYPE_PLURALS[type];
+      const count = descendantCounts?.counts.find(
+        (entry) => entry.entityType === type
+      );
+      return {
+        value: plural,
+        label: (
+          <>
+            {plural.charAt(0).toUpperCase() + plural.slice(1)}
+            {count ? (
+              // HeroTabs' own count, hidden on phones.
+              <span className="text-xs font-normal text-muted-foreground tabular-nums max-sm:hidden">
+                {formatCount(count.count)}
+                {count.capped ? '+' : null}
+              </span>
+            ) : null}
+          </>
+        ),
+        href: list.hrefFor({ tab: plural as typeof list.state.tab }),
+        testId: `audit-tab-${plural}`,
+      };
+    }),
+  ];
 
   return (
-    <Tabs defaultValue="self" className="gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <TabsList data-testid="audit-scope-tabs">
-          <TabsTrigger value="self">
-            This {ENTITY_TYPE_LABELS[entityType]}
-          </TabsTrigger>
-          {descendantTypes.map((descendantType) => {
-            const count = descendantCounts?.counts.find(
-              (entry) => entry.entityType === descendantType
-            );
-            return (
-              <TabsTrigger
-                key={descendantType}
-                value={String(descendantType)}
-                className="capitalize"
-              >
-                {ENTITY_TYPE_PLURALS[descendantType]}
-                {count && (
-                  <span className="text-muted-foreground">
-                    {numberFormat.format(count.count)}
-                    {count.capped && '+'}
-                  </span>
-                )}
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
+    <Panel data-testid="audit-history" aria-label="Audit history">
+      {descendantTypes.length > 0 ? (
+        <div className="border-b">
+          <HeroTabs
+            data-testid="audit-scope-tabs"
+            aria-label="Audit history views"
+            value={descendantType ? list.state.tab : 'self'}
+            items={tabs}
+          />
+        </div>
+      ) : null}
 
-        {systemToggle}
-      </div>
-
-      <TabsContent value="self">
+      {descendantType !== undefined ? (
+        <AuditDescendantTimeline
+          key={descendantType}
+          entityType={entityType}
+          entityId={entityId}
+          descendantType={descendantType}
+          showSystem={showSystem}
+          systemSwitch={systemSwitch}
+        />
+      ) : (
         <AuditEntityTimeline
           entityType={entityType}
           entityId={entityId}
           showSystem={showSystem}
+          systemSwitch={systemSwitch}
         />
-      </TabsContent>
-
-      {descendantTypes.map((descendantType) => (
-        <TabsContent key={descendantType} value={String(descendantType)}>
-          <AuditDescendantTimeline
-            entityType={entityType}
-            entityId={entityId}
-            descendantType={descendantType}
-            showSystem={showSystem}
-          />
-        </TabsContent>
-      ))}
-    </Tabs>
+      )}
+    </Panel>
   );
 }

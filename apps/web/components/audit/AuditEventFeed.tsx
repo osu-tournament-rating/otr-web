@@ -1,15 +1,26 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import useSWRInfinite from 'swr/infinite';
-import { ClipboardList, Loader2 } from 'lucide-react';
-import type { AuditEvent } from '@/lib/orpc/schema/audit';
+import { ClipboardList } from 'lucide-react';
+import type { AuditEvent, FieldFilter } from '@/lib/orpc/schema/audit';
 import SectionError from '@/components/error/SectionError';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { RowListSkeleton } from '@/components/kit/feedback/Skeletons';
+import { Panel } from '@/components/kit/layout/Panel';
+import { RowList } from '@/components/kit/layout/RowList';
+import { LoadMore } from '@/components/kit/tables/LoadMore';
+import type { ListState } from '@/lib/kit/lists/params';
+import { useListState } from '@/lib/kit/lists/use-list-state';
 import { orpc } from '@/lib/orpc/orpc';
 import AuditEventCard from './AuditEventCard';
-import AuditFilterBar, { type FilterState } from './AuditFilterBar';
+import AuditFilterBar from './AuditFilterBar';
+import {
+  AUDIT_LOG_PARAMS,
+  getAuditFieldOption,
+  toAuditActionType,
+  toAuditEntityType,
+} from './auditParams';
 
 type EventFeedResponse = {
   events: AuditEvent[];
@@ -17,80 +28,65 @@ type EventFeedResponse = {
   hasMore: boolean;
 };
 
-function LoadingSkeleton(): React.JSX.Element {
-  return (
-    <div
-      data-testid="audit-feed-loading"
-      className="divide-y divide-border rounded-lg border border-border"
-    >
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 px-3 py-2.5">
-          <Skeleton className="h-7 w-7 rounded-full" />
-          <Skeleton className="h-4 w-48" />
-          <div className="flex-1" />
-          <Skeleton className="h-4 w-16" />
-        </div>
-      ))}
-    </div>
-  );
-}
+/** The audit log loads 30 events at a time. */
+const EVENT_BATCH = 30;
 
-function EmptyState({
-  isFiltered,
-}: {
-  isFiltered: boolean;
-}): React.JSX.Element {
-  return (
-    <div
-      data-testid="audit-feed-empty"
-      className="flex flex-col items-center justify-center py-16"
-    >
-      <ClipboardList className="mb-4 h-12 w-12 text-muted-foreground/50" />
-      <h3 className="text-lg font-medium">
-        {isFiltered ? 'No audit events match' : 'No audit events found'}
-      </h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {isFiltered
-          ? 'Try fewer filters or clear them.'
-          : 'No audit activity has been recorded yet.'}
-      </p>
-    </div>
-  );
-}
-
-export default function AuditEventFeed(): React.JSX.Element {
-  const [filters, setFilters] = useState<FilterState>({
-    entityTypes: [],
-    fieldsChanged: [],
-    showSystem: false,
-    actionTypes: [],
+/** The feed's request filters, from the list state in the address. */
+function toFeedFilters(state: ListState<typeof AUDIT_LOG_PARAMS>) {
+  const entityTypes = state.entity
+    .map(toAuditEntityType)
+    .filter((type) => type !== undefined);
+  const fieldsChanged: FieldFilter[] = state.field.flatMap((value) => {
+    const option = getAuditFieldOption(value);
+    return option
+      ? [{ entityType: option.entityType, fieldName: option.field }]
+      : [];
   });
+  const actionTypes = state.action.map(toAuditActionType);
+
+  return {
+    showSystem: state.system ? true : undefined,
+    entityTypes: entityTypes.length > 0 ? entityTypes : undefined,
+    fieldsChanged: fieldsChanged.length > 0 ? fieldsChanged : undefined,
+    actionTypes: actionTypes.length > 0 ? actionTypes : undefined,
+  };
+}
+
+/** The panel's placeholder rows while the first batch loads. */
+export function AuditFeedRowsSkeleton() {
+  return (
+    <div data-testid="audit-feed-loading" aria-hidden="true">
+      <RowListSkeleton rows={6} leading="none" trailing={false} />
+    </div>
+  );
+}
+
+/**
+ * The audit log: one panel with its toolbar strip, a row per event, and
+ * "Load more" at the bottom. Filters live in the page address.
+ */
+export default function AuditEventFeed(): React.JSX.Element {
+  const list = useListState(AUDIT_LOG_PARAMS);
+  const filters = toFeedFilters(list.state);
+  const filterKey = JSON.stringify(filters);
 
   const getKey = useCallback(
-    (pageIndex: number, previousPageData: EventFeedResponse | null) => {
+    (_pageIndex: number, previousPageData: EventFeedResponse | null) => {
       if (previousPageData && !previousPageData.hasMore) return null;
       const cursor = previousPageData?.nextCursor ?? null;
-      return ['audit-events', cursor, JSON.stringify(filters)] as const;
+      return ['audit-events', cursor, filterKey] as const;
     },
-    [filters]
+    [filterKey]
   );
 
   const { data, error, mutate, size, setSize, isLoading, isValidating } =
     useSWRInfinite(
       getKey,
-      async ([, cursor]) =>
+      async ([, cursor, key]) =>
         orpc.audit.events({
-          limit: 30,
+          limit: EVENT_BATCH,
           cursor: cursor ?? undefined,
-          showSystem: filters.showSystem ? true : undefined,
-          entityTypes:
-            filters.entityTypes.length > 0 ? filters.entityTypes : undefined,
-          fieldsChanged:
-            filters.fieldsChanged.length > 0
-              ? filters.fieldsChanged
-              : undefined,
-          actionTypes:
-            filters.actionTypes.length > 0 ? filters.actionTypes : undefined,
+          ...(JSON.parse(key) as ReturnType<typeof toFeedFilters>),
         }),
       {
         revalidateFirstPage: false,
@@ -104,55 +100,63 @@ export default function AuditEventFeed(): React.JSX.Element {
   const pages = data ?? [];
   const allEvents = pages.flatMap((page) => page.events);
   const hasMore = pages[pages.length - 1]?.hasMore ?? false;
-  const isEmpty = !isLoading && allEvents.length === 0;
-  const isFiltered =
-    filters.entityTypes.length > 0 ||
-    filters.fieldsChanged.length > 0 ||
-    filters.actionTypes.length > 0;
+  const isEmpty = !isLoading && !error && allEvents.length === 0;
+  const isFiltered = list.activeFilterCount > 0;
+  // A failed "Load more" keeps the events already showing.
+  const loadMoreFailed = Boolean(error) && allEvents.length > 0;
 
   return (
-    <div data-testid="audit-event-feed" className="flex flex-col gap-4">
-      <AuditFilterBar filters={filters} onChange={setFilters} />
+    <Panel data-testid="audit-event-feed">
+      <AuditFilterBar list={list} />
 
       {isLoading ? (
-        <LoadingSkeleton />
-      ) : error && !data ? (
+        <AuditFeedRowsSkeleton />
+      ) : error && allEvents.length === 0 ? (
         <SectionError
           title="Audit events could not load"
           retrying={isValidating}
           onRetry={() => void mutate()}
         />
       ) : isEmpty ? (
-        <EmptyState isFiltered={isFiltered} />
+        <EmptyState
+          data-testid="audit-feed-empty"
+          icon={ClipboardList}
+          title={isFiltered ? 'No audit events match' : 'No audit events found'}
+          description={
+            isFiltered
+              ? 'Try fewer filters or clear them.'
+              : 'No audit activity has been recorded yet.'
+          }
+          clearFilters={isFiltered ? { onClick: list.clearFilters } : undefined}
+        />
       ) : (
-        <div className="space-y-4">
-          <div
-            data-testid="audit-event-list"
-            className="divide-y divide-border rounded-lg border border-border"
-          >
+        <>
+          <RowList data-testid="audit-event-list" aria-label="Audit events">
             {allEvents.map((event) => (
               <AuditEventCard key={event.eventKey} event={event} />
             ))}
-          </div>
-
-          {hasMore && (
-            <div className="flex justify-center pt-2">
-              <Button
-                data-testid="audit-load-more"
-                variant="outline"
-                size="sm"
-                onClick={() => setSize(size + 1)}
-                disabled={isValidating}
-              >
-                {isValidating && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Load more
-              </Button>
+          </RowList>
+          {loadMoreFailed ? (
+            <div className="border-t px-4 py-4">
+              <SectionError
+                size="inline"
+                title="More audit events could not load"
+                retrying={isValidating}
+                onRetry={() => void mutate()}
+                className="justify-center"
+              />
             </div>
+          ) : (
+            <LoadMore
+              data-testid="audit-load-more"
+              hasMore={hasMore}
+              loading={isValidating && size > pages.length}
+              shownCount={allEvents.length}
+              onLoadMore={() => void setSize(size + 1)}
+            />
           )}
-        </div>
+        </>
       )}
-    </div>
+    </Panel>
   );
 }

@@ -1,22 +1,28 @@
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import { FileText } from 'lucide-react';
+
 import { FilterReportView } from '@/components/filtering/FilterReportView';
-import { Metadata } from 'next';
+import { PanelSkeleton } from '@/components/kit/feedback/Skeletons';
+import { PageFrame } from '@/components/kit/layout/PageFrame';
+import { PageHeader } from '@/components/kit/layout/PageHeader';
 
 export const metadata: Metadata = {
-  title: 'Filter Reports',
+  title: 'Filter reports',
 };
 
 export default function FilterReportsPage() {
   return (
-    <div className="container mx-auto flex flex-col gap-4 md:gap-2">
-      <div className="mb-4 flex flex-col gap-2 sm:mb-6 md:mb-8">
-        <h1 className="text-2xl font-bold sm:text-3xl">Filter Reports</h1>
-        <p className="text-sm text-muted-foreground sm:text-base">
-          View Tournament Registrant Filtering reports by entering a report ID.
-          These reports show detailed filtering results for tournament
-          participants.
-        </p>
-      </div>
-      <FilterReportView />
-    </div>
+    <PageFrame>
+      <PageHeader
+        icon={FileText}
+        title="Filter reports"
+        description="View registrant filtering reports by entering a report ID."
+      />
+      {/* The report ID lives in the address. */}
+      <Suspense fallback={<PanelSkeleton className="h-[25rem]" />}>
+        <FilterReportView />
+      </Suspense>
+    </PageFrame>
   );
 }

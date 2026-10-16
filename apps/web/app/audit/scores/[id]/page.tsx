@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { z } from 'zod';
 import { AuditEntityType } from '@otr/core/osu';
-import AuditPageHeader from '@/components/audit/AuditPageHeader';
-import AuditEntityView from '@/components/audit/AuditEntityView';
+import AuditHistoryPage from '@/components/audit/AuditHistoryPage';
+import { getAuditEntityTitle } from '@/components/audit/AuditPageHeader';
 import { parseParamsOrNotFound } from '@/lib/orpc/server-helpers';
 
 type PageProps = {
@@ -17,18 +17,15 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const parsed = paramsSchema.safeParse(await params);
-  if (!parsed.success) return { title: 'Audit History' };
+  if (!parsed.success) return { title: 'Audit history' };
 
-  return { title: `Score #${parsed.data.id} Audit` };
+  return {
+    title: `Audit: ${getAuditEntityTitle(AuditEntityType.Score, parsed.data.id)}`,
+  };
 }
 
 export default async function ScoreAuditPage({ params }: PageProps) {
   const { id } = parseParamsOrNotFound(paramsSchema, await params);
 
-  return (
-    <>
-      <AuditPageHeader entityType={AuditEntityType.Score} entityId={id} />
-      <AuditEntityView entityType={AuditEntityType.Score} entityId={id} />
-    </>
-  );
+  return <AuditHistoryPage entityType={AuditEntityType.Score} entityId={id} />;
 }

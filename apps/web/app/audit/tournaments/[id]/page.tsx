@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { z } from 'zod';
 import { AuditEntityType } from '@otr/core/osu';
-import AuditPageHeader from '@/components/audit/AuditPageHeader';
-import AuditEntityView from '@/components/audit/AuditEntityView';
+import AuditHistoryPage from '@/components/audit/AuditHistoryPage';
+import { getAuditEntityTitle } from '@/components/audit/AuditPageHeader';
 import {
   fetchOrpcOptional,
   parseParamsOrNotFound,
@@ -21,16 +21,14 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const parsed = paramsSchema.safeParse(await params);
-  if (!parsed.success) return { title: 'Audit History' };
+  if (!parsed.success) return { title: 'Audit history' };
 
   const tournament = await fetchOrpcOptional(() =>
     getTournamentCached(parsed.data.id)
   );
 
   return {
-    title: tournament
-      ? `Audit: ${tournament.name}`
-      : `Tournament #${parsed.data.id} Audit`,
+    title: `Audit: ${getAuditEntityTitle(AuditEntityType.Tournament, parsed.data.id, tournament?.name)}`,
   };
 }
 
@@ -40,13 +38,10 @@ export default async function TournamentAuditPage({ params }: PageProps) {
   const tournament = await fetchOrpcOptional(() => getTournamentCached(id));
 
   return (
-    <>
-      <AuditPageHeader
-        entityType={AuditEntityType.Tournament}
-        entityId={id}
-        entityName={tournament?.name}
-      />
-      <AuditEntityView entityType={AuditEntityType.Tournament} entityId={id} />
-    </>
+    <AuditHistoryPage
+      entityType={AuditEntityType.Tournament}
+      entityId={id}
+      entityName={tournament?.name}
+    />
   );
 }
