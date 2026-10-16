@@ -76,5 +76,3 @@ monitoring/loki/data/
 *.png
 # The rule above matches in every directory, so re-include the docs' images.
 !apps/docs/**/*.png
-# The web-design skill's screenshots are part of the skill.
-!.claude/skills/web-design/images/*.png

@@ -107,12 +107,6 @@ Don't:
 
 Gallery anchors: `/admin/design#feedback-empty-state`, `/admin/design#feedback-empty-state-filtered`, `/admin/design#feedback-empty-state-compact`
 
-![EmptyState, light and dark (feedback-empty-state)](../images/feedback-empty-state.png)
-
-![EmptyState, light and dark (feedback-empty-state-filtered)](../images/feedback-empty-state-filtered.png)
-
-![EmptyState, light and dark (feedback-empty-state-compact)](../images/feedback-empty-state-compact.png)
-
 ## SectionError
 
 Takes the place of a section whose data failed to load, with Try again, so a failure never reads as an empty list. It is a default export and already used by the tournament list, the reports pages, the audit timelines and `SectionErrorBoundary`.
@@ -166,12 +160,6 @@ Don't:
 - Don't show a toast for a failed load; toasts are for actions.
 
 Gallery anchors: `/admin/design#feedback-section-error`, `/admin/design#feedback-empty-state-compact`, `/admin/design#feedback-section-error-inline`
-
-![SectionError, light and dark (feedback-section-error)](../images/feedback-section-error.png)
-
-![SectionError, light and dark (feedback-empty-state-compact)](../images/feedback-empty-state-compact.png)
-
-![SectionError, light and dark (feedback-section-error-inline)](../images/feedback-section-error-inline.png)
 
 ## Skeletons
 
@@ -242,12 +230,6 @@ Don't:
 The site-wide spinner in `app/loading.tsx` stays for routes without a page-shaped skeleton.
 
 Gallery anchors: `/admin/design#feedback-skeleton-panel`, `/admin/design#feedback-skeleton-table` (TableSkeleton and PhoneRowListSkeleton), `/admin/design#feedback-skeleton-rows`
-
-![Skeletons, light and dark (feedback-skeleton-panel)](../images/feedback-skeleton-panel.png)
-
-![Skeletons, light and dark (feedback-skeleton-table)](../images/feedback-skeleton-table.png)
-
-![Skeletons, light and dark (feedback-skeleton-rows)](../images/feedback-skeleton-rows.png)
 
 ## StatusPage
 
@@ -327,10 +309,6 @@ Don't:
 
 Gallery anchors: `/admin/design#feedback-status-page`, `/admin/design#feedback-status-page-variants`
 
-![StatusPage, light and dark (feedback-status-page)](../images/feedback-status-page.png)
-
-![StatusPage, light and dark (feedback-status-page-variants)](../images/feedback-status-page-variants.png)
-
 ## Callout
 
 The one notice box. Info for context, warning for something to check before acting, danger for something that cannot be undone. The tone sets the fill, border, text and glyph (info circle, triangle, octagon) from the colour family's `callout-*` tokens.
@@ -392,12 +370,6 @@ Don't:
 
 Gallery anchors: `/admin/design#feedback-callout`, `/admin/design#feedback-callout-action`, `/admin/design#feedback-callout-banner`
 
-![Callout, light and dark (feedback-callout)](../images/feedback-callout.png)
-
-![Callout, light and dark (feedback-callout-action)](../images/feedback-callout-action.png)
-
-![Callout, light and dark (feedback-callout-banner)](../images/feedback-callout-banner.png)
-
 ## CalloutChip
 
 A short notice inside a panel, such as "Includes unverified" on a chart: the callout's colours on a small outlined chip (the status family's `Badge` with `shape="rounded"`). With `detail` it becomes a button whose explanation opens on tap, hover and focus.
@@ -440,8 +412,6 @@ Don't:
 - Don't write a sentence in it; use a Callout.
 
 Gallery anchor: `/admin/design#feedback-callout-chip`
-
-![CalloutChip, light and dark (feedback-callout-chip)](../images/feedback-callout-chip.png)
 
 ## Legacy inventory
 

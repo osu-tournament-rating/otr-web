@@ -33,8 +33,6 @@ The glyph carries the meaning and colour only reinforces it, so every status sti
 
 Gallery anchor: `/admin/design#status-sheet`
 
-![Status sheet, light and dark (status-sheet)](../images/status-sheet.png)
-
 ## Status copy
 
 Plain TypeScript in `@/lib/kit/status/verification`, `report`, `reasons` and `count`, with unit tests. Use it instead of `VerificationStatusEnumHelper` or `ReportStatusEnumHelper` text in new UI.
@@ -123,8 +121,6 @@ Don't:
 
 Gallery anchor: `/admin/design#status-verification-icon`
 
-![VerificationStatusIcon, light and dark (status-verification-icon)](../images/status-verification-icon.png)
-
 ## VerificationStatusBadge
 
 Status as glyph plus name, for detail heroes, game and match card headers, dialogs and audit diffs. The hue follows the outcome: green for Verified and Pre-verified, neutral for Pending, red for Pre-rejected and Rejected. An admin's decision is a filled badge; an automated check is a dashed outline with no fill.
@@ -162,8 +158,6 @@ Don't:
 
 Gallery anchor: `/admin/design#status-verification-badge`
 
-![VerificationStatusBadge, light and dark (status-verification-badge)](../images/status-verification-badge.png)
-
 ## VerificationStatusTooltip
 
 The explanation behind a status icon or badge: the name and its plain-language line, then who verified or rejected it, the warnings and the rejection reasons. The icon and badge use it through their `tooltip` prop; wrap something else with it only when that something is the status trigger.
@@ -187,8 +181,6 @@ import {
 - `VerificationStatusDetails` is the body on its own, for a chart tooltip or a popover that already exists.
 
 Gallery anchor: `/admin/design#status-verification-icon`
-
-![VerificationStatusTooltip, light and dark (status-verification-icon)](../images/status-verification-icon.png)
 
 ## NotInRatings
 
@@ -220,8 +212,6 @@ Don't:
 - Don't colour the label; it is information, not a warning.
 
 Gallery anchor: `/admin/design#status-not-in-ratings`
-
-![NotInRatings, light and dark (status-not-in-ratings)](../images/status-not-in-ratings.png)
 
 ## Badge
 
@@ -273,10 +263,6 @@ Don't:
 
 Gallery anchors: `/admin/design#status-badge`, `/admin/design#status-badge-uses`
 
-![Badge, light and dark (status-badge)](../images/status-badge.png)
-
-![Badge, light and dark (status-badge-uses)](../images/status-badge-uses.png)
-
 ## ReportStatusBadge
 
 A data report's state on My reports and the admin queue, in the same status language: Pending (clock, neutral), Confirmed (circled check, green) or Dismissed (circled cross, red). The names are the ones the report pages and the admin's Confirm report and Dismiss buttons already use.
@@ -294,8 +280,6 @@ Don't:
 - Don't keep the two copies of `getStatusBadge` in `app/reports/MyReportsClient.tsx` and `app/admin/reports/AdminReportsClient.tsx` (secondary, `bg-success text-green-950` and solid red). Both become this component.
 
 Gallery anchor: `/admin/design#status-report-badge`
-
-![ReportStatusBadge, light and dark (status-report-badge)](../images/status-report-badge.png)
 
 ## NotificationDot
 
@@ -332,8 +316,6 @@ Don't:
 - Don't use the dot for status or as a bullet; it only means "new since you last looked".
 
 Gallery anchor: `/admin/design#status-notification-dot`
-
-![NotificationDot, light and dark (status-notification-dot)](../images/status-notification-dot.png)
 
 ## CircleDashedX
 

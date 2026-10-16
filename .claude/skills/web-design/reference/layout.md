@@ -71,8 +71,6 @@ Don't:
 
 Gallery anchor: `/admin/design#layout-page-frame`
 
-![PageFrame, light and dark (layout-page-frame)](../images/layout-page-frame.png)
-
 ## PageHeader
 
 The top of every list or tool page: a muted icon, the page's h1 (30px bold), one line of description, actions on the right and a divider underneath. Detail pages use DetailHero instead.
@@ -115,10 +113,6 @@ Don't:
 - Don't use breadcrumbs (audit pages do today); use `back`.
 
 Gallery anchors: `/admin/design#layout-page-header`, `/admin/design#layout-page-header-back`
-
-![PageHeader, light and dark (layout-page-header)](../images/layout-page-header.png)
-
-![PageHeader, light and dark (layout-page-header-back)](../images/layout-page-header-back.png)
 
 ## DetailHero and HeroMetaItem
 
@@ -190,14 +184,6 @@ Don't:
 
 Gallery anchors: `/admin/design#layout-detail-hero-art`, `/admin/design#layout-detail-hero-art-status`, `/admin/design#layout-detail-hero-tabs`, `/admin/design#layout-detail-hero-player`
 
-![DetailHero and HeroMetaItem, light and dark (layout-detail-hero-art)](../images/layout-detail-hero-art.png)
-
-![DetailHero and HeroMetaItem, light and dark (layout-detail-hero-art-status)](../images/layout-detail-hero-art-status.png)
-
-![DetailHero and HeroMetaItem, light and dark (layout-detail-hero-tabs)](../images/layout-detail-hero-tabs.png)
-
-![DetailHero and HeroMetaItem, light and dark (layout-detail-hero-player)](../images/layout-detail-hero-player.png)
-
 ## HeroTabs
 
 Link tabs attached under a DetailHero that switch between views of one entity. The view lives in the address, so it survives a reload and can be shared.
@@ -249,8 +235,6 @@ Don't:
 
 Gallery anchor: `/admin/design#layout-detail-hero-tabs`
 
-![HeroTabs, light and dark (layout-detail-hero-tabs)](../images/layout-detail-hero-tabs.png)
-
 ## HeroTabsRoot, HeroTabsList, HeroTabsTrigger, HeroTabsContent
 
 The same tabs for views held in component state, built on Radix Tabs for keyboard support. Prefer HeroTabs when the view should survive a reload.
@@ -289,8 +273,6 @@ import {
 
 Gallery anchor: `/admin/design#layout-hero-tabs-in-page`
 
-![HeroTabsRoot, HeroTabsList, HeroTabsTrigger, HeroTabsContent, light and dark (layout-hero-tabs-in-page)](../images/layout-hero-tabs-in-page.png)
-
 ## Panel and PanelBody
 
 The one surface every section sits on: 12px corners, a hairline border, `bg-card` with a shadow in light mode and a flat lighter panel in dark mode.
@@ -322,8 +304,6 @@ Don't:
 - `SectionCard` from `components/beatmap/BeatmapSection.tsx` is the same component under its old name; new code imports Panel.
 
 Gallery anchor: `/admin/design#layout-panel`
-
-![Panel and PanelBody, light and dark (layout-panel)](../images/layout-panel.png)
 
 ## SectionHeader
 
@@ -361,8 +341,6 @@ Don't:
 
 Gallery anchor: `/admin/design#layout-section-header`
 
-![SectionHeader, light and dark (layout-section-header)](../images/layout-section-header.png)
-
 ## InfoButton
 
 The one help affordance: a muted circled "i" beside the thing it explains. It opens on hover, on keyboard focus and on tap, so it works on phones.
@@ -398,8 +376,6 @@ Don't:
 - Don't put it inside another button or link, such as a sortable column header; it is a button itself, so place it beside that control.
 
 Gallery anchor: `/admin/design#layout-info-button`
-
-![InfoButton, light and dark (layout-info-button)](../images/layout-info-button.png)
 
 ## Tile
 
@@ -437,8 +413,6 @@ Don't:
 - Don't put a tile on the page by itself, outside a panel.
 
 Gallery anchor: `/admin/design#layout-tile`
-
-![Tile, light and dark (layout-tile)](../images/layout-tile.png)
 
 ## StatTile and StatTileGrid
 
@@ -494,10 +468,6 @@ Don't:
 
 Gallery anchors: `/admin/design#layout-stat-tile`, `/admin/design#layout-stat-tile-inline`
 
-![StatTile and StatTileGrid, light and dark (layout-stat-tile)](../images/layout-stat-tile.png)
-
-![StatTile and StatTileGrid, light and dark (layout-stat-tile-inline)](../images/layout-stat-tile-inline.png)
-
 ## RowList and RowListItem
 
 A list inside a panel: divided rows that run edge to edge, with no box around each item. Use it for players, tournaments, matches and events.
@@ -538,8 +508,6 @@ Don't:
 - Don't render each item as a card inside the panel (`components/player/PlayerTournamentCard.tsx` today).
 
 Gallery anchor: `/admin/design#layout-row-list`
-
-![RowList and RowListItem, light and dark (layout-row-list)](../images/layout-row-list.png)
 
 ## Type scale
 
@@ -585,5 +553,3 @@ Don't:
 - Don't make a row title larger than its section title (the profile's tournament names today).
 
 Gallery anchor: `/admin/design#layout-typography`
-
-![Type scale, light and dark (layout-typography)](../images/layout-typography.png)

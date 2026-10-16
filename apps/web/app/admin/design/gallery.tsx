@@ -45,7 +45,7 @@ export function Specimen({
   frameClassName,
   children,
 }: {
-  /** Stable anchor, used by the design skill's screenshots. */
+  /** Stable anchor, linked from the web-design skill. */
   id: string;
   name: string;
   importPath?: string;

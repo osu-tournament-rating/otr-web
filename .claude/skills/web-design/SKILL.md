@@ -1,6 +1,6 @@
 ---
 name: web-design
-description: Design reference for the o!TR website (apps/web). Use whenever you build, change, or review anything a visitor or admin sees in apps/web, such as a page, component, chart, table, form, dialog, badge, colour, or wording on screen. Covers the shared component library, its rules, screenshots in light and dark, do and don't examples, and how to keep this reference current.
+description: Design reference for the o!TR website (apps/web). Use whenever you build, change, or review anything a visitor or admin sees in apps/web, such as a page, component, chart, table, form, dialog, badge, colour, or wording on screen. Covers the shared component library, its rules, do and don't examples, the admin gallery, and how to keep this reference current.
 ---
 
 # o!TR web design
@@ -14,9 +14,8 @@ changed screen from it, and never copy markup from a page that predates it.
 
 1. Read the rules below.
 2. Open the reference file for each area you touch (see "Where things are").
-   Each component section has a screenshot in light and dark, the import, a
-   usage example, its props, and do and don't bullets, including the legacy
-   pattern it replaces.
+   Each component section has the import, a usage example, its props, and do
+   and don't bullets, including the legacy pattern it replaces.
 3. To see a component live, sign in as an admin on your stack and open
    `/admin/design`. Every specimen has an anchor, for example
    `/admin/design#status-verification-icon`.
@@ -87,10 +86,6 @@ If the library has no component for what you need, build it in the library
 | Buttons, admin menus, dialogs, forms             | [reference/controls.md](reference/controls.md) |
 | Dates, numbers, ruleset and field names, mods    | [reference/format.md](reference/format.md)     |
 
-Screenshots live in `images/`, one per gallery specimen, named after its
-anchor. Each shows the light theme beside the dark one, or above it for wide
-specimens.
-
 ## Keeping this reference current
 
 This skill is only useful while it matches the code. In the same pull
@@ -100,10 +95,9 @@ request that changes a shared component, token or pattern:
    do and don't, and the import if it moved.
 2. Update or add its gallery specimen in
    `apps/web/app/admin/design/sections/`.
-3. Retake its screenshot. With your stack running (`apps/scripts/otr up`),
-   run `node .claude/skills/web-design/scripts/capture-specimens.mjs
-.claude/skills/web-design/images --only <specimen-id>` from the
-   repository root.
+
+The skill has no screenshots on purpose: they go stale and are slow to keep
+current. To see a component, open the gallery on your stack.
 
 When you notice that any part of this skill no longer matches the site, fix
 that part, even when it is outside your task; for this skill, that replaces

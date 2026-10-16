@@ -162,12 +162,6 @@ Don't:
 
 Gallery anchors: `/admin/design#lists-toolbar`, `/admin/design#lists-toolbar-scope`, `/admin/design#lists-toolbar-view`
 
-![ListToolbar, light and dark (lists-toolbar)](../images/lists-toolbar.png)
-
-![ListToolbar, light and dark (lists-toolbar-scope)](../images/lists-toolbar-scope.png)
-
-![ListToolbar, light and dark (lists-toolbar-view)](../images/lists-toolbar-view.png)
-
 ## SearchField
 
 The one search box: a search icon that turns into a spinner while results load, a clear button, and a hint under the box while the term is too short.
@@ -204,8 +198,6 @@ Don't:
 - Don't write a placeholder longer than about 30 characters; the box is about 290px wide on a phone and cuts it off. The beatmap list's "Search title, artist, difficulty, mapper, or ID" does; "Title, artist, mapper or ID" fits. The `label` carries the full name.
 
 Gallery anchor: `/admin/design#lists-search-field`
-
-![SearchField, light and dark (lists-search-field)](../images/lists-search-field.png)
 
 ## SortControl
 
@@ -255,8 +247,6 @@ Don't:
 
 Gallery anchor: `/admin/design#lists-sort-control`
 
-![SortControl, light and dark (lists-sort-control)](../images/lists-sort-control.png)
-
 ## RulesetChips
 
 Labelled chips that filter a list by any number of rulesets. "All" is selected when none is, and choosing it clears the selection.
@@ -276,8 +266,6 @@ import { RulesetChips } from '@/components/kit/lists/RulesetChips';
 - `label`: the group's accessible name, "Filter by ruleset" by default.
 
 Gallery anchor: `/admin/design#lists-ruleset-chips`
-
-![RulesetChips, light and dark (lists-ruleset-chips)](../images/lists-ruleset-chips.png)
 
 ## RulesetSwitch
 
@@ -301,8 +289,6 @@ Don't (for both ruleset controls):
 - Don't write ruleset labels by hand (`.replace('osu!', '')`); the chips use `getRulesetLabel`.
 
 Gallery anchor: `/admin/design#lists-ruleset-switch`
-
-![RulesetSwitch, light and dark (lists-ruleset-switch)](../images/lists-ruleset-switch.png)
 
 ## ScopeSwitch
 
@@ -336,8 +322,6 @@ Don't:
 
 Gallery anchor: `/admin/design#lists-scope-switch`
 
-![ScopeSwitch, light and dark (lists-scope-switch)](../images/lists-scope-switch.png)
-
 ## ChoiceChip
 
 One pill that toggles an option on or off (`aria-pressed`). `RulesetChips` and `ChoiceFilter` are built from it; use it alone only for a chip filter that is not a ruleset, such as "Lazer".
@@ -364,8 +348,6 @@ Don't:
 - Don't use a chip as a badge or a badge as a chip: a `Badge` never acts.
 
 Gallery anchor: `/admin/design#lists-choice-chip`
-
-![ChoiceChip, light and dark (lists-choice-chip)](../images/lists-choice-chip.png)
 
 ## FilterPanel and FilterButton
 
@@ -408,10 +390,6 @@ Don't:
 - Don't use an icon-only Filters button with a corner badge (the beatmap list today).
 
 Gallery anchors: `/admin/design#lists-filter-button`, `/admin/design#lists-filter-panel`
-
-![FilterPanel and FilterButton, light and dark (lists-filter-button)](../images/lists-filter-button.png)
-
-![FilterPanel and FilterButton, light and dark (lists-filter-panel)](../images/lists-filter-panel.png)
 
 ## Filter fields
 
@@ -465,8 +443,6 @@ Don't:
 
 Gallery anchor: `/admin/design#lists-filter-panel`
 
-![Filter fields, light and dark (lists-filter-panel)](../images/lists-filter-panel.png)
-
 ## DateField and Calendar
 
 A UTC day picked from a month calendar, replacing `<input type="date">`, which looks different in every browser and follows the visitor's locale.
@@ -490,8 +466,6 @@ import { Calendar, DateField } from '@/components/kit/lists/DateField';
 - `Calendar` is the grid on its own.
 
 Gallery anchor: `/admin/design#lists-date-field`
-
-![DateField and Calendar, light and dark (lists-date-field)](../images/lists-date-field.png)
 
 ## ActiveFilterChips
 
@@ -540,8 +514,6 @@ Don't:
 - Don't truncate chip labels (`truncate` in `TournamentListFilter.tsx`), write `SR: 5 – Any`, or show raw dates (`2024-07-20`).
 
 Gallery anchor: `/admin/design#lists-active-filter-chips`
-
-![ActiveFilterChips, light and dark (lists-active-filter-chips)](../images/lists-active-filter-chips.png)
 
 ## useListState and list params
 
@@ -620,8 +592,6 @@ Don't:
 
 Gallery anchor: `/admin/design#lists-list-state`
 
-![useListState and list params, light and dark (lists-list-state)](../images/lists-list-state.png)
-
 ## Sort state
 
 `@/lib/kit/lists/sort` holds the one sort shape, shared by `SortControl`, `sortParam` and sortable table headers.
@@ -646,5 +616,3 @@ getAriaSort(sort, 'rating'); // 'descending'
 - `SORT_DIRECTION_LABELS`, `flipSortDirection`, `isSortDirection` and `sortStatesEqual` cover the rest.
 
 Gallery anchor: `/admin/design#lists-sort-control`
-
-![Sort state, light and dark (lists-sort-control)](../images/lists-sort-control.png)

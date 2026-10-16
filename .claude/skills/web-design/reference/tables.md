@@ -106,10 +106,6 @@ Don't:
 
 Gallery anchors: `/admin/design#tables-data-table`, `/admin/design#tables-missing-value`
 
-![DataTable, light and dark (tables-data-table)](../images/tables-data-table.png)
-
-![DataTable, light and dark (tables-missing-value)](../images/tables-missing-value.png)
-
 ## Sticky header
 
 Long tables keep their header row in view.
@@ -128,8 +124,6 @@ Long tables keep their header row in view.
 Use it on tables longer than about one screen: the leaderboard, a tournament's ratings, the beatmap list, a pool. Short tables don't need it.
 
 Gallery anchor: `/admin/design#tables-sticky-header`
-
-![Sticky header, light and dark (tables-sticky-header)](../images/tables-sticky-header.png)
 
 ## SortableHeader
 
@@ -193,8 +187,6 @@ Don't:
 
 Gallery anchor: `/admin/design#tables-sortable-header`
 
-![SortableHeader, light and dark (tables-sortable-header)](../images/tables-sortable-header.png)
-
 ## Sorting rows
 
 The sort state is the lists family's: `SortState<K>` (`{ key, direction }`), `toggleSort`, `getAriaSort`, `fromDescending` and `toDescending` live in `@/lib/kit/lists/sort`, and `sortParam` keeps a sort in the address. SortableHeader and SortControl both use it; never define another sort shape. This family adds one helper for lists you hold in full.
@@ -217,8 +209,6 @@ const sorted = sortRows(pool, sort, {
 
 Gallery anchor: `/admin/design#tables-sortable-header`
 
-![Sorting rows, light and dark (tables-sortable-header)](../images/tables-sortable-header.png)
-
 ## Row behaviour
 
 Owner decision (finding 28, 15 Oct): no new whole-row links or row dialogs.
@@ -239,10 +229,6 @@ Don't:
 - Don't make a row clickable with `onClick` (My reports today) or add a new whole-row link.
 
 Gallery anchors: `/admin/design#tables-data-table` (name links, no tint), `/admin/design#tables-link-row` (opens as a whole, tint)
-
-![Row behaviour, light and dark (tables-data-table)](../images/tables-data-table.png)
-
-![Row behaviour, light and dark (tables-link-row)](../images/tables-link-row.png)
 
 ## EntityLink
 
@@ -279,8 +265,6 @@ Don't:
 
 Gallery anchor: `/admin/design#tables-entity-link`
 
-![EntityLink, light and dark (tables-entity-link)](../images/tables-entity-link.png)
-
 ## DataTableLinkRow and DataTableLinkCell
 
 A table row that opens as a whole, with the hover tint. Only for tables whose rows already open as a whole: the beatmap list's table view and a tournament's pooled beatmaps.
@@ -316,8 +300,6 @@ Don't:
 
 Gallery anchor: `/admin/design#tables-link-row`
 
-![DataTableLinkRow and DataTableLinkCell, light and dark (tables-link-row)](../images/tables-link-row.png)
-
 ## ViewButton
 
 The labelled "View" button that opens a row's record in a modal. Admin reports and My reports both use it; neither row is clickable as a whole, and the entity link in the row keeps working on its own.
@@ -351,8 +333,6 @@ Don't:
 - Don't wrap `Dialog` in a tooltip; wrap `DialogTrigger` if you need one.
 
 Gallery anchor: `/admin/design#tables-view-button`
-
-![ViewButton, light and dark (tables-view-button)](../images/tables-view-button.png)
 
 ## PhoneRowList and PhoneRow
 
@@ -426,8 +406,6 @@ Don't:
 
 Gallery anchor: `/admin/design#tables-phone-rows`
 
-![PhoneRowList and PhoneRow, light and dark (tables-phone-rows)](../images/tables-phone-rows.png)
-
 ## PaginationFooter
 
 Numbered pages inside the panel's footer with a "1–50 of 8,412" readout, for every searchable or filterable list (finding 25). It renders nothing when everything fits on one page.
@@ -480,8 +458,6 @@ Don't:
 
 Gallery anchor: `/admin/design#tables-pagination`
 
-![PaginationFooter, light and dark (tables-pagination)](../images/tables-pagination.png)
-
 ## LoadMore
 
 The footer of an activity feed: how many entries are showing and a "Load more" button that appends the next batch, then a note once everything is showing. Only for feeds (the audit log, a player's recent activity); searchable lists use PaginationFooter.
@@ -510,8 +486,6 @@ Don't:
 
 Gallery anchor: `/admin/design#tables-load-more`
 
-![LoadMore, light and dark (tables-load-more)](../images/tables-load-more.png)
-
 ## MissingValue
 
 A muted em dash for a missing value, read by screen readers as "No value". DataTableCell and PhoneRow render it on their own; use it directly in tiles, hero rows and anywhere else one value can be missing.
@@ -531,8 +505,6 @@ Don't:
 - Don't write `'—'` or `'N/A'` by hand (`components/beatmap/BeatmapLeaderboardCard.tsx`, `BeatmapPoolsDialog.tsx`), and don't show `0` for a value that doesn't exist.
 
 Gallery anchor: `/admin/design#tables-missing-value`
-
-![MissingValue, light and dark (tables-missing-value)](../images/tables-missing-value.png)
 
 ## Pagination helpers
 
@@ -562,5 +534,3 @@ formatLoadedReadout(50, 1214); // "50 of 1,214"
 - `getPageItems` never hides a single page behind an ellipsis.
 
 Gallery anchor: `/admin/design#tables-pagination`
-
-![Pagination helpers, light and dark (tables-pagination)](../images/tables-pagination.png)

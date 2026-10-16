@@ -31,8 +31,8 @@ const SECTIONS = [
 ];
 
 /**
- * Every shared component in both themes. Agents screenshot it to keep the
- * web-design skill's images current, so specimens use static demo data.
+ * Every shared component in both themes, with static demo data, so agents
+ * and admins can check a component without finding a page that uses it.
  */
 export default async function DesignReferencePage() {
   const session = await auth.api.getSession({ headers: await headers() });

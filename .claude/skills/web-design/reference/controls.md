@@ -94,10 +94,6 @@ Don't:
 
 Gallery anchors: `/admin/design#controls-button-sizes`, `/admin/design#controls-button-variants`
 
-![Button, light and dark (controls-button-sizes)](../images/controls-button-sizes.png)
-
-![Button, light and dark (controls-button-variants)](../images/controls-button-variants.png)
-
 ## IconButton
 
 The one icon-only button: a square (round on art) with a hover fill, an `aria-label`, and a tooltip that repeats it. It supersedes `iconButtonStyle` in `components/buttons/IconButton.tsx`, which only styled the glyph and left the hit area, hover and name to each caller.
@@ -137,8 +133,6 @@ Don't:
 - Don't rely on the tooltip of a disabled IconButton: a disabled button gets no pointer events. Say why it is disabled somewhere visible, such as an AdminMenu item's `description`.
 
 Gallery anchor: `/admin/design#controls-icon-button`
-
-![IconButton, light and dark (controls-icon-button)](../images/controls-icon-button.png)
 
 ## AdminMenu
 
@@ -198,10 +192,6 @@ Don't:
 
 Gallery anchors: `/admin/design#controls-admin-menu`, `/admin/design#controls-on-art`
 
-![AdminMenu, light and dark (controls-admin-menu)](../images/controls-admin-menu.png)
-
-![AdminMenu, light and dark (controls-on-art)](../images/controls-on-art.png)
-
 ## RowActionsMenu
 
 The overflow menu at the end of a row or card: one "…" IconButton in place of a cluster of icons, such as on each game and score of a match page. Its items work exactly like AdminMenu's.
@@ -256,10 +246,6 @@ Don't:
 - Don't put it inside a whole-row link; a linked row holds no other button.
 
 Gallery anchors: `/admin/design#controls-row-actions-menu`, `/admin/design#controls-on-art`
-
-![RowActionsMenu, light and dark (controls-row-actions-menu)](../images/controls-row-actions-menu.png)
-
-![RowActionsMenu, light and dark (controls-on-art)](../images/controls-on-art.png)
 
 ## ActionMenu and MenuAction
 
@@ -353,8 +339,6 @@ Don't:
 
 Gallery anchor: `/admin/design#controls-dialog-template`
 
-![DialogTemplate, light and dark (controls-dialog-template)](../images/controls-dialog-template.png)
-
 ## ConfirmDialog
 
 Confirms one consequential action before it runs: delete, reset, refetch, merge, discard. Built on AlertDialog, so it cannot be dismissed by clicking outside, and Cancel takes the initial focus. Its confirm button is the only solid red button on the site.
@@ -404,8 +388,6 @@ Don't:
 - Don't use a plain `Dialog` for a confirmation (`DeleteButton.tsx`, `RefetchMatchDataButton.tsx`, `DeleteTournamentBeatmapsButton.tsx`, the merge confirms in `MergeGameButton.tsx` and `MergeMatchButton.tsx`).
 
 Gallery anchor: `/admin/design#controls-confirm-dialog`
-
-![ConfirmDialog, light and dark (controls-confirm-dialog)](../images/controls-confirm-dialog.png)
 
 ## FormPanel, FormSection, FormGrid and FormActions
 
@@ -475,8 +457,6 @@ Don't:
 
 Gallery anchor: `/admin/design#controls-form-layout`
 
-![FormPanel, FormSection, FormGrid and FormActions, light and dark (controls-form-layout)](../images/controls-form-layout.png)
-
 ## FormFieldLabel
 
 A field label inside a shadcn `FormItem`, with the one info button for help and an optional muted hint on the right ("Optional", "One per line", a unit).
@@ -512,7 +492,3 @@ Don't:
 - Don't mix FormFieldLabel and a bare `FormLabel` in one FormGrid row; the bare label is shorter and its input sits 6px higher.
 
 Gallery anchors: `/admin/design#controls-form-field-label`, `/admin/design#controls-form-layout`
-
-![FormFieldLabel, light and dark (controls-form-field-label)](../images/controls-form-field-label.png)
-
-![FormFieldLabel, light and dark (controls-form-layout)](../images/controls-form-layout.png)

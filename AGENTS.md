@@ -154,10 +154,10 @@ checkout's services on ports 5432, 5672, and 3000. This is a rule.
 ## UI conventions
 
 - Before you build or change UI in `apps/web`, load the `web-design` skill.
-  It documents the shared component library with screenshots and do and
-  don't examples. A change to a shared component, token, or pattern updates
-  the skill in the same pull request, and when you find part of the skill out
-  of date, fix that part.
+  It documents the shared component library with do and don't examples. A
+  change to a shared component, token, or pattern updates the skill in the
+  same pull request, and when you find part of the skill out of date, fix that
+  part.
 - All user-facing text uses the Inter sans font, including chart axes,
   tooltips, table headers, and numbers. Use sentence case: no `uppercase` and
   no `tracking-wide`. `text-xs` is the minimum size; fix smaller overrides when

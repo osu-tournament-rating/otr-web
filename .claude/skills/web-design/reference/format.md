@@ -67,8 +67,6 @@ Don't:
 
 Gallery anchor: `/admin/design#format-date`
 
-![DateText, light and dark (format-date)](../images/format-date.png)
-
 ## DateRangeText
 
 A span of days, sharing the month and year where both ends do. Use it for tournament dates and any other range of days.
@@ -101,8 +99,6 @@ Don't:
 
 Gallery anchor: `/admin/design#format-date-range`
 
-![DateRangeText, light and dark (format-date-range)](../images/format-date-range.png)
-
 ## Timestamp
 
 A moment in UTC on a 24-hour clock, with the zone written out. Use it for match and game times, report and audit times, and anywhere the time of day matters.
@@ -122,8 +118,6 @@ Don't:
 - Don't show local time, 12-hour clocks or offsets such as `UTC+02:00`. Legacy: `components/dates/FormattedDate.tsx`, `formatExactTime` in `components/audit/formatRelativeTime.ts`, `formatUTCDateFull` (`2023-10-05 14:30:45 UTC`) in `lib/utils/date.ts`.
 
 Gallery anchor: `/admin/design#format-timestamp`
-
-![Timestamp, light and dark (format-timestamp)](../images/format-timestamp.png)
 
 ## RelativeTime
 
@@ -148,8 +142,6 @@ Don't:
 - Legacy: `components/audit/RelativeTime.tsx` and `formatRelativeTime` in `components/audit/formatRelativeTime.ts` (locale-dependent tooltip, hover only).
 
 Gallery anchor: `/admin/design#format-relative-time`
-
-![RelativeTime, light and dark (format-relative-time)](../images/format-relative-time.png)
 
 ## Date helpers
 
@@ -230,8 +222,6 @@ Don't:
 
 Gallery anchor: `/admin/design#format-numbers`
 
-![Number helpers, light and dark (format-numbers)](../images/format-numbers.png)
-
 ## RatingDelta
 
 A rating change: coloured text with an arrow and one decimal, never a pill. It inherits the font size, so the same component fits a table cell, a stat tile and a chart tooltip.
@@ -273,8 +263,6 @@ Don't:
 
 Gallery anchor: `/admin/design#format-rating-delta`
 
-![RatingDelta, light and dark (format-rating-delta)](../images/format-rating-delta.png)
-
 ## RulesetName and ruleset names
 
 One label set: `osu!`, `taiko`, `catch`, `mania 4K`, `mania 7K`, with the full name (`osu!taiko`) for tooltips and the accessible name of an icon on its own.
@@ -306,8 +294,6 @@ Don't:
 - `getBeatmapRulesetLabel` (`lib/beatmaps/presentation.ts`) and `RulesetPill` (`components/beatmaps/RulesetPill.tsx`) still print the long names; keep `getBeatmapDisplayRuleset` for reading 4K and 7K from a difficulty name, then label the result with `getRulesetLabel`.
 
 Gallery anchor: `/admin/design#format-ruleset`
-
-![RulesetName and ruleset names, light and dark (format-ruleset)](../images/format-ruleset.png)
 
 ## Field names
 
@@ -351,8 +337,6 @@ The duplicates it settles:
 Paths are under `apps/web/components/`. Other values: `formatRankRange` in `lib/utils/number.ts` and `formatRankRangeBound` call `toLocaleString()` without a locale; `LobbySizeEnumHelper` prints `Unknown` where the kit prints an em dash.
 
 Gallery anchor: `/admin/design#format-field-names`
-
-![Field names, light and dark (format-field-names)](../images/format-field-names.png)
 
 ## Mods
 
@@ -456,5 +440,3 @@ Don't:
 - Legacy: `components/audit/auditFieldConfig.ts` and `components/audit/AuditDiffDisplay.tsx`. The audit pages move onto these in the next pull request.
 
 Gallery anchor: `/admin/design#format-audit-change`
-
-![Audit values and AuditFieldChange, light and dark (format-audit-change)](../images/format-audit-change.png)

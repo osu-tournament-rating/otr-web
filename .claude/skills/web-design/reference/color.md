@@ -92,8 +92,6 @@ Don't:
 
 Gallery anchor: `/admin/design#color-accent-rule`
 
-![Accent rule, light and dark (color-accent-rule)](../images/color-accent-rule.png)
-
 ## Categorical palette
 
 Eight hues in a fixed order for neutral series: rank ranges, teams (red and blue), rulesets, teammates and opponents, any "series 1, 2, 3". The order keeps neighbours apart for protanopia and deuteranopia (Machado 2009 simulation, adjacent OKLab ΔE ≥ 8) and for full colour vision (ΔE ≥ 15), in both themes; the tests check it.
@@ -139,8 +137,6 @@ Don't:
 
 Gallery anchor: `/admin/design#color-categorical-palette`
 
-![Categorical palette, light and dark (color-categorical-palette)](../images/color-categorical-palette.png)
-
 ## Verification colours
 
 Green, neutral and red for status icons and chart fills, keyed by the status hue from `@/lib/kit/status/verification` (see the status reference). Icons keep the outcome hue (Pre-verified green, Pre-rejected red); charts group Pending, Pre-verified and Pre-rejected into one neutral "Not in ratings yet" bar.
@@ -172,8 +168,6 @@ Don't:
 
 Gallery anchor: `/admin/design#color-verification`
 
-![Verification colours, light and dark (color-verification)](../images/color-verification.png)
-
 ## Callout tones
 
 Fill, border and text-plus-icon for the info, warning and danger callouts. The callout component (feedback family) uses them; use the tokens directly only when building a new tone-carrying surface.
@@ -193,8 +187,6 @@ Don't:
 - Don't build notices from palette classes: `border-orange-500/50 bg-orange-500/15` in `app/tools/filter/FilteringPageClient.tsx` and `components/banner/MaintenanceBanner.tsx`, `bg-blue-50/50` in `components/filtering/FilterComplianceNotice.tsx`, `bg-amber-50/30` in `components/audit/AuditNoteItem.tsx`.
 
 Gallery anchor: `/admin/design#color-callout-tones`
-
-![Callout tones, light and dark (color-callout-tones)](../images/color-callout-tones.png)
 
 ## Match teams and surfaces
 
@@ -240,8 +232,6 @@ Don't:
 
 Gallery anchor: `/admin/design#color-match`
 
-![Match teams and surfaces, light and dark (color-match)](../images/color-match.png)
-
 ## Tier colours
 
 Tier names as text, stepped per theme to clear 4.5:1 (light gold and emerald were 1.9:1). The same colours mark tier rows in charts.
@@ -263,8 +253,6 @@ Don't:
 
 Gallery anchor: `/admin/design#color-tiers`
 
-![Tier colours, light and dark (color-tiers)](../images/color-tiers.png)
-
 ## Grade colours
 
 Marks for grade charts and swatches. SS, S and A keep the osu! badge hues (stepped darker on light cards); B to D are a grey ramp that recedes toward the card in both themes.
@@ -283,8 +271,6 @@ Don't:
 - Don't use `--grade-*` (`components/beatmap/BeatmapDistributionsCard.tsx`); its light S and A are 2.4:1 and 1.6:1.
 
 Gallery anchor: `/admin/design#color-grades`
-
-![Grade colours, light and dark (color-grades)](../images/color-grades.png)
 
 ## Mod colours
 
@@ -316,8 +302,6 @@ Don't:
 
 Gallery anchor: `/admin/design#color-mods`
 
-![Mod colours, light and dark (color-mods)](../images/color-mods.png)
-
 ## Star rating colours
 
 osu!'s difficulty spectrum. As a solid pill it keeps its exact colour with a black or white label (always 4.5:1); as an icon, text tint or chart mark on a card it is stepped darker in light mode and lighter in dark mode to clear 3:1.
@@ -341,8 +325,6 @@ Don't:
 - Don't use `getStarRatingIconColor` from `lib/beatmaps/star-rating-color.ts` on light cards; it only clamps for dark ones.
 
 Gallery anchor: `/admin/design#color-star-rating`
-
-![Star rating colours, light and dark (color-star-rating)](../images/color-star-rating.png)
 
 ## Contrast helpers
 
@@ -394,8 +376,6 @@ Don't:
 - Don't leave a value axis to Recharts' automatic ticks: the beatmap Misses chart (`components/beatmap/BeatmapPerformanceCard.tsx`) gets steps of 150 that way. Pass `niceAxisProps(getNiceTicks(…))`.
 
 Gallery anchor: `/admin/design#color-chart-ticks`
-
-![Tick rule, light and dark (color-chart-ticks)](../images/color-chart-ticks.png)
 
 ## Axis formatters
 
@@ -509,8 +489,6 @@ Don't:
 
 Gallery anchor: `/admin/design#color-chart-tooltip`
 
-![ChartTooltipContent, light and dark (color-chart-tooltip)](../images/color-chart-tooltip.png)
-
 ## ChartLegend and SeriesMarker
 
 The key for a chart with two or more series: a marker in the series colour and a muted 12px name, above the plot, in series order.
@@ -538,8 +516,6 @@ Don't:
 - Don't use Recharts' default `<Legend />` (`components/player/PlayerRatingChartView.tsx`), which renders below the plot in the series colour.
 
 Gallery anchor: `/admin/design#color-chart-legend`
-
-![ChartLegend and SeriesMarker, light and dark (color-chart-legend)](../images/color-chart-legend.png)
 
 ## Chart card
 
@@ -575,11 +551,3 @@ Don't:
 - Don't use `Card`, `CardHeader` and `CardDescription` with a 24px blue icon for charts (every chart in `components/stats/` and the player charts today).
 
 Gallery anchors: `/admin/design#color-chart-line`, `/admin/design#color-chart-bar`, `/admin/design#color-chart-stacked`, `/admin/design#color-chart-distribution`
-
-![Chart card, light and dark (color-chart-bar)](../images/color-chart-bar.png)
-
-![Chart card, light and dark (color-chart-stacked)](../images/color-chart-stacked.png)
-
-![Chart card, light and dark (color-chart-distribution)](../images/color-chart-distribution.png)
-
-![Chart card, light and dark (color-chart-line)](../images/color-chart-line.png)
