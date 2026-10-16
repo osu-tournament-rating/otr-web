@@ -3,6 +3,7 @@ import { History } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
 
 import {
+  HeroTabsSkeleton,
   ListToolbarSkeleton,
   PanelSkeleton,
   SkeletonText,
@@ -19,16 +20,17 @@ import AuditPageHeader from './AuditPageHeader';
  * descendants), the toolbar strip and placeholder rows.
  */
 export function AuditHistoryPanelSkeleton({
-  withTabs,
+  tabs,
   label,
 }: {
-  withTabs: boolean;
+  /** How many tab bars to draw; 0 for an entity without tabs. */
+  tabs: number;
   label?: string;
 }) {
   return (
     <PanelSkeleton label={label}>
-      {/* box-content: the border sits under the tabs' 44px. */}
-      {withTabs ? <div className="box-content h-11 border-b" /> : null}
+      {/* The tab labels follow the entity and the counts load, so bars. */}
+      {tabs > 0 ? <HeroTabsSkeleton tabs={tabs} className="border-b" /> : null}
       {/* The system events switch and the count. */}
       <ListToolbarSkeleton leading="w-44" count />
       <TimelineSkeleton />
@@ -37,9 +39,27 @@ export function AuditHistoryPanelSkeleton({
 }
 
 /**
+ * The skeleton's tab bars are sized for the full labels, so four of them run
+ * past a phone's tab strip, where a tournament's four loaded tabs fit only
+ * with their short labels. Three fit at 320px.
+ */
+const MAX_TAB_BARS = 3;
+
+/**
+ * The entity's own tab and one per descendant type, at most MAX_TAB_BARS, or
+ * none without descendants.
+ */
+function auditTabBars(entityType: AuditEntityType): number {
+  const descendants = getDescendantTypes(entityType).length;
+  return descendants > 0 ? Math.min(descendants + 1, MAX_TAB_BARS) : 0;
+}
+
+/**
  * An audit history route's loading screen, shaped like the page. The name,
  * the back link's wording and the tabs depend on the entity, so they are
- * bars; scores and beatmaps have no tabs.
+ * bars; scores and beatmaps have no tabs. One loading screen serves
+ * tournaments, matches and games, which have four, three and two tabs, so
+ * it draws two; the strip's height is the same.
  */
 export function AuditHistoryLoading({ withTabs }: { withTabs: boolean }) {
   return (
@@ -55,7 +75,7 @@ export function AuditHistoryLoading({ withTabs }: { withTabs: boolean }) {
         description={<SkeletonText className="w-56" />}
       />
       <AuditHistoryPanelSkeleton
-        withTabs={withTabs}
+        tabs={withTabs ? 2 : 0}
         label="Loading audit history"
       />
     </PageFrame>
@@ -81,11 +101,7 @@ export default function AuditHistoryPage({
       />
       {/* The view reads its tab and switch from the address. */}
       <Suspense
-        fallback={
-          <AuditHistoryPanelSkeleton
-            withTabs={getDescendantTypes(entityType).length > 0}
-          />
-        }
+        fallback={<AuditHistoryPanelSkeleton tabs={auditTabBars(entityType)} />}
       >
         <AuditEntityView entityType={entityType} entityId={entityId} />
       </Suspense>

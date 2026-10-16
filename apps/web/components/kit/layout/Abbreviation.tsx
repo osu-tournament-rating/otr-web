@@ -1,15 +1,25 @@
-import type * as React from 'react';
-
 import TapTooltip from '@/components/tap-tooltip';
 import { cn } from '@/lib/utils';
 
 /**
+ * The full form as it reads after a comma: "circle size" for "Circle size",
+ * but "HP drain" keeps its capitals, since its first word is a short form.
+ */
+function midSentence(full: string): string {
+  return /^[A-Z][a-z]/.test(full)
+    ? full.charAt(0).toLowerCase() + full.slice(1)
+    : full;
+}
+
+/**
  * A short form, such as CS for circle size, whose full form opens on tap,
- * hover and keyboard focus, and is what screen readers hear. It replaces
- * `<abbr title>`, whose title only shows on a mouse hover. Use it in labels
- * where the short form is the established name: stat tiles, table headers,
- * filter labels. Its tap target is at least 24px square, past the text, so
- * leave 4px between it and the next control.
+ * hover and keyboard focus. It replaces `<abbr title>`, whose title only
+ * shows on a mouse hover. Screen readers hear the short form, then the full
+ * one ("CS, circle size"), so the name starts with the text on screen and
+ * speech input that says "CS" reaches it. Use it in labels where the short
+ * form is the established name: stat tiles, table headers, filter labels.
+ * Its tap target is at least 24px square, past the text, so leave 4px
+ * between it and the next control.
  */
 export function Abbreviation({
   full,
@@ -19,8 +29,8 @@ export function Abbreviation({
 }: {
   /** The full form, in sentence case: "Circle size". */
   full: string;
-  /** The short form shown: "CS". */
-  children: React.ReactNode;
+  /** The short form shown: "CS". The accessible name starts with it. */
+  children: string;
   side?: 'top' | 'right' | 'bottom' | 'left';
   className?: string;
 }) {
@@ -29,7 +39,7 @@ export function Abbreviation({
       side={side}
       align="start"
       content={full}
-      triggerAriaLabel={full}
+      triggerAriaLabel={`${children}, ${midSentence(full)}`}
       triggerClassName={cn(
         // Sits in the line like text; the dotted underline is the cue.
         'relative inline w-auto underline decoration-muted-foreground/60 decoration-dotted underline-offset-2',

@@ -1729,18 +1729,19 @@ test.describe('Beatmap Detail Page', () => {
       await expect(
         card.getByRole('heading', { name: 'Attributes' })
       ).toBeVisible({ timeout: 10000 });
-      // Each short label names its attribute in full and shows it on tap.
-      for (const [short, full] of [
-        ['CS', 'Circle size'],
-        ['AR', 'Approach rate'],
-        ['OD', 'Overall difficulty'],
-        ['HP', 'HP drain'],
+      // Each short label's name starts with the short form on screen, then
+      // names the attribute in full, which opens on tap.
+      for (const [short, name] of [
+        ['CS', 'CS, circle size'],
+        ['AR', 'AR, approach rate'],
+        ['OD', 'OD, overall difficulty'],
+        ['HP', 'HP, HP drain'],
       ]) {
-        const label = card.getByRole('button', { name: full, exact: true });
+        const label = card.getByRole('button', { name, exact: true });
         await expect(label).toHaveText(short);
       }
 
-      const circleSize = card.getByRole('button', { name: 'Circle size' });
+      const circleSize = card.getByRole('button', { name: 'CS, circle size' });
       await circleSize.click();
       await expect(
         page.getByRole('dialog').filter({ hasText: 'Circle size' })

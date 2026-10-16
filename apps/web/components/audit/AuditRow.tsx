@@ -55,11 +55,16 @@ export function AuditActor({
     );
   }
 
-  // No profile to open: the same avatar and name, unlinked.
+  // No profile to open: the same avatar and name, unlinked. The avatar's
+  // wrapper copies the inline EntityLink's, so both rows keep the line's
+  // height and centre the avatar on it.
   return (
     <span>
       {avatar ? (
-        <span aria-hidden="true" className="mr-1.5 inline-flex align-middle">
+        <span
+          aria-hidden="true"
+          className="mr-1.5 inline-flex h-lh items-center align-top"
+        >
           {avatar}
         </span>
       ) : null}

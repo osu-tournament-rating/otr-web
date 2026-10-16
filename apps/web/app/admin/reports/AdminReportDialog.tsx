@@ -201,7 +201,8 @@ export function AdminReportDialog({
               {/* Confirm report and Dismiss stay disabled until it has text. */}
               <FormFieldLabel
                 htmlFor={commentId}
-                hint={<span id={commentHintId}>Required</span>}
+                hint="Required"
+                hintId={commentHintId}
               >
                 Comment
               </FormFieldLabel>

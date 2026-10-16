@@ -261,12 +261,13 @@ export default function CascadeContextBanner({
                 key={descendant.entityType}
                 variant="outline"
                 size="sm"
+                // Wraps on a phone instead of running past the row.
+                wrap
                 aria-expanded={isOpen}
                 onClick={() =>
                   setOpenLevel(isOpen ? null : descendant.entityType)
                 }
-                // Wraps on a phone instead of running past the row.
-                className="h-auto min-h-8 max-w-full py-1.5 text-left font-normal whitespace-normal [&_svg]:transition-transform"
+                className="font-normal [&_svg]:transition-transform"
               >
                 <CountLabel descendant={descendant} />
                 <ChevronDown

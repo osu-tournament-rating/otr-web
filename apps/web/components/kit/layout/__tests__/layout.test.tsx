@@ -161,14 +161,23 @@ describe('InfoButton', () => {
 });
 
 describe('Abbreviation', () => {
-  it('names the short form by its full form and opens it on tap', () => {
+  it('names the short form, then its full form, and opens it on tap', () => {
     const html = render(<Abbreviation full="Circle size">CS</Abbreviation>);
 
-    expect(html).toContain('<button type="button" aria-label="Circle size"');
+    // The name starts with the visible "CS" (WCAG 2.5.3, label in name).
+    expect(html).toContain(
+      '<button type="button" aria-label="CS, circle size"'
+    );
     expect(html).toContain('decoration-dotted');
     expect(html).toContain('>CS</button>');
     // No hover-only title attribute.
     expect(html).not.toContain('title=');
+  });
+
+  it('keeps the capitals of a full form that starts with a short form', () => {
+    const html = render(<Abbreviation full="HP drain">HP</Abbreviation>);
+
+    expect(html).toContain('aria-label="HP, HP drain"');
   });
 
   it('has a tap target of at least 24px that moves no text', () => {
@@ -408,7 +417,7 @@ describe('StatTile', () => {
       />
     );
 
-    expect(html).toMatch(/<dt[^>]*>.*aria-label="Circle size".*<\/dt>/);
+    expect(html).toMatch(/<dt[^>]*>.*aria-label="CS, circle size".*<\/dt>/);
     expect(html).toContain('aria-label="About circle size"');
     // A node is not truncated, so a button inside keeps its focus ring.
     expect(html).not.toContain('class="truncate"');
