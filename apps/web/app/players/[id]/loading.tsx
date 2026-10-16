@@ -20,6 +20,13 @@ import {
   PlayerBeatmapsSkeleton,
   PlayerTournamentsSkeleton,
 } from '@/components/player/PlayerSectionSkeletons';
+import {
+  MOD_DISTRIBUTION_INFO,
+  MOD_PERFORMANCE_INFO,
+  OPPONENTS_INFO,
+  RATING_HISTORY_INFO,
+  TEAMMATES_INFO,
+} from '@/components/player/section-info';
 import { RATED_RULESETS } from '@/lib/kit/format/ruleset';
 
 const STAT_LABELS = [
@@ -34,10 +41,30 @@ const STAT_LABELS = [
 // The chart panels below the rating history, in page order. The mod charts
 // grow with the number of mods; this is a typical player's.
 const CHART_PANELS = [
-  { icon: ChartBarBig, title: 'Mod performance', plot: 'h-44' },
-  { icon: ChartPie, title: 'Mod distribution', plot: 'h-72 md:h-44' },
-  { icon: Users, title: 'Frequent teammates', plot: 'h-72' },
-  { icon: Swords, title: 'Frequent opponents', plot: 'h-72' },
+  {
+    icon: ChartBarBig,
+    title: 'Mod performance',
+    info: MOD_PERFORMANCE_INFO,
+    plot: 'h-44',
+  },
+  {
+    icon: ChartPie,
+    title: 'Mod distribution',
+    info: MOD_DISTRIBUTION_INFO,
+    plot: 'h-72 md:h-44',
+  },
+  {
+    icon: Users,
+    title: 'Frequent teammates',
+    info: TEAMMATES_INFO,
+    plot: 'h-72',
+  },
+  {
+    icon: Swords,
+    title: 'Frequent opponents',
+    info: OPPONENTS_INFO,
+    plot: 'h-72',
+  },
 ] as const;
 
 export default function PlayerLoading() {
@@ -74,10 +101,25 @@ export default function PlayerLoading() {
       </PanelSkeleton>
 
       <PanelSkeleton>
-        <SectionHeaderSkeleton icon={ChartLine} title="Rating history" />
-        <PanelBody className="flex flex-col gap-3">
-          <SkeletonText className="block h-8 w-full max-w-md" />
-          <SkeletonText className="block h-80 w-full rounded-lg" />
+        {/* The peak rating meta: a tier icon, "Peak rating" and the rating. */}
+        <SectionHeaderSkeleton
+          icon={ChartLine}
+          title="Rating history"
+          infoText={RATING_HISTORY_INFO}
+          meta="w-28"
+        />
+        {/* The two control groups (the view switches, then the decay chip
+            and time range) wrap onto two rows on phones, as the loaded ones
+            do; then the total change line and the 288px chart. */}
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4">
+          <SkeletonText className="block h-8 w-56" />
+          <SkeletonText className="block h-8 w-56" />
+        </div>
+        <p className="px-4 pt-3 text-sm">
+          <SkeletonText className="w-36" />
+        </p>
+        <PanelBody>
+          <SkeletonText className="block h-72 w-full rounded-lg" />
         </PanelBody>
       </PanelSkeleton>
 
@@ -87,6 +129,7 @@ export default function PlayerLoading() {
             <SectionHeaderSkeleton
               icon={panel.icon}
               title={panel.title}
+              infoText={panel.info}
               meta={false}
             />
             <PanelBody>

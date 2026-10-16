@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import useSWRInfinite from 'swr/infinite';
 import { ChevronDown } from 'lucide-react';
 import { AuditEntityType, VerificationStatus } from '@otr/core/osu';
@@ -10,9 +10,9 @@ import type {
   CascadeDescendant,
 } from '@/lib/orpc/schema/audit';
 import {
-  childCountTail,
   entityTypeToSlug,
   ENTITY_TYPE_PLURALS,
+  formatAffectedCount,
 } from '@/lib/audit-entity-types';
 import { ACTION_NOUNS } from '@/lib/audit-actions';
 import { orpc } from '@/lib/orpc/orpc';
@@ -20,11 +20,11 @@ import SectionError from '@/components/error/SectionError';
 import { Button } from '@/components/kit/controls/Button';
 import { RowListSkeleton } from '@/components/kit/feedback/Skeletons';
 import { VerificationStatusIcon } from '@/components/kit/status/VerificationStatusIcon';
-import { formatCount, formatId } from '@/lib/kit/format/number';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { formatId } from '@/lib/kit/format/number';
 import { VERIFICATION_STATUS_COPY } from '@/lib/kit/status/verification';
 import { cn } from '@/lib/utils';
-import { formatActionBreakdown } from './ActionBreakdownPhrase';
-import { AuditInlineLink } from './AuditRow';
+import { getBreakdownSummaryParts } from './ActionBreakdownPhrase';
 import { getEntityTypeName, nameOr } from './auditParams';
 
 type CascadeContextBannerProps = {
@@ -33,14 +33,26 @@ type CascadeContextBannerProps = {
   viewedEntity?: { entityType: AuditEntityType; entityId: number };
 };
 
-function countLabel(descendant: CascadeDescendant): string {
+/**
+ * "85 of 118 matches", or "58 matches: 57 verified, 1 rejected". Each half
+ * wraps as a unit, so a level too wide for a phone breaks after the colon.
+ */
+function CountLabel({ descendant }: { descendant: CascadeDescendant }) {
   const { entityType, affectedCount, totalCount, actionBreakdown } = descendant;
-  const tail = childCountTail(entityType, affectedCount, totalCount);
+  const parts = actionBreakdown
+    ? getBreakdownSummaryParts(actionBreakdown, entityType, totalCount)
+    : [formatAffectedCount(entityType, affectedCount, totalCount)];
 
-  if (actionBreakdown) {
-    return `${formatActionBreakdown(actionBreakdown)} ${tail}`;
-  }
-  return `${formatCount(affectedCount)} ${tail}`;
+  return (
+    <span>
+      {parts.map((part, index) => (
+        <Fragment key={part}>
+          {index > 0 ? ' ' : null}
+          <span className="inline-block">{part}</span>
+        </Fragment>
+      ))}
+    </span>
+  );
 }
 
 type AffectedEntity = {
@@ -152,12 +164,12 @@ function AffectedEntities({
                     />
                   ) : null}
                 </span>
-                <AuditInlineLink href={`/audit/${slug}/${entity.id}`}>
+                <EntityLink href={`/audit/${slug}/${entity.id}`} wrap>
                   {nameOr(
                     entity.entityName,
                     `${getEntityTypeName(entityType)} #${formatId(entity.id)}`
                   )}
-                </AuditInlineLink>
+                </EntityLink>
               </li>
             );
           })}
@@ -223,13 +235,14 @@ export default function CascadeContextBanner({
           </>
         ) : (
           <>
-            Part of{' '}
-            <AuditInlineLink
-              inSentence
+            Part of {/* The name keeps the text colour in the muted line. */}
+            <EntityLink
+              variant="inline"
               href={`/audit/${slug}/${context.topEntityId}`}
+              className="text-foreground"
             >
               {entityName}
-            </AuditInlineLink>{' '}
+            </EntityLink>{' '}
             {actionLabel}
             {context.descendants.length > 0 && ' — also affected:'}
           </>
@@ -252,9 +265,10 @@ export default function CascadeContextBanner({
                 onClick={() =>
                   setOpenLevel(isOpen ? null : descendant.entityType)
                 }
-                className="font-normal [&_svg]:transition-transform"
+                // Wraps on a phone instead of running past the row.
+                className="h-auto min-h-8 max-w-full py-1.5 text-left font-normal whitespace-normal [&_svg]:transition-transform"
               >
-                {countLabel(descendant)}
+                <CountLabel descendant={descendant} />
                 <ChevronDown
                   aria-hidden
                   className={cn(

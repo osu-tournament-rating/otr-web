@@ -11,14 +11,12 @@ import {
 import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { formatDate } from '@/lib/kit/format/date';
+import { RATING_ADJUSTMENT_TYPE_LABELS } from '@/lib/kit/format/enum-labels';
 import { formatNumber, formatRating } from '@/lib/kit/format/number';
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 import { sortData } from '@/lib/utils/playerRatingChart';
 
-import {
-  RATING_ADJUSTMENT_TYPE_LABELS,
-  type RatingMetric,
-} from './rating-adjustment';
+import type { RatingMetric } from './rating-adjustment';
 
 function formatMetric(metric: RatingMetric, value: number): string {
   return metric === 'rating'

@@ -149,7 +149,7 @@ test.describe('Filtering during the maintenance window', () => {
   test.describe('Signed-in user', () => {
     test.use({ storageState: STORAGE_STATE.user });
 
-    test('shows the unavailable state instead of the form during the window', async ({
+    test('shows only the unavailable notice during the window', async ({
       page,
     }) => {
       await page.setExtraHTTPHeaders({
@@ -164,6 +164,10 @@ test.describe('Filtering during the maintenance window', () => {
       ).toContainText('Filtering is temporarily unavailable', {
         timeout: 10000,
       });
+      // The outage notice takes the compliance rules' place.
+      await expect(
+        page.locator('[data-testid="filtering-compliance"]')
+      ).toHaveCount(0);
       await expect(page.locator('[data-testid="filter-form"]')).toHaveCount(0);
     });
 
@@ -178,6 +182,9 @@ test.describe('Filtering during the maintenance window', () => {
       await expect(page.locator('[data-testid="filter-form"]')).toBeVisible({
         timeout: 10000,
       });
+      await expect(
+        page.locator('[data-testid="filtering-compliance"]')
+      ).toBeVisible();
       await expect(
         page.locator('[data-testid="filtering-unavailable"]')
       ).toHaveCount(0);

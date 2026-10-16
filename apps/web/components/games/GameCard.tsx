@@ -55,6 +55,7 @@ export default function GameCard({
   game,
   number,
   players = [],
+  countryNames,
   highlighted = false,
   highlightScoreId = null,
 }: {
@@ -62,6 +63,8 @@ export default function GameCard({
   /** The game's place in the match, counting from 1. */
   number: number;
   players: MatchPlayer[];
+  /** The players' country names by code, from the server. */
+  countryNames: Record<string, string>;
   highlighted?: boolean;
   highlightScoreId?: number | null;
 }) {
@@ -73,16 +76,22 @@ export default function GameCard({
 
   const outcome = getOutcome(scoresByTeam);
   const renderScores = (team: Team) =>
-    (scoresByTeam.get(team) ?? []).map((score) => (
-      <ScoreCard
-        key={score.id}
-        score={score}
-        matchId={game.matchId}
-        gameNumber={number}
-        player={players.find((player) => player.id === score.playerId)}
-        highlighted={score.id === highlightScoreId}
-      />
-    ));
+    (scoresByTeam.get(team) ?? []).map((score) => {
+      const player = players.find((player) => player.id === score.playerId);
+      return (
+        <ScoreCard
+          key={score.id}
+          score={score}
+          matchId={game.matchId}
+          gameNumber={number}
+          player={player}
+          countryName={
+            player?.country ? countryNames[player.country] : undefined
+          }
+          highlighted={score.id === highlightScoreId}
+        />
+      );
+    });
   const hasNoTeamScores = (scoresByTeam.get(Team.NoTeam)?.length ?? 0) > 0;
 
   return (

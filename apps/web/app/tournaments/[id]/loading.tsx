@@ -8,15 +8,17 @@ import { DetailHero } from '@/components/kit/layout/DetailHero';
 import {
   HeroTabLabel,
   heroTabClassName,
+  heroTabCountsFromClassName,
   heroTabListClassName,
 } from '@/components/kit/layout/HeroTabs';
 import { PageFrame } from '@/components/kit/layout/PageFrame';
 import { RowList, RowListItem } from '@/components/kit/layout/RowList';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { cn } from '@/lib/utils';
 
-/** A tab's count, shown from `sm` like the loaded tabs' counts. */
+/** A tab's count; the tabs show counts from `sm`, like the loaded ones. */
 function TabCountSkeleton() {
-  return <SkeletonText className="hidden h-3 w-6 sm:inline-block" />;
+  return <SkeletonText className="h-3 w-6" />;
 }
 
 /** A match row while it loads: result, name, status, games and time. */
@@ -55,7 +57,10 @@ export default function TournamentLoading() {
           </>
         }
         tabs={
-          <div className={heroTabListClassName} aria-hidden="true">
+          <div
+            className={cn(heroTabListClassName, heroTabCountsFromClassName.sm)}
+            aria-hidden="true"
+          >
             <span className={heroTabClassName} aria-current="page">
               <HeroTabLabel count={<TabCountSkeleton />}>Matches</HeroTabLabel>
             </span>
@@ -72,14 +77,14 @@ export default function TournamentLoading() {
         }
       />
       <PanelSkeleton>
-        {/* The sort control's bars, 40px tall like the loaded strip. */}
+        {/* The small sort control's bars, 32px tall like the loaded ones. */}
         <SectionHeader
           icon={Swords}
           title="Matches"
           actions={
-            <span className="flex gap-2">
-              <SkeletonText className="block h-10 w-44 md:w-48" />
-              <SkeletonText className="block size-10" />
+            <span className="flex w-52 gap-2 md:w-auto">
+              <SkeletonText className="block h-8 flex-1 md:w-40 md:flex-none" />
+              <SkeletonText className="block size-8" />
             </span>
           }
         />

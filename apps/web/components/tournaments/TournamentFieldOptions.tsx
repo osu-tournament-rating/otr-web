@@ -6,7 +6,6 @@ import type * as React from 'react';
 import {
   LOBBY_SIZES,
   TOURNAMENT_REJECTION_REASONS,
-  toFlagMask,
 } from '@/app/tournaments/list-params';
 import RulesetIcon from '@/components/icons/RulesetIcon';
 import { ChoiceChip } from '@/components/kit/lists/ChoiceChip';
@@ -15,6 +14,7 @@ import { SelectContent, SelectItem } from '@/components/ui/select';
 import { TOURNAMENT_REJECTION_REASON_LABELS } from '@/lib/kit/format/enum-labels';
 import { formatLobbySize } from '@/lib/kit/format/fields';
 import { RATED_RULESETS, getRulesetLabel } from '@/lib/kit/format/ruleset';
+import { flagsToMask } from '@/lib/kit/lists/params';
 import {
   VERIFICATION_STATUS_ORDER,
   getVerificationStatusName,
@@ -106,7 +106,7 @@ export function RejectionReasonChips({
               const flags = TOURNAMENT_REJECTION_REASONS.filter((flag) =>
                 flag === reason ? !selected : (value & flag) === flag
               );
-              onValueChange(toFlagMask(flags));
+              onValueChange(flagsToMask(flags));
             }}
           >
             {TOURNAMENT_REJECTION_REASON_LABELS[reason]}

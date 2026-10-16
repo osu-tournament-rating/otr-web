@@ -57,7 +57,7 @@ test.describe('Tournaments', () => {
       await expect(searchBox(page)).toBeVisible({ timeout: 10000 });
     });
 
-    test('previews admin notes without shifting tournament rows', async ({
+    test('marks admin notes without a hover-only preview or shifting rows', async ({
       page,
     }) => {
       await page.goto(ROUTES.tournaments);
@@ -76,42 +76,38 @@ test.describe('Tournaments', () => {
       );
       expect(new Set(slotWidths)).toEqual(new Set([20]));
 
-      const noteTriggers = page.locator(
-        '[data-testid="tournament-admin-notes-trigger"]'
+      const markers = page.locator(
+        '[data-testid="tournament-admin-notes-marker"]'
       );
-      await noteTriggers.first().scrollIntoViewIfNeeded();
-      await expect(noteTriggers.first()).toBeVisible();
-      expect(await noteTriggers.count()).toBeLessThan(await noteSlots.count());
+      await markers.first().scrollIntoViewIfNeeded();
+      await expect(markers.first()).toBeVisible();
+      expect(await markers.count()).toBeLessThan(await noteSlots.count());
 
-      const trigger = noteTriggers.first();
-      const row = trigger.locator(
+      const marker = markers.first();
+      const row = marker.locator(
         'xpath=ancestor::*[@data-testid="tournament-list-item"]'
       );
-      const abbreviation = row.locator(
-        '[data-testid="tournament-abbreviation"]'
-      );
-      const rowBoxBeforeHover = await row.boundingBox();
-      const abbreviationBox = await abbreviation.boundingBox();
-      const triggerBox = await trigger.boundingBox();
-
+      const abbreviationBox = await row
+        .locator('[data-testid="tournament-abbreviation"]')
+        .boundingBox();
+      const markerBox = await marker.boundingBox();
       expect(abbreviationBox).not.toBeNull();
-      expect(triggerBox).not.toBeNull();
-      expect(triggerBox!.x).toBeGreaterThanOrEqual(
+      expect(markerBox).not.toBeNull();
+      expect(markerBox!.x).toBeGreaterThanOrEqual(
         abbreviationBox!.x + abbreviationBox!.width
       );
 
-      await trigger.hover();
-      const tooltip = page.getByRole('tooltip').filter({
-        has: page.locator('[data-testid="tournament-admin-notes-content"]'),
-      });
-      await expect(tooltip.last()).toBeVisible();
-      await expect(tooltip.last()).toContainText(
-        /By .+ on [A-Z][a-z]{2} \d{2}, \d{4}/
+      // The row is one link: its name says how many notes there are, and
+      // nothing inside it opens on hover alone.
+      await expect(row.getByRole('link')).toHaveAccessibleName(
+        /^View .+, \d+ admin notes?$/
       );
-      await expect(tooltip.last().locator(':scope > span > svg')).toHaveCount(
-        0
-      );
-      expect(await row.boundingBox()).toEqual(rowBoxBeforeHover);
+      const rowBox = await row.boundingBox();
+      await marker.hover();
+      // Longer than a tooltip's open delay, so a hover preview would show.
+      await page.waitForTimeout(800);
+      await expect(page.getByRole('tooltip')).toHaveCount(0);
+      expect(await row.boundingBox()).toEqual(rowBox);
     });
 
     test('says "Not in ratings yet" instead of an amber pill', async ({
@@ -489,6 +485,27 @@ test.describe('Tournaments', () => {
       await expect(
         page.getByRole('link', { name: 'View audit history' })
       ).toBeVisible();
+    });
+
+    test('four tabs fit a 360px phone and keep their counts in their names', async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 360, height: 780 });
+      await page.goto(ROUTES.tournament(TEST_PUBLIC_TOURNAMENT_ID));
+      await page.waitForLoadState('networkidle');
+
+      const tabs = page.locator('[data-testid="tournament-tabs"]');
+      await expect(tabs).toBeVisible({ timeout: 10000 });
+      const overflow = await tabs.evaluate(
+        (nav) => nav.scrollWidth - nav.clientWidth
+      );
+      expect(overflow).toBeLessThanOrEqual(0);
+      await expect(page.locator('[data-testid="tab-stats"]')).toBeInViewport({
+        ratio: 1,
+      });
+      await expect(
+        page.locator('[data-testid="tab-matches"]')
+      ).toHaveAccessibleName(/^Matches\s*[\d,]+$/);
     });
 
     test('page title is populated', async ({ page }) => {

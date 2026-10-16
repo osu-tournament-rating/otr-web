@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
+import { SETTINGS_COPY } from '@/app/settings/settings-copy';
 import { Button } from '@/components/kit/controls/Button';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
 import { Panel, PanelBody } from '@/components/kit/layout/Panel';
@@ -55,9 +56,7 @@ export default function FriendsSyncClient({
       <SectionHeader icon={Users} title="Friends" />
       <PanelBody className="flex flex-col gap-4">
         <div className="flex flex-col gap-1 text-sm">
-          <p className="text-muted-foreground">
-            Sync your osu! friends list to filter the leaderboard by friends.
-          </p>
+          <p className="text-muted-foreground">{SETTINGS_COPY.friends}</p>
           <p>
             {friendCount > 0
               ? `${friends} synced.`

@@ -144,6 +144,31 @@ test.describe('Player Profile Page', () => {
       }
     });
 
+    test('rating history views stay in the address', async ({ page }) => {
+      await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
+      await page.waitForLoadState('networkidle');
+
+      const chart = page.locator('[data-testid="player-rating-chart"]');
+      await expect(chart).toBeVisible({ timeout: 15000 });
+
+      await chart.getByRole('radio', { name: 'Volatility' }).click();
+      await chart.getByRole('radio', { name: 'Table' }).click();
+      await expect(page).toHaveURL(/metric=volatility/);
+      await expect(page).toHaveURL(/view=table/);
+      await expect(
+        chart.getByRole('region', { name: 'Volatility history' })
+      ).toBeVisible();
+
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await expect(
+        chart.getByRole('radio', { name: 'Volatility' })
+      ).toBeChecked();
+      await expect(
+        chart.getByRole('region', { name: 'Volatility history' })
+      ).toBeVisible({ timeout: 10000 });
+    });
+
     test('displays mod stats charts', async ({ page }) => {
       await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
       await page.waitForLoadState('networkidle');
@@ -191,6 +216,29 @@ test.describe('Player Profile Page', () => {
         '[data-testid="tournament-history-title"]'
       );
       await expect(tournamentSection).toBeVisible({ timeout: 10000 });
+    });
+
+    test('Show more reveals more tournaments', async ({ page }) => {
+      await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
+      await page.waitForLoadState('networkidle');
+
+      const panel = page.locator('[data-slot="panel"]').filter({
+        has: page.locator('[data-testid="tournament-history-title"]'),
+      });
+      const rows = panel.locator('[data-testid="player-tournament-row"]');
+      await expect(rows.first()).toBeVisible({ timeout: 10000 });
+      const footer = panel.locator('[data-slot="load-more"]');
+      // The test player may have five tournaments or fewer.
+      test.skip(
+        !(await footer.isVisible()),
+        'The test player has no more tournaments to show'
+      );
+
+      await expect(footer).toContainText('Showing 5 of ');
+      await footer.getByRole('button', { name: 'Show more' }).click();
+      await expect
+        .poll(() => rows.count(), { timeout: 10000 })
+        .toBeGreaterThan(5);
     });
 
     test('a tournament row expands its matches in place', async ({ page }) => {

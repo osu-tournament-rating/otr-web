@@ -16,6 +16,44 @@ type FilteringPageClientProps = {
   filterBlocked: boolean;
 };
 
+/** The rules a host agrees to before filtering, above the form. */
+function HostComplianceCallout() {
+  return (
+    <Callout
+      tone="warning"
+      title="Host compliance"
+      data-testid="filtering-compliance"
+    >
+      <p>
+        Hosts must comply with the{' '}
+        <a href={FILTERING_RULES_URL}>
+          official tournament support filtering rules
+        </a>
+        :
+      </p>
+      <ol className="mt-2 ml-4 list-decimal space-y-1">
+        <li>
+          Receive <strong className="font-semibold">written permission</strong>{' '}
+          from osu! support by contacting{' '}
+          <a href="mailto:tournaments@ppy.sh">tournaments@ppy.sh</a> via email
+          before using this tool in officially-supported tournaments.
+        </li>
+        <li>
+          After creating a filter report, hosts must copy the provided forum
+          post text exactly as-is and include it in their tournament forum post.
+          Do not modify the filtering result.
+        </li>
+      </ol>
+    </Callout>
+  );
+}
+
+/**
+ * The registrant filter: the host compliance rules, then the form and its
+ * results. During the weekly rating run the page shows only the outage
+ * notice, in the compliance rules' place: there is nothing to comply with
+ * while the tool is off.
+ */
 export default function FilteringPageClient({
   filterBlocked,
 }: FilteringPageClientProps) {
@@ -29,33 +67,6 @@ export default function FilteringPageClient({
         title="Tournament registrant filtering"
         description="Filter your tournament registrants based on rating eligibility criteria."
       />
-      <Callout
-        tone="warning"
-        title="Host compliance"
-        data-testid="filtering-compliance"
-      >
-        <p>
-          Hosts must comply with the{' '}
-          <a href={FILTERING_RULES_URL}>
-            official tournament support filtering rules
-          </a>
-          :
-        </p>
-        <ol className="mt-2 ml-4 list-decimal space-y-1">
-          <li>
-            Receive{' '}
-            <strong className="font-semibold">written permission</strong> from
-            osu! support by contacting{' '}
-            <a href="mailto:tournaments@ppy.sh">tournaments@ppy.sh</a> via email
-            before using this tool in officially-supported tournaments.
-          </li>
-          <li>
-            After creating a filter report, hosts must copy the provided forum
-            post text exactly as-is and include it in their tournament forum
-            post. Do not modify the filtering result.
-          </li>
-        </ol>
-      </Callout>
       {filterBlocked ? (
         <Callout
           tone="warning"
@@ -66,10 +77,13 @@ export default function FilteringPageClient({
           Ratings are currently recalculating, please check back later.
         </Callout>
       ) : (
-        <FilteringForm
-          onFilteringComplete={setFilteringResults}
-          filteringResults={filteringResults}
-        />
+        <>
+          <HostComplianceCallout />
+          <FilteringForm
+            onFilteringComplete={setFilteringResults}
+            filteringResults={filteringResults}
+          />
+        </>
       )}
     </PageFrame>
   );

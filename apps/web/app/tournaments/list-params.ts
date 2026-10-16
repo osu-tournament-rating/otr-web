@@ -10,6 +10,8 @@ import {
   booleanParam,
   dayRangeParam,
   defineListParams,
+  flagsParam,
+  flagsToMask,
   listStateHref,
   numberParam,
   pageParam,
@@ -18,8 +20,6 @@ import {
   searchParam,
   sortParam,
   toSearchParams,
-  type ListParam,
-  type ListParamDefinition,
   type ListState,
   type SearchParamsInput,
 } from '@/lib/kit/lists/params';
@@ -74,48 +74,6 @@ export const TOURNAMENT_REJECTION_REASONS: readonly TournamentRejectionReason[] 
     TournamentRejectionReason.IncompleteData,
   ];
 
-/** The bitmask for a set of flags; 0 for none. */
-export function toFlagMask(flags: readonly number[]): number {
-  return flags.reduce((mask, flag) => mask | flag, 0);
-}
-
-/**
- * A bitflag filter kept as one number in the address
- * (`rejectionReason=9`), the format the list has always used, and held as
- * the list of set flags so a ChoiceFilter can edit it. Unknown bits are
- * dropped.
- */
-function flagsParam<T extends number>(
-  flags: readonly T[],
-  options: { key?: string } = {}
-): ListParamDefinition<T[]> {
-  const canonical = (values: readonly T[]) =>
-    flags.filter((flag) => values.includes(flag));
-
-  return {
-    resolve: (name): ListParam<T[]> => {
-      const key = options.key ?? name;
-      return {
-        name,
-        keys: [key],
-        role: 'filter',
-        defaultValue: [],
-        parse: (params) => {
-          const raw = params.get(key)?.trim() ?? '';
-          if (!/^\d+$/.test(raw)) return [];
-          const mask = Number(raw);
-          return flags.filter((flag) => (mask & flag) === flag);
-        },
-        write: (value, params) => {
-          const mask = toFlagMask(canonical(value));
-          if (mask > 0) params.set(key, String(mask));
-        },
-        equals: (a, b) => toFlagMask(canonical(a)) === toFlagMask(canonical(b)),
-      };
-    },
-  };
-}
-
 /**
  * Everything that changes what the tournament list shows. The server page
  * parses it and fetches; the toolbar reads and writes it. The rank, date,
@@ -157,7 +115,7 @@ export function tournamentListHref(state: TournamentListState): string {
 export function toTournamentListRequest(
   state: TournamentListState
 ): TournamentListRequest {
-  const reasonMask = toFlagMask(state.reason);
+  const reasonMask = flagsToMask(state.reason);
 
   return {
     page: state.page,

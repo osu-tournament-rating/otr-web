@@ -39,6 +39,7 @@ function HighlightSub({ stat }: { stat: HighlightStat }) {
           />
         }
         className="gap-1.5"
+        wrap
       >
         {stat.player.username}
       </EntityLink>

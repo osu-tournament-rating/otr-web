@@ -2,25 +2,23 @@ import { FilteringFailReason } from '@otr/core/osu';
 
 import { Badge } from '@/components/kit/status/Badge';
 import TapTooltip from '@/components/tap-tooltip';
+import {
+  FILTERING_FAIL_REASON_DESCRIPTIONS,
+  FILTERING_FAIL_REASON_LABELS,
+  getSetFlags,
+} from '@/lib/kit/format/enum-labels';
 
 /** The reasons the filter tool can set today: its form has only rating bounds. */
-const VISIBLE_FAILURE_REASONS = [
-  {
-    flag: FilteringFailReason.MinRating,
-    label: 'Low rating',
-    description: "The player's rating is below the minimum threshold",
-  },
-  {
-    flag: FilteringFailReason.MaxRating,
-    label: 'High rating',
-    description: "The player's rating is above the maximum threshold",
-  },
-] as const;
+const VISIBLE_FAILURE_REASONS: readonly FilteringFailReason[] = [
+  FilteringFailReason.MinRating,
+  FilteringFailReason.MaxRating,
+];
 
-function getVisibleReasons(failureReason: number | null | undefined) {
-  if (!failureReason) return [];
-  return VISIBLE_FAILURE_REASONS.filter(
-    (reason) => (failureReason & reason.flag) !== 0
+function getVisibleReasons(
+  failureReason: number | null | undefined
+): FilteringFailReason[] {
+  return getSetFlags(failureReason ?? 0, FILTERING_FAIL_REASON_LABELS).filter(
+    (flag) => VISIBLE_FAILURE_REASONS.includes(flag)
   );
 }
 
@@ -28,7 +26,9 @@ function getVisibleReasons(failureReason: number | null | undefined) {
 export function getFailureReasons(
   failureReason: number | null | undefined
 ): string[] {
-  return getVisibleReasons(failureReason).map((reason) => reason.label);
+  return getVisibleReasons(failureReason).map(
+    (flag) => FILTERING_FAIL_REASON_LABELS[flag]
+  );
 }
 
 /**
@@ -45,19 +45,23 @@ export default function FailureReasonsBadges({
 
   return (
     <span className="inline-flex flex-wrap gap-1">
-      {reasons.map((reason) => (
-        <TapTooltip
-          key={reason.flag}
-          content={reason.description}
-          side="top"
-          triggerAriaLabel={`${reason.label}: ${reason.description}`}
-          triggerClassName="w-auto rounded-full"
-        >
-          <Badge tone="destructive" size="sm">
-            {reason.label}
-          </Badge>
-        </TapTooltip>
-      ))}
+      {reasons.map((flag) => {
+        const label = FILTERING_FAIL_REASON_LABELS[flag];
+        const description = FILTERING_FAIL_REASON_DESCRIPTIONS[flag];
+        return (
+          <TapTooltip
+            key={flag}
+            content={description}
+            side="top"
+            triggerAriaLabel={`${label}: ${description}`}
+            triggerClassName="w-auto rounded-full"
+          >
+            <Badge tone="destructive" size="sm">
+              {label}
+            </Badge>
+          </TapTooltip>
+        );
+      })}
     </span>
   );
 }

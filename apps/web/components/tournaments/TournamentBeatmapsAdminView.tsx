@@ -13,6 +13,7 @@ import BeatmapSelectionBar from '@/components/beatmaps/list/BeatmapSelectionBar'
 import { Button } from '@/components/kit/controls/Button';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
 import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
+import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
 import { IconButton } from '@/components/kit/controls/IconButton';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import { Panel } from '@/components/kit/layout/Panel';
@@ -22,7 +23,6 @@ import {
   type SortOption,
 } from '@/components/kit/lists/SortControl';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { hasAdminScope } from '@/lib/auth/roles';
 import { getBeatmapRulesetLabel } from '@/lib/beatmaps/presentation';
@@ -40,14 +40,13 @@ import {
 } from '@/lib/kit/format/number';
 import { defineListParams, sortParam } from '@/lib/kit/lists/params';
 import type { SortState } from '@/lib/kit/lists/sort';
+import { useListState } from '@/lib/kit/lists/use-list-state';
 import { orpc } from '@/lib/orpc/orpc';
 import type {
   TournamentBeatmap,
   TournamentMatchGame,
 } from '@/lib/orpc/schema/tournament';
 import { beatmapListSortValues } from '@/lib/validation-schema';
-
-import { useAddressListState } from './useAddressListState';
 
 interface TournamentBeatmapsAdminViewProps {
   tournamentId: number;
@@ -119,6 +118,7 @@ function PoolPhoneRows({
     <>
       <div className="border-b px-4 py-3">
         <SortControl
+          size="sm"
           label="Sort pooled beatmaps by"
           options={POOL_SORT_OPTIONS}
           value={sort}
@@ -169,7 +169,8 @@ export default function TournamentBeatmapsAdminView({
   const session = useSession();
   const router = useRouter();
   const isAdmin = hasAdminScope(session?.scopes);
-  const { state, setState } = useAddressListState(POOL_PARAMS);
+  // The whole pool is on the client already: a sort only rewrites the address.
+  const { state, setState } = useListState(POOL_PARAMS, { shallow: true });
   const textareaId = useId();
 
   const [selectedBeatmapIds, setSelectedBeatmapIds] = useState<Set<number>>(
@@ -445,12 +446,12 @@ export default function TournamentBeatmapsAdminView({
             }
           >
             <div className="flex flex-col gap-2">
-              <div className="flex min-h-5 items-center justify-between gap-2">
-                <Label htmlFor={textareaId}>Beatmaps</Label>
-                <span className="text-xs text-muted-foreground">
-                  Separate with commas or new lines
-                </span>
-              </div>
+              <FormFieldLabel
+                htmlFor={textareaId}
+                hint="Separate with commas or new lines"
+              >
+                Beatmaps
+              </FormFieldLabel>
               <Textarea
                 id={textareaId}
                 placeholder="Enter beatmap IDs or URLs"

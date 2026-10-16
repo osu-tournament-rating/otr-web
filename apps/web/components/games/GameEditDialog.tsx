@@ -12,8 +12,6 @@ import { useState } from 'react';
 import { type Resolver, useForm } from 'react-hook-form';
 import type { z } from 'zod';
 
-import { Button } from '@/components/kit/controls/Button';
-import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
 import {
   ALL_RULESET_LABELS,
   LabelSelectContent,
@@ -24,7 +22,9 @@ import {
   changedFieldClass,
   combineFlags,
   flagOptions,
-} from '@/components/matches/adminFormFields';
+} from '@/components/admin-forms/adminFormFields';
+import { Button } from '@/components/kit/controls/Button';
+import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
 import { MultipleSelect } from '@/components/select/multiple-select';
 import { Checkbox } from '@/components/ui/checkbox';
 import {

@@ -6,6 +6,7 @@ import {
   LEADERBOARD_RANGES,
   LEADERBOARD_TIER_LABELS,
 } from '@/app/leaderboard/list-params';
+import { CountryCombobox } from '@/components/kit/country/CountryCombobox';
 import { ActiveFilterChips } from '@/components/kit/lists/ActiveFilterChips';
 import {
   ChoiceFilter,
@@ -22,6 +23,7 @@ import {
   type SortOption,
 } from '@/components/kit/lists/SortControl';
 import { tournamentRankScale } from '@/lib/filters/tournament-rank';
+import { type CountryOption, getCountryName } from '@/lib/kit/format/country';
 import { fieldLabel } from '@/lib/kit/format/fields';
 import {
   formatChoiceFilterLabel,
@@ -33,9 +35,6 @@ import {
   leaderboardTierKeys,
   type LeaderboardSort,
 } from '@/lib/orpc/schema/leaderboard';
-
-import { CountrySearchSelect } from './CountryFilter';
-import { COUNTRY_OPTIONS, getCountryName } from './countries';
 
 // Each key starts highest first, as the column headers do.
 const SORT_OPTIONS: readonly SortOption<LeaderboardSort>[] = [
@@ -62,17 +61,29 @@ const formatWinRate = (value: number) => `${formatFilterNumber(value)}%`;
  */
 export default function LeaderboardToolbar({
   count,
+  countries,
   signedIn,
   hasFriends,
 }: {
   /** The player count, already formatted. */
   count: string;
+  /**
+   * The country filter's options, named on the server
+   * (`getCountryOptions()`), so the browser's region names never differ.
+   */
+  countries: readonly CountryOption[];
   /** All / Friends shows only to signed-in visitors. */
   signedIn: boolean;
   hasFriends: boolean;
 }) {
   const list = useListState(LEADERBOARD_LIST_PARAMS);
   const { state, setState } = list;
+  // A code the options leave out (osu!'s `EU` from a flag link) is named
+  // as the combobox names it.
+  const countryName = state.country
+    ? (countries.find((country) => country.code === state.country)?.name ??
+      getCountryName(state.country))
+    : '';
 
   return (
     <ListToolbar
@@ -142,10 +153,11 @@ export default function LeaderboardToolbar({
             onValueChange={(tiers) => setState({ tiers })}
           />
           <FilterField label="Country">
-            <CountrySearchSelect
+            <CountryCombobox
               value={state.country}
               onValueChange={(country) => setState({ country })}
-              countries={COUNTRY_OPTIONS}
+              countries={countries}
+              data-testid="leaderboard-filter-country-button"
             />
           </FilterField>
         </FilterPanel>
@@ -214,9 +226,7 @@ export default function LeaderboardToolbar({
             },
             {
               key: 'country',
-              label: state.country
-                ? `Country: ${getCountryName(state.country)}`
-                : '',
+              label: countryName ? `Country: ${countryName}` : '',
               onRemove: () => setState({ country: '' }),
             },
           ]}

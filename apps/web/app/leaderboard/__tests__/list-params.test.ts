@@ -12,6 +12,7 @@ import { LeaderboardRequestSchema } from '@/lib/orpc/schema/leaderboard';
 
 import {
   LEADERBOARD_LIST_PARAMS,
+  LEADERBOARD_RANGES,
   leaderboardHref,
   toLeaderboardRequest,
 } from '../list-params';
@@ -66,6 +67,22 @@ describe('LEADERBOARD_LIST_PARAMS', () => {
     expect(state.matches).toEqual({});
     expect(state.winRate).toEqual({});
     expect(state.country).toBe('');
+  });
+
+  it('takes whole numbers for rating, rank and matches, and decimals for win rate', () => {
+    const state = parse(
+      'minRating=1500.5&maxRating=2000&maxOsuRank=100.5&minMatches=10.5&minWinRate=40.5'
+    );
+    expect(state.rating).toEqual({ max: 2000 });
+    expect(state.osuRank).toEqual({});
+    expect(state.matches).toEqual({});
+    expect(state.winRate).toEqual({ min: 40.5 });
+
+    // The filter fields round typed numbers by the same flags.
+    expect(LEADERBOARD_RANGES.rating.integer).toBe(true);
+    expect(LEADERBOARD_RANGES.osuRank.integer).toBe(true);
+    expect(LEADERBOARD_RANGES.matches.integer).toBe(true);
+    expect(LEADERBOARD_RANGES.winRate.integer).toBe(false);
   });
 
   it('counts the filter panel only, and Clear all keeps search, sort and scope', () => {

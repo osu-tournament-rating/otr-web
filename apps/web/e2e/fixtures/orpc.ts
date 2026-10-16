@@ -2,11 +2,28 @@ import { readFileSync } from 'node:fs';
 import { createORPCClient } from '@orpc/client';
 import { RPCLink } from '@orpc/client/fetch';
 import type { RouterClient } from '@orpc/server';
+import { test } from '@playwright/test';
 
 import type { router } from '../../app/server/oRPC/router';
 import { STORAGE_STATE, type TestRole } from './auth';
 
-const BASE_URL = 'http://localhost:3001';
+/** The production build that `playwright.config.ts` starts. */
+const DEFAULT_BASE_URL = 'http://localhost:3001';
+
+/**
+ * The site under test: the running test's `baseURL`, so a config pointed at
+ * another server (a worktree's stack) reaches that server, then
+ * `E2E_BASE_URL`, then the default build.
+ */
+function getBaseUrl(): string {
+  let baseURL: string | undefined;
+  try {
+    baseURL = test.info().project.use.baseURL;
+  } catch {
+    // Outside a running test there is no project to ask.
+  }
+  return baseURL ?? process.env.E2E_BASE_URL ?? DEFAULT_BASE_URL;
+}
 
 function cookieHeaderFromStorageState(path: string): string {
   const state = JSON.parse(readFileSync(path, 'utf8')) as {
@@ -17,13 +34,17 @@ function cookieHeaderFromStorageState(path: string): string {
     .join('; ');
 }
 
-/** oRPC client for a test role; storage state is read lazily, after collection. */
+/**
+ * oRPC client for a test role, against the site under test unless
+ * `baseURL` names another. Storage state is read lazily, after collection.
+ */
 export function createOrpcClientForRole(
-  role: TestRole
+  role: TestRole,
+  baseURL: string = getBaseUrl()
 ): RouterClient<typeof router> {
   const cookie = cookieHeaderFromStorageState(STORAGE_STATE[role]);
   const link = new RPCLink({
-    url: `${BASE_URL}/rpc`,
+    url: `${baseURL.replace(/\/+$/, '')}/rpc`,
     headers: () => ({ cookie }),
   });
   return createORPCClient(link);

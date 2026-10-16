@@ -7,10 +7,10 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/kit/controls/Button';
 import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
+import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
 import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { ReportDetails } from '@/components/reports/ReportDetails';
 import { getReportEntityTypeName } from '@/components/reports/report-presentation';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { notifyReportChange } from '@/lib/hooks/useReportCount';
 import { formatId } from '@/lib/kit/format/number';
@@ -23,14 +23,25 @@ const MAX_COMMENT_LENGTH = 500;
 type ReportUser = NonNullable<Report['reporter']>;
 
 /** A reporter or reviewer: their profile link, or "Deleted user". */
-export function ReportUserName({ user }: { user: ReportUser | null }) {
+export function ReportUserName({
+  user,
+  wrap = false,
+}: {
+  user: ReportUser | null;
+  /** Wraps a long name instead of truncating it, as in the dialog. */
+  wrap?: boolean;
+}) {
   if (!user) {
     return <span className="text-muted-foreground">Deleted user</span>;
   }
 
   return (
     // Baseline-aligned, so "by Name" after a timestamp sits on one line.
-    <EntityLink href={`/players/${user.player.id}`} className="align-baseline">
+    <EntityLink
+      href={`/players/${user.player.id}`}
+      wrap={wrap}
+      className="align-baseline"
+    >
       {user.player.username || `User #${formatId(user.id)}`}
     </EntityLink>
   );
@@ -175,10 +186,10 @@ export function AdminReportDialog({
         <>
           <ReportDetails
             report={report}
-            reporter={<ReportUserName user={report.reporter} />}
+            reporter={<ReportUserName user={report.reporter} wrap />}
             reviewer={
               report.resolvedBy ? (
-                <ReportUserName user={report.resolvedBy} />
+                <ReportUserName user={report.resolvedBy} wrap />
               ) : undefined
             }
             // A reopened report keeps its old comment; the field below
@@ -188,15 +199,12 @@ export function AdminReportDialog({
           {isOpenReport ? (
             <div className="flex flex-col gap-2 border-t pt-4">
               {/* Confirm report and Dismiss stay disabled until it has text. */}
-              <div className="flex min-h-5 items-center gap-1.5">
-                <Label htmlFor={commentId}>Comment</Label>
-                <span
-                  id={commentHintId}
-                  className="ml-auto text-xs text-muted-foreground"
-                >
-                  Required
-                </span>
-              </div>
+              <FormFieldLabel
+                htmlFor={commentId}
+                hint={<span id={commentHintId}>Required</span>}
+              >
+                Comment
+              </FormFieldLabel>
               <Textarea
                 id={commentId}
                 value={comment}

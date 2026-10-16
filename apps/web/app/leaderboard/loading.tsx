@@ -1,14 +1,13 @@
 import { Trophy } from 'lucide-react';
 
 import {
+  ListToolbarSkeleton,
   PhoneRowListSkeleton,
-  SkeletonText,
   TableSkeleton,
 } from '@/components/kit/feedback/Skeletons';
 import { PageFrame } from '@/components/kit/layout/PageFrame';
 import { PageHeader } from '@/components/kit/layout/PageHeader';
 import { Panel } from '@/components/kit/layout/Panel';
-import { ListToolbar } from '@/components/kit/lists/ListToolbar';
 
 /** The loaded table's columns, so the header strip doesn't shift. */
 const COLUMNS = [
@@ -30,30 +29,20 @@ export default function LeaderboardLoading() {
         description="Players ranked by tournament rating."
       />
       <Panel as="div" role="status" aria-label="Loading leaderboard">
-        <ListToolbar
-          label="Search and filter players"
-          aria-hidden="true"
-          search={<SkeletonText className="block h-10 w-full" />}
-          sort={
-            <span className="flex gap-2">
-              <SkeletonText className="block h-10 flex-1 md:w-48 md:flex-none" />
-              <SkeletonText className="block size-10" />
-            </span>
-          }
-          filters={<SkeletonText className="block h-10 w-24" />}
-          rulesets={
-            <span className="flex flex-wrap gap-1.5">
-              {Array.from({ length: 5 }, (_, index) => (
-                <SkeletonText key={index} className="block h-8 w-20" />
-              ))}
-            </span>
-          }
-          count={<SkeletonText className="h-3 w-20" />}
+        {/* The scope block stands in for All / Friends, which only
+            signed-in visitors see. */}
+        <ListToolbarSkeleton
+          search
+          sort
+          filters
+          scope="w-36"
+          rulesets={5}
+          count
         />
         <TableSkeleton
           columns={COLUMNS}
           rows={20}
-          phoneRows={<PhoneRowListSkeleton rows={12} rank avatar />}
+          phoneRows={<PhoneRowListSkeleton rows={12} rank leading={32} />}
         />
       </Panel>
     </PageFrame>

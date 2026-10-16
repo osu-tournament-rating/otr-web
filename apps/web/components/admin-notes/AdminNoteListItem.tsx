@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/kit/controls/Button';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
+import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
 import { IconButton } from '@/components/kit/controls/IconButton';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { hasAdminScope } from '@/lib/auth/roles';
 import { useSession } from '@/lib/hooks/useSession';
@@ -62,7 +62,7 @@ export default function AdminNoteListItem({
   if (editing) {
     return (
       <div className="flex flex-col gap-2">
-        <Label htmlFor={editorId}>Edit note</Label>
+        <FormFieldLabel htmlFor={editorId}>Edit note</FormFieldLabel>
         <Textarea
           id={editorId}
           value={draft}

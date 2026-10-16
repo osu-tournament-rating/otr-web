@@ -1,7 +1,6 @@
 'use client';
 
 import { Fragment, useCallback } from 'react';
-import Link from 'next/link';
 import useSWRInfinite from 'swr/infinite';
 import { ChevronRight, ClipboardList } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
@@ -14,17 +13,16 @@ import {
 import SectionError from '@/components/error/SectionError';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import { RowList } from '@/components/kit/layout/RowList';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { LoadMore } from '@/components/kit/tables/LoadMore';
 import { formatId } from '@/lib/kit/format/number';
 import { orpc } from '@/lib/orpc/orpc';
-import { cn } from '@/lib/utils';
 import AuditEntryRow from './AuditEntryRow';
 import {
   TIMELINE_BATCH,
   TimelineSkeleton,
   TimelineToolbar,
 } from './AuditEntityTimeline';
-import { AUDIT_INLINE_LINK } from './AuditRow';
 import { getEntityTypeName, nameOr } from './auditParams';
 
 type DescendantResponse = {
@@ -36,7 +34,7 @@ type DescendantResponse = {
   items: DescendantAuditItem[];
 };
 
-/** Where the changed entity sits: its ancestors, then its own name. */
+/** Where the changed entity sits: its ancestors, muted, then its own name. */
 function EntityHeading({
   entity,
 }: {
@@ -56,23 +54,22 @@ function EntityHeading({
     <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-xs text-muted-foreground">
       {entity.path.map((ancestor) => (
         <Fragment key={`${ancestor.entityType}-${ancestor.entityId}`}>
-          <Link
+          <EntityLink
             href={`/audit/${entityTypeToSlug(ancestor.entityType)}/${ancestor.entityId}`}
-            prefetch={false}
-            className={cn(AUDIT_INLINE_LINK, 'text-muted-foreground')}
+            wrap
+            className="font-normal text-muted-foreground"
           >
             {name(ancestor.entityType, ancestor.entityId, ancestor.entityName)}
-          </Link>
+          </EntityLink>
           <ChevronRight aria-hidden="true" className="size-3 shrink-0" />
         </Fragment>
       ))}
-      <Link
+      <EntityLink
         href={`/audit/${entityTypeToSlug(entity.entityType)}/${entity.entityId}`}
-        prefetch={false}
-        className={cn(AUDIT_INLINE_LINK, 'font-medium')}
+        wrap
       >
         {name(entity.entityType, entity.entityId, entity.entityName)}
-      </Link>
+      </EntityLink>
     </p>
   );
 }
@@ -220,6 +217,7 @@ export default function AuditDescendantTimeline({
           loading={isValidating && size > responsePages.length}
           shownCount={allItems.length}
           totalCount={capped ? null : total}
+          pageSize={TIMELINE_BATCH}
           onLoadMore={() => void setSize(size + 1)}
         />
       )}

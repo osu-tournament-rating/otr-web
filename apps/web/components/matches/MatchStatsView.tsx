@@ -53,7 +53,11 @@ const PLAYER_SORT_KEYS = [
 
 type PlayerSortKey = (typeof PLAYER_SORT_KEYS)[number];
 
-/** The player table's sort, kept in the address as `sort` and `dir`. */
+/**
+ * The player table's sort, kept in the address as `sort` and `dir`. Every
+ * row is on the client already, so a sort changes the address without
+ * rendering the page again.
+ */
 const MATCH_STATS_PARAMS = defineListParams({
   sort: sortParam(PLAYER_SORT_KEYS, { key: 'matchCost', direction: 'desc' }),
 });
@@ -133,7 +137,7 @@ export default function MatchStatsView({ match }: { match: MatchDetail }) {
 }
 
 function VerifiedMatchStats({ match }: { match: MatchDetail }) {
-  const list = useListState(MATCH_STATS_PARAMS);
+  const list = useListState(MATCH_STATS_PARAMS, { shallow: true });
   const sort = list.state.sort;
   const hasRecordedResult = Boolean(match.winRecord);
 
@@ -165,11 +169,9 @@ function VerifiedMatchStats({ match }: { match: MatchDetail }) {
     { value: 'misses', label: 'Misses', defaultDirection: 'desc' },
     { value: 'placement', label: 'Placement', defaultDirection: 'desc' },
   ];
-  const headerProps = {
-    sort,
-    getSortHref: (next: SortState<PlayerSortKey>) =>
-      list.hrefFor({ sort: next }),
-  };
+  const setSort = (next: SortState<PlayerSortKey>) =>
+    list.setState({ sort: next });
+  const headerProps = { sort, onSortChange: setSort };
 
   return (
     <>
@@ -193,16 +195,17 @@ function VerifiedMatchStats({ match }: { match: MatchDetail }) {
           infoText="Score, accuracy, misses, and placement are per-game averages"
           meta={formatCountOf(players.length, 'player')}
         />
-        <div className="border-b px-4 py-3 md:hidden">
-          <SortControl
-            label="Sort players by"
-            value={sort}
-            onValueChange={(next) => list.setState({ sort: next })}
-            options={sortOptions}
-          />
-        </div>
         <DataTable
           aria-label="Player performance statistics"
+          phoneSort={
+            <SortControl
+              size="sm"
+              label="Sort players by"
+              value={sort}
+              onValueChange={setSort}
+              options={sortOptions}
+            />
+          }
           phoneRows={
             <PhoneRowList aria-label="Player performance statistics">
               {sortedPlayers.map((player) => (

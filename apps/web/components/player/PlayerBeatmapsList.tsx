@@ -5,13 +5,12 @@ import { Music } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import SectionError from '@/components/error/SectionError';
-import { Button } from '@/components/kit/controls/Button';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import { Panel } from '@/components/kit/layout/Panel';
 import { RowList } from '@/components/kit/layout/RowList';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
-import { formatCount, formatCountOf } from '@/lib/kit/format/number';
-import { formatLoadedReadout } from '@/lib/kit/tables/pagination';
+import { LoadMore } from '@/components/kit/tables/LoadMore';
+import { formatCountOf } from '@/lib/kit/format/number';
 import { orpc } from '@/lib/orpc/orpc';
 import type { PlayerBeatmapStats } from '@/lib/orpc/schema/playerBeatmaps';
 
@@ -121,7 +120,7 @@ export default function PlayerBeatmapsList({
         </RowList>
       )}
       {hasError ? (
-        <div className="border-t px-4 py-3">
+        <div className="border-t px-4 py-4">
           <SectionError
             size="inline"
             title="More beatmaps could not load"
@@ -129,26 +128,18 @@ export default function PlayerBeatmapsList({
             onRetry={() => void handleLoadMore()}
           />
         </div>
-      ) : remainingCount > 0 && playerId ? (
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t bg-muted/20 px-4 py-3 dark:bg-muted">
-          <p
-            className="text-xs text-muted-foreground tabular-nums"
-            aria-live="polite"
-          >
-            Showing {formatLoadedReadout(beatmaps.length, totalCount)}
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            pending={isLoading}
-            onClick={() => void handleLoadMore()}
-          >
-            {isLoading
-              ? 'Loading…'
-              : `Show more (${formatCount(remainingCount)} more)`}
-          </Button>
-        </div>
-      ) : null}
+      ) : isEmpty || !playerId ? null : (
+        <LoadMore
+          label="Show more"
+          hasMore={remainingCount > 0}
+          loading={isLoading}
+          shownCount={beatmaps.length}
+          totalCount={totalCount}
+          // The server's first batch; a list that fits in it needs no footer.
+          pageSize={initialBeatmaps.length}
+          onLoadMore={() => void handleLoadMore()}
+        />
+      )}
     </Panel>
   );
 }

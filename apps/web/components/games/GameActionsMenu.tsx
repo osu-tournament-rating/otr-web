@@ -18,12 +18,11 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { DELETE_CASCADE_DESCRIPTION } from '@/components/admin-forms/adminFormFields';
 import { AdminNotesDialog } from '@/components/admin-notes/AdminNotesDialog';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
 import { RowActionsMenu } from '@/components/kit/controls/RowActionsMenu';
 import { Badge } from '@/components/kit/status/Badge';
-import { NotificationDot } from '@/components/kit/status/NotificationDot';
-import { DELETE_CASCADE_DESCRIPTION } from '@/components/matches/adminFormFields';
 import { ReportDialog } from '@/components/reports/ReportDialog';
 import { entityTypeToSlug } from '@/lib/audit-entity-types';
 import { hasAdminScope } from '@/lib/auth/roles';
@@ -44,10 +43,19 @@ import MergeGameDialog from './MergeGameDialog';
 export default function GameActionsMenu({
   game,
   gameName,
+  itemName,
 }: {
   game: Game;
-  /** "Title [Difficulty]", or "Game 123" for a deleted beatmap; names the menu. */
+  /**
+   * "Title [Difficulty]", or "Game 123" for a deleted beatmap; names the
+   * report and the notes.
+   */
   gameName: string;
+  /**
+   * Names the menu with the game's place in the match, such as "Game 3:
+   * Title [Difficulty]", so two games on one beatmap have distinct buttons.
+   */
+  itemName: string;
 }) {
   const session = useSession();
   const isAdmin = hasAdminScope(session?.scopes ?? []);
@@ -63,64 +71,56 @@ export default function GameActionsMenu({
 
   return (
     <>
-      <span className="relative inline-flex shrink-0">
-        <RowActionsMenu
-          onArt
-          itemName={gameName}
-          data-testid="game-actions"
-          actions={[
-            isAdmin && {
-              label: 'Edit game',
-              icon: PencilLine,
-              onSelect: () => setEditing(true),
-            },
-            (isAdmin || noteCount > 0) && {
-              label: 'Admin notes',
-              icon: NotebookPen,
-              trailing:
-                noteCount > 0 ? (
-                  <Badge size="sm">{formatBadgeCount(noteCount)}</Badge>
-                ) : undefined,
-              onSelect: () => setViewingNotes(true),
-            },
-            {
-              label: 'View audit history',
-              icon: History,
-              href: `/audit/${entityTypeToSlug(AuditEntityType.Game)}/${game.id}`,
-            },
-            Boolean(beatmapOsuId) && {
-              label: 'View beatmap on osu! website',
-              icon: Music2,
-              href: `https://osu.ppy.sh/b/${beatmapOsuId}`,
-              external: true,
-            },
-            session && {
-              label: 'Report an issue',
-              icon: Flag,
-              onSelect: () => setReporting(true),
-            },
-            isAdmin && {
-              label: 'Merge games',
-              icon: GitMerge,
-              group: 'data',
-              onSelect: () => setMerging(true),
-            },
-            isAdmin && {
-              label: 'Delete game',
-              icon: Trash2,
-              destructive: true,
-              onSelect: () => setDeleting(true),
-            },
-          ]}
-        />
-        {noteCount > 0 ? (
-          <NotificationDot
-            placement="corner"
-            label="Has admin notes"
-            className="ring-1 ring-black/40"
-          />
-        ) : null}
-      </span>
+      <RowActionsMenu
+        onArt
+        itemName={itemName}
+        notification={noteCount > 0 ? 'Has admin notes' : undefined}
+        data-testid="game-actions"
+        actions={[
+          isAdmin && {
+            label: 'Edit game',
+            icon: PencilLine,
+            onSelect: () => setEditing(true),
+          },
+          (isAdmin || noteCount > 0) && {
+            label: 'Admin notes',
+            icon: NotebookPen,
+            trailing:
+              noteCount > 0 ? (
+                <Badge size="sm">{formatBadgeCount(noteCount)}</Badge>
+              ) : undefined,
+            onSelect: () => setViewingNotes(true),
+          },
+          {
+            label: 'View audit history',
+            icon: History,
+            href: `/audit/${entityTypeToSlug(AuditEntityType.Game)}/${game.id}`,
+          },
+          Boolean(beatmapOsuId) && {
+            label: 'View beatmap on osu! website',
+            icon: Music2,
+            href: `https://osu.ppy.sh/b/${beatmapOsuId}`,
+            external: true,
+          },
+          session && {
+            label: 'Report an issue',
+            icon: Flag,
+            onSelect: () => setReporting(true),
+          },
+          isAdmin && {
+            label: 'Merge games',
+            icon: GitMerge,
+            group: 'data',
+            onSelect: () => setMerging(true),
+          },
+          isAdmin && {
+            label: 'Delete game',
+            icon: Trash2,
+            destructive: true,
+            onSelect: () => setDeleting(true),
+          },
+        ]}
+      />
 
       {session ? (
         <ReportDialog

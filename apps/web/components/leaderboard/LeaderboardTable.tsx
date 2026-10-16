@@ -6,6 +6,7 @@ import {
   type LeaderboardListState,
 } from '@/app/leaderboard/list-params';
 import TierIcon from '@/components/icons/TierIcon';
+import { CountryFlag } from '@/components/kit/country/CountryFlag';
 import { Badge } from '@/components/kit/status/Badge';
 import {
   DataTable,
@@ -18,10 +19,10 @@ import {
 import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { SortableHeader } from '@/components/kit/tables/SortableHeader';
-import CountryFlag from '@/components/shared/CountryFlag';
 import SimpleTooltip from '@/components/simple-tooltip';
 import TapTooltip from '@/components/tap-tooltip';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
+import { getCountryName } from '@/lib/kit/format/country';
 import {
   formatCount,
   formatCountOf,
@@ -37,7 +38,10 @@ import type {
 } from '@/lib/orpc/schema/leaderboard';
 import { type TierName, getTierString } from '@/lib/utils/tierData';
 
-import { getCountryName } from './countries';
+/** The player's profile, on the leaderboard's ruleset. */
+function getPlayerHref(entry: LeaderboardEntry): string {
+  return `/players/${entry.player.id}?ruleset=${entry.ruleset}`;
+}
 
 /** Win rate means nothing before a player's first match. */
 function getWinRate(entry: LeaderboardEntry): number | null {
@@ -64,59 +68,92 @@ function TierMark({ entry, size }: { entry: LeaderboardEntry; size: number }) {
 }
 
 /**
- * The player's name with the avatar inside the same link, then the flag,
- * which narrows the leaderboard to that country as it always has.
+ * The player's name, with the avatar inside the same link in the table, then
+ * the flag, which narrows the leaderboard to that country as it always has.
+ * Phone rows show the avatar as the row's `leading` instead.
  */
 function PlayerName({
   entry,
   state,
   isYou,
   showCountryRank,
+  avatar = true,
 }: {
   entry: LeaderboardEntry;
   state: LeaderboardListState;
   isYou: boolean;
   showCountryRank: boolean;
+  /** The 24px avatar inside the name's link. */
+  avatar?: boolean;
 }) {
   const { player } = entry;
-  const countryName = getCountryName(player.country);
-  const countryRank = formatRank(entry.countryRank);
 
   return (
     <span className="flex min-w-0 items-center gap-2">
       <EntityLink
-        href={`/players/${player.id}?ruleset=${entry.ruleset}`}
+        href={getPlayerHref(entry)}
         leading={
-          <OsuAvatar
-            osuId={player.osuId}
-            username={player.username}
-            size={24}
-          />
+          avatar ? (
+            <OsuAvatar
+              osuId={player.osuId}
+              username={player.username}
+              size={24}
+            />
+          ) : undefined
         }
       >
-        {player.username}
+        {/* A player whose osu! profile has no data stored yet has an empty
+            name, and the link would otherwise have no text. */}
+        {player.username || 'Unknown player'}
       </EntityLink>
-      {/* The tooltip names the country on hover and keyboard focus; on a
-          phone, a tap follows the link and the active-filter chip names it. */}
-      <SimpleTooltip content={countryName}>
-        <Link
-          href={leaderboardHref(state, { country: player.country })}
-          prefetch={false}
-          aria-label={`${countryRank} in ${countryName}`}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-sm text-xs font-medium text-muted-foreground tabular-nums transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
-        >
-          <CountryFlag country={player.country} showTooltip={false} />
-          {showCountryRank ? (
-            <span aria-hidden="true">{countryRank}</span>
-          ) : null}
-        </Link>
-      </SimpleTooltip>
+      {player.country ? (
+        <CountryLink
+          entry={entry}
+          state={state}
+          showCountryRank={showCountryRank}
+        />
+      ) : null}
       {isYou ? (
         <Badge size="sm" tone="primary">
           You
         </Badge>
       ) : null}
     </span>
+  );
+}
+
+/**
+ * The flag, and in the table the country rank, as one link that narrows the
+ * leaderboard to that country. A player stored without a country code gets
+ * none, rather than an empty link.
+ */
+function CountryLink({
+  entry,
+  state,
+  showCountryRank,
+}: {
+  entry: LeaderboardEntry;
+  state: LeaderboardListState;
+  showCountryRank: boolean;
+}) {
+  const { country } = entry.player;
+  const countryName = getCountryName(country);
+  const countryRank = formatRank(entry.countryRank);
+
+  return (
+    // The tooltip names the country on hover and keyboard focus; on a
+    // phone, a tap follows the link and the active-filter chip names it.
+    <SimpleTooltip content={countryName}>
+      <Link
+        href={leaderboardHref(state, { country })}
+        prefetch={false}
+        aria-label={`${countryRank} in ${countryName}`}
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-sm text-xs font-medium text-muted-foreground tabular-nums transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+      >
+        <CountryFlag code={country} decorative />
+        {showCountryRank ? <span aria-hidden="true">{countryRank}</span> : null}
+      </Link>
+    </SimpleTooltip>
   );
 }
 
@@ -177,12 +214,21 @@ export default function LeaderboardTable({
                 data-testid={`leaderboard-phone-row-${entry.player.id}`}
                 highlight={isYou}
                 rank={formatRank(entry.globalRank)}
+                leading={
+                  <OsuAvatar
+                    osuId={entry.player.osuId}
+                    username={entry.player.username}
+                    size={32}
+                  />
+                }
+                leadingHref={getPlayerHref(entry)}
                 title={
                   <PlayerName
                     entry={entry}
                     state={state}
                     isYou={isYou}
                     showCountryRank={false}
+                    avatar={false}
                   />
                 }
                 description={getPhoneDescription(entry, sort.key)}

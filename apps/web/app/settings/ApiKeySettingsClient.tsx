@@ -5,8 +5,10 @@ import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { SETTINGS_COPY } from '@/app/settings/settings-copy';
 import { Button } from '@/components/kit/controls/Button';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
+import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
 import { IconButton } from '@/components/kit/controls/IconButton';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import { Timestamp } from '@/components/kit/format/Timestamp';
@@ -22,7 +24,6 @@ import {
 } from '@/components/kit/tables/DataTable';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { formatCount, formatCountOf } from '@/lib/kit/format/number';
 import type { ApiKeyMetadataWithKey } from '@/lib/orpc/schema/apiKey';
 import { orpc } from '@/lib/orpc/orpc';
@@ -204,16 +205,19 @@ export default function ApiKeySettingsClient({
         meta={`${formatCount(remainingSlots)} of ${formatCount(MAX_API_KEYS)} slots available`}
       />
       <PanelBody className="flex flex-col gap-4">
-        <p className="text-sm text-muted-foreground">
-          Use o!TR in spreadsheets and other tools via the API.
-        </p>
+        <p className="text-sm text-muted-foreground">{SETTINGS_COPY.apiKeys}</p>
         <form
           className="flex flex-col gap-3 sm:flex-row sm:items-end"
           onSubmit={handleGenerate}
           noValidate
         >
           <div className="flex min-w-0 flex-1 flex-col gap-2">
-            <Label htmlFor="api-key-name">Key name</Label>
+            <FormFieldLabel
+              htmlFor="api-key-name"
+              invalid={error === KEY_NAME_REQUIRED_MESSAGE}
+            >
+              Key name
+            </FormFieldLabel>
             <Input
               id="api-key-name"
               placeholder='e.g. "My spreadsheet"'
@@ -295,7 +299,7 @@ export default function ApiKeySettingsClient({
                   ) : null}
                 </DataTableCell>
                 <DataTableCell>{row.rateLimit}</DataTableCell>
-                <DataTableCell muted showFrom="lg" className="tabular-nums">
+                <DataTableCell muted showFrom="lg">
                   <Timestamp date={row.keyMetadata.createdAt} />
                 </DataTableCell>
                 <DataTableCell align="end" empty={false}>
@@ -324,10 +328,7 @@ export default function ApiKeySettingsClient({
             when making API calls.
           </p>
         ) : null}
-        <p>
-          Remember not to leave your keys in sheet templates or other places by
-          mistake.
-        </p>
+        <p>{SETTINGS_COPY.apiKeysReminder}</p>
       </div>
 
       <ConfirmDialog

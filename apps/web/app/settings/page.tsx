@@ -31,8 +31,7 @@ export default async function SettingsPage() {
   const keys = await orpc.apiClients.getKeys();
 
   const playerId = appSession.dbPlayer?.id;
-  // count(*) arrives from Postgres as a string despite its number type.
-  const friendCount = playerId ? Number(await getFriendCount(playerId)) : 0;
+  const friendCount = playerId ? await getFriendCount(playerId) : 0;
 
   return (
     <SettingsFrame>

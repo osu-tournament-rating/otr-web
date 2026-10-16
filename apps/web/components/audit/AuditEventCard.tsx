@@ -14,25 +14,28 @@ import { Button } from '@/components/kit/controls/Button';
 import { RowListSkeleton } from '@/components/kit/feedback/Skeletons';
 import { RelativeTime } from '@/components/kit/format/RelativeTime';
 import { Eyebrow } from '@/components/kit/layout/Typography';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import {
-  childCountTail,
   entityTypeToSlug,
   ENTITY_TYPE_LABELS,
   ENTITY_TYPE_PLURALS,
+  formatAffectedCount,
 } from '@/lib/audit-entity-types';
 import { ACTION_LABELS } from '@/lib/audit-actions';
 import { getAuditFieldLabel } from '@/lib/kit/format/audit';
 import { formatCount, formatId } from '@/lib/kit/format/number';
-import { formatActionBreakdown } from './ActionBreakdownPhrase';
+import {
+  formatBreakdownClause,
+  formatBreakdownSummary,
+} from './ActionBreakdownPhrase';
 import {
   AuditActor,
   AuditChanges,
-  AuditInlineLink,
   AuditRowDetails,
   AuditRowLine,
   AuditRowToggle,
@@ -80,9 +83,9 @@ function TournamentLink({
   tournament: NonNullable<AuditEvent['parentTournament']>;
 }) {
   return (
-    <AuditInlineLink inSentence href={`/audit/tournaments/${tournament.id}`}>
+    <EntityLink variant="inline" href={`/audit/tournaments/${tournament.id}`}>
       {nameOr(tournament.name, `Tournament #${formatId(tournament.id)}`)}
-    </AuditInlineLink>
+    </EntityLink>
   );
 }
 
@@ -97,18 +100,15 @@ function EventDescription({ event }: { event: AuditEvent }) {
     parentTournament,
     changedFields,
   } = event;
-  const verb = actionBreakdown
-    ? formatActionBreakdown(actionBreakdown)
-    : ACTION_LABELS[action];
   const entityLabel = ENTITY_TYPE_LABELS[topEntity.entityType];
   const entityPlural = ENTITY_TYPE_PLURALS[topEntity.entityType];
   const entityLink = (
-    <AuditInlineLink
-      inSentence
+    <EntityLink
+      variant="inline"
       href={`/audit/${entityTypeToSlug(topEntity.entityType)}/${topEntity.entityId}`}
     >
       {nameOr(topEntity.entityName, `#${formatId(topEntity.entityId)}`)}
-    </AuditInlineLink>
+    </EntityLink>
   );
   const inTournament =
     topEntity.entityType !== AuditEntityType.Tournament && parentTournament ? (
@@ -117,39 +117,46 @@ function EventDescription({ event }: { event: AuditEvent }) {
         <TournamentLink tournament={parentTournament} />
       </>
     ) : null;
+  // Several entities: "verified 3 and rejected 1 of 4 matches" when their
+  // outcomes differ, otherwise "verified 4 matches".
+  const groupClause = actionBreakdown
+    ? formatBreakdownClause(
+        actionBreakdown,
+        topEntity.entityType,
+        topEntity.count
+      )
+    : `${ACTION_LABELS[action]} ${formatCount(topEntity.count)} ${entityPlural}`;
 
-  // Cascade: "(85 of 118 matches)", or "(verified 115, rejected 3 of 118 matches)"
+  // Cascade: "(85 of 118 matches)", or "(58 matches: 57 verified, 1 rejected)"
   if (isCascade && childLevel) {
-    // A live child count can sit below a historical affected count once children are deleted.
+    // A live child count can sit below a historical affected count once
+    // children are deleted; the total only shows when it is larger.
     const showsChildTotal =
       childLevel.totalCount !== null &&
       childLevel.totalCount > childLevel.affectedCount;
-    const childTail = childCountTail(
-      childLevel.entityType,
-      childLevel.affectedCount,
-      childLevel.totalCount
-    );
     const countDisplay = childLevel.actionBreakdown
-      ? `${formatActionBreakdown(childLevel.actionBreakdown)} ${childTail}`
-      : showsChildTotal
-        ? `${formatCount(childLevel.affectedCount)} ${childTail}`
-        : null;
-    const topDisplay =
-      topEntity.count > 1 ? (
-        actionBreakdown ? (
-          entityPlural
-        ) : (
-          `${formatCount(topEntity.count)} ${entityPlural}`
+      ? formatBreakdownSummary(
+          childLevel.actionBreakdown,
+          childLevel.entityType,
+          childLevel.totalCount
         )
-      ) : (
-        <>
-          {entityLabel} {entityLink}
-        </>
-      );
+      : showsChildTotal
+        ? formatAffectedCount(
+            childLevel.entityType,
+            childLevel.affectedCount,
+            childLevel.totalCount
+          )
+        : null;
 
     return (
       <>
-        {verb} {topDisplay}
+        {topEntity.count > 1 ? (
+          groupClause
+        ) : (
+          <>
+            {ACTION_LABELS[action]} {entityLabel} {entityLink}
+          </>
+        )}
         {inTournament}
         {countDisplay ? (
           <span className="text-muted-foreground"> ({countDisplay})</span>
@@ -166,10 +173,7 @@ function EventDescription({ event }: { event: AuditEvent }) {
   if (topEntity.count > 1) {
     return (
       <>
-        {verb}{' '}
-        {actionBreakdown
-          ? entityPlural
-          : `${formatCount(topEntity.count)} ${entityPlural}`}
+        {groupClause}
         {parentTournament ? (
           <>
             {' in '}
@@ -268,15 +272,16 @@ function EventEntityEntries({
 
             return (
               <li key={entry.id} className="flex flex-col gap-1.5">
-                <AuditInlineLink
+                <EntityLink
                   href={`/audit/${entitySlug}/${entryId}`}
-                  className="w-fit text-sm font-medium"
+                  wrap
+                  className="self-start text-sm"
                 >
                   {nameOr(
                     entry.entityName,
                     `${getEntityTypeName(entityType)} #${formatId(entryId)}`
                   )}
-                </AuditInlineLink>
+                </EntityLink>
                 {changes && Object.keys(changes).length > 0 ? (
                   <AuditChanges
                     entityType={entityType}
@@ -359,9 +364,10 @@ export default function AuditEventCard({
             </>
           }
           meta={
-            <span data-testid="event-card-timestamp">
-              <RelativeTime date={event.created} />
-            </span>
+            <RelativeTime
+              data-testid="event-card-timestamp"
+              date={event.created}
+            />
           }
           toggle={
             hasExpandableContent ? (

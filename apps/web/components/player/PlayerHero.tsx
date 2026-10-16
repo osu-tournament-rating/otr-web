@@ -3,27 +3,13 @@ import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 import { IconButton } from '@/components/kit/controls/IconButton';
+import { CountryName } from '@/components/kit/country/CountryFlag';
 import { DetailHero } from '@/components/kit/layout/DetailHero';
-import CountryFlag from '@/components/shared/CountryFlag';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
+import { getCountryName } from '@/lib/kit/format/country';
 import type { PlayerCompact } from '@/lib/orpc/schema/playerStats';
 
 import PlayerRulesetSwitch from './PlayerRulesetSwitch';
-
-// Rendered on the server only, so the browser's own data never comes into it.
-const REGION_NAMES = new Intl.DisplayNames(['en'], {
-  type: 'region',
-  fallback: 'none',
-});
-
-/** "Australia" for `AU`; the code itself when the name is unknown. */
-function getCountryName(code: string): string {
-  try {
-    return REGION_NAMES.of(code) ?? code;
-  } catch {
-    return code;
-  }
-}
 
 /**
  * The top of a player's profile: avatar, name, country (a link to that
@@ -37,8 +23,6 @@ export default function PlayerHero({
   player: PlayerCompact;
   ruleset: Ruleset;
 }) {
-  const countryName = getCountryName(player.country);
-
   return (
     <DetailHero
       data-testid="player-card"
@@ -56,13 +40,10 @@ export default function PlayerHero({
         player.country ? (
           <Link
             href={`/leaderboard?country=${encodeURIComponent(player.country)}&ruleset=${ruleset}`}
-            aria-label={`${countryName} leaderboard`}
-            className="inline-flex min-w-0 items-center gap-1.5 rounded-sm transition-colors outline-none hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            aria-label={`${getCountryName(player.country)} leaderboard`}
+            className="inline-flex min-w-0 rounded-sm transition-colors outline-none hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
-            <span aria-hidden className="flex shrink-0">
-              <CountryFlag country={player.country} showTooltip={false} />
-            </span>
-            <span className="min-w-0 break-words">{countryName}</span>
+            <CountryName code={player.country} />
           </Link>
         ) : null
       }

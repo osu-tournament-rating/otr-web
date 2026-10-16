@@ -8,7 +8,13 @@ import {
   Target,
   TrendingUp,
 } from 'lucide-react';
+import type * as React from 'react';
 
+import {
+  GAME_CLOSENESS_INFO,
+  SCORE_DISTRIBUTION_INFO,
+  TIER_BREAKDOWN_INFO,
+} from '@/components/beatmap/section-info';
 import {
   PanelSkeleton,
   SectionHeaderSkeleton,
@@ -28,15 +34,26 @@ function Block({ className }: { className?: string }) {
 function ChartPanel({
   icon,
   title,
+  infoText,
+  meta,
   className,
 }: {
   icon: KitIcon;
   title: string;
+  /** The loaded header's info text. */
+  infoText?: React.ReactNode;
+  /** The loaded meta's width class, or false when the header has none. */
+  meta: string | false;
   className: string;
 }) {
   return (
     <PanelSkeleton className={cn('flex flex-col', className)}>
-      <SectionHeaderSkeleton icon={icon} title={title} />
+      <SectionHeaderSkeleton
+        icon={icon}
+        title={title}
+        infoText={infoText}
+        meta={meta}
+      />
       <div className="flex flex-1 p-4">
         <Block className="min-h-24 flex-1 rounded-lg" />
       </div>
@@ -45,6 +62,8 @@ function ChartPanel({
 }
 
 // Heights are the loaded panels' at 390px and 1440px wide, in page order.
+// Meta widths are the loaded counts', such as "272 of 272 scores rated", so
+// the Game closeness strip wraps on a phone as the loaded one does.
 export default function BeatmapDetailLoading() {
   return (
     <PageFrame role="status" aria-label="Loading beatmap">
@@ -65,7 +84,7 @@ export default function BeatmapDetailLoading() {
       </Panel>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <PanelSkeleton className="flex h-[682px] flex-col">
+        <PanelSkeleton className="flex h-[680px] flex-col">
           <SectionHeaderSkeleton
             icon={SlidersHorizontal}
             title="Attributes"
@@ -73,7 +92,7 @@ export default function BeatmapDetailLoading() {
           />
           <div className="grid grid-cols-2 gap-2 p-4">
             {Array.from({ length: 4 }, (_, index) => (
-              <Block key={index} className="h-[57px] rounded-lg" />
+              <Block key={index} className="h-14 rounded-lg" />
             ))}
           </div>
           <div className="border-t">
@@ -90,39 +109,49 @@ export default function BeatmapDetailLoading() {
         <ChartPanel
           icon={ListFilter}
           title="Distributions"
-          className="h-[760px] lg:col-span-2 lg:h-[682px]"
+          meta={false}
+          className="h-[760px] lg:col-span-2 lg:h-[680px]"
         />
       </div>
       <ChartPanel
         icon={ChartCandlestick}
         title="Score distribution"
+        infoText={SCORE_DISTRIBUTION_INFO}
+        meta="w-16"
         className="h-[516px] xl:h-[359px]"
       />
       <ChartPanel
         icon={Medal}
         title="Tier breakdown"
+        infoText={TIER_BREAKDOWN_INFO}
+        meta="w-34"
         className="h-[580px] xl:h-[315px]"
       />
       <ChartPanel
         icon={ChartScatter}
         title="Score scatter"
+        meta="w-16"
         className="h-[427px]"
       />
       <div className="grid gap-4 lg:grid-cols-2">
         <ChartPanel
           icon={Swords}
           title="Game closeness"
+          infoText={GAME_CLOSENESS_INFO}
+          meta="w-48"
           className="h-[371px] lg:h-[331px]"
         />
         <ChartPanel
           icon={Target}
           title="Misses"
+          meta="w-16"
           className="h-[223px] lg:h-[331px]"
         />
       </div>
       <ChartPanel
         icon={Medal}
         title="Leaderboard"
+        meta="w-32"
         className="h-[1525px] md:h-[1108px]"
       />
     </PageFrame>

@@ -17,7 +17,7 @@ import {
   VERIFY_CHILDREN_TITLE,
   VerifyChildrenChoices,
   changedFieldClass,
-} from '@/components/matches/adminFormFields';
+} from '@/components/admin-forms/adminFormFields';
 import {
   LobbySizeSelectContent,
   RejectionReasonChips,

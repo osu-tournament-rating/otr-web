@@ -63,6 +63,12 @@ interface RangeField {
   chipLabel?: string;
   min: number;
   max: number;
+  /**
+   * The param's `integer`, false when left out. Always passed on, because
+   * RangeFilter would otherwise guess from the track, and BPM's whole-number
+   * track would round a typed fraction that the address keeps.
+   */
+  integer?: boolean;
   step?: number;
   scale?: NumericScale;
   span?: 'half';
@@ -82,6 +88,7 @@ const RANGE_FIELDS: readonly RangeField[] = [
     format: formatDuration,
     min: 0,
     max: 1800,
+    integer: true,
     scale: tieredScale({
       tiers: [
         { start: 0, end: 300, step: 5 },
@@ -95,6 +102,7 @@ const RANGE_FIELDS: readonly RangeField[] = [
     label: 'Games',
     min: 0,
     max: 600,
+    integer: true,
     scale: tieredScale({
       tiers: [
         { start: 0, end: 50, step: 1 },
@@ -108,6 +116,7 @@ const RANGE_FIELDS: readonly RangeField[] = [
     label: 'Tournaments',
     min: 0,
     max: 80,
+    integer: true,
     scale: tieredScale({
       tiers: [
         { start: 0, end: 30, step: 1 },
@@ -187,6 +196,7 @@ export default function BeatmapListToolbar({
               span={field.span}
               min={field.min}
               max={field.max}
+              integer={field.integer ?? false}
               step={field.step}
               scale={field.scale}
               format={field.format}

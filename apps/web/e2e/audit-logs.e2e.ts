@@ -402,17 +402,20 @@ test.describe('Entity Audit Timeline Page', () => {
       await page.goto(ROUTES.auditTournament(TEST_TOURNAMENT_ID));
       await page.waitForLoadState('networkidle');
 
+      // While the page streams in after a load, React briefly holds a
+      // second, hidden copy of it; only the visible tabs count.
+      const tab = (name: string) =>
+        page
+          .locator(`[data-testid="audit-tab-${name}"]`)
+          .filter({ visible: true });
+
       const tabs = page.locator('[data-testid="audit-scope-tabs"]');
       await expect(tabs).toBeVisible({ timeout: 10000 });
-      await expect(
-        page.locator('[data-testid="audit-tab-self"]')
-      ).toHaveAttribute('aria-current', 'page');
+      await expect(tab('self')).toHaveAttribute('aria-current', 'page');
 
-      await page.locator('[data-testid="audit-tab-matches"]').click();
+      await tab('matches').click();
       await expect(page).toHaveURL(/[?&]tab=matches/);
-      await expect(
-        page.locator('[data-testid="audit-tab-matches"]')
-      ).toHaveAttribute('aria-current', 'page');
+      await expect(tab('matches')).toHaveAttribute('aria-current', 'page');
       await expect(
         page
           .locator(
@@ -422,9 +425,9 @@ test.describe('Entity Audit Timeline Page', () => {
       ).toBeVisible({ timeout: 15000 });
 
       await page.reload();
-      await expect(
-        page.locator('[data-testid="audit-tab-matches"]')
-      ).toHaveAttribute('aria-current', 'page', { timeout: 10000 });
+      await expect(tab('matches')).toHaveAttribute('aria-current', 'page', {
+        timeout: 10000,
+      });
     });
   });
 });

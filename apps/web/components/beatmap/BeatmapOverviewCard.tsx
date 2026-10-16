@@ -12,8 +12,10 @@ import type * as React from 'react';
 
 import BeatmapPoolsDialog from '@/components/beatmap/BeatmapPoolsDialog';
 import BeatmapUsageSparkline from '@/components/beatmap/BeatmapUsageSparkline';
+import { Abbreviation } from '@/components/kit/layout/Abbreviation';
 import { Panel } from '@/components/kit/layout/Panel';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { StatTile, StatTileGrid } from '@/components/kit/layout/StatTile';
 import { Tile } from '@/components/kit/layout/Tile';
 import { Eyebrow } from '@/components/kit/layout/Typography';
 import { MissingValue } from '@/components/kit/tables/MissingValue';
@@ -68,28 +70,24 @@ function AttributesGroup({ beatmap }: { beatmap: BeatmapWithDetails }) {
   return (
     <div data-testid="beatmap-attributes">
       <SectionHeader icon={SlidersHorizontal} title="Attributes" />
-      <dl className="grid grid-cols-2 gap-2 p-4">
+      <StatTileGrid columns={2} className="p-4">
         {attributes.map((row) => {
           const value = beatmap[row.key];
 
           return (
-            <Tile
+            <StatTile
               key={row.abbreviation}
+              layout="inline"
+              label={
+                <Abbreviation full={row.label}>{row.abbreviation}</Abbreviation>
+              }
+              value={
+                row.integer
+                  ? formatCount(value)
+                  : formatNumber(value, { decimals: 1 })
+              }
               className={cn(row.muted && 'opacity-55')}
             >
-              <div className="flex items-baseline justify-between gap-2">
-                <dt className="text-xs font-medium text-muted-foreground">
-                  <abbr title={row.label} className="cursor-help no-underline">
-                    <span aria-hidden>{row.abbreviation}</span>
-                    <span className="sr-only">{row.label}</span>
-                  </abbr>
-                </dt>
-                <dd className="text-lg leading-none font-semibold tabular-nums">
-                  {row.integer
-                    ? formatCount(value)
-                    : formatNumber(value, { decimals: 1 })}
-                </dd>
-              </div>
               {row.gauge !== false ? (
                 <Progress
                   aria-hidden
@@ -99,10 +97,10 @@ function AttributesGroup({ beatmap }: { beatmap: BeatmapWithDetails }) {
               ) : (
                 <span aria-hidden className="mt-2.5 block h-1.5" />
               )}
-            </Tile>
+            </StatTile>
           );
         })}
-      </dl>
+      </StatTileGrid>
     </div>
   );
 }

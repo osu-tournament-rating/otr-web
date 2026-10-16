@@ -2,14 +2,13 @@ import { Flag } from 'lucide-react';
 import type * as React from 'react';
 
 import {
+  ListToolbarSkeleton,
   PanelSkeleton,
   PhoneRowListSkeleton,
-  SkeletonText,
   TableSkeleton,
 } from '@/components/kit/feedback/Skeletons';
 import { PageFrame } from '@/components/kit/layout/PageFrame';
 import { PageHeader } from '@/components/kit/layout/PageHeader';
-import { ListToolbar } from '@/components/kit/lists/ListToolbar';
 
 import { ADMIN_REPORTS_SKELETON_COLUMNS } from './list-params';
 
@@ -36,7 +35,14 @@ export function AdminReportsTableSkeleton() {
     <TableSkeleton
       columns={ADMIN_REPORTS_SKELETON_COLUMNS}
       cellHeight="h-9"
-      phoneRows={<PhoneRowListSkeleton />}
+      phoneRows={
+        // A status badge under the name, and a View button level with the name.
+        <PhoneRowListSkeleton
+          description="badge"
+          value="button"
+          align="start"
+        />
+      }
     />
   );
 }
@@ -45,21 +51,9 @@ export function AdminReportsTableSkeleton() {
 export function AdminReportsPanelSkeleton() {
   return (
     <PanelSkeleton label="Loading reports">
-      <ListToolbar
-        aria-hidden="true"
-        label="Sort and filter reports"
-        sort={
-          // The shape of SortControl: the select, then its direction button.
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 md:flex">
-            <SkeletonText className="block h-10 w-full md:w-48" />
-            <SkeletonText className="block size-10" />
-          </div>
-        }
-        scope={
-          <SkeletonText className="block h-8 w-72 max-w-[calc(100vw-6rem)]" />
-        }
-        count={<SkeletonText className="h-3 w-20" />}
-      />
+      {/* The status switch (All, Pending, Confirmed, Dismissed), sort and
+          count. The switch's buttons are narrower below `sm`. */}
+      <ListToolbarSkeleton scope="w-74 sm:w-80" sort count />
       <AdminReportsTableSkeleton />
     </PanelSkeleton>
   );

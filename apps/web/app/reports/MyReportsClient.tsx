@@ -25,7 +25,10 @@ import { PaginationFooter } from '@/components/kit/tables/PaginationFooter';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { ViewButton } from '@/components/kit/tables/ViewButton';
 import { ReportDetails } from '@/components/reports/ReportDetails';
-import { ReportEntityName } from '@/components/reports/ReportEntityName';
+import {
+  ReportEntityCell,
+  ReportEntityName,
+} from '@/components/reports/ReportEntityName';
 import {
   formatReportSubject,
   getReportEntityTypeName,
@@ -141,6 +144,8 @@ export default function MyReportsClient() {
                     key={report.id}
                     data-testid="my-reports-phone-row"
                     data-report-id={report.id}
+                    // The View button belongs to the name's line.
+                    align="start"
                     title={
                       <>
                         {report.hasUnreadUpdate ? (
@@ -203,20 +208,13 @@ export default function MyReportsClient() {
                     ) : null}
                   </DataTableCell>
                   <DataTableCell>
-                    <span className="block text-xs text-muted-foreground">
-                      {getReportEntityTypeName(report.entityType)}
-                    </span>
-                    <ReportEntityName report={report} />
+                    <ReportEntityCell report={report} />
                   </DataTableCell>
                   <DataTableCell>{report.reason.label}</DataTableCell>
                   <DataTableCell>
                     <ReportStatusBadge status={report.status} size="sm" />
                   </DataTableCell>
-                  <DataTableCell
-                    muted
-                    showFrom={COLUMN.submitted.showFrom}
-                    className="tabular-nums"
-                  >
+                  <DataTableCell muted showFrom={COLUMN.submitted.showFrom}>
                     <DateText date={report.created} />
                   </DataTableCell>
                   <DataTableCell align="end" empty={false}>

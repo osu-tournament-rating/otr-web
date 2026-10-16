@@ -241,7 +241,7 @@ export default function MatchLedgerRow({
       />
 
       <div className="col-span-2 col-start-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 lg:col-span-1 lg:col-start-auto lg:self-stretch lg:border-l lg:pl-3">
-        <span className="text-xs text-muted-foreground tabular-nums lg:hidden">
+        <span className="text-xs text-muted-foreground lg:hidden">
           {match.startDate ? (
             <>
               <Timestamp date={match.startDate} />
@@ -255,7 +255,7 @@ export default function MatchLedgerRow({
 
       <Timestamp
         date={match.startDate}
-        className="hidden text-right text-xs text-muted-foreground tabular-nums lg:block"
+        className="hidden text-right text-xs text-muted-foreground lg:block"
       />
     </li>
   );

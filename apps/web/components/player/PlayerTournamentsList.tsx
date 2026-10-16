@@ -3,13 +3,12 @@
 import { Trophy } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button } from '@/components/kit/controls/Button';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import { Panel } from '@/components/kit/layout/Panel';
 import { RowList } from '@/components/kit/layout/RowList';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
-import { formatCount, formatCountOf } from '@/lib/kit/format/number';
-import { formatLoadedReadout } from '@/lib/kit/tables/pagination';
+import { LoadMore } from '@/components/kit/tables/LoadMore';
+import { formatCountOf } from '@/lib/kit/format/number';
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 import type { PlayerTournamentListItem } from '@/lib/orpc/schema/tournament';
 
@@ -30,7 +29,7 @@ export default function PlayerTournamentsList({
   adjustments: PlayerRatingAdjustment[];
 }) {
   const [displayCount, setDisplayCount] = useState(INITIAL_COUNT);
-  const remaining = Math.max(tournaments.length - displayCount, 0);
+  const shownCount = Math.min(displayCount, tournaments.length);
 
   return (
     <Panel>
@@ -61,27 +60,18 @@ export default function PlayerTournamentsList({
               />
             ))}
           </RowList>
-          {remaining > 0 ? (
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t bg-muted/20 px-4 py-3 dark:bg-muted">
-              <p
-                className="text-xs text-muted-foreground tabular-nums"
-                aria-live="polite"
-              >
-                Showing {formatLoadedReadout(displayCount, tournaments.length)}
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setDisplayCount((count) =>
-                    Math.min(count + LOAD_MORE_COUNT, tournaments.length)
-                  )
-                }
-              >
-                Show more ({formatCount(remaining)} more)
-              </Button>
-            </div>
-          ) : null}
+          <LoadMore
+            label="Show more"
+            hasMore={shownCount < tournaments.length}
+            shownCount={shownCount}
+            totalCount={tournaments.length}
+            pageSize={INITIAL_COUNT}
+            onLoadMore={() =>
+              setDisplayCount((count) =>
+                Math.min(count + LOAD_MORE_COUNT, tournaments.length)
+              )
+            }
+          />
         </>
       )}
     </Panel>

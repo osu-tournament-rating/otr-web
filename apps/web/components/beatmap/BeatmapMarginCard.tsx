@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 
 import { NotEnoughData } from '@/components/beatmap/BeatmapSection';
+import { GAME_CLOSENESS_INFO } from '@/components/beatmap/section-info';
 import {
   ChartTooltipCard,
   ChartTooltipContent,
@@ -422,7 +423,7 @@ export default function BeatmapMarginCard({
       <SectionHeader
         icon={Swords}
         title="Game closeness"
-        infoText="How far the winning score finishes ahead of the losing one, ranked against every other map played in the same ruleset and team size."
+        infoText={GAME_CLOSENESS_INFO}
         meta={
           gameCount === 0
             ? undefined

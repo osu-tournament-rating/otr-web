@@ -16,6 +16,10 @@ import {
   DataTableHeader,
   DataTableRow,
 } from '@/components/kit/tables/DataTable';
+import {
+  SortControl,
+  type SortOption,
+} from '@/components/kit/lists/SortControl';
 import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { SortableHeader } from '@/components/kit/tables/SortableHeader';
@@ -39,6 +43,29 @@ type SortKey = 'status' | 'player' | 'osuId' | 'rating';
 
 /** Failed players first, as the results have always opened. */
 const DEFAULT_SORT: SortState<SortKey> = { key: 'status', direction: 'asc' };
+
+/** The sortable columns, in header order, for the phone rows' sort strip. */
+const SORT_OPTIONS: SortOption<SortKey>[] = [
+  {
+    value: 'status',
+    label: 'Status',
+    defaultDirection: 'asc',
+    directionLabels: { asc: 'Failed first', desc: 'Passed first' },
+  },
+  {
+    value: 'player',
+    label: 'Player',
+    defaultDirection: 'asc',
+    directionLabels: { asc: 'A to Z', desc: 'Z to A' },
+  },
+  { value: 'osuId', label: 'osu! ID', defaultDirection: 'asc' },
+  {
+    value: 'rating',
+    label: 'Rating',
+    defaultDirection: 'desc',
+    directionLabels: { desc: 'Highest first', asc: 'Lowest first' },
+  },
+];
 
 const SORT_ACCESSORS = {
   status: (row: PlayerFilteringResult) => (row.isSuccess ? 1 : 0),
@@ -65,21 +92,49 @@ function StatusBadge({ passed }: { passed: boolean }) {
   );
 }
 
-/** The player's name and avatar as one link, or "Unknown" when o!TR has no player. */
-function PlayerName({ row }: { row: PlayerFilteringResult }) {
-  if (!row.username || !row.playerId || row.osuId === null) {
+function playerHref(row: PlayerFilteringResult): string | null {
+  return row.username && row.playerId && row.osuId !== null
+    ? `/players/${row.playerId}`
+    : null;
+}
+
+/**
+ * The player's name as a link, with the 24px avatar inside it unless the
+ * row draws its own (`avatar={false}`), or "Unknown" when o!TR has no
+ * player.
+ */
+function PlayerName({
+  row,
+  avatar = true,
+}: {
+  row: PlayerFilteringResult;
+  avatar?: boolean;
+}) {
+  const href = playerHref(row);
+  if (!href || !row.username || row.osuId === null) {
     return <span className="font-medium text-muted-foreground">Unknown</span>;
   }
 
   return (
     <EntityLink
-      href={`/players/${row.playerId}`}
+      href={href}
       leading={
-        <OsuAvatar osuId={row.osuId} username={row.username} size={24} />
+        avatar ? (
+          <OsuAvatar osuId={row.osuId} username={row.username} size={24} />
+        ) : undefined
       }
     >
       {row.username}
     </EntityLink>
+  );
+}
+
+/** A phone row's 32px avatar, or a blank disc for a player o!TR doesn't know. */
+function PhoneAvatar({ row }: { row: PlayerFilteringResult }) {
+  return row.osuId !== null ? (
+    <OsuAvatar osuId={row.osuId} username={row.username} size={32} />
+  ) : (
+    <span className="size-8 rounded-full bg-muted" />
   );
 }
 
@@ -127,27 +182,39 @@ export default function FilteringResultsTable({
         <DataTable
           aria-label="Filtering results"
           stickyHeader
+          phoneSort={
+            <SortControl
+              size="sm"
+              label="Sort players by"
+              options={SORT_OPTIONS}
+              value={sort}
+              onValueChange={setSort}
+            />
+          }
           phoneRows={
             <PhoneRowList aria-label="Filtering results">
               {rows.map((row, index) => {
                 const reasons = getFailureReasons(row.failureReason);
+                const osuId =
+                  row.osuId !== null ? `osu! ID ${formatId(row.osuId)}` : null;
+                // Sorted by osu! ID, the line leads with it.
+                const description =
+                  sort.key === 'osuId'
+                    ? [osuId, ...reasons]
+                    : [...reasons, osuId];
+                const href = playerHref(row);
                 return (
                   <PhoneRow
                     key={rowKey(row, index)}
+                    leading={<PhoneAvatar row={row} />}
+                    leadingHref={href ?? undefined}
                     title={
                       <>
-                        <PlayerName row={row} />
+                        <PlayerName row={row} avatar={false} />
                         <StatusBadge passed={row.isSuccess} />
                       </>
                     }
-                    description={[
-                      ...reasons,
-                      row.osuId !== null
-                        ? `osu! ID ${formatId(row.osuId)}`
-                        : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
+                    description={description.filter(Boolean).join(' · ')}
                     value={formatRatingPrecise(row.currentRating)}
                   />
                 );

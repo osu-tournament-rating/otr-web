@@ -10,6 +10,7 @@ import {
   NotEnoughData,
   ScaleAxis,
 } from '@/components/beatmap/BeatmapSection';
+import { TIER_BREAKDOWN_INFO } from '@/components/beatmap/section-info';
 import TierIcon from '@/components/icons/TierIcon';
 import { Panel } from '@/components/kit/layout/Panel';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
@@ -259,7 +260,7 @@ export default function BeatmapTierBreakdownCard({
       <SectionHeader
         icon={Medal}
         title="Tier breakdown"
-        infoText="Charts NM, HD, HR and DT scores only, grouped by each player's pre-match rating at the time of play. Tiers with fewer than 5 scores are hidden."
+        infoText={TIER_BREAKDOWN_INFO}
         meta={`${formatCount(ratedScoreCount)} of ${formatCountOf(totalScoreCount, 'score')} rated`}
       />
 

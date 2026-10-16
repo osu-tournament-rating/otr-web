@@ -2,6 +2,7 @@ import { Music } from 'lucide-react';
 
 import { BEATMAP_CARD_GRID_CLASS } from '@/components/beatmaps/list/layout';
 import {
+  ListToolbarSkeleton,
   PanelSkeleton,
   SkeletonText,
 } from '@/components/kit/feedback/Skeletons';
@@ -23,21 +24,7 @@ export default function BeatmapsLoading() {
         description="Tournament maps and observed play data."
       />
       <PanelSkeleton label="Loading beatmaps">
-        {/* The ListToolbar's two rows */}
-        <div className="flex flex-col gap-3 border-b bg-muted/20 p-3 sm:p-4 dark:bg-muted">
-          <div className="flex flex-col gap-2 md:flex-row md:gap-4">
-            <Block className="h-10 flex-1" />
-            <div className="flex gap-2 md:border-l md:pl-4">
-              <Block className="h-10 flex-1 md:w-48 md:flex-none" />
-              <Block className="size-10" />
-              <Block className="ml-2 h-10 w-24 md:ml-4" />
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <Block className="h-8 w-80 max-w-full" />
-            <Block className="ml-auto h-8 w-40" />
-          </div>
-        </div>
+        <ListToolbarSkeleton search sort filters rulesets={6} view={3} count />
         <div
           className={cn(
             BEATMAP_CARD_GRID_CLASS,

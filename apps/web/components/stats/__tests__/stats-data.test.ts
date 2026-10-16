@@ -2,7 +2,6 @@ import { describe, expect, it } from 'bun:test';
 import { Ruleset, VerificationStatus } from '@otr/core/osu';
 
 import {
-  getCategoryTicks,
   getLobbySizeBars,
   getRatingBucketStart,
   getRatingDistribution,
@@ -157,26 +156,6 @@ describe('getRatingDistribution', () => {
   it('puts a rating in the bucket that starts at or below it', () => {
     expect(getRatingBucketStart(1024.9, 25)).toBe(1000);
     expect(getRatingBucketStart(1025, 25)).toBe(1025);
-  });
-});
-
-describe('getCategoryTicks', () => {
-  it('labels every category when they all fit', () => {
-    expect(getCategoryTicks([2024], 6)).toEqual([2024]);
-    expect(getCategoryTicks([1500, 1525, 1550], 4)).toEqual([1500, 1525, 1550]);
-  });
-
-  it('picks round values from the data by the tick rule', () => {
-    const years = Array.from({ length: 12 }, (_, index) => 2015 + index);
-    expect(getCategoryTicks(years, 6)).toEqual([
-      2016, 2018, 2020, 2022, 2024, 2026,
-    ]);
-    expect(getCategoryTicks(years, 4)).toEqual([2015, 2020, 2025]);
-
-    const starts = Array.from({ length: 117 }, (_, index) => 100 + index * 25);
-    expect(getCategoryTicks(starts, 6)).toEqual([
-      500, 1000, 1500, 2000, 2500, 3000,
-    ]);
   });
 });
 

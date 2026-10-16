@@ -4,6 +4,7 @@ import { Trash2, UserX } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
+import { SETTINGS_COPY } from '@/app/settings/settings-copy';
 import { Button } from '@/components/kit/controls/Button';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
 import { Callout } from '@/components/kit/feedback/Callout';
@@ -59,8 +60,7 @@ export default function AccountDeletionClient() {
             />
           }
         >
-          Permanently delete your account and remove your data from o!TR. Your
-          player profile will remain public.
+          {SETTINGS_COPY.deleteAccount}
         </Callout>
       </PanelBody>
     </Panel>

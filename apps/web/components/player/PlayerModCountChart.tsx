@@ -13,12 +13,10 @@ import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { formatCountTick } from '@/lib/kit/charts/format';
 import { formatCount, formatPercent } from '@/lib/kit/format/number';
 import type { PlayerModStats } from '@/lib/orpc/schema/playerStats';
-import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import { cn } from '@/lib/utils';
 
 import { groupModStats } from './mod-stats';
-
-const INFO_TEXT = `Mods played in at least ${MOD_CHART_DISPLAY_THRESHOLD}% of all verified games.`;
+import { MOD_DISTRIBUTION_INFO as INFO_TEXT } from './section-info';
 
 /** How a player's games split across mods, as a donut in the mod palette. */
 export default function PlayerModCountChart({

@@ -78,10 +78,7 @@ export default function BeatmapHeader({
             <span className="inline-flex items-center gap-1.5">
               <PencilLine className="size-4 shrink-0" aria-hidden />
               Manually configured
-              <InfoButton
-                label="About manually configured"
-                className={onArt ? 'text-white/80 hover:text-white' : undefined}
-              >
+              <InfoButton label="About manually configured" onArt={onArt}>
                 Set by an admin because the osu! API no longer serves this
                 beatmap
               </InfoButton>

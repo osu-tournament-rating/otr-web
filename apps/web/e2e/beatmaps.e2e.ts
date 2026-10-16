@@ -1729,12 +1729,23 @@ test.describe('Beatmap Detail Page', () => {
       await expect(
         card.getByRole('heading', { name: 'Attributes' })
       ).toBeVisible({ timeout: 10000 });
-      await expect(card.locator('abbr[title="Circle size"]')).toBeVisible();
-      await expect(card.locator('abbr[title="Approach rate"]')).toBeVisible();
+      // Each short label names its attribute in full and shows it on tap.
+      for (const [short, full] of [
+        ['CS', 'Circle size'],
+        ['AR', 'Approach rate'],
+        ['OD', 'Overall difficulty'],
+        ['HP', 'HP drain'],
+      ]) {
+        const label = card.getByRole('button', { name: full, exact: true });
+        await expect(label).toHaveText(short);
+      }
+
+      const circleSize = card.getByRole('button', { name: 'Circle size' });
+      await circleSize.click();
       await expect(
-        card.locator('abbr[title="Overall difficulty"]')
+        page.getByRole('dialog').filter({ hasText: 'Circle size' })
       ).toBeVisible();
-      await expect(card.locator('abbr[title="HP drain"]')).toBeVisible();
+      await page.keyboard.press('Escape');
 
       await expect(
         page

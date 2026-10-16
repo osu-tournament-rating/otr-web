@@ -8,6 +8,7 @@ import useSWR from 'swr';
 import SectionError from '@/components/error/SectionError';
 import { Button } from '@/components/kit/controls/Button';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
+import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
 import {
   FormActions,
   FormGrid,
@@ -200,7 +201,12 @@ function UserLookup() {
           data-testid="admin-user-lookup-form"
         >
           <div className="flex min-w-0 flex-1 flex-col gap-2">
-            <Label htmlFor="admin-player-search">Username</Label>
+            <FormFieldLabel
+              htmlFor="admin-player-search"
+              invalid={queryError !== null}
+            >
+              Username
+            </FormFieldLabel>
             <Input
               id="admin-player-search"
               value={query}
@@ -466,12 +472,12 @@ function UserApiKeys({ playerId }: { playerId: number }) {
                 <DataTableCell className="truncate">
                   {getApiKeyPreview(key)}
                 </DataTableCell>
-                <DataTableCell muted showFrom="lg" className="tabular-nums">
+                <DataTableCell muted showFrom="lg">
                   {key.lastRequest ? (
                     <Timestamp date={key.lastRequest} />
                   ) : null}
                 </DataTableCell>
-                <DataTableCell muted showFrom="lg" className="tabular-nums">
+                <DataTableCell muted showFrom="lg">
                   <Timestamp date={key.createdAt} />
                 </DataTableCell>
                 <DataTableCell numeric>
@@ -785,7 +791,7 @@ function IdField({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor={id}>{label}</Label>
+      <FormFieldLabel htmlFor={id}>{label}</FormFieldLabel>
       <Textarea
         id={id}
         value={value}

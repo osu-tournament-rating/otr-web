@@ -30,6 +30,7 @@ import { formatCountTick, formatNumberTick } from '@/lib/kit/charts/format';
 import {
   DEFAULT_MAX_TICKS,
   NARROW_MAX_TICKS,
+  getCategoryTicks,
   getNiceTicks,
 } from '@/lib/kit/charts/ticks';
 import { getTierColor } from '@/lib/kit/color/tiers';
@@ -40,7 +41,6 @@ import { getTierString } from '@/lib/utils/tierData';
 import {
   type RatingBucket,
   type RatingDistribution,
-  getCategoryTicks,
   getRatingBucketStart,
 } from './stats-data';
 
@@ -165,13 +165,11 @@ export default function RatingDistributionChart({
                   if (!bucket) return null;
                   return (
                     <>
-                      <div className="tabular-nums">
+                      <div>
                         Rating {formatNumberTick(bucket.rating)} –{' '}
                         {formatNumberTick(bucket.rating + bucketSize - 1)}
                       </div>
-                      <div className="tabular-nums">
-                        Cumulative {formatPercent(bucket.cumulative)}
-                      </div>
+                      <div>Cumulative {formatPercent(bucket.cumulative)}</div>
                     </>
                   );
                 }}

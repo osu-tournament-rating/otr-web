@@ -186,7 +186,7 @@ export function PlayerStatsPhoneRow({
   return (
     <PhoneRow
       data-testid={`player-stats-phone-row-${player.playerId}`}
-      className="items-start"
+      align="start"
       title={
         <>
           <PlayerName player={player} avatarSize={24} />

@@ -52,7 +52,7 @@ export function TimelineToolbar({
   return (
     <ListToolbar
       label="Filter audit history"
-      scope={systemSwitch}
+      leading={systemSwitch}
       count={
         total === undefined ? undefined : (
           <span data-testid="timeline-summary">
@@ -228,6 +228,7 @@ export default function AuditEntityTimeline({
           loading={isValidating && size > responsePages.length}
           shownCount={allItems.length}
           totalCount={totalCount}
+          pageSize={TIMELINE_BATCH}
           onLoadMore={() => void setSize(size + 1)}
         />
       ) : null}

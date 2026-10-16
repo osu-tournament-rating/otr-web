@@ -6,10 +6,10 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/kit/controls/Button';
 import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
+import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
 import { Timestamp } from '@/components/kit/format/Timestamp';
 import { Callout } from '@/components/kit/feedback/Callout';
 import { MissingValue } from '@/components/kit/tables/MissingValue';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { formatCount, formatCountOf, formatId } from '@/lib/kit/format/number';
 import { orpc } from '@/lib/orpc/orpc';
@@ -230,7 +230,9 @@ export default function MergeGameDialog({
           </ul>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor={`merge-game-ids-${game.id}`}>Child game IDs</Label>
+            <FormFieldLabel htmlFor={`merge-game-ids-${game.id}`}>
+              Child game IDs
+            </FormFieldLabel>
             <Textarea
               id={`merge-game-ids-${game.id}`}
               placeholder={TEXTAREA_PLACEHOLDER}

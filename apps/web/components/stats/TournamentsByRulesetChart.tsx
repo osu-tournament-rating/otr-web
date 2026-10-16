@@ -1,12 +1,12 @@
 'use client';
 
+import { CountBarChart } from '@/components/kit/charts/CountBarChart';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import { Panel, PanelBody } from '@/components/kit/layout/Panel';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { formatCount } from '@/lib/kit/format/number';
 
 import { STATS_PANELS } from './chart-panels';
-import { CountBarChart } from './CountBarChart';
 import { getRulesetBars, sumCounts } from './stats-data';
 
 export default function TournamentsByRulesetChart({

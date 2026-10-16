@@ -32,12 +32,16 @@ export const DEFAULT_LEADERBOARD_SORT: SortState<LeaderboardSort> = {
   direction: 'desc',
 };
 
-/** The bounds of each range filter, shared by the params and the fields. */
+/**
+ * The domain of each range filter, shared by the params and the fields, so
+ * a field rounds typed numbers exactly as its address does.
+ */
 export const LEADERBOARD_RANGES = {
-  rating: { min: 100, max: 3500 },
-  osuRank: { min: 1, max: 1_000_000 },
-  matches: { min: 1, max: 1000 },
-  winRate: { min: 0, max: 100 },
+  rating: { min: 100, max: 3500, integer: true },
+  osuRank: { min: 1, max: 1_000_000, integer: true },
+  matches: { min: 1, max: 1000, integer: true },
+  // Percent. Old links may hold a decimal, such as 55.5.
+  winRate: { min: 0, max: 100, integer: false },
 } as const;
 
 /**
@@ -68,10 +72,9 @@ export const LEADERBOARD_LIST_PARAMS = defineListParams({
   // A trimmed string, as the search is: a country code such as `US`.
   country: searchParam({ minLength: 2, maxLength: 4, role: 'filter' }),
   tiers: arrayParam(leaderboardTierKeys),
-  rating: rangeParam({ ...LEADERBOARD_RANGES.rating, integer: true }),
-  osuRank: rangeParam({ ...LEADERBOARD_RANGES.osuRank, integer: true }),
-  matches: rangeParam({ ...LEADERBOARD_RANGES.matches, integer: true }),
-  // Percent. Old links may hold a decimal, such as 55.5.
+  rating: rangeParam(LEADERBOARD_RANGES.rating),
+  osuRank: rangeParam(LEADERBOARD_RANGES.osuRank),
+  matches: rangeParam(LEADERBOARD_RANGES.matches),
   winRate: rangeParam(LEADERBOARD_RANGES.winRate),
   page: pageParam(),
 });

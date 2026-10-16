@@ -13,8 +13,10 @@ import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
 import {
   CHART_CURSOR,
-  CHART_MARGIN,
+  CHART_ROW_BAR_RADIUS,
+  CHART_ROW_MARGIN,
   chartAxisProps,
+  chartRowGridProps,
   niceAxisProps,
 } from '@/lib/kit/charts/axis';
 import { formatCompactTick, formatCountTick } from '@/lib/kit/charts/format';
@@ -24,18 +26,17 @@ import {
   getNiceTicks,
 } from '@/lib/kit/charts/ticks';
 import type { PlayerModStats } from '@/lib/orpc/schema/playerStats';
-import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
 import { cn } from '@/lib/utils';
 
 import { groupModStats } from './mod-stats';
+import {
+  MOD_PERFORMANCE_EASY_NOTE,
+  MOD_PERFORMANCE_INFO,
+} from './section-info';
 
 const BAR_SIZE = 24;
 const ROW_HEIGHT = 36;
 const AXIS_HEIGHT = 32;
-// The last tick label is centred on the plot's edge; leave it room.
-const MARGIN = { ...CHART_MARGIN, right: 24 };
-// Rounded at the data end, square at the axis.
-const HORIZONTAL_BAR_RADIUS: [number, number, number, number] = [0, 4, 4, 0];
 
 /**
  * Average score per mod, with the mod multipliers removed, as horizontal
@@ -55,13 +56,9 @@ export default function PlayerModStatsChart({
   );
   const hasEasyMod = chartData.some((entry) => entry.mods & Mods.Easy);
 
-  const infoText = (
-    <>
-      Mods played in at least {MOD_CHART_DISPLAY_THRESHOLD}% of all verified
-      ScoreV2 games.
-      {hasEasyMod ? ' All EZ scores are multiplied by 1.75x.' : null}
-    </>
-  );
+  const infoText = hasEasyMod
+    ? `${MOD_PERFORMANCE_INFO} ${MOD_PERFORMANCE_EASY_NOTE}`
+    : MOD_PERFORMANCE_INFO;
 
   if (chartData.length === 0) {
     return (
@@ -99,8 +96,12 @@ export default function PlayerModStatsChart({
           className="aspect-auto w-full"
           style={{ height: chartData.length * ROW_HEIGHT + AXIS_HEIGHT }}
         >
-          <BarChart data={chartData} layout="vertical" margin={MARGIN}>
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+          <BarChart
+            data={chartData}
+            layout="vertical"
+            margin={CHART_ROW_MARGIN}
+          >
+            <CartesianGrid {...chartRowGridProps} />
             <XAxis
               {...chartAxisProps}
               {...niceAxisProps(xTicks)}
@@ -126,7 +127,7 @@ export default function PlayerModStatsChart({
               dataKey="averageScore"
               name="Average score"
               barSize={BAR_SIZE}
-              radius={HORIZONTAL_BAR_RADIUS}
+              radius={CHART_ROW_BAR_RADIUS}
               isAnimationActive={false}
             >
               {chartData.map((entry) => (

@@ -3,6 +3,7 @@ import { History } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
 
 import {
+  ListToolbarSkeleton,
   PanelSkeleton,
   SkeletonText,
 } from '@/components/kit/feedback/Skeletons';
@@ -26,9 +27,10 @@ export function AuditHistoryPanelSkeleton({
 }) {
   return (
     <PanelSkeleton label={label}>
-      {/* box-content: the strips' borders sit under their 44, 56 and 64px. */}
+      {/* box-content: the border sits under the tabs' 44px. */}
       {withTabs ? <div className="box-content h-11 border-b" /> : null}
-      <div className="box-content h-14 border-b bg-muted/20 sm:h-16 dark:bg-muted" />
+      {/* The system events switch and the count. */}
+      <ListToolbarSkeleton leading="w-44" count />
       <TimelineSkeleton />
     </PanelSkeleton>
   );

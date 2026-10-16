@@ -21,7 +21,6 @@ import { AdminNotesDialog } from '@/components/admin-notes/AdminNotesDialog';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
 import { RowActionsMenu } from '@/components/kit/controls/RowActionsMenu';
 import { Badge } from '@/components/kit/status/Badge';
-import { NotificationDot } from '@/components/kit/status/NotificationDot';
 import { ReportDialog } from '@/components/reports/ReportDialog';
 import ScoreEditDialog from '@/components/scores/ScoreEditDialog';
 import { entityTypeToSlug } from '@/lib/audit-entity-types';
@@ -64,57 +63,49 @@ export default function ScoreActionsMenu({
 
   return (
     <>
-      <span className="relative inline-flex shrink-0">
-        <RowActionsMenu
-          itemName={`${scoreName} in game ${gameNumber}`}
-          data-testid="score-actions"
-          actions={[
-            isAdmin && {
-              label: 'Edit score',
-              icon: PencilLine,
-              onSelect: () => setEditing(true),
-            },
-            (isAdmin || noteCount > 0) && {
-              label: 'Admin notes',
-              icon: NotebookPen,
-              trailing:
-                noteCount > 0 ? (
-                  <Badge size="sm">{formatBadgeCount(noteCount)}</Badge>
-                ) : undefined,
-              onSelect: () => setViewingNotes(true),
-            },
-            {
-              label: 'View audit history',
-              icon: History,
-              href: `/audit/${entityTypeToSlug(AuditEntityType.Score)}/${score.id}`,
-            },
-            session && {
-              label: 'Report an issue',
-              icon: Flag,
-              onSelect: () => setReporting(true),
-            },
-            isAdmin && {
-              label: 'Delete score',
-              icon: Trash2,
-              destructive: true,
-              onSelect: () => setDeleting(true),
-            },
-            isAdmin && {
-              label: 'Delete all player scores',
-              icon: UserRoundMinus,
-              destructive: true,
-              onSelect: () => setDeletingAll(true),
-            },
-          ]}
-        />
-        {noteCount > 0 ? (
-          <NotificationDot
-            placement="corner"
-            label="Has admin notes"
-            className="ring-score-card"
-          />
-        ) : null}
-      </span>
+      <RowActionsMenu
+        itemName={`${scoreName} in game ${gameNumber}`}
+        notification={noteCount > 0 ? 'Has admin notes' : undefined}
+        data-testid="score-actions"
+        actions={[
+          isAdmin && {
+            label: 'Edit score',
+            icon: PencilLine,
+            onSelect: () => setEditing(true),
+          },
+          (isAdmin || noteCount > 0) && {
+            label: 'Admin notes',
+            icon: NotebookPen,
+            trailing:
+              noteCount > 0 ? (
+                <Badge size="sm">{formatBadgeCount(noteCount)}</Badge>
+              ) : undefined,
+            onSelect: () => setViewingNotes(true),
+          },
+          {
+            label: 'View audit history',
+            icon: History,
+            href: `/audit/${entityTypeToSlug(AuditEntityType.Score)}/${score.id}`,
+          },
+          session && {
+            label: 'Report an issue',
+            icon: Flag,
+            onSelect: () => setReporting(true),
+          },
+          isAdmin && {
+            label: 'Delete score',
+            icon: Trash2,
+            destructive: true,
+            onSelect: () => setDeleting(true),
+          },
+          isAdmin && {
+            label: 'Delete all player scores',
+            icon: UserRoundMinus,
+            destructive: true,
+            onSelect: () => setDeletingAll(true),
+          },
+        ]}
+      />
 
       {session ? (
         <ReportDialog

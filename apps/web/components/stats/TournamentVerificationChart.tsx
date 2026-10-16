@@ -1,5 +1,6 @@
 'use client';
 
+import { CountBarChart } from '@/components/kit/charts/CountBarChart';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import { Panel, PanelBody } from '@/components/kit/layout/Panel';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
@@ -7,7 +8,6 @@ import { formatCount, formatPercent } from '@/lib/kit/format/number';
 import type { VerificationStatusKey } from '@/lib/orpc/schema/stats';
 
 import { STATS_PANELS } from './chart-panels';
-import { CountBarChart } from './CountBarChart';
 import { getVerificationBars, sumCounts } from './stats-data';
 
 /**
@@ -40,12 +40,9 @@ export default function TournamentVerificationChart({
             data={bars}
             layout="rows"
             valueName="Tournaments"
-            footer={(bar) => (
-              // The share changes in place as the pointer moves.
-              <span className="tabular-nums">
-                {formatPercent(bar.count / total)} of all tournaments
-              </span>
-            )}
+            footer={(bar) =>
+              `${formatPercent(bar.count / total)} of all tournaments`
+            }
           />
         </PanelBody>
       )}

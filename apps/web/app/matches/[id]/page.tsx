@@ -12,6 +12,7 @@ import { NotInRatings } from '@/components/kit/status/NotInRatings';
 import MatchHero, { type MatchTab } from '@/components/matches/MatchHero';
 import MatchStatsView from '@/components/matches/MatchStatsView';
 import { getMatchDisplayName } from '@/components/matches/matchName';
+import { getCountryNames } from '@/lib/kit/format/country';
 import { formatCountOf } from '@/lib/kit/format/number';
 import { parseHeroTab } from '@/lib/kit/layout/hero-tabs';
 import { getMatchCached } from '@/lib/orpc/queries/match';
@@ -59,6 +60,10 @@ export default async function Page({ params, searchParams }: PageProps) {
   const tab = parseHeroTab((await searchParams).tab, MATCH_TABS, 'games');
   const match = await fetchOrpcOrNotFound(() => getMatchCached(id));
   const games = match.games ?? [];
+  const players = match.players ?? [];
+  // Worked out here, so the score cards' flags never name a country with
+  // the browser's own region names.
+  const countryNames = getCountryNames(players.map((player) => player.country));
 
   return (
     <PageFrame>
@@ -79,7 +84,11 @@ export default async function Page({ params, searchParams }: PageProps) {
           {games.length > 0 ? (
             <PanelBody>
               <Suspense fallback={<GameFramesSkeleton />}>
-                <GamesListClient games={games} players={match.players ?? []} />
+                <GamesListClient
+                  games={games}
+                  players={players}
+                  countryNames={countryNames}
+                />
               </Suspense>
             </PanelBody>
           ) : (

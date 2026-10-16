@@ -23,6 +23,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { DELETE_CASCADE_DESCRIPTION } from '@/components/admin-forms/adminFormFields';
 import { AdminNotesDialog } from '@/components/admin-notes/AdminNotesDialog';
 import { AdminMenu } from '@/components/kit/controls/AdminMenu';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
@@ -46,7 +47,6 @@ import {
 import { orpc } from '@/lib/orpc/orpc';
 import type { MatchDetail } from '@/lib/orpc/schema/match';
 
-import { DELETE_CASCADE_DESCRIPTION } from './adminFormFields';
 import MatchEditDialog from './MatchEditDialog';
 import { getMatchDisplayName } from './matchName';
 import MergeMatchDialog from './MergeMatchDialog';
@@ -107,7 +107,7 @@ export default function MatchHero({
                 <EntityLink
                   href={`/tournaments/${match.tournament.id}`}
                   data-testid="match-tournament-link"
-                  title={match.tournament.name}
+                  wrap
                 >
                   {match.tournament.name}
                 </EntityLink>

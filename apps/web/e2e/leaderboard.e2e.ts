@@ -20,10 +20,8 @@ async function chooseCountry(page: Page) {
   await expect(countrySearch).toBeVisible({ timeout: 10000 });
   await countrySearch.fill('United States');
 
-  // Anchor on the country code so "United States Minor Outlying Islands" can't match
-  const option = page.getByRole('option', {
-    name: /United States of America US$/,
-  });
+  // Anchor on the country code so "U.S. Outlying Islands" can't match
+  const option = page.getByRole('option', { name: /^United States US$/ });
   await expect(option).toBeVisible({ timeout: 10000 });
   await option.click();
 }
@@ -205,9 +203,14 @@ test.describe('Leaderboard Page', () => {
       ).toBeVisible({ timeout: 10000 });
       await expect(
         page.getByRole('button', {
-          name: 'Remove Country: United States of America filter',
+          name: 'Remove Country: United States filter',
         })
       ).toBeVisible();
+      // The combobox names the chosen country with its flag.
+      await openFilters(page);
+      await expect(
+        page.locator('[data-testid="leaderboard-filter-country-button"]')
+      ).toHaveText('United States');
     });
 
     test('tier filter narrows results to a selected tier', async ({ page }) => {
@@ -513,6 +516,29 @@ test.describe('Leaderboard Page', () => {
           document.documentElement.clientWidth
       );
       expect(hasPageOverflow).toBe(false);
+    });
+
+    test('the avatar opens the profile without a second tab stop', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.leaderboard);
+      await page.waitForLoadState('networkidle');
+
+      const firstRow = page
+        .locator('[data-testid^="leaderboard-phone-row-"]')
+        .first();
+      const avatarLink = firstRow.locator(
+        '[data-slot="phone-row-leading"] a[href*="/players/"]'
+      );
+      await expect(avatarLink).toBeVisible({ timeout: 10000 });
+      await expect(avatarLink).toHaveAttribute('tabindex', '-1');
+
+      // The name links to the same profile and is the row's one tab stop.
+      const nameHref = await firstRow
+        .getByRole('link')
+        .first()
+        .getAttribute('href');
+      expect(await avatarLink.getAttribute('href')).toBe(nameHref);
     });
 
     test('rows name the win rate, or the count the list is sorted by', async ({

@@ -8,11 +8,14 @@ import type { Game, MatchPlayer } from '@/lib/orpc/schema/match';
 interface GamesListClientProps {
   games: Game[];
   players: MatchPlayer[];
+  /** The players' country names by code, from `getCountryNames` on the server. */
+  countryNames: Record<string, string>;
 }
 
 export default function GamesListClient({
   games,
   players,
+  countryNames,
 }: GamesListClientProps) {
   const searchParams = useSearchParams();
   const gameIdParam = searchParams.get('gameId');
@@ -68,6 +71,7 @@ export default function GamesListClient({
           players={players.filter((player) =>
             game.scores.map((s) => s.playerId).includes(player.id)
           )}
+          countryNames={countryNames}
           highlighted={game.id === highlightGameId}
           highlightScoreId={highlightScoreId}
         />

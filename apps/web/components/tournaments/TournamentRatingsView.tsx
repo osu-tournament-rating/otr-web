@@ -27,15 +27,15 @@ import {
   formatCount,
   formatCountOf,
   formatRating,
+  formatRatingDelta,
 } from '@/lib/kit/format/number';
 import { defineListParams, sortParam } from '@/lib/kit/lists/params';
 import type { SortState } from '@/lib/kit/lists/sort';
+import { useListState } from '@/lib/kit/lists/use-list-state';
 import { sortRows } from '@/lib/kit/tables/sort';
 import type { TournamentPlayerStats } from '@/lib/orpc/schema/tournament';
 
-import { useAddressListState } from './useAddressListState';
-
-type RatingSortKey =
+export type RatingSortKey =
   'player' | 'matches' | 'games' | 'before' | 'after' | 'average' | 'total';
 
 const RATING_SORT_KEYS: readonly RatingSortKey[] = [
@@ -99,17 +99,69 @@ function WinLoss({ won, lost }: { won: number; lost: number }) {
   );
 }
 
-function PlayerLink({ player }: { player: TournamentPlayerStats['player'] }) {
+const playerHref = (player: TournamentPlayerStats['player']) =>
+  `/players/${player.id}`;
+
+/** The name, with a 24px avatar inside its link in the table. */
+function PlayerLink({
+  player,
+  avatar = true,
+}: {
+  player: TournamentPlayerStats['player'];
+  /** Off on phone rows, which show a 32px avatar beside the name and its line. */
+  avatar?: boolean;
+}) {
   return (
     <EntityLink
-      href={`/players/${player.id}`}
+      href={playerHref(player)}
       leading={
-        <OsuAvatar osuId={player.osuId} username={player.username} size={24} />
+        avatar ? (
+          <OsuAvatar
+            osuId={player.osuId}
+            username={player.username}
+            size={24}
+          />
+        ) : undefined
       }
     >
       {player.username}
     </EntityLink>
   );
+}
+
+const formatWinLoss = (won: number, lost: number) =>
+  `${formatCount(won)}–${formatCount(lost)}`;
+
+/**
+ * The phone row's muted line: the columns the phone hides, led by the
+ * sorted one, so the order on screen has a visible reason.
+ */
+export function getPhoneDescription(
+  row: TournamentPlayerStats,
+  sortKey: RatingSortKey
+): string {
+  const matches = `Matches ${formatWinLoss(row.matchesWon, row.matchesLost)}`;
+  const ratings = `${formatRating(row.ratingBefore)} → ${formatRating(row.ratingAfter)}`;
+
+  switch (sortKey) {
+    case 'games':
+      return [
+        `Games ${formatWinLoss(row.gamesWon, row.gamesLost)}`,
+        matches,
+        ratings,
+      ].join(' · ');
+    case 'average':
+      return [
+        `Avg. change ${formatRatingDelta(row.averageRatingDelta)}`,
+        matches,
+        ratings,
+      ].join(' · ');
+    case 'before':
+    case 'after':
+      return [ratings, matches].join(' · ');
+    default:
+      return [matches, ratings].join(' · ');
+  }
 }
 
 function downloadCsv(rows: readonly TournamentPlayerStats[]) {
@@ -162,7 +214,10 @@ export default function TournamentRatingsView({
 }: {
   playerStats: TournamentPlayerStats[];
 }) {
-  const { state, setState } = useAddressListState(TOURNAMENT_RATING_PARAMS);
+  // Every row is on the client already: a sort only rewrites the address.
+  const { state, setState } = useListState(TOURNAMENT_RATING_PARAMS, {
+    shallow: true,
+  });
   const sort = state.sort;
   const rows = useMemo(
     () => sortRows(playerStats, sort, SORT_VALUES),
@@ -204,28 +259,35 @@ export default function TournamentRatingsView({
         <DataTable
           aria-label="Rating changes"
           stickyHeader
+          // The headers sort the table; phones get the same sort here.
+          phoneSort={
+            <SortControl
+              size="sm"
+              label="Sort rating changes by"
+              options={RATING_SORT_OPTIONS}
+              value={sort}
+              onValueChange={onSortChange}
+            />
+          }
           phoneRows={
-            <>
-              {/* The headers sort the table; phones get the same sort here. */}
-              <div className="border-b px-4 py-3">
-                <SortControl
-                  label="Sort rating changes by"
-                  options={RATING_SORT_OPTIONS}
-                  value={sort}
-                  onValueChange={onSortChange}
+            <PhoneRowList aria-label="Rating changes">
+              {rows.map((row) => (
+                <PhoneRow
+                  key={row.player.id}
+                  leading={
+                    <OsuAvatar
+                      osuId={row.player.osuId}
+                      username={row.player.username}
+                      size={32}
+                    />
+                  }
+                  leadingHref={playerHref(row.player)}
+                  title={<PlayerLink player={row.player} avatar={false} />}
+                  description={getPhoneDescription(row, sort.key)}
+                  value={<RatingDelta value={totalChange(row)} />}
                 />
-              </div>
-              <PhoneRowList aria-label="Rating changes">
-                {rows.map((row) => (
-                  <PhoneRow
-                    key={row.player.id}
-                    title={<PlayerLink player={row.player} />}
-                    description={`Matches ${formatCount(row.matchesWon)}–${formatCount(row.matchesLost)} · ${formatRating(row.ratingBefore)} → ${formatRating(row.ratingAfter)}`}
-                    value={<RatingDelta value={totalChange(row)} />}
-                  />
-                ))}
-              </PhoneRowList>
-            </>
+              ))}
+            </PhoneRowList>
           }
         >
           <DataTableHeader>

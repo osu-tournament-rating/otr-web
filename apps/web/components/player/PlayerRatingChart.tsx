@@ -18,6 +18,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatRating } from '@/lib/kit/format/number';
+import {
+  booleanParam,
+  defineListParams,
+  enumParam,
+} from '@/lib/kit/lists/params';
+import { useListState } from '@/lib/kit/lists/use-list-state';
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 import { sortData } from '@/lib/utils/playerRatingChart';
 import { getTierFromRating } from '@/lib/utils/tierData';
@@ -26,9 +32,26 @@ import PlayerRatingChartSummaryStats from './PlayerRatingChartSummaryStats';
 import PlayerRatingChartTable from './PlayerRatingChartTable';
 import PlayerRatingChartView from './PlayerRatingChartView';
 import type { RatingMetric } from './rating-adjustment';
+import { RATING_HISTORY_INFO } from './section-info';
 
 type TimeRangeOption = 'all' | '1y' | '6m' | '3m' | 'custom';
-type ViewMode = 'chart' | 'table';
+
+/**
+ * The panel's views, kept in the address so a reload or a shared link
+ * shows the same one. Every adjustment is already on the client, so they
+ * change the address without a server render (`shallow`).
+ */
+const RATING_VIEW_PARAMS = defineListParams({
+  metric: enumParam<RatingMetric>(['rating', 'volatility'], {
+    default: 'rating',
+    role: 'scope',
+  }),
+  view: enumParam(['chart', 'table'] as const, {
+    default: 'chart',
+    role: 'scope',
+  }),
+  decay: booleanParam({ default: true, role: 'scope' }),
+});
 
 const TIME_RANGE_LABELS: Record<TimeRangeOption, string> = {
   all: 'All time',
@@ -124,8 +147,9 @@ const isDecay = (point: PlayerRatingAdjustment) =>
 /**
  * The rating history panel: rating or volatility as a line or a table,
  * with a time range (kept in the address, where the whole profile reads
- * it) and a switch for decay adjustments. The peak rating and its tier sit
- * in the header.
+ * it) and a switch for decay adjustments. The views and the decay switch
+ * live in the address too, without a server render. The peak rating and
+ * its tier sit in the header.
  */
 export default function PlayerRatingChart({
   adjustments,
@@ -143,9 +167,11 @@ export default function PlayerRatingChart({
   const [timeRange, setTimeRange] = useState<TimeRangeOption>(() =>
     deriveTimeRange(parseDateParam(dateMinParam), parseDateParam(dateMaxParam))
   );
-  const [metric, setMetric] = useState<RatingMetric>('rating');
-  const [viewMode, setViewMode] = useState<ViewMode>('chart');
-  const [showDecay, setShowDecay] = useState(true);
+  const { state: views, setState: setViews } = useListState(
+    RATING_VIEW_PARAMS,
+    { shallow: true }
+  );
+  const { metric, view: viewMode, decay: showDecay } = views;
 
   useEffect(() => {
     const derivedRange = deriveTimeRange(
@@ -212,7 +238,7 @@ export default function PlayerRatingChart({
       <SectionHeader
         icon={ChartLine}
         title="Rating history"
-        infoText="Shows rating changes over time. Each entry represents a rating adjustment from a match or rating decay. The dashed line marks the all-time peak rating."
+        infoText={RATING_HISTORY_INFO}
         meta={
           peak && highestRating !== undefined ? (
             <span
@@ -228,7 +254,7 @@ export default function PlayerRatingChart({
               />
               <span>
                 Peak rating{' '}
-                <span className="font-medium text-foreground tabular-nums">
+                <span className="font-medium text-foreground">
                   {formatRating(highestRating)}
                 </span>
               </span>
@@ -242,21 +268,21 @@ export default function PlayerRatingChart({
           <ScopeSwitch
             label="Rating or volatility"
             value={metric}
-            onValueChange={setMetric}
+            onValueChange={(next) => setViews({ metric: next })}
             options={METRIC_OPTIONS}
           />
           <ScopeSwitch
             data-testid="rating-chart-toggle"
             label="View"
             value={viewMode}
-            onValueChange={setViewMode}
+            onValueChange={(next) => setViews({ view: next })}
             options={VIEW_OPTIONS}
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ChoiceChip
             selected={showDecay}
-            onClick={() => setShowDecay((value) => !value)}
+            onClick={() => setViews({ decay: !showDecay })}
           >
             Display decay
           </ChoiceChip>

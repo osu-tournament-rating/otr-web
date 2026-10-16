@@ -13,6 +13,7 @@ import LeaderboardTable from '@/components/leaderboard/LeaderboardTable';
 import LeaderboardToolbar from '@/components/leaderboard/LeaderboardToolbar';
 import { auth } from '@/lib/auth/auth';
 import { hasFriends } from '@/lib/db/player-friends';
+import { getCountryOptions } from '@/lib/kit/format/country';
 import { formatCountOf } from '@/lib/kit/format/number';
 import {
   clearListFilters,
@@ -73,6 +74,7 @@ export default async function Page(props: {
       <Panel data-testid="leaderboard-card">
         <LeaderboardToolbar
           count={formatCountOf(data.total, 'player')}
+          countries={getCountryOptions()}
           signedIn={Boolean(session)}
           hasFriends={userHasFriends}
         />

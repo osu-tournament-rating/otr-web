@@ -4,9 +4,9 @@ import { Ruleset, Team } from '@otr/core/osu';
 import Image from 'next/image';
 
 import ModIconset from '@/components/icons/ModIconset';
+import { CountryFlag } from '@/components/kit/country/CountryFlag';
 import { VerificationStatusIcon } from '@/components/kit/status/VerificationStatusIcon';
 import { EntityLink } from '@/components/kit/tables/EntityLink';
-import CountryFlag from '@/components/shared/CountryFlag';
 import { getTeamTextColor, getTeamTintClass } from '@/lib/kit/color/teams';
 import { SCORE_GRADE_LABELS } from '@/lib/kit/format/enum-labels';
 import { formatAccuracy, formatCount } from '@/lib/kit/format/number';
@@ -73,12 +73,15 @@ function PerformanceItem({ label, value }: { label: string; value: string }) {
 export default function ScoreCard({
   score,
   player,
+  countryName,
   matchId,
   gameNumber,
   highlighted = false,
 }: {
   score: GameScore;
   player?: MatchPlayer;
+  /** The player's country name, from the server, so hydration never differs. */
+  countryName?: string;
   matchId: number;
   /** The game's place in the match, which names the status and menu. */
   gameNumber: number;
@@ -146,23 +149,16 @@ export default function ScoreCard({
       {/* Phones: two lines, the hit counts joined into one. */}
       <div className="relative flex min-w-0 flex-1 flex-col gap-1 px-2 py-1 sm:hidden">
         <div className="flex items-center justify-between gap-1.5">
-          <div className="flex min-w-0 items-center gap-1.5">
+          {/* 8px apart: the status icon and the flag are both tap targets. */}
+          <div className="flex min-w-0 items-center gap-2">
             {status}
-            {player?.country ? (
-              <CountryFlag
-                country={player.country}
-                width={18}
-                height={13}
-                showTooltip={false}
-                className="shrink-0"
-              />
-            ) : null}
+            <CountryFlag code={player?.country} name={countryName} size="sm" />
             {playerLink}
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
+            {/* A set height: the icons size themselves to it. */}
             <ModIconset
-              className="flex h-full max-w-14 items-center justify-end"
-              iconClassName="max-h-5"
+              className="flex h-5 shrink-0 items-center justify-end"
               mods={score.mods}
             />
             {grade(24)}
@@ -193,15 +189,7 @@ export default function ScoreCard({
           <div className="team-flex-row flex h-full min-w-0 items-center justify-start gap-2">
             {status}
             {actions}
-            {player?.country ? (
-              <CountryFlag
-                country={player.country}
-                width={20}
-                height={14}
-                showTooltip={false}
-                className="shrink-0"
-              />
-            ) : null}
+            <CountryFlag code={player?.country} name={countryName} />
             {playerLink}
           </div>
           <div className="team-flex-row flex h-full items-center justify-center gap-2">

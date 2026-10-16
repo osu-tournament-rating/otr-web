@@ -75,14 +75,6 @@ function showWarnings(warnings: readonly string[] | undefined) {
 }
 
 /**
- * A tab's count, shown from `sm`. With the counts, the four tabs are wider
- * than a phone's hero and the last one is cut off.
- */
-function TabCount({ count }: { count: number }) {
-  return <span className="hidden sm:inline">{formatCount(count)}</span>;
-}
-
-/**
  * The top of the tournament page: the name, status and format, the one
  * Admin menu with every admin action and its confirmation, the public
  * actions (report, audit history, the forum post) and the view tabs.
@@ -140,7 +132,7 @@ export default function TournamentHero({
               {formatRankRange(tournament.rankRangeLowerBound)}
             </HeroMetaItem>
             {tournament.startTime || tournament.endTime ? (
-              <HeroMetaItem icon={CalendarDays} className="tabular-nums">
+              <HeroMetaItem icon={CalendarDays}>
                 <DateRangeText
                   start={tournament.startTime}
                   end={tournament.endTime}
@@ -261,19 +253,22 @@ export default function TournamentHero({
           <HeroTabs
             aria-label="Tournament views"
             value={tab}
+            // With the counts, four tabs are wider than a 360px phone's hero;
+            // below `sm` the counts stay in each tab's accessible name.
+            countsFrom="sm"
             data-testid="tournament-tabs"
             items={[
               {
                 value: 'matches',
                 label: 'Matches',
-                count: <TabCount count={counts.matches} />,
+                count: formatCount(counts.matches),
                 href: tabHref('matches'),
                 testId: 'tab-matches',
               },
               {
                 value: 'beatmaps',
                 label: 'Beatmaps',
-                count: <TabCount count={counts.beatmaps} />,
+                count: formatCount(counts.beatmaps),
                 href: tabHref('beatmaps'),
                 testId: 'tab-beatmaps',
               },

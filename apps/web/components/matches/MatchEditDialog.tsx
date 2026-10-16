@@ -11,6 +11,15 @@ import { useState } from 'react';
 import { type Resolver, useForm } from 'react-hook-form';
 import type { z } from 'zod';
 
+import {
+  VERIFY_CHILDREN_DESCRIPTION,
+  VERIFY_CHILDREN_TITLE,
+  VerificationStatusSelectContent,
+  VerifyChildrenChoices,
+  changedFieldClass,
+  combineFlags,
+  flagOptions,
+} from '@/components/admin-forms/adminFormFields';
 import { Button } from '@/components/kit/controls/Button';
 import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
 import { MultipleSelect } from '@/components/select/multiple-select';
@@ -38,15 +47,6 @@ import type { MatchDetail } from '@/lib/orpc/schema/match';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 import { matchEditFormSchema } from '@/lib/validation-schema';
 
-import {
-  VERIFY_CHILDREN_DESCRIPTION,
-  VERIFY_CHILDREN_TITLE,
-  VerificationStatusSelectContent,
-  VerifyChildrenChoices,
-  changedFieldClass,
-  combineFlags,
-  flagOptions,
-} from './adminFormFields';
 import { getMatchDisplayName } from './matchName';
 
 type MatchEditValues = z.infer<typeof matchEditFormSchema>;

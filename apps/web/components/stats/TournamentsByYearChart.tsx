@@ -1,16 +1,20 @@
 'use client';
 
+import { CountBarChart } from '@/components/kit/charts/CountBarChart';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import { Panel, PanelBody } from '@/components/kit/layout/Panel';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { formatYearTick } from '@/lib/kit/charts/format';
-import { DEFAULT_MAX_TICKS, NARROW_MAX_TICKS } from '@/lib/kit/charts/ticks';
+import {
+  DEFAULT_MAX_TICKS,
+  NARROW_MAX_TICKS,
+  getCategoryTicks,
+} from '@/lib/kit/charts/ticks';
 import { formatCount } from '@/lib/kit/format/number';
 import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
 
 import { STATS_PANELS } from './chart-panels';
-import { CountBarChart } from './CountBarChart';
-import { getCategoryTicks, getYearBars, sumCounts } from './stats-data';
+import { getYearBars, sumCounts } from './stats-data';
 
 export default function TournamentsByYearChart({
   data,

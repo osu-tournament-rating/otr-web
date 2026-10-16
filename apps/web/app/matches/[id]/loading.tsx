@@ -47,7 +47,7 @@ export default function MatchLoading() {
         }
       />
       <PanelSkeleton>
-        <SectionHeaderSkeleton icon={Swords} title="Games" />
+        <SectionHeaderSkeleton icon={Swords} title="Games" meta="w-14" />
         <div className="p-4">
           <GameFramesSkeleton />
         </div>

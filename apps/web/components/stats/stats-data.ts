@@ -4,7 +4,7 @@
  */
 import { Ruleset, type VerificationStatus } from '@otr/core/osu';
 
-import { getNiceTicks } from '@/lib/kit/charts/ticks';
+import type { CountBarDatum } from '@/lib/kit/charts/count-bars';
 import { getStatusHueColor } from '@/lib/kit/color/verification';
 import { getTierColor } from '@/lib/kit/color/tiers';
 import { formatLobbySize } from '@/lib/kit/format/fields';
@@ -17,14 +17,6 @@ import {
   type TierName,
   tierNames,
 } from '@/lib/utils/tierData';
-
-/** One bar: a category and its count. `fill` overrides the series colour. */
-export interface CountBar {
-  key: string;
-  label: string;
-  count: number;
-  fill?: string;
-}
 
 export function sumCounts(bars: readonly { count: number }[]): number {
   return bars.reduce((sum, bar) => sum + bar.count, 0);
@@ -41,7 +33,7 @@ function countOf(record: Record<string, number>, key: number): number {
  */
 export function getVerificationBars(
   counts: Partial<Record<VerificationStatusKey, number>>
-): CountBar[] {
+): CountBarDatum[] {
   const record = counts as Record<string, number>;
   return RATINGS_GROUPS.map((group) => ({
     key: group.key,
@@ -65,7 +57,7 @@ function integerKeys(record: Record<string, number>): number[] {
  * Verified tournaments per year, oldest first. Years without a tournament
  * between the first and the last are kept as zero, so the axis has no gaps.
  */
-export function getYearBars(data: Record<string, number>): CountBar[] {
+export function getYearBars(data: Record<string, number>): CountBarDatum[] {
   const years = integerKeys(data);
   if (years.length === 0) return [];
 
@@ -85,7 +77,7 @@ export function getYearBars(data: Record<string, number>): CountBar[] {
  * Verified tournaments per ruleset in the site's ruleset order. The five
  * rated rulesets always show; mania (other) only when it has tournaments.
  */
-export function getRulesetBars(data: Record<string, number>): CountBar[] {
+export function getRulesetBars(data: Record<string, number>): CountBarDatum[] {
   const rulesets = [
     ...RATED_RULESETS,
     ...(countOf(data, Ruleset.ManiaOther) > 0 ? [Ruleset.ManiaOther] : []),
@@ -101,7 +93,9 @@ export function getRulesetBars(data: Record<string, number>): CountBar[] {
  * Verified tournaments per lobby size, from 1v1 to the largest size with a
  * tournament. Sizes in between with none are kept as zero.
  */
-export function getLobbySizeBars(data: Record<string, number>): CountBar[] {
+export function getLobbySizeBars(
+  data: Record<string, number>
+): CountBarDatum[] {
   const sizes = integerKeys(data).filter((size) => size >= 1);
   if (sizes.length === 0) return [];
 
@@ -176,27 +170,6 @@ export function getRatingDistribution(
     totalPlayers,
     tiers: tierNames.filter((tier) => present.has(tier)),
   };
-}
-
-/**
- * Ticks for a category axis of evenly spaced numbers (years, bucket starts),
- * ascending: every value when they all fit, otherwise the tick rule's round
- * values that are in the data. Without the first case, a single category
- * would get the rule's padded ticks, none of which are in the data, and so
- * no label at all.
- */
-export function getCategoryTicks(
-  values: readonly number[],
-  maxTicks: number
-): number[] {
-  if (values.length <= maxTicks) return [...values];
-
-  const present = new Set(values);
-  return getNiceTicks(values[0], values[values.length - 1], {
-    integer: true,
-    within: true,
-    maxTicks,
-  }).ticks.filter((tick) => present.has(tick));
 }
 
 /** The bucket a rating falls in, by its lowest rating. */

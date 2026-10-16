@@ -25,11 +25,11 @@ import { PaginationFooter } from '@/components/kit/tables/PaginationFooter';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { SortableHeader } from '@/components/kit/tables/SortableHeader';
 import { ViewButton } from '@/components/kit/tables/ViewButton';
-import { ReportEntityName } from '@/components/reports/ReportEntityName';
 import {
-  formatReportSubject,
-  getReportEntityTypeName,
-} from '@/components/reports/report-presentation';
+  ReportEntityCell,
+  ReportEntityName,
+} from '@/components/reports/ReportEntityName';
+import { formatReportSubject } from '@/components/reports/report-presentation';
 import { notifyReportChange } from '@/lib/hooks/useReportCount';
 import { formatCountOf, formatId } from '@/lib/kit/format/number';
 import { useListState } from '@/lib/kit/lists/use-list-state';
@@ -206,6 +206,8 @@ export default function AdminReportsClient() {
                       key={report.id}
                       data-testid="admin-reports-phone-row"
                       data-report-id={report.id}
+                      // The View button belongs to the name's line.
+                      align="start"
                       title={<ReportEntityName report={report} />}
                       description={
                         <span className="flex min-w-0 items-center gap-1.5">
@@ -270,10 +272,7 @@ export default function AdminReportsClient() {
                       {formatId(report.id)}
                     </DataTableCell>
                     <DataTableCell>
-                      <span className="block text-xs text-muted-foreground">
-                        {getReportEntityTypeName(report.entityType)}
-                      </span>
-                      <ReportEntityName
+                      <ReportEntityCell
                         report={report}
                         data-testid="admin-reports-entity-link"
                       />
@@ -287,11 +286,7 @@ export default function AdminReportsClient() {
                     <DataTableCell>
                       <ReportStatusBadge status={report.status} size="sm" />
                     </DataTableCell>
-                    <DataTableCell
-                      muted
-                      showFrom={COLUMN.submitted.showFrom}
-                      className="tabular-nums"
-                    >
+                    <DataTableCell muted showFrom={COLUMN.submitted.showFrom}>
                       <DateText
                         date={
                           dateColumn.key === 'resolvedAt'

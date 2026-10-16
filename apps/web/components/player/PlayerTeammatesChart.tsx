@@ -6,6 +6,7 @@ import { seriesColor } from '@/lib/kit/color/categorical';
 import type { PlayerFrequency } from '@/lib/orpc/schema/playerStats';
 
 import PlayerFrequencyChart from './PlayerFrequencyChart';
+import { TEAMMATES_INFO } from './section-info';
 
 export default function PlayerTeammatesChart({
   className,
@@ -20,7 +21,7 @@ export default function PlayerTeammatesChart({
       data={teammates}
       title="Frequent teammates"
       icon={Users}
-      infoText="Most frequently played with teammates"
+      infoText={TEAMMATES_INFO}
       emptyTitle="No teammate data available"
       color={seriesColor(0)}
     />

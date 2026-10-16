@@ -161,11 +161,7 @@ export default function BeatmapAdminView({
             label: 'Edit beatmap data',
             icon: PencilLine,
             disabled: !isDeleted,
-            // Capped so the reason wraps instead of widening the menu past
-            // a phone's edge.
-            description: isDeleted ? undefined : (
-              <span className="block max-w-60">{ONLY_DELETED_BEATMAPS}</span>
-            ),
+            description: isDeleted ? undefined : ONLY_DELETED_BEATMAPS,
             onSelect: () => setEditing(true),
             testId: 'beatmap-edit-action',
           },

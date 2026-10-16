@@ -201,15 +201,13 @@ export default function AuditFilterBar({
           />
         </FilterPanel>
       }
-      // One row: the switch where a list's search sits, Filters beside it.
-      search={
-        <div className="flex h-10 items-center">
-          <AuditSystemSwitch
-            data-testid="filter-show-system"
-            checked={state.system}
-            onCheckedChange={(system) => setState({ system })}
-          />
-        </div>
+      // Not a filter: it widens the feed, so it leads the strip.
+      leading={
+        <AuditSystemSwitch
+          data-testid="filter-show-system"
+          checked={state.system}
+          onCheckedChange={(system) => setState({ system })}
+        />
       }
       activeFilters={
         <ActiveFilterChips

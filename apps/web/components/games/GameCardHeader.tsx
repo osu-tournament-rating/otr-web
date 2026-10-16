@@ -37,17 +37,20 @@ export default function GameCardHeader({
   number,
 }: {
   game: Game;
-  /** The game's place in the match, which names its status icon. */
+  /** The game's place in the match, which names its status icon and menu. */
   number: number;
 }) {
   const isDeletedBeatmap =
     !game.beatmap || !game.beatmap.beatmapset || game.beatmap.osuId === 0;
   const headerMods = resolveGameDisplayMods(game, game.scores);
   const beatmapLabel = `${game.beatmap?.beatmapset?.title ?? 'Deleted beatmap'} [${game.beatmap?.diffName ?? 'Unknown'}]`;
-  // Names the actions menu, the report and the notes, as the old buttons did.
-  const gameName = game.beatmap?.beatmapset?.title
-    ? beatmapLabel
-    : `Game ${formatId(game.id)}`;
+  const hasTitle = Boolean(game.beatmap?.beatmapset?.title);
+  // Names the report and the notes, as the old buttons did.
+  const gameName = hasTitle ? beatmapLabel : `Game ${formatId(game.id)}`;
+  // The menu also says which game it is, since a beatmap can repeat in a match.
+  const menuName = hasTitle
+    ? `Game ${number}: ${beatmapLabel}`
+    : `Game ${number}`;
   const rulesetName = getRulesetFullName(game.ruleset);
 
   return (
@@ -57,7 +60,8 @@ export default function GameCardHeader({
         alt=""
       />
 
-      <div className="absolute inset-0 z-2 h-full w-full rounded-xl bg-gradient-to-b from-black/40 via-black/50 to-black/70 dark:from-black/60 dark:via-black/70 dark:to-black/80" />
+      {/* One matte in both themes, dark enough for white text on any cover. */}
+      <div className="absolute inset-0 z-2 h-full w-full rounded-xl bg-gradient-to-b from-black/60 via-black/70 to-black/80" />
 
       <div className="dark z-3 flex h-full w-full flex-col p-2 text-white">
         <div className="flex h-8 w-full items-center justify-between gap-2">
@@ -71,6 +75,7 @@ export default function GameCardHeader({
               )}
               context={`Game ${number}`}
               tooltip="tap"
+              variant="overlay"
             />
             <TapTooltip
               content={rulesetName}
@@ -98,7 +103,11 @@ export default function GameCardHeader({
               seconds
               className="text-xs text-white/80 sm:text-sm"
             />
-            <GameActionsMenu game={game} gameName={gameName} />
+            <GameActionsMenu
+              game={game}
+              gameName={gameName}
+              itemName={menuName}
+            />
           </div>
         </div>
         <div className="flex w-full flex-1 flex-row justify-between gap-2">

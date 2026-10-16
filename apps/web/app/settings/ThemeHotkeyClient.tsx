@@ -4,6 +4,7 @@ import { Keyboard } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
+import { SETTINGS_COPY } from '@/app/settings/settings-copy';
 import { Panel, PanelBody } from '@/components/kit/layout/Panel';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { Label } from '@/components/ui/label';
@@ -52,7 +53,7 @@ export default function ThemeHotkeyClient() {
       <SectionHeader icon={Keyboard} title="Keyboard shortcuts" />
       <PanelBody className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">
-          Ctrl+L switches between the light and dark theme.
+          {SETTINGS_COPY.shortcuts}
         </p>
         <div className="flex items-center justify-between gap-4">
           <Label htmlFor="theme-hotkey-switch" className="font-normal">

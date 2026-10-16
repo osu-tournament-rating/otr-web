@@ -7,10 +7,10 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/kit/controls/Button';
 import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
+import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
 import { RulesetName } from '@/components/kit/format/RulesetName';
 import { Timestamp } from '@/components/kit/format/Timestamp';
 import { VerificationStatusBadge } from '@/components/kit/status/VerificationStatusBadge';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { formatCount, formatCountOf, formatId } from '@/lib/kit/format/number';
 import {
@@ -203,7 +203,9 @@ export default function MergeMatchDialog({
       ) : (
         <>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="merge-match-ids">Child match IDs</Label>
+            <FormFieldLabel htmlFor="merge-match-ids">
+              Child match IDs
+            </FormFieldLabel>
             <Textarea
               id="merge-match-ids"
               placeholder={TEXTAREA_PLACEHOLDER}

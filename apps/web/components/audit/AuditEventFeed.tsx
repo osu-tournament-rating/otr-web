@@ -152,6 +152,7 @@ export default function AuditEventFeed(): React.JSX.Element {
               hasMore={hasMore}
               loading={isValidating && size > pages.length}
               shownCount={allEvents.length}
+              pageSize={EVENT_BATCH}
               onLoadMore={() => void setSize(size + 1)}
             />
           )}

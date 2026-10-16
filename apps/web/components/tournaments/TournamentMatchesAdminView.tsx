@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/kit/controls/Button';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
 import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
+import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
 import { IconButton } from '@/components/kit/controls/IconButton';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import { Panel } from '@/components/kit/layout/Panel';
@@ -20,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { hasAdminScope } from '@/lib/auth/roles';
 import { useSession } from '@/lib/hooks/useSession';
 import { formatCount, formatCountOf, formatId } from '@/lib/kit/format/number';
+import { useListState } from '@/lib/kit/lists/use-list-state';
 import { orpc } from '@/lib/orpc/orpc';
 
 import TournamentMatchesLedger from './TournamentMatchesLedger';
@@ -28,7 +30,6 @@ import {
   TOURNAMENT_MATCH_PARAMS,
   type MatchRow,
 } from './matchRow';
-import { useAddressListState } from './useAddressListState';
 
 interface TournamentMatchesAdminViewProps {
   tournamentId: number;
@@ -67,7 +68,10 @@ export default function TournamentMatchesAdminView({
   const session = useSession();
   const router = useRouter();
   const isAdmin = hasAdminScope(session?.scopes);
-  const { state, setState } = useAddressListState(TOURNAMENT_MATCH_PARAMS);
+  // Every match is on the client already: a sort only rewrites the address.
+  const { state, setState } = useListState(TOURNAMENT_MATCH_PARAMS, {
+    shallow: true,
+  });
   const lazerCheckboxId = useId();
 
   const [selectedMatchIds, setSelectedMatchIds] = useState<Set<number>>(
@@ -196,6 +200,7 @@ export default function TournamentMatchesAdminView({
             <>
               {matches.length > 0 && (
                 <SortControl
+                  size="sm"
                   className="w-52 md:w-auto"
                   label="Sort matches by"
                   options={MATCH_SORT_OPTIONS}
@@ -309,12 +314,12 @@ export default function TournamentMatchesAdminView({
             }
           >
             <div className="flex flex-col gap-2">
-              <div className="flex min-h-5 items-center justify-between gap-2">
-                <Label htmlFor={`${lazerCheckboxId}-ids`}>Matches</Label>
-                <span className="text-xs text-muted-foreground">
-                  Separate with commas or new lines
-                </span>
-              </div>
+              <FormFieldLabel
+                htmlFor={`${lazerCheckboxId}-ids`}
+                hint="Separate with commas or new lines"
+              >
+                Matches
+              </FormFieldLabel>
               <Textarea
                 id={`${lazerCheckboxId}-ids`}
                 placeholder="Enter match IDs or URLs"

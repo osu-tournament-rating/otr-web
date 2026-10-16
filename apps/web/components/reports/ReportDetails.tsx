@@ -79,7 +79,7 @@ export function ReportDetails({
       <ReportDetailRow label="Entity">
         <span className="flex min-w-0 flex-col">
           {entityHref ? (
-            <EntityLink href={entityHref} title={report.entityDisplayName}>
+            <EntityLink href={entityHref} wrap className="self-start">
               {report.entityDisplayName}
             </EntityLink>
           ) : (
@@ -96,11 +96,11 @@ export function ReportDetails({
         <ReportDetailRow label="Reporter">{reporter}</ReportDetailRow>
       ) : null}
       <ReportDetailRow label="Submitted">
-        <Timestamp date={report.created} className="tabular-nums" />
+        <Timestamp date={report.created} />
       </ReportDetailRow>
       {report.resolvedAt ? (
         <ReportDetailRow label="Reviewed">
-          <Timestamp date={report.resolvedAt} className="tabular-nums" />
+          <Timestamp date={report.resolvedAt} />
           {reviewer ? <> by {reviewer}</> : null}
         </ReportDetailRow>
       ) : null}

@@ -12,11 +12,6 @@ import { type Resolver, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 
-import AdminNotesList from '@/components/admin-notes/AdminNoteList';
-import { getAdminNoteMutations } from '@/components/admin-notes/adminNoteMutations';
-import { modOptions } from '@/components/games/modOptions';
-import { Button } from '@/components/kit/controls/Button';
-import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
 import {
   ALL_RULESET_LABELS,
   LabelSelectContent,
@@ -24,7 +19,13 @@ import {
   changedFieldClass,
   combineFlags,
   flagOptions,
-} from '@/components/matches/adminFormFields';
+} from '@/components/admin-forms/adminFormFields';
+import AdminNotesList from '@/components/admin-notes/AdminNoteList';
+import { getAdminNoteMutations } from '@/components/admin-notes/adminNoteMutations';
+import { modOptions } from '@/components/games/modOptions';
+import { Button } from '@/components/kit/controls/Button';
+import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
+import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
 import { MultipleSelect } from '@/components/select/multiple-select';
 import {
   Form,
@@ -36,7 +37,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { getEnumFlags } from '@/lib/enum-helpers';
@@ -257,7 +257,9 @@ export default function ScoreEditDialog({
         {askingForNote ? (
           <>
             <div className="flex flex-col gap-2">
-              <Label htmlFor={`score-note-${score.id}`}>Admin note</Label>
+              <FormFieldLabel htmlFor={`score-note-${score.id}`}>
+                Admin note
+              </FormFieldLabel>
               <Textarea
                 id={`score-note-${score.id}`}
                 value={adminNote}

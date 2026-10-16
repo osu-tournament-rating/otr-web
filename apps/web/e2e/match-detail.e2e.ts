@@ -118,6 +118,8 @@ test.describe('Match Detail Page', () => {
       const firstGame = page.locator('[id^="game-"]').first();
       const actions = firstGame.getByTestId('game-actions');
       await expect(actions).toHaveCount(1);
+      // Named with the game's place, as one beatmap can be played twice.
+      await expect(actions).toHaveAccessibleName(/^Actions for Game 1(:|,|$)/);
       await actions.click();
 
       const menu = page.getByTestId('game-actions-content');
@@ -196,7 +198,8 @@ test.describe('Match Detail Page', () => {
       await page.waitForLoadState('networkidle');
 
       const costHeader = page.locator('[data-testid="match-cost-header"]');
-      const costSort = costHeader.getByRole('link', { name: 'Match cost' });
+      // The rows are all on the page, so the header sorts them in place.
+      const costSort = costHeader.getByRole('button', { name: 'Match cost' });
       const rows = page.locator('[data-testid^="player-stats-row-"]');
       const getMatchCosts = () =>
         rows.evaluateAll((elements) =>
@@ -206,7 +209,6 @@ test.describe('Match Detail Page', () => {
         );
 
       await expect(costHeader).toHaveAttribute('aria-sort', 'descending');
-      await expect(costSort).toHaveAttribute('href', /[?&]dir=asc/);
       const descendingCosts = await getMatchCosts();
       expect(descendingCosts).toEqual(
         [...descendingCosts].sort((first, second) => second - first)
@@ -219,6 +221,10 @@ test.describe('Match Detail Page', () => {
       expect(ascendingCosts).toEqual(
         [...ascendingCosts].sort((first, second) => first - second)
       );
+
+      await page.goBack();
+      await expect(costHeader).toHaveAttribute('aria-sort', 'descending');
+      expect(await getMatchCosts()).toEqual(descendingCosts);
     });
 
     test('mobile player rows keep every metric visible without page overflow', async ({

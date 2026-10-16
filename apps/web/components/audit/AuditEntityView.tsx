@@ -64,19 +64,14 @@ export default function AuditEntityView({
     />
   );
 
-  // On phones the tabs drop "This" and their counts so all four fit without
-  // scrolling; the toolbar still counts the open tab's changes.
+  // On phones the first tab drops "This" and the counts hide (screen
+  // readers still hear both), so all four tabs fit without scrolling; the
+  // toolbar still counts the open tab's changes.
   const tabs: HeroTabItem[] = [
     {
       value: 'self',
-      label: (
-        <>
-          <span className="max-sm:hidden">
-            This {ENTITY_TYPE_LABELS[entityType]}
-          </span>
-          <span className="sm:hidden">{getEntityTypeName(entityType)}</span>
-        </>
-      ),
+      label: `This ${ENTITY_TYPE_LABELS[entityType]}`,
+      compactLabel: getEntityTypeName(entityType),
       href: list.hrefFor({ tab: 'self' }),
       testId: 'audit-tab-self',
     },
@@ -87,18 +82,10 @@ export default function AuditEntityView({
       );
       return {
         value: plural,
-        label: (
-          <>
-            {plural.charAt(0).toUpperCase() + plural.slice(1)}
-            {count ? (
-              // HeroTabs' own count, hidden on phones.
-              <span className="text-xs font-normal text-muted-foreground tabular-nums max-sm:hidden">
-                {formatCount(count.count)}
-                {count.capped ? '+' : null}
-              </span>
-            ) : null}
-          </>
-        ),
+        label: plural.charAt(0).toUpperCase() + plural.slice(1),
+        count: count
+          ? `${formatCount(count.count)}${count.capped ? '+' : ''}`
+          : undefined,
         href: list.hrefFor({ tab: plural as typeof list.state.tab }),
         testId: `audit-tab-${plural}`,
       };
@@ -108,14 +95,14 @@ export default function AuditEntityView({
   return (
     <Panel data-testid="audit-history" aria-label="Audit history">
       {descendantTypes.length > 0 ? (
-        <div className="border-b">
-          <HeroTabs
-            data-testid="audit-scope-tabs"
-            aria-label="Audit history views"
-            value={descendantType ? list.state.tab : 'self'}
-            items={tabs}
-          />
-        </div>
+        <HeroTabs
+          data-testid="audit-scope-tabs"
+          aria-label="Audit history views"
+          value={descendantType ? list.state.tab : 'self'}
+          items={tabs}
+          countsFrom="sm"
+          className="border-b"
+        />
       ) : null}
 
       {descendantType !== undefined ? (

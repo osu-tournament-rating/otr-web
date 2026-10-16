@@ -11,6 +11,7 @@ import {
   NotEnoughData,
   ScaleAxis,
 } from '@/components/beatmap/BeatmapSection';
+import { SCORE_DISTRIBUTION_INFO } from '@/components/beatmap/section-info';
 import { ChartTooltipContent } from '@/components/kit/charts/ChartTooltip';
 import { SeriesMarker } from '@/components/kit/charts/SeriesMarker';
 import { Panel } from '@/components/kit/layout/Panel';
@@ -216,7 +217,7 @@ export default function BeatmapScoreDistributionCard({
       <SectionHeader
         icon={ChartCandlestick}
         title="Score distribution"
-        infoText="Charts NM, HD, HR and DT scores only. Mod rows with fewer than 5 scores are hidden."
+        infoText={SCORE_DISTRIBUTION_INFO}
         meta={hasBoxData ? formatCountOf(totalScoreCount, 'score') : undefined}
       />
 

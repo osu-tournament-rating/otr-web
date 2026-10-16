@@ -158,6 +158,37 @@ test.describe('Statistics Page', () => {
       ).toBeVisible({ timeout: 15000 });
     });
 
+    test('switches without rendering the page again', async ({ page }) => {
+      await page.goto(ROUTES.stats);
+      await page.waitForLoadState('networkidle');
+      await expect(
+        page.locator('[data-testid="chart-rating-distribution-0"]')
+      ).toBeVisible({ timeout: 15000 });
+
+      // Every ruleset's distribution is on the page already, so a switch
+      // only rewrites the address: no React Server Components request.
+      const serverRenders: string[] = [];
+      page.on('request', (request) => {
+        if (
+          request.headers()['rsc'] === '1' ||
+          request.url().includes('_rsc=')
+        ) {
+          serverRenders.push(request.url());
+        }
+      });
+
+      await page
+        .getByRole('radiogroup', { name: 'Ruleset' })
+        .getByRole('radio', { name: 'catch' })
+        .click();
+
+      await expect(page).toHaveURL(/[?&]ruleset=2(&|$)/);
+      await expect(
+        page.locator('[data-testid="chart-rating-distribution-2"]')
+      ).toBeVisible({ timeout: 15000 });
+      expect(serverRenders).toEqual([]);
+    });
+
     test('opens on the ruleset named in the address', async ({ page }) => {
       await page.goto(`${ROUTES.stats}?ruleset=4`);
       await page.waitForLoadState('networkidle');

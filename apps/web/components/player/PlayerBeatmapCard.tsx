@@ -66,7 +66,6 @@ export default function PlayerBeatmapCard({
             background: getStarRatingColor(beatmap.sr),
             foreground: getStarRatingForegroundColor(beatmap.sr),
           }}
-          className="tabular-nums"
         >
           <Star aria-hidden className="fill-current" />
           {formatNumber(beatmap.sr, { decimals: 2 })}

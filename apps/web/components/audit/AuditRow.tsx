@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
 import type * as React from 'react';
 import { AuditEntityType, VerificationStatus } from '@otr/core/osu';
@@ -17,6 +16,7 @@ import {
   VerificationStatusGlyph,
   VerificationStatusIcon,
 } from '@/components/kit/status/VerificationStatusIcon';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
 import type {
   AuditActionUser,
@@ -24,48 +24,6 @@ import type {
 } from '@/lib/orpc/schema/audit';
 import type { FormattedAuditValue } from '@/lib/kit/format/audit';
 import { cn } from '@/lib/utils';
-
-/**
- * A name that stands on its own line, such as an affected entity: plain
- * weight and the text colour at rest, blue with an underline on hover.
- */
-export const AUDIT_INLINE_LINK =
-  'rounded-sm text-foreground transition-colors outline-none hover:text-link hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50';
-
-/**
- * A name inside a sentence. It shares the text's colour and weight, so a
- * faint underline is what marks it as a link (WCAG 1.4.1), as in Callout.
- */
-export const AUDIT_SENTENCE_LINK = cn(
-  AUDIT_INLINE_LINK,
-  'underline decoration-muted-foreground/50 underline-offset-[3px] hover:decoration-current'
-);
-
-export function AuditInlineLink({
-  href,
-  inSentence = false,
-  className,
-  children,
-}: {
-  href: string;
-  /** Underlined, for a name in running text. */
-  inSentence?: boolean;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      prefetch={false}
-      className={cn(
-        inSentence ? AUDIT_SENTENCE_LINK : AUDIT_INLINE_LINK,
-        className
-      )}
-    >
-      {children}
-    </Link>
-  );
-}
 
 /** Who made the change: their avatar and name as one link, or "System". */
 export function AuditActor({
@@ -81,32 +39,30 @@ export function AuditActor({
   }
 
   const name = user.username ?? `User ${user.id}`;
-  // Inline, not flex, so the name sits on the sentence's baseline and wraps
-  // with it; the avatar is centred on the line.
   const avatar = user.osuId ? (
-    <span aria-hidden="true" className="mr-1.5 inline-flex align-[-0.3125rem]">
-      <OsuAvatar osuId={user.osuId} username={user.username} size={20} />
-    </span>
+    <OsuAvatar osuId={user.osuId} username={user.username} size={20} />
   ) : null;
 
   if (user.playerId) {
-    // Like EntityLink, the avatar sits inside the name's link; in a sentence
-    // the name keeps plain weight and an underline marks the link.
     return (
-      <Link
+      <EntityLink
+        variant="inline"
         href={`/players/${user.playerId}`}
-        prefetch={false}
-        className={AUDIT_SENTENCE_LINK}
+        leading={avatar}
       >
-        {avatar}
         {name}
-      </Link>
+      </EntityLink>
     );
   }
 
+  // No profile to open: the same avatar and name, unlinked.
   return (
     <span>
-      {avatar}
+      {avatar ? (
+        <span aria-hidden="true" className="mr-1.5 inline-flex align-middle">
+          {avatar}
+        </span>
+      ) : null}
       {name}
     </span>
   );
@@ -189,23 +145,23 @@ export function AuditRowLine({
 }
 
 /**
- * The button that opens a row's details. Put it inside `CollapsibleTrigger
- * asChild`, which supplies `aria-expanded` and the open state. The turned
- * chevron shows an open row; the ghost fill stays a hover cue, so the many
+ * The disclosure button that opens a row's details. Put it inside
+ * `CollapsibleTrigger asChild`. The turned chevron and `aria-expanded` say
+ * the row is open; as a disclosure it keeps its resting look, so the many
  * rows that open on their own don't each carry a filled square.
  */
 export function AuditRowToggle({
   open,
   className,
   ...props
-}: Omit<IconButtonProps, 'label' | 'icon'> & { open: boolean }) {
+}: Omit<IconButtonProps, 'label' | 'icon' | 'expanded'> & { open: boolean }) {
   return (
     <IconButton
-      label={open ? 'Hide details' : 'Show details'}
+      label="Details"
       icon={ChevronDown}
+      expanded={open}
       className={cn(
-        '-my-1.5 shrink-0 [&_svg]:transition-transform data-[state=open]:[&_svg]:rotate-180',
-        'data-[state=open]:bg-transparent data-[state=open]:text-muted-foreground data-[state=open]:hover:bg-accent data-[state=open]:hover:text-accent-foreground',
+        '-my-1.5 shrink-0 [&>svg]:transition-transform aria-expanded:[&>svg]:rotate-180',
         className
       )}
       {...props}

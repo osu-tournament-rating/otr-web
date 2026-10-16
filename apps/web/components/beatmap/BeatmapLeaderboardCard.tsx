@@ -1,6 +1,7 @@
 import { Medal } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import type * as React from 'react';
 
 import { NotEnoughData } from '@/components/beatmap/BeatmapSection';
 import ModIconset from '@/components/icons/ModIconset';
@@ -64,25 +65,42 @@ function rankClassName(rank: DisplayRank) {
 const linkClassName =
   'rounded-sm transition-colors outline-none hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
-function PlayerLink({
+const playerHref = (performer: BeatmapTopPerformer) =>
+  `/players/${performer.player.id}`;
+
+function PlayerAvatar({
   performer,
-  avatarSize,
+  size,
 }: {
   performer: BeatmapTopPerformer;
-  avatarSize: number;
+  size: number;
+}) {
+  return (
+    <OsuAvatar
+      osuId={performer.player.osuId}
+      username={performer.player.username}
+      size={size}
+    />
+  );
+}
+
+/**
+ * The player's name as a link. The table passes the avatar as `leading`, so
+ * it sits inside the link; a phone row shows it in its own column instead.
+ */
+function PlayerLink({
+  performer,
+  leading,
+}: {
+  performer: BeatmapTopPerformer;
+  leading?: React.ReactNode;
 }) {
   const displayName = (performer.player.username ?? '').trim();
 
   return (
     <EntityLink
-      href={`/players/${performer.player.id}`}
-      leading={
-        <OsuAvatar
-          osuId={performer.player.osuId}
-          username={performer.player.username}
-          size={avatarSize}
-        />
-      }
+      href={playerHref(performer)}
+      leading={leading}
       className={cn(!displayName && 'font-normal text-muted-foreground')}
     >
       {displayName || 'Unknown player'}
@@ -159,7 +177,9 @@ export default function BeatmapLeaderboardCard({
                       {ranks[index].label}
                     </span>
                   }
-                  title={<PlayerLink performer={performer} avatarSize={20} />}
+                  leading={<PlayerAvatar performer={performer} size={32} />}
+                  leadingHref={playerHref(performer)}
+                  title={<PlayerLink performer={performer} />}
                   description={
                     <span className="flex min-w-0 items-center gap-2">
                       <ModIconset
@@ -217,7 +237,10 @@ export default function BeatmapLeaderboardCard({
                   {ranks[index].label}
                 </DataTableCell>
                 <DataTableCell>
-                  <PlayerLink performer={performer} avatarSize={24} />
+                  <PlayerLink
+                    performer={performer}
+                    leading={<PlayerAvatar performer={performer} size={24} />}
+                  />
                 </DataTableCell>
                 <DataTableCell empty={false}>
                   <div

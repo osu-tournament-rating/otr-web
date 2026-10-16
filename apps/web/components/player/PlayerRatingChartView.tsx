@@ -37,13 +37,11 @@ import {
 } from '@/lib/kit/charts/ticks';
 import { seriesColor } from '@/lib/kit/color/categorical';
 import { formatDate } from '@/lib/kit/format/date';
+import { RATING_ADJUSTMENT_TYPE_LABELS } from '@/lib/kit/format/enum-labels';
 import { formatNumber, formatRatingPrecise } from '@/lib/kit/format/number';
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 
-import {
-  RATING_ADJUSTMENT_TYPE_LABELS,
-  type RatingMetric,
-} from './rating-adjustment';
+import type { RatingMetric } from './rating-adjustment';
 
 const MIN_DATA_POINTS = 2;
 const ACTIVE_DOT_RADIUS = 5;

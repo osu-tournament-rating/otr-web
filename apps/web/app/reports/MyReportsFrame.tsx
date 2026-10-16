@@ -35,7 +35,14 @@ export function MyReportsTableSkeleton() {
     <TableSkeleton
       columns={MY_REPORTS_SKELETON_COLUMNS}
       cellHeight="h-9"
-      phoneRows={<PhoneRowListSkeleton />}
+      phoneRows={
+        // A status badge under the name, and a View button level with the name.
+        <PhoneRowListSkeleton
+          description="badge"
+          value="button"
+          align="start"
+        />
+      }
     />
   );
 }
