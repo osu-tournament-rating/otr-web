@@ -47,10 +47,6 @@ export default function GameCardHeader({
   const hasTitle = Boolean(game.beatmap?.beatmapset?.title);
   // Names the report and the notes, as the old buttons did.
   const gameName = hasTitle ? beatmapLabel : `Game ${formatId(game.id)}`;
-  // The menu also says which game it is, since a beatmap can repeat in a match.
-  const menuName = hasTitle
-    ? `Game ${number}: ${beatmapLabel}`
-    : `Game ${number}`;
   const rulesetName = getRulesetFullName(game.ruleset);
 
   return (
@@ -106,7 +102,10 @@ export default function GameCardHeader({
             <GameActionsMenu
               game={game}
               gameName={gameName}
-              itemName={menuName}
+              // The game's place, unique even when a beatmap repeats; the
+              // beatmap's name is on the card beside it, so the menu's
+              // heading stays short.
+              itemName={`Game ${number}`}
             />
           </div>
         </div>

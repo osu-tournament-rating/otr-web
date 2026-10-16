@@ -106,7 +106,9 @@ export default function TournamentTopPerformers({
                       avatar={false}
                     />
                   }
-                  description={`Avg. placement ${formatAverage(stats.averagePlacement)} · Avg. games ${formatAverage(stats.gamesPlayed / stats.matchesPlayed)}`}
+                  // One phone line holds only one figure beside the match
+                  // cost; average games stays in the table.
+                  description={`Avg. placement ${formatAverage(stats.averagePlacement)}`}
                   value={formatMatchCost(stats.averageMatchCost)}
                   valueDescription="Match cost"
                 />

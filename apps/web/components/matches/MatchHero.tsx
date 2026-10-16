@@ -127,7 +127,6 @@ export default function MatchHero({
         adminActions={
           isAdmin ? (
             <AdminMenu
-              title={name}
               notification={noteCount > 0 ? 'Has admin notes' : undefined}
               data-testid="match-admin-menu"
               actions={[

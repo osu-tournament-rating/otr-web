@@ -61,14 +61,15 @@ export function GameFramesSkeleton({ count = 3 }: { count?: number }) {
   );
 }
 
-// The headline tiles of a verified match, in the loaded order.
+// The headline tiles of a verified match, in the loaded order, and whether
+// each has a line under its value (the winner, tier or player).
 const HIGHLIGHT_TILES = [
-  { icon: Swords, label: 'Match result' },
-  { icon: Users, label: 'Players' },
-  { icon: Gamepad2, label: 'Rated games' },
-  { icon: TrendingUp, label: 'Average rating' },
-  { icon: Medal, label: 'Top match cost' },
-  { icon: Crosshair, label: 'Top accuracy' },
+  { icon: Swords, label: 'Match result', sub: true },
+  { icon: Users, label: 'Players', sub: false },
+  { icon: Gamepad2, label: 'Rated games', sub: false },
+  { icon: TrendingUp, label: 'Average rating', sub: true },
+  { icon: Medal, label: 'Top match cost', sub: true },
+  { icon: Crosshair, label: 'Top accuracy', sub: true },
 ] as const;
 
 // The player table's columns, as MatchStatsView draws them.
@@ -95,8 +96,8 @@ const PHONE_METRICS = [
 
 /**
  * The player table on a phone while it loads: the sort strip, then rows
- * with the name, the rating change and every metric's label, at the loaded
- * rows' height.
+ * with the name, the team badge, the rating change and every metric's
+ * label, at the loaded rows' height.
  */
 function PlayerPhoneRowsSkeleton() {
   return (
@@ -122,7 +123,9 @@ function PlayerPhoneRowsSkeleton() {
             value={<SkeletonText className="w-12" />}
             valueDescription={<SkeletonText className="h-3 w-24" />}
           >
-            <dl className="mt-2 grid grid-cols-3 gap-x-3 gap-y-2">
+            {/* The team badge under the name. */}
+            <SkeletonBlock className="mt-1 h-5 w-14 rounded-full" />
+            <dl className="mt-2 grid grid-cols-[repeat(3,minmax(0,auto))] justify-between gap-x-3 gap-y-2">
               {PHONE_METRICS.map((label) => (
                 <div key={label} className="min-w-0">
                   <dt className="truncate text-xs text-muted-foreground">
@@ -163,7 +166,9 @@ export function MatchStatsSkeleton() {
                 icon={tile.icon}
                 label={tile.label}
                 value={<SkeletonText className="w-20" />}
-                sub={<SkeletonText className="h-3 w-16" />}
+                sub={
+                  tile.sub ? <SkeletonText className="h-3 w-16" /> : undefined
+                }
               />
             ))}
           </StatTileGrid>
@@ -174,7 +179,7 @@ export function MatchStatsSkeleton() {
         <SectionHeaderSkeleton
           icon={ChartLine}
           title="Team score progression"
-          meta="w-14"
+          meta="w-24"
         />
         <PanelBody className="flex flex-col gap-3">
           <SkeletonText className="h-4 w-40" />
@@ -189,9 +194,11 @@ export function MatchStatsSkeleton() {
           infoText={PLAYER_PERFORMANCE_INFO}
           meta="w-16"
         />
+        {/* Rows are as tall as a name with its team badge under it. */}
         <TableSkeleton
           columns={PLAYER_COLUMNS}
           rows={8}
+          cellHeight="h-12"
           phoneRows={<PlayerPhoneRowsSkeleton />}
         />
       </PanelSkeleton>

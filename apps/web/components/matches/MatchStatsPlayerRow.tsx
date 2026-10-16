@@ -13,8 +13,10 @@ import { TEAM_LABELS } from '@/lib/kit/format/enum-labels';
 import {
   formatAccuracy,
   formatCount,
+  formatCountOf,
   formatRating,
 } from '@/lib/kit/format/number';
+import { cn } from '@/lib/utils';
 
 import {
   formatAverage,
@@ -33,11 +35,25 @@ export const PLAYER_STATS_COLUMN = {
 
 const TEAMS = { red: Team.Red, blue: Team.Blue } as const;
 
-function PlayerBadges({ player }: { player: ProcessedPlayerStats }) {
+/**
+ * The team and Winner badges, on their own line under the name: beside it
+ * they squeezed names on phones and pushed the table past its panel.
+ */
+function PlayerBadges({
+  player,
+  className,
+}: {
+  player: ProcessedPlayerStats;
+  className?: string;
+}) {
   const team = player.team ? TEAMS[player.team] : null;
 
+  if (team === null && !player.won) {
+    return null;
+  }
+
   return (
-    <>
+    <div className={cn('flex flex-wrap items-center gap-1.5', className)}>
       {team !== null ? (
         <Badge size="sm" variant="outline" swatch={getTeamColor(team)}>
           {TEAM_LABELS[team]}
@@ -49,7 +65,7 @@ function PlayerBadges({ player }: { player: ProcessedPlayerStats }) {
           Winner
         </Badge>
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -65,6 +81,7 @@ function PlayerName({
   return (
     <EntityLink
       href={playerProfileHref(player.playerId, ruleset)}
+      title={player.username}
       leading={
         <OsuAvatar
           osuId={player.osuId}
@@ -125,7 +142,9 @@ export function PlayerStatsTableRow({
       data-match-cost={player.matchCost}
     >
       <DataTableCell>
-        <div className="flex min-w-0 items-center gap-2">
+        {/* Capped, so a name of 15 wide letters truncates instead of
+            pushing the Placement column past the panel at 1024px. */}
+        <div className="flex max-w-48 min-w-0 flex-col items-start gap-1">
           <PlayerName player={player} avatarSize={24} ruleset={ruleset} />
           <PlayerBadges player={player} />
         </div>
@@ -133,7 +152,7 @@ export function PlayerStatsTableRow({
       <DataTableCell numeric>
         {showRecord ? (
           <>
-            <span className="sr-only">{`${formatCount(player.gamesWon)} wins and ${formatCount(player.gamesLost)} losses`}</span>
+            <span className="sr-only">{`${formatCountOf(player.gamesWon, 'win')} and ${formatCountOf(player.gamesLost, 'loss', 'losses')}`}</span>
             <span aria-hidden="true">{formatRecord(player, true)}</span>
           </>
         ) : (
@@ -178,9 +197,9 @@ function PhoneMetric({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * One player on a phone: the name and badges, the rating change on the
- * right with the rating under it, and every per-game figure underneath, so
- * nothing the table shows is lost.
+ * One player on a phone: the name with its badges under it, the rating
+ * change on the right with the rating under it, and every per-game figure
+ * underneath, so nothing the table shows is lost.
  */
 export function PlayerStatsPhoneRow({
   player,
@@ -196,12 +215,7 @@ export function PlayerStatsPhoneRow({
     <PhoneRow
       data-testid={`player-stats-phone-row-${player.playerId}`}
       align="start"
-      title={
-        <>
-          <PlayerName player={player} avatarSize={24} ruleset={ruleset} />
-          <PlayerBadges player={player} />
-        </>
-      }
+      title={<PlayerName player={player} avatarSize={24} ruleset={ruleset} />}
       value={
         player.ratingDelta === null ? null : (
           <RatingDelta value={player.ratingDelta} />
@@ -209,7 +223,10 @@ export function PlayerStatsPhoneRow({
       }
       valueDescription={<RatingRange player={player} />}
     >
-      <dl className="mt-2 grid grid-cols-3 gap-x-3 gap-y-2">
+      <PlayerBadges player={player} className="mt-1" />
+      {/* Columns as wide as their labels, spread across the row, so "Match
+          cost" fits beside the rating range on a 375px phone. */}
+      <dl className="mt-2 grid grid-cols-[repeat(3,minmax(0,auto))] justify-between gap-x-3 gap-y-2">
         <PhoneMetric
           label="Match cost"
           value={formatMatchCost(player.matchCost)}

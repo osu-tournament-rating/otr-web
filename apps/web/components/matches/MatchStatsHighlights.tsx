@@ -109,7 +109,11 @@ export default function MatchStatsHighlights({
               />
             ) : undefined
           }
-          sub={<HighlightSub stat={stat} ruleset={ruleset} />}
+          sub={
+            stat.player || stat.tierIcon || stat.sublabel ? (
+              <HighlightSub stat={stat} ruleset={ruleset} />
+            ) : undefined
+          }
         />
       ))}
     </StatTileGrid>

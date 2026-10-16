@@ -272,6 +272,7 @@ Props that matter:
 Do:
 
 - Put a flag, status icon or badge after the link, outside it.
+- Put two or more badges (a team and Winner) on their own line under the name, in the table cell and in the phone row's `children`, as the match's player performance does (`components/matches/MatchStatsPlayerRow.tsx`). Beside the name they push a wide table past its panel and cut names to a few letters on a phone.
 - Keep secondary links (country, tournament) as their own inline links.
 
 Don't:
@@ -309,6 +310,7 @@ import {
 - Mark the name with `data-row-title`; it turns blue while the row is hovered.
 - A control inside the link cell (an audio preview, a checkbox) needs `relative z-20` to sit above the overlay.
 - Below tablet width, give the DataTable `phoneRows` of `PhoneRow`s with `href` and `linkLabel`, the rank, when the list has one, as `rank` and the key number as `value`; a fixed table squeezed to a phone truncates every name.
+- Beatmap tables are the exception: the beatmap list's table view and a tournament's pool show the list's cover rows on phones (`components/beatmaps/list/BeatmapListRows.tsx`, with `pool` for a pool), each still one link, so the audio preview, mapper, star rating and mods stay.
 - Client component (the row listens for clicks).
 
 Don't:
@@ -415,7 +417,7 @@ Props that matter:
 - `align`: `center` (default) centres the rank and value on the row; `start` sets them level with the name's line, for a value that belongs to the first line (a View button beside a name and a status line) or a body that runs longer than the value.
 - `href` and `linkLabel`: the whole row becomes one link with the hover tint. Only for lists whose rows open as a whole (beatmap list, tournament list, pooled beatmaps); `title` is then plain text marked `data-row-title`.
 - A missing `value` shows MissingValue.
-- `children`: extra content under the description, inside the body column.
+- `children`: extra content under the description, inside the body column, such as a line of badges or a grid of labelled figures (the match's player performance). Next to a wide value column, give such a grid columns as wide as their labels (`grid-cols-[repeat(3,minmax(0,auto))] justify-between`), so "Match cost" fits on a 375px phone.
 - Loading: `PhoneRowListSkeleton` (`@/components/kit/feedback/Skeletons`) with the same parts, including `leading`, `align` and a `value` or `description` of `button` or `badge` ([feedback.md](feedback.md#skeletons)).
 
 Do:
@@ -428,6 +430,7 @@ Don't:
 - Don't let a table scroll sideways on a phone or force a minimum width (`min-w-[44rem]`) on visitors. The one exception is a tournament pool in an admin's select mode, where the checkbox column needs the room.
 - Don't hand-build phone lists per page (`<ol className="divide-y sm:hidden">`, a `lg:table-row` trick).
 - Don't drop the tier icon on phones; drop the tier name.
+- Don't give a tier icon a tooltip where its name is written beside it, as in the leaderboard's tier column from laptop width: use a plain `TierIcon` with `aria-hidden`. The tooltip goes only where the name is hidden, such as phone rows.
 - Don't link the avatar and the name as two links a keyboard reaches; with `leading`, use `leadingHref`.
 
 Gallery anchors: `/admin/design#tables-phone-rows`, `/admin/design#tables-view-button` (`align="start"`)

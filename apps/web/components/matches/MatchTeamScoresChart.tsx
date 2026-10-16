@@ -178,8 +178,7 @@ export default function MatchTeamScoresChart({
       <SectionHeader
         icon={ChartLine}
         title="Team score progression"
-        infoText={`Verified team totals across ${formatCountOf(chartData.length, 'game')}`}
-        meta={formatCountOf(chartData.length, 'game')}
+        meta={formatCountOf(chartData.length, 'verified game')}
       />
       <PanelBody className="flex flex-col gap-3">
         <ChartLegend

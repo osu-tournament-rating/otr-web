@@ -52,8 +52,8 @@ export default function GameActionsMenu({
    */
   gameName: string;
   /**
-   * Names the menu with the game's place in the match, such as "Game 3:
-   * Title [Difficulty]", so two games on one beatmap have distinct buttons.
+   * Names the menu with the game's place in the match, such as "Game 3", so
+   * two games on one beatmap have distinct buttons.
    */
   itemName: string;
 }) {

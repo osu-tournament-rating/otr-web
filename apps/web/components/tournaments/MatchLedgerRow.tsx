@@ -20,15 +20,27 @@ import { cn } from '@/lib/utils';
 
 import { parseTeamNames, type MatchRow } from './matchRow';
 
-/** The points each side won, tinted with the winning team's colour. */
+/** Why a match shows no result: a rejected one never gets one. */
+function getMissingResultText(status: VerificationStatus) {
+  switch (status) {
+    case VerificationStatus.Verified:
+      return 'No result yet — check back once stats are generated';
+    case VerificationStatus.Rejected:
+      return 'No result — rejected matches are not counted in ratings';
+    default:
+      return 'No result yet — the match is not verified';
+  }
+}
+
+/**
+ * The points each side won, tinted with the winning team's colour. Only a
+ * missing result and a draw explain themselves on tap; a score says enough.
+ */
 function Scoreline({ match }: { match: MatchRow }) {
   const winRecord = match.winRecord;
 
   if (!winRecord) {
-    const explanation =
-      match.status.verificationStatus === VerificationStatus.Verified
-        ? 'No result yet — check back once stats are generated'
-        : 'No result yet — the match is not verified';
+    const explanation = getMissingResultText(match.status.verificationStatus);
 
     return (
       <TapTooltip
@@ -47,10 +59,27 @@ function Scoreline({ match }: { match: MatchRow }) {
     (winRecord.winnerTeam === Team.Red || winRecord.winnerTeam === Team.Blue)
       ? winRecord.winnerTeam
       : null;
-  const explanation = winRecord.isTied
-    ? 'Draw — some games may not have been counted, so this result is not accurate'
-    : 'Points won across the verified games';
   const score = `${formatCount(winRecord.winnerPoints)}–${formatCount(winRecord.loserPoints)}`;
+  const pill = (
+    <span
+      className={cn(
+        'block rounded-md py-0.5 text-center text-sm font-semibold tabular-nums',
+        winner === null
+          ? 'bg-muted text-muted-foreground'
+          : getTeamTintClass(winner)
+      )}
+      style={winner === null ? undefined : { color: getTeamTextColor(winner) }}
+    >
+      {score}
+    </span>
+  );
+
+  if (!winRecord.isTied) {
+    return <span className="w-14 shrink-0">{pill}</span>;
+  }
+
+  const explanation =
+    'Draw — some games may not have been counted, so this result is not accurate';
 
   return (
     <TapTooltip
@@ -59,19 +88,7 @@ function Scoreline({ match }: { match: MatchRow }) {
       triggerAriaLabel={`Result ${score}. ${explanation}`}
       triggerClassName="w-14 shrink-0"
     >
-      <span
-        className={cn(
-          'block rounded-md py-0.5 text-center text-sm font-semibold tabular-nums',
-          winner === null
-            ? 'bg-muted text-muted-foreground'
-            : getTeamTintClass(winner)
-        )}
-        style={
-          winner === null ? undefined : { color: getTeamTextColor(winner) }
-        }
-      >
-        {score}
-      </span>
+      {pill}
     </TapTooltip>
   );
 }

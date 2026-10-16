@@ -151,7 +151,6 @@ export default function TournamentHero({
         adminActions={
           isAdmin ? (
             <AdminMenu
-              title={tournament.name}
               notification={notes.length > 0 ? 'Has admin notes' : undefined}
               data-testid="tournament-admin-menu"
               actions={[

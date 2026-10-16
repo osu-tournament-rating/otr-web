@@ -23,6 +23,7 @@ import { useSession } from '@/lib/hooks/useSession';
 import { formatCount, formatCountOf, formatId } from '@/lib/kit/format/number';
 import { useListState } from '@/lib/kit/lists/use-list-state';
 import { orpc } from '@/lib/orpc/orpc';
+import { cn } from '@/lib/utils';
 
 import TournamentMatchesLedger from './TournamentMatchesLedger';
 import {
@@ -208,12 +209,27 @@ export default function TournamentMatchesAdminView({
                   onValueChange={(sort) => setState({ sort })}
                 />
               )}
-              {isAdmin && (
+              {isAdmin && matches.length > 0 && (
+                // Beside the sort, a phone's strip has room for the icon
+                // only. Outline, as the sort's own button.
                 <IconButton
+                  variant="outline"
                   label="Add matches"
                   icon={Plus}
                   onClick={() => setIsAddDialogOpen(true)}
+                  className="sm:hidden"
                 />
+              )}
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  icon={Plus}
+                  onClick={() => setIsAddDialogOpen(true)}
+                  className={cn(matches.length > 0 && 'hidden sm:inline-flex')}
+                >
+                  Add matches
+                </Button>
               )}
             </>
           ) : undefined

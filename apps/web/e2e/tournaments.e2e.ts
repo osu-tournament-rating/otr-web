@@ -1,4 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
+
+import { STORAGE_STATE } from './fixtures/auth';
 import {
   ROUTES,
   TEST_PUBLIC_TOURNAMENT_ID,
@@ -616,6 +618,23 @@ test.describe('Tournaments', () => {
       ).toHaveCount(1);
     });
 
+    test('phones show the pool as cover rows', async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(
+        `${ROUTES.tournament(TEST_PUBLIC_TOURNAMENT_ID)}?tab=beatmaps`
+      );
+
+      const row = page
+        .getByRole('list', { name: 'Pooled beatmaps' })
+        .getByRole('listitem')
+        .first();
+      await expect(row).toBeVisible({ timeout: 15000 });
+      // The cover and its audio preview, and the pool's own game count.
+      await expect(row.getByTestId('beatmap-cover-cell')).toBeVisible();
+      await expect(row.getByTestId('beatmap-games-count')).toBeVisible();
+      await expect(row.getByTestId('beatmap-tournaments-count')).toHaveCount(0);
+    });
+
     test('ratings tab shows player ratings', async ({ page }) => {
       await page.goto(
         `${ROUTES.tournament(TEST_PUBLIC_TOURNAMENT_ID)}?tab=ratings`
@@ -691,6 +710,32 @@ test.describe('Tournaments', () => {
       await expect(
         content.getByText('Tournament statistics').first()
       ).toBeVisible({ timeout: 15000 });
+    });
+  });
+
+  test.describe('Admin on a phone', () => {
+    test.use({ storageState: STORAGE_STATE.admin });
+
+    test('closing a dialog with Escape leaves no tooltip on its button', async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 375, height: 844 });
+      await page.goto(
+        `${ROUTES.tournament(TEST_PUBLIC_TOURNAMENT_ID)}?tab=matches`
+      );
+
+      // On phones Add matches is an icon beside the sort control.
+      const addMatches = page.getByRole('button', { name: 'Add matches' });
+      await addMatches.click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+
+      await page.keyboard.press('Escape');
+      await expect(dialog).toBeHidden();
+      await expect(addMatches).toBeFocused();
+      // Longer than a tooltip's open delay, so a tooltip would show.
+      await page.waitForTimeout(500);
+      await expect(page.getByRole('tooltip')).toHaveCount(0);
     });
   });
 

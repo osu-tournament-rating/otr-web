@@ -244,16 +244,13 @@ export function calculateHighlightStats(
       id: 'players',
       label: 'Players',
       value: formatCount(players.length),
-      sublabel: players.length === 1 ? 'Participant' : 'Participants',
       icon: 'Users',
     },
     {
       id: 'rated-games',
       label: 'Rated games',
       value: formatCount(ratedGames),
-      sublabel: ratedGames === 1 ? 'Verified game' : 'Verified games',
       icon: 'Gamepad2',
-      helpText: 'Only verified games contribute to match statistics.',
     },
     {
       id: 'average-rating',
