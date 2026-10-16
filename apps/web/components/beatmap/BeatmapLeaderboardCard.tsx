@@ -2,30 +2,31 @@ import { Medal } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import {
-  EmptyState,
-  Eyebrow,
-  SectionCard,
-  SectionHeader,
-} from '@/components/beatmap/BeatmapSection';
+import { NotEnoughData } from '@/components/beatmap/BeatmapSection';
 import ModIconset from '@/components/icons/ModIconset';
-import SimpleTooltip from '@/components/simple-tooltip';
-import { OsuAvatar } from '@/components/ui/osu-avatar';
+import { DateText } from '@/components/kit/format/DateText';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from '@/components/kit/tables/DataTable';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { MissingValue } from '@/components/kit/tables/MissingValue';
+import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
 import { ScoreGradeEnumHelper } from '@/lib/enum-helpers';
+import {
+  formatAccuracy,
+  formatCount,
+  formatCountOf,
+} from '@/lib/kit/format/number';
 import type { BeatmapTopPerformer } from '@/lib/orpc/schema/beatmapStats';
 import { cn } from '@/lib/utils';
-import { formatChartNumber } from '@/lib/utils/chart';
-import { formatUTCDate } from '@/lib/utils/date';
-import { formatAccuracy } from '@/lib/utils/format';
-import { stickyTableHeader } from '@/lib/utils/table';
 
 type DisplayRank = {
   /** Rendered numeral, prefixed with `=` when the position is shared. */
@@ -44,31 +45,77 @@ function computeDisplayRanks(performers: BeatmapTopPerformer[]): DisplayRank[] {
       (index > 0 && performers[index - 1].score === performer.score) ||
       (index + 1 < performers.length &&
         performers[index + 1].score === performer.score);
-    return { label: `${tied ? '=' : ''}${start + 1}`, position: start + 1 };
+    return {
+      label: `${tied ? '=' : ''}${formatCount(start + 1)}`,
+      position: start + 1,
+    };
   });
 }
 
-function RankBadge({
-  rank,
+/** The podium reads heavier; colour is not needed for it. */
+function rankClassName(rank: DisplayRank) {
+  return rank.position === 1
+    ? 'font-semibold text-foreground'
+    : rank.position <= 3
+      ? 'font-medium text-foreground'
+      : 'text-muted-foreground';
+}
+
+const linkClassName =
+  'rounded-sm transition-colors outline-none hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50';
+
+function PlayerLink({
+  performer,
+  avatarSize,
+}: {
+  performer: BeatmapTopPerformer;
+  avatarSize: number;
+}) {
+  const displayName = (performer.player.username ?? '').trim();
+
+  return (
+    <EntityLink
+      href={`/players/${performer.player.id}`}
+      leading={
+        <OsuAvatar
+          osuId={performer.player.osuId}
+          username={performer.player.username}
+          size={avatarSize}
+        />
+      }
+      className={cn(!displayName && 'font-normal text-muted-foreground')}
+    >
+      {displayName || 'Unknown player'}
+    </EntityLink>
+  );
+}
+
+function ScoreLink({
+  performer,
+  testId,
   className,
 }: {
-  rank: DisplayRank;
+  performer: BeatmapTopPerformer;
+  testId?: string;
   className?: string;
 }) {
+  const displayName = (performer.player.username ?? '').trim();
+
   return (
-    <span
+    <Link
+      href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
+      prefetch={false}
+      aria-label={`View ${displayName || 'Unknown player'}'s recorded score`}
+      data-testid={testId}
       className={cn(
-        'inline-flex h-5 min-w-6 items-center justify-center rounded-md px-1 text-xs tabular-nums',
-        rank.position === 1
-          ? 'bg-primary/15 font-semibold text-primary'
-          : rank.position <= 3
-            ? 'font-medium text-foreground'
-            : 'text-muted-foreground',
+        'inline-flex items-center justify-end gap-1.5 font-semibold tabular-nums',
+        linkClassName,
         className
       )}
     >
-      {rank.label}
-    </span>
+      {formatCount(performer.score)}
+      <GradeIcon grade={performer.grade} />
+    </Link>
   );
 }
 
@@ -84,240 +131,153 @@ export default function BeatmapLeaderboardCard({
   const ranks = computeDisplayRanks(performers);
 
   return (
-    <SectionCard data-testid="beatmap-leaderboard">
+    <Panel data-testid="beatmap-leaderboard">
       <SectionHeader
         icon={Medal}
         title="Leaderboard"
         meta={
           performers.length < totalScoreCount
-            ? `top ${formatChartNumber(performers.length)} of ${formatChartNumber(totalScoreCount)} scores`
-            : `${formatChartNumber(totalScoreCount)} ${
-                totalScoreCount === 1 ? 'score' : 'scores'
-              }`
+            ? `Top ${formatCount(performers.length)} of ${formatCountOf(totalScoreCount, 'score')}`
+            : formatCountOf(totalScoreCount, 'score')
         }
       />
 
       {performers.length === 0 ? (
-        <EmptyState />
+        <NotEnoughData />
       ) : (
-        <>
-          <div className={cn('hidden sm:block', stickyTableHeader)}>
-            <Table className="min-w-156 table-fixed">
-              <TableHeader>
-                <TableRow className="bg-muted">
-                  <TableHead className="h-8 w-12 pl-4">
-                    <Eyebrow>#</Eyebrow>
-                  </TableHead>
-                  <TableHead className="h-8">
-                    <Eyebrow>Player</Eyebrow>
-                  </TableHead>
-                  <TableHead className="h-8 w-20">
-                    <Eyebrow>Mods</Eyebrow>
-                  </TableHead>
-                  <TableHead className="h-8 w-29 text-right">
-                    <Eyebrow>Score</Eyebrow>
-                  </TableHead>
-                  <TableHead className="h-8 w-17 text-right">
-                    <Eyebrow>Acc</Eyebrow>
-                  </TableHead>
-                  <TableHead className="h-8">
-                    <Eyebrow>Tournament</Eyebrow>
-                  </TableHead>
-                  <TableHead className="h-8 w-28 pr-4 text-right">
-                    <Eyebrow>Played</Eyebrow>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {performers.map((performer, index) => {
-                  const displayName = (performer.player.username ?? '').trim();
-
-                  return (
-                    <TableRow
-                      key={performer.scoreId}
-                      className="group hover:bg-muted/25"
-                    >
-                      <TableCell className="pl-4">
-                        <RankBadge rank={ranks[index]} />
-                      </TableCell>
-
-                      <TableCell>
-                        <Link
-                          href={`/players/${performer.player.id}`}
-                          prefetch={false}
-                          className="flex min-w-0 items-center gap-2 rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                        >
-                          <OsuAvatar
-                            osuId={performer.player.osuId}
-                            username={performer.player.username}
-                            size={24}
-                          />
-                          <span
-                            className={cn(
-                              'truncate text-sm group-hover:underline',
-                              displayName
-                                ? 'font-medium'
-                                : 'text-muted-foreground italic'
-                            )}
-                          >
-                            {displayName || 'Unknown player'}
-                          </span>
-                        </Link>
-                      </TableCell>
-
-                      <TableCell>
-                        <div
-                          data-testid="beatmap-top-play-mods"
-                          className="flex h-5 w-16 items-center"
-                        >
-                          <ModIconset
-                            mods={performer.mods}
-                            className="flex h-full items-center"
-                            iconClassName="h-5"
-                          />
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <Link
-                          href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
-                          prefetch={false}
-                          aria-label={`View ${displayName || 'Unknown player'}'s recorded score`}
-                          data-testid="beatmap-top-play-score"
-                          className="flex items-center justify-end gap-1.5 rounded-sm text-sm font-semibold hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                        >
-                          {formatChartNumber(performer.score)}
-                          <GradeIcon grade={performer.grade} />
-                        </Link>
-                      </TableCell>
-
-                      <TableCell
-                        data-testid="beatmap-top-play-accuracy"
-                        className="text-right text-xs text-muted-foreground"
-                      >
+        <DataTable
+          fixed
+          stickyHeader
+          aria-label="Beatmap leaderboard"
+          phoneRows={
+            <PhoneRowList as="ol" aria-label="Beatmap leaderboard">
+              {performers.map((performer, index) => (
+                <PhoneRow
+                  key={performer.scoreId}
+                  rank={
+                    <span className={rankClassName(ranks[index])}>
+                      {ranks[index].label}
+                    </span>
+                  }
+                  title={<PlayerLink performer={performer} avatarSize={20} />}
+                  description={
+                    <span className="flex min-w-0 items-center gap-2">
+                      <ModIconset
+                        mods={performer.mods}
+                        className="flex h-4 shrink-0 items-center"
+                        iconClassName="h-4"
+                      />
+                      <span className="shrink-0 tabular-nums">
                         {performer.accuracy !== null
                           ? formatAccuracy(performer.accuracy)
-                          : '—'}
-                      </TableCell>
-
-                      <TableCell>
-                        <Link
-                          href={`/tournaments/${performer.tournament.id}`}
-                          prefetch={false}
-                          title={performer.tournament.name}
-                          data-testid="beatmap-top-play-tournament"
-                          className="block truncate rounded-sm text-xs hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                        >
-                          {performer.tournament.name}
-                        </Link>
-                      </TableCell>
-
-                      <TableCell className="pr-4 text-right">
-                        <time
-                          dateTime={performer.playedAt ?? undefined}
-                          data-testid="beatmap-top-play-date"
-                          className="text-xs whitespace-nowrap text-muted-foreground"
-                        >
-                          {performer.playedAt
-                            ? formatUTCDate(new Date(performer.playedAt))
-                            : '—'}
-                        </time>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-
-          <ol className="divide-y sm:hidden">
-            {performers.map((performer, index) => {
-              const displayName = (performer.player.username ?? '').trim();
-
-              return (
-                <li
-                  key={performer.scoreId}
-                  className="group px-4 py-2 transition-colors hover:bg-muted/25"
-                >
-                  <div className="flex items-center gap-2">
-                    <RankBadge rank={ranks[index]} className="shrink-0" />
-                    <Link
-                      href={`/players/${performer.player.id}`}
-                      prefetch={false}
-                      className="flex min-w-0 flex-1 items-center gap-2 rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                    >
-                      <OsuAvatar
-                        osuId={performer.player.osuId}
-                        username={performer.player.username}
-                        size={20}
-                      />
-                      <span
-                        className={cn(
-                          'truncate text-sm group-hover:underline',
-                          displayName
-                            ? 'font-medium'
-                            : 'text-muted-foreground italic'
-                        )}
-                      >
-                        {displayName || 'Unknown player'}
+                          : null}
                       </span>
-                    </Link>
-                    <Link
-                      href={`/matches/${performer.matchId}?scoreId=${performer.scoreId}`}
-                      prefetch={false}
-                      aria-label={`View ${displayName || 'Unknown player'}'s recorded score`}
-                      className="flex shrink-0 items-center gap-1 rounded-sm text-sm font-semibold hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                    >
-                      {formatChartNumber(performer.score)}
-                      <GradeIcon grade={performer.grade} />
-                    </Link>
-                  </div>
-
-                  <div className="mt-1 flex items-center gap-2 pl-8 text-xs text-muted-foreground">
+                      <Link
+                        href={`/tournaments/${performer.tournament.id}`}
+                        prefetch={false}
+                        title={performer.tournament.name}
+                        className={cn('min-w-0 truncate', linkClassName)}
+                      >
+                        {performer.tournament.name}
+                      </Link>
+                    </span>
+                  }
+                  value={<ScoreLink performer={performer} />}
+                />
+              ))}
+            </PhoneRowList>
+          }
+        >
+          <DataTableHeader>
+            <DataTableRow>
+              <DataTableHead className="w-12">#</DataTableHead>
+              <DataTableHead>Player</DataTableHead>
+              <DataTableHead className="w-20">Mods</DataTableHead>
+              <DataTableHead numeric className="w-29">
+                Score
+              </DataTableHead>
+              <DataTableHead numeric className="w-20">
+                Acc
+              </DataTableHead>
+              <DataTableHead>Tournament</DataTableHead>
+              <DataTableHead align="end" className="w-28">
+                Played
+              </DataTableHead>
+            </DataTableRow>
+          </DataTableHeader>
+          <DataTableBody>
+            {performers.map((performer, index) => (
+              <DataTableRow key={performer.scoreId}>
+                <DataTableCell
+                  className={cn(
+                    'text-xs tabular-nums',
+                    rankClassName(ranks[index])
+                  )}
+                >
+                  {ranks[index].label}
+                </DataTableCell>
+                <DataTableCell>
+                  <PlayerLink performer={performer} avatarSize={24} />
+                </DataTableCell>
+                <DataTableCell empty={false}>
+                  <div
+                    data-testid="beatmap-top-play-mods"
+                    className="flex h-5 w-16 items-center"
+                  >
                     <ModIconset
                       mods={performer.mods}
-                      className="flex h-4 shrink-0 items-center"
-                      iconClassName="h-4"
+                      className="flex h-full items-center"
+                      iconClassName="h-5"
                     />
-                    <span className="shrink-0">
-                      {performer.accuracy !== null
-                        ? formatAccuracy(performer.accuracy)
-                        : '—'}
-                    </span>
-                    <Link
-                      href={`/tournaments/${performer.tournament.id}`}
-                      prefetch={false}
-                      title={performer.tournament.name}
-                      className="min-w-0 flex-1 truncate rounded-sm font-sans hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                    >
-                      {performer.tournament.name}
-                    </Link>
-                    <time
-                      dateTime={performer.playedAt ?? undefined}
-                      className="shrink-0 text-xs whitespace-nowrap"
-                    >
-                      {performer.playedAt
-                        ? formatUTCDate(new Date(performer.playedAt))
-                        : '—'}
-                    </time>
                   </div>
-                </li>
-              );
-            })}
-          </ol>
-        </>
+                </DataTableCell>
+                <DataTableCell numeric>
+                  <ScoreLink
+                    performer={performer}
+                    testId="beatmap-top-play-score"
+                    // Fills the cell, so every score lines up on the right.
+                    className="flex"
+                  />
+                </DataTableCell>
+                <DataTableCell
+                  numeric
+                  muted
+                  data-testid="beatmap-top-play-accuracy"
+                >
+                  {performer.accuracy !== null
+                    ? formatAccuracy(performer.accuracy)
+                    : null}
+                </DataTableCell>
+                <DataTableCell>
+                  <Link
+                    href={`/tournaments/${performer.tournament.id}`}
+                    prefetch={false}
+                    title={performer.tournament.name}
+                    data-testid="beatmap-top-play-tournament"
+                    className={cn('block truncate text-xs', linkClassName)}
+                  >
+                    {performer.tournament.name}
+                  </Link>
+                </DataTableCell>
+                <DataTableCell
+                  align="end"
+                  muted
+                  data-testid="beatmap-top-play-date"
+                >
+                  <DateText date={performer.playedAt} />
+                </DataTableCell>
+              </DataTableRow>
+            ))}
+          </DataTableBody>
+        </DataTable>
       )}
-    </SectionCard>
+    </Panel>
   );
 }
 
 function GradeIcon({ grade }: { grade: BeatmapTopPerformer['grade'] }) {
   if (grade === undefined) {
-    return (
-      <SimpleTooltip content="Grade unavailable">
-        <span className="text-xs text-muted-foreground">—</span>
-      </SimpleTooltip>
-    );
+    return <MissingValue label="Grade unavailable" />;
   }
 
   const gradeName = ScoreGradeEnumHelper.getMetadata(grade).text;

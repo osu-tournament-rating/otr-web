@@ -10,8 +10,10 @@ import BeatmapOverviewCard from '@/components/beatmap/BeatmapOverviewCard';
 import BeatmapPerformanceCard from '@/components/beatmap/BeatmapPerformanceCard';
 import BeatmapScoreDistributionCard from '@/components/beatmap/BeatmapScoreDistributionCard';
 import BeatmapScoreScatterCard from '@/components/beatmap/BeatmapScoreScatterCard';
-import { SectionCard } from '@/components/beatmap/BeatmapSection';
 import BeatmapTierBreakdownCard from '@/components/beatmap/BeatmapTierBreakdownCard';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { PageFrame } from '@/components/kit/layout/PageFrame';
+import { Panel } from '@/components/kit/layout/Panel';
 import { getBeatmapArtist, getBeatmapTitle } from '@/lib/beatmaps/presentation';
 import { getBeatmapStatsCached } from '@/lib/orpc/queries/beatmapStats';
 import {
@@ -85,7 +87,7 @@ export default async function BeatmapPage({ params }: PageProps) {
   // BeatmapHeader and BeatmapOverviewCard render in both branches; keep their props in sync
   if (hasNoVerifiedData) {
     return (
-      <div className="container mx-auto space-y-4 px-4 py-6 sm:px-0 sm:py-0">
+      <PageFrame>
         <BeatmapHeader
           beatmap={stats.beatmap}
           relatedDifficulties={stats.relatedDifficulties}
@@ -97,26 +99,21 @@ export default async function BeatmapPage({ params }: PageProps) {
             summary={stats.summary}
             pools={stats.tournaments}
           />
-          <SectionCard
-            data-testid="beatmap-empty-band"
-            className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center lg:col-span-2"
-          >
-            <Inbox className="size-8 text-muted-foreground" aria-hidden />
-            <p className="font-medium">
-              No verified tournament data recorded yet
-            </p>
-            <p className="max-w-md text-sm text-muted-foreground">
-              Statistics will appear once a verified tournament uses this
-              beatmap.
-            </p>
-          </SectionCard>
+          <Panel className="flex flex-col justify-center lg:col-span-2">
+            <EmptyState
+              data-testid="beatmap-empty-band"
+              icon={Inbox}
+              title="No verified tournament data recorded yet"
+              description="Statistics will appear once a verified tournament uses this beatmap."
+            />
+          </Panel>
         </div>
-      </div>
+      </PageFrame>
     );
   }
 
   return (
-    <div className="container mx-auto space-y-4 px-4 py-6 sm:px-0 sm:py-0">
+    <PageFrame>
       <BeatmapHeader
         beatmap={stats.beatmap}
         relatedDifficulties={stats.relatedDifficulties}
@@ -159,6 +156,6 @@ export default async function BeatmapPage({ params }: PageProps) {
         performers={stats.topPerformers}
         totalScoreCount={totalVerifiedScoreCount}
       />
-    </div>
+    </PageFrame>
   );
 }

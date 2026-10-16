@@ -1,45 +1,31 @@
 'use client';
 
+import { VerificationStatus } from '@otr/core/osu';
 import { ChevronRight } from 'lucide-react';
-import Link from 'next/link';
 import * as React from 'react';
 
-import VerificationBadge from '@/components/badges/VerificationBadge';
-import { Eyebrow } from '@/components/beatmap/BeatmapSection';
 import ModIconset from '@/components/icons/ModIconset';
+import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
+import { DateRangeText } from '@/components/kit/format/DateRangeText';
+import { Tile } from '@/components/kit/layout/Tile';
+import { VerificationStatusIcon } from '@/components/kit/status/VerificationStatusIcon';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { formatRankRangeBound } from '@/lib/beatmaps/rankRange';
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from '@/components/kit/tables/DataTable';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { MissingValue } from '@/components/kit/tables/MissingValue';
+import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
+import { formatDateRange } from '@/lib/kit/format/date';
+import { formatLobbySize, formatRankRange } from '@/lib/kit/format/fields';
+import { formatCount, formatCountOf } from '@/lib/kit/format/number';
+import { getRejectionReasonTexts } from '@/lib/kit/status/reasons';
 import type { BeatmapTournamentUsage } from '@/lib/orpc/schema/beatmapStats';
-import { cn } from '@/lib/utils';
-import { formatChartNumber } from '@/lib/utils/chart';
-import { formatUTCDate } from '@/lib/utils/date';
 import { normalizeBeatmapDisplayMods } from '@/lib/utils/mods';
-import { stickyTableHeaderInScrollArea } from '@/lib/utils/table';
-import { VerificationStatus } from '@otr/core/osu';
-
-/** `2021-11-05 – 2021-12-18`, or one bound, or an em dash. */
-function formatDateRange(startTime: string | null, endTime: string | null) {
-  const start = startTime ? formatUTCDate(new Date(startTime)) : null;
-  const end = endTime ? formatUTCDate(new Date(endTime)) : null;
-
-  if (start && end) return `${start} – ${end}`;
-  return start ?? end ?? '—';
-}
 
 /** Chronological, newest first; alphabetical within a tie, undated last. */
 function byMostRecent(a: BeatmapTournamentUsage, b: BeatmapTournamentUsage) {
@@ -53,7 +39,21 @@ function byMostRecent(a: BeatmapTournamentUsage, b: BeatmapTournamentUsage) {
     return left < right ? 1 : -1;
   }
 
-  return a.tournament.name.localeCompare(b.tournament.name);
+  return a.tournament.name.localeCompare(b.tournament.name, 'en-US');
+}
+
+function StatusIcon({ row }: { row: BeatmapTournamentUsage }) {
+  return (
+    <VerificationStatusIcon
+      status={row.verificationStatus}
+      rejectionReasons={getRejectionReasonTexts(
+        'tournament',
+        row.rejectionReason
+      )}
+      context={row.tournament.name}
+      tooltip="tap"
+    />
+  );
 }
 
 /** Every tournament that pooled the beatmap, behind the "Pooled in" tile. */
@@ -75,152 +75,134 @@ export default function BeatmapPoolsDialog({
   ).length;
 
   return (
-    <Dialog>
-      <DialogTrigger
-        data-testid="beatmap-pool-records"
-        aria-label={accessibleValue}
-        className="relative cursor-pointer rounded-lg border bg-muted/25 px-3 py-2.5 text-left transition-colors hover:border-ring/40 hover:bg-muted/50 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+    <DialogTemplate
+      trigger={
+        <Tile asChild interactive className="relative">
+          <button
+            type="button"
+            data-testid="beatmap-pool-records"
+            aria-label={accessibleValue}
+          >
+            {children}
+            <ChevronRight
+              className="absolute top-2.5 right-3 size-3.5 text-muted-foreground"
+              aria-hidden
+            />
+          </button>
+        </Tile>
+      }
+      title={`Pooled in ${formatCountOf(rows.length, 'tournament')}`}
+      description={`${formatCount(verifiedCount)} verified`}
+      size="lg"
+      // Wider than the form dialogs: six columns of tournament data.
+      className="sm:max-w-[min(64rem,calc(100%-2rem))]"
+      bodyClassName="gap-0 p-0"
+    >
+      {/* Focusable so the list scrolls by keyboard */}
+      <div
+        tabIndex={0}
+        aria-label="Tournaments that pooled this beatmap"
+        className="min-h-0 flex-1 overflow-y-auto focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset"
       >
-        {children}
-        <ChevronRight
-          className="absolute top-2.5 right-3 size-3.5 translate-y-px text-muted-foreground"
-          aria-hidden
-        />
-      </DialogTrigger>
-
-      {/* `min()` keeps DialogContent's 1rem gutter; a bare `sm:max-w-3xl` wins the cascade */}
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[min(48rem,calc(100%-2rem))] lg:max-w-[min(64rem,calc(100%-2rem))]">
-        <DialogHeader className="gap-1 border-b px-4 py-3 pr-12 text-left">
-          <DialogTitle className="text-base">
-            {`Pooled in ${formatChartNumber(rows.length)} ${rows.length === 1 ? 'tournament' : 'tournaments'}`}
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            {`${formatChartNumber(verifiedCount)} verified`}
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* Focusable so the list scrolls by keyboard */}
-        <div
-          tabIndex={0}
-          className={cn(
-            'min-h-0 flex-1 overflow-y-auto focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset',
-            stickyTableHeaderInScrollArea
-          )}
+        <DataTable
+          fixed
+          stickyHeader="scroll-area"
+          phoneRows={
+            <PhoneRowList aria-label="Tournaments that pooled this beatmap">
+              {rows.map((row) => (
+                <PhoneRow
+                  key={row.tournament.id}
+                  title={
+                    <>
+                      <StatusIcon row={row} />
+                      <EntityLink
+                        href={`/tournaments/${row.tournament.id}`}
+                        title={row.tournament.name}
+                      >
+                        {row.tournament.name}
+                      </EntityLink>
+                    </>
+                  }
+                  description={[
+                    formatRankRange(row.rankRangeLowerBound),
+                    formatLobbySize(row.lobbySize),
+                    formatDateRange(row.startTime, row.endTime, {
+                      empty: '',
+                    }),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  value={
+                    row.gameCount > 0
+                      ? formatCountOf(row.gameCount, 'game')
+                      : undefined
+                  }
+                >
+                  {row.mostCommonMods !== null ? (
+                    <PoolMods
+                      mods={row.mostCommonMods}
+                      freemod={row.mostCommonModsFreemod}
+                      className="mt-1 h-4"
+                      iconClassName="h-4"
+                    />
+                  ) : null}
+                </PhoneRow>
+              ))}
+            </PhoneRowList>
+          }
         >
-          <div className="hidden md:block">
-            <Table className="table-fixed">
-              <TableHeader>
-                <TableRow className="bg-muted">
-                  <TableHead className="h-8 pl-4">
-                    <Eyebrow>Tournament</Eyebrow>
-                  </TableHead>
-                  <TableHead className="h-8 w-48">
-                    <Eyebrow>Dates</Eyebrow>
-                  </TableHead>
-                  <TableHead className="h-8 w-22">
-                    <Eyebrow>Rank range</Eyebrow>
-                  </TableHead>
-                  <TableHead className="h-8 w-20">
-                    <Eyebrow>Team size</Eyebrow>
-                  </TableHead>
-                  <TableHead className="h-8 w-20">
-                    <Eyebrow>Mods</Eyebrow>
-                  </TableHead>
-                  <TableHead className="h-8 w-18 pr-4 text-right">
-                    <Eyebrow>Games</Eyebrow>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((row) => (
-                  <TableRow
-                    key={row.tournament.id}
-                    className="hover:bg-muted/25"
-                  >
-                    <TableCell className="pl-4">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <VerificationBadge
-                          verificationStatus={row.verificationStatus}
-                          rejectionReason={row.rejectionReason}
-                          entityType="tournament"
-                          size="small"
-                        />
-                        <Link
-                          href={`/tournaments/${row.tournament.id}`}
-                          prefetch={false}
-                          title={row.tournament.name}
-                          className="line-clamp-2 min-w-0 rounded-sm text-sm leading-snug font-medium whitespace-normal hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                        >
-                          {row.tournament.name}
-                        </Link>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {formatDateRange(row.startTime, row.endTime)}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {formatRankRangeBound(row.rankRangeLowerBound)}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {`${row.lobbySize}v${row.lobbySize}`}
-                    </TableCell>
-                    <TableCell>
-                      <PoolMods
-                        mods={row.mostCommonMods}
-                        freemod={row.mostCommonModsFreemod}
-                        iconClassName="h-5"
-                      />
-                    </TableCell>
-                    <TableCell className="pr-4 text-right text-xs text-muted-foreground">
-                      {row.gameCount > 0
-                        ? formatChartNumber(row.gameCount)
-                        : '—'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          <ol className="divide-y md:hidden">
+          <DataTableHeader>
+            <DataTableRow>
+              <DataTableHead>Tournament</DataTableHead>
+              <DataTableHead className="w-48">Dates</DataTableHead>
+              <DataTableHead className="w-32">Rank restriction</DataTableHead>
+              <DataTableHead className="w-22">Lobby size</DataTableHead>
+              <DataTableHead className="w-20">Mods</DataTableHead>
+              <DataTableHead numeric className="w-18">
+                Games
+              </DataTableHead>
+            </DataTableRow>
+          </DataTableHeader>
+          <DataTableBody>
             {rows.map((row) => (
-              <li key={row.tournament.id} className="px-4 py-2.5">
-                <div className="flex items-center gap-2">
-                  <VerificationBadge
-                    verificationStatus={row.verificationStatus}
-                    rejectionReason={row.rejectionReason}
-                    entityType="tournament"
-                    size="small"
-                  />
-                  <Link
-                    href={`/tournaments/${row.tournament.id}`}
-                    prefetch={false}
-                    title={row.tournament.name}
-                    className="line-clamp-2 min-w-0 flex-1 rounded-sm text-sm leading-snug font-medium whitespace-normal hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                  >
-                    {row.tournament.name}
-                  </Link>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {`${formatChartNumber(row.gameCount)} ${row.gameCount === 1 ? 'game' : 'games'}`}
-                  </span>
-                </div>
-
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-muted-foreground">
+              <DataTableRow key={row.tournament.id}>
+                <DataTableCell>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <StatusIcon row={row} />
+                    <EntityLink
+                      href={`/tournaments/${row.tournament.id}`}
+                      title={row.tournament.name}
+                    >
+                      {row.tournament.name}
+                    </EntityLink>
+                  </div>
+                </DataTableCell>
+                <DataTableCell muted>
+                  <DateRangeText start={row.startTime} end={row.endTime} />
+                </DataTableCell>
+                <DataTableCell muted>
+                  {formatRankRange(row.rankRangeLowerBound)}
+                </DataTableCell>
+                <DataTableCell muted>
+                  {formatLobbySize(row.lobbySize)}
+                </DataTableCell>
+                <DataTableCell empty={false}>
                   <PoolMods
                     mods={row.mostCommonMods}
                     freemod={row.mostCommonModsFreemod}
-                    iconClassName="h-4"
+                    className="h-5"
+                    iconClassName="h-5"
                   />
-                  <span>{formatRankRangeBound(row.rankRangeLowerBound)}</span>
-                  <span>{`${row.lobbySize}v${row.lobbySize}`}</span>
-                  <span>{formatDateRange(row.startTime, row.endTime)}</span>
-                </div>
-              </li>
+                </DataTableCell>
+                <DataTableCell numeric muted>
+                  {row.gameCount > 0 ? formatCount(row.gameCount) : null}
+                </DataTableCell>
+              </DataTableRow>
             ))}
-          </ol>
-        </div>
-      </DialogContent>
-    </Dialog>
+          </DataTableBody>
+        </DataTable>
+      </div>
+    </DialogTemplate>
   );
 }
 
@@ -228,20 +210,21 @@ export default function BeatmapPoolsDialog({
 function PoolMods({
   mods,
   freemod,
+  className,
   iconClassName,
 }: {
   mods: number | null;
   freemod: boolean;
+  className: string;
   iconClassName: string;
 }) {
-  if (mods === null)
-    return <span className="text-xs text-muted-foreground">—</span>;
+  if (mods === null) return <MissingValue label="Never played" />;
 
   return (
     <ModIconset
       mods={normalizeBeatmapDisplayMods(mods)}
       freemod={freemod}
-      className="flex h-5 shrink-0 items-center"
+      className={`flex shrink-0 items-center ${className}`}
       iconClassName={iconClassName}
       alwaysExpanded
     />

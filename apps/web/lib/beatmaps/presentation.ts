@@ -1,6 +1,6 @@
 import { Ruleset } from '@otr/core/osu';
 
-import { RulesetEnumHelper } from '@/lib/enum-helpers';
+import { getRulesetFullName, getRulesetLabel } from '@/lib/kit/format/ruleset';
 
 export function getBeatmapDisplayRuleset(
   ruleset: Ruleset,
@@ -14,13 +14,20 @@ export function getBeatmapDisplayRuleset(
   return ruleset;
 }
 
+/** The short label (`mania 4K`), reading 4K and 7K from the difficulty name. */
 export function getBeatmapRulesetLabel(
   ruleset: Ruleset,
   difficultyName: string
 ): string {
-  return RulesetEnumHelper.getMetadata(
-    getBeatmapDisplayRuleset(ruleset, difficultyName)
-  ).text;
+  return getRulesetLabel(getBeatmapDisplayRuleset(ruleset, difficultyName));
+}
+
+/** The full name (`osu!mania 4K`), for tooltips and an icon's accessible name. */
+export function getBeatmapRulesetFullName(
+  ruleset: Ruleset,
+  difficultyName: string
+): string {
+  return getRulesetFullName(getBeatmapDisplayRuleset(ruleset, difficultyName));
 }
 
 export function isManiaRuleset(ruleset: Ruleset): boolean {

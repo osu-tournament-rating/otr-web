@@ -118,9 +118,10 @@ export default function BeatmapIdentity({
           <div data-testid="beatmap-heading" className={HEADING_CLASS[size]}>
             <h2
               data-testid="beatmap-title"
+              data-row-title=""
               title={title}
               className={cn(
-                'min-w-0 leading-snug font-semibold transition-colors group-hover:text-primary',
+                'min-w-0 leading-snug font-semibold transition-colors group-hover:text-link',
                 isTable ? 'text-sm' : 'text-base sm:text-lg',
                 clip
               )}

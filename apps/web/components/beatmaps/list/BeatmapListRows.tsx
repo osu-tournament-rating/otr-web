@@ -23,6 +23,8 @@ import {
   isManiaRuleset,
 } from '@/lib/beatmaps/presentation';
 import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
+import { formatCount } from '@/lib/kit/format/number';
+import { ROW_HOVER_TINT } from '@/lib/kit/tables/row';
 import { cn } from '@/lib/utils';
 import { formatDuration } from '@/lib/utils/date';
 
@@ -61,7 +63,10 @@ export default function BeatmapListRows({
             key={beatmap.id}
             role="listitem"
             data-testid={`beatmap-list-row-${beatmap.osuId}`}
-            className="group relative grid gap-3 p-3 transition-colors hover:bg-muted/35 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-stretch sm:gap-4 sm:p-4 lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[14rem_minmax(0,1fr)] dark:hover:bg-secondary/60"
+            className={cn(
+              'group relative grid gap-3 p-3 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-stretch sm:gap-4 sm:p-4 lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[14rem_minmax(0,1fr)]',
+              ROW_HOVER_TINT
+            )}
           >
             <Link
               href={href}
@@ -104,7 +109,7 @@ export default function BeatmapListRows({
                   <h2
                     data-testid="beatmap-title"
                     title={beatmap.title}
-                    className="min-w-0 text-base leading-snug font-semibold break-words transition-colors group-hover:text-primary sm:text-lg"
+                    className="min-w-0 text-base leading-snug font-semibold break-words transition-colors group-hover:text-link sm:text-lg"
                   >
                     {beatmap.title}
                   </h2>
@@ -207,20 +212,18 @@ export default function BeatmapListRows({
                         aria-hidden="true"
                       />
                     }
-                    value={beatmap.verifiedGameCount.toLocaleString('en-US')}
+                    value={formatCount(beatmap.verifiedGameCount)}
                     valueClassName="min-w-[3ch]"
-                    ariaLabel={`${beatmap.verifiedGameCount.toLocaleString('en-US')} verified games`}
+                    ariaLabel={`${formatCount(beatmap.verifiedGameCount)} verified games`}
                   />
                   <BeatmapMetric
                     testId="beatmap-tournaments-count"
                     icon={
                       <Trophy className="size-4 shrink-0" aria-hidden="true" />
                     }
-                    value={beatmap.verifiedTournamentCount.toLocaleString(
-                      'en-US'
-                    )}
+                    value={formatCount(beatmap.verifiedTournamentCount)}
                     valueClassName="min-w-[3ch]"
-                    ariaLabel={`${beatmap.verifiedTournamentCount.toLocaleString('en-US')} verified tournaments`}
+                    ariaLabel={`${formatCount(beatmap.verifiedTournamentCount)} verified tournaments`}
                   />
                   {showMods ? (
                     <BeatmapTopMods mods={topMods} fixedWidth />

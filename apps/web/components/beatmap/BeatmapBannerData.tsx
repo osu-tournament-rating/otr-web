@@ -1,12 +1,14 @@
 import { formatSecondsToMinutesSeconds } from '@otr/core/utils/time';
 import { Activity, Clock3, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
 
 import RulesetPill from '@/components/beatmaps/RulesetPill';
 import StarRatingPill from '@/components/beatmaps/StarRatingPill';
-import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/kit/controls/IconButton';
+import { HeroMetaItem } from '@/components/kit/layout/DetailHero';
+import { formatCount } from '@/lib/kit/format/number';
 import type { BeatmapWithDetails } from '@/lib/orpc/schema/beatmapStats';
 
+/** The essentials row under the beatmap hero's art. */
 export default function BeatmapBannerData({
   beatmap,
 }: {
@@ -15,53 +17,48 @@ export default function BeatmapBannerData({
   return (
     <div
       data-testid="beatmap-data-matte"
-      className="bg-card text-card-foreground"
+      role="group"
+      aria-label="Beatmap essentials"
+      className="flex flex-wrap items-center gap-2 p-4 sm:gap-2.5"
     >
-      <div
-        aria-label="Beatmap essentials"
-        className="flex flex-wrap items-center gap-2 p-4 sm:gap-2.5"
+      <RulesetPill
+        ruleset={beatmap.ruleset}
+        diffName={beatmap.diffName}
+        size="md"
+      />
+      <StarRatingPill
+        starRating={beatmap.sr}
+        size="md"
+        valueClassName="font-bold"
+      />
+      <HeroMetaItem
+        icon={Activity}
+        className="h-8 px-1 text-sm font-semibold tabular-nums [&>svg]:text-muted-foreground"
       >
-        <RulesetPill
-          ruleset={beatmap.ruleset}
-          diffName={beatmap.diffName}
-          size="md"
-        />
-        <StarRatingPill
-          starRating={beatmap.sr}
-          size="md"
-          valueClassName="font-bold"
-        />
-        <span className="inline-flex h-8 items-center gap-1.5 px-1 text-sm font-semibold">
-          <Activity
-            className="size-4 text-muted-foreground"
-            aria-hidden="true"
-          />
-          {Math.round(beatmap.bpm)} BPM
-        </span>
-        <span className="inline-flex h-8 items-center gap-1.5 px-1 text-sm font-semibold">
-          <Clock3 className="size-4 text-muted-foreground" aria-hidden="true" />
-          {formatSecondsToMinutesSeconds(beatmap.totalLength)}
-        </span>
+        {`${formatCount(Math.round(beatmap.bpm))} BPM`}
+      </HeroMetaItem>
+      <HeroMetaItem
+        icon={Clock3}
+        className="h-8 px-1 text-sm font-semibold tabular-nums [&>svg]:text-muted-foreground"
+      >
+        {formatSecondsToMinutesSeconds(beatmap.totalLength)}
+      </HeroMetaItem>
 
-        <div className="ml-auto flex shrink-0 items-center gap-2">
-          <Button
-            asChild
-            variant="outline"
-            size="icon"
-            className="size-9 bg-card shadow-none"
-          >
-            <Link
-              data-testid="beatmap-external-link"
-              href={`https://osu.ppy.sh/beatmaps/${beatmap.osuId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="View beatmap on osu!"
-            >
-              <ExternalLink aria-hidden="true" />
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <IconButton
+        asChild
+        variant="outline"
+        size="default"
+        icon={ExternalLink}
+        label="View beatmap on osu!"
+        className="ml-auto"
+      >
+        <a
+          data-testid="beatmap-external-link"
+          href={`https://osu.ppy.sh/beatmaps/${beatmap.osuId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        />
+      </IconButton>
     </div>
   );
 }

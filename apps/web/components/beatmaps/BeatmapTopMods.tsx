@@ -1,13 +1,30 @@
 import { Layers } from 'lucide-react';
 
+import { Badge } from '@/components/kit/status/Badge';
+import { CATEGORICAL_OTHER } from '@/lib/kit/color/categorical';
+import { MOD_FILL_FOREGROUND, getModPaletteColor } from '@/lib/kit/color/mods';
+import { formatPercent } from '@/lib/kit/format/number';
 import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
 import { cn } from '@/lib/utils';
-import { formatPercentage } from '@/lib/utils/chart';
 import {
-  getModColor,
-  getModForegroundColor,
+  BEATMAP_MOD_OTHER_LABEL,
+  getBeatmapModLabel,
   selectBeatmapListModGroups,
 } from '@/lib/utils/mods';
+
+type TopMod = NonNullable<BeatmapListItem['topMods']>[number];
+
+/** The pill's label and fill: the mod palette, or the "Other" grey. */
+function modPill({ mod, mods }: TopMod) {
+  if (mod === BEATMAP_MOD_OTHER_LABEL) {
+    return { label: mod, background: CATEGORICAL_OTHER.css };
+  }
+
+  return {
+    label: getBeatmapModLabel(mods),
+    background: getModPaletteColor(mods),
+  };
+}
 
 /** The mod pills summarising which mods a beatmap's scores were set under. */
 export default function BeatmapTopMods({
@@ -54,24 +71,27 @@ export default function BeatmapTopMods({
       <ul
         data-testid="beatmap-top-mods"
         aria-label="Top mods by score usage"
-        className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden text-xs"
+        className="flex min-w-0 flex-nowrap items-center gap-1.5 overflow-hidden"
       >
-        {displayedMods.map(({ mod, mods, percentage }) => (
-          <li
-            key={`${mods}-${mod}`}
-            data-testid="beatmap-mod-group"
-            className="inline-flex h-6 items-center gap-1 rounded-full border border-current/20 px-2 whitespace-nowrap"
-            style={{
-              backgroundColor: getModColor(mods),
-              color: getModForegroundColor(mods),
-            }}
-          >
-            <span className="font-semibold text-inherit">{mod}</span>
-            <span className="font-medium text-inherit">
-              {formatPercentage(percentage, 1)}
-            </span>
-          </li>
-        ))}
+        {displayedMods.map((topMod) => {
+          const { label, background } = modPill(topMod);
+
+          return (
+            <li
+              key={`${topMod.mods}-${topMod.mod}`}
+              data-testid="beatmap-mod-group"
+              className="flex"
+            >
+              <Badge
+                customColor={{ background, foreground: MOD_FILL_FOREGROUND }}
+                className="tabular-nums"
+              >
+                <span className="font-semibold">{label}</span>
+                <span>{formatPercent(topMod.percentage / 100)}</span>
+              </Badge>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

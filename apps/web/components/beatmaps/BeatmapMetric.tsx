@@ -30,7 +30,10 @@ export default function BeatmapMetric({
       {icon}
       <span
         data-testid={testId ? `${testId}-value` : undefined}
-        className={cn('font-medium text-foreground', valueClassName)}
+        className={cn(
+          'font-medium text-foreground tabular-nums',
+          valueClassName
+        )}
       >
         {value}
       </span>

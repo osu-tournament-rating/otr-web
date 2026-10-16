@@ -1,7 +1,11 @@
-import { SearchX } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-/** The "nothing here" block for beatmap list surfaces. */
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+
+/**
+ * The old name for the kit EmptyState, kept while other pages still import
+ * it. New code uses `EmptyState` from `@/components/kit/feedback/EmptyState`.
+ */
 export default function BeatmapEmptyState({
   testId,
   title,
@@ -14,16 +18,11 @@ export default function BeatmapEmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div
+    <EmptyState
       data-testid={testId}
-      className="flex min-h-72 flex-col items-center justify-center px-5 py-12 text-center"
-    >
-      <span className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted dark:bg-secondary">
-        <SearchX className="size-6 text-muted-foreground" aria-hidden="true" />
-      </span>
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <p className="mt-1 text-sm text-muted-foreground">{body}</p>
-      {action ? <div className="mt-5">{action}</div> : null}
-    </div>
+      title={title}
+      description={body}
+      action={action}
+    />
   );
 }

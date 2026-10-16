@@ -1,40 +1,37 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
-import type { z } from 'zod';
+import { useEffect, useState } from 'react';
 
-import BeatmapListFilter from '@/components/beatmaps/list/BeatmapListFilter';
 import BeatmapListGrid from '@/components/beatmaps/list/BeatmapListGrid';
+import BeatmapListToolbar from '@/components/beatmaps/list/BeatmapListToolbar';
 import {
   isBeatmapLayout,
   type BeatmapLayout,
 } from '@/components/beatmaps/list/layout';
 import {
-  buildBeatmapListPath,
+  BEATMAP_LIST_PARAMS,
+  clearedBeatmapListHref,
   type BeatmapListSortChange,
 } from '@/lib/beatmaps/list-params';
+import { fromDescending } from '@/lib/kit/lists/sort';
+import { useListState } from '@/lib/kit/lists/use-list-state';
 import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
-import { beatmapListFilterSchema } from '@/lib/validation-schema';
-
-type FilterData = z.infer<typeof beatmapListFilterSchema>;
 
 const BEATMAP_LAYOUT_STORAGE_KEY = 'otr-beatmap-layout';
 
 interface BeatmapListContentProps {
   beatmaps: BeatmapListItem[];
-  filter: FilterData;
   isFiltered: boolean;
   totalCount: number;
 }
 
+/** The beatmap list's toolbar and rows, inside the list's panel. */
 export default function BeatmapListContent({
   beatmaps,
-  filter,
   isFiltered,
   totalCount,
 }: BeatmapListContentProps) {
-  const router = useRouter();
+  const list = useListState(BEATMAP_LIST_PARAMS);
   const [layout, setLayout] = useState<BeatmapLayout>('cards');
 
   useEffect(() => {
@@ -60,34 +57,30 @@ export default function BeatmapListContent({
     }
   };
 
-  // The filter bar's own select cannot share this; it carries pending edits.
-  const changeSort = useCallback<BeatmapListSortChange>(
-    (sort, descending) => {
-      router.push(
-        buildBeatmapListPath({ ...filter, sort, descending, page: undefined }),
-        { scroll: false }
-      );
-    },
-    [filter, router]
-  );
+  // The table's headers and the toolbar's sort share one state.
+  const changeSort: BeatmapListSortChange = (sort, descending) =>
+    list.setState({ sort: fromDescending(sort, descending) });
 
   return (
     <>
-      <div className="border-b bg-muted/20 p-3 sm:p-4 dark:bg-muted">
-        <BeatmapListFilter
-          filter={filter}
-          totalCount={totalCount}
-          layout={layout}
-          onLayoutChange={changeLayout}
-        />
-      </div>
+      <BeatmapListToolbar
+        list={list}
+        layout={layout}
+        onLayoutChange={changeLayout}
+        totalCount={totalCount}
+      />
 
       <BeatmapListGrid
         beatmaps={beatmaps}
         isFiltered={isFiltered}
+        clearFiltersHref={
+          list.activeFilterCount > 0
+            ? clearedBeatmapListHref(list.state)
+            : undefined
+        }
         layout={layout}
-        sort={filter.sort}
-        descending={filter.descending}
+        sort={list.state.sort.key}
+        descending={list.state.sort.direction === 'desc'}
         onSortChange={changeSort}
       />
     </>

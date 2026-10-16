@@ -27,6 +27,28 @@ describe('beatmap mod display helpers', () => {
     );
   });
 
+  it('names every key mod, so mania scores never read as No Mod (#1027)', () => {
+    for (const [mods, label] of [
+      [Mods.Key1, '1K'],
+      [Mods.Key2, '2K'],
+      [Mods.Key3, '3K'],
+      [Mods.Key4, '4K'],
+      [Mods.Key7, '7K'],
+      [Mods.Key8, '8K'],
+      [Mods.Key9, '9K'],
+    ] as const) {
+      expect(getBeatmapModLabel(mods)).toBe(label);
+    }
+    expect(getBeatmapModLabel(Mods.Hidden | Mods.Key7)).toBe('HD7K');
+    expect(getBeatmapModLabel(Mods.NoFail | Mods.Key7)).toBe('7K');
+
+    const distribution = calculateBeatmapModDistribution([
+      { mods: Mods.None, scoreCount: 4 },
+      { mods: Mods.Key7, scoreCount: 6 },
+    ]);
+    expect(distribution.map(({ label }) => label)).toEqual(['7K', 'NM']);
+  });
+
   it('folds Nightcore into DoubleTime everywhere it is displayed', () => {
     expect(normalizeBeatmapDisplayMods(Mods.DoubleTime | Mods.Nightcore)).toBe(
       Mods.DoubleTime

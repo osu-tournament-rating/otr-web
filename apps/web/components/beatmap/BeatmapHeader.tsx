@@ -1,28 +1,31 @@
 'use client';
 
-import { Music2, PencilLine, UserRound } from 'lucide-react';
+import { AuditEntityType, Ruleset } from '@otr/core/osu';
+import { History, Music2, PencilLine, UserRound } from 'lucide-react';
 import Link from 'next/link';
-import type * as React from 'react';
 import { Fragment, useEffect, useRef } from 'react';
-
-import { Ruleset } from '@otr/core/osu';
 
 import AudioPreviewButton from '@/components/audio/AudioPreviewButton';
 import BeatmapAdminView from '@/components/beatmap/BeatmapAdminView';
 import BeatmapBannerData from '@/components/beatmap/BeatmapBannerData';
-import { Eyebrow, SectionCard } from '@/components/beatmap/BeatmapSection';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import StarRatingPill from '@/components/beatmaps/StarRatingPill';
 import RulesetIcon from '@/components/icons/RulesetIcon';
+import { IconButton } from '@/components/kit/controls/IconButton';
+import { InfoButton } from '@/components/kit/layout/InfoButton';
+import { DetailHero, HeroMetaItem } from '@/components/kit/layout/DetailHero';
+import { Eyebrow } from '@/components/kit/layout/Typography';
 import SimpleTooltip from '@/components/simple-tooltip';
 import { Separator } from '@/components/ui/separator';
+import { entityTypeToSlug } from '@/lib/audit-entity-types';
 import {
   getBeatmapArtist,
   getBeatmapDisplayRuleset,
   getBeatmapTitle,
 } from '@/lib/beatmaps/presentation';
-import { getStarRatingIconColor } from '@/lib/beatmaps/star-rating-color';
-import { RulesetEnumHelper } from '@/lib/enum-helpers';
+import { getStarRatingMarkColor } from '@/lib/kit/color/star-rating';
+import { formatCountOf } from '@/lib/kit/format/number';
+import { getRulesetLabel } from '@/lib/kit/format/ruleset';
 import type {
   BeatmapWithDetails,
   RelatedBeatmapDifficulty,
@@ -47,106 +50,106 @@ export default function BeatmapHeader({
   );
   const artist = getBeatmapArtist(beatmap) ?? 'Unknown artist';
   const title = getBeatmapTitle(beatmap) ?? 'Unknown title';
+  // Without a beatmapset there is no cover, so the hero is a plain panel.
+  const beatmapsetOsuId = beatmap.beatmapset?.osuId;
+  const onArt = beatmapsetOsuId !== undefined;
 
   return (
-    <SectionCard as="header" data-testid="beatmap-header">
-      <div
-        data-testid="beatmap-artwork-strip"
-        className="group relative isolate h-48 overflow-hidden bg-muted sm:h-56"
-      >
-        <BeatmapCover
-          beatmapsetOsuId={beatmap.beatmapset?.osuId}
-          alt={`${artist} - ${title} cover`}
-          sizes="(max-width: 1050px) 100vw, 1050px"
-          priority
-          className="absolute inset-0"
-          imageClassName="scale-[1.01] saturate-75 transition-transform duration-700 group-hover:scale-[1.0225]"
-        />
+    <DetailHero
+      data-testid="beatmap-header"
+      art={
+        onArt ? (
+          <BeatmapCover
+            beatmapsetOsuId={beatmapsetOsuId}
+            alt={`${artist} - ${title} cover`}
+            sizes="(max-width: 1050px) 100vw, 1050px"
+            priority
+            className="absolute inset-0"
+            imageClassName="scale-[1.01] saturate-75 transition-transform duration-700 group-hover:scale-[1.0225]"
+          />
+        ) : undefined
+      }
+      title={title}
+      titleSuffix={beatmap.diffName ? `[${beatmap.diffName}]` : undefined}
+      meta={
+        <>
+          <HeroMetaItem icon={Music2}>{artist}</HeroMetaItem>
+          {beatmap.manualOverride ? (
+            <span className="inline-flex items-center gap-1.5">
+              <PencilLine className="size-4 shrink-0" aria-hidden />
+              Manually configured
+              <InfoButton
+                label="About manually configured"
+                className={onArt ? 'text-white/80 hover:text-white' : undefined}
+              >
+                Set by an admin because the osu! API no longer serves this
+                beatmap
+              </InfoButton>
+            </span>
+          ) : null}
+          <HeroMetaItem icon={UserRound}>
+            {creators.length > 0 ? (
+              <>
+                Mapped by{' '}
+                {creators.map((creator, index) => (
+                  <Fragment key={creator.id}>
+                    {index > 0 ? ', ' : null}
+                    <Link
+                      href={`/players/${creator.id}`}
+                      prefetch={false}
+                      className={
+                        onArt
+                          ? 'rounded-sm font-medium text-white hover:underline focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none'
+                          : 'rounded-sm font-medium text-foreground transition-colors hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none'
+                      }
+                    >
+                      {creator.username}
+                    </Link>
+                  </Fragment>
+                ))}
+              </>
+            ) : (
+              'Unknown mapper'
+            )}
+          </HeroMetaItem>
+        </>
+      }
+      adminActions={<BeatmapAdminView beatmap={beatmap} onArt={onArt} />}
+      actions={
+        // Stacked on the art, so both fit the column the hero keeps clear
+        // beside the title.
         <div
-          data-testid="beatmap-matte-overlay"
-          className="absolute inset-0 bg-black/60"
-        />
-
-        <div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
-          <BeatmapAdminView beatmap={beatmap} />
-        </div>
-
-        <div className="absolute right-4 bottom-4 z-20 sm:right-6 sm:bottom-6">
+          className={
+            onArt ? 'flex flex-col items-end gap-2' : 'flex items-center gap-2'
+          }
+        >
+          {/* Audit pages are public, so the link is for everyone. */}
+          <IconButton
+            asChild
+            variant={onArt ? 'overlay' : 'outline'}
+            icon={History}
+            label="View audit history"
+          >
+            <Link
+              href={`/audit/${entityTypeToSlug(AuditEntityType.Beatmap)}/${beatmap.id}`}
+              prefetch={false}
+            />
+          </IconButton>
           <AudioPreviewButton
-            beatmapsetOsuId={beatmap.beatmapset?.osuId}
+            beatmapsetOsuId={beatmapsetOsuId}
             artist={artist}
             title={title}
             difficulty={beatmap.diffName}
-            className="rounded-full border border-white/25 bg-black/55 text-white shadow-lg backdrop-blur-sm hover:bg-black/70 hover:text-white"
           />
         </div>
-
-        <div className="relative z-10 flex h-full items-end p-4 pr-28 text-white sm:p-6 sm:pr-32">
-          <div className="max-w-4xl min-w-0">
-            <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
-              <h1 className="text-2xl leading-tight font-bold tracking-tight text-balance sm:text-4xl">
-                {title}
-              </h1>
-              <p className="text-sm font-semibold text-white/85 sm:text-lg">
-                [{beatmap.diffName}]
-              </p>
-            </div>
-
-            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-white/80">
-              <span className="inline-flex min-w-0 items-center gap-1.5">
-                <Music2 className="size-4 shrink-0" aria-hidden="true" />
-                <span className="min-w-0 break-words">{artist}</span>
-              </span>
-              {beatmap.manualOverride && (
-                <SimpleTooltip content="Set by an admin because the osu! API no longer serves this beatmap">
-                  <span className="inline-flex items-center gap-1.5">
-                    <PencilLine
-                      className="size-4 shrink-0"
-                      aria-hidden="true"
-                    />
-                    Manually configured
-                  </span>
-                </SimpleTooltip>
-              )}
-              <span className="inline-flex min-w-0 items-start gap-1.5">
-                <UserRound
-                  className="mt-0.5 size-4 shrink-0"
-                  aria-hidden="true"
-                />
-                {creators.length > 0 ? (
-                  <span className="flex min-w-0 flex-wrap">
-                    <span className="mr-1">Mapped by</span>
-                    {creators.map((creator, index) => (
-                      <span key={creator.id} className="inline-flex">
-                        {index > 0 && (
-                          <span className="mr-1 text-white/55">,</span>
-                        )}
-                        <Link
-                          href={`/players/${creator.id}`}
-                          prefetch={false}
-                          className="relative z-20 rounded-sm font-medium text-white hover:underline focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
-                        >
-                          {creator.username}
-                        </Link>
-                      </span>
-                    ))}
-                  </span>
-                ) : (
-                  <span>Unknown mapper</span>
-                )}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      }
+    >
       <BeatmapBannerData beatmap={beatmap} />
-
       <DifficultyNavigator
         currentOsuId={beatmap.osuId}
         difficulties={relatedDifficulties}
       />
-    </SectionCard>
+    </DetailHero>
   );
 }
 
@@ -219,7 +222,7 @@ function DifficultyNavigator({
       <RulesetIcon
         ruleset={ruleset}
         className="size-5 shrink-0 fill-current [&_path]:fill-current"
-        style={{ color: getStarRatingIconColor(difficulty.sr) }}
+        style={{ color: getStarRatingMarkColor(difficulty.sr) }}
         aria-hidden="true"
       />
     );
@@ -277,7 +280,7 @@ function DifficultyNavigator({
           <span className="min-w-0 truncate font-medium sm:hidden">
             {difficulty.diffName}
           </span>
-          <span className="shrink-0 text-xs text-muted-foreground sm:hidden">
+          <span className="shrink-0 text-xs text-muted-foreground tabular-nums sm:hidden">
             {formattedRating} SR
           </span>
         </Link>
@@ -286,7 +289,7 @@ function DifficultyNavigator({
   };
 
   return (
-    <nav aria-label="Beatmapset difficulties" className="border-t">
+    <nav aria-label="Beatmapset difficulties">
       <div
         ref={scrollerRef}
         className="flex snap-x scroll-pl-4 gap-2 overflow-x-auto p-4 pt-3"
@@ -315,9 +318,7 @@ function DifficultyNavigator({
 
 /** Group headers drop the "(other)" mania qualifier. */
 function getRulesetGroupLabel(ruleset: Ruleset): string {
-  return ruleset === Ruleset.ManiaOther
-    ? 'osu!mania'
-    : RulesetEnumHelper.getMetadata(ruleset).text;
+  return ruleset === Ruleset.ManiaOther ? 'mania' : getRulesetLabel(ruleset);
 }
 
 function formatDifficultyUsage({
@@ -328,8 +329,5 @@ function formatDifficultyUsage({
     return 'Not used in a tournament';
   }
 
-  const mappools = pooledTournamentCount === 1 ? 'mappool' : 'mappools';
-  const games = verifiedGameCount === 1 ? 'game' : 'games';
-
-  return `${pooledTournamentCount} ${mappools} · ${verifiedGameCount} ${games}`;
+  return `${formatCountOf(pooledTournamentCount, 'mappool')} · ${formatCountOf(verifiedGameCount, 'game')}`;
 }

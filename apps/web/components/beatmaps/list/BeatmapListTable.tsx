@@ -1,36 +1,39 @@
 'use client';
 
-import Link from 'next/link';
+import type * as React from 'react';
 
 import BeatmapCoverPreview from '@/components/beatmaps/BeatmapCoverPreview';
 import BeatmapIdentity from '@/components/beatmaps/BeatmapIdentity';
 import BeatmapTopMods from '@/components/beatmaps/BeatmapTopMods';
 import StarRatingPill from '@/components/beatmaps/StarRatingPill';
-import BeatmapSortableHead from '@/components/beatmaps/list/BeatmapSortableHead';
-import { Eyebrow } from '@/components/beatmap/BeatmapSection';
-import RulesetIcon from '@/components/icons/RulesetIcon';
-import SimpleTooltip from '@/components/simple-tooltip';
-import { Checkbox } from '@/components/ui/checkbox';
+import { RulesetName } from '@/components/kit/format/RulesetName';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from '@/components/kit/tables/DataTable';
+import {
+  DataTableLinkCell,
+  DataTableLinkRow,
+} from '@/components/kit/tables/DataTableLinkRow';
+import { SortableHeader } from '@/components/kit/tables/SortableHeader';
+import { Checkbox } from '@/components/ui/checkbox';
 import type {
   BeatmapListSortChange,
   BeatmapListSortKey,
 } from '@/lib/beatmaps/list-params';
 import {
   getBeatmapDisplayRuleset,
-  getBeatmapRulesetLabel,
   isManiaRuleset,
 } from '@/lib/beatmaps/presentation';
 import type { BeatmapTableRow } from '@/lib/beatmaps/table-row';
+import { formatCount, formatNumber } from '@/lib/kit/format/number';
+import { fromDescending, type SortState } from '@/lib/kit/lists/sort';
+import type { ColumnBreakpoint } from '@/lib/kit/tables/cell';
 import { cn } from '@/lib/utils';
-import { stickyTableHeader } from '@/lib/utils/table';
 import { formatDuration } from '@/lib/utils/date';
 
 /** Row selection, for the surfaces that let an admin act on a set of rows. */
@@ -51,31 +54,37 @@ interface BeatmapListTableProps {
   /** A single tournament's pool has nothing to count here. */
   showTournamentCount?: boolean;
   selection?: BeatmapTableSelection;
-  /** A width floor for callers that render this fixed layout below `sm`. */
+  /** A width floor for callers that keep this table on phones. */
   minWidthClassName?: string;
   stickyHeader?: boolean;
+  /** Rows shown instead of the table below tablet width. */
+  phoneRows?: React.ReactNode;
+  /** Classes for the wrapper around the table. */
   className?: string;
 }
 
-// One class per column, shared by its header and its cells.
+// One width and breakpoint per column, shared by its header and its cells.
 const COLUMN = {
-  select: 'w-11 pl-4',
-  beatmap: 'pl-4',
-  mode: 'w-13',
-  sr: 'w-22 text-right',
-  bpm: 'w-17 text-right tabular-nums',
-  length: 'w-20 text-right tabular-nums',
-  cs: 'hidden w-15 text-right tabular-nums xl:table-cell',
-  ar: 'hidden w-15 text-right tabular-nums xl:table-cell',
-  games: 'w-20 text-right tabular-nums',
-  tournaments: 'hidden w-29 text-right tabular-nums md:table-cell',
-  mods: 'hidden w-34 pr-3 lg:table-cell',
-} as const;
+  select: { className: 'w-11' },
+  mode: { className: 'w-13' },
+  sr: { className: 'w-22' },
+  bpm: { className: 'w-17' },
+  length: { className: 'w-20' },
+  cs: { className: 'w-15', showFrom: 'xl' },
+  ar: { className: 'w-15', showFrom: 'xl' },
+  games: { className: 'w-20' },
+  tournaments: { className: 'w-29', showFrom: 'md' },
+  mods: { className: 'w-34', showFrom: 'lg' },
+} as const satisfies Record<
+  string,
+  { className: string; showFrom?: ColumnBreakpoint }
+>;
 
 /**
- * The dense layout, shared by the beatmap list and a tournament's pool. Sorting
- * is the caller's: the list writes it to the URL and reloads server-sorted rows,
- * while a pool the caller already holds in full sorts in place.
+ * The dense layout, shared by the beatmap list and a tournament's pool. Each
+ * row opens its beatmap as a whole. Sorting is the caller's: the list keeps
+ * it in the address and reloads server-sorted rows, while a pool the caller
+ * holds in full sorts in place.
  */
 export default function BeatmapListTable({
   beatmaps,
@@ -86,217 +95,185 @@ export default function BeatmapListTable({
   selection,
   minWidthClassName,
   stickyHeader = false,
+  phoneRows,
   className,
 }: BeatmapListTableProps) {
-  const sortProps = { activeSort: sort, descending, onSortChange };
+  const sortState = fromDescending(sort, descending);
+  const sortProps = {
+    sort: sortState,
+    onSortChange: (next: SortState<BeatmapListSortKey>) =>
+      onSortChange(next.key, next.direction === 'desc'),
+    numeric: true,
+  };
 
   return (
-    <div className={cn(className, stickyHeader && stickyTableHeader)}>
-      <Table className={cn('table-fixed', minWidthClassName)}>
-        <TableHeader>
-          <TableRow
-            className={cn(
-              'hover:bg-transparent',
-              stickyHeader && 'bg-muted hover:bg-muted'
-            )}
-          >
-            {selection ? (
-              <TableHead className={cn('h-8', COLUMN.select)}>
-                <Checkbox
-                  data-testid="beatmap-table-select-all"
-                  checked={selection.allSelected}
-                  onCheckedChange={(checked) =>
-                    selection.onSelectAll(checked === true)
-                  }
-                  aria-label="Select all beatmaps"
-                />
-              </TableHead>
-            ) : null}
-            {/* Not sortable: the server has no title sort. */}
-            <TableHead
-              className={cn('h-8', selection ? 'pl-1' : COLUMN.beatmap)}
-            >
-              <Eyebrow>Beatmap</Eyebrow>
-            </TableHead>
-            <TableHead className={cn('h-8', COLUMN.mode)}>
-              <Eyebrow>Mode</Eyebrow>
-            </TableHead>
-            <BeatmapSortableHead
-              {...sortProps}
-              sort="sr"
-              label="SR"
-              className={COLUMN.sr}
-            />
-            <BeatmapSortableHead
-              {...sortProps}
-              sort="bpm"
-              label="BPM"
-              className={COLUMN.bpm}
-            />
-            <BeatmapSortableHead
-              {...sortProps}
-              sort="length"
-              label="Length"
-              className={COLUMN.length}
-            />
-            <BeatmapSortableHead
-              {...sortProps}
-              sort="cs"
-              label="CS"
-              className={COLUMN.cs}
-            />
-            <BeatmapSortableHead
-              {...sortProps}
-              sort="ar"
-              label="AR"
-              className={COLUMN.ar}
-            />
-            <BeatmapSortableHead
-              {...sortProps}
-              sort="gameCount"
-              label="Games"
-              className={COLUMN.games}
-            />
-            {showTournamentCount ? (
-              <BeatmapSortableHead
-                {...sortProps}
-                sort="tournamentCount"
-                label="Tournaments"
-                className={COLUMN.tournaments}
-              />
-            ) : null}
-            <TableHead className={cn('h-8', COLUMN.mods)}>
-              <Eyebrow>Mods</Eyebrow>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
-          {beatmaps.map((beatmap) => {
-            const ruleset = getBeatmapDisplayRuleset(
-              beatmap.ruleset,
-              beatmap.diffName
-            );
-            const rulesetLabel = getBeatmapRulesetLabel(
-              beatmap.ruleset,
-              beatmap.diffName
-            );
-
-            return (
-              <TableRow
-                key={beatmap.id}
-                data-testid={`beatmap-list-row-${beatmap.osuId}`}
-                data-state={
-                  selection?.isSelected(beatmap) ? 'selected' : undefined
+    <DataTable
+      fixed
+      stickyHeader={stickyHeader}
+      phoneRows={phoneRows}
+      containerClassName={className}
+      className={minWidthClassName}
+    >
+      <DataTableHeader>
+        <DataTableRow>
+          {selection ? (
+            <DataTableHead {...COLUMN.select}>
+              <Checkbox
+                data-testid="beatmap-table-select-all"
+                checked={selection.allSelected}
+                onCheckedChange={(checked) =>
+                  selection.onSelectAll(checked === true)
                 }
-                className="group hover:bg-muted/25"
-              >
-                {selection ? (
-                  <TableCell className={COLUMN.select}>
-                    <Checkbox
-                      checked={selection.isSelected(beatmap)}
-                      onCheckedChange={(checked) =>
-                        selection.onSelect(beatmap, checked === true)
-                      }
-                      aria-label={`Select ${selection.getRowLabel(beatmap)}`}
-                    />
-                  </TableCell>
-                ) : null}
+                aria-label="Select all beatmaps"
+              />
+            </DataTableHead>
+          ) : null}
+          {/* Not sortable: the server has no title sort. */}
+          <DataTableHead className={cn(selection && 'pl-1')}>
+            Beatmap
+          </DataTableHead>
+          <DataTableHead {...COLUMN.mode}>Mode</DataTableHead>
+          <SortableHeader {...sortProps} {...COLUMN.sr} sortKey="sr">
+            SR
+          </SortableHeader>
+          <SortableHeader {...sortProps} {...COLUMN.bpm} sortKey="bpm">
+            BPM
+          </SortableHeader>
+          <SortableHeader {...sortProps} {...COLUMN.length} sortKey="length">
+            Length
+          </SortableHeader>
+          <SortableHeader {...sortProps} {...COLUMN.cs} sortKey="cs">
+            CS
+          </SortableHeader>
+          <SortableHeader {...sortProps} {...COLUMN.ar} sortKey="ar">
+            AR
+          </SortableHeader>
+          <SortableHeader {...sortProps} {...COLUMN.games} sortKey="gameCount">
+            Games
+          </SortableHeader>
+          {showTournamentCount ? (
+            <SortableHeader
+              {...sortProps}
+              {...COLUMN.tournaments}
+              sortKey="tournamentCount"
+            >
+              Tournaments
+            </SortableHeader>
+          ) : null}
+          <DataTableHead {...COLUMN.mods}>Mods</DataTableHead>
+        </DataTableRow>
+      </DataTableHeader>
 
-                {/* Overlay link, so the cover's preview button is a sibling and not nested */}
-                <TableCell
-                  className={cn(
-                    selection ? 'pl-1' : COLUMN.beatmap,
-                    'relative group-hover:[&_[data-testid=beatmap-title]]:underline',
-                    beatmap.isDeleted &&
-                      '[&_[data-testid=beatmap-title]]:text-muted-foreground [&_[data-testid=beatmap-title]]:line-through'
-                  )}
-                >
-                  <Link
-                    href={`/beatmaps/${beatmap.osuId}`}
-                    prefetch={false}
-                    aria-label={`View ${beatmap.artist} - ${beatmap.title} [${beatmap.diffName}]`}
-                    className="absolute inset-0 z-10 rounded-sm focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none focus-visible:ring-inset"
+      <DataTableBody>
+        {beatmaps.map((beatmap) => {
+          const ruleset = getBeatmapDisplayRuleset(
+            beatmap.ruleset,
+            beatmap.diffName
+          );
+
+          return (
+            <DataTableLinkRow
+              key={beatmap.id}
+              data-testid={`beatmap-list-row-${beatmap.osuId}`}
+              data-state={
+                selection?.isSelected(beatmap) ? 'selected' : undefined
+              }
+            >
+              {selection ? (
+                <DataTableCell {...COLUMN.select} empty={false}>
+                  <Checkbox
+                    checked={selection.isSelected(beatmap)}
+                    onCheckedChange={(checked) =>
+                      selection.onSelect(beatmap, checked === true)
+                    }
+                    aria-label={`Select ${selection.getRowLabel(beatmap)}`}
                   />
-                  <div className="flex min-w-0 items-center gap-2">
-                    <BeatmapIdentity
-                      osuId={beatmap.osuId}
+                </DataTableCell>
+              ) : null}
+
+              <DataTableLinkCell
+                href={`/beatmaps/${beatmap.osuId}`}
+                label={`View ${beatmap.artist} - ${beatmap.title} [${beatmap.diffName}]`}
+                className={cn(
+                  selection && 'pl-1',
+                  beatmap.isDeleted &&
+                    '[&_[data-testid=beatmap-title]]:text-muted-foreground [&_[data-testid=beatmap-title]]:line-through'
+                )}
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <BeatmapIdentity
+                    osuId={beatmap.osuId}
+                    beatmapsetOsuId={beatmap.beatmapsetOsuId}
+                    artist={beatmap.artist}
+                    title={beatmap.title}
+                    diffName={beatmap.diffName}
+                    creator={beatmap.creator}
+                    size="table"
+                    coverSizes="72px"
+                    className="min-w-0 flex-1"
+                  >
+                    <BeatmapCoverPreview
                       beatmapsetOsuId={beatmap.beatmapsetOsuId}
                       artist={beatmap.artist}
                       title={beatmap.title}
-                      diffName={beatmap.diffName}
-                      creator={beatmap.creator}
-                      size="table"
-                      coverSizes="72px"
-                      className="min-w-0 flex-1"
-                    >
-                      <BeatmapCoverPreview
-                        beatmapsetOsuId={beatmap.beatmapsetOsuId}
-                        artist={beatmap.artist}
-                        title={beatmap.title}
-                        difficulty={beatmap.diffName}
-                        size="sm"
-                        className="rounded-md"
-                      />
-                    </BeatmapIdentity>
-                    {beatmap.isDeleted ? (
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        Deleted
-                      </span>
-                    ) : null}
-                  </div>
-                </TableCell>
-
-                <TableCell className={COLUMN.mode}>
-                  <SimpleTooltip content={rulesetLabel}>
-                    <span className="inline-flex text-muted-foreground">
-                      <RulesetIcon
-                        ruleset={ruleset}
-                        className="size-4 fill-current"
-                        aria-hidden="true"
-                      />
-                      <span className="sr-only">{rulesetLabel}</span>
-                    </span>
-                  </SimpleTooltip>
-                </TableCell>
-
-                <TableCell className={COLUMN.sr}>
-                  <StarRatingPill starRating={beatmap.sr} />
-                </TableCell>
-                <TableCell className={COLUMN.bpm}>
-                  {Math.round(beatmap.bpm)}
-                </TableCell>
-                <TableCell className={COLUMN.length}>
-                  {formatDuration(Number(beatmap.totalLength))}
-                </TableCell>
-                <TableCell className={COLUMN.cs}>
-                  {beatmap.cs.toFixed(1)}
-                </TableCell>
-                <TableCell className={COLUMN.ar}>
-                  {beatmap.ar.toFixed(1)}
-                </TableCell>
-                <TableCell className={COLUMN.games}>
-                  {beatmap.gameCount.toLocaleString('en-US')}
-                </TableCell>
-                {showTournamentCount ? (
-                  <TableCell className={COLUMN.tournaments}>
-                    {beatmap.tournamentCount.toLocaleString('en-US')}
-                  </TableCell>
-                ) : null}
-                <TableCell className={COLUMN.mods}>
-                  {isManiaRuleset(ruleset) ? null : (
-                    // Only the dominant group; a second pill costs the beatmap column 72px.
-                    <BeatmapTopMods
-                      mods={beatmap.topMods.slice(0, 1)}
-                      showIcon={false}
+                      difficulty={beatmap.diffName}
+                      size="sm"
+                      className="rounded-md"
                     />
-                  )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
+                  </BeatmapIdentity>
+                  {beatmap.isDeleted ? (
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      Deleted
+                    </span>
+                  ) : null}
+                </div>
+              </DataTableLinkCell>
+
+              <DataTableCell {...COLUMN.mode}>
+                {/* Above the row link, so its name opens on tap. */}
+                <RulesetName
+                  ruleset={ruleset}
+                  iconOnly
+                  className="relative z-20"
+                />
+              </DataTableCell>
+
+              <DataTableCell {...COLUMN.sr} align="end">
+                <StarRatingPill starRating={beatmap.sr} />
+              </DataTableCell>
+              <DataTableCell {...COLUMN.bpm} numeric>
+                {formatCount(Math.round(beatmap.bpm))}
+              </DataTableCell>
+              <DataTableCell {...COLUMN.length} numeric>
+                {formatDuration(Number(beatmap.totalLength))}
+              </DataTableCell>
+              <DataTableCell {...COLUMN.cs} numeric>
+                {formatNumber(beatmap.cs, { decimals: 1 })}
+              </DataTableCell>
+              <DataTableCell {...COLUMN.ar} numeric>
+                {formatNumber(beatmap.ar, { decimals: 1 })}
+              </DataTableCell>
+              <DataTableCell {...COLUMN.games} numeric>
+                {formatCount(beatmap.gameCount)}
+              </DataTableCell>
+              {showTournamentCount ? (
+                <DataTableCell {...COLUMN.tournaments} numeric>
+                  {formatCount(beatmap.tournamentCount)}
+                </DataTableCell>
+              ) : null}
+              <DataTableCell {...COLUMN.mods} empty={false}>
+                {isManiaRuleset(ruleset) ? null : (
+                  // Only the dominant group; a second pill costs the beatmap column 72px.
+                  <BeatmapTopMods
+                    mods={beatmap.topMods.slice(0, 1)}
+                    showIcon={false}
+                  />
+                )}
+              </DataTableCell>
+            </DataTableLinkRow>
+          );
+        })}
+      </DataTableBody>
+    </DataTable>
   );
 }

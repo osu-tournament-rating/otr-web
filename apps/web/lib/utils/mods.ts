@@ -1,4 +1,6 @@
 import { Mods } from '@otr/core/osu';
+
+import { getModAcronyms, NO_MOD_LABEL } from '@/lib/kit/format/mods';
 import { ModsEnumHelper } from '../enum-helpers';
 
 export interface BeatmapModScoreCount {
@@ -27,12 +29,15 @@ export function normalizeBeatmapDisplayMods(mods: number): Mods {
   return normalized as Mods;
 }
 
+/**
+ * The beatmap pages' label for a combination: the kit's acronyms after the
+ * display rules, run together (`HDHR`), or `NM`. Every key mod keeps its
+ * name (`7K`), so mania scores never fold into No Mod.
+ */
 export function getBeatmapModLabel(mods: number): string {
-  const label = ModsEnumHelper.getMetadata(normalizeBeatmapDisplayMods(mods))
-    .map(({ text }) => text)
-    .join('');
-
-  return label || 'NM';
+  return (
+    getModAcronyms(normalizeBeatmapDisplayMods(mods)).join('') || NO_MOD_LABEL
+  );
 }
 
 /** Buckets grouped score counts by label and converts them to percentages. */
@@ -223,7 +228,11 @@ export function normalizedScore(mods: Mods, score: number): number {
   return Math.round(score / multiplier);
 }
 
-/** CSS color variable for a mod combination. */
+/**
+ * The legacy mod palette. New code uses `getModPaletteColor` from
+ * `@/lib/kit/color/mods`, which gives No Mod its own colour and clears 3:1
+ * on light cards; this stays until the player charts move off it.
+ */
 export function getModColor(mods: Mods) {
   mods = normalizeBeatmapDisplayMods(mods);
 
@@ -279,7 +288,7 @@ export function getModColor(mods: Mods) {
   }
 }
 
-/** Returns a readable neutral foreground for a solid mod-color background. */
+/** Text on a legacy `getModColor` fill. New code uses `MOD_FILL_FOREGROUND`. */
 export function getModForegroundColor(mods: Mods): string {
   const normalizedMods = normalizeBeatmapDisplayMods(mods);
 

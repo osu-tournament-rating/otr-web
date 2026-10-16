@@ -4,6 +4,7 @@ import { Ruleset } from '@otr/core/osu';
 import {
   getBeatmapAttributeRows,
   getBeatmapDisplayRuleset,
+  getBeatmapRulesetFullName,
   getBeatmapRulesetLabel,
   isDeletedTournamentBeatmap,
   isManiaRuleset,
@@ -21,7 +22,11 @@ describe('beatmap ruleset presentation', () => {
 
   test('keeps the native ruleset when no key-mode marker is present', () => {
     expect(getBeatmapDisplayRuleset(Ruleset.Taiko, 'Oni')).toBe(Ruleset.Taiko);
-    expect(getBeatmapRulesetLabel(Ruleset.Catch, 'Rain')).toBe('osu!catch');
+    expect(getBeatmapRulesetLabel(Ruleset.Catch, 'Rain')).toBe('catch');
+    expect(getBeatmapRulesetLabel(Ruleset.ManiaOther, "Kyou's 4K MX")).toBe(
+      'mania 4K'
+    );
+    expect(getBeatmapRulesetFullName(Ruleset.Taiko, 'Oni')).toBe('osu!taiko');
   });
 
   test('identifies every mania key-mode ruleset', () => {

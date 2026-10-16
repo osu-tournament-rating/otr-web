@@ -6,14 +6,14 @@ import * as React from 'react';
 import {
   BoxPlotTooltipContent,
   BoxPlotTrack,
-  EmptyState,
-  Eyebrow,
   FullRangeToggle,
+  NotEnoughData,
   ScaleAxis,
-  SectionCard,
-  SectionHeader,
 } from '@/components/beatmap/BeatmapSection';
 import TierIcon from '@/components/icons/TierIcon';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { Eyebrow } from '@/components/kit/layout/Typography';
 import TapTooltip from '@/components/tap-tooltip';
 import {
   formatAccuracyTick,
@@ -28,27 +28,19 @@ import type {
   BeatmapTierBreakdown,
   BeatmapTierScoreSummary,
 } from '@/lib/orpc/schema/beatmapStats';
+import { TIER_TEXT_CLASS, getTierColor } from '@/lib/kit/color/tiers';
+import {
+  formatCount,
+  formatCountOf,
+  formatPercent,
+} from '@/lib/kit/format/number';
 import { cn } from '@/lib/utils';
-import { formatChartNumber, formatPercentage } from '@/lib/utils/chart';
-import { getTierColor, tierData, type TierName } from '@/lib/utils/tierData';
+import { tierData, type TierName } from '@/lib/utils/tierData';
 
 interface BeatmapTierBreakdownCardProps {
   tierBreakdown: BeatmapTierBreakdown;
   className?: string;
 }
-
-// Mirrors the `--text-<tier>` properties behind `tierColors[...].textClass`.
-const TIER_CHART_COLOR: Record<TierName, string> = {
-  Bronze: 'var(--text-bronze)',
-  Silver: 'var(--text-silver)',
-  Gold: 'var(--text-gold)',
-  Platinum: 'var(--text-platinum)',
-  Emerald: 'var(--text-emerald)',
-  Diamond: 'var(--text-diamond)',
-  Master: 'var(--text-master)',
-  Grandmaster: 'var(--text-grandmaster)',
-  'Elite Grandmaster': 'var(--text-elite-grandmaster)',
-};
 
 // Grandmaster reads "Grandmaster+"; the server folds Elite Grandmaster into it.
 const TIER_DISPLAY_NAME: Record<TierName, string> = {
@@ -72,7 +64,7 @@ function TierLabel({ tier }: { tier: TierName }) {
         width={18}
         height={18}
       />
-      <span className={cn('truncate text-xs', getTierColor(tier)?.textClass)}>
+      <span className={cn('truncate text-xs', TIER_TEXT_CLASS[tier])}>
         {TIER_DISPLAY_NAME[tier]}
       </span>
     </span>
@@ -109,7 +101,7 @@ function TierScoreRow({
 
   return (
     <TapTooltip
-      triggerAriaLabel={`${TIER_DISPLAY_NAME[summary.tier]} score: ${formatChartNumber(summary.scoreCount)} scores`}
+      triggerAriaLabel={`${TIER_DISPLAY_NAME[summary.tier]} score: ${formatCountOf(summary.scoreCount, 'score')}`}
       content={
         <BoxPlotTooltipContent
           labelIcon={<TierTooltipIcon tier={summary.tier} />}
@@ -117,8 +109,7 @@ function TierScoreRow({
           scoreCount={summary.scoreCount}
           measureLabel="Median score"
           quartiles={quartiles}
-          color={TIER_CHART_COLOR[summary.tier]}
-          format={formatChartNumber}
+          format={formatCount}
         />
       }
     >
@@ -126,7 +117,7 @@ function TierScoreRow({
         <TierLabel tier={summary.tier} />
 
         <BoxPlotTrack
-          color={TIER_CHART_COLOR[summary.tier]}
+          color={getTierColor(summary.tier)}
           marks={toBoxPlotMarks(quartiles, axis)}
           gridPercents={gridPercents}
         />
@@ -177,7 +168,7 @@ function TierAccuracyRow({
   gridPercents: number[];
 }) {
   const quartiles = toAccuracyQuartiles(summary);
-  const color = TIER_CHART_COLOR[summary.tier];
+  const color = getTierColor(summary.tier);
 
   if (quartiles === null) {
     return (
@@ -191,7 +182,7 @@ function TierAccuracyRow({
     );
   }
 
-  const format = (value: number) => formatPercentage(value, 2);
+  const format = (value: number) => formatPercent(value / 100, { decimals: 2 });
 
   return (
     <TapTooltip
@@ -203,7 +194,6 @@ function TierAccuracyRow({
           scoreCount={summary.scoreCount}
           measureLabel="Median accuracy"
           quartiles={quartiles}
-          color={color}
           format={format}
         />
       }
@@ -265,16 +255,16 @@ export default function BeatmapTierBreakdownCard({
   );
 
   return (
-    <SectionCard data-testid="beatmap-tier-breakdown" className={cn(className)}>
+    <Panel data-testid="beatmap-tier-breakdown" className={className}>
       <SectionHeader
         icon={Medal}
         title="Tier breakdown"
         infoText="Charts NM, HD, HR and DT scores only, grouped by each player's pre-match rating at the time of play. Tiers with fewer than 5 scores are hidden."
-        meta={`${formatChartNumber(ratedScoreCount)} of ${formatChartNumber(totalScoreCount)} scores rated`}
+        meta={`${formatCount(ratedScoreCount)} of ${formatCountOf(totalScoreCount, 'score')} rated`}
       />
 
       {tiers.length === 0 ? (
-        <EmptyState />
+        <NotEnoughData />
       ) : (
         <div className="xl:grid xl:grid-cols-2 xl:divide-x">
           <div className="px-4 py-4">
@@ -326,6 +316,6 @@ export default function BeatmapTierBreakdownCard({
           </div>
         </div>
       )}
-    </SectionCard>
+    </Panel>
   );
 }

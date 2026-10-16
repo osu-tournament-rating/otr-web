@@ -6,7 +6,7 @@ import { highlightMatch } from '../search';
 const render = (text: string, match: string) =>
   renderToStaticMarkup(<>{highlightMatch(text, match)}</>);
 
-const HIGHLIGHT = '<span class="font-semibold text-primary">';
+const HIGHLIGHT = '<span class="font-semibold text-link">';
 
 describe('highlightMatch', () => {
   it('returns the text untouched without a usable query', () => {

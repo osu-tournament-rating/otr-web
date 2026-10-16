@@ -3,8 +3,8 @@
 import { Check, ChevronsUpDown, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/kit/controls/Button';
+import { Badge } from '@/components/kit/status/Badge';
 import {
   Command,
   CommandEmpty,
@@ -37,7 +37,7 @@ export default function PlayerPicker({
   onChange,
   multiple = false,
   label,
-  placeholder = 'Search players or paste an osu! id',
+  placeholder = 'Search players or paste an osu! ID',
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -95,7 +95,6 @@ export default function PlayerPicker({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
-            type="button"
             variant="outline"
             role="combobox"
             aria-expanded={open}
@@ -155,7 +154,7 @@ export default function PlayerPicker({
                         </span>
                         <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                           {player.playerId === null
-                            ? 'not yet fetched'
+                            ? 'Not yet fetched'
                             : player.osuId}
                         </span>
                       </CommandItem>
@@ -172,11 +171,7 @@ export default function PlayerPicker({
       ) : (
         <div className="flex flex-wrap gap-1.5">
           {value.map((player) => (
-            <Badge
-              key={player.osuId}
-              variant="secondary"
-              className="gap-1 pr-1"
-            >
+            <Badge key={player.osuId} className="pr-1">
               <span className="truncate">{player.username}</span>
               <button
                 type="button"

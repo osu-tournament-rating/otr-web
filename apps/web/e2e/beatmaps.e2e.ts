@@ -261,6 +261,8 @@ async function getDistinctBeatmapPreviewRows(page: Page) {
 async function openTierAccuracyChart(page: Page) {
   const card = page.locator('[data-testid="beatmap-tier-breakdown"]');
   await expect(card).toBeVisible({ timeout: 15000 });
+  // The toggle is server-rendered; keys pressed before hydration do nothing.
+  await page.waitForLoadState('networkidle');
 
   const label = 'Full range: accuracy by tier';
   const toggle = card.getByRole('button', { name: label });
@@ -276,6 +278,24 @@ async function openTierAccuracyChart(page: Page) {
       ':scope > div:last-child span:not([aria-hidden="true"])'
     ),
   };
+}
+
+/** The kit toolbar's controls, by role and name. */
+function toolbar(page: Page) {
+  return {
+    search: page.getByRole('searchbox', { name: 'Search beatmaps' }),
+    sort: page.getByRole('combobox', { name: 'Sort beatmaps by' }),
+    direction: page.getByRole('button', { name: /^Sort order is/ }),
+    filters: page.getByRole('button', { name: /^Filters/ }),
+  };
+}
+
+/** A pagination control by name, whichever of its two widths is showing. */
+function pageControl(page: Page, name: 'Next page' | 'Previous page') {
+  return page
+    .getByTestId('beatmap-pagination')
+    .getByRole('link', { name })
+    .filter({ visible: true });
 }
 
 /** A beatmap whose set has a single difficulty, so no navigator renders. */
@@ -564,26 +584,29 @@ test.describe('Beatmaps Listing Page', () => {
       expect(starPresentation.valueColor).toBe(starPresentation.color);
       expect(starPresentation.valueFont).toEqual(bpmValueFont);
 
-      const modPresentations = await displayedMods.evaluateAll((pills) =>
-        pills.map((pill) => {
-          const pillStyle = getComputedStyle(pill);
+      const modPresentations = await displayedMods
+        .locator('[data-slot="kit-badge"]')
+        .evaluateAll((pills) =>
+          pills.map((pill) => {
+            const pillStyle = getComputedStyle(pill);
 
-          return {
-            backgroundColor: pillStyle.backgroundColor,
-            backgroundImage: pillStyle.backgroundImage,
-            borderRadius: Number.parseFloat(pillStyle.borderRadius),
-            childColors: Array.from(pill.children).map(
-              (child) => getComputedStyle(child).color
-            ),
-            color: pillStyle.color,
-            height: pill.getBoundingClientRect().height,
-            inlineBackgroundColor: (pill as HTMLElement).style.backgroundColor,
-          };
-        })
-      );
+            return {
+              backgroundColor: pillStyle.backgroundColor,
+              backgroundImage: pillStyle.backgroundImage,
+              borderRadius: Number.parseFloat(pillStyle.borderRadius),
+              childColors: Array.from(pill.children).map(
+                (child) => getComputedStyle(child).color
+              ),
+              color: pillStyle.color,
+              height: pill.getBoundingClientRect().height,
+              inlineBackgroundColor: (pill as HTMLElement).style
+                .backgroundColor,
+            };
+          })
+        );
       for (const modPresentation of modPresentations) {
         expect(modPresentation.inlineBackgroundColor).toMatch(
-          /^var\(--(?:chart|mod)-/
+          /^var\(--(?:mod|series)-/
         );
         expect(modPresentation.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
         expect(modPresentation.backgroundImage).toBe('none');
@@ -704,6 +727,19 @@ test.describe('Beatmaps Listing Page', () => {
       const preview = firstRow.locator('button[data-preview-state]').first();
       await expect(preview).toBeVisible({ timeout: 10000 });
       await expect(preview).toHaveAccessibleName('Play preview');
+      // Development builds mount the provider twice, and the first unmount
+      // calls load(); once the page has hydrated, count only what the clicks
+      // below cause.
+      await page.waitForLoadState('networkidle');
+      const before = await audio.snapshot();
+      const calls = async () => {
+        const now = await audio.snapshot();
+        return {
+          loadCalls: now.loadCalls - before.loadCalls,
+          playCalls: now.playCalls - before.playCalls,
+          sourceAssignments: now.sourceAssignments - before.sourceAssignments,
+        };
+      };
       await audio.queuePlayBehaviors('error');
       await preview.click();
 
@@ -716,7 +752,7 @@ test.describe('Beatmaps Listing Page', () => {
       await expect(preview).toHaveAttribute('data-preview-state', 'error');
       await expect(preview).toHaveAttribute('aria-pressed', 'false');
 
-      expect(await audio.snapshot()).toMatchObject({
+      expect(await calls()).toEqual({
         loadCalls: 0,
         playCalls: 1,
         sourceAssignments: 1,
@@ -729,7 +765,7 @@ test.describe('Beatmaps Listing Page', () => {
       await expect(preview).toHaveAccessibleName('Pause preview');
       await expect(preview).toHaveAttribute('data-preview-state', 'playing');
       await expect(preview).toHaveAttribute('aria-pressed', 'true');
-      expect(await audio.snapshot()).toMatchObject({
+      expect(await calls()).toEqual({
         loadCalls: 1,
         playCalls: 2,
         sourceAssignments: 1,
@@ -975,7 +1011,7 @@ test.describe('Beatmaps Listing Page', () => {
       await page.goto(ROUTES.beatmaps);
       await page.waitForLoadState('networkidle');
 
-      const search = page.locator('[data-testid="beatmap-search-input"]');
+      const { search } = toolbar(page);
       await expect(search).toBeVisible({ timeout: 10000 });
     });
 
@@ -983,7 +1019,7 @@ test.describe('Beatmaps Listing Page', () => {
       await page.goto(ROUTES.beatmaps);
       await page.waitForLoadState('networkidle');
 
-      const search = page.locator('[data-testid="beatmap-search-input"]');
+      const { search } = toolbar(page);
       await expect(search).toBeVisible({ timeout: 10000 });
       await search.fill('medley');
 
@@ -997,22 +1033,16 @@ test.describe('Beatmaps Listing Page', () => {
       await page.goto(ROUTES.beatmaps);
       await page.waitForLoadState('networkidle');
 
-      const filterButton = page.locator(
-        '[data-testid="beatmap-filter-button"]'
-      );
+      const filterButton = toolbar(page).filters;
       await expect(filterButton).toBeVisible({ timeout: 10000 });
-      await expect(
-        filterButton.getByText('Filters', { exact: true })
-      ).toHaveCount(0);
+      await expect(filterButton).toHaveAccessibleName('Filters');
+      await expect(filterButton).toContainText('Filters');
       await filterButton.click();
 
-      const popover = page.locator('[data-testid="beatmap-filter-popover"]');
-      await expect(popover).toBeVisible({ timeout: 10000 });
-      await expect(
-        page.getByRole('dialog', { name: 'Filter beatmaps' })
-      ).toBeVisible({ timeout: 10000 });
+      const panel = page.getByRole('dialog', { name: 'Filter beatmaps' });
+      await expect(panel).toBeVisible({ timeout: 10000 });
 
-      const clear = page.locator('[data-testid="beatmap-filter-clear"]');
+      const clear = panel.getByRole('button', { name: 'Clear all' });
       await expect(clear).toBeVisible({ timeout: 10000 });
       await expect(clear).toBeDisabled();
     });
@@ -1022,16 +1052,69 @@ test.describe('Beatmaps Listing Page', () => {
       await page.getByRole('button', { name: 'taiko', exact: true }).click();
       await page.waitForURL(/ruleset=1/);
 
-      await page.locator('[data-testid="beatmap-sort-select"]').click();
+      await toolbar(page).sort.click();
       await page.getByRole('option', { name: 'SR' }).click();
       await page.waitForURL(/sort=sr/);
+    });
+
+    test('ruleset chips pick several rulesets and All clears them', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.beatmaps);
+      const chips = page.getByRole('group', { name: 'Filter by ruleset' });
+      const chip = (name: string) =>
+        chips.getByRole('button', { name, exact: true });
+
+      await chip('mania 4K').click();
+      await page.waitForURL(/ruleset=4/);
+      await chip('mania 7K').click();
+      await page.waitForURL(
+        (url) => url.searchParams.getAll('ruleset').join() === '4,5'
+      );
+      await expect(chip('mania 4K')).toHaveAttribute('aria-pressed', 'true');
+      await expect(chip('mania 7K')).toHaveAttribute('aria-pressed', 'true');
+      await expect(chip('All')).toHaveAttribute('aria-pressed', 'false');
+      await expect(
+        page.locator('[data-testid^="beatmap-list-row-"]').first()
+      ).toBeVisible({ timeout: 10000 });
+
+      await chip('All').click();
+      await page.waitForURL((url) => !url.searchParams.has('ruleset'));
+      await expect(chip('All')).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    test('clearing filters keeps the search, sort and rulesets', async ({
+      page,
+    }) => {
+      await page.goto(`${ROUTES.beatmaps}?q=medley&ruleset=0&sort=sr&minSr=5`);
+      await page.waitForLoadState('networkidle');
+      const remove = page.getByRole('button', {
+        name: 'Remove SR: at least 5 filter',
+      });
+      await expect(remove).toBeVisible({ timeout: 10000 });
+      await expect(toolbar(page).filters).toHaveAccessibleName(
+        'Filters, 1 active'
+      );
+
+      await page
+        .getByRole('group', { name: 'Active filters' })
+        .getByRole('button', { name: 'Clear all' })
+        .click();
+      await page.waitForURL((url) => !url.searchParams.has('minSr'));
+
+      const url = new URL(page.url());
+      expect(url.searchParams.get('q')).toBe('medley');
+      expect(url.searchParams.get('ruleset')).toBe('0');
+      expect(url.searchParams.get('sort')).toBe('sr');
+      await expect(remove).toHaveCount(0);
+      await expect(toolbar(page).search).toHaveValue('medley');
     });
 
     test('shows the available sort options in grouped order', async ({
       page,
     }) => {
       await page.goto(ROUTES.beatmaps);
-      await page.locator('[data-testid="beatmap-sort-select"]').click();
+      await toolbar(page).sort.click();
 
       const sortMenu = page.getByRole('listbox');
       const menuItems = sortMenu.locator(
@@ -1055,11 +1138,10 @@ test.describe('Beatmaps Listing Page', () => {
     test('sorts searched beatmaps by SR descending', async ({ page }) => {
       await page.goto(ROUTES.beatmaps);
 
-      const search = page.locator('[data-testid="beatmap-search-input"]');
-      await search.fill('Freedom');
+      await toolbar(page).search.fill('Freedom');
       await page.waitForURL(/q=Freedom/, { timeout: 10000 });
 
-      await page.locator('[data-testid="beatmap-sort-select"]').click();
+      await toolbar(page).sort.click();
       await page.getByRole('option', { name: 'SR' }).click();
       await page.waitForURL(
         (url) =>
@@ -1084,38 +1166,22 @@ test.describe('Beatmaps Listing Page', () => {
           { timeout: 10000 }
         )
         .toBe(true);
-      await expect(
-        page.locator('[data-testid="beatmap-sort-direction"]')
-      ).toHaveAccessibleName('Sort order is descending');
+      await expect(toolbar(page).direction).toHaveAccessibleName(
+        'Sort order is descending'
+      );
     });
 
-    test('moves labeled ruleset filters into the filter popover on mobile', async ({
+    test('keeps labelled ruleset chips in the toolbar on phones', async ({
       page,
     }) => {
-      await page.setViewportSize({ width: 520, height: 844 });
+      await page.setViewportSize({ width: 390, height: 844 });
       await page.goto(ROUTES.beatmaps);
 
-      const desktopRulesets = page.locator(
-        '[data-testid="beatmap-ruleset-filters-desktop"]'
-      );
-      const filterButton = page.locator(
-        '[data-testid="beatmap-filter-button"]'
-      );
+      const chips = page.getByRole('group', { name: 'Filter by ruleset' });
+      await expect(chips).toBeVisible({ timeout: 10000 });
+      await expect(toolbar(page).filters).toBeVisible();
 
-      await expect(desktopRulesets).toBeHidden();
-      await expect(filterButton).toBeVisible({ timeout: 10000 });
-      await expect(filterButton).toHaveAccessibleName(/^Filters/);
-      await expect(
-        filterButton.getByText('Filters', { exact: true })
-      ).toHaveCount(0);
-      await filterButton.click();
-
-      const mobileRulesets = page.locator(
-        '[data-testid="beatmap-ruleset-filters-mobile"]'
-      );
-      await expect(mobileRulesets).toBeVisible();
-
-      const rulesetButtons = mobileRulesets.getByRole('button');
+      const rulesetButtons = chips.getByRole('button');
       await expect(rulesetButtons).toHaveCount(6);
       for (const name of [
         'All',
@@ -1125,38 +1191,35 @@ test.describe('Beatmaps Listing Page', () => {
         'mania 4K',
         'mania 7K',
       ]) {
-        const button = mobileRulesets.getByRole('button', {
-          name,
-          exact: true,
-        });
+        const button = chips.getByRole('button', { name, exact: true });
         await expect(button).toBeVisible();
         await expect(button).toHaveText(name);
       }
 
-      const mania4k = mobileRulesets.getByRole('button', {
-        name: 'mania 4K',
-        exact: true,
-      });
-      const mania7k = mobileRulesets.getByRole('button', {
+      const mania7k = chips.getByRole('button', {
         name: 'mania 7K',
         exact: true,
       });
-      const [mania4kBox, mania7kBox, mania7kIconBox] = await Promise.all([
-        mania4k.boundingBox(),
+      const [mania7kBox, mania7kIconBox] = await Promise.all([
         mania7k.boundingBox(),
         mania7k.locator('svg').boundingBox(),
       ]);
-
-      expect(mania4kBox).not.toBeNull();
       expect(mania7kBox).not.toBeNull();
       expect(mania7kIconBox).not.toBeNull();
-      expect(mania7kBox!.height).toBe(32);
-      expect(mania7kIconBox!.width).toBe(16);
-      expect(Math.abs(mania4kBox!.y - mania7kBox!.y)).toBeLessThanOrEqual(1);
+      expect(Math.round(mania7kBox!.height)).toBe(32);
+      expect(Math.round(mania7kIconBox!.width)).toBe(16);
 
-      await mobileRulesets
-        .getByRole('button', { name: 'mania 7K', exact: true })
-        .click();
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () =>
+              document.documentElement.scrollWidth -
+              document.documentElement.clientWidth
+          )
+        )
+        .toBe(0);
+
+      await mania7k.click();
       await page.waitForURL(/ruleset=5/);
     });
   });
@@ -1168,20 +1231,21 @@ test.describe('Beatmaps Listing Page', () => {
 
       const pagination = page.locator('[data-testid="beatmap-pagination"]');
       await expect(pagination).toBeVisible({ timeout: 10000 });
+      await expect(pagination).toContainText(/^1–30 of [\d,]+/);
 
-      await expect(
-        page.locator('[data-testid="beatmap-pagination-next"]')
-      ).toBeVisible({ timeout: 10000 });
-      await expect(
-        page.locator('[data-testid="beatmap-pagination-prev"]')
-      ).toBeVisible({ timeout: 10000 });
+      await expect(pageControl(page, 'Next page')).toBeVisible({
+        timeout: 10000,
+      });
+      const previous = pageControl(page, 'Previous page');
+      await expect(previous).toBeVisible({ timeout: 10000 });
+      await expect(previous).toHaveAttribute('aria-disabled', 'true');
     });
 
     test('navigates to the next page', async ({ page }) => {
       await page.goto(ROUTES.beatmaps);
       await page.waitForLoadState('networkidle');
 
-      const next = page.locator('[data-testid="beatmap-pagination-next"]');
+      const next = pageControl(page, 'Next page');
       await expect(next).toBeVisible({ timeout: 10000 });
       await next.click();
 
@@ -1203,13 +1267,18 @@ test.describe('Beatmaps Listing Page', () => {
       );
       expect(new URL(page.url()).searchParams.get('sort')).toBe('sr');
 
-      const status = page.locator('[data-testid="beatmap-pagination-status"]');
-      await expect(status).toBeVisible({ timeout: 10000 });
-
-      const [currentPage, totalPages] = (await status.innerText())
-        .split('/')
-        .map((value) => Number(value.trim()));
-      expect(currentPage).toBe(totalPages);
+      // The readout ends on the last row: "9,361–9,378 of 9,378".
+      const readout = page
+        .getByTestId('beatmap-pagination')
+        .getByText(/^[\d,]+–[\d,]+ of [\d,]+$/);
+      await expect(readout).toBeVisible({ timeout: 10000 });
+      const [, lastShown, total] =
+        (await readout.innerText()).match(/–([\d,]+) of ([\d,]+)$/) ?? [];
+      expect(lastShown).toBe(total);
+      await expect(pageControl(page, 'Next page')).toHaveAttribute(
+        'aria-disabled',
+        'true'
+      );
 
       const rows = page.locator('[data-testid^="beatmap-list-row-"]');
       await expect(rows.first()).toBeVisible({ timeout: 10000 });
@@ -1222,9 +1291,10 @@ test.describe('Beatmaps Listing Page', () => {
           url.searchParams.get('page') === null,
         { timeout: 10000 }
       );
-      await expect(page.getByText('No beatmaps match')).toBeVisible({
-        timeout: 10000,
-      });
+      // Next keeps the previous route's tree hidden, so match the visible one.
+      await expect(
+        page.getByTestId('beatmap-empty-state').filter({ visible: true })
+      ).toContainText('No beatmaps match', { timeout: 10000 });
     });
   });
 
@@ -1470,7 +1540,7 @@ test.describe('Beatmaps Listing Page', () => {
     );
 
     const table = page.getByTestId('beatmap-list').locator('table');
-    const sortSelect = page.getByTestId('beatmap-sort-select');
+    const sortSelect = toolbar(page).sort;
     const srHeader = table.getByRole('columnheader', { name: 'SR' });
     await expect(srHeader).toHaveAttribute('aria-sort', 'none');
 
@@ -1480,11 +1550,11 @@ test.describe('Beatmaps Listing Page', () => {
     await expect(sortSelect).toHaveText('SR');
 
     await srHeader.getByRole('button').click();
-    await page.waitForURL(/descending=false/, { timeout: 10000 });
+    await page.waitForURL(/dir=asc/, { timeout: 10000 });
     await expect(srHeader).toHaveAttribute('aria-sort', 'ascending');
-    await expect(
-      page.getByTestId('beatmap-sort-direction')
-    ).toHaveAccessibleName('Sort order is ascending');
+    await expect(toolbar(page).direction).toHaveAccessibleName(
+      'Sort order is ascending'
+    );
 
     await sortSelect.click();
     await page.getByRole('option', { name: 'BPM' }).click();
@@ -1524,6 +1594,8 @@ test.describe('Beatmap Detail Page', () => {
 
     test('shows the same-set difficulty navigator', async ({ page }) => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+      // Measure and hover the hydrated navigator, not the server markup.
+      await page.waitForLoadState('networkidle');
 
       const activeDifficulty = page.locator(
         '[data-testid^="related-difficulty-"][aria-current="page"]:visible'
@@ -1780,7 +1852,7 @@ test.describe('Beatmap Detail Page', () => {
       const games = activity.getByTestId('beatmap-games');
       await expect(pools).toHaveAccessibleName(/Pooled in [\d,]+ tournaments/);
       await expect(played).toHaveAccessibleName(
-        /Picked in [\d,]+ of [\d,]+ pools, \d+%|Never pooled, so no pick rate/
+        /Picked in [\d,]+ of [\d,]+ pools?, \d+%|Never pooled, so no pick rate/
       );
       await expect(games).toHaveAccessibleName(/[\d,]+ games played/);
       await expect(pools.locator('svg.lucide-waves-ladder')).toBeVisible();
@@ -1792,6 +1864,8 @@ test.describe('Beatmap Detail Page', () => {
       page,
     }) => {
       await page.goto(ROUTES.beatmap(TEST_BEATMAP_OSU_ID));
+      // A click before hydration would not open the dialog.
+      await page.waitForLoadState('networkidle');
 
       const trigger = page.locator(
         '[data-testid="beatmap-usage-chart"] [data-testid="beatmap-pool-records"]'
@@ -1863,7 +1937,7 @@ test.describe('Beatmap Detail Page', () => {
 
       const leaderboardTotal = await page
         .locator('[data-testid="beatmap-leaderboard"]')
-        .getByText(/^(?:top [\d,]+ of )?[\d,]+ scores?$/)
+        .getByText(/^(?:Top [\d,]+ of )?[\d,]+ scores?$/)
         .textContent();
 
       expect(chartTotal?.trim()).toBeTruthy();
@@ -1976,7 +2050,7 @@ test.describe('Beatmap Detail Page', () => {
         leaderboard.getByRole('heading', { name: 'Leaderboard' })
       ).toBeVisible();
       await expect(
-        leaderboard.getByText(/^(?:top [\d,]+ of )?[\d,]+ scores?$/)
+        leaderboard.getByText(/^(?:Top [\d,]+ of )?[\d,]+ scores?$/)
       ).toBeVisible();
 
       const scores = leaderboard.locator(

@@ -2,28 +2,26 @@
 
 import { Bar, BarChart, XAxis, YAxis } from 'recharts';
 
-import { Eyebrow } from '@/components/beatmap/BeatmapSection';
+import { ChartTooltipContent } from '@/components/kit/charts/ChartTooltip';
+import { Eyebrow } from '@/components/kit/layout/Typography';
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
 import { formatQuarterLong, summarizeActivity } from '@/lib/beatmaps/records';
+import { seriesColor } from '@/lib/kit/color/categorical';
+import { CHART_CURSOR } from '@/lib/kit/charts/axis';
+import { formatCountTick } from '@/lib/kit/charts/format';
+import { formatCount, formatCountOf } from '@/lib/kit/format/number';
 import type { BeatmapUsagePoint } from '@/lib/orpc/schema/beatmapStats';
-import { formatChartNumber } from '@/lib/utils/chart';
 
 const chartConfig: ChartConfig = {
   gameCount: {
     label: 'Verified games',
-    color: 'var(--chart-1)',
+    color: seriesColor(0),
   },
 };
-
-/** `1 pool record`, `3 pool records`. */
-function countLabel(count: number, noun: string) {
-  return `${formatChartNumber(count)} ${noun}${count === 1 ? '' : 's'}`;
-}
 
 /** Verified games per quarter. */
 export default function BeatmapUsageSparkline({
@@ -40,8 +38,8 @@ export default function BeatmapUsageSparkline({
     <div>
       <div className="flex items-baseline justify-between gap-2">
         <Eyebrow>Games per quarter</Eyebrow>
-        <span className="text-xs text-muted-foreground">
-          {`peak ${formatChartNumber(activity.maxGames)}`}
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {`Peak ${formatCount(activity.maxGames)}`}
         </span>
       </div>
       <ChartContainer
@@ -58,25 +56,25 @@ export default function BeatmapUsageSparkline({
           {/* Pinned to the peak; the default domain rounds up past it */}
           <YAxis domain={[0, activity.maxGames]} hide />
           <ChartTooltip
+            cursor={CHART_CURSOR.bar}
             content={
               <ChartTooltipContent
                 labelFormatter={(label) => formatQuarterLong(String(label))}
-                formatter={(_value, _name, item) => {
-                  const point = (item as { payload?: BeatmapUsagePoint })
-                    ?.payload;
-                  if (!point) return null;
-                  return (
-                    <span className="font-medium text-foreground">
-                      {countLabel(point.gameCount, 'verified game')},{' '}
-                      {countLabel(point.pooledCount, 'pool record')}
-                    </span>
-                  );
+                nameFormatter={() => 'Verified games'}
+                valueFormatter={formatCountTick}
+                footer={(payload) => {
+                  const point = payload[0]?.payload as
+                    BeatmapUsagePoint | undefined;
+                  return point
+                    ? formatCountOf(point.pooledCount, 'pool record')
+                    : null;
                 }}
               />
             }
           />
           <Bar
             dataKey="gameCount"
+            name="Verified games"
             fill="var(--color-gameCount)"
             fillOpacity={0.85}
             radius={[2, 2, 0, 0]}
@@ -86,7 +84,7 @@ export default function BeatmapUsageSparkline({
           />
         </BarChart>
       </ChartContainer>
-      <div className="mt-1 flex justify-between border-t pt-1 text-xs text-muted-foreground">
+      <div className="mt-1 flex justify-between border-t pt-1 text-xs text-muted-foreground tabular-nums">
         <span>{formatQuarterLong(usage[0].quarter)}</span>
         <span>{formatQuarterLong(usage[usage.length - 1].quarter)}</span>
       </div>
