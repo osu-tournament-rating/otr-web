@@ -7,13 +7,16 @@ import {
 
 test.describe('Match Detail Page', () => {
   test.describe('Page Load', () => {
-    test('loads with match header card', async ({ page }) => {
+    test('loads with the match name as the page heading', async ({ page }) => {
       await page.goto(ROUTES.match(TEST_MATCH_ID));
       await page.waitForLoadState('networkidle');
 
       const matchName = page.locator('[data-testid="match-name"]');
       await expect(matchName).toBeVisible({ timeout: 10000 });
       await expect(matchName).not.toBeEmpty();
+      await expect(
+        page.getByRole('heading', { level: 1 }).getByTestId('match-name')
+      ).toBeVisible();
     });
 
     test('displays match name and parent tournament context', async ({
@@ -54,6 +57,20 @@ test.describe('Match Detail Page', () => {
       await expect(
         page.locator('[data-testid="tab-trigger-stats"]')
       ).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.locator('[data-testid="tab-trigger-games"]')
+      ).toHaveAttribute('aria-current', 'page');
+    });
+
+    test('links to the public audit history from the header', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.match(TEST_MATCH_ID));
+      await page.waitForLoadState('networkidle');
+
+      await expect(
+        page.getByRole('link', { name: 'View audit history' }).first()
+      ).toHaveAttribute('href', `/audit/matches/${TEST_MATCH_ID}`);
     });
   });
 
@@ -91,6 +108,24 @@ test.describe('Match Detail Page', () => {
       const outcomes = page.locator('[data-testid="game-outcome"]');
       await expect(outcomes.first()).toBeVisible({ timeout: 10000 });
     });
+
+    test('each game card has one actions menu with its public actions', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.match(TEST_MATCH_ID));
+      await page.waitForLoadState('networkidle');
+
+      const firstGame = page.locator('[id^="game-"]').first();
+      const actions = firstGame.getByTestId('game-actions');
+      await expect(actions).toHaveCount(1);
+      await actions.click();
+
+      const menu = page.getByTestId('game-actions-content');
+      await expect(menu).toBeVisible();
+      await expect(
+        menu.getByRole('menuitem', { name: 'View audit history' })
+      ).toHaveAttribute('href', /^\/audit\/games\/\d+$/);
+    });
   });
 
   test.describe('Stats Tab', () => {
@@ -107,7 +142,7 @@ test.describe('Match Detail Page', () => {
         page.locator('[data-testid="match-stats-summary"]')
       ).toBeVisible({ timeout: 10000 });
       await expect(
-        page.getByRole('heading', { name: 'Match Statistics' })
+        page.getByRole('heading', { name: 'Match statistics' })
       ).toBeVisible();
     });
 
@@ -160,10 +195,8 @@ test.describe('Match Detail Page', () => {
       await page.goto(`${ROUTES.match(TEST_MATCH_ID)}?tab=stats`);
       await page.waitForLoadState('networkidle');
 
-      const costSort = page.getByRole('button', {
-        name: 'Sort by match cost, ascending',
-      });
       const costHeader = page.locator('[data-testid="match-cost-header"]');
+      const costSort = costHeader.getByRole('link', { name: 'Match cost' });
       const rows = page.locator('[data-testid^="player-stats-row-"]');
       const getMatchCosts = () =>
         rows.evaluateAll((elements) =>
@@ -173,7 +206,7 @@ test.describe('Match Detail Page', () => {
         );
 
       await expect(costHeader).toHaveAttribute('aria-sort', 'descending');
-      await expect(costSort).toContainText('MC');
+      await expect(costSort).toHaveAttribute('href', /[?&]dir=asc/);
       const descendingCosts = await getMatchCosts();
       expect(descendingCosts).toEqual(
         [...descendingCosts].sort((first, second) => second - first)
@@ -181,13 +214,14 @@ test.describe('Match Detail Page', () => {
 
       await costSort.click();
       await expect(costHeader).toHaveAttribute('aria-sort', 'ascending');
+      await expect(page).toHaveURL(/[?&]dir=asc/);
       const ascendingCosts = await getMatchCosts();
       expect(ascendingCosts).toEqual(
         [...ascendingCosts].sort((first, second) => first - second)
       );
     });
 
-    test('mobile player cards keep every metric visible without page overflow', async ({
+    test('mobile player rows keep every metric visible without page overflow', async ({
       page,
     }) => {
       await page.setViewportSize({ width: 390, height: 844 });
@@ -195,7 +229,7 @@ test.describe('Match Detail Page', () => {
       await page.waitForLoadState('networkidle');
 
       const firstPlayer = page
-        .locator('[data-testid^="player-stats-row-"]')
+        .locator('[data-testid^="player-stats-phone-row-"]')
         .first();
       await expect(firstPlayer).toBeVisible({ timeout: 10000 });
 
@@ -224,12 +258,13 @@ test.describe('Match Detail Page', () => {
       await expect(page.getByLabel('Sort players by')).toContainText('Player');
 
       const directionButton = page.getByRole('button', {
-        name: 'Sort descending',
+        name: 'Sort order is ascending',
       });
       await directionButton.click();
       await expect(
-        page.getByRole('button', { name: 'Sort ascending' })
+        page.getByRole('button', { name: 'Sort order is descending' })
       ).toBeVisible();
+      await expect(page).toHaveURL(/[?&]sort=player/);
     });
   });
 

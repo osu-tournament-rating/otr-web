@@ -1,134 +1,130 @@
 'use client';
 
+import { Ruleset, Team } from '@otr/core/osu';
 import Image from 'next/image';
-import Link from 'next/link';
-import { Clock } from 'lucide-react';
 
-import { ScoreGradeEnumHelper } from '@/lib/enum-helpers';
-import { GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
-import {
-  AdminNoteRouteTarget,
-  ReportEntityType,
-  Roles,
-  Ruleset,
-  Team,
-} from '@otr/core/osu';
-import { useSession } from '@/lib/hooks/useSession';
+import ModIconset from '@/components/icons/ModIconset';
+import { VerificationStatusIcon } from '@/components/kit/status/VerificationStatusIcon';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
+import CountryFlag from '@/components/shared/CountryFlag';
+import { getTeamTextColor, getTeamTintClass } from '@/lib/kit/color/teams';
+import { SCORE_GRADE_LABELS } from '@/lib/kit/format/enum-labels';
+import { formatAccuracy, formatCount } from '@/lib/kit/format/number';
+import { getRejectionReasonTexts } from '@/lib/kit/status/reasons';
+import type { GameScore, MatchPlayer } from '@/lib/orpc/schema/match';
 import { cn } from '@/lib/utils';
-import { formatAccuracy } from '@/lib/utils/format';
-import AdminNoteView from '../admin-notes/AdminNoteView';
-import VerificationBadge from '../badges/VerificationBadge';
-import ReportButton from '../reports/ReportButton';
-import SimpleTooltip from '../simple-tooltip';
-import CountryFlag from '../shared/CountryFlag';
-import ScoreAdminView from '../scores/ScoreAdminView';
-import ModIconset from '../icons/ModIconset';
+
+import ScoreActionsMenu from './ScoreActionsMenu';
 import ScoreTeamColorBar from './ScoreTeamColorBar';
 
+type HitJudgment = { label: string; count: number };
+
+function getHitJudgments(score: GameScore): HitJudgment[] {
+  switch (score.ruleset) {
+    case Ruleset.Taiko:
+      return [
+        { label: 'Great', count: score.statGreat ?? 0 },
+        { label: 'Ok', count: score.statOk ?? 0 },
+        { label: 'Miss', count: score.statMiss ?? 0 },
+      ];
+    case Ruleset.Mania4k:
+    case Ruleset.Mania7k:
+    case Ruleset.ManiaOther:
+      return [
+        { label: 'Perfect', count: score.statPerfect ?? 0 },
+        { label: 'Great', count: score.statGreat ?? 0 },
+        { label: 'Good', count: score.statGood ?? 0 },
+        { label: 'Ok', count: score.statOk ?? 0 },
+        { label: 'Meh', count: score.statMeh ?? 0 },
+        { label: 'Miss', count: score.statMiss ?? 0 },
+      ];
+    case Ruleset.Catch:
+      return [
+        { label: 'Great', count: score.statGreat ?? 0 },
+        { label: 'Lg. drop', count: score.statLargeTickHit ?? 0 },
+        { label: 'Sm. drop miss', count: score.statSmallTickMiss ?? 0 },
+        { label: 'Miss', count: score.statMiss ?? 0 },
+      ];
+    case Ruleset.Osu:
+    default:
+      return [
+        { label: 'Great', count: score.statGreat ?? 0 },
+        { label: 'Ok', count: score.statOk ?? 0 },
+        { label: 'Meh', count: score.statMeh ?? 0 },
+        { label: 'Miss', count: score.statMiss ?? 0 },
+      ];
+  }
+}
+
+/** One figure on the score card: a muted label over its value. */
+function PerformanceItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col items-start justify-center">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="text-base tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+/**
+ * One player's score in a game: a card on the game frame, tinted with the
+ * player's team and edged in its colour.
+ */
 export default function ScoreCard({
   score,
   player,
+  matchId,
+  gameNumber,
   highlighted = false,
 }: {
   score: GameScore;
   player?: MatchPlayer;
+  matchId: number;
+  /** The game's place in the match, which names the status and menu. */
+  gameNumber: number;
   highlighted?: boolean;
 }) {
-  const session = useSession();
-  const isAdmin = session?.scopes?.includes(Roles.Admin);
-  const hasNotes = score.adminNotes && score.adminNotes.length > 0;
-  const showAdminControls = isAdmin || hasNotes;
+  const playerName = player?.username ?? 'Unknown player';
+  const hitJudgments = getHitJudgments(score);
+  const gradeLabel = SCORE_GRADE_LABELS[score.grade] ?? 'D';
+  const scoreStyle = { color: getTeamTextColor(score.team) };
 
-  const iconSlotStyles =
-    'relative [&_button]:h-6 [&_button]:w-6 [&_button]:bg-transparent [&_button]:hover:bg-neutral-200 [&_button]:dark:hover:bg-neutral-700 [&_svg]:text-neutral-600 [&_svg]:dark:text-neutral-400';
-
-  const hitJudgments = (() => {
-    switch (score.ruleset) {
-      case Ruleset.Taiko:
-        return [
-          { label: 'Great', value: `${score.statGreat ?? 0}x` },
-          { label: 'Ok', value: `${score.statOk ?? 0}x` },
-          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
-        ];
-      case Ruleset.Mania4k:
-      case Ruleset.Mania7k:
-      case Ruleset.ManiaOther:
-        return [
-          { label: 'Perfect', value: `${score.statPerfect ?? 0}x` },
-          { label: 'Great', value: `${score.statGreat ?? 0}x` },
-          { label: 'Good', value: `${score.statGood ?? 0}x` },
-          { label: 'Ok', value: `${score.statOk ?? 0}x` },
-          { label: 'Meh', value: `${score.statMeh ?? 0}x` },
-          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
-        ];
-      case Ruleset.Catch:
-        return [
-          { label: 'Great', value: `${score.statGreat ?? 0}x` },
-          { label: 'Lg. Drop', value: `${score.statLargeTickHit ?? 0}x` },
-          { label: 'Sm. Drop Miss', value: `${score.statSmallTickMiss ?? 0}x` },
-          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
-        ];
-      case Ruleset.Osu:
-      default:
-        return [
-          { label: 'Great', value: `${score.statGreat ?? 0}x` },
-          { label: 'Ok', value: `${score.statOk ?? 0}x` },
-          { label: 'Meh', value: `${score.statMeh ?? 0}x` },
-          { label: 'Miss', value: `${score.statMiss ?? 0}x` },
-        ];
-    }
-  })();
-
-  const renderActionIcons = () => (
-    <>
-      <div className="flex items-center gap-1 overflow-hidden transition-all duration-200 sm:max-w-0 sm:group-focus-within:max-w-xs sm:group-hover:max-w-xs">
-        <div className={iconSlotStyles}>
-          <ReportButton
-            entityType={ReportEntityType.Score}
-            entityId={score.id}
-            entityDisplayName={`${player?.username ?? 'Unknown'}'s score`}
-          />
-        </div>
-        <div className={iconSlotStyles}>
-          <SimpleTooltip content="View audit history">
-            <Link
-              href={`/audit/scores/${score.id}`}
-              className="inline-flex h-4 w-4 items-center justify-center rounded-md bg-transparent hover:bg-neutral-200 dark:hover:bg-neutral-700"
-              aria-label="View audit history"
-            >
-              <Clock className="size-4" />
-            </Link>
-          </SimpleTooltip>
-        </div>
-        {showAdminControls && (
-          <>
-            {!hasNotes && (
-              <div className={iconSlotStyles}>
-                <AdminNoteView
-                  notes={score.adminNotes}
-                  entity={AdminNoteRouteTarget.GameScore}
-                  entityId={score.id}
-                />
-              </div>
-            )}
-            {isAdmin && (
-              <div className={iconSlotStyles}>
-                <ScoreAdminView score={score} />
-              </div>
-            )}
-          </>
-        )}
-      </div>
-      {hasNotes && (
-        <div className={iconSlotStyles}>
-          <AdminNoteView
-            notes={score.adminNotes}
-            entity={AdminNoteRouteTarget.GameScore}
-            entityId={score.id}
-          />
-        </div>
-      )}
-    </>
+  const status = (
+    <VerificationStatusIcon
+      status={score.verificationStatus}
+      rejectionReasons={getRejectionReasonTexts('score', score.rejectionReason)}
+      context={`${playerName}'s score in game ${gameNumber}`}
+      tooltip="tap"
+    />
+  );
+  // A score whose player is missing from the match keeps its name as text,
+  // rather than an empty link to /players/undefined.
+  const playerLink = player ? (
+    <EntityLink
+      href={`/players/${player.id}?ruleset=${score.ruleset}`}
+      data-testid="score-player-link"
+    >
+      {player.username}
+    </EntityLink>
+  ) : (
+    <span className="truncate text-muted-foreground">{playerName}</span>
+  );
+  const actions = (
+    <ScoreActionsMenu
+      score={score}
+      playerName={playerName}
+      gameNumber={gameNumber}
+      matchId={matchId}
+    />
+  );
+  const grade = (size: number) => (
+    <Image
+      src={`/icons/grades/${gradeLabel}.svg`}
+      alt={`Grade ${gradeLabel}`}
+      width={size}
+      height={size}
+      className={size > 24 ? 'size-8' : 'size-5'}
+    />
   );
 
   return (
@@ -136,25 +132,23 @@ export default function ScoreCard({
       id={`score-${score.id}`}
       data-team={Team[score.team]}
       className={cn(
-        'team-flex-row group relative flex overflow-clip rounded-xl border border-neutral-300 bg-white transition-all duration-300 **:z-10 dark:border-neutral-700 dark:bg-neutral-800',
-        highlighted &&
-          'ring-2 ring-yellow-400 ring-offset-2 ring-offset-secondary'
+        'team-flex-row relative flex overflow-clip rounded-lg border bg-score-card transition-all duration-300',
+        highlighted && 'ring-2 ring-primary'
       )}
     >
-      <div className="absolute z-2 size-full bg-[var(--team-color)]/10" />
+      <span
+        aria-hidden="true"
+        className={cn('absolute inset-0', getTeamTintClass(score.team))}
+      />
 
-      <ScoreTeamColorBar />
+      <ScoreTeamColorBar team={score.team} />
 
-      <div className="flex size-full flex-col gap-1 px-2 py-1 sm:hidden">
+      {/* Phones: two lines, the hit counts joined into one. */}
+      <div className="relative flex min-w-0 flex-1 flex-col gap-1 px-2 py-1 sm:hidden">
         <div className="flex items-center justify-between gap-1.5">
           <div className="flex min-w-0 items-center gap-1.5">
-            <VerificationBadge
-              verificationStatus={score.verificationStatus}
-              rejectionReason={score.rejectionReason}
-              entityType="score"
-              size="small"
-            />
-            {player?.country && (
+            {status}
+            {player?.country ? (
               <CountryFlag
                 country={player.country}
                 width={18}
@@ -162,16 +156,8 @@ export default function ScoreCard({
                 showTooltip={false}
                 className="shrink-0"
               />
-            )}
-            <Link
-              data-testid="score-player-link"
-              href={`/players/${player?.id}?ruleset=${score.ruleset}`}
-              className="min-w-0 shrink"
-            >
-              <span className="block truncate text-neutral-800 dark:text-neutral-200">
-                {player?.username}
-              </span>
-            </Link>
+            ) : null}
+            {playerLink}
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             <ModIconset
@@ -179,43 +165,35 @@ export default function ScoreCard({
               iconClassName="max-h-5"
               mods={score.mods}
             />
-            <Image
-              src={`/icons/grades/${ScoreGradeEnumHelper.getMetadata(score.grade).text}.svg`}
-              alt={`Grade ${ScoreGradeEnumHelper.getMetadata(score.grade).text}`}
-              width={24}
-              height={24}
-              className="h-5 w-5"
-            />
-            <span className="text-(--score-text-color)">
-              {score.score.toLocaleString('en-US')}
+            {grade(24)}
+            <span className="tabular-nums" style={scoreStyle}>
+              {formatCount(score.score)}
             </span>
           </div>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <span
-            className="text-xs text-neutral-500 dark:text-neutral-400"
-            title={hitJudgments.map((j) => `${j.label}: ${j.value}`).join(', ')}
+            className="text-xs text-muted-foreground tabular-nums"
+            title={hitJudgments
+              .map((item) => `${item.label}: ${formatCount(item.count)}x`)
+              .join(', ')}
           >
-            {hitJudgments.map((j) => j.value.slice(0, -1)).join('/')}
+            {hitJudgments.map((item) => formatCount(item.count)).join('/')}
             {' · '}
-            {score.maxCombo}x{' · '}
+            {formatCount(score.maxCombo)}x{' · '}
             {formatAccuracy(score.accuracy)}
           </span>
-          <div className="flex items-center gap-1">{renderActionIcons()}</div>
+          {actions}
         </div>
       </div>
 
-      <div className="hidden size-full flex-col gap-2 px-2 sm:flex">
+      {/* Tablet and up: name, mods, grade and score, then the figures. */}
+      <div className="relative hidden min-w-0 flex-1 flex-col gap-2 px-2 sm:flex">
         <div className="team-flex-row flex flex-1 items-center justify-between">
           <div className="team-flex-row flex h-full min-w-0 items-center justify-start gap-2">
-            <VerificationBadge
-              verificationStatus={score.verificationStatus}
-              rejectionReason={score.rejectionReason}
-              entityType="score"
-              size="small"
-            />
-            <div className="flex items-center gap-1">{renderActionIcons()}</div>
-            {player?.country && (
+            {status}
+            {actions}
+            {player?.country ? (
               <CountryFlag
                 country={player.country}
                 width={20}
@@ -223,16 +201,8 @@ export default function ScoreCard({
                 showTooltip={false}
                 className="shrink-0"
               />
-            )}
-            <Link
-              data-testid="score-player-link"
-              href={`/players/${player?.id}?ruleset=${score.ruleset}`}
-              className="min-w-0 shrink"
-            >
-              <span className="block truncate text-neutral-800 dark:text-neutral-200">
-                {player?.username}
-              </span>
-            </Link>
+            ) : null}
+            {playerLink}
           </div>
           <div className="team-flex-row flex h-full items-center justify-center gap-2">
             <ModIconset
@@ -240,48 +210,31 @@ export default function ScoreCard({
               iconClassName="max-h-6"
               mods={score.mods}
             />
-            <Image
-              src={`/icons/grades/${ScoreGradeEnumHelper.getMetadata(score.grade).text}.svg`}
-              alt={`Grade ${ScoreGradeEnumHelper.getMetadata(score.grade).text}`}
-              width={32}
-              height={32}
-              className="h-8 w-8"
-            />
-            <span className="text-(--score-text-color)">
-              {score.score.toLocaleString('en-US')}
+            {grade(32)}
+            <span className="tabular-nums" style={scoreStyle}>
+              {formatCount(score.score)}
             </span>
           </div>
         </div>
-        <div className="team-flex-row flex flex-1 items-center justify-between gap-6">
+        <div className="team-flex-row flex flex-1 items-center justify-between gap-6 pb-1">
           <div className="flex items-center justify-start gap-4">
-            {hitJudgments.map((item, index) => (
-              <div key={index} className="performance-item">
-                <span className="label text-neutral-600 dark:text-neutral-400">
-                  {item.label}
-                </span>
-                <span className="value text-neutral-800 dark:text-neutral-200">
-                  {item.value}
-                </span>
-              </div>
+            {hitJudgments.map((item) => (
+              <PerformanceItem
+                key={item.label}
+                label={item.label}
+                value={`${formatCount(item.count)}x`}
+              />
             ))}
           </div>
           <div className="team-flex-row flex items-center justify-start gap-4">
-            <div className="performance-item">
-              <span className="label text-neutral-600 dark:text-neutral-400">
-                Combo
-              </span>
-              <span className="value text-neutral-800 dark:text-neutral-200">
-                {score.maxCombo}x
-              </span>
-            </div>
-            <div className="performance-item">
-              <span className="label text-neutral-600 dark:text-neutral-400">
-                Accuracy
-              </span>
-              <span className="value text-neutral-800 dark:text-neutral-200">
-                {formatAccuracy(score.accuracy)}
-              </span>
-            </div>
+            <PerformanceItem
+              label="Combo"
+              value={`${formatCount(score.maxCombo)}x`}
+            />
+            <PerformanceItem
+              label="Accuracy"
+              value={formatAccuracy(score.accuracy)}
+            />
           </div>
         </div>
       </div>

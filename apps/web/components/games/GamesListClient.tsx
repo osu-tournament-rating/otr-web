@@ -59,11 +59,12 @@ export default function GamesListClient({
   });
 
   return (
-    <div className="space-y-4">
-      {sortedGames.map((game) => (
+    <div className="flex flex-col gap-4">
+      {sortedGames.map((game, index) => (
         <GameCard
           key={game.id}
           game={game}
+          number={index + 1}
           players={players.filter((player) =>
             game.scores.map((s) => s.playerId).includes(player.id)
           )}

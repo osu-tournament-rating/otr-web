@@ -1,196 +1,231 @@
-import Link from 'next/link';
+import { Team } from '@otr/core/osu';
 import { ArrowRight, Trophy } from 'lucide-react';
 
-import RatingDelta from '@/components/rating/RatingDelta';
-import TRText from '@/components/rating/TRText';
-import { Badge } from '@/components/ui/badge';
+import { RatingDelta } from '@/components/kit/format/RatingDelta';
+import { Badge } from '@/components/kit/status/Badge';
+import { DataTableCell, DataTableRow } from '@/components/kit/tables/DataTable';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { MissingValue } from '@/components/kit/tables/MissingValue';
+import { PhoneRow } from '@/components/kit/tables/PhoneRow';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
-import { TableCell, TableRow } from '@/components/ui/table';
-import { formatAccuracy } from '@/lib/utils/format';
-import { formatScore, ProcessedPlayerStats } from './MatchStatsUtils';
+import { getTeamColor } from '@/lib/kit/color/teams';
+import { TEAM_LABELS } from '@/lib/kit/format/enum-labels';
+import {
+  formatAccuracy,
+  formatCount,
+  formatRating,
+} from '@/lib/kit/format/number';
 
-interface MatchStatsPlayerRowProps {
-  player: ProcessedPlayerStats;
-  showRecord: boolean;
+import {
+  formatAverage,
+  formatMatchCost,
+  type ProcessedPlayerStats,
+} from './MatchStatsUtils';
+
+/** Which columns the table hides below desktop width; phones show rows. */
+export const PLAYER_STATS_COLUMN = {
+  rating: 'lg',
+  score: 'lg',
+  misses: 'lg',
+  placement: 'lg',
+} as const;
+
+const TEAMS = { red: Team.Red, blue: Team.Blue } as const;
+
+function PlayerBadges({ player }: { player: ProcessedPlayerStats }) {
+  const team = player.team ? TEAMS[player.team] : null;
+
+  return (
+    <>
+      {team !== null ? (
+        <Badge size="sm" variant="outline" swatch={getTeamColor(team)}>
+          {TEAM_LABELS[team]}
+        </Badge>
+      ) : null}
+      {player.won ? (
+        <Badge size="sm">
+          <Trophy aria-hidden="true" />
+          Winner
+        </Badge>
+      ) : null}
+    </>
+  );
 }
 
-function TeamBadge({
-  team,
+function PlayerName({
+  player,
+  avatarSize,
 }: {
-  team: NonNullable<ProcessedPlayerStats['team']>;
+  player: ProcessedPlayerStats;
+  avatarSize: number;
 }) {
-  const label = team === 'red' ? 'Red' : 'Blue';
-
   return (
-    <Badge
-      variant="outline"
-      className="gap-1.5 bg-popover px-1.5 py-0 font-normal text-popover-foreground"
+    <EntityLink
+      href={`/players/${player.playerId}`}
+      leading={
+        <OsuAvatar
+          osuId={player.osuId}
+          username={player.username}
+          size={avatarSize}
+        />
+      }
     >
-      <span
-        className="size-1.5 rounded-full"
-        style={{ backgroundColor: `var(--team-${team})` }}
-        aria-hidden="true"
-      />
-      {label}
-    </Badge>
+      {player.username}
+    </EntityLink>
   );
 }
 
-function MobileMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <div className="truncate text-xs text-muted-foreground">{label}</div>
-      <div className="mt-0.5 truncate text-sm font-medium">{value}</div>
-    </div>
-  );
+function formatRecord(player: ProcessedPlayerStats, showRecord: boolean) {
+  return showRecord
+    ? `${formatCount(player.gamesWon)}–${formatCount(player.gamesLost)}`
+    : formatCount(player.gamesPlayed);
 }
 
+/** The rating before and after the match: `1,524 → 1,513`. */
 function RatingRange({ player }: { player: ProcessedPlayerStats }) {
   if (player.ratingBefore === null || player.ratingAfter === null) {
-    return <span className="text-muted-foreground">—</span>;
+    return <MissingValue />;
   }
 
+  const before = formatRating(player.ratingBefore);
+  const after = formatRating(player.ratingAfter);
+
   return (
-    <span
-      className="inline-flex items-center gap-1.5"
-      aria-label={`Rating changed from ${player.ratingBefore.toFixed(0)} to ${player.ratingAfter.toFixed(0)}`}
-    >
-      <span className="text-muted-foreground">
-        {player.ratingBefore.toFixed(0)}
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums">
+      {/* A plain span can't carry an aria-label, so the words are sr-only. */}
+      <span className="sr-only">{`Rating changed from ${before} to ${after}`}</span>
+      <span className="text-muted-foreground" aria-hidden="true">
+        {before}
       </span>
       <ArrowRight className="size-3 text-muted-foreground" aria-hidden="true" />
-      <span className="font-medium">{player.ratingAfter.toFixed(0)}</span>
+      <span className="font-medium" aria-hidden="true">
+        {after}
+      </span>
     </span>
   );
 }
 
-const MatchStatsPlayerRow = function MatchStatsPlayerRow({
+/** One player in the player performance table, from tablet width. */
+export function PlayerStatsTableRow({
   player,
   showRecord,
-}: MatchStatsPlayerRowProps) {
+}: {
+  player: ProcessedPlayerStats;
+  showRecord: boolean;
+}) {
   return (
-    <TableRow
+    <DataTableRow
       data-testid={`player-stats-row-${player.playerId}`}
       data-match-cost={player.matchCost}
-      className="block p-4 transition-colors hover:bg-muted/50 lg:table-row lg:p-0"
     >
-      <TableCell className="block p-0 lg:table-cell lg:min-w-44 lg:py-3 lg:pl-4">
-        <div className="flex items-start justify-between gap-3 lg:items-center">
-          <Link
-            href={`/players/${player.playerId}`}
-            className="flex min-w-0 items-center gap-2.5 rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          >
-            <OsuAvatar
-              osuId={player.osuId}
-              username={player.username}
-              size={32}
-              className="shrink-0"
-            />
-            <div className="min-w-0">
-              <div className="truncate text-sm font-medium">
-                {player.username}
-              </div>
-              <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                {player.team && <TeamBadge team={player.team} />}
-                {player.won && (
-                  <Badge
-                    variant="outline"
-                    className="bg-popover px-1.5 py-0 text-popover-foreground"
-                  >
-                    <Trophy
-                      className="size-3 text-primary"
-                      aria-hidden="true"
-                    />
-                    Winner
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </Link>
-
-          <div className="flex shrink-0 flex-col items-end gap-1 lg:hidden">
-            {player.ratingDelta !== null ? (
-              <RatingDelta delta={player.ratingDelta} />
-            ) : (
-              <span className="text-sm text-muted-foreground">—</span>
-            )}
-            <div className="flex items-center gap-1 text-xs">
-              <RatingRange player={player} />
-              <TRText className="text-xs" />
-            </div>
-          </div>
+      <DataTableCell>
+        <div className="flex min-w-0 items-center gap-2">
+          <PlayerName player={player} avatarSize={24} />
+          <PlayerBadges player={player} />
         </div>
-
-        <div className="mt-4 grid grid-cols-3 gap-x-3 gap-y-3 rounded-lg bg-muted/50 p-3 lg:hidden">
-          <MobileMetric
-            label="Match cost"
-            value={player.matchCost.toFixed(2)}
-          />
-          <MobileMetric
-            label={showRecord ? 'Record' : 'Games'}
-            value={
-              showRecord
-                ? `${player.gamesWon}–${player.gamesLost}`
-                : player.gamesPlayed.toLocaleString()
-            }
-          />
-          <MobileMetric
-            label="Avg. score"
-            value={formatScore(player.averageScore)}
-          />
-          <MobileMetric
-            label="Accuracy"
-            value={formatAccuracy(player.averageAccuracy)}
-          />
-          <MobileMetric
-            label="Misses"
-            value={player.averageMisses.toFixed(1)}
-          />
-          <MobileMetric
-            label="Placement"
-            value={player.averagePlacement.toFixed(1)}
-          />
-        </div>
-      </TableCell>
-
-      <TableCell className="hidden py-3 text-center lg:table-cell">
+      </DataTableCell>
+      <DataTableCell numeric>
         {showRecord ? (
-          <span
-            aria-label={`${player.gamesWon} wins and ${player.gamesLost} losses`}
-          >
-            {player.gamesWon}–{player.gamesLost}
-          </span>
+          <>
+            <span className="sr-only">{`${formatCount(player.gamesWon)} wins and ${formatCount(player.gamesLost)} losses`}</span>
+            <span aria-hidden="true">{formatRecord(player, true)}</span>
+          </>
         ) : (
-          player.gamesPlayed.toLocaleString()
+          formatRecord(player, false)
         )}
-      </TableCell>
-      <TableCell className="hidden py-3 text-center font-medium lg:table-cell">
-        {player.matchCost.toFixed(2)}
-      </TableCell>
-      <TableCell className="hidden py-3 text-center text-sm lg:table-cell">
+      </DataTableCell>
+      <DataTableCell numeric className="font-medium">
+        {formatMatchCost(player.matchCost)}
+      </DataTableCell>
+      <DataTableCell numeric showFrom={PLAYER_STATS_COLUMN.rating}>
         <RatingRange player={player} />
-      </TableCell>
-      <TableCell className="hidden py-3 text-center lg:table-cell">
-        {player.ratingDelta !== null ? (
-          <RatingDelta delta={player.ratingDelta} />
-        ) : (
-          <span className="text-muted-foreground">—</span>
+      </DataTableCell>
+      <DataTableCell numeric>
+        {player.ratingDelta === null ? null : (
+          <RatingDelta value={player.ratingDelta} />
         )}
-      </TableCell>
-      <TableCell className="hidden py-3 text-center lg:table-cell">
-        {formatScore(player.averageScore)}
-      </TableCell>
-      <TableCell className="hidden py-3 text-center lg:table-cell">
+      </DataTableCell>
+      <DataTableCell numeric showFrom={PLAYER_STATS_COLUMN.score}>
+        {formatCount(player.averageScore)}
+      </DataTableCell>
+      <DataTableCell numeric>
         {formatAccuracy(player.averageAccuracy)}
-      </TableCell>
-      <TableCell className="hidden py-3 text-center lg:table-cell">
-        {player.averageMisses.toFixed(1)}
-      </TableCell>
-      <TableCell className="hidden py-3 text-center lg:table-cell lg:pr-4">
-        {player.averagePlacement.toFixed(1)}
-      </TableCell>
-    </TableRow>
+      </DataTableCell>
+      <DataTableCell numeric showFrom={PLAYER_STATS_COLUMN.misses}>
+        {formatAverage(player.averageMisses)}
+      </DataTableCell>
+      <DataTableCell numeric showFrom={PLAYER_STATS_COLUMN.placement}>
+        {formatAverage(player.averagePlacement)}
+      </DataTableCell>
+    </DataTableRow>
   );
-};
+}
 
-export default MatchStatsPlayerRow;
+/** One label and value under a phone row's name. */
+function PhoneMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="truncate text-xs text-muted-foreground">{label}</dt>
+      <dd className="truncate text-sm font-medium tabular-nums">{value}</dd>
+    </div>
+  );
+}
+
+/**
+ * One player on a phone: the name and badges, the rating change on the
+ * right with the rating under it, and every per-game figure underneath, so
+ * nothing the table shows is lost.
+ */
+export function PlayerStatsPhoneRow({
+  player,
+  showRecord,
+}: {
+  player: ProcessedPlayerStats;
+  showRecord: boolean;
+}) {
+  return (
+    <PhoneRow
+      data-testid={`player-stats-phone-row-${player.playerId}`}
+      className="items-start"
+      title={
+        <>
+          <PlayerName player={player} avatarSize={24} />
+          <PlayerBadges player={player} />
+        </>
+      }
+      value={
+        player.ratingDelta === null ? null : (
+          <RatingDelta value={player.ratingDelta} />
+        )
+      }
+      valueDescription={<RatingRange player={player} />}
+    >
+      <dl className="mt-2 grid grid-cols-3 gap-x-3 gap-y-2">
+        <PhoneMetric
+          label="Match cost"
+          value={formatMatchCost(player.matchCost)}
+        />
+        <PhoneMetric
+          label={showRecord ? 'Record' : 'Games'}
+          value={formatRecord(player, showRecord)}
+        />
+        <PhoneMetric
+          label="Avg. score"
+          value={formatCount(player.averageScore)}
+        />
+        <PhoneMetric
+          label="Accuracy"
+          value={formatAccuracy(player.averageAccuracy)}
+        />
+        <PhoneMetric
+          label="Misses"
+          value={formatAverage(player.averageMisses)}
+        />
+        <PhoneMetric
+          label="Placement"
+          value={formatAverage(player.averagePlacement)}
+        />
+      </dl>
+    </PhoneRow>
+  );
+}

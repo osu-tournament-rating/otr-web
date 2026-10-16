@@ -1,26 +1,57 @@
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ChartLine, Swords } from 'lucide-react';
+
+import {
+  PanelSkeleton,
+  SectionHeaderSkeleton,
+  SkeletonText,
+} from '@/components/kit/feedback/Skeletons';
+import { DetailHero } from '@/components/kit/layout/DetailHero';
+import {
+  HeroTabLabel,
+  heroTabClassName,
+  heroTabListClassName,
+} from '@/components/kit/layout/HeroTabs';
+import { PageFrame } from '@/components/kit/layout/PageFrame';
+
+import { GameFramesSkeleton } from './skeletons';
 
 export default function MatchLoading() {
   return (
-    <div
-      role="status"
-      aria-label="Loading match"
-      className="container mx-auto flex flex-col gap-4 md:gap-2"
-    >
-      <Skeleton className="h-36 w-full rounded-xl" />
-      <Skeleton className="h-9 w-full rounded-lg" />
-      <Card className="mt-4 p-6">
-        <div className="flex items-center gap-2">
-          <Skeleton className="size-6" />
-          <Skeleton className="h-7 w-24" />
+    <PageFrame role="status" aria-label="Loading match">
+      <DetailHero
+        title={<SkeletonText className="h-7 w-80 max-w-full" />}
+        status={<SkeletonText className="h-6 w-24 rounded-full" />}
+        meta={
+          <>
+            <SkeletonText className="w-44" />
+            <SkeletonText className="w-48" />
+            <SkeletonText className="w-20" />
+          </>
+        }
+        actions={
+          <>
+            <SkeletonText className="size-8" />
+            <SkeletonText className="size-8" />
+            <SkeletonText className="size-8" />
+          </>
+        }
+        tabs={
+          <div className={heroTabListClassName} aria-hidden="true">
+            <span className={heroTabClassName} aria-current="page">
+              <HeroTabLabel icon={Swords}>Games</HeroTabLabel>
+            </span>
+            <span className={heroTabClassName}>
+              <HeroTabLabel icon={ChartLine}>Stats</HeroTabLabel>
+            </span>
+          </div>
+        }
+      />
+      <PanelSkeleton>
+        <SectionHeaderSkeleton icon={Swords} title="Games" />
+        <div className="p-4">
+          <GameFramesSkeleton />
         </div>
-        <div className="space-y-4">
-          {Array.from({ length: 3 }, (_, index) => (
-            <Skeleton key={index} className="h-[19rem] w-full rounded-xl" />
-          ))}
-        </div>
-      </Card>
-    </div>
+      </PanelSkeleton>
+    </PageFrame>
   );
 }
