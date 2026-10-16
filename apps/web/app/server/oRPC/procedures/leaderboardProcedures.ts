@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { SQL, and, eq, gte, inArray, lte, sql } from 'drizzle-orm';
+import { SQL, and, eq, gte, inArray, lte, or, sql } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
 import {
@@ -20,7 +20,7 @@ import type { DatabaseClient } from '@/lib/db';
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 100;
 
-async function runLeaderboard({
+export async function runLeaderboard({
   input,
   context,
   friendUserId,
@@ -230,16 +230,10 @@ async function runLeaderboard({
           (condition): condition is SQL<unknown> => condition !== undefined
         );
 
-      if (tierConditions.length === 1) {
-        filters.push(tierConditions[0]!);
-      } else if (tierConditions.length > 1) {
-        const combined = tierConditions.reduce((acc, condition) =>
-          acc ? sql`(${acc}) OR (${condition})` : condition
-        );
+      const tiersFilter = or(...tierConditions);
 
-        if (combined) {
-          filters.push(combined);
-        }
+      if (tiersFilter) {
+        filters.push(tiersFilter);
       }
     }
 
