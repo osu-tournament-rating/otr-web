@@ -308,6 +308,7 @@ import { formatTierName } from '@/lib/kit/format/tier';
 - `getTierColor(tier)` / `TIER_PALETTE[tier].css`: the colour for a fill or SVG. This is not the `getTierColor` in `lib/utils/tierData.ts`, which returns the tier ladder's glow classes (`gradient`); alias one of them when a file needs both.
 - The tier ladder's glows are decoration and stay in `lib/utils/tierData.ts`.
 - Diamond and Master are hard to tell apart as neighbouring marks, such as touching bars in the rating distribution: OKLab ΔE 5.8 in light and 5.4 in dark (3.6 to 5.4 for protan and deutan readers), against the 15 (and 8) the categorical palette keeps between neighbours. Both are violets of the same lightness 14° apart. Until the owner settles new values, a chart that colours by tier also names the tier in its legend and tooltip, as the rating distribution does.
+- The tiers use every categorical hue (dark Elite Grandmaster is slot 1's blue), so a line over tier-coloured bars takes the text colour, `var(--foreground)`, as the rating distribution's cumulative line does; a dashed rule in the same colour (its "You" mark) is told apart by its dash and its label.
 
 Don't:
 
@@ -506,7 +507,7 @@ import {
 </BarChart>;
 ```
 
-- `chartAxisProps`: for any axis. `chartValueAxisProps` adds `width: 'auto'` for the value axis on the left.
+- `chartAxisProps`: for any axis. `chartValueAxisProps` adds `width: 'auto'` for a value axis, so it sizes to its longest label (the share axis on the right takes it too).
 - `niceAxisProps(ticks)`: `type`, `domain`, `ticks`, `interval: 0` and `allowDecimals` from `getNiceTicks`.
 - `chartGridProps`: dashed, horizontal only. `ChartContainer` paints it in the border colour at half strength, so always render inside `ChartContainer` (`@/components/ui/chart`). The container also gives tick labels tabular figures (the body no longer does) and paints the bar cursor. `globals.css` gives Recharts' hidden measuring span (`#recharts_measurement_span`) tabular figures too, so the labels Recharts decides to show are spaced for the width it draws; keep the two together.
 - `CHART_BAR_RADIUS` (4px data ends, square at the baseline), `CHART_LINE_WIDTH` (2px), `CHART_MARGIN`, `CHART_CURSOR.bar` and `.line`.
@@ -514,9 +515,13 @@ import {
 - Stacked bars: a 1px `stroke="var(--card)"` separates segments; round only the top series.
 - `CHART_CURSOR.bar` is a band behind the hovered bar, `accent` at half strength (`--muted` matches the dark panel, so a muted band vanished there). `ChartContainer` paints the band the same way, so it also covers charts that pass `cursor` without it; pass it anyway so the intent is explicit.
 - Turn off animation (`isAnimationActive={false}`) as the beatmap charts do.
+- A share axis on the right is for one case: a running share over the same bars, such as the rating distribution's cumulative line (players at or below each bucket, 0–100%). Give that axis a `yAxisId` and `orientation="right"`, leave the count axis on the default id so the gridlines follow it, and put the share ticks on the count axis's gridlines, so the plot keeps one set of lines: `getRatingDistributionAxes` in `components/stats/stats-data.ts` does both, adding a step to a three-step count axis so no share reads 33%. Format the ticks with `formatPercentTick(share * 100)` and add a `marker: 'line'` legend entry.
+- Draw bars with a line in a `BarChart`, not a `ComposedChart`: Recharts 3 draws a `Line` in any cartesian chart, and only a BarChart keeps the `CHART_CURSOR.bar` band (a ComposedChart turns it into a 1px rule).
+- A line that crosses bars gets a 2px ring in the card colour: the same `Line` drawn first with `stroke="var(--card)"` and `strokeWidth={CHART_LINE_WIDTH + 4}`.
 
 Don't:
 
+- Don't add a second value axis for a second measure; a share of the plotted total is the only one. Two measures get two charts.
 - Don't render Recharts outside `ChartContainer`: in a bare `ResponsiveContainer` its labels fall back to 16px and `#666`.
 - Don't set tick font sizes or colours per chart (`fontSize: 14`, `fill: 'var(--foreground)'`); `chartAxisProps` carries `CHART_TICK_STYLE`.
 
@@ -587,6 +592,7 @@ import { ChartTooltip } from '@/components/ui/chart';
 - `labelFormatter`: the title from the hovered x value. `valueFormatter`: each value, usually an axis formatter; `formatNumberTick` by default. `nameFormatter`: series key to display name.
 - The marker takes the series' `fill` (or a line's `stroke`). Bars coloured per `Cell` have no series fill, so give each data row a `fill` field, as the beatmap mod charts do, and the marker uses it.
 - `marker`: `square` (default), `line`, `dashed` or `dot`, matching the mark.
+- It gives every series in Recharts' payload a row, including one marked `tooltipType="none"`. To leave a series out, pass `content` as a function and filter `payload`, as the rating distribution does to keep its cumulative line (and the line's ring) out of the rows; its footer gives the share instead.
 - `reverse`: list a vertical stack top to bottom. `footer`: a total or a share. Values and the footer take tabular figures, as they change while the pointer moves; don't wrap a footer in your own `tabular-nums` span.
 - `ChartTooltipBody`: the same readout without the card, for a `TapTooltip` around a chart drawn without Recharts (box plots). `ChartTooltipCard`: the card around it, for static use.
 
@@ -638,9 +644,9 @@ import { ChartContainer } from '@/components/ui/chart';
 <Panel>
   <SectionHeader
     icon={ChartColumn}
-    title="Tournaments by year"
-    meta="8,042 verified"
-    infoText="Number of verified tournaments by year"
+    title="Tournament verification status"
+    meta="2,993 tournaments"
+    infoText='"Not in ratings yet" covers Pending, Pre-verified and Pre-rejected tournaments.'
   />
   <PanelBody className="flex flex-col gap-3">
     <ChartLegend items={…} />
@@ -651,12 +657,14 @@ import { ChartContainer } from '@/components/ui/chart';
 </Panel>;
 ```
 
-- The SectionHeader icon is muted, the title is the chart's name in sentence case, the meta is a short count or the peak, and the info button explains how to read the chart.
+- The SectionHeader icon is muted, the title is the chart's name in sentence case, and the meta is a short count or the peak.
+- An info button only when it tells the reader something the chart does not: a threshold ("Mods played in at least 1% of all verified games"), a grouping, how a value is counted. Most charts have none: "Tournaments by year" with "2,540 verified" beside it needs no help, and neither do the profile's frequent teammates and opponents.
 - The legend goes at the top of the body; the plot is 240px tall (`h-60`) unless the chart needs more.
 - Empty data uses the shared empty state inside the same panel.
 
 Don't:
 
-- Don't give a chart a card of its own, a 24px blue icon or a description line under its title; the SectionHeader's `infoText` explains it.
+- Don't give a chart a card of its own, a 24px blue icon or a description line under its title.
+- Don't turn a caption that restates the title ("Verified tournaments by ruleset", "Most frequently played with teammates") into an info button; drop it.
 
 Gallery anchors: `/admin/design#color-chart-line`, `/admin/design#color-chart-bar`, `/admin/design#color-chart-stacked`, `/admin/design#color-chart-distribution`, `/admin/design#color-chart-count-bars`

@@ -18,7 +18,7 @@ export const RATING_BUCKET_SIZE = CHART_CONSTANTS.BUCKET_SIZE;
 export interface StatsPanelCopy {
   icon: KitIcon;
   title: string;
-  /** The old card's description, where it had one. */
+  /** Help that says what the chart does not; never a restatement of the title. */
   infoText?: string;
 }
 
@@ -31,25 +31,21 @@ export const STATS_PANELS = {
     icon: CircleCheck,
     title: 'Tournament verification status',
     infoText:
-      'Distribution of tournaments by verification status. "Not in ratings yet" covers Pending, Pre-verified and Pre-rejected tournaments.',
+      '"Not in ratings yet" covers Pending, Pre-verified and Pre-rejected tournaments.',
   },
   year: {
     icon: Calendar,
     title: 'Tournaments by year',
-    infoText: 'Number of verified tournaments by year.',
   },
   ruleset: {
     icon: Gamepad2,
     title: 'Tournaments by ruleset',
-    infoText: 'Verified tournaments by ruleset.',
   },
   lobbySize: {
     icon: Users,
     title: 'Tournaments by lobby size',
-    infoText: 'Verified tournaments by lobby size.',
   },
-  // The old card had no description, and help text is never invented; the
-  // tier legend and the tooltip's rating range explain the bars.
+  // No info button: the legend and the tooltip explain the chart.
   ratingDistribution: {
     icon: ChartNoAxesColumn,
     title: 'Rating distribution',

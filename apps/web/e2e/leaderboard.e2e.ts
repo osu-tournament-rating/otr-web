@@ -87,6 +87,31 @@ test.describe('Leaderboard Page', () => {
       }
     });
 
+    test('the tier name needs no tooltip where it is written out', async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto(ROUTES.leaderboard);
+      await page.waitForLoadState('networkidle');
+
+      const tierCell = page
+        .locator('[data-testid^="leaderboard-row-"]')
+        .first()
+        .getByRole('cell')
+        .nth(2);
+      await expect(tierCell).toBeVisible({ timeout: 10000 });
+      await expect(tierCell).toContainText(
+        /^(Bronze|Silver|Gold|Platinum|Emerald|Diamond|Master|Grandmaster|Elite Grandmaster)/
+      );
+      await expect(tierCell.getByRole('button')).toHaveCount(0);
+
+      // Below 1024px the column shows the icon alone, which names the tier.
+      await page.setViewportSize({ width: 900, height: 900 });
+      await expect(
+        tierCell.getByRole('button', { name: /^Tier: / })
+      ).toBeVisible();
+    });
+
     test('ranks read as #1,234', async ({ page }) => {
       await page.goto(ROUTES.leaderboard);
       await page.waitForLoadState('networkidle');

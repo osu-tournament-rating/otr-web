@@ -60,7 +60,6 @@ export default function PlayerFrequencyChart({
   data,
   title,
   icon,
-  infoText,
   emptyTitle,
   color,
   ruleset,
@@ -69,7 +68,6 @@ export default function PlayerFrequencyChart({
   data: PlayerFrequency[];
   title: string;
   icon: KitIcon;
-  infoText: string;
   emptyTitle: string;
   /** The series colour, from `seriesColor`. */
   color: string;
@@ -189,7 +187,7 @@ export default function PlayerFrequencyChart({
   if (chartData.length === 0) {
     return (
       <Panel className={className}>
-        <SectionHeader icon={icon} title={title} infoText={infoText} />
+        <SectionHeader icon={icon} title={title} />
         <EmptyState size="compact" icon={icon} title={emptyTitle} />
       </Panel>
     );
@@ -203,7 +201,7 @@ export default function PlayerFrequencyChart({
 
   return (
     <Panel className={cn('flex flex-col', className)}>
-      <SectionHeader icon={icon} title={title} infoText={infoText} />
+      <SectionHeader icon={icon} title={title} />
       <PanelBody className="flex flex-1 flex-col justify-center">
         <ChartContainer config={{}} className="aspect-auto h-72 w-full">
           <BarChart data={chartData} margin={CHART_MARGIN}>

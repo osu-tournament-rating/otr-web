@@ -241,6 +241,22 @@ test.describe('Player Profile Page', () => {
         .toBeGreaterThan(5);
     });
 
+    test('a tournament row labels its won–lost pair as the record', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
+      await page.waitForLoadState('networkidle');
+
+      const row = page.locator('[data-testid="player-tournament-row"]').first();
+      await expect(row).toBeVisible({ timeout: 10000 });
+      await expect(row.getByText('Record', { exact: true })).toBeVisible();
+      await expect(
+        row.getByText(/^[\d,]+ wins? and [\d,]+ loss(es)?$/)
+      ).toHaveCount(1);
+      // One "Matches": the button, not a stat beside it.
+      await expect(row.getByText('Matches', { exact: true })).toHaveCount(1);
+    });
+
     test('a tournament row expands its matches in place', async ({ page }) => {
       await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
       await page.waitForLoadState('networkidle');

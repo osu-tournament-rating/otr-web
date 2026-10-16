@@ -23,11 +23,10 @@ import {
 import {
   MOD_DISTRIBUTION_INFO,
   MOD_PERFORMANCE_INFO,
-  OPPONENTS_INFO,
   RATING_HISTORY_INFO,
-  TEAMMATES_INFO,
 } from '@/components/player/section-info';
 import { RATED_RULESETS } from '@/lib/kit/format/ruleset';
+import type { KitIcon } from '@/lib/kit/layout/icon';
 
 const STAT_LABELS = [
   'Rating',
@@ -40,7 +39,13 @@ const STAT_LABELS = [
 
 // The chart panels below the rating history, in page order. The mod charts
 // grow with the number of mods; this is a typical player's.
-const CHART_PANELS = [
+const CHART_PANELS: readonly {
+  icon: KitIcon;
+  title: string;
+  /** The loaded header's info text, for the panels that have one. */
+  info?: string;
+  plot: string;
+}[] = [
   {
     icon: ChartBarBig,
     title: 'Mod performance',
@@ -56,16 +61,14 @@ const CHART_PANELS = [
   {
     icon: Users,
     title: 'Frequent teammates',
-    info: TEAMMATES_INFO,
     plot: 'h-72',
   },
   {
     icon: Swords,
     title: 'Frequent opponents',
-    info: OPPONENTS_INFO,
     plot: 'h-72',
   },
-] as const;
+];
 
 export default function PlayerLoading() {
   return (

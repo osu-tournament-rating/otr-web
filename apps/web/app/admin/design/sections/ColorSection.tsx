@@ -1050,12 +1050,13 @@ export default function ColorSection() {
       <Specimen
         id="color-accent-rule"
         name="Accent rule"
-        description="Blue means you can act on it or it is selected: links on hover, primary buttons, the selected chip. Buttons fill with primary-solid, blue text uses link, and icons and borders use primary. Section icons stay muted, and new things get the one notification dot."
+        description="Blue means you can act on it or it is selected: links on hover, primary buttons, the selected chip. Buttons fill with primary-solid, blue text uses link, and icons and borders use primary. Section icons stay muted, new things get the one notification dot, and the header's support heart turns pink on hover."
       >
         <div className="flex flex-col gap-3">
           <AccentRule />
           <TokenList groupId="brand" />
           <TokenList groupId="accent" />
+          <TokenList groupId="support" />
         </div>
       </Specimen>
 
@@ -1101,7 +1102,7 @@ export default function ColorSection() {
         id="color-mods"
         name="Mod colours"
         importPath={`${COLOR_LIB}/mods`}
-        description="The revised mod palette: No Mod has its own colour, Sudden Death and Touch Device differ, and every mod clears 3:1 and takes black text as a solid pill. Rare combinations use the Other grey."
+        description="The mod colours the site has always used, each hue kept and only the lightness moved as far as contrast needs, so the light theme's are darker. Touch Device, which once shared Sudden Death's orange, is a greyer orange. Every mod clears 3:1 and takes black text as a solid pill. Rare combinations use the Other grey."
       >
         <div className="@container">
           <ul className="grid grid-cols-3 gap-2 @md:grid-cols-4 @xl:grid-cols-6">
@@ -1177,7 +1178,7 @@ export default function ColorSection() {
         id="color-chart-distribution"
         name="Distribution chart"
         importPath={CHART_PARTS}
-        description="A histogram with touching bars and ticks from the shared rule on both axes."
+        description="A histogram with touching bars and ticks from the shared rule on both axes. The stats page's rating distribution adds a cumulative share line on a right-hand percentage axis (components/stats/RatingDistributionChart.tsx), as documented under the Recharts axis props."
       >
         <DistributionDemo />
       </Specimen>

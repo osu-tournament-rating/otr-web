@@ -124,6 +124,26 @@ test.describe('Statistics Page', () => {
         timeout: 10000,
       });
     });
+
+    test('draws the cumulative share on its own percentage axis', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.stats);
+      await page.waitForLoadState('networkidle');
+
+      const chart = page.locator('[data-testid="chart-rating-distribution-0"]');
+      await expect(chart.locator('.recharts-wrapper')).toBeVisible({
+        timeout: 15000,
+      });
+      await expect(
+        chart.getByText('Cumulative', { exact: true })
+      ).toBeVisible();
+      await expect(
+        chart.locator('.recharts-cartesian-axis-tick-value', {
+          hasText: /^100%$/,
+        })
+      ).toBeVisible();
+    });
   });
 
   test.describe('Rating distribution ruleset', () => {

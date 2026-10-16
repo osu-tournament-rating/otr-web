@@ -41,6 +41,20 @@ describe('stats chart panels', () => {
     expect(lobby).not.toContain('Team size');
   });
 
+  it('keep an info button only where it adds to the chart', () => {
+    const verification = render(
+      <TournamentVerificationChart verificationCounts={{ '4': 2540 }} />
+    );
+    const year = render(<TournamentsByYearChart data={{ '2024': 386 }} />);
+    const ruleset = render(<TournamentsByRulesetChart data={{ '0': 12 }} />);
+    const lobby = render(<TournamentsByLobbySizeChart data={{ '1': 1166 }} />);
+
+    expect(verification).toContain('About tournament verification status');
+    for (const html of [year, ruleset, lobby]) {
+      expect(html).not.toContain('About tournaments by');
+    }
+  });
+
   it('show the shared empty state instead of an empty plot', () => {
     const verification = render(
       <TournamentVerificationChart verificationCounts={{}} />

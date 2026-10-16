@@ -327,9 +327,22 @@ export default function LeaderboardTable({
                 />
               </DataTableCell>
               <DataTableCell>
-                <span className="flex items-center gap-2">
+                {/* The icon names the tier in a tooltip only while the
+                    column is too narrow for the name; once the name shows,
+                    the icon is decoration and no tab stop. */}
+                <span className="flex lg:hidden">
                   <TierMark entry={entry} size={22} />
-                  <span className="hidden text-xs whitespace-nowrap text-muted-foreground lg:inline">
+                </span>
+                <span className="hidden items-center gap-2 lg:flex">
+                  <TierIcon
+                    tier={tier.tier}
+                    subTier={tier.subTier}
+                    width={22}
+                    height={22}
+                    aria-hidden
+                    className="shrink-0"
+                  />
+                  <span className="text-xs whitespace-nowrap text-muted-foreground">
                     {tier.name}
                   </span>
                 </span>

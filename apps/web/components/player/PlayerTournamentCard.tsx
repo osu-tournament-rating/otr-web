@@ -15,6 +15,7 @@ import { VerificationStatusIcon } from '@/components/kit/status/VerificationStat
 import { EntityLink } from '@/components/kit/tables/EntityLink';
 import { MissingValue } from '@/components/kit/tables/MissingValue';
 import { formatLobbySize, formatRankRange } from '@/lib/kit/format/fields';
+import { formatCount, formatCountOf } from '@/lib/kit/format/number';
 import { getRejectionReasonTexts } from '@/lib/kit/status/reasons';
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 import type { PlayerTournamentListItem } from '@/lib/orpc/schema/tournament';
@@ -101,10 +102,16 @@ export default function PlayerTournamentCard({
 
         <div className="flex items-center justify-between gap-4 sm:justify-end">
           <dl className="flex items-center gap-4">
-            <RowStat label="Matches">
-              {tournament.matchesWon}–{tournament.matchesLost}
+            {/* "Record", as the match pages call a won–lost pair; the
+                Matches button beside it opens the matches themselves. */}
+            <RowStat label="Record">
+              <span className="sr-only">{`${formatCountOf(tournament.matchesWon, 'win')} and ${formatCountOf(tournament.matchesLost, 'loss', 'losses')}`}</span>
+              <span aria-hidden="true">
+                {formatCount(tournament.matchesWon)}–
+                {formatCount(tournament.matchesLost)}
+              </span>
             </RowStat>
-            <RowStat label="Rating">
+            <RowStat label="Rating change">
               {tournamentAdjustments.length > 0 ? (
                 <RatingDelta value={totalRatingDelta} />
               ) : (

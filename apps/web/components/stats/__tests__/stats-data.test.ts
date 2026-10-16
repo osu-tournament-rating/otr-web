@@ -5,6 +5,7 @@ import {
   getLobbySizeBars,
   getRatingBucketStart,
   getRatingDistribution,
+  getRatingDistributionAxes,
   getRulesetBars,
   getVerificationBars,
   getYearBars,
@@ -156,6 +157,28 @@ describe('getRatingDistribution', () => {
   it('puts a rating in the bucket that starts at or below it', () => {
     expect(getRatingBucketStart(1024.9, 25)).toBe(1000);
     expect(getRatingBucketStart(1025, 25)).toBe(1025);
+  });
+});
+
+describe('getRatingDistributionAxes', () => {
+  it('labels the players gridlines with round shares from 0% to 100%', () => {
+    const { count, share } = getRatingDistributionAxes(2450);
+    expect(count.ticks).toEqual([0, 500, 1000, 1500, 2000, 2500]);
+    expect(share.ticks).toEqual([0, 0.2, 0.4, 0.6, 0.8, 1]);
+    expect([share.min, share.max]).toEqual([0, 1]);
+  });
+
+  it('gives a three-step players axis a fourth, so no share reads 33%', () => {
+    const { count, share } = getRatingDistributionAxes(1480);
+    expect(count.ticks).toEqual([0, 500, 1000, 1500, 2000]);
+    expect(count.max).toBe(2000);
+    expect(share.ticks).toEqual([0, 0.25, 0.5, 0.75, 1]);
+  });
+
+  it('keeps one share tick per players tick for small counts', () => {
+    const { count, share } = getRatingDistributionAxes(1);
+    expect(share.ticks).toHaveLength(count.ticks.length);
+    expect(share.ticks.at(-1)).toBe(1);
   });
 });
 

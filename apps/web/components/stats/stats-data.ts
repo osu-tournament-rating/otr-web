@@ -5,6 +5,7 @@
 import { Ruleset, type VerificationStatus } from '@otr/core/osu';
 
 import type { CountBarDatum } from '@/lib/kit/charts/count-bars';
+import { getNiceTicks, type NiceTicks } from '@/lib/kit/charts/ticks';
 import { getStatusHueColor } from '@/lib/kit/color/verification';
 import { getTierColor } from '@/lib/kit/color/tiers';
 import { formatLobbySize } from '@/lib/kit/format/fields';
@@ -175,4 +176,36 @@ export function getRatingDistribution(
 /** The bucket a rating falls in, by its lowest rating. */
 export function getRatingBucketStart(rating: number, bucketSize: number) {
   return Math.floor(rating / bucketSize) * bucketSize;
+}
+
+/**
+ * The distribution's two value axes on one set of gridlines: players on the
+ * left by the shared tick rule, and the cumulative share on the right,
+ * labelling the same lines from 0% to 100%. Three steps would label them
+ * 33% and 67%, so a players axis with three gains a fourth.
+ */
+export function getRatingDistributionAxes(maxCount: number): {
+  count: NiceTicks;
+  share: NiceTicks;
+} {
+  const nice = getNiceTicks(0, maxCount, { integer: true });
+  const count =
+    nice.ticks.length === 4
+      ? {
+          ...nice,
+          max: nice.max + nice.step,
+          ticks: [...nice.ticks, nice.max + nice.step],
+        }
+      : nice;
+  const steps = count.ticks.length - 1;
+
+  return {
+    count,
+    share: {
+      min: 0,
+      max: 1,
+      step: 1 / steps,
+      ticks: count.ticks.map((_, index) => index / steps),
+    },
+  };
 }

@@ -41,8 +41,9 @@ export default function StatsLoading() {
           <RulesetSwitchSkeleton />
         </div>
         <div className="flex flex-col gap-3 p-4">
-          {/* The tier legend: one line on desktop, three on phones. */}
-          <div className="flex h-14 items-start sm:h-4 sm:items-center">
+          {/* The legend: one line on desktop, two on tablets, four on
+              phones. */}
+          <div className="flex h-19 items-start sm:h-9 lg:h-4 lg:items-center">
             <SkeletonText className="h-3 w-full max-w-xl" />
           </div>
           <ChartPlotSkeleton className="h-72" />
