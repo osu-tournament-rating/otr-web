@@ -88,7 +88,8 @@ If the library has no component for what you need, build it in the library
 | Dates, numbers, ruleset and field names, mods    | [reference/format.md](reference/format.md)     |
 
 Screenshots live in `images/`, one per gallery specimen, named after its
-anchor. Each shows the light theme on the left and dark on the right.
+anchor. Each shows the light theme beside the dark one, or above it for wide
+specimens.
 
 ## Keeping this reference current
 
@@ -105,6 +106,7 @@ request that changes a shared component, token or pattern:
    repository root.
 
 When you notice that any part of this skill no longer matches the site, fix
-that part, even when it is outside your task. When a page still uses a
+that part, even when it is outside your task; for this skill, that replaces
+the usual rule of filing an issue. When a page still uses a
 legacy pattern listed here, move it onto the library when you next work on
 that page.

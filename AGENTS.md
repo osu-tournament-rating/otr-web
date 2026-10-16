@@ -197,7 +197,8 @@ follow the `pull-request` skill in `.claude/skills/pull-request/SKILL.md`.
 
 Open an issue for anything you notice outside your task, such as an unrelated
 bug, a risk, dead code, or documentation that no longer matches the code. Do not
-fix it in the current change.
+fix it in the current change. The one exception is the `web-design` skill: fix
+an out-of-date part of it in place, in the change you are making.
 
 Before you open, edit, or label an issue, read and follow the `issue` skill in
 `.claude/skills/issue/SKILL.md`.
