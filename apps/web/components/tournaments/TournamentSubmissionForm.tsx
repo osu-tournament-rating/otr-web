@@ -16,7 +16,6 @@ import {
   FormPanel,
   FormSection,
 } from '@/components/kit/controls/FormPanel';
-import { InfoButton } from '@/components/kit/layout/InfoButton';
 import {
   LobbySizeSelectContent,
   RejectionReasonChips,
@@ -327,10 +326,6 @@ export default function TournamentSubmissionForm() {
                   />
                 </FormControl>
                 <FormLabel>Played on osu!lazer</FormLabel>
-                <InfoButton label="About played on osu!lazer">
-                  Check this if the tournament was played on osu!lazer instead
-                  of osu!stable
-                </InfoButton>
               </FormItem>
             )}
           />

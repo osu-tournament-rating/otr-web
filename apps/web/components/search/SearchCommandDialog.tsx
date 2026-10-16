@@ -221,7 +221,12 @@ export default function SearchCommandDialog() {
               className="h-12 min-w-0 flex-1 bg-transparent text-base outline-hidden placeholder:text-muted-foreground sm:text-sm"
             />
             {text ? (
-              <IconButton label="Clear search" icon={X} onClick={clear} />
+              <IconButton
+                label="Clear search"
+                icon={X}
+                tooltip={false}
+                onClick={clear}
+              />
             ) : null}
           </div>
 

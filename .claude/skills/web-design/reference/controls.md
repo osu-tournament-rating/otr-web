@@ -28,7 +28,7 @@ Import each component from its own file under `@/components/kit/controls/`; the 
 
 - One primary (blue, `default`) button per view: the action the view exists for. Everything else is `outline` or `ghost`.
 - Red means the action deletes or overwrites data. A button or menu item that starts such an action is red text (`destructive`); only the button that carries it out, in the final confirm, is solid red (`destructive-confirm`, which ConfirmDialog renders for you). A destructive action is never blue.
-- Every icon-only control is an IconButton: it has an accessible name, a tooltip that repeats it, and a hover fill.
+- Every icon-only control is an IconButton: it has an accessible name, a tooltip that repeats it (except an X that closes or clears), and a hover fill.
 - A detail page has one admin control, AdminMenu, in the hero's `adminActions`. A row or card has at most one RowActionsMenu. No clusters of unlabelled admin icons.
 - A dialog is a DialogTemplate or a ConfirmDialog: 12px corners, 24px side padding, a header strip with a sentence-case title, a body, a footer strip with the actions on the right, and one backdrop (black at 50%, the same as every alert dialog and sheet).
 - A page form is a PageHeader, then FormPanel with FormSections and FormActions. Notices are Callouts (`@/components/kit/feedback/Callout`).
@@ -119,7 +119,7 @@ Props:
 
 - `label`: required. The accessible name and the tooltip, in sentence case.
 - `icon`: the lucide glyph. With `asChild` it is placed inside the child element.
-- `tooltip`: tooltip text when it should differ from `label` (RowActionsMenu uses it to keep the tooltip short while the name says which row). `tooltipSide`: where it opens, `top` by default.
+- `tooltip`: tooltip text when it should differ from `label` (RowActionsMenu uses it to keep the tooltip short while the name says which row; the support heart uses it to leave "opens in a new tab" to the accessible name). `false` drops the tooltip, only for an X that closes a dialog or panel or clears a field: everyone knows it, and a tooltip on it is noise. `tooltipSide`: where it opens, `top` by default.
 - `size`: `sm` (32px, the default), `default` (36px), `lg` (40px), matching the button heights.
 - `variant`: `ghost` (default) muted icon that fills on hover; `outline` bordered, beside inputs and outline buttons; `overlay` the round dark pill on cover art.
 - `destructive`: red icon and red fill on hover, for a single destructive action outside a menu, such as deleting one admin note. Ignored on `overlay`.
@@ -143,7 +143,8 @@ Do:
 Don't:
 
 - Don't wrap `<Button variant="ghost" size="icon" className="h-6 w-6 …">` in `SimpleTooltip` by hand: a 24px target with a home-made hover fill.
-- Don't make a bare glyph clickable, and don't turn the icon blue on hover. Links that need more than an icon to explain them, such as the header's docs, API reference and support, are labelled items in a menu.
+- Don't make a bare glyph clickable, and don't turn the icon blue on hover. Links that need more than an icon to explain them, such as the header's docs and API reference, are labelled items in a menu. The header's support heart is the one icon link that stays at the top right: it turns `text-support` pink and pulses on hover (`motion-safe:hover:animate-pulse`), as it always has (`components/header/SupportButton.tsx`).
+- Don't give an X that closes or clears a tooltip ("Close", "Clear search"); pass `tooltip={false}`. Every other icon-only button keeps its tooltip.
 - Don't rely on the tooltip of a disabled IconButton: a disabled button gets no pointer events. Say why it is disabled somewhere visible, such as an AdminMenu item's `description`.
 
 Gallery anchor: `/admin/design#controls-icon-button`

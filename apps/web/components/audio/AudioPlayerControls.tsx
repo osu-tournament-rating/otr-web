@@ -172,6 +172,7 @@ export default function AudioPlayerControls() {
             data-testid="audio-transport-close"
             label="Close audio preview"
             icon={X}
+            tooltip={false}
             className="absolute top-2 right-2 sm:top-1/2 sm:-translate-y-1/2"
             onClick={close}
           />

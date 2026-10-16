@@ -910,7 +910,7 @@ function DialogAnatomy({
       <DialogFooterStrip start={footerStart}>{footer}</DialogFooterStrip>
       {closable ? (
         <div className="absolute top-3 right-4">
-          <IconButton label="Close" icon={X} />
+          <IconButton label="Close" icon={X} tooltip={false} />
         </div>
       ) : null}
     </div>

@@ -65,7 +65,7 @@ If the library has no component for what you need, build it in the library
   skeletons shaped like the page, one callout with info, warning and danger
   tones.
 - **Controls.** Three button sizes. Icon-only buttons always have an
-  accessible name and a tooltip. Red only for destructive actions, solid red
+  accessible name and a tooltip, except an X that closes or clears. Red only for destructive actions, solid red
   only in the final confirm. One dialog layout over one black 50% backdrop.
   Admin actions sit in one "Admin" menu per hero and an overflow menu per
   row; audit history is a public action, never an admin one.

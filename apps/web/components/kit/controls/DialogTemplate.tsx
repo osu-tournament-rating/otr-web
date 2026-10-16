@@ -204,7 +204,7 @@ export function DialogTemplate({
             // drawn in the header's corner.
             <div className="absolute top-3 right-4">
               <DialogClose asChild>
-                <IconButton label="Close" icon={X} tooltipSide="left" />
+                <IconButton label="Close" icon={X} tooltip={false} />
               </DialogClose>
             </div>
           ) : null}

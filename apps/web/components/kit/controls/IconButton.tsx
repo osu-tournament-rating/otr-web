@@ -56,8 +56,12 @@ export type IconButtonProps = Omit<
   label: string;
   /** The lucide glyph. With `asChild` it goes inside the child element. */
   icon?: KitIcon;
-  /** Tooltip text when it should differ from `label`. */
-  tooltip?: React.ReactNode;
+  /**
+   * Tooltip text when it should differ from `label`. `false` drops the
+   * tooltip, only for an X that closes or clears, which needs no
+   * explanation.
+   */
+  tooltip?: React.ReactNode | false;
   tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
   variant?: IconButtonVariant;
   size?: IconButtonSize;
@@ -78,7 +82,8 @@ export type IconButtonProps = Omit<
 
 /**
  * The one icon-only button: a square (round on art) with a hover fill, an
- * accessible name and a tooltip that repeats it. Put it inside DialogTrigger
+ * accessible name and a tooltip that repeats it, except on an X that closes
+ * or clears. Put it inside DialogTrigger
  * or DropdownMenuTrigger with `asChild`; the tooltip stays on the button.
  */
 export function IconButton({
@@ -98,30 +103,34 @@ export function IconButton({
 }: IconButtonProps) {
   const disclosure = expanded !== undefined;
 
+  const button = (
+    <BaseButton
+      data-slot="icon-button"
+      variant={variant === 'ghost' ? 'ghost' : 'outline'}
+      size="icon"
+      asChild={asChild}
+      type={asChild ? type : (type ?? 'button')}
+      aria-label={label}
+      aria-expanded={expanded}
+      className={cn(
+        SIZE_CLASSES[size],
+        VARIANT_CLASSES[variant],
+        !disclosure && OPEN_CLASSES[variant],
+        destructive && variant !== 'overlay' && DESTRUCTIVE_CLASSES,
+        className
+      )}
+      {...props}
+    >
+      {Icon ? <Icon aria-hidden /> : null}
+      <Slottable>{children}</Slottable>
+    </BaseButton>
+  );
+
+  if (tooltip === false) return button;
+
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <BaseButton
-          data-slot="icon-button"
-          variant={variant === 'ghost' ? 'ghost' : 'outline'}
-          size="icon"
-          asChild={asChild}
-          type={asChild ? type : (type ?? 'button')}
-          aria-label={label}
-          aria-expanded={expanded}
-          className={cn(
-            SIZE_CLASSES[size],
-            VARIANT_CLASSES[variant],
-            !disclosure && OPEN_CLASSES[variant],
-            destructive && variant !== 'overlay' && DESTRUCTIVE_CLASSES,
-            className
-          )}
-          {...props}
-        >
-          {Icon ? <Icon aria-hidden /> : null}
-          <Slottable>{children}</Slottable>
-        </BaseButton>
-      </TooltipTrigger>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
       <TooltipContent side={tooltipSide} sideOffset={6} collisionPadding={8}>
         {tooltip ?? label}
       </TooltipContent>
