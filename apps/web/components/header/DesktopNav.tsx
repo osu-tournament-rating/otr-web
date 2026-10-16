@@ -90,7 +90,9 @@ export default function DesktopNav({ entries }: { entries: NavEntry[] }) {
                   className="size-3 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180"
                 />
               </NavigationMenuPrimitive.Trigger>
-              <NavigationMenuContent className="min-w-52 rounded-lg p-1 pr-1">
+              {/* As wide as its longest link, and never narrower than
+                  its trigger. */}
+              <NavigationMenuContent className="min-w-full rounded-lg p-1 pr-1">
                 <ul className="flex flex-col">
                   {entry.links.map((link) => (
                     <li key={link.href}>
