@@ -179,7 +179,7 @@ function AdminMenuDemo() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="-mx-2 inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm transition-colors hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none data-[state=open]:text-primary"
+          className="-mx-2 inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none data-[state=open]:bg-accent"
         >
           Admin
           <NotificationDot label="Unseen reports" />

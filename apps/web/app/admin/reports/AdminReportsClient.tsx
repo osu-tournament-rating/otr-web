@@ -114,7 +114,9 @@ export default function AdminReportsClient() {
               report.id === updated.id ? updated : report
             ),
           },
-        { revalidate: false }
+        // Refetch afterwards: only the server knows who reviewed it and when,
+        // and a list sorted by review date needs the row in its new place.
+        { revalidate: true }
       );
     },
     [mutate]

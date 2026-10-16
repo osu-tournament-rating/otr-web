@@ -7,9 +7,14 @@ import { CountryName } from '@/components/kit/country/CountryFlag';
 import { DetailHero } from '@/components/kit/layout/DetailHero';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
 import { getCountryName } from '@/lib/kit/format/country';
+import { parseListState } from '@/lib/kit/lists/params';
 import type { PlayerCompact } from '@/lib/orpc/schema/playerStats';
 
 import PlayerRulesetSwitch from './PlayerRulesetSwitch';
+import {
+  LEADERBOARD_LIST_PARAMS,
+  leaderboardHref,
+} from '@/app/leaderboard/list-params';
 
 /**
  * The top of a player's profile: avatar, name, country (a link to that
@@ -39,7 +44,10 @@ export default function PlayerHero({
       meta={
         player.country ? (
           <Link
-            href={`/leaderboard?country=${encodeURIComponent(player.country)}&ruleset=${ruleset}`}
+            href={leaderboardHref(parseListState(LEADERBOARD_LIST_PARAMS, {}), {
+              country: player.country,
+              ruleset,
+            })}
             aria-label={`${getCountryName(player.country)} leaderboard`}
             className="inline-flex min-w-0 rounded-sm transition-colors outline-none hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
