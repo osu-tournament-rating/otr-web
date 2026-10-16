@@ -1,15 +1,33 @@
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { STATE_LAYOUT, STATE_TONE } from '@/lib/kit/feedback/state-layout';
 import { cn } from '@/lib/utils';
 
 type SectionErrorProps = {
   title: string;
-  description?: string;
   onRetry: () => void;
   retrying?: boolean;
   className?: string;
-};
+} & (
+  | {
+      /**
+       * `regular` takes the place of a whole section; `compact` fits a chart,
+       * a small panel or a dialog.
+       */
+      size?: 'regular' | 'compact';
+      /** Regular falls back to a generic sentence; compact shows none. */
+      description?: string;
+    }
+  | {
+      /**
+       * One line with Try again beside it, for a failure inside a list or a
+       * form, such as a "Load more" page or an expanded row.
+       */
+      size: 'inline';
+      description?: never;
+    }
+);
 
 /**
  * Takes the place of a section whose data failed to load, so the failure
@@ -17,11 +35,69 @@ type SectionErrorProps = {
  */
 export default function SectionError({
   title,
-  description = 'This is temporarily unavailable. Try the request again.',
+  description: descriptionProp,
   onRetry,
   retrying = false,
   className,
+  size = 'regular',
 }: SectionErrorProps) {
+  if (size === 'inline') {
+    return (
+      <div
+        role="alert"
+        data-size="inline"
+        className={cn(
+          'flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-foreground',
+          className
+        )}
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <AlertCircle
+            className="size-4 shrink-0 text-destructive"
+            aria-hidden="true"
+          />
+          {title}
+        </span>
+        <RetryButton size="sm" retrying={retrying} onRetry={onRetry} />
+      </div>
+    );
+  }
+
+  if (size === 'compact') {
+    const layout = STATE_LAYOUT.compact;
+    const tone = STATE_TONE.destructive;
+
+    return (
+      <div
+        role="alert"
+        data-size="compact"
+        className={cn(layout.root, className)}
+      >
+        <span className={cn(layout.badge, tone.badge)}>
+          <AlertCircle
+            className={cn(layout.icon, tone.icon)}
+            aria-hidden="true"
+          />
+        </span>
+        <p className={layout.title}>{title}</p>
+        {descriptionProp ? (
+          <p className={layout.description}>{descriptionProp}</p>
+        ) : null}
+        <div className={layout.actions}>
+          <RetryButton
+            size={layout.buttonSize}
+            retrying={retrying}
+            onRetry={onRetry}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const description =
+    descriptionProp ??
+    'This is temporarily unavailable. Try the request again.';
+
   return (
     <div
       role="alert"
@@ -51,5 +127,31 @@ export default function SectionError({
         Try again
       </Button>
     </div>
+  );
+}
+
+function RetryButton({
+  size,
+  retrying,
+  onRetry,
+}: {
+  size: 'default' | 'sm';
+  retrying: boolean;
+  onRetry: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size={size}
+      disabled={retrying}
+      onClick={onRetry}
+    >
+      <RefreshCw
+        className={cn(retrying && 'animate-spin')}
+        aria-hidden="true"
+      />
+      Try again
+    </Button>
   );
 }

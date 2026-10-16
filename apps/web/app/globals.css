@@ -6,7 +6,11 @@
 @import 'tailwindcss';
 @plugin 'tailwindcss-animate';
 
-@custom-variant dark (&:is(.dark *));
+/*
+ * `.theme-light` forces the light theme on a subtree inside a dark page. Only
+ * the admin design gallery uses it, to show light and dark side by side.
+ */
+@custom-variant dark (&:is(.dark *):not(.theme-light *));
 
 @layer base {
   body {
@@ -18,6 +22,10 @@
 @layer utilities {
   .dark {
     color-scheme: dark;
+  }
+
+  .theme-light {
+    color-scheme: light;
   }
 }
 
@@ -45,6 +53,7 @@
   --color-border: var(--border);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-solid: var(--destructive-solid);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -89,6 +98,47 @@
   --shadow-blur: var(--shadow-blur);
   --shadow-opacity: var(--shadow-opacity);
   --color-shadow-color: var(--shadow-color);
+
+  /* Component library tokens. Values live in :root and .dark below; the
+     web-design skill's color reference says when to use each. */
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+  --color-series-6: var(--series-6);
+  --color-series-7: var(--series-7);
+  --color-series-8: var(--series-8);
+  --color-series-other: var(--series-other);
+  --color-verification-verified: var(--verification-verified);
+  --color-verification-rejected: var(--verification-rejected);
+  --color-verification-neutral: var(--verification-neutral);
+  --color-callout-info: var(--callout-info);
+  --color-callout-info-border: var(--callout-info-border);
+  --color-callout-info-foreground: var(--callout-info-foreground);
+  --color-callout-warning: var(--callout-warning);
+  --color-callout-warning-border: var(--callout-warning-border);
+  --color-callout-warning-foreground: var(--callout-warning-foreground);
+  --color-callout-danger: var(--callout-danger);
+  --color-callout-danger-border: var(--callout-danger-border);
+  --color-callout-danger-foreground: var(--callout-danger-foreground);
+  --color-match-red: var(--match-red);
+  --color-match-red-foreground: var(--match-red-foreground);
+  --color-match-blue: var(--match-blue);
+  --color-match-blue-foreground: var(--match-blue-foreground);
+  --color-match-no-team: var(--match-no-team);
+  --color-game-frame: var(--game-frame);
+  --color-score-card: var(--score-card);
+  --color-notification: var(--notification);
+  --color-tier-elite-grandmaster: var(--tier-elite-grandmaster);
+  --color-tier-grandmaster: var(--tier-grandmaster);
+  --color-tier-master: var(--tier-master);
+  --color-tier-diamond: var(--tier-diamond);
+  --color-tier-emerald: var(--tier-emerald);
+  --color-tier-platinum: var(--tier-platinum);
+  --color-tier-gold: var(--tier-gold);
+  --color-tier-silver: var(--tier-silver);
+  --color-tier-bronze: var(--tier-bronze);
 }
 
 @theme {
@@ -104,7 +154,8 @@
   --color-status-verified: var(--color-green-400);
 }
 
-:root {
+:root,
+.theme-light {
   --background: oklch(0.99 0 0);
   --foreground: oklch(0 0 0);
   --muted: oklch(0.96 0 0);
@@ -123,6 +174,8 @@
   --secondary-foreground: oklch(0 0 0);
 
   --destructive: var(--color-red-600);
+  /* Solid fill behind white text, such as the final destructive confirm. */
+  --destructive-solid: var(--color-red-600);
   --destructive-foreground: var(--color-red-800);
 
   --warning: var(--color-warning);
@@ -274,6 +327,103 @@
   --grade-b: oklch(0.45 0 0);
   --grade-c: oklch(0.6 0 0);
   --grade-d: oklch(0.75 0 0);
+
+  /* Repeats the @theme status values so a light subtree inside a dark page
+     (the design gallery) gets the light ones. Same values as @theme. */
+  --color-success: var(--color-green-600);
+  --color-success-foreground: var(--color-green-800);
+  --color-warning: var(--color-amber-600);
+  --color-warning-foreground: var(--color-amber-800);
+
+  /*
+   * Component library tokens (apps/web/lib/kit/color mirrors every value and
+   * its tests check them). Marks and icons clear 3:1 and text clears 4.5:1
+   * against the card and muted surfaces of their theme.
+   */
+
+  /* Categorical chart palette: neutral series, rank ranges and teams, in
+     this fixed order. Never cycle it; a ninth series folds into "other". */
+  --series-1: #4589f2;
+  --series-2: #e6632f;
+  --series-3: #049e6d;
+  --series-4: #bd7f03;
+  --series-5: #d36992;
+  --series-6: #008300;
+  --series-7: #4a3aa7;
+  --series-8: #e34948;
+  --series-other: #7a7a7a;
+
+  /* Verification status, for icons, badges and chart fills. Icons take the
+     outcome's hue (Pre-verified green, Pre-rejected red, with a dashed
+     outline); neutral is Pending's icon and the "Not in ratings yet" chart bar. */
+  --verification-verified: #25984d;
+  --verification-rejected: #d73431;
+  --verification-neutral: #7a7a7a;
+
+  /* Callout tones: fill, border, and text plus icon. */
+  --callout-info: #f0f6fc;
+  --callout-info-border: #c9daeb;
+  --callout-info-foreground: #314968;
+  --callout-warning: #fff6e1;
+  --callout-warning-border: #ebc573;
+  --callout-warning-foreground: #864900;
+  --callout-danger: #fff1f1;
+  --callout-danger-border: #f9bcb9;
+  --callout-danger-foreground: #b7191c;
+
+  /* Match teams: the categorical red and blue, text steps, and no team. */
+  --match-red: #e34948;
+  --match-red-foreground: #cc3135;
+  --match-blue: #4589f2;
+  --match-blue-foreground: #276bd1;
+  --match-no-team: #747474;
+
+  /* Match page surfaces: a recessed game frame holding lighter score cards. */
+  --game-frame: #f4f4f4;
+  --score-card: #ffffff;
+
+  /* The one notification dot colour. */
+  --notification: #4589f2;
+
+  /* Tier text. */
+  --tier-elite-grandmaster: #256acf;
+  --tier-grandmaster: #d81821;
+  --tier-master: #8b44e5;
+  --tier-diamond: #9c43c7;
+  --tier-emerald: #027f3d;
+  --tier-platinum: #0d7699;
+  --tier-gold: #896904;
+  --tier-silver: #6d6d6d;
+  --tier-bronze: #aa5800;
+
+  /* Score grade marks. SS, S and A keep the osu! badge hues; B to D are a
+     grey ramp that recedes toward the card in both themes. */
+  --score-grade-ss: #de31ae;
+  --score-grade-s: #0c98a4;
+  --score-grade-a: #5d9a03;
+  --score-grade-b: #3d3d3d;
+  --score-grade-c: #5b5b5b;
+  --score-grade-d: #7a7a7a;
+
+  /* Mod marks. Every value takes black text on a solid fill. */
+  --mod-nm: #0b8d9e;
+  --mod-hd: #948000;
+  --mod-hr: #d9524f;
+  --mod-dt: #876fd5;
+  --mod-ht: #0b9360;
+  --mod-ez: #628d00;
+  --mod-fl: #6076b5;
+  --mod-hdhr: #d1528c;
+  --mod-ezhd: #bd6c00;
+  --mod-ezdt: #2b89c0;
+  --mod-hdfl: #957164;
+  --mod-hddt: #af63ba;
+  --mod-sd: #d75a21;
+  --mod-td: #9d8757;
+  --mod-rx: #279785;
+  --mod-mr: #9181b0;
+  --mod-rd: #469b4c;
+  --mod-key: #5f8fa3;
 }
 
 .dark {
@@ -290,6 +440,8 @@
   --color-warning-foreground: var(--color-yellow-400);
 
   --destructive: var(--color-red-500);
+  /* Red-500 under white text is about 3.8:1; red-600 clears 4.5:1. */
+  --destructive-solid: var(--color-red-600);
   --destructive-foreground: var(--color-red-500);
 
   --warning: var(--color-warning);
@@ -353,6 +505,78 @@
   --shadow-xl:
     0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 8px 10px -1px hsl(0 0% 0% / 0.18);
   --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
+
+  /* Component library tokens, dark values. */
+  --series-1: #4e93fc;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+  --series-other: #929292;
+
+  --verification-verified: #47c86e;
+  --verification-rejected: #f66d67;
+  --verification-neutral: #929292;
+
+  --callout-info: #1b2026;
+  --callout-info-border: #344458;
+  --callout-info-foreground: #bcd3f2;
+  --callout-warning: #2b1f0d;
+  --callout-warning-border: #724d0b;
+  --callout-warning-foreground: #f8cf68;
+  --callout-danger: #301717;
+  --callout-danger-border: #893130;
+  --callout-danger-foreground: #ff9e9b;
+
+  --match-red: #e66767;
+  --match-red-foreground: #f17070;
+  --match-blue: #4e93fc;
+  --match-blue-foreground: #579dff;
+  --match-no-team: #9e9e9e;
+
+  --game-frame: #141414;
+  --score-card: #242424;
+
+  --notification: #4e93fc;
+
+  --tier-elite-grandmaster: #4e93fc;
+  --tier-grandmaster: #f9433e;
+  --tier-master: #a467ff;
+  --tier-diamond: #b961e5;
+  --tier-emerald: #2dd26f;
+  --tier-platinum: #3691b5;
+  --tier-gold: #ddb246;
+  --tier-silver: #b3b3b3;
+  --tier-bronze: #c8732d;
+
+  --score-grade-ss: #de31ae;
+  --score-grade-s: #02b5c3;
+  --score-grade-a: #88da20;
+  --score-grade-b: #d7d7d7;
+  --score-grade-c: #ababab;
+  --score-grade-d: #808080;
+
+  --mod-nm: #4cb8c9;
+  --mod-hd: #c1aa2a;
+  --mod-hr: #ff8780;
+  --mod-dt: #b09bff;
+  --mod-ht: #4cbd88;
+  --mod-ez: #87b930;
+  --mod-fl: #758ccc;
+  --mod-hdhr: #ff80b5;
+  --mod-ezhd: #ef9437;
+  --mod-ezdt: #68c1fb;
+  --mod-hdfl: #ae887b;
+  --mod-hddt: #db8de8;
+  --mod-sd: #fd7d48;
+  --mod-td: #d9c190;
+  --mod-rx: #70d6c2;
+  --mod-mr: #d4c3f5;
+  --mod-rd: #82d785;
+  --mod-key: #a1d3e8;
 }
 
 @layer base {
