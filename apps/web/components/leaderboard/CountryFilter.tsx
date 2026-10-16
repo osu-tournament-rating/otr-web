@@ -2,24 +2,36 @@
 
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+
+import { Button } from '@/components/kit/controls/Button';
+import CountryFlag from '@/components/shared/CountryFlag';
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-} from '../ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Button } from '../ui/button';
-import CountryFlag from '../shared/CountryFlag';
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+
+import type { CountryOption } from './countries';
 
 interface CountrySearchSelectProps {
   value: string;
   onValueChange: (value: string) => void;
-  countries: { code: string; name: string }[];
+  countries: readonly CountryOption[];
 }
 
+/**
+ * A searchable list of countries for the leaderboard's country filter. The
+ * button names the chosen country; its filter field names the group.
+ * Choosing the selected country again clears it.
+ */
 export function CountrySearchSelect({
   value,
   onValueChange,
@@ -29,16 +41,17 @@ export function CountrySearchSelect({
   const [searchValue, setSearchValue] = useState('');
 
   const selectedCountry = countries.find((country) => country.code === value);
+  const term = searchValue.toLowerCase();
   const filteredCountries = countries.filter(
     (country) =>
-      country.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-      country.code.toLowerCase().includes(searchValue.toLowerCase())
+      country.name.toLowerCase().includes(term) ||
+      country.code.toLowerCase().includes(term)
   );
 
   const sortedCountries = [...filteredCountries].sort((a, b) => {
     if (a.code === value) return -1;
     if (b.code === value) return 1;
-    return a.name.localeCompare(b.name);
+    return a.name.localeCompare(b.name, 'en');
   });
 
   return (
@@ -47,33 +60,36 @@ export function CountrySearchSelect({
         <Button
           data-testid="leaderboard-filter-country-button"
           variant="outline"
-          role="combobox"
+          size="sm"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="w-full justify-between font-normal"
         >
           {selectedCountry ? (
-            <div className="flex items-center gap-2">
-              <CountryFlag country={selectedCountry.code} />
+            <span className="flex min-w-0 items-center gap-2">
+              <CountryFlag country={selectedCountry.code} showTooltip={false} />
               <span className="truncate">{selectedCountry.name}</span>
-            </div>
+            </span>
           ) : (
-            <span className="text-muted-foreground">Select country...</span>
+            <span className="text-muted-foreground">Any country</span>
           )}
-          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronDown
+            className="ml-2 size-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="p-0" align="start">
-        <Command>
-          <div className="flex items-center border-b px-3">
-            <CommandInput
-              placeholder="Search countries..."
-              value={searchValue}
-              onValueChange={setSearchValue}
-              className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div>
+      <PopoverContent
+        className="w-(--radix-popover-trigger-width) min-w-64 p-0"
+        align="start"
+      >
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search countries"
+            value={searchValue}
+            onValueChange={setSearchValue}
+          />
           <CommandEmpty>No country found.</CommandEmpty>
-          <CommandGroup className="relative max-h-[200px] overflow-auto">
+          <CommandGroup className="max-h-56 overflow-auto">
             {sortedCountries.map((country) => (
               <CommandItem
                 key={country.code}
@@ -85,11 +101,10 @@ export function CountrySearchSelect({
                 }}
                 className={cn(
                   'flex cursor-pointer items-center gap-2',
-                  country.code === value &&
-                    'bg-accent text-accent-foreground opacity-100'
+                  country.code === value && 'bg-accent text-accent-foreground'
                 )}
               >
-                <CountryFlag country={country.code} />
+                <CountryFlag country={country.code} showTooltip={false} />
                 <span className="truncate">{country.name}</span>
                 <span className="ml-auto text-xs text-muted-foreground">
                   {country.code}

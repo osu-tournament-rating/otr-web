@@ -1,44 +1,61 @@
 import { Trophy } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import {
+  PhoneRowListSkeleton,
+  SkeletonText,
+  TableSkeleton,
+} from '@/components/kit/feedback/Skeletons';
+import { PageFrame } from '@/components/kit/layout/PageFrame';
+import { PageHeader } from '@/components/kit/layout/PageHeader';
+import { Panel } from '@/components/kit/layout/Panel';
+import { ListToolbar } from '@/components/kit/lists/ListToolbar';
+
+/** The loaded table's columns, so the header strip doesn't shift. */
+const COLUMNS = [
+  { label: 'Rank', width: 'w-20' },
+  { label: 'Player' },
+  { label: 'Tier', width: 'w-16 lg:w-44' },
+  { label: 'Rating', width: 'w-24', align: 'end' },
+  { label: 'Tournaments', width: 'w-28', align: 'end' },
+  { label: 'Matches', width: 'w-24', align: 'end' },
+  { label: 'Win rate', width: 'w-24', align: 'end' },
+] as const;
 
 export default function LeaderboardLoading() {
   return (
-    <div className="container mx-auto flex flex-col gap-4 md:gap-2">
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex flex-row items-center justify-between">
-            <div className="flex flex-row items-center gap-2">
-              <Trophy className="h-6 w-6 text-primary" aria-hidden="true" />
-              <CardTitle className="text-xl font-bold">
-                Global Leaderboard
-              </CardTitle>
-            </div>
-            <Skeleton className="h-9 w-24" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div
-            role="status"
-            aria-label="Loading leaderboard"
-            className="divide-y overflow-hidden rounded-lg border"
-          >
-            <Skeleton className="h-10 w-full rounded-none" />
-            {Array.from({ length: 20 }, (_, index) => (
-              <div key={index} className="flex h-14 items-center gap-4 px-4">
-                <Skeleton className="h-4 w-8" />
-                <Skeleton className="h-4 w-10" />
-                <Skeleton className="size-8 rounded-full" />
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="ml-auto h-4 w-12" />
-                <Skeleton className="hidden h-4 w-12 sm:block" />
-                <Skeleton className="hidden h-4 w-12 md:block" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <PageFrame>
+      <PageHeader
+        icon={Trophy}
+        title="Leaderboard"
+        description="Players ranked by tournament rating."
+      />
+      <Panel as="div" role="status" aria-label="Loading leaderboard">
+        <ListToolbar
+          label="Search and filter players"
+          aria-hidden="true"
+          search={<SkeletonText className="block h-10 w-full" />}
+          sort={
+            <span className="flex gap-2">
+              <SkeletonText className="block h-10 flex-1 md:w-48 md:flex-none" />
+              <SkeletonText className="block size-10" />
+            </span>
+          }
+          filters={<SkeletonText className="block h-10 w-24" />}
+          rulesets={
+            <span className="flex flex-wrap gap-1.5">
+              {Array.from({ length: 5 }, (_, index) => (
+                <SkeletonText key={index} className="block h-8 w-20" />
+              ))}
+            </span>
+          }
+          count={<SkeletonText className="h-3 w-20" />}
+        />
+        <TableSkeleton
+          columns={COLUMNS}
+          rows={20}
+          phoneRows={<PhoneRowListSkeleton rows={12} rank avatar />}
+        />
+      </Panel>
+    </PageFrame>
   );
 }

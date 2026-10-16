@@ -1,24 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { useCallback, useEffect, useId, useState } from 'react';
+
+import { Button } from '@/components/kit/controls/Button';
+import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
 
 const STORAGE_KEY = 'otr-leaderboard-first-visit-dismissed';
 
+/** Explains what ratings measure, once per browser. */
 export default function LeaderboardFirstVisitDialog() {
   const [isOpen, setIsOpen] = useState(false);
+  const bodyId = useId();
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
     try {
       if (!localStorage.getItem(STORAGE_KEY)) {
         setIsOpen(true);
@@ -40,28 +34,22 @@ export default function LeaderboardFirstVisitDialog() {
   }, []);
 
   return (
-    <Dialog
+    <DialogTemplate
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) {
           handleDismiss();
         }
       }}
+      title="Welcome to the o!TR leaderboard"
+      size="sm"
+      aria-describedby={bodyId}
+      footer={<Button onClick={handleDismiss}>I understand</Button>}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="pr-8">
-            Welcome to the o!TR Leaderboard
-          </DialogTitle>
-          <DialogDescription>
-            Ratings measure tournament match performance, not skill, so players
-            may place higher or lower than you expect.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button onClick={handleDismiss}>I understand</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <p id={bodyId} className="text-sm">
+        Ratings measure tournament match performance, not skill, so players may
+        place higher or lower than you expect.
+      </p>
+    </DialogTemplate>
   );
 }

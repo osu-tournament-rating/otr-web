@@ -1,5 +1,32 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { ROUTES, Ruleset } from './fixtures/test-config';
+
+/** Opens the filter panel and returns it. */
+async function openFilters(page: Page) {
+  const panel = page.getByRole('dialog', { name: 'Filter players' });
+  if (!(await panel.isVisible())) {
+    await page.getByRole('button', { name: /^Filters/ }).click();
+  }
+  await expect(panel).toBeVisible({ timeout: 10000 });
+  return panel;
+}
+
+async function chooseCountry(page: Page) {
+  await page
+    .locator('[data-testid="leaderboard-filter-country-button"]')
+    .click();
+
+  const countrySearch = page.getByPlaceholder('Search countries');
+  await expect(countrySearch).toBeVisible({ timeout: 10000 });
+  await countrySearch.fill('United States');
+
+  // Anchor on the country code so "United States Minor Outlying Islands" can't match
+  const option = page.getByRole('option', {
+    name: /United States of America US$/,
+  });
+  await expect(option).toBeVisible({ timeout: 10000 });
+  await option.click();
+}
 
 test.describe('Leaderboard Page', () => {
   // Pre-set the flag so the blocking first-visit dialog never opens
@@ -22,6 +49,9 @@ test.describe('Leaderboard Page', () => {
 
       const title = page.locator('[data-testid="leaderboard-title"]');
       await expect(title).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.getByRole('heading', { level: 1, name: 'Leaderboard' })
+      ).toBeVisible();
     });
 
     test('displays the rankings table', async ({ page }) => {
@@ -52,18 +82,23 @@ test.describe('Leaderboard Page', () => {
       const table = page.locator('[data-testid="leaderboard-table"]');
       await expect(table).toBeVisible({ timeout: 10000 });
 
-      await expect(
-        table.getByRole('columnheader', { name: 'Rank' })
-      ).toBeVisible({ timeout: 10000 });
-      await expect(
-        table.getByRole('columnheader', { name: 'Player' })
-      ).toBeVisible({ timeout: 10000 });
-      await expect(
-        table.getByRole('columnheader', { name: 'Tier' })
-      ).toBeVisible({ timeout: 10000 });
-      await expect(
-        table.getByRole('columnheader', { name: 'Rating' })
-      ).toBeVisible({ timeout: 10000 });
+      for (const name of ['Rank', 'Player', 'Tier', 'Rating', 'Win rate']) {
+        await expect(table.getByRole('columnheader', { name })).toBeVisible({
+          timeout: 10000,
+        });
+      }
+    });
+
+    test('ranks read as #1,234', async ({ page }) => {
+      await page.goto(ROUTES.leaderboard);
+      await page.waitForLoadState('networkidle');
+
+      const firstRank = page
+        .locator('[data-testid^="leaderboard-row-"]')
+        .first()
+        .getByRole('cell')
+        .first();
+      await expect(firstRank).toHaveText(/^#[\d,]+$/);
     });
 
     test('page title contains expected text', async ({ page }) => {
@@ -75,47 +110,73 @@ test.describe('Leaderboard Page', () => {
     });
   });
 
-  test.describe('Filters', () => {
-    // A taller viewport keeps the popover's clear button clickable
-    test.use({ viewport: { width: 1280, height: 1080 } });
+  test.describe('Search and sort', () => {
+    test('player search updates the URL', async ({ page }) => {
+      await page.goto(ROUTES.leaderboard);
+      await page.waitForLoadState('networkidle');
 
-    test('opens the filter popover from the trigger button', async ({
+      const search = page.getByRole('searchbox', { name: 'Search players' });
+      await search.fill('mr');
+      await search.press('Enter');
+
+      await page.waitForURL(/q=mr/, { timeout: 10000 });
+      await page.waitForLoadState('networkidle');
+      await expect(search).toHaveValue('mr');
+    });
+
+    test('loads a search from the header search "See all" link', async ({
+      page,
+    }) => {
+      await page.goto(`${ROUTES.leaderboard}?q=mr`);
+      await page.waitForLoadState('networkidle');
+
+      await expect(
+        page.getByRole('searchbox', { name: 'Search players' })
+      ).toHaveValue('mr');
+    });
+
+    test('a sortable header sorts the list and the toolbar agrees', async ({
       page,
     }) => {
       await page.goto(ROUTES.leaderboard);
       await page.waitForLoadState('networkidle');
 
-      const filterButton = page.locator(
-        '[data-testid="leaderboard-filter-button"]'
-      );
-      await expect(filterButton).toBeVisible({ timeout: 10000 });
-      await filterButton.click();
+      const table = page.locator('[data-testid="leaderboard-table"]');
+      await table
+        .getByRole('columnheader', { name: 'Matches' })
+        .getByRole('link')
+        .click();
 
-      const popover = page.locator(
-        '[data-testid="leaderboard-filter-popover"]'
-      );
-      await expect(popover).toBeVisible({ timeout: 10000 });
-
-      const rulesetGroup = page.locator(
-        '[data-testid="leaderboard-filter-ruleset-group"]'
-      );
-      await expect(rulesetGroup).toBeVisible({ timeout: 10000 });
+      await page.waitForURL(/sort=matches/, { timeout: 10000 });
+      await page.waitForLoadState('networkidle');
+      await expect(
+        table.getByRole('columnheader', { name: 'Matches' })
+      ).toHaveAttribute('aria-sort', 'descending');
+      await expect(page.getByLabel('Sort players by')).toContainText('Matches');
     });
+  });
 
-    test('ruleset filter updates URL and rankings', async ({ page }) => {
+  test.describe('Filters', () => {
+    // A taller viewport keeps the whole filter panel on screen
+    test.use({ viewport: { width: 1280, height: 1080 } });
+
+    test('opens the filter panel from the Filters button', async ({ page }) => {
       await page.goto(ROUTES.leaderboard);
       await page.waitForLoadState('networkidle');
 
-      await page.locator('[data-testid="leaderboard-filter-button"]').click();
-      await expect(
-        page.locator('[data-testid="leaderboard-filter-popover"]')
-      ).toBeVisible({ timeout: 10000 });
+      const panel = await openFilters(page);
+      for (const label of ['Rating', 'osu! rank', 'Matches', 'Tiers']) {
+        await expect(panel.getByRole('group', { name: label })).toBeVisible();
+      }
+    });
 
-      const taikoRuleset = page.locator(
-        `[data-testid="leaderboard-filter-ruleset-${Ruleset.Taiko}"]`
-      );
-      await expect(taikoRuleset).toBeVisible({ timeout: 10000 });
-      await taikoRuleset.click();
+    test('ruleset switch updates URL and rankings', async ({ page }) => {
+      await page.goto(ROUTES.leaderboard);
+      await page.waitForLoadState('networkidle');
+
+      const taiko = page.getByRole('radio', { name: 'taiko' });
+      await expect(taiko).toBeVisible({ timeout: 10000 });
+      await taiko.click();
 
       await page.waitForURL(/ruleset=1/, { timeout: 10000 });
       expect(page.url()).toContain('ruleset=1');
@@ -132,27 +193,8 @@ test.describe('Leaderboard Page', () => {
       await page.goto(ROUTES.leaderboard);
       await page.waitForLoadState('networkidle');
 
-      await page.locator('[data-testid="leaderboard-filter-button"]').click();
-      await expect(
-        page.locator('[data-testid="leaderboard-filter-popover"]')
-      ).toBeVisible({ timeout: 10000 });
-
-      const countryButton = page.locator(
-        '[data-testid="leaderboard-filter-country-button"]'
-      );
-      await expect(countryButton).toBeVisible({ timeout: 10000 });
-      await countryButton.click();
-
-      const countrySearch = page.getByPlaceholder('Search countries...');
-      await expect(countrySearch).toBeVisible({ timeout: 10000 });
-      await countrySearch.fill('United States');
-
-      // Anchor on the country code so "United States Minor Outlying Islands" can't match
-      const option = page.getByRole('option', {
-        name: /United States of America US$/,
-      });
-      await expect(option).toBeVisible({ timeout: 10000 });
-      await option.click();
+      await openFilters(page);
+      await chooseCountry(page);
 
       await page.waitForURL(/country=US/, { timeout: 10000 });
       expect(page.url()).toContain('country=US');
@@ -161,32 +203,30 @@ test.describe('Leaderboard Page', () => {
       await expect(
         page.locator('[data-testid="leaderboard-table"]')
       ).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.getByRole('button', {
+          name: 'Remove Country: United States of America filter',
+        })
+      ).toBeVisible();
     });
 
     test('tier filter narrows results to a selected tier', async ({ page }) => {
       await page.goto(ROUTES.leaderboard);
       await page.waitForLoadState('networkidle');
 
-      await page.locator('[data-testid="leaderboard-filter-button"]').click();
-      await expect(
-        page.locator('[data-testid="leaderboard-filter-popover"]')
-      ).toBeVisible({ timeout: 10000 });
+      const panel = await openFilters(page);
+      await panel.getByRole('button', { name: 'Gold', exact: true }).click();
 
-      const tiers = page.locator('[data-testid="leaderboard-filter-tiers"]');
-      await expect(tiers).toBeVisible({ timeout: 10000 });
-      await tiers.click();
-
-      const goldOption = page.getByRole('option', { name: /Gold/i });
-      await expect(goldOption.first()).toBeVisible({ timeout: 10000 });
-      await goldOption.first().click();
-
-      await page.waitForURL(/tiers/, { timeout: 10000 });
-      expect(page.url()).toContain('tiers');
+      await page.waitForURL(/tiers=gold/, { timeout: 10000 });
+      expect(page.url()).toContain('tiers=gold');
 
       await page.waitForLoadState('networkidle');
       await expect(
         page.locator('[data-testid="leaderboard-table"]')
       ).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.getByRole('button', { name: /^Filters, 1 active$/ })
+      ).toBeVisible();
     });
 
     test('combining ruleset and country filters works together', async ({
@@ -195,35 +235,12 @@ test.describe('Leaderboard Page', () => {
       await page.goto(ROUTES.leaderboard);
       await page.waitForLoadState('networkidle');
 
-      await page.locator('[data-testid="leaderboard-filter-button"]').click();
-      await expect(
-        page.locator('[data-testid="leaderboard-filter-popover"]')
-      ).toBeVisible({ timeout: 10000 });
-      await page
-        .locator(`[data-testid="leaderboard-filter-ruleset-${Ruleset.Taiko}"]`)
-        .click();
+      await page.getByRole('radio', { name: 'taiko' }).click();
       await page.waitForURL(/ruleset=1/, { timeout: 10000 });
       await page.waitForLoadState('networkidle');
 
-      // Clicking the trigger while the popover is still open would toggle it shut
-      const popover = page.locator(
-        '[data-testid="leaderboard-filter-popover"]'
-      );
-      if (!(await popover.isVisible())) {
-        await page.locator('[data-testid="leaderboard-filter-button"]').click();
-      }
-      await expect(popover).toBeVisible({ timeout: 10000 });
-      await page
-        .locator('[data-testid="leaderboard-filter-country-button"]')
-        .click();
-      const countrySearch = page.getByPlaceholder('Search countries...');
-      await expect(countrySearch).toBeVisible({ timeout: 10000 });
-      await countrySearch.fill('United States');
-      const option = page.getByRole('option', {
-        name: /United States of America US$/,
-      });
-      await expect(option).toBeVisible({ timeout: 10000 });
-      await option.click();
+      await openFilters(page);
+      await chooseCountry(page);
 
       await page.waitForURL(/country=US/, { timeout: 10000 });
       expect(page.url()).toContain('ruleset=1');
@@ -235,25 +252,37 @@ test.describe('Leaderboard Page', () => {
       ).toBeVisible({ timeout: 10000 });
     });
 
-    test('clear filters button resets to the base leaderboard URL', async ({
+    test('clear all resets the filters to the base leaderboard URL', async ({
       page,
     }) => {
       await page.goto(`${ROUTES.leaderboard}?country=US`);
       await page.waitForLoadState('networkidle');
 
-      await page.locator('[data-testid="leaderboard-filter-button"]').click();
-      await expect(
-        page.locator('[data-testid="leaderboard-filter-popover"]')
-      ).toBeVisible({ timeout: 10000 });
-
-      const clearButton = page.locator(
-        '[data-testid="leaderboard-filter-clear-button"]'
-      );
-      await expect(clearButton).toBeVisible({ timeout: 10000 });
-      await clearButton.click();
+      const panel = await openFilters(page);
+      await panel.getByRole('button', { name: 'Clear all' }).click();
 
       await page.waitForURL(/\/leaderboard$/, { timeout: 10000 });
       expect(page.url()).not.toContain('country=');
+    });
+
+    test('clear all keeps the search, sort and ruleset', async ({ page }) => {
+      await page.goto(
+        `${ROUTES.leaderboard}?q=mr&sort=matches&ruleset=${Ruleset.Taiko}&tiers=gold`
+      );
+      await page.waitForLoadState('networkidle');
+
+      await page
+        .getByRole('group', { name: 'Active filters' })
+        .getByRole('button', { name: 'Clear all' })
+        .click();
+
+      await page.waitForURL((url) => !url.searchParams.has('tiers'), {
+        timeout: 10000,
+      });
+      const params = new URL(page.url()).searchParams;
+      expect(params.get('q')).toBe('mr');
+      expect(params.get('sort')).toBe('matches');
+      expect(params.get('ruleset')).toBe(String(Ruleset.Taiko));
     });
   });
 
@@ -268,6 +297,7 @@ test.describe('Leaderboard Page', () => {
       await expect(
         page.locator('[data-testid="leaderboard-table"]')
       ).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('radio', { name: 'taiko' })).toBeChecked();
 
       const rows = page.locator('[data-testid^="leaderboard-row-"]');
       await expect(rows.first()).toBeVisible({ timeout: 10000 });
@@ -296,6 +326,14 @@ test.describe('Leaderboard Page', () => {
         page.locator('[data-testid="leaderboard-table"]')
       ).toBeVisible({ timeout: 10000 });
     });
+
+    test('a page past the end goes to the last page', async ({ page }) => {
+      await page.goto(`${ROUTES.leaderboard}?country=US&page=100000`);
+      await page.waitForLoadState('networkidle');
+
+      const pageParam = new URL(page.url()).searchParams.get('page');
+      expect(Number(pageParam ?? '1')).toBeLessThan(100000);
+    });
   });
 
   test.describe('Pagination', () => {
@@ -307,10 +345,10 @@ test.describe('Leaderboard Page', () => {
       await expect(pagination).toBeVisible({ timeout: 10000 });
 
       await expect(
-        page.locator('[data-testid="leaderboard-pagination-prev"]')
+        pagination.getByRole('link', { name: 'Previous page' })
       ).toBeVisible({ timeout: 10000 });
       await expect(
-        page.locator('[data-testid="leaderboard-pagination-next"]')
+        pagination.getByRole('link', { name: 'Next page' })
       ).toBeVisible({ timeout: 10000 });
     });
 
@@ -325,9 +363,9 @@ test.describe('Leaderboard Page', () => {
         .first()
         .getAttribute('data-testid');
 
-      const nextButton = page.locator(
-        '[data-testid="leaderboard-pagination-next"]'
-      );
+      const nextButton = page
+        .locator('[data-testid="leaderboard-pagination"]')
+        .getByRole('link', { name: 'Next page' });
       await expect(nextButton).toBeVisible({ timeout: 10000 });
       await nextButton.click();
 
@@ -351,9 +389,9 @@ test.describe('Leaderboard Page', () => {
       await page.waitForLoadState('networkidle');
       expect(page.url()).toContain('page=2');
 
-      const prevButton = page.locator(
-        '[data-testid="leaderboard-pagination-prev"]'
-      );
+      const prevButton = page
+        .locator('[data-testid="leaderboard-pagination"]')
+        .getByRole('link', { name: 'Previous page' });
       await expect(prevButton).toBeVisible({ timeout: 10000 });
       await prevButton.click();
 
@@ -374,9 +412,9 @@ test.describe('Leaderboard Page', () => {
       await page.goto(ROUTES.leaderboard);
       await page.waitForLoadState('networkidle');
 
-      const pageTwo = page.locator(
-        '[data-testid="leaderboard-pagination-page-2"]'
-      );
+      const pageTwo = page
+        .locator('[data-testid="leaderboard-pagination"]')
+        .getByRole('link', { name: 'Page 2', exact: true });
       await expect(pageTwo).toBeVisible({ timeout: 10000 });
       await pageTwo.click();
 
@@ -411,7 +449,7 @@ test.describe('Leaderboard Page', () => {
       expect(page.url()).toMatch(/\/players\/\d+/);
     });
 
-    test('a country cell link navigates to a filtered country leaderboard', async ({
+    test('a country link navigates to a filtered country leaderboard', async ({
       page,
     }) => {
       await page.goto(ROUTES.leaderboard);
@@ -420,7 +458,7 @@ test.describe('Leaderboard Page', () => {
       const countryLink = page
         .locator('[data-testid^="leaderboard-row-"]')
         .first()
-        .locator('a[href*="/leaderboard?country="]');
+        .locator('a[href*="country="]');
       await expect(countryLink).toBeVisible({ timeout: 10000 });
 
       const href = await countryLink.getAttribute('href');
@@ -429,6 +467,73 @@ test.describe('Leaderboard Page', () => {
       await countryLink.click();
       await page.waitForURL(/country=/, { timeout: 10000 });
       expect(page.url()).toContain('country=');
+    });
+
+    test('the country link names its country on keyboard focus', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.leaderboard);
+      await page.waitForLoadState('networkidle');
+
+      const row = page.locator('[data-testid^="leaderboard-row-"]').first();
+      await row.locator('a[href*="/players/"]').focus();
+      await page.keyboard.press('Tab');
+
+      const countryLink = row.locator('a[href*="country="]');
+      await expect(countryLink).toBeFocused();
+      const name = await countryLink.getAttribute('aria-label');
+      const country = name?.replace(/^#[\d,]+ in /, '');
+      expect(country).toBeTruthy();
+      await expect(page.getByRole('tooltip')).toHaveText(country!);
+    });
+  });
+
+  test.describe('Phones', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('shows rows instead of the table, with nothing scrolling sideways', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.leaderboard);
+      await page.waitForLoadState('networkidle');
+
+      await expect(
+        page.locator('[data-testid^="leaderboard-phone-row-"]').first()
+      ).toBeVisible({ timeout: 10000 });
+      await expect(
+        page.locator('[data-testid="leaderboard-table"]')
+      ).toBeHidden();
+      await expect(
+        page.getByRole('button', { name: /^Filters/ })
+      ).toBeInViewport();
+
+      const hasPageOverflow = await page.evaluate(
+        () =>
+          document.documentElement.scrollWidth >
+          document.documentElement.clientWidth
+      );
+      expect(hasPageOverflow).toBe(false);
+    });
+
+    test('rows name the win rate, or the count the list is sorted by', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.leaderboard);
+      await page.waitForLoadState('networkidle');
+
+      const firstRow = page
+        .locator('[data-testid^="leaderboard-phone-row-"]')
+        .first();
+      await expect(firstRow).toContainText(/[\d.]+% win rate/, {
+        timeout: 10000,
+      });
+
+      await page.goto(`${ROUTES.leaderboard}?sort=tournaments`);
+      await page.waitForLoadState('networkidle');
+      await expect(firstRow).toContainText(/[\d,]+ tournaments?/, {
+        timeout: 10000,
+      });
+      await expect(firstRow).not.toContainText('win rate');
     });
   });
 
