@@ -1,31 +1,90 @@
-import { BarChart3 } from 'lucide-react';
+import {
+  PanelSkeleton,
+  SkeletonText,
+} from '@/components/kit/feedback/Skeletons';
+import { PageFrame } from '@/components/kit/layout/PageFrame';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import {
+  STATS_PANELS,
+  type StatsPanelCopy,
+} from '@/components/stats/chart-panels';
+import { RATED_RULESETS } from '@/lib/kit/format/ruleset';
+import { cn } from '@/lib/utils';
 
-import { Skeleton } from '@/components/ui/skeleton';
+import { StatsPageHeader } from './StatsPageHeader';
+
+/**
+ * The real section header with a bar for its count, about as wide as the
+ * loaded count, so headers wrap on phones just as they will once loaded.
+ */
+function PanelHeaderSkeleton({
+  copy,
+  metaWidth,
+}: {
+  copy: StatsPanelCopy;
+  metaWidth: string;
+}) {
+  return (
+    <SectionHeader
+      {...copy}
+      meta={<SkeletonText className={cn('h-3', metaWidth)} />}
+    />
+  );
+}
+
+/** The plot area of a chart while it loads, as tall as the loaded plot. */
+function PlotSkeleton({ className }: { className: string }) {
+  return (
+    <span
+      data-slot="skeleton"
+      aria-hidden="true"
+      className={cn(
+        'block w-full animate-pulse rounded-lg bg-accent',
+        className
+      )}
+    />
+  );
+}
+
+const CHART_PANELS = [
+  { copy: STATS_PANELS.verification, metaWidth: 'w-28' },
+  { copy: STATS_PANELS.year, metaWidth: 'w-24' },
+  { copy: STATS_PANELS.ruleset, metaWidth: 'w-24' },
+  { copy: STATS_PANELS.lobbySize, metaWidth: 'w-24' },
+];
 
 export default function StatsLoading() {
   return (
-    <div className="container mx-auto flex flex-col gap-6 py-6">
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <BarChart3 className="h-8 w-8 text-primary" aria-hidden="true" />
-          <h1 className="text-3xl font-bold">Platform Statistics</h1>
-        </div>
-        <p className="text-muted-foreground">
-          Statistics covering all of osu! tournaments
-        </p>
+    <PageFrame role="status" aria-label="Loading statistics">
+      <StatsPageHeader />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {CHART_PANELS.map(({ copy, metaWidth }) => (
+          <PanelSkeleton key={copy.title}>
+            <PanelHeaderSkeleton copy={copy} metaWidth={metaWidth} />
+            <div className="p-4">
+              <PlotSkeleton className="h-60" />
+            </div>
+          </PanelSkeleton>
+        ))}
       </div>
-      <div
-        role="status"
-        aria-label="Loading statistics"
-        className="flex flex-col gap-6"
-      >
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {Array.from({ length: 4 }, (_, index) => (
-            <Skeleton key={index} className="h-[23.25rem] w-full rounded-xl" />
+      <PanelSkeleton>
+        <PanelHeaderSkeleton
+          copy={STATS_PANELS.ratingDistribution}
+          metaWidth="w-24"
+        />
+        <div className="flex flex-wrap gap-1.5 border-b px-4 py-3">
+          {RATED_RULESETS.map((ruleset) => (
+            <SkeletonText key={ruleset} className="h-8 w-24 rounded-full" />
           ))}
         </div>
-        <Skeleton className="h-[25.5rem] w-full rounded-xl" />
-      </div>
-    </div>
+        <div className="flex flex-col gap-3 p-4">
+          {/* The tier legend: one line on desktop, three on phones. */}
+          <div className="flex h-14 items-start sm:h-4 sm:items-center">
+            <SkeletonText className="h-3 w-full max-w-xl" />
+          </div>
+          <PlotSkeleton className="h-72" />
+        </div>
+      </PanelSkeleton>
+    </PageFrame>
   );
 }
