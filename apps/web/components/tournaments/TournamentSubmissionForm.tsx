@@ -1,10 +1,28 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Trophy, Database, LoaderCircle, LinkIcon } from 'lucide-react';
-import LabelWithTooltip from '../ui/LabelWithTooltip';
-import { useState } from 'react';
+import { TournamentRejectionReason } from '@otr/core/osu';
+import { Database, Trophy } from 'lucide-react';
+import Link from 'next/link';
+import { useId, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/kit/controls/Button';
+import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
+import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
+import {
+  FormActions,
+  FormGrid,
+  FormPanel,
+  FormSection,
+} from '@/components/kit/controls/FormPanel';
+import { InfoButton } from '@/components/kit/layout/InfoButton';
+import {
+  LobbySizeSelectContent,
+  RejectionReasonChips,
+  RulesetSelectContent,
+} from '@/components/tournaments/TournamentFieldOptions';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -14,103 +32,59 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { hasAdminScope } from '@/lib/auth/roles';
+import { useSession } from '@/lib/hooks/useSession';
+import { orpc } from '@/lib/orpc/orpc';
 import {
   tournamentSubmissionFormSchema,
   type TournamentSubmissionFormValues,
 } from '@/lib/orpc/schema/tournamentSubmission';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import LobbySizeSelectContent from '../select/LobbySizeSelectContent';
-import RulesetSelectContent from '../select/RulesetSelectContent';
-import { Select, SelectTrigger, SelectValue } from '../ui/select';
-import { orpc } from '@/lib/orpc/orpc';
-import { useSession } from '@/lib/hooks/useSession';
-import { Checkbox } from '../ui/checkbox';
-import { Label } from '../ui/label';
-import { MultipleSelect } from '../select/multiple-select';
-import { TournamentRejectionReasonEnumHelper } from '@/lib/enum-helpers';
-import Link from 'next/link';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '../ui/alert-dialog';
-import { TournamentRejectionReason } from '@otr/core/osu';
-import { hasAdminScope } from '@/lib/auth/roles';
 
-const getFieldClassName = (hasError: boolean): string => {
-  return `border-2 shadow-sm ${
-    hasError
-      ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive'
-      : 'border-input bg-card focus-visible:border-primary focus-visible:ring-primary'
-  } focus-visible:ring-1`;
+const DEFAULT_VALUES: Partial<TournamentSubmissionFormValues> = {
+  name: '',
+  abbreviation: '',
+  forumUrl: '',
+  ruleset: undefined,
+  rankRangeLowerBound: undefined,
+  lobbySize: undefined,
+  rejectionReason: TournamentRejectionReason.None,
+  isLazer: false,
+  ids: [],
+  beatmapIds: [],
 };
 
-const getSelectFieldClassName = (hasError: boolean): string => {
-  return `w-full border-2 shadow-sm ${
-    hasError
-      ? 'border-destructive focus:border-destructive focus:ring-destructive'
-      : 'border-input bg-card focus:border-primary focus:ring-primary'
-  } focus:ring-1`;
-};
+const STABLE_MATCH_PLACEHOLDER =
+  'https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890';
+const LAZER_MATCH_PLACEHOLDER =
+  'https://osu.ppy.sh/multiplayer/rooms/1537300\nhttps://osu.ppy.sh/multiplayer/rooms/2048512';
+const BEATMAP_PLACEHOLDER =
+  'https://osu.ppy.sh/b/12345\nhttps://osu.ppy.sh/beatmapsets/123#osu/456';
 
-const getTextareaFieldClassName = (hasError: boolean): string => {
-  return `field-sizing-fixed min-h-32 border-2 shadow-sm ${
-    hasError
-      ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive'
-      : 'border-input bg-card focus-visible:border-primary focus-visible:ring-primary'
-  } focus-visible:ring-1`;
-};
-
-type FormSectionProps = {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
-};
-
-const FormSection = ({ icon, title, children }: FormSectionProps) => (
-  <div className="space-y-4 sm:space-y-6">
-    <div className="flex items-center gap-2 rounded-md border-b border-border pb-2 sm:gap-3 sm:pb-3">
-      {icon}
-      <h3 className="text-lg font-semibold text-foreground sm:text-xl">
-        {title}
-      </h3>
-    </div>
-    {children}
-  </div>
-);
+/** One link per line, as the textarea holds them. */
+const toLines = (value: unknown) =>
+  Array.isArray(value) ? value.map(String).join('\n') : '';
 
 export default function TournamentSubmissionForm() {
   const session = useSession();
   const isAdmin = hasAdminScope(session?.scopes ?? []);
+  const rejectId = useId();
+  const reasonLabelId = useId();
 
   const form = useForm<TournamentSubmissionFormValues>({
-    defaultValues: {
-      name: '',
-      abbreviation: '',
-      forumUrl: '',
-      ruleset: undefined,
-      rankRangeLowerBound: undefined,
-      lobbySize: undefined,
-      rejectionReason: TournamentRejectionReason.None,
-      isLazer: false,
-      ids: [],
-      beatmapIds: [],
-    },
+    defaultValues: DEFAULT_VALUES,
   });
+  const isLazer = form.watch('isLazer');
 
   const [rejectOnSubmit, setRejectOnSubmit] = useState(false);
   const [showBeatmapWarning, setShowBeatmapWarning] = useState(false);
-  const [beatmapWarningConfirmed, setBeatmapWarningConfirmed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const performSubmit = async () => {
+  const performSubmit = async ({
+    allowNoBeatmaps = false,
+  }: { allowNoBeatmaps?: boolean } = {}) => {
     form.clearErrors();
 
     const formValues = form.getValues();
@@ -118,24 +92,26 @@ export default function TournamentSubmissionForm() {
       tournamentSubmissionFormSchema.safeParse(formValues);
 
     if (!validationResult.success) {
-      validationResult.error.issues.forEach((issue) => {
+      // One message per field: the first, which is the most basic rule.
+      const reported = new Set<string>();
+      for (const issue of validationResult.error.issues) {
         const fieldName = issue.path[0];
         if (
-          fieldName &&
           typeof fieldName === 'string' &&
-          fieldName in formValues
+          fieldName in formValues &&
+          !reported.has(fieldName)
         ) {
+          reported.add(fieldName);
           form.setError(fieldName as keyof TournamentSubmissionFormValues, {
             type: 'validation',
             message: issue.message,
           });
         }
-      });
+      }
       return;
     }
 
     const validatedData = validationResult.data;
-    const beatmapIds = validatedData.beatmapIds;
 
     if (
       rejectOnSubmit &&
@@ -147,152 +123,136 @@ export default function TournamentSubmissionForm() {
       return;
     }
 
-    if (beatmapIds.length === 0 && !beatmapWarningConfirmed) {
+    if (validatedData.beatmapIds.length === 0 && !allowNoBeatmaps) {
       setShowBeatmapWarning(true);
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const result = await orpc.tournaments.submit(validatedData);
+      const result = await orpc.tournaments.submit({
+        ...validatedData,
+        // The reasons only apply when the admin chose to reject on submit.
+        rejectionReason: rejectOnSubmit
+          ? validatedData.rejectionReason
+          : TournamentRejectionReason.None,
+      });
 
-      form.reset();
+      form.reset(DEFAULT_VALUES);
       setRejectOnSubmit(false);
-      setBeatmapWarningConfirmed(false);
 
       result.warnings?.forEach((warning) => {
         toast.warning(warning);
       });
 
       toast.success(
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           <span>Tournament submitted successfully</span>
           <Link
-            className="flex flex-row items-center gap-1"
+            className="text-link underline-offset-2 hover:underline"
             href={`/tournaments/${result.id}`}
           >
-            <LinkIcon className="size-4 text-primary" />
-            <span className="text-primary">Click to view</span>
+            Click to view
           </Link>
         </div>
       );
     } catch (error) {
-      const errorMessage = extractErrorMessage(error);
-      toast.error(errorMessage);
+      toast.error(extractErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    await performSubmit();
+  const clear = () => {
+    form.reset(DEFAULT_VALUES);
+    setRejectOnSubmit(false);
   };
 
   return (
-    <Card className="w-full overflow-hidden">
-      <Form {...form}>
-        <form
-          data-testid="tournament-submission-form"
-          onSubmit={handleFormSubmit}
-          className="space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:space-y-8 lg:px-8"
-        >
-          <FormSection
-            icon={<Trophy className="size-6 text-primary" />}
-            title="Information"
-          >
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <FormField
-                control={form.control}
-                name="abbreviation"
-                render={({ field, fieldState }) => (
-                  <FormItem className="w-full sm:flex-1">
-                    <LabelWithTooltip
-                      label="Abbreviation"
-                      tooltip="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)"
-                    />
-                    <FormControl>
-                      <Input
-                        placeholder="OWC2024"
-                        {...field}
-                        className={getFieldClassName(!!fieldState.error)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field, fieldState }) => (
-                  <FormItem className="w-full sm:flex-1">
-                    <LabelWithTooltip
-                      label="Name"
-                      tooltip="Full tournament name (e.g. osu! World Cup 2024)"
-                    />
-                    <FormControl>
-                      <Input
-                        placeholder="osu! World Cup 2024"
-                        {...field}
-                        className={getFieldClassName(!!fieldState.error)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
+    <Form {...form}>
+      <FormPanel
+        data-testid="tournament-submission-form"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void performSubmit();
+        }}
+      >
+        <FormSection icon={Trophy} title="Information">
+          <FormGrid>
             <FormField
               control={form.control}
-              name="forumUrl"
-              render={({ field, fieldState }) => (
+              name="abbreviation"
+              render={({ field }) => (
                 <FormItem>
-                  <LabelWithTooltip
-                    label="Forum post URL"
-                    tooltip="Forum post URL or wiki page for the tournament"
-                  />
+                  <FormFieldLabel info="The prefix of each tournament lobby, such as 'OWC2024' from OWC2024: (United States) vs. (Canada)">
+                    Abbreviation
+                  </FormFieldLabel>
                   <FormControl>
-                    <Input
-                      placeholder="https://osu.ppy.sh/community/forums/topics/..."
-                      {...field}
-                      className={getFieldClassName(!!fieldState.error)}
-                      onChange={(e) => {
-                        const url = e.target.value;
-                        const baseUrl = url.split('?')[0];
-                        field.onChange(baseUrl);
-                      }}
-                    />
+                    <Input placeholder="OWC2024" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </FormSection>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldLabel info="Full tournament name (e.g. osu! World Cup 2024)">
+                    Name
+                  </FormFieldLabel>
+                  <FormControl>
+                    <Input placeholder="osu! World Cup 2024" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormGrid>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <FormField
+            control={form.control}
+            name="forumUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormFieldLabel info="Forum post URL or wiki page for the tournament">
+                  Forum post URL
+                </FormFieldLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://osu.ppy.sh/community/forums/topics/..."
+                    {...field}
+                    onChange={(event) =>
+                      field.onChange(event.target.value.split('?')[0])
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormGrid columns={3}>
             <FormField
               control={form.control}
               name="ruleset"
-              render={({ field, fieldState }) => (
-                <FormItem className="sm:col-span-2 lg:col-span-1">
-                  <LabelWithTooltip
-                    label="Ruleset"
-                    tooltip="Game mode the tournament is played in"
-                  />
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldLabel info="The ruleset the tournament is played in">
+                    Ruleset
+                  </FormFieldLabel>
                   <Select
-                    onValueChange={(val) => field.onChange(Number(val))}
-                    value={field.value?.toString() || ''}
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    value={field.value?.toString() ?? ''}
                   >
                     <FormControl>
-                      <SelectTrigger
-                        className={getSelectFieldClassName(!!fieldState.error)}
-                      >
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select ruleset" />
                       </SelectTrigger>
                     </FormControl>
-                    <RulesetSelectContent maniaOther={isAdmin} />
+                    <RulesetSelectContent includeManiaOther={isAdmin} />
                   </Select>
                   <FormMessage />
                 </FormItem>
@@ -301,20 +261,17 @@ export default function TournamentSubmissionForm() {
             <FormField
               control={form.control}
               name="lobbySize"
-              render={({ field, fieldState }) => (
+              render={({ field }) => (
                 <FormItem>
-                  <LabelWithTooltip
-                    label="Lobby size"
-                    tooltip="Number of players per team in each match"
-                  />
+                  <FormFieldLabel info="Number of players per team in each match">
+                    Lobby size
+                  </FormFieldLabel>
                   <Select
-                    onValueChange={(val) => field.onChange(Number(val))}
-                    value={field.value?.toString() || ''}
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    value={field.value?.toString() ?? ''}
                   >
                     <FormControl>
-                      <SelectTrigger
-                        className={getSelectFieldClassName(!!fieldState.error)}
-                      >
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
                     </FormControl>
@@ -327,274 +284,202 @@ export default function TournamentSubmissionForm() {
             <FormField
               control={form.control}
               name="rankRangeLowerBound"
-              render={({ field, fieldState }) => (
+              render={({ field }) => (
                 <FormItem>
-                  <LabelWithTooltip
-                    label="Rank restriction"
-                    tooltip="The 'best' global rank allowed to participate. Use 1 for open rank."
-                  />
+                  <FormFieldLabel info="The 'best' global rank allowed to participate. Use 1 for open rank.">
+                    Rank restriction
+                  </FormFieldLabel>
                   <FormControl>
                     <Input
                       type="number"
+                      inputMode="numeric"
                       min={1}
+                      step={1}
                       placeholder="Enter rank restriction"
-                      className={getFieldClassName(!!fieldState.error)}
                       {...field}
-                      value={field.value || ''}
-                      onChange={(e) => {
-                        const value =
-                          e.target.value === ''
+                      value={field.value ?? ''}
+                      onChange={(event) =>
+                        field.onChange(
+                          event.target.value === ''
                             ? undefined
-                            : e.target.valueAsNumber;
-                        field.onChange(value);
-                      }}
+                            : event.target.valueAsNumber
+                        )
+                      }
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </div>
+          </FormGrid>
 
-          <div className="flex flex-row items-center gap-4">
-            <FormField
-              control={form.control}
-              name="isLazer"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <LabelWithTooltip
-                    label="Played on osu!lazer"
-                    tooltip="Check this if the tournament was played on osu!lazer instead of osu!stable"
+          <FormField
+            control={form.control}
+            name="isLazer"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center gap-2">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={(checked) =>
+                      field.onChange(checked === true)
+                    }
                   />
-                </FormItem>
-              )}
-            />
+                </FormControl>
+                <FormLabel>Played on osu!lazer</FormLabel>
+                <InfoButton label="About played on osu!lazer">
+                  Check this if the tournament was played on osu!lazer instead
+                  of osu!stable
+                </InfoButton>
+              </FormItem>
+            )}
+          />
 
-            {isAdmin && (
-              <div className="flex flex-row items-center gap-2">
+          {isAdmin && (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
                 <Checkbox
-                  id="reject-on-submit"
+                  id={rejectId}
                   checked={rejectOnSubmit}
                   onCheckedChange={(checked) =>
                     setRejectOnSubmit(checked === true)
                   }
                 />
-                <Label
-                  htmlFor="reject-on-submit"
-                  className="font-medium text-foreground"
-                >
+                <Label htmlFor={rejectId}>
                   Reject this tournament on submission
                 </Label>
-                {rejectOnSubmit && (
-                  <FormField
-                    control={form.control}
-                    name="rejectionReason"
-                    render={({
-                      field: { onChange, value },
-                      fieldState: { invalid },
-                    }) => (
-                      <FormItem>
-                        <FormLabel className="sr-only">
-                          Rejection reason
-                        </FormLabel>
-                        <FormControl>
-                          <MultipleSelect
-                            placeholder="Select rejection reason"
-                            options={Object.entries(
-                              TournamentRejectionReasonEnumHelper.metadata
-                            )
-                              .filter(
-                                ([v]) =>
-                                  Number(v) !== TournamentRejectionReason.None
-                              )
-                              .map(([v, { text }]) => ({
-                                value: v,
-                                label: text,
-                              }))}
-                            selected={TournamentRejectionReasonEnumHelper.getFlags(
-                              value
-                            ).map(String)}
-                            onChange={(values: string[]) => {
-                              let flag = 0;
-                              values.forEach((v: string) => {
-                                flag |= Number(v);
-                              });
-
-                              onChange(flag);
-                            }}
-                            invalid={invalid}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
               </div>
-            )}
-          </div>
+              {rejectOnSubmit && (
+                <FormField
+                  control={form.control}
+                  name="rejectionReason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel id={reasonLabelId}>Rejection reason</FormLabel>
+                      <FormControl>
+                        <RejectionReasonChips
+                          aria-labelledby={reasonLabelId}
+                          value={field.value ?? TournamentRejectionReason.None}
+                          onValueChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+          )}
+        </FormSection>
 
-          <FormSection
-            icon={<Database className="h-6 w-6 text-primary" />}
-            title="Data"
-          >
+        <FormSection icon={Database} title="Data">
+          <FormGrid>
             <FormField
               control={form.control}
               name="ids"
-              render={({ field, fieldState }) => {
-                const isLazer = form.watch('isLazer');
-                const placeholder = isLazer
-                  ? `https://osu.ppy.sh/multiplayer/rooms/1537300\nhttps://osu.ppy.sh/multiplayer/rooms/2048512`
-                  : `https://osu.ppy.sh/community/matches/12345\nhttps://osu.ppy.sh/mp/67890`;
-
-                return (
-                  <FormItem>
-                    <LabelWithTooltip
-                      label="Matches"
-                      tooltip="osu! match IDs or URLs (one per line)"
-                    />
-                    <FormControl>
-                      <Textarea
-                        placeholder={placeholder}
-                        value={
-                          Array.isArray(field.value)
-                            ? field.value.map(String).join('\n')
-                            : ''
-                        }
-                        onChange={(e) =>
-                          field.onChange(e.target.value.split('\n'))
-                        }
-                        className={getTextareaFieldClassName(
-                          !!fieldState.error
-                        )}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-
-            <FormField
-              control={form.control}
-              name="beatmapIds"
-              render={({ field, fieldState }) => (
+              render={({ field }) => (
                 <FormItem>
-                  <LabelWithTooltip
-                    label="Beatmaps"
-                    tooltip="osu! beatmap IDs or URLs (one per line)"
-                  />
+                  <FormFieldLabel
+                    info="osu! match IDs or URLs"
+                    hint="One per line"
+                  >
+                    Matches
+                  </FormFieldLabel>
                   <FormControl>
                     <Textarea
-                      placeholder={`https://osu.ppy.sh/b/12345\nhttps://osu.ppy.sh/beatmapsets/123#osu/456`}
-                      value={
-                        Array.isArray(field.value)
-                          ? field.value.map(String).join('\n')
-                          : ''
+                      className="field-sizing-fixed min-h-32"
+                      placeholder={
+                        isLazer
+                          ? LAZER_MATCH_PLACEHOLDER
+                          : STABLE_MATCH_PLACEHOLDER
                       }
-                      onChange={(e) =>
-                        field.onChange(e.target.value.split('\n'))
+                      name={field.name}
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      value={toLines(field.value)}
+                      onChange={(event) =>
+                        field.onChange(event.target.value.split('\n'))
                       }
-                      className={getTextareaFieldClassName(!!fieldState.error)}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </FormSection>
+            <FormField
+              control={form.control}
+              name="beatmapIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldLabel
+                    info="osu! beatmap IDs or URLs"
+                    hint="One per line"
+                  >
+                    Beatmaps
+                  </FormFieldLabel>
+                  <FormControl>
+                    <Textarea
+                      className="field-sizing-fixed min-h-32"
+                      placeholder={BEATMAP_PLACEHOLDER}
+                      name={field.name}
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      value={toLines(field.value)}
+                      onChange={(event) =>
+                        field.onChange(event.target.value.split('\n'))
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormGrid>
+        </FormSection>
 
-          <Button
-            data-testid="tournament-submit-button"
-            type="submit"
-            className="w-full rounded-md bg-primary-solid py-5 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary-solid/90 hover:shadow-xl sm:py-6 sm:text-lg"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <LoaderCircle className="animate-spin" />
-            ) : (
-              'Submit tournament'
-            )}
+        <FormActions>
+          <Button variant="outline" disabled={isSubmitting} onClick={clear}>
+            Clear
           </Button>
-        </form>
-      </Form>
+          <Button
+            type="submit"
+            data-testid="tournament-submit-button"
+            pending={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting…' : 'Submit tournament'}
+          </Button>
+        </FormActions>
+      </FormPanel>
 
-      <AlertDialog
+      <ConfirmDialog
         open={showBeatmapWarning}
         onOpenChange={setShowBeatmapWarning}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>No beatmaps provided</AlertDialogTitle>
-            <AlertDialogDescription>
-              You are submitting a tournament without any beatmap links. This is
-              strongly discouraged.
-              <br />
-              <br />
-              Are you sure you want to continue without providing beatmap links?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => {
-                setShowBeatmapWarning(false);
-                setBeatmapWarningConfirmed(false);
-              }}
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
-              onClick={() => {
-                setShowBeatmapWarning(false);
-                setBeatmapWarningConfirmed(true);
-                void performSubmit();
-              }}
-            >
-              Continue without beatmaps
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </Card>
+        tone="default"
+        title="Continue without beatmaps?"
+        description={
+          <p>
+            You are submitting a tournament without any beatmap links. This is
+            strongly discouraged.
+          </p>
+        }
+        confirmLabel="Continue without beatmaps"
+        pendingLabel="Submitting…"
+        onConfirm={() => performSubmit({ allowNoBeatmaps: true })}
+      />
+    </Form>
   );
 }
 
 function extractErrorMessage(error: unknown): string {
   if (error && typeof error === 'object') {
-    const maybeMessage =
-      typeof (error as { message?: unknown }).message === 'string'
-        ? (error as { message: string }).message
-        : undefined;
-
-    const causeMessage = (() => {
-      const cause = (error as { cause?: unknown }).cause;
-      if (cause && typeof cause === 'object') {
-        const message = (cause as { message?: unknown }).message;
-        if (typeof message === 'string') {
-          return message;
-        }
-      }
-      return undefined;
-    })();
-
-    if (causeMessage) {
-      return causeMessage;
+    const cause = (error as { cause?: unknown }).cause;
+    if (cause && typeof cause === 'object') {
+      const message = (cause as { message?: unknown }).message;
+      if (typeof message === 'string') return message;
     }
 
-    if (maybeMessage) {
-      return maybeMessage;
-    }
-  }
-
-  if (error instanceof Error && error.message) {
-    return error.message;
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message) return message;
   }
 
   return 'Failed to submit tournament. Please try again.';

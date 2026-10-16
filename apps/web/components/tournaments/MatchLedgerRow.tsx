@@ -1,178 +1,184 @@
 'use client';
 
-import Link from 'next/link';
-import { StickyNote } from 'lucide-react';
-
-import type { MatchRow } from './matchRow';
-import VerificationBadge from '@/components/badges/VerificationBadge';
-import SimpleTooltip from '@/components/simple-tooltip';
-import { Checkbox } from '@/components/ui/checkbox';
-import { formatUTCTime } from '@/lib/utils/date';
-import { VerificationStatusEnumHelper } from '@/lib/enum-helpers';
-import { parseTeamNames } from '@/lib/utils/match';
-import { cn } from '@/lib/utils';
 import { Team, VerificationStatus } from '@otr/core/osu';
+import { NotebookPen } from 'lucide-react';
+import Link from 'next/link';
 
+import { Timestamp } from '@/components/kit/format/Timestamp';
+import { VerificationStatusIcon } from '@/components/kit/status/VerificationStatusIcon';
+import TapTooltip from '@/components/tap-tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
+import { getTeamTextColor, getTeamTintClass } from '@/lib/kit/color/teams';
+import { EMPTY_VALUE } from '@/lib/kit/format/empty';
+import { formatCount, formatCountOf } from '@/lib/kit/format/number';
+import {
+  getRejectionReasonTexts,
+  getWarningTexts,
+} from '@/lib/kit/status/reasons';
+import { cn } from '@/lib/utils';
+
+import { parseTeamNames, type MatchRow } from './matchRow';
+
+/** The points each side won, tinted with the winning team's colour. */
 function Scoreline({ match }: { match: MatchRow }) {
   const winRecord = match.winRecord;
 
   if (!winRecord) {
+    const explanation =
+      match.status.verificationStatus === VerificationStatus.Verified
+        ? 'No result yet — check back once stats are generated'
+        : 'No result yet — the match is not verified';
+
     return (
-      <SimpleTooltip
-        content={
-          match.status.verificationStatus === VerificationStatus.Verified
-            ? 'No result yet — check back once stats are generated'
-            : 'No result yet — the match is not verified'
-        }
+      <TapTooltip
+        content={explanation}
+        side="top"
+        triggerAriaLabel={explanation}
+        triggerClassName="w-14 shrink-0 text-center text-sm text-muted-foreground"
       >
-        <span className="w-14 shrink-0 text-center text-sm text-muted-foreground/60">
-          &mdash;
-        </span>
-      </SimpleTooltip>
+        {EMPTY_VALUE}
+      </TapTooltip>
     );
   }
 
-  const tone = winRecord.isTied
-    ? 'bg-muted text-muted-foreground'
-    : winRecord.winnerTeam === Team.Red
-      ? 'bg-red-500/10 text-red-600 dark:text-red-400'
-      : winRecord.winnerTeam === Team.Blue
-        ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-        : 'bg-muted text-foreground';
+  const winner =
+    !winRecord.isTied &&
+    (winRecord.winnerTeam === Team.Red || winRecord.winnerTeam === Team.Blue)
+      ? winRecord.winnerTeam
+      : null;
+  const explanation = winRecord.isTied
+    ? 'Draw — some games may not have been counted, so this result is not accurate'
+    : 'Points won across the verified games';
+  const score = `${formatCount(winRecord.winnerPoints)}–${formatCount(winRecord.loserPoints)}`;
 
   return (
-    <SimpleTooltip
-      content={
-        winRecord.isTied
-          ? 'Draw — some games may not have been counted, so this result is not accurate'
-          : 'Points won across the verified games'
-      }
+    <TapTooltip
+      content={explanation}
+      side="top"
+      triggerAriaLabel={`Result ${score}. ${explanation}`}
+      triggerClassName="w-14 shrink-0"
     >
       <span
         className={cn(
-          'w-14 shrink-0 rounded-md py-0.5 text-center text-sm font-semibold tabular-nums',
-          tone
+          'block rounded-md py-0.5 text-center text-sm font-semibold tabular-nums',
+          winner === null
+            ? 'bg-muted text-muted-foreground'
+            : getTeamTintClass(winner)
         )}
+        style={
+          winner === null ? undefined : { color: getTeamTextColor(winner) }
+        }
       >
-        {winRecord.winnerPoints}&ndash;{winRecord.loserPoints}
+        {score}
       </span>
-    </SimpleTooltip>
+    </TapTooltip>
   );
 }
 
+/** The match name; with two teams, the winner first and the loser muted. */
 function MatchTitle({ match }: { match: MatchRow }) {
+  const name = match.name || `Match ${match.id}`;
   const teams = parseTeamNames(match.name);
 
-  if (!teams) {
-    return (
-      <span className="min-w-0 truncate">
-        {match.name || `Match ${match.id}`}
-      </span>
-    );
-  }
+  const content = (() => {
+    if (!teams) return <span className="min-w-0 truncate">{name}</span>;
 
-  const winRecord = match.winRecord;
-  const decided =
-    winRecord !== null &&
-    !winRecord.isTied &&
-    (winRecord.winnerTeam === Team.Red || winRecord.winnerTeam === Team.Blue);
-  const blueWon = decided && winRecord.winnerTeam === Team.Blue;
+    const winRecord = match.winRecord;
+    const decided =
+      winRecord !== null &&
+      !winRecord.isTied &&
+      (winRecord.winnerTeam === Team.Red || winRecord.winnerTeam === Team.Blue);
+    const blueWon = decided && winRecord.winnerTeam === Team.Blue;
+
+    return (
+      <>
+        <span className="min-w-0 truncate">
+          {blueWon ? teams.blue : teams.red}
+        </span>
+        <span className="shrink-0 text-xs font-normal text-muted-foreground">
+          vs
+        </span>
+        <span
+          className={cn(
+            'min-w-0 truncate',
+            decided && 'font-normal text-muted-foreground'
+          )}
+        >
+          {blueWon ? teams.red : teams.blue}
+        </span>
+      </>
+    );
+  })();
 
   return (
-    <>
-      <span className={cn('min-w-0 truncate', decided && 'font-medium')}>
-        {blueWon ? teams.blue : teams.red}
-      </span>
-      <span className="shrink-0 text-xs text-muted-foreground">vs</span>
-      <span
-        className={cn('min-w-0 truncate', decided && 'text-muted-foreground')}
-      >
-        {blueWon ? teams.red : teams.blue}
-      </span>
-    </>
+    <Link
+      href={`/matches/${match.id}`}
+      prefetch={false}
+      title={name}
+      className="flex min-w-0 items-baseline gap-1.5 rounded-sm font-medium text-foreground transition-colors outline-none hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50"
+    >
+      {content}
+    </Link>
   );
 }
 
+/** The admin notes on the match and its games, opened on tap. */
 function Notes({ match }: { match: MatchRow }) {
-  const gamesWithNotes = match.games.filter((game) => game.adminNotes.length);
-  const hasMatchNotes = match.matchAdminNotes.length > 0;
+  const notes = [
+    ...match.matchAdminNotes,
+    ...match.games.flatMap((game) => game.adminNotes),
+  ];
 
-  if (!hasMatchNotes && !gamesWithNotes.length) {
+  if (notes.length === 0) {
     return null;
   }
 
   return (
-    <SimpleTooltip
+    <TapTooltip
+      side="top"
+      triggerAriaLabel={`${formatCountOf(notes.length, 'admin note')} on ${match.name || `match ${match.id}`}`}
+      triggerClassName="inline-flex w-auto shrink-0 self-center"
       content={
-        <div className="max-w-xs space-y-1 text-xs">
-          {match.matchAdminNotes.map((note, index) => (
-            <div key={`match-${index}`}>
+        <ul className="max-w-xs space-y-1 text-xs">
+          {notes.map((note, index) => (
+            <li key={index}>
               {note.note}
               <span className="text-muted-foreground">
                 {' '}
                 — {note.adminUsername}
               </span>
-            </div>
+            </li>
           ))}
-          {gamesWithNotes.flatMap((game) =>
-            game.adminNotes.map((note, index) => (
-              <div key={`game-${game.id}-${index}`}>
-                {note.note}
-                <span className="text-muted-foreground">
-                  {' '}
-                  — {note.adminUsername}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
+        </ul>
       }
     >
-      <StickyNote className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-    </SimpleTooltip>
+      <NotebookPen
+        className="size-3.5 text-muted-foreground"
+        aria-hidden="true"
+      />
+    </TapTooltip>
   );
 }
 
-function GamePips({
-  games,
-  className,
-}: {
-  games: MatchRow['games'];
-  className?: string;
-}) {
-  const counts = new Map<VerificationStatus, number>();
-  for (const game of games) {
-    counts.set(
-      game.verificationStatus,
-      (counts.get(game.verificationStatus) ?? 0) + 1
-    );
-  }
-
-  const summary = [...counts]
-    .map(
-      ([status, count]) =>
-        `${count} ${VerificationStatusEnumHelper.getMetadata(status).text.toLowerCase()}`
-    )
-    .join(', ');
-
+function GamePips({ games }: { games: MatchRow['games'] }) {
   return (
-    <div
-      className={cn('flex flex-wrap items-center gap-0.5', className)}
-      aria-label={`${games.length} ${games.length === 1 ? 'game' : 'games'}: ${summary}`}
-    >
+    // 8px apart, so each 16px icon keeps a 24px tap area.
+    <ul aria-label="Games" className="flex flex-wrap items-center gap-2">
       {games.map((game, index) => (
-        <VerificationBadge
-          key={game.id}
-          verificationStatus={game.verificationStatus}
-          warningFlags={game.warningFlags}
-          rejectionReason={game.rejectionReason}
-          entityType="game"
-          gameIndex={index}
-          size="pip"
-          minimal
-        />
+        <li key={game.id} className="inline-flex">
+          <VerificationStatusIcon
+            status={game.verificationStatus}
+            warnings={getWarningTexts('game', game.warningFlags)}
+            rejectionReasons={getRejectionReasonTexts(
+              'game',
+              game.rejectionReason
+            )}
+            context={`Game ${index + 1}`}
+            tooltip="tap"
+          />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -182,6 +188,11 @@ interface MatchLedgerRowProps {
   onSelect?: (matchId: number, checked: boolean) => void;
 }
 
+/**
+ * One match: its result, name, status, game statuses and start time. Only
+ * the name links to the match, so the row has no hover tint. On phones the
+ * games and time move to a second line.
+ */
 export default function MatchLedgerRow({
   match,
   isSelected,
@@ -192,60 +203,60 @@ export default function MatchLedgerRow({
     const startB = b.startTime ? new Date(b.startTime).getTime() : 0;
     return startA - startB;
   });
-  const startedAt = match.startDate ? new Date(match.startDate) : null;
 
   return (
-    <div
+    <li
+      data-testid="tournament-match-row"
       className={cn(
-        'flex items-center gap-2 border-b border-border/40 px-3 py-1.5 text-sm transition-colors last:border-b-0 hover:bg-muted/50',
+        'grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 px-4 py-2 text-sm lg:grid-cols-[auto_minmax(0,1fr)_auto_24rem_10rem]',
         isSelected && 'bg-primary/5'
       )}
     >
-      {onSelect && (
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={(checked) => onSelect(match.id, checked === true)}
-          aria-label={`Select ${match.name || `match ${match.id}`}`}
-          className="shrink-0"
-        />
-      )}
-      <Scoreline match={match} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex min-w-0 items-baseline gap-1.5">
-          <Link
-            href={`/matches/${match.id}`}
-            title={match.name || `Match ${match.id}`}
-            className="flex min-w-0 items-baseline gap-1.5 hover:underline"
-          >
-            <MatchTitle match={match} />
-          </Link>
-          <Notes match={match} />
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground lg:hidden">
-          <span>
-            {startedAt ? `${formatUTCTime(startedAt)} · ` : ''}
-            {match.games.length} {match.games.length === 1 ? 'game' : 'games'}
-          </span>
-          <GamePips games={games} />
-        </div>
+      <div className="flex items-center gap-3">
+        {onSelect && (
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={(checked) => onSelect(match.id, checked === true)}
+            aria-label={`Select ${match.name || `match ${match.id}`}`}
+          />
+        )}
+        <Scoreline match={match} />
       </div>
-      <span className="shrink-0">
-        <VerificationBadge
-          verificationStatus={match.status.verificationStatus}
-          warningFlags={match.status.warningFlags}
-          rejectionReason={match.status.rejectionReason}
-          entityType="match"
-          verifierUsername={match.status.verifiedByUsername ?? undefined}
-          size="small"
-        />
-      </span>
-      <GamePips
-        games={games}
-        className="hidden w-72 shrink-0 self-stretch border-l pl-3 lg:flex"
+
+      <div className="flex min-w-0 items-center gap-1.5">
+        <MatchTitle match={match} />
+        <Notes match={match} />
+      </div>
+
+      <VerificationStatusIcon
+        status={match.status.verificationStatus}
+        warnings={getWarningTexts('match', match.status.warningFlags)}
+        rejectionReasons={getRejectionReasonTexts(
+          'match',
+          match.status.rejectionReason
+        )}
+        reviewer={match.status.verifiedByUsername ?? undefined}
+        context={match.name || `Match ${match.id}`}
+        tooltip="tap"
       />
-      <span className="hidden w-10 shrink-0 text-right text-xs text-muted-foreground tabular-nums lg:inline">
-        {startedAt ? formatUTCTime(startedAt) : ''}
-      </span>
-    </div>
+
+      <div className="col-span-2 col-start-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 lg:col-span-1 lg:col-start-auto lg:self-stretch lg:border-l lg:pl-3">
+        <span className="text-xs text-muted-foreground tabular-nums lg:hidden">
+          {match.startDate ? (
+            <>
+              <Timestamp date={match.startDate} />
+              {' · '}
+            </>
+          ) : null}
+          {formatCountOf(match.games.length, 'game')}
+        </span>
+        <GamePips games={games} />
+      </div>
+
+      <Timestamp
+        date={match.startDate}
+        className="hidden text-right text-xs text-muted-foreground tabular-nums lg:block"
+      />
+    </li>
   );
 }

@@ -1,46 +1,94 @@
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Swords } from 'lucide-react';
+
+import {
+  PanelSkeleton,
+  SkeletonText,
+} from '@/components/kit/feedback/Skeletons';
+import { DetailHero } from '@/components/kit/layout/DetailHero';
+import {
+  HeroTabLabel,
+  heroTabClassName,
+  heroTabListClassName,
+} from '@/components/kit/layout/HeroTabs';
+import { PageFrame } from '@/components/kit/layout/PageFrame';
+import { RowList, RowListItem } from '@/components/kit/layout/RowList';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+
+/** A tab's count, shown from `sm` like the loaded tabs' counts. */
+function TabCountSkeleton() {
+  return <SkeletonText className="hidden h-3 w-6 sm:inline-block" />;
+}
+
+/** A match row while it loads: result, name, status, games and time. */
+function MatchRowSkeleton() {
+  return (
+    <RowListItem className="py-2">
+      <div className="flex h-6 items-center gap-3">
+        <SkeletonText className="h-6 w-14" />
+        <SkeletonText className="w-56 max-w-[40%]" />
+        <SkeletonText className="ml-auto size-4 rounded-full lg:ml-0" />
+        <SkeletonText className="hidden w-72 lg:ml-auto lg:block" />
+        <SkeletonText className="hidden h-3 w-36 lg:block" />
+      </div>
+    </RowListItem>
+  );
+}
 
 export default function TournamentLoading() {
   return (
-    <div
-      role="status"
-      aria-label="Loading tournament"
-      className="container mx-auto flex flex-col gap-4 md:gap-2"
-    >
-      <Card className="gap-4 p-4 sm:p-6">
-        <div className="flex items-center justify-between gap-3">
-          <Skeleton className="h-6 w-24 rounded-full" />
-          <Skeleton className="h-6 w-28" />
-        </div>
-        <Skeleton className="h-7 w-3/4 sm:h-[1.875rem] md:h-[2.375rem]" />
-        <div className="flex flex-wrap gap-4">
-          <Skeleton className="h-5 w-16" />
-          <Skeleton className="h-5 w-12" />
-          <Skeleton className="h-5 w-16" />
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-40 sm:ml-auto" />
-        </div>
-      </Card>
-      <Skeleton className="h-9 w-full rounded-lg" />
-      <Card className="mt-4 p-6">
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Skeleton className="size-6" />
-            <Skeleton className="h-7 w-28" />
-            <Skeleton className="ml-auto h-8 w-60" />
+    <PageFrame role="status" aria-label="Loading tournament">
+      <DetailHero
+        title={<SkeletonText className="h-7 w-80 max-w-full" />}
+        status={<SkeletonText className="h-6 w-24 rounded-full" />}
+        meta={
+          <>
+            <SkeletonText className="w-14" />
+            <SkeletonText className="w-10" />
+            <SkeletonText className="w-20" />
+            <SkeletonText className="w-40" />
+          </>
+        }
+        actions={
+          <>
+            <SkeletonText className="size-8" />
+            <SkeletonText className="size-8" />
+          </>
+        }
+        tabs={
+          <div className={heroTabListClassName} aria-hidden="true">
+            <span className={heroTabClassName} aria-current="page">
+              <HeroTabLabel count={<TabCountSkeleton />}>Matches</HeroTabLabel>
+            </span>
+            <span className={heroTabClassName}>
+              <HeroTabLabel count={<TabCountSkeleton />}>Beatmaps</HeroTabLabel>
+            </span>
+            <span className={heroTabClassName}>
+              <HeroTabLabel>Ratings</HeroTabLabel>
+            </span>
+            <span className={heroTabClassName}>
+              <HeroTabLabel>Stats</HeroTabLabel>
+            </span>
           </div>
-          <div className="divide-y rounded-lg border">
-            {Array.from({ length: 12 }, (_, index) => (
-              <div key={index} className="flex items-center gap-2 px-3 py-2">
-                <Skeleton className="h-6 w-14" />
-                <Skeleton className="h-5 flex-1" />
-                <Skeleton className="hidden h-6 w-72 md:block" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>
-    </div>
+        }
+      />
+      <PanelSkeleton>
+        {/* The sort control's bars, 40px tall like the loaded strip. */}
+        <SectionHeader
+          icon={Swords}
+          title="Matches"
+          actions={
+            <span className="flex gap-2">
+              <SkeletonText className="block h-10 w-44 md:w-48" />
+              <SkeletonText className="block size-10" />
+            </span>
+          }
+        />
+        <RowList aria-hidden="true">
+          {Array.from({ length: 12 }, (_, index) => (
+            <MatchRowSkeleton key={index} />
+          ))}
+        </RowList>
+      </PanelSkeleton>
+    </PageFrame>
   );
 }

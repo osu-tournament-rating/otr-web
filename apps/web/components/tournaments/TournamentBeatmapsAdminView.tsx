@@ -1,40 +1,53 @@
 'use client';
 
-import { Eye, EyeOff, ListChecks, Loader2, Plus, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, ListChecks, Music, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import BeatmapEmptyState from '@/components/beatmaps/BeatmapEmptyState';
 import BeatmapListTable, {
   type BeatmapTableSelection,
 } from '@/components/beatmaps/list/BeatmapListTable';
 import BeatmapSelectionBar from '@/components/beatmaps/list/BeatmapSelectionBar';
-import SimpleTooltip from '@/components/simple-tooltip';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/kit/controls/Button';
+import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
+import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
+import { IconButton } from '@/components/kit/controls/IconButton';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  SortControl,
+  type SortOption,
+} from '@/components/kit/lists/SortControl';
+import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { hasAdminScope } from '@/lib/auth/roles';
-import type { BeatmapListSortChange } from '@/lib/beatmaps/list-params';
+import { getBeatmapRulesetLabel } from '@/lib/beatmaps/presentation';
 import {
   sortBeatmapTableRows,
   toTournamentBeatmapTableRows,
   type BeatmapTableRow,
 } from '@/lib/beatmaps/table-row';
 import { useSession } from '@/lib/hooks/useSession';
+import {
+  formatCount,
+  formatCountOf,
+  formatId,
+  formatNumber,
+} from '@/lib/kit/format/number';
+import { defineListParams, sortParam } from '@/lib/kit/lists/params';
+import type { SortState } from '@/lib/kit/lists/sort';
 import { orpc } from '@/lib/orpc/orpc';
 import type {
   TournamentBeatmap,
   TournamentMatchGame,
 } from '@/lib/orpc/schema/tournament';
+import { beatmapListSortValues } from '@/lib/validation-schema';
+
+import { useAddressListState } from './useAddressListState';
 
 interface TournamentBeatmapsAdminViewProps {
   tournamentId: number;
@@ -42,6 +55,29 @@ interface TournamentBeatmapsAdminViewProps {
   beatmaps: TournamentBeatmap[];
   tournamentGames?: TournamentMatchGame[];
 }
+
+/** The pool's sort, in the tournament page's address, like the beatmap list's. */
+const POOL_PARAMS = defineListParams({
+  sort: sortParam(beatmapListSortValues, {
+    key: 'gameCount',
+    direction: 'desc',
+  }),
+});
+
+type PoolSortKey = (typeof beatmapListSortValues)[number];
+
+/**
+ * The table's sortable columns, for phones, where the rows have no headers.
+ * Labelled and grouped like the beatmap list's sort.
+ */
+const POOL_SORT_OPTIONS: readonly SortOption<PoolSortKey>[] = [
+  { value: 'gameCount', label: 'Games' },
+  { value: 'sr', label: 'SR', group: 'attributes' },
+  { value: 'bpm', label: 'BPM', group: 'attributes' },
+  { value: 'cs', label: 'CS', group: 'attributes' },
+  { value: 'ar', label: 'AR', group: 'attributes' },
+  { value: 'length', label: 'Length', group: 'attributes' },
+];
 
 const MAX_BEATMAP_OSU_ID = 20_000_000;
 
@@ -52,20 +88,78 @@ const splitBeatmapInput = (input: string): string[] =>
   input
     .split(/[,\n]+/)
     .map((id) => id.trim())
-    .filter((id) => id);
+    .filter(Boolean);
 
-const parseBeatmapIds = (input: string): number[] =>
-  splitBeatmapInput(input)
-    .map((value) => {
-      const match = value.match(BEATMAP_ID_PATTERN);
-      const numericId = match
-        ? Number(match[1] || match[2] || match[3])
-        : parseInt(value, 10);
-      // 0 marks an unusable value, which the filter below drops.
-      return isNaN(numericId) || numericId > MAX_BEATMAP_OSU_ID ? 0 : numericId;
-    })
-    .filter((id) => id > 0);
+/** The osu! beatmap ID in one entry, or 0 when the entry is not one. */
+function parseBeatmapId(value: string): number {
+  const match = value.match(BEATMAP_ID_PATTERN);
+  const id = match
+    ? Number(match[1] || match[2] || match[3])
+    : parseInt(value, 10);
+  return Number.isNaN(id) || id <= 0 || id > MAX_BEATMAP_OSU_ID ? 0 : id;
+}
 
+const beatmapLabel = (row: BeatmapTableRow) =>
+  `${row.artist} - ${row.title} [${row.diffName}]`;
+
+/**
+ * The pool on phones: the sort the table's headers give, then the rows, each
+ * opening its beatmap as a whole like the table rows.
+ */
+function PoolPhoneRows({
+  rows,
+  sort,
+  onSortChange,
+}: {
+  rows: BeatmapTableRow[];
+  sort: SortState<PoolSortKey>;
+  onSortChange: (sort: SortState<PoolSortKey>) => void;
+}) {
+  return (
+    <>
+      <div className="border-b px-4 py-3">
+        <SortControl
+          label="Sort pooled beatmaps by"
+          options={POOL_SORT_OPTIONS}
+          value={sort}
+          onValueChange={onSortChange}
+        />
+      </div>
+      <PhoneRowList aria-label="Pooled beatmaps">
+        {rows.map((row) => (
+          <PhoneRow
+            key={row.id}
+            href={`/beatmaps/${row.osuId}`}
+            linkLabel={`View ${beatmapLabel(row)}`}
+            title={
+              <span data-row-title className="min-w-0 truncate">
+                {row.title}{' '}
+                <span className="font-normal text-muted-foreground">
+                  [{row.diffName}]
+                </span>
+              </span>
+            }
+            description={[
+              row.artist,
+              getBeatmapRulesetLabel(row.ruleset, row.diffName),
+              `${formatNumber(row.sr, { decimals: 2 })} SR`,
+              row.isDeleted ? 'Deleted from osu!' : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+            value={formatCount(row.gameCount)}
+            valueDescription={row.gameCount === 1 ? 'game' : 'games'}
+          />
+        ))}
+      </PhoneRowList>
+    </>
+  );
+}
+
+/**
+ * The Beatmaps tab: the tournament's pool, sortable like the beatmap list.
+ * Admins add beatmaps, show deleted ones, and select beatmaps to unlink.
+ */
 export default function TournamentBeatmapsAdminView({
   tournamentId,
   tournamentName,
@@ -74,57 +168,41 @@ export default function TournamentBeatmapsAdminView({
 }: TournamentBeatmapsAdminViewProps) {
   const session = useSession();
   const router = useRouter();
+  const isAdmin = hasAdminScope(session?.scopes);
+  const { state, setState } = useAddressListState(POOL_PARAMS);
+  const textareaId = useId();
+
   const [selectedBeatmapIds, setSelectedBeatmapIds] = useState<Set<number>>(
     new Set()
   );
   const [isSelecting, setIsSelecting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const [isAdding, setIsAdding] = useState(false);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [beatmapIdsToAdd, setBeatmapIdsToAdd] = useState('');
   const [showDeleted, setShowDeleted] = useState(false);
-
-  // Matches the beatmap list's default sort
-  const [sort, setSort] =
-    useState<Parameters<BeatmapListSortChange>[0]>('gameCount');
-  const [descending, setDescending] = useState(true);
-
-  const isAdmin = hasAdminScope(session?.scopes);
 
   const rows = useMemo(
     () => toTournamentBeatmapTableRows(beatmaps, tournamentGames),
     [beatmaps, tournamentGames]
   );
-
-  const deletedBeatmapsCount = useMemo(
-    () => rows.filter((row) => row.isDeleted).length,
-    [rows]
-  );
+  const deletedCount = rows.filter((row) => row.isDeleted).length;
+  const visibleCount = rows.length - deletedCount;
 
   const visibleRows = useMemo(() => {
     const shown = showDeleted ? rows : rows.filter((row) => !row.isDeleted);
-    return sortBeatmapTableRows(shown, sort, descending);
-  }, [rows, showDeleted, sort, descending]);
+    return sortBeatmapTableRows(
+      shown,
+      state.sort.key,
+      state.sort.direction === 'desc'
+    );
+  }, [rows, showDeleted, state.sort]);
 
-  // Hidden rows must drop out of the pending selection
+  // Hidden rows drop out of the pending selection.
   const selectedRows = useMemo(
     () => visibleRows.filter((row) => selectedBeatmapIds.has(row.id)),
     [visibleRows, selectedBeatmapIds]
   );
-
-  const changeSort = useCallback<BeatmapListSortChange>(
-    (nextSort, nextDescending) => {
-      setSort(nextSort);
-      setDescending(nextDescending);
-    },
-    []
-  );
-
-  const clearSelection = useCallback(() => {
-    setSelectedBeatmapIds(new Set());
-  }, []);
 
   const toggleSelecting = useCallback(() => {
     setIsSelecting((previous) => {
@@ -139,11 +217,8 @@ export default function TournamentBeatmapsAdminView({
       onSelect: (row, checked) =>
         setSelectedBeatmapIds((previous) => {
           const next = new Set(previous);
-          if (checked) {
-            next.add(row.id);
-          } else {
-            next.delete(row.id);
-          }
+          if (checked) next.add(row.id);
+          else next.delete(row.id);
           return next;
         }),
       allSelected:
@@ -157,79 +232,44 @@ export default function TournamentBeatmapsAdminView({
     [selectedBeatmapIds, selectedRows, visibleRows]
   );
 
-  const handleDeleteSelected = useCallback(async () => {
-    if (selectedRows.length === 0) return;
+  const removeSelected = async () => {
+    const result = await orpc.tournaments.admin.manageBeatmaps({
+      tournamentId,
+      addBeatmapOsuIds: [],
+      removeBeatmapIds: selectedRows.map((row) => row.id),
+    });
 
-    setIsDeleting(true);
-    try {
-      const beatmapIds = selectedRows.map((row) => row.id);
+    result.warnings?.forEach((warning) => toast.warning(warning));
+    toast.success(
+      `Successfully removed ${formatCountOf(selectedRows.length, 'beatmap')}`
+    );
+    setSelectedBeatmapIds(new Set());
+    router.refresh();
+  };
 
-      const result = await orpc.tournaments.admin.manageBeatmaps({
-        tournamentId,
-        addBeatmapOsuIds: [],
-        removeBeatmapIds: beatmapIds,
-      });
+  const addBeatmaps = async () => {
+    const entries = splitBeatmapInput(beatmapIdsToAdd);
 
-      result.warnings?.forEach((warning) => {
-        toast.warning(warning);
-      });
-
-      const count = beatmapIds.length;
-      toast.success(
-        `Successfully removed ${count} beatmap${count === 1 ? '' : 's'}`
-      );
-      setSelectedBeatmapIds(new Set());
-      setIsDeleteDialogOpen(false);
-      router.refresh();
-    } catch (error) {
-      toast.error('Failed to remove beatmaps');
-      console.error('Error removing beatmaps:', error);
-    } finally {
-      setIsDeleting(false);
-    }
-  }, [selectedRows, tournamentId, router]);
-
-  const handleAddBeatmaps = useCallback(async () => {
-    const rawValues = splitBeatmapInput(beatmapIdsToAdd);
-
-    if (rawValues.length === 0) {
+    if (entries.length === 0) {
       toast.error('Please enter beatmap IDs or URLs');
       return;
     }
 
-    const invalidIds = rawValues.filter((value) => {
-      const match = value.match(BEATMAP_ID_PATTERN);
-
-      if (!match) {
-        const num = parseInt(value, 10);
-        return isNaN(num) || num <= 0 || num > MAX_BEATMAP_OSU_ID;
-      }
-
-      const numericId = Number(match[1] || match[2] || match[3]);
-      return numericId <= 0 || numericId > MAX_BEATMAP_OSU_ID;
-    });
-
-    if (invalidIds.length > 0) {
-      const errorMessage =
-        invalidIds.length === 1
-          ? `Invalid beatmap ID: "${invalidIds[0]}". IDs must be positive integers not exceeding 20,000,000.`
-          : `Invalid beatmap IDs found: ${invalidIds
-              .slice(0, 3)
-              .map((id) => `"${id}"`)
-              .join(
-                ', '
-              )}${invalidIds.length > 3 ? ` and ${invalidIds.length - 3} more` : ''}. IDs must be positive integers not exceeding 20,000,000.`;
-
-      toast.error(errorMessage);
+    const invalid = entries.filter((entry) => parseBeatmapId(entry) === 0);
+    if (invalid.length > 0) {
+      const listed = invalid
+        .slice(0, 3)
+        .map((entry) => `"${entry}"`)
+        .join(', ');
+      toast.error(
+        invalid.length === 1
+          ? `Invalid beatmap ID: ${listed}. IDs must be positive integers not exceeding ${formatCount(MAX_BEATMAP_OSU_ID)}.`
+          : `Invalid beatmap IDs found: ${listed}${invalid.length > 3 ? ` and ${formatCount(invalid.length - 3)} more` : ''}. IDs must be positive integers not exceeding ${formatCount(MAX_BEATMAP_OSU_ID)}.`
+      );
       return;
     }
 
-    const uniqueIds = Array.from(new Set(parseBeatmapIds(beatmapIdsToAdd)));
-
-    if (uniqueIds.length === 0) {
-      toast.error('No valid beatmap IDs could be parsed from the input');
-      return;
-    }
+    const uniqueIds = Array.from(new Set(entries.map(parseBeatmapId)));
 
     setIsAdding(true);
     try {
@@ -239,32 +279,24 @@ export default function TournamentBeatmapsAdminView({
         removeBeatmapIds: [],
       });
 
+      result.warnings?.forEach((warning) => toast.warning(warning));
+
       const { addedCount, skippedCount } = result;
-
-      result.warnings?.forEach((warning) => {
-        toast.warning(warning);
-      });
-
       if (addedCount === 0 && skippedCount > 0) {
         toast.success(
-          `No new beatmaps were added. Skipped ${skippedCount} already pooled beatmap${
-            skippedCount === 1 ? '' : 's'
-          }.`
+          `No new beatmaps were added. Skipped ${formatCountOf(skippedCount, 'already pooled beatmap')}.`
         );
       } else {
-        const parts = [
-          `Added ${addedCount} beatmap${addedCount === 1 ? '' : 's'}.`,
-        ];
-
-        if (skippedCount > 0) {
-          parts.push(
-            `Skipped ${skippedCount} beatmap${
-              skippedCount === 1 ? '' : 's'
-            } already pooled.`
-          );
-        }
-
-        toast.success(parts.join(' '));
+        toast.success(
+          [
+            `Added ${formatCountOf(addedCount, 'beatmap')}.`,
+            skippedCount > 0
+              ? `Skipped ${formatCountOf(skippedCount, 'beatmap')} already pooled.`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' ')
+        );
       }
       setBeatmapIdsToAdd('');
       setIsAddDialogOpen(false);
@@ -275,276 +307,219 @@ export default function TournamentBeatmapsAdminView({
     } finally {
       setIsAdding(false);
     }
-  }, [beatmapIdsToAdd, tournamentId, router]);
+  };
 
-  const emptyState = (
-    <BeatmapEmptyState
-      testId="tournament-beatmaps-empty"
-      title="No beatmaps pooled"
-      body="This tournament has no pooled beatmaps."
-    />
-  );
-
-  const table =
-    visibleRows.length === 0 ? (
-      emptyState
-    ) : (
-      <BeatmapListTable
-        beatmaps={visibleRows}
-        sort={sort}
-        descending={descending}
-        onSortChange={changeSort}
-        showTournamentCount={false}
-        selection={isAdmin && isSelecting ? selection : undefined}
-        // No compact fallback: rows stay selectable at any width
-        minWidthClassName="min-w-[44rem]"
-      />
-    );
-
-  if (!isAdmin) return table;
+  const selecting = isAdmin && isSelecting;
+  const meta = `${formatCountOf(visibleCount, 'beatmap')}${
+    deletedCount > 0 ? ` · ${formatCount(deletedCount)} deleted` : ''
+  }`;
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-end gap-2">
-        <SimpleTooltip
-          content={isSelecting ? 'Done selecting' : 'Select beatmaps'}
+    <Panel>
+      <SectionHeader
+        icon={Music}
+        title="Pooled beatmaps"
+        meta={meta}
+        actions={
+          isAdmin ? (
+            <>
+              <IconButton
+                data-testid="tournament-beatmaps-select-mode"
+                label={isSelecting ? 'Done selecting' : 'Select beatmaps'}
+                icon={ListChecks}
+                aria-pressed={isSelecting}
+                onClick={toggleSelecting}
+                className={isSelecting ? 'bg-accent' : undefined}
+              />
+              {deletedCount > 0 && (
+                <IconButton
+                  data-testid="tournament-beatmaps-toggle-deleted"
+                  label={
+                    showDeleted
+                      ? 'Hide deleted beatmaps'
+                      : 'Show deleted beatmaps'
+                  }
+                  tooltip={
+                    showDeleted
+                      ? 'Hide deleted beatmaps'
+                      : `Show ${formatCountOf(deletedCount, 'deleted beatmap')}`
+                  }
+                  icon={showDeleted ? EyeOff : Eye}
+                  aria-pressed={showDeleted}
+                  onClick={() => setShowDeleted(!showDeleted)}
+                />
+              )}
+              <IconButton
+                data-testid="tournament-beatmaps-add"
+                label="Add beatmaps"
+                icon={Plus}
+                onClick={() => setIsAddDialogOpen(true)}
+              />
+            </>
+          ) : undefined
+        }
+      />
+
+      {visibleRows.length === 0 ? (
+        <EmptyState
+          data-testid="tournament-beatmaps-empty"
+          icon={Music}
+          title="No beatmaps pooled"
+          description="This tournament has no pooled beatmaps."
+        />
+      ) : (
+        <BeatmapListTable
+          beatmaps={visibleRows}
+          sort={state.sort.key}
+          descending={state.sort.direction === 'desc'}
+          onSortChange={(key, descending) =>
+            setState({
+              sort: { key, direction: descending ? 'desc' : 'asc' },
+            })
+          }
+          showTournamentCount={false}
+          selection={selecting ? selection : undefined}
+          // Selecting keeps the table on phones, wide enough for its checkboxes.
+          minWidthClassName={selecting ? 'min-w-[44rem]' : undefined}
+          phoneRows={
+            selecting ? undefined : (
+              <PoolPhoneRows
+                rows={visibleRows}
+                sort={state.sort}
+                onSortChange={(sort) => setState({ sort })}
+              />
+            )
+          }
+        />
+      )}
+
+      {selecting && selectedRows.length > 0 && (
+        <BeatmapSelectionBar
+          count={selectedRows.length}
+          onClear={() => setSelectedBeatmapIds(new Set())}
         >
           <Button
-            data-testid="tournament-beatmaps-select-mode"
-            size="icon"
-            variant={isSelecting ? 'secondary' : 'ghost'}
-            aria-pressed={isSelecting}
-            aria-label={isSelecting ? 'Done selecting' : 'Select beatmaps'}
-            onClick={toggleSelecting}
-            className="size-9 rounded-full"
+            data-testid="tournament-beatmaps-remove"
+            variant="destructive"
+            size="sm"
+            icon={Trash2}
+            className="rounded-full"
+            onClick={() => setIsRemoveDialogOpen(true)}
           >
-            <ListChecks className="size-4" />
+            Remove
           </Button>
-        </SimpleTooltip>
+        </BeatmapSelectionBar>
+      )}
 
-        {deletedBeatmapsCount > 0 && (
-          <SimpleTooltip
-            content={
-              showDeleted
-                ? 'Hide deleted beatmaps'
-                : `Show ${deletedBeatmapsCount} deleted beatmap${deletedBeatmapsCount === 1 ? '' : 's'}`
-            }
-          >
-            <Button
-              data-testid="tournament-beatmaps-toggle-deleted"
-              size="icon"
-              variant="ghost"
-              aria-pressed={showDeleted}
-              aria-label={
-                showDeleted ? 'Hide deleted beatmaps' : 'Show deleted beatmaps'
-              }
-              onClick={() => setShowDeleted(!showDeleted)}
-              className="size-9 rounded-full"
-            >
-              {showDeleted ? (
-                <EyeOff className="size-4" />
-              ) : (
-                <Eye className="size-4" />
-              )}
-            </Button>
-          </SimpleTooltip>
-        )}
-
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            {/* Label expands from a zero-width grid track */}
-            <Button
-              data-testid="tournament-beatmaps-add"
-              aria-label="Add beatmaps"
-              className="group h-9 gap-0 rounded-full px-2.5 has-[>svg]:px-2.5"
-            >
-              <Plus className="size-4 shrink-0" aria-hidden="true" />
-              <span className="grid grid-cols-[0fr] transition-[grid-template-columns] duration-200 ease-out group-hover:grid-cols-[1fr] group-focus-visible:grid-cols-[1fr] motion-reduce:transition-none">
-                <span className="overflow-hidden">
-                  <span className="pl-1.5 whitespace-nowrap">Add beatmaps</span>
-                </span>
-              </span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add beatmaps</DialogTitle>
-              <DialogDescription asChild>
-                <div>
-                  <p>
-                    Enter osu! beatmap IDs or URLs to add to the tournament
-                    pool. You can enter multiple values separated by commas or
-                    new lines.{' '}
-                    <strong>
-                      Duplicates are safely ignored/merged into existing pool.
-                    </strong>
-                  </p>
-                  <p className="mt-2">Accepted formats:</p>
-                  <ul className="mt-1 list-inside list-disc">
-                    <li>Direct beatmap ID (e.g., 1234567)</li>
-                    <li>Beatmap URL (e.g., https://osu.ppy.sh/b/1234567)</li>
-                    <li>
-                      Beatmapset URL (e.g.,
-                      https://osu.ppy.sh/beatmapsets/123#osu/456)
-                    </li>
-                  </ul>
-                </div>
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <Textarea
-                placeholder="Enter beatmap IDs or URLs"
-                value={beatmapIdsToAdd}
-                onChange={(e) => setBeatmapIdsToAdd(e.target.value)}
-                rows={5}
-              />
-              <div className="flex justify-end gap-2">
+      {isAdmin && (
+        <>
+          <DialogTemplate
+            open={isAddDialogOpen}
+            onOpenChange={(open) => {
+              if (isAdding) return;
+              setIsAddDialogOpen(open);
+              if (!open) setBeatmapIdsToAdd('');
+            }}
+            title="Add beatmaps"
+            description="Enter osu! beatmap IDs or URLs to add to the tournament pool. Duplicates are safely ignored/merged into existing pool."
+            onSubmit={(event) => {
+              event.preventDefault();
+              void addBeatmaps();
+            }}
+            footer={
+              <>
                 <Button
                   variant="outline"
+                  disabled={isAdding}
                   onClick={() => {
                     setIsAddDialogOpen(false);
                     setBeatmapIdsToAdd('');
                   }}
-                  disabled={isAdding}
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleAddBeatmaps} disabled={isAdding}>
-                  {isAdding ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Adding...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="h-4 w-4" />
-                      Add beatmaps
-                    </>
-                  )}
+                <Button type="submit" icon={Plus} pending={isAdding}>
+                  {isAdding ? 'Adding…' : 'Add beatmaps'}
                 </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {table}
-
-      {isSelecting && selectedRows.length > 0 && (
-        <BeatmapSelectionBar
-          count={selectedRows.length}
-          onClear={clearSelection}
-        >
-          <Dialog
-            open={isDeleteDialogOpen}
-            onOpenChange={setIsDeleteDialogOpen}
+              </>
+            }
           >
-            <DialogTrigger asChild>
-              <Button
-                data-testid="tournament-beatmaps-remove"
-                variant="destructive"
-                size="sm"
-                className="rounded-full"
-              >
-                <Trash2 className="size-4" />
-                Remove
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="flex max-h-[80vh] flex-col overflow-hidden sm:max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Confirm beatmap removal</DialogTitle>
-                <DialogDescription asChild>
-                  <div>
-                    Are you sure you want to remove{' '}
-                    <strong>{selectedRows.length}</strong> beatmap
-                    {selectedRows.length === 1 ? '' : 's'} from{' '}
-                    <strong>{tournamentName}</strong>?
-                  </div>
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="flex-1 space-y-3 overflow-y-auto py-2">
-                <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="mb-2 text-sm font-medium">
-                    Beatmaps to be removed:
-                  </p>
-                  <div className="max-h-60 space-y-1 overflow-y-auto">
-                    {selectedRows.map((beatmap) => (
-                      <div
-                        key={beatmap.id}
-                        className="rounded px-2 py-1 text-sm hover:bg-muted/50"
-                      >
-                        <div className="flex items-start gap-2">
-                          <Link
-                            href={`/beatmaps/${beatmap.osuId}`}
-                            className="min-w-[3rem] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-primary"
-                          >
-                            #{beatmap.osuId || beatmap.id}
-                          </Link>
-                          <div className="flex-1">
-                            <span
-                              className={
-                                beatmap.isDeleted
-                                  ? 'line-through opacity-50'
-                                  : ''
-                              }
-                            >
-                              {beatmap.artist} - {beatmap.title} [
-                              {beatmap.diffName}]
-                            </span>
-                            {beatmap.isDeleted && (
-                              <span className="ml-2 text-xs text-muted-foreground">
-                                (deleted from osu!)
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-1 text-sm text-muted-foreground">
-                  <p>
-                    • This will unlink the selected beatmaps from the tournament
-                  </p>
-                  <p>
-                    • The beatmaps themselves will not be deleted from the
-                    system
-                  </p>
-                  <p>• This action cannot be undone</p>
-                </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex min-h-5 items-center justify-between gap-2">
+                <Label htmlFor={textareaId}>Beatmaps</Label>
+                <span className="text-xs text-muted-foreground">
+                  Separate with commas or new lines
+                </span>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsDeleteDialogOpen(false)}
-                  disabled={isDeleting}
+              <Textarea
+                id={textareaId}
+                placeholder="Enter beatmap IDs or URLs"
+                value={beatmapIdsToAdd}
+                onChange={(event) => setBeatmapIdsToAdd(event.target.value)}
+                rows={5}
+              />
+              <ul className="list-inside list-disc text-xs text-muted-foreground">
+                <li>Direct beatmap ID (e.g., 1234567)</li>
+                <li>Beatmap URL (e.g., https://osu.ppy.sh/b/1234567)</li>
+                <li>
+                  Beatmapset URL (e.g.,
+                  https://osu.ppy.sh/beatmapsets/123#osu/456)
+                </li>
+              </ul>
+            </div>
+          </DialogTemplate>
+
+          <ConfirmDialog
+            open={isRemoveDialogOpen}
+            onOpenChange={setIsRemoveDialogOpen}
+            title={`Remove ${formatCountOf(selectedRows.length, 'beatmap')}?`}
+            description={
+              <>
+                <p>
+                  This will unlink the selected beatmaps from {tournamentName}.
+                  The beatmaps themselves will not be deleted from the system.
+                </p>
+                <p>This action cannot be undone.</p>
+              </>
+            }
+            confirmLabel="Remove beatmaps"
+            pendingLabel="Removing…"
+            errorText="Failed to remove beatmaps"
+            onConfirm={removeSelected}
+          >
+            <ul className="max-h-60 divide-y overflow-y-auto rounded-lg border text-sm">
+              {selectedRows.map((row) => (
+                <li
+                  key={row.id}
+                  className="flex items-baseline gap-2 px-3 py-1.5"
                 >
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleDeleteSelected}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Removing...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="h-4 w-4" />
-                      Remove beatmaps
-                    </>
+                  <Link
+                    href={`/beatmaps/${row.osuId}`}
+                    prefetch={false}
+                    className="shrink-0 text-muted-foreground tabular-nums underline decoration-dotted underline-offset-2 transition-colors hover:text-link"
+                  >
+                    {formatId(row.osuId || row.id)}
+                  </Link>
+                  <span
+                    className={
+                      row.isDeleted
+                        ? 'min-w-0 truncate text-muted-foreground line-through'
+                        : 'min-w-0 truncate'
+                    }
+                  >
+                    {beatmapLabel(row)}
+                  </span>
+                  {row.isDeleted && (
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      Deleted from osu!
+                    </span>
                   )}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </BeatmapSelectionBar>
+                </li>
+              ))}
+            </ul>
+          </ConfirmDialog>
+        </>
       )}
-    </div>
+    </Panel>
   );
 }

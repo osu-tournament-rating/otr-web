@@ -1,59 +1,148 @@
-import { Metadata } from 'next';
-import Link from 'next/link';
-import { headers } from 'next/headers';
-import { PageSearchParams } from '@/lib/types';
-import { tournamentListFilterSchema } from '@/lib/validation-schema';
-import TournamentListFilter from '@/components/tournaments/list/TournamentListFilter';
-import TournamentList from '@/components/tournaments/list/TournamentList';
 import { Trophy, Upload } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Metadata } from 'next';
+import { headers } from 'next/headers';
+import Link from 'next/link';
+import { redirect, unstable_rethrow } from 'next/navigation';
+
+import {
+  TOURNAMENT_LIST_PARAMS,
+  TOURNAMENT_PAGE_SIZE,
+  legacyTournamentListHref,
+  toTournamentListRequest,
+  tournamentListHref,
+  type TournamentListState,
+} from '@/app/tournaments/list-params';
+import { Button } from '@/components/kit/controls/Button';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { PageFrame } from '@/components/kit/layout/PageFrame';
+import { PageHeader } from '@/components/kit/layout/PageHeader';
+import { Panel } from '@/components/kit/layout/Panel';
+import { PaginationFooter } from '@/components/kit/tables/PaginationFooter';
+import TournamentList from '@/components/tournaments/list/TournamentList';
+import TournamentListError from '@/components/tournaments/list/TournamentListError';
+import TournamentListToolbar from '@/components/tournaments/list/TournamentListToolbar';
 import { auth } from '@/lib/auth/auth';
+import { formatCountOf } from '@/lib/kit/format/number';
+import {
+  clearListFilters,
+  countActiveFilters,
+  parseListState,
+} from '@/lib/kit/lists/params';
+import { orpc } from '@/lib/orpc/orpc';
+import type { TournamentListPageResponse } from '@/lib/orpc/schema/tournament';
+import type { PageSearchParams } from '@/lib/types';
 
 export const metadata: Metadata = {
   title: 'Tournaments',
   description: 'Browse tournament submissions and their verification status.',
 };
 
-export default async function Page({ searchParams }: PageSearchParams) {
-  const filter = tournamentListFilterSchema.parse(await searchParams);
-  const session = await auth.api.getSession({ headers: await headers() });
+async function fetchTournaments(
+  state: TournamentListState
+): Promise<TournamentListPageResponse | null> {
+  try {
+    return await orpc.tournaments.listPage(toTournamentListRequest(state));
+  } catch (error) {
+    // Next's own control-flow errors (dynamic rendering, redirects) pass.
+    unstable_rethrow(error);
+    console.error('[tournaments] list could not load', error);
+    return null;
+  }
+}
+
+function TournamentResults({
+  state,
+  data,
+}: {
+  state: TournamentListState;
+  data: TournamentListPageResponse | null;
+}) {
+  if (!data) {
+    return <TournamentListError />;
+  }
+
+  if (data.items.length === 0) {
+    const filtered = countActiveFilters(TOURNAMENT_LIST_PARAMS, state) > 0;
+    const narrowed = filtered || state.q !== '' || state.ruleset.length > 0;
+
+    return (
+      <EmptyState
+        data-testid="tournament-empty-state"
+        title={narrowed ? 'No tournaments match' : 'No tournaments yet'}
+        description={
+          narrowed
+            ? 'Try a different name, ruleset, or fewer filters.'
+            : 'No tournament submissions are available right now.'
+        }
+        clearFilters={
+          filtered
+            ? {
+                href: tournamentListHref(
+                  clearListFilters(TOURNAMENT_LIST_PARAMS, state)
+                ),
+              }
+            : undefined
+        }
+      />
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-6 sm:px-0 sm:py-0">
-      <header className="mb-6 flex flex-col gap-5 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="max-w-2xl">
-          <div className="flex items-center gap-3">
-            <Trophy className="size-7 text-primary" aria-hidden="true" />
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Tournaments
-            </h1>
-          </div>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground sm:text-base">
-            Browse tournament submissions and their review status. Only verified
-            data is included in ratings.
-          </p>
-        </div>
+    <>
+      <TournamentList tournaments={data.items} />
+      <PaginationFooter
+        data-testid="tournament-pagination"
+        page={state.page}
+        pageSize={TOURNAMENT_PAGE_SIZE}
+        totalCount={data.totalCount}
+        getPageHref={(page) => tournamentListHref({ ...state, page })}
+        label="Tournament pages"
+      />
+    </>
+  );
+}
 
-        {session && (
-          <Button asChild className="w-full sm:w-auto">
-            <Link href="/tournaments/submit">
-              <Upload aria-hidden="true" />
-              Submit
-            </Link>
-          </Button>
-        )}
-      </header>
+export default async function Page({ searchParams }: PageSearchParams) {
+  const raw = await searchParams;
+  const legacyHref = legacyTournamentListHref(raw);
+  if (legacyHref) redirect(legacyHref);
 
-      <section
-        aria-label="Tournament archive"
-        data-testid="tournament-results"
-        className="overflow-clip rounded-xl border bg-card shadow-sm dark:bg-muted/75 dark:shadow-none"
-      >
-        <div className="border-b bg-muted/20 p-3 sm:p-4 dark:bg-muted">
-          <TournamentListFilter filter={filter} />
-        </div>
-        <TournamentList filter={filter} />
-      </section>
-    </div>
+  const state = parseListState(TOURNAMENT_LIST_PARAMS, raw);
+  const [session, data] = await Promise.all([
+    auth.api.getSession({ headers: await headers() }),
+    fetchTournaments(state),
+  ]);
+
+  // A page past the end, such as an old link after filtering, shows the last.
+  if (data && data.totalPages > 0 && state.page > data.totalPages) {
+    redirect(tournamentListHref({ ...state, page: data.totalPages }));
+  }
+
+  return (
+    <PageFrame>
+      <PageHeader
+        icon={Trophy}
+        title="Tournaments"
+        description="Browse tournament submissions and their review status. Only verified data is included in ratings."
+        actions={
+          session ? (
+            <Button asChild icon={Upload}>
+              <Link href="/tournaments/submit">Submit</Link>
+            </Button>
+          ) : null
+        }
+      />
+
+      <Panel aria-label="Tournament archive" data-testid="tournament-results">
+        <TournamentListToolbar
+          count={
+            data
+              ? formatCountOf(data.totalCount, 'tournament', 'tournaments')
+              : undefined
+          }
+        />
+        <TournamentResults state={state} data={data} />
+      </Panel>
+    </PageFrame>
   );
 }

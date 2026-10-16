@@ -1,357 +1,296 @@
 'use client';
 
-import type { TournamentPlayerStats } from '@/lib/orpc/schema/tournament';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  SortingState,
-  useReactTable,
-} from '@tanstack/react-table';
-import { useState, useMemo, useCallback } from 'react';
-import { OsuAvatar } from '@/components/ui/osu-avatar';
-import Link from 'next/link';
-import {
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Download,
-  TrendingUp,
-} from 'lucide-react';
-import RatingDelta from '@/components/rating/RatingDelta';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { stickyTableHeaderFromLg } from '@/lib/utils/table';
+import { Download, TrendingUp } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
 
-interface TournamentRatingsViewProps {
-  playerStats: TournamentPlayerStats[];
+import { Button } from '@/components/kit/controls/Button';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { RatingDelta } from '@/components/kit/format/RatingDelta';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import {
+  SortControl,
+  type SortOption,
+} from '@/components/kit/lists/SortControl';
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHeader,
+  DataTableRow,
+} from '@/components/kit/tables/DataTable';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
+import { SortableHeader } from '@/components/kit/tables/SortableHeader';
+import { OsuAvatar } from '@/components/ui/osu-avatar';
+import {
+  formatCount,
+  formatCountOf,
+  formatRating,
+} from '@/lib/kit/format/number';
+import { defineListParams, sortParam } from '@/lib/kit/lists/params';
+import type { SortState } from '@/lib/kit/lists/sort';
+import { sortRows } from '@/lib/kit/tables/sort';
+import type { TournamentPlayerStats } from '@/lib/orpc/schema/tournament';
+
+import { useAddressListState } from './useAddressListState';
+
+type RatingSortKey =
+  'player' | 'matches' | 'games' | 'before' | 'after' | 'average' | 'total';
+
+const RATING_SORT_KEYS: readonly RatingSortKey[] = [
+  'player',
+  'matches',
+  'games',
+  'before',
+  'after',
+  'average',
+  'total',
+];
+
+/**
+ * The columns as sort options, for phones, where the rows have no headers.
+ * Each starts in its header's direction: names A to Z, numbers highest first.
+ */
+const RATING_SORT_OPTIONS: readonly SortOption<RatingSortKey>[] = [
+  { value: 'player', label: 'Player', defaultDirection: 'asc' },
+  { value: 'matches', label: 'Matches', defaultDirection: 'desc' },
+  { value: 'games', label: 'Games', defaultDirection: 'desc' },
+  { value: 'before', label: 'Rating before', defaultDirection: 'desc' },
+  { value: 'after', label: 'Rating after', defaultDirection: 'desc' },
+  { value: 'average', label: 'Avg. change', defaultDirection: 'desc' },
+  { value: 'total', label: 'Total change', defaultDirection: 'desc' },
+];
+
+const DEFAULT_RATING_SORT: SortState<RatingSortKey> = {
+  key: 'total',
+  direction: 'desc',
+};
+
+/** The ratings table's sort, in the tournament page's address. */
+const TOURNAMENT_RATING_PARAMS = defineListParams({
+  sort: sortParam(RATING_SORT_KEYS, DEFAULT_RATING_SORT),
+});
+
+const totalChange = (row: TournamentPlayerStats) =>
+  row.averageRatingDelta * row.matchesPlayed;
+
+const SORT_VALUES = {
+  player: (row: TournamentPlayerStats) => row.player.username,
+  // Win–loss records: the wider positive margin first, then more wins.
+  matches: (row: TournamentPlayerStats) =>
+    (row.matchesWon - row.matchesLost) * 10_000 + row.matchesWon,
+  games: (row: TournamentPlayerStats) =>
+    (row.gamesWon - row.gamesLost) * 10_000 + row.gamesWon,
+  before: (row: TournamentPlayerStats) => row.ratingBefore,
+  after: (row: TournamentPlayerStats) => row.ratingAfter,
+  average: (row: TournamentPlayerStats) => row.averageRatingDelta,
+  total: totalChange,
+} satisfies Record<RatingSortKey, (row: TournamentPlayerStats) => unknown>;
+
+/** `7–1`, wins in green and losses in red, the numbers carrying the meaning. */
+function WinLoss({ won, lost }: { won: number; lost: number }) {
+  return (
+    <span className="tabular-nums">
+      <span className="text-success-foreground">{formatCount(won)}</span>
+      <span className="text-muted-foreground">–</span>
+      <span className="text-destructive-foreground">{formatCount(lost)}</span>
+    </span>
+  );
 }
 
-const SortableHeader = ({
-  column,
-  children,
-  justify = 'center',
-  defaultDesc = true,
-}: {
-  column: {
-    toggleSorting: (desc?: boolean) => void;
-    getIsSorted: () => false | 'asc' | 'desc';
-  };
-  children: React.ReactNode;
-  justify?: 'start' | 'center' | 'end';
-  defaultDesc?: boolean;
-}) => (
-  <div className={cn('flex', 'justify-' + justify)}>
-    <Button
-      variant="ghost"
-      onClick={() => {
-        const currentSort = column.getIsSorted();
-        if (currentSort === false) {
-          column.toggleSorting(defaultDesc);
-        } else {
-          column.toggleSorting(currentSort === 'asc');
-        }
-      }}
-      className="h-auto p-0 font-semibold hover:bg-transparent"
+function PlayerLink({ player }: { player: TournamentPlayerStats['player'] }) {
+  return (
+    <EntityLink
+      href={`/players/${player.id}`}
+      leading={
+        <OsuAvatar osuId={player.osuId} username={player.username} size={24} />
+      }
     >
-      {children}
-      {column.getIsSorted() === 'asc' ? (
-        <ArrowUp className="ml-2 h-4 w-4" />
-      ) : column.getIsSorted() === 'desc' ? (
-        <ArrowDown className="ml-2 h-4 w-4" />
-      ) : (
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      )}
-    </Button>
-  </div>
-);
-
-const PlayerCell = ({
-  player,
-}: {
-  player: TournamentPlayerStats['player'];
-}) => (
-  <Link
-    href={`/players/${player.id}`}
-    className="flex items-center gap-2 transition-opacity hover:opacity-80 sm:gap-2.5"
-  >
-    <OsuAvatar
-      osuId={player.osuId}
-      username={player.username}
-      size={28}
-      className="flex-shrink-0 ring-1 ring-border/10"
-    />
-    <span className="truncate text-xs font-medium sm:text-sm">
       {player.username}
-    </span>
-  </Link>
-);
+    </EntityLink>
+  );
+}
 
-export default function TournamentRatingsView({
-  playerStats,
-}: TournamentRatingsViewProps) {
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: 'totalChange', desc: true },
+function downloadCsv(rows: readonly TournamentPlayerStats[]) {
+  const headers = [
+    'Player',
+    'Matches Won',
+    'Matches Lost',
+    'Games Won',
+    'Games Lost',
+    'Rating Before',
+    'Rating After',
+    'Average Change',
+    'Total Change',
+  ];
+
+  const csvRows = rows.map((stat) => [
+    stat.player.username,
+    stat.matchesWon,
+    stat.matchesLost,
+    stat.gamesWon,
+    stat.gamesLost,
+    stat.ratingBefore.toFixed(1),
+    stat.ratingAfter.toFixed(1),
+    stat.averageRatingDelta.toFixed(1),
+    totalChange(stat).toFixed(1),
   ]);
 
-  const columns: ColumnDef<TournamentPlayerStats>[] = useMemo(
-    () => [
-      {
-        id: 'player',
-        accessorFn: (row) => row.player.username.toLowerCase(),
-        header: ({ column }) => (
-          <SortableHeader column={column} justify="start" defaultDesc={false}>
-            Player
-          </SortableHeader>
-        ),
-        cell: ({ row }) => <PlayerCell player={row.original.player} />,
-        size: 200,
-      },
-      {
-        id: 'matchRecord',
-        header: ({ column }) => (
-          <SortableHeader column={column}>Matches</SortableHeader>
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-center font-medium">
-              <span className="text-green-600">{row.original.matchesWon}</span>
-              <span className="px-0.5 text-muted-foreground">-</span>
-              <span className="text-red-600">{row.original.matchesLost}</span>
-            </div>
-          );
-        },
-        accessorFn: (row) =>
-          (row.matchesWon - row.matchesLost) * 10000 + row.matchesWon,
-      },
-      {
-        id: 'gameRecord',
-        header: ({ column }) => (
-          <SortableHeader column={column}>Games</SortableHeader>
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-center font-medium">
-              <span className="text-green-600">{row.original.gamesWon}</span>
-              <span className="px-0.5 text-muted-foreground">-</span>
-              <span className="text-red-600">{row.original.gamesLost}</span>
-            </div>
-          );
-        },
-        accessorFn: (row) =>
-          (row.gamesWon - row.gamesLost) * 10000 + row.gamesWon,
-      },
-      {
-        accessorKey: 'ratingBefore',
-        header: ({ column }) => (
-          <SortableHeader column={column}>Before</SortableHeader>
-        ),
-        cell: ({ row }) => (
-          <div className="text-center font-medium text-foreground">
-            {Math.round(row.original.ratingBefore)}
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'ratingAfter',
-        header: ({ column }) => (
-          <SortableHeader column={column}>After</SortableHeader>
-        ),
-        cell: ({ row }) => (
-          <div className="text-center font-medium text-foreground">
-            {Math.round(row.original.ratingAfter)}
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'averageRatingDelta',
-        header: ({ column }) => (
-          <SortableHeader column={column}>Avg</SortableHeader>
-        ),
-        cell: ({ getValue }) => (
-          <div className="text-center">
-            <RatingDelta delta={getValue() as number} />
-          </div>
-        ),
-      },
-      {
-        id: 'totalChange',
-        header: ({ column }) => (
-          <SortableHeader column={column}>Total</SortableHeader>
-        ),
-        accessorFn: (row) => row.averageRatingDelta * row.matchesPlayed,
-        cell: ({ getValue }) => {
-          return (
-            <div className="text-center">
-              <RatingDelta delta={getValue() as number} />
-            </div>
-          );
-        },
-      },
-    ],
-    []
+  const csvContent = [headers, ...csvRows]
+    .map((row) => row.join(','))
+    .join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'tournament-ratings.csv';
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * The Ratings tab: every player's record and rating change in the
+ * tournament, sortable by any column (the sort is kept in the address), as
+ * rows on phones.
+ */
+export default function TournamentRatingsView({
+  playerStats,
+}: {
+  playerStats: TournamentPlayerStats[];
+}) {
+  const { state, setState } = useAddressListState(TOURNAMENT_RATING_PARAMS);
+  const sort = state.sort;
+  const rows = useMemo(
+    () => sortRows(playerStats, sort, SORT_VALUES),
+    [playerStats, sort]
   );
-
-  const table = useReactTable({
-    data: playerStats,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    onSortingChange: setSorting,
-    state: { sorting },
-  });
-
-  const downloadCSV = useCallback(() => {
-    const headers = [
-      'Player',
-      'Matches Won',
-      'Matches Lost',
-      'Games Won',
-      'Games Lost',
-      'Rating Before',
-      'Rating After',
-      'Average Change',
-      'Total Change',
-    ];
-
-    const sortedRows = table.getRowModel().rows;
-
-    const csvData = sortedRows.map((row) => {
-      const stat = row.original;
-
-      return [
-        stat.player.username,
-        stat.matchesWon,
-        stat.matchesLost,
-        stat.gamesWon,
-        stat.gamesLost,
-        stat.ratingBefore.toFixed(1),
-        stat.ratingAfter.toFixed(1),
-        stat.averageRatingDelta.toFixed(1),
-        (stat.averageRatingDelta * stat.matchesPlayed).toFixed(1),
-      ];
-    });
-
-    const csvContent = [
-      headers.join(','),
-      ...csvData.map((row) => row.join(',')),
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'tournament-ratings.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }, [table]);
-
-  if (playerStats.length === 0) {
-    return (
-      <div className="py-8 text-center text-muted-foreground">
-        No rating data available for this tournament.
-      </div>
-    );
-  }
+  const onSortChange = useCallback(
+    (next: SortState<RatingSortKey>) => setState({ sort: next }),
+    [setState]
+  );
+  const headerProps = { sort, onSortChange } as const;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <TrendingUp className="h-6 w-6 text-primary" />
-        <h3 className="font-sans text-lg font-semibold">Rating Changes</h3>
-        <span className="text-sm text-muted-foreground">
-          ({table.getRowModel().rows?.length || 0} players)
-        </span>
+    <Panel>
+      <SectionHeader
+        icon={TrendingUp}
+        title="Rating changes"
+        meta={formatCountOf(playerStats.length, 'player')}
+        actions={
+          playerStats.length > 0 ? (
+            <Button
+              variant="outline"
+              size="sm"
+              icon={Download}
+              onClick={() => downloadCsv(rows)}
+            >
+              Download CSV
+            </Button>
+          ) : undefined
+        }
+      />
 
-        <div className="ml-auto flex">
-          <Button
-            onClick={downloadCSV}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Download CSV
-          </Button>
-        </div>
-      </div>
-      <div
-        className={cn(
-          'overflow-x-auto rounded-lg border bg-gradient-to-br from-background to-muted/20',
-          stickyTableHeaderFromLg
-        )}
-      >
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-muted">
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="font-semibold text-foreground"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
+      {playerStats.length === 0 ? (
+        <EmptyState
+          icon={TrendingUp}
+          title="No rating data"
+          description="No rating data available for this tournament."
+        />
+      ) : (
+        <DataTable
+          aria-label="Rating changes"
+          stickyHeader
+          phoneRows={
+            <>
+              {/* The headers sort the table; phones get the same sort here. */}
+              <div className="border-b px-4 py-3">
+                <SortControl
+                  label="Sort rating changes by"
+                  options={RATING_SORT_OPTIONS}
+                  value={sort}
+                  onValueChange={onSortChange}
+                />
+              </div>
+              <PhoneRowList aria-label="Rating changes">
+                {rows.map((row) => (
+                  <PhoneRow
+                    key={row.player.id}
+                    title={<PlayerLink player={row.player} />}
+                    description={`Matches ${formatCount(row.matchesWon)}–${formatCount(row.matchesLost)} · ${formatRating(row.ratingBefore)} → ${formatRating(row.ratingAfter)}`}
+                    value={<RatingDelta value={totalChange(row)} />}
+                  />
                 ))}
-              </TableRow>
+              </PhoneRowList>
+            </>
+          }
+        >
+          <DataTableHeader>
+            <DataTableRow>
+              <SortableHeader
+                {...headerProps}
+                sortKey="player"
+                defaultDirection="asc"
+              >
+                Player
+              </SortableHeader>
+              <SortableHeader {...headerProps} sortKey="matches" numeric>
+                Matches
+              </SortableHeader>
+              <SortableHeader
+                {...headerProps}
+                sortKey="games"
+                numeric
+                showFrom="lg"
+              >
+                Games
+              </SortableHeader>
+              <SortableHeader {...headerProps} sortKey="before" numeric>
+                Before
+              </SortableHeader>
+              <SortableHeader {...headerProps} sortKey="after" numeric>
+                After
+              </SortableHeader>
+              <SortableHeader {...headerProps} sortKey="average" numeric>
+                Avg. change
+              </SortableHeader>
+              <SortableHeader {...headerProps} sortKey="total" numeric>
+                Total change
+              </SortableHeader>
+            </DataTableRow>
+          </DataTableHeader>
+          <DataTableBody>
+            {rows.map((row) => (
+              <DataTableRow key={row.player.id}>
+                <DataTableCell>
+                  <PlayerLink player={row.player} />
+                </DataTableCell>
+                <DataTableCell numeric>
+                  <WinLoss won={row.matchesWon} lost={row.matchesLost} />
+                </DataTableCell>
+                <DataTableCell numeric showFrom="lg">
+                  <WinLoss won={row.gamesWon} lost={row.gamesLost} />
+                </DataTableCell>
+                <DataTableCell numeric>
+                  {formatRating(row.ratingBefore)}
+                </DataTableCell>
+                <DataTableCell numeric>
+                  {formatRating(row.ratingAfter)}
+                </DataTableCell>
+                <DataTableCell numeric>
+                  <RatingDelta value={row.averageRatingDelta} />
+                </DataTableCell>
+                <DataTableCell numeric>
+                  <RatingDelta value={totalChange(row)} />
+                </DataTableCell>
+              </DataTableRow>
             ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row, index) => (
-                <TableRow
-                  key={row.id}
-                  className={cn(
-                    'transition-colors duration-200 hover:bg-muted/30',
-                    index % 2 === 0 ? 'bg-background/50' : 'bg-muted/10'
-                  )}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className={cn(
-                        'py-2',
-                        cell.column.id === 'player' && 'pl-4'
-                      )}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+          </DataTableBody>
+        </DataTable>
+      )}
+    </Panel>
   );
 }
