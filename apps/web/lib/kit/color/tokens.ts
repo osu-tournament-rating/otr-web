@@ -64,6 +64,34 @@ export const CALLOUT_COLORS: Readonly<Record<CalloutTone, CalloutColors>> = {
   ),
 };
 
+/**
+ * The brand blue. `--primary` colours icons, borders, rings and selection: in
+ * light mode it is darkened so white text on it reaches 4.5:1, and in dark mode
+ * it stays the original blue. `--primary-solid` is the fill behind white text
+ * in both themes, and `--link` colours blue text.
+ */
+export const PRIMARY_COLOR: ThemeColor = themeColor(
+  '--primary',
+  'oklch(0.575 0.182 262.51)',
+  'oklch(0.67 0.17 258.51)',
+  'mark'
+);
+
+/** Blue link text: 4.5:1 or better on every surface in both themes. */
+export const LINK_COLOR: ThemeColor = themeColor(
+  '--link',
+  'oklch(0.547 0.174 262.51)',
+  'oklch(0.67 0.17 258.51)',
+  'text'
+);
+
+export const PRIMARY_SOLID_COLOR: ThemeColor = themeColor(
+  '--primary-solid',
+  'oklch(0.575 0.182 262.51)',
+  'oklch(0.575 0.182 262.51)',
+  'mark'
+);
+
 /** The one colour for "something new" dots on menu items and avatars. */
 export const NOTIFICATION_COLOR: ThemeColor = themeColor(
   '--notification',
@@ -139,6 +167,23 @@ export const TOKEN_GROUPS: readonly TokenGroup[] = [
       { color: MATCH_SURFACES.gameFrame, label: 'Game frame' },
       { color: MATCH_SURFACES.scoreCard, label: 'Score card' },
     ].map((entry) => ({ ...entry, utility: utilityOf(entry.color) })),
+  },
+  {
+    id: 'brand',
+    title: 'Brand blue',
+    entries: [
+      {
+        color: PRIMARY_COLOR,
+        label: 'Blue icons, borders and selection',
+        utility: 'primary',
+      },
+      { color: LINK_COLOR, label: 'Blue link text', utility: 'link' },
+      {
+        color: PRIMARY_SOLID_COLOR,
+        label: 'Blue fill behind white text',
+        utility: 'primary-solid',
+      },
+    ],
   },
   {
     id: 'accent',

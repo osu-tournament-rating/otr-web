@@ -302,7 +302,7 @@ function AccentRule() {
             <PanelBody className="flex flex-col gap-3 text-sm">
               <a
                 href="#color-accent-rule"
-                className="w-fit rounded-sm font-medium transition-colors hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                className="w-fit rounded-sm font-medium transition-colors hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 Corsace Open 2025 (a name link, blue on hover)
               </a>
@@ -866,10 +866,11 @@ export default function ColorSection() {
       <Specimen
         id="color-accent-rule"
         name="Accent rule"
-        description="Blue means you can act on it or it is selected: links on hover, primary buttons, the selected chip. Section icons stay muted, and new things get the one notification dot."
+        description="Blue means you can act on it or it is selected: links on hover, primary buttons, the selected chip. Buttons fill with primary-solid, blue text uses link, and icons and borders use primary. Section icons stay muted, and new things get the one notification dot."
       >
         <div className="flex flex-col gap-3">
           <AccentRule />
+          <TokenList groupId="brand" />
           <TokenList groupId="accent" />
         </div>
       </Specimen>

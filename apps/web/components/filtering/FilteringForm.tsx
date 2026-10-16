@@ -384,7 +384,7 @@ export default function FilteringForm({
                 type="submit"
                 data-testid="filter-submit-button"
                 disabled={isLoading}
-                className="flex-1 rounded-md bg-primary text-base font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl sm:py-6 sm:text-lg"
+                className="flex-1 rounded-md bg-primary-solid text-base font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary-solid/90 hover:shadow-xl sm:py-6 sm:text-lg"
               >
                 {isLoading ? (
                   <LoaderCircle className="animate-spin" />

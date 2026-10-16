@@ -626,7 +626,7 @@ function RowActionsDemo() {
               title={
                 <a
                   href="#controls-row-actions-menu"
-                  className="rounded-sm transition-colors hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                  className="rounded-sm transition-colors hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
                 >
                   {game.name}
                 </a>

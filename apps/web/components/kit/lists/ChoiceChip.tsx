@@ -12,9 +12,9 @@ import { cn } from '@/lib/utils';
 export const choiceChipClassName = cn(
   // Proportional figures: the body's tabular ones widen the hyphen in "Pre-verified".
   'h-8 flex-none gap-1.5 rounded-full bg-background px-3 font-medium proportional-nums dark:bg-input/50 dark:shadow-none',
-  'aria-pressed:border-primary aria-pressed:bg-primary/10 aria-pressed:text-foreground aria-pressed:hover:bg-primary/15 aria-pressed:[&_svg:not([class*=text-])]:text-foreground dark:aria-pressed:[&_svg:not([class*=text-])]:text-primary',
+  'aria-pressed:border-primary aria-pressed:bg-primary/10 aria-pressed:text-foreground aria-pressed:hover:bg-primary/15 aria-pressed:[&_svg:not([class*=text-])]:text-primary',
   'dark:aria-pressed:bg-primary/20 dark:aria-pressed:hover:bg-primary/25',
-  'aria-checked:border-primary aria-checked:bg-primary/10 aria-checked:text-foreground aria-checked:hover:bg-primary/15 aria-checked:[&_svg:not([class*=text-])]:text-foreground dark:aria-checked:[&_svg:not([class*=text-])]:text-primary',
+  'aria-checked:border-primary aria-checked:bg-primary/10 aria-checked:text-foreground aria-checked:hover:bg-primary/15 aria-checked:[&_svg:not([class*=text-])]:text-primary',
   'dark:aria-checked:bg-primary/20 dark:aria-checked:hover:bg-primary/25'
 );
 

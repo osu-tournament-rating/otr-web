@@ -5,6 +5,7 @@ Tokens live in `apps/web/app/globals.css`; every value is mirrored, with its lig
 
 - [Rules at a glance](#rules-at-a-glance)
 - [Theme tokens](#theme-tokens): every token, its class, light and dark values
+- [Brand blue](#brand-blue): `primary`, `primary-solid` and `link`
 - [Accent rule](#accent-rule): what blue is for
 - [Categorical palette](#categorical-palette): `CATEGORICAL_PALETTE`, `seriesColor`
 - [Verification colours](#verification-colours): `getStatusHueColor`, `getRatingsGroupColor`
@@ -63,17 +64,41 @@ Every token below has a light value in `:root` and a dark value in `.dark`; the 
 | `--score-grade-ss` … `--score-grade-d` | none                         | `grades.ts` | `grades.ts` | Grade chart marks                        |
 | `--mod-nm` … `--mod-key`               | none                         | `mods.ts`   | `mods.ts`   | Mod marks and solid mod pills            |
 
-The existing tokens (`primary`, `muted`, `success`, `warning`, `destructive`, `chart-1` … `chart-5` and the rest) keep their values. The legacy palettes that pages still read (`--mod-hard-rock` and the other long mod names, `--text-<tier>` with the `.text-gold` utilities, `--grade-*`, `--rank-range-*`, `--team-red`, `--team-blue`, `--team-no-team`, `--color-status-*`) are replaced by the tokens above in the second pull request; don't use them in new code.
+The existing tokens (`muted`, `success`, `warning`, `destructive`, `chart-1` … `chart-5` and the rest) keep their values. The legacy palettes that pages still read (`--mod-hard-rock` and the other long mod names, `--text-<tier>` with the `.text-gold` utilities, `--grade-*`, `--rank-range-*`, `--team-red`, `--team-blue`, `--team-no-team`, `--color-status-*`) are replaced by the tokens above in the second pull request; don't use them in new code.
 
 A light subtree inside a dark page (`.theme-light`, the gallery only) gets the light values of every token above, and of `success` and `warning`.
 
 Gallery anchor: `/admin/design#color`
 
+## Brand blue
+
+Three tokens carry the brand blue, because one blue can't be both a fill behind white text and readable text in both themes.
+
+| Token             | Class                                 | Light     | Dark                     | Use for                                              |
+| ----------------- | ------------------------------------- | --------- | ------------------------ | ---------------------------------------------------- |
+| `--primary`       | `text-primary`, `border-primary`, ... | `#3a71e2` | `#4e93fc` (the original) | Icons, borders, the focus ring, selected tints       |
+| `--primary-solid` | `bg-primary-solid`                    | `#3a71e2` | `#3a71e2`                | Fills behind white text: buttons, solid badges, days |
+| `--link`          | `text-link`                           | `#356ad4` | `#4e93fc` (the original) | Blue text: links on hover, row titles on hover       |
+
+- White text on `primary-solid` measures 4.5:1 in both themes. In light mode `#3a71e2` is the passing blue closest to the original `#4e93fc`, which only reached 3:1 with white text.
+- `link` reaches 4.5:1 on the background, cards and grey panels in both themes. Light mode needs it a step darker than `primary` for that; dark mode keeps the original blue.
+- `primary` is a mark colour: 3:1 or better on every surface, in both themes.
+
+Do:
+
+- Put white text (`text-primary-foreground`) only on `bg-primary-solid`. The shadcn and kit buttons and the solid badge already do.
+- Colour blue text with `text-link`, including hover states on names and row titles.
+
+Don't:
+
+- Don't put white text on `bg-primary`: in dark mode it is the original blue, 3:1 with white.
+- Don't colour text `text-primary`; it is under 4.5:1 on light cards. Pages still doing it move to `text-link` in the second pull request.
+
 ## Accent rule
 
 Blue (`primary`) means "you can act on this" or "this is selected". Nothing decorative is blue.
 
-- Blue: primary buttons, a selected chip, tab or toggle, the focus ring, links on hover (`hover:text-primary`, or `hover:underline` on dense rows), and the notification dot.
+- Blue: primary buttons, a selected chip, tab or toggle, the focus ring, links on hover (`hover:text-link`, or `hover:underline` on dense rows), and the notification dot.
 - Not blue: section and page icons (`text-muted-foreground`), names at rest (they are `text-foreground` links that turn blue on hover), headings, trophies and other decorative icons, and info callouts (they use the slate `callout-info` tone).
 - One notification dot colour: `bg-notification`, through `NotificationDot` from `@/components/kit/status/NotificationDot`.
 - Blue that is not interactive is data, never decoration: a single chart series (`--series-1`, the brand blue stepped to clear 3:1 on light cards), the blue team (`match-blue`) and the notification dot. Of these only the blue team's score is ever text.
@@ -81,7 +106,7 @@ Blue (`primary`) means "you can act on this" or "this is selected". Nothing deco
 Do:
 
 - Use `text-muted-foreground` on every SectionHeader and PageHeader icon.
-- Make a name a link with `transition-colors hover:text-primary` and the standard focus ring.
+- Make a name a link with `transition-colors hover:text-link` and the standard focus ring.
 
 Don't:
 

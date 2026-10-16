@@ -62,6 +62,8 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-solid: var(--primary-solid);
+  --color-link: var(--link);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -166,8 +168,14 @@
   --popover-foreground: oklch(0 0 0);
   --border: oklch(0.92 0 0);
   --input: oklch(0.94 0 0);
-  --primary: oklch(0.67 0.17 258.51);
+  /* The brand blue for icons, borders and selection, darkened just enough that
+     white text on it reaches 4.5:1. Blue text uses --link. */
+  --primary: oklch(0.575 0.182 262.51);
+  /* Fills behind white text: buttons, solid badges, selected days. */
+  --primary-solid: oklch(0.575 0.182 262.51);
   --primary-foreground: oklch(1 0 0);
+  /* Blue link text: darker than --primary so it reaches 4.5:1 on every light surface. */
+  --link: oklch(0.547 0.174 262.51);
   --accent: oklch(0.92 0 0);
   --accent-foreground: oklch(0 0 0);
   --secondary: oklch(0.92 0 0);
@@ -464,8 +472,13 @@
   --card-foreground: oklch(1 0 0);
   --popover: oklch(0.23 0 264.49);
   --popover-foreground: oklch(1 0 0);
+  /* The original brand blue for icons, borders and selection. */
   --primary: oklch(0.67 0.17 258.51);
+  /* White text on the original blue is only 3:1, so fills use the darker one. */
+  --primary-solid: oklch(0.575 0.182 262.51);
   --primary-foreground: oklch(1 0 0);
+  /* Blue link text: the original blue, 6.3:1 on the background. */
+  --link: oklch(0.67 0.17 258.51);
   --secondary: oklch(0.26 0 264.5);
   --secondary-foreground: oklch(1 0 0);
   --accent: oklch(0.35 0 0);

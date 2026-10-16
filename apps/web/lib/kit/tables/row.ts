@@ -11,7 +11,7 @@ export const ROW_HOVER_TINT =
  * marked `data-row-title` turns blue while the row is hovered.
  */
 export const ROW_TITLE_HOVER =
-  '[&_[data-row-title]]:transition-colors hover:[&_[data-row-title]]:text-primary';
+  '[&_[data-row-title]]:transition-colors hover:[&_[data-row-title]]:text-link';
 
 /** The signed-in player's own row, such as on the leaderboard. */
 export const ROW_HIGHLIGHT = 'bg-primary/10';

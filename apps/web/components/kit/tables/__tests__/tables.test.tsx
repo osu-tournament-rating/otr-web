@@ -285,7 +285,7 @@ describe('EntityLink', () => {
     expect(html).toContain('href="/players/1"');
     expect(html).toContain('<span aria-hidden="true" class="flex shrink-0">');
     expect(html).toContain('<span class="min-w-0 truncate">mrekk</span>');
-    expect(html).toContain('hover:text-primary');
+    expect(html).toContain('hover:text-link');
   });
 });
 

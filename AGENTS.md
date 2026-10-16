@@ -165,8 +165,8 @@ checkout's services on ports 5432, 5672, and 3000. This is a rule.
 - Color text with semantic tokens, never palette classes like
   `text-orange-500`. Status tokens (`success`, `warning`, `destructive`) are for
   fills, borders, and icons. Their `*-foreground` tokens are for text.
-  `text-primary-foreground` goes only on `bg-primary`. On a solid `bg-success`
-  fill, use `text-green-950`.
+  `text-primary-foreground` goes only on `bg-primary-solid`, and blue text uses
+  `text-link`. On a solid `bg-success` fill, use `text-green-950`.
 - Never put a `z-*` class on shadcn overlay content (popover, dropdown,
   tooltip); it overrides the portal's stacking. Wrap a tooltip around
   `DialogTrigger`, never around `Dialog`.

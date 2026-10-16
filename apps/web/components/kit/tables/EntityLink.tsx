@@ -30,7 +30,7 @@ export function EntityLink({
       prefetch={prefetch}
       data-slot="entity-link"
       className={cn(
-        'inline-flex max-w-full min-w-0 items-center gap-2 rounded-sm align-middle font-medium text-foreground transition-colors outline-none hover:text-primary focus-visible:ring-[3px] focus-visible:ring-ring/50',
+        'inline-flex max-w-full min-w-0 items-center gap-2 rounded-sm align-middle font-medium text-foreground transition-colors outline-none hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50',
         className
       )}
       {...props}

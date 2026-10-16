@@ -80,7 +80,7 @@ const OUTLINE_CLASSES: Record<BadgeTone, string> = {
 
 const SOLID_CLASSES: Record<'neutral' | 'primary' | 'success', string> = {
   neutral: 'border-transparent bg-foreground text-background',
-  primary: 'border-transparent bg-primary text-primary-foreground',
+  primary: 'border-transparent bg-primary-solid text-primary-foreground',
   success: 'border-transparent bg-success text-green-950',
 };
 

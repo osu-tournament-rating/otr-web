@@ -8,6 +8,7 @@ import {
   toHex,
 } from '@/lib/kit/color/contrast';
 import { colorDistance } from '@/lib/kit/color/cvd';
+import { PRIMARY_SOLID_COLOR } from '@/lib/kit/color/tokens';
 
 describe('parseColor', () => {
   it('reads hex, rgb, hsl and oklch', () => {
@@ -70,5 +71,13 @@ describe('colorDistance', () => {
     const normal = colorDistance('#d73431', '#25984d');
     const deutan = colorDistance('#d73431', '#25984d', 'deutan');
     expect(deutan).toBeLessThan(normal / 2);
+  });
+});
+
+describe('brand blue', () => {
+  it('carries white text at 4.5:1 or better on its fill in both themes', () => {
+    for (const fill of [PRIMARY_SOLID_COLOR.light, PRIMARY_SOLID_COLOR.dark]) {
+      expect(contrastRatio('oklch(1 0 0)', fill)).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });
