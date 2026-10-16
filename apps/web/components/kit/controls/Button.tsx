@@ -47,17 +47,16 @@ const BASE_VARIANT = {
   overlay: 'outline',
 } as const satisfies Record<ButtonVariant, string>;
 
-// Added on top of the shadcn variant: the hover and open fills it lacks, and
-// the looks it does not have.
+// Added on top of the shadcn variant: the fill while a menu or popover it
+// opens is open, and the looks shadcn does not have. Its hover fills and the
+// solid red behind white text come from the shadcn variants themselves.
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   default: '',
   outline: 'data-[state=open]:bg-accent',
-  ghost:
-    'hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
+  ghost: 'data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
   destructive:
     'border-destructive/40 text-destructive-foreground hover:bg-destructive/10 hover:text-destructive-foreground focus-visible:border-destructive focus-visible:ring-destructive/20 data-[state=open]:bg-destructive/10 dark:border-destructive/50 dark:hover:bg-destructive/20 dark:focus-visible:ring-destructive/40',
-  // Dark mode's --destructive is too light behind white text.
-  'destructive-confirm': 'bg-destructive-solid hover:bg-destructive-solid/90',
+  'destructive-confirm': '',
   overlay: ON_ART_CONTROL_CLASSES,
 };
 

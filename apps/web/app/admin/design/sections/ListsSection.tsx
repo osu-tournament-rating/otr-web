@@ -1205,7 +1205,7 @@ function ListStateDemo() {
           >
             {example.note}
           </dt>
-          <dd className="break-words proportional-nums">
+          <dd className="break-words">
             <Address
               href={listStateHref('/tournaments', TOURNAMENT_PARAMS, {
                 ...defaults,

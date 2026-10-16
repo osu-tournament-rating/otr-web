@@ -42,7 +42,7 @@ export function HeroTabLabel({
       {Icon ? <Icon className="size-4 shrink-0" aria-hidden /> : null}
       {children}
       {count != null ? (
-        <span className="text-xs font-normal text-muted-foreground">
+        <span className="text-xs font-normal text-muted-foreground tabular-nums">
           {count}
         </span>
       ) : null}

@@ -142,7 +142,7 @@ Don't:
 
 - Don't colour section icons `text-primary` (most non-beatmap pages today, such as `components/player/PlayerTournamentsList.tsx`, `components/tournaments/TournamentRatingsView.tsx`, `components/filtering/FilterReportView.tsx`, `components/stats/*Chart.tsx`).
 - Don't colour every name in an event as a link (`components/audit/*`); only real links, and only on hover.
-- Don't use a second dot colour: `bg-blue-500` in `components/profile/ProfileCard.tsx` and `app/reports/MyReportsClient.tsx`, `bg-yellow-600 dark:bg-yellow-400` in `components/admin-notes/AdminNoteView.tsx` all become `NotificationDot`.
+- Don't use a second dot colour: `bg-blue-500` in `app/reports/MyReportsClient.tsx` and `bg-yellow-600 dark:bg-yellow-400` in `components/admin-notes/AdminNoteView.tsx` both become `NotificationDot`.
 - Don't use blue for an info notice (`components/filtering/FilterComplianceNotice.tsx`, `components/audit/CascadeContextBanner.tsx`).
 
 Gallery anchor: `/admin/design#color-accent-rule`
@@ -239,7 +239,7 @@ Fill, border and text-plus-icon for the info, warning and danger callouts. The c
 
 Don't:
 
-- Don't build notices from palette classes: `border-orange-500/50 bg-orange-500/15` in `app/tools/filter/FilteringPageClient.tsx` and `components/banner/MaintenanceBanner.tsx`, `bg-blue-50/50` in `components/filtering/FilterComplianceNotice.tsx`, `bg-amber-50/30` in `components/audit/AuditNoteItem.tsx`.
+- Don't build notices from palette classes: `border-orange-500/50 bg-orange-500/15` in `app/tools/filter/FilteringPageClient.tsx`, `bg-blue-50/50` in `components/filtering/FilterComplianceNotice.tsx`, `bg-amber-50/30` in `components/audit/AuditNoteItem.tsx`.
 
 Gallery anchor: `/admin/design#color-callout-tones`
 
@@ -499,7 +499,7 @@ import {
 - `chartGridProps`: dashed, horizontal only. `ChartContainer` paints it in the border colour at half strength, so always render inside `ChartContainer` (`@/components/ui/chart`). The container also gives tick labels tabular figures (the body no longer does) and paints the bar cursor. `globals.css` gives Recharts' hidden measuring span (`#recharts_measurement_span`) tabular figures too, so the labels Recharts decides to show are spaced for the width it draws; keep the two together.
 - `CHART_BAR_RADIUS` (4px data ends, square at the baseline), `CHART_LINE_WIDTH` (2px), `CHART_MARGIN`, `CHART_CURSOR.bar` and `.line`.
 - Stacked bars: a 1px `stroke="var(--card)"` separates segments; round only the top series.
-- `CHART_CURSOR.bar` asks for a band behind the hovered bar; pass it anyway so the intent is explicit. `ChartContainer` paints that band `accent` at half strength, overriding the fill, because `--muted` matches the dark panel and the band vanished there.
+- `CHART_CURSOR.bar` is a band behind the hovered bar, `accent` at half strength (`--muted` matches the dark panel, so a muted band vanished there). `ChartContainer` paints the band the same way, so it also covers charts that pass `cursor` without it; pass it anyway so the intent is explicit.
 - Turn off animation (`isAnimationActive={false}`) as the beatmap charts do.
 
 Don't:

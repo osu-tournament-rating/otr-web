@@ -61,7 +61,6 @@ import { ListToolbar } from '@/components/kit/lists/ListToolbar';
 import { SearchField } from '@/components/kit/lists/SearchField';
 import { VerificationStatusBadge } from '@/components/kit/status/VerificationStatusBadge';
 import { EntityLink } from '@/components/kit/tables/EntityLink';
-import TapTooltip from '@/components/tap-tooltip';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { formatCountOf } from '@/lib/kit/format/number';
@@ -579,21 +578,13 @@ export default function LayoutSection() {
                 label="Rating"
                 value="2,215"
                 adornment={
-                  // TierIcon's own `tooltip` is hover-only; TapTooltip lets a
-                  // tap read the tier name.
-                  <TapTooltip
-                    content="Grandmaster II"
-                    triggerAriaLabel="Tier: Grandmaster II"
-                    triggerClassName="w-auto rounded-full"
-                  >
-                    <TierIcon
-                      tier="Grandmaster"
-                      subTier={2}
-                      width={22}
-                      height={22}
-                      className="block"
-                    />
-                  </TapTooltip>
+                  <TierIcon
+                    tier="Grandmaster"
+                    subTier={2}
+                    tooltip
+                    width={22}
+                    height={22}
+                  />
                 }
                 sub="Peak 2,302"
               />

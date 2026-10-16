@@ -29,8 +29,9 @@ const SIZE_CLASSES: Record<IconButtonSize, string> = {
 };
 
 const VARIANT_CLASSES: Record<IconButtonVariant, string> = {
+  // The hover fill comes from the shadcn ghost variant.
   ghost:
-    'text-muted-foreground hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
+    'text-muted-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
   outline: 'data-[state=open]:bg-accent',
   overlay: ON_ART_CONTROL_CLASSES,
 };

@@ -55,6 +55,12 @@ export type ActionMenuProps = {
   actions: readonly (MenuAction | false | null | undefined)[];
   /** A muted line at the top naming what the actions apply to. */
   title?: React.ReactNode;
+  /**
+   * A richer top section than `title`, such as an avatar beside a name and
+   * role. It sits above `title` and the items, over a separator, and is not
+   * focusable: links and buttons belong in `actions`.
+   */
+  header?: React.ReactNode;
   align?: 'start' | 'center' | 'end';
   side?: 'top' | 'right' | 'bottom' | 'left';
   contentClassName?: string;
@@ -70,6 +76,7 @@ export function ActionMenu({
   trigger,
   actions,
   title,
+  header,
   align = 'end',
   side = 'bottom',
   contentClassName,
@@ -102,14 +109,20 @@ export function ActionMenu({
           }
         }}
       >
-        {title ? (
-          <>
-            <DropdownMenuLabel className="max-w-72 truncate text-xs font-medium text-muted-foreground">
-              {title}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-          </>
+        {header ? (
+          <div
+            data-slot="action-menu-header"
+            className="max-w-72 min-w-0 px-2 py-1.5 text-sm"
+          >
+            {header}
+          </div>
         ) : null}
+        {title ? (
+          <DropdownMenuLabel className="max-w-72 truncate text-xs font-medium text-muted-foreground">
+            {title}
+          </DropdownMenuLabel>
+        ) : null}
+        {header || title ? <DropdownMenuSeparator /> : null}
         {groups.map((group, index) => (
           <React.Fragment key={index}>
             {index > 0 ? <DropdownMenuSeparator /> : null}
@@ -163,8 +176,7 @@ function ActionMenuItem({
         />
       ) : null}
       <span className="flex min-w-0 flex-1 flex-col">
-        {/* Proportional figures keep Inter's hyphen narrow ("Pre-verified"). */}
-        <span className={cn('proportional-nums', dim)}>{label}</span>
+        <span className={dim || undefined}>{label}</span>
         {description ? (
           <span className="text-xs text-muted-foreground">{description}</span>
         ) : null}

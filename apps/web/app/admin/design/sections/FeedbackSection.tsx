@@ -24,6 +24,7 @@ import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
 import { GallerySection, Specimen } from '../gallery';
+import { SiteBannerContent } from '@/components/banner/SiteBanner';
 import SectionError from '@/components/error/SectionError';
 import { Button } from '@/components/kit/controls/Button';
 import { Callout } from '@/components/kit/feedback/Callout';
@@ -554,6 +555,7 @@ function TableSkeletonDemo() {
   );
 }
 
+/** The art behind app/not-found.tsx, with the same image classes. */
 function NotFoundBackground() {
   return (
     <Image
@@ -561,7 +563,10 @@ function NotFoundBackground() {
       alt=""
       fill
       sizes="100vw"
-      className="object-contain object-top sm:object-cover sm:object-center"
+      // The art is empty in the middle. Always show all of it: cropped, the
+      // outer shapes end in a hard edge at the column's sides. On phones it
+      // sits at the top, so the shapes flank the icon and stay off the text.
+      className="object-contain object-top sm:object-center"
     />
   );
 }
@@ -778,12 +783,14 @@ export default function FeedbackSection() {
         id="feedback-callout-banner"
         name="Callout, banner"
         importPath={`${KIT}/Callout`}
-        description="The banner variant is the full-width strip under the site header, for site-wide notices such as the weekly maintenance window."
+        description="The banner variant is the full-width strip under the site header, for site-wide notices such as the weekly maintenance window. There is one strip (SiteBannerContent, shown here as the site renders it): the maintenance warning, the signed-out note on its own, or both in the warning during the window, never as a second banner."
         stacked
       >
-        <Callout tone="warning" variant="banner" role="status">
-          Ratings are pending recalculation, performance may be degraded
-        </Callout>
+        <div className="flex flex-col gap-3">
+          <SiteBannerContent maintenance signedIn />
+          <SiteBannerContent maintenance={false} signedIn={false} />
+          <SiteBannerContent maintenance signedIn={false} />
+        </div>
       </Specimen>
 
       <Specimen

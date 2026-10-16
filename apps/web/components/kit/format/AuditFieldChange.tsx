@@ -40,20 +40,13 @@ function Value({
   }
 
   const content = renderValue ? renderValue(value, side) : value.text;
-  // Words such as "Pre-verified": tabular figures widen Inter's hyphen.
-  const figures = /\d/.test(value.text) ? undefined : 'proportional-nums';
 
   return side === 'old' ? (
-    <del
-      className={cn(
-        'text-muted-foreground decoration-muted-foreground/70',
-        figures
-      )}
-    >
+    <del className="text-muted-foreground decoration-muted-foreground/70">
       {content}
     </del>
   ) : (
-    <ins className={cn('text-foreground no-underline', figures)}>{content}</ins>
+    <ins className="text-foreground no-underline">{content}</ins>
   );
 }
 

@@ -57,12 +57,16 @@ export function SectionHeader({
         // actions is as tall as one without.
         <div className="-my-1 flex shrink-0 items-center gap-3">
           {meta ? (
-            <span className="text-xs text-muted-foreground">{meta}</span>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {meta}
+            </span>
           ) : null}
           {actions}
         </div>
       ) : meta ? (
-        <span className="shrink-0 text-xs text-muted-foreground">{meta}</span>
+        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+          {meta}
+        </span>
       ) : null}
     </div>
   );

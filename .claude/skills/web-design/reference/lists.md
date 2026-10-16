@@ -146,7 +146,7 @@ Props that matter:
 
 - `label`: names the toolbar, which is a `search` landmark ("Search and filter tournaments").
 - First row: `search`, `sort`, `filters`. Without a sort, the Filters button stays beside the search box on phones.
-- Second row: `scope` and `rulesets` on the left, `view` (layout toggles) and `count` on the right. `count` is already formatted with `formatCountOf` and announced politely. Layout toggles are a `ToggleGroup` of 32px (`size-8`) icon items with an `aria-label` each; leave tooltips off them, because a `TooltipTrigger`'s `data-state` replaces the item's `on`/`off`.
+- Second row: `scope` and `rulesets` on the left, `view` (layout toggles) and `count` on the right. `count` is already formatted with `formatCountOf`, set in tabular figures and announced politely. Layout toggles are a `ToggleGroup` of 32px (`size-8`) icon items with an `aria-label` each; leave tooltips off them, because a `TooltipTrigger`'s `data-state` replaces the item's `on`/`off`.
 - `activeFilters`: `ActiveFilterChips`. Its row, and the divider above it, disappear when it renders nothing.
 - When nothing matches, render `EmptyState` (`@/components/kit/feedback/EmptyState`) straight under the toolbar in place of the rows, with `clearFilters` when filter-role params are active (`activeFilterCount > 0`). Not a line of muted text.
 
@@ -188,11 +188,11 @@ Props that matter:
 
 Behaviour: Escape clears the text (inside a dialog, the dialog closes instead), and the clear button (a ghost `IconButton` inside the box, with a "Clear search" tooltip) returns focus to the box. The box is 40px tall, the toolbar's first-row height.
 
-Why 400ms: most people leave 150–300ms between keystrokes, so 400ms waits out a word and sends one query per pause instead of one per letter. It is 200ms sooner than the lists' old 600ms, and with the server render on top results still land within about a second of the last keystroke. The header search moves from 500ms to the same value.
+Why 400ms: most people leave 150–300ms between keystrokes, so 400ms waits out a word and sends one query per pause instead of one per letter. It is 200ms sooner than the lists' old 600ms, and with the server render on top results still land within about a second of the last keystroke. The header search (`components/search/SearchCommandDialog.tsx`) waits the same `SEARCH_DEBOUNCE_MS`.
 
 Don't:
 
-- Don't debounce by hand: `useDebounce(query, 500)` in `components/search/SearchCommandDialog.tsx`, `FILTER_APPLY_DELAY` (600ms) in `components/filters/useDeferredFilterApply.ts`.
+- Don't debounce by hand with your own delay: `FILTER_APPLY_DELAY` (600ms) in `components/filters/useDeferredFilterApply.ts`. A search outside a list waits `SEARCH_DEBOUNCE_MS` from `@/lib/kit/lists/search`, as the header search does.
 - Don't search without a minimum or a spinner (the tournament list today), and don't make search wait for a button (admin player search in `app/admin/AdminDashboardClient.tsx`; a lookup by exact ID may keep a submit button, but it is then not a list search).
 - Don't leave a list without search: the leaderboard needs a player search.
 - Don't write a placeholder longer than about 30 characters; the box is about 290px wide on a phone and cuts it off, as it does the beatmap list's "Search title, artist, difficulty, mapper, or ID". The `label` carries the full name.

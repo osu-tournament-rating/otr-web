@@ -210,8 +210,7 @@ export function RangeFilter({
         step={SLIDER_STEP}
         minStepsBetweenThumbs={0}
         value={positions}
-        // The default track is the popover colour in light mode.
-        className="py-1.5 [&_[data-slot=slider-track]]:bg-muted-foreground/25"
+        className="py-1.5"
         onValueChange={(next) => {
           const minMoved = Math.abs(next[0] - positions[0]);
           const maxMoved = Math.abs(next[1] - positions[1]);

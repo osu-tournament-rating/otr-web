@@ -1,4 +1,4 @@
-import MaintenanceBanner from '@/components/banner/MaintenanceBanner';
+import SiteBanner from '@/components/banner/SiteBanner';
 import Header from '@/components/header/Header';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
@@ -13,6 +13,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth/auth';
 import { mapAppSessionToUser } from '@/lib/auth/session-utils';
+import { resolveMaintenanceWindowActive } from '@/lib/maintenance-window';
 
 export const metadata: Metadata = {
   title: {
@@ -52,7 +53,11 @@ export default async function RootLayout({
             <SessionProvider user={session}>
               <AudioPlayerProvider>
                 <Header />
-                <MaintenanceBanner headers={new Headers(headersList)} />
+                {/* One strip: the maintenance window and the signed-out
+                    note share it rather than stacking. */}
+                <SiteBanner
+                  maintenance={resolveMaintenanceWindowActive(headersList)}
+                />
                 {/* The page frame's margins: 16px at the sides on phones,
                     40px below the header from sm. Pages add no container. */}
                 <main className="mx-auto w-full max-w-[1050px] flex-1 px-4 pt-6 pb-10 sm:px-5 sm:pt-10">

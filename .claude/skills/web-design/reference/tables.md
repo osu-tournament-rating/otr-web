@@ -23,7 +23,7 @@ Every value comes from the beatmap tables, which are the reference. Components l
 | Rule             | Do                                                                                   | Instead of                                             |
 | ---------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------ |
 | Headers          | 12px muted, sentence case, on a `bg-muted` strip, 32px tall                          | bold white headers (`font-semibold text-foreground`)   |
-| Numbers          | right-aligned, tabular figures, separators on counts (`formatCount`)                 | centred numbers, bare `{count}`                        |
+| Numbers          | right-aligned, tabular figures (`numeric`), separators on counts (`formatCount`)     | centred numbers, bare `{count}`                        |
 | Missing values   | a muted em dash, read as "No value"                                                  | `0`, `N/A`, an empty cell, `Unknown`                   |
 | Rows             | divided rows, no stripes                                                             | zebra stripes (`index % 2`)                            |
 | Frame            | the table runs edge to edge inside its Panel, first and last cell 16px in            | a second `rounded-lg border` box around the table      |
@@ -362,19 +362,13 @@ import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
           }
           description={`${formatCountOf(row.tournaments, 'tournament')} · ${formatPercent(row.winRate)} win rate`}
           valueAdornment={
-            <TapTooltip
-              content={tierName}
-              triggerAriaLabel={`Tier: ${tierName}`}
-              triggerClassName="w-auto rounded-full"
-            >
-              <TierIcon
-                tier={tier}
-                subTier={subTier}
-                width={22}
-                height={22}
-                className="block"
-              />
-            </TapTooltip>
+            <TierIcon
+              tier={tier}
+              subTier={subTier}
+              tooltip
+              width={22}
+              height={22}
+            />
           }
           value={formatRating(row.rating)}
         />
@@ -388,8 +382,8 @@ import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 
 Props that matter:
 
-- PhoneRowList: `as="ol"` when the order means something; `aria-label`. Its rows share columns (CSS subgrid), so ranks, names and values line up from row to row.
-- PhoneRow: `rank` (formatted), `title` (an EntityLink, then a flag, status icon or badge), `description` (one muted 12px line with what the hidden columns said, joined with `·`), `value` (the number the table is about), `valueAdornment` (4px left of the value, such as the tier icon at 20–24px wrapped in `TapTooltip` so its name opens on tap), `valueDescription` (a muted line under the value, such as a RatingDelta), `highlight`.
+- PhoneRowList: `as="ol"` when the order means something; `aria-label`. Its rows share columns (CSS subgrid), so ranks, names and values line up from row to row. The rank and value are set in tabular figures; the body is not, so a number you add elsewhere in a row takes `tabular-nums` itself.
+- PhoneRow: `rank` (formatted), `title` (an EntityLink, then a flag, status icon or badge), `description` (one muted 12px line with what the hidden columns said, joined with `·`), `value` (the number the table is about), `valueAdornment` (4px left of the value, such as a 20–24px TierIcon with `tooltip`, whose name opens on tap, hover and focus), `valueDescription` (a muted line under the value, such as a RatingDelta), `highlight`.
 - `href` and `linkLabel`: the whole row becomes one link with the hover tint. Only for lists whose rows open as a whole (beatmap list, tournament list, pooled beatmaps); `title` is then plain text marked `data-row-title`.
 - A missing `value` shows MissingValue.
 

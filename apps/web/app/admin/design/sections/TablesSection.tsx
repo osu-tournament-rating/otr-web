@@ -46,7 +46,6 @@ import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { SortableHeader } from '@/components/kit/tables/SortableHeader';
 import { ViewButton } from '@/components/kit/tables/ViewButton';
 import CountryFlag from '@/components/shared/CountryFlag';
-import TapTooltip from '@/components/tap-tooltip';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatLobbySize } from '@/lib/kit/format/fields';
 import {
@@ -60,7 +59,7 @@ import {
 } from '@/lib/kit/format/number';
 import type { SortState } from '@/lib/kit/lists/sort';
 import { sortRows } from '@/lib/kit/tables/sort';
-import { type TierName, getTierString } from '@/lib/utils/tierData';
+import type { TierName } from '@/lib/utils/tierData';
 
 const KIT = '@/components/kit/tables';
 
@@ -78,7 +77,7 @@ function PlayerAvatar({ name, size = 24 }: { name: string; size?: number }) {
   );
 }
 
-/** The tier icon, named on tap, hover and focus. */
+/** The tier icon; its own tooltip names it on tap, hover and focus. */
 function TierMark({
   tier,
   subTier,
@@ -88,21 +87,14 @@ function TierMark({
   subTier?: number;
   size?: number;
 }) {
-  const name = getTierString(tier, subTier);
   return (
-    <TapTooltip
-      content={name}
-      triggerAriaLabel={`Tier: ${name}`}
-      triggerClassName="w-auto shrink-0 rounded-full"
-    >
-      <TierIcon
-        tier={tier}
-        subTier={subTier}
-        width={size}
-        height={size}
-        className="block"
-      />
-    </TapTooltip>
+    <TierIcon
+      tier={tier}
+      subTier={subTier}
+      tooltip
+      width={size}
+      height={size}
+    />
   );
 }
 

@@ -30,7 +30,7 @@ Import each component from its own file under `@/components/kit/controls/`; the 
 - Red means the action deletes or overwrites data. A button or menu item that starts such an action is red text (`destructive`); only the button that carries it out, in the final confirm, is solid red (`destructive-confirm`, which ConfirmDialog renders for you). A destructive action is never blue.
 - Every icon-only control is an IconButton: it has an accessible name, a tooltip that repeats it, and a hover fill.
 - A detail page has one admin control, AdminMenu, in the hero's `adminActions`. A row or card has at most one RowActionsMenu. No clusters of unlabelled admin icons.
-- A dialog is a DialogTemplate or a ConfirmDialog: 12px corners, 24px side padding, a header strip with a sentence-case title, a body, a footer strip with the actions on the right, and one backdrop (black at 50%).
+- A dialog is a DialogTemplate or a ConfirmDialog: 12px corners, 24px side padding, a header strip with a sentence-case title, a body, a footer strip with the actions on the right, and one backdrop (black at 50%, the same as every alert dialog and sheet).
 - A page form is a PageHeader, then FormPanel with FormSections and FormActions. Notices are Callouts (`@/components/kit/feedback/Callout`).
 - Sentence case for every label, title and menu item: "Edit tournament", not "Edit Tournament".
 - Button and IconButton have no `'use client'`, so a server page can render them, for example drawn on a `Link` with `asChild`. AdminMenu, RowActionsMenu, ActionMenu, DialogTemplate and ConfirmDialog are client components, and menu actions hold functions and icon components, so build a menu and its dialogs inside a client component (the entity's admin view), never in a server page such as `app/tournaments/[id]/page.tsx`.
@@ -39,7 +39,7 @@ Gallery anchor: `/admin/design#controls`
 
 ## Button
 
-The site's text button. It wraps the shadcn Button with the three sizes, adds the hover fill that shadcn's ghost lacks, a quiet red for destructive actions, a dark pill for cover art, and a `pending` state.
+The site's text button. It wraps the shadcn Button with the three sizes, a quiet red for destructive actions, a dark pill for cover art, a fill that stays while a menu or popover it opens is open, and a `pending` state. The hover fills (ghost included) and the solid red behind white text come from the shadcn variants.
 
 ```tsx
 import { Button } from '@/components/kit/controls/Button';
@@ -84,12 +84,12 @@ Do:
 
 Don't:
 
-- Don't import `Button` from `@/components/ui/button` in new UI. Its `ghost` has `hover:bg-none`, so pages bolt on their own fills (`hover:bg-black/15 … dark:hover:bg-white/20` in `components/audit/AuditButton.tsx`, `components/tournaments/TournamentAdminView.tsx`, `app/tournaments/[id]/page.tsx`).
+- Don't import `Button` from `@/components/ui/button` in new UI. It has a fourth size (`icon`), a grey `secondary`, a solid red `destructive` that belongs only in the final confirm, and no `pending` or open-state fill. Its `ghost` now fills on hover (`hover:bg-accent`), so drop the fills pages bolted on when it had none (`hover:bg-black/15 … dark:hover:bg-white/20` in `components/audit/AuditButton.tsx`, `components/tournaments/TournamentAdminView.tsx`, `app/tournaments/[id]/page.tsx`).
 - Don't use the large lifted buttons (`py-5 sm:py-6 text-base sm:text-lg shadow-lg hover:-translate-y-0.5`) in `components/tournaments/TournamentSubmissionForm.tsx` and `components/filtering/FilteringForm.tsx`; a form's buttons are `default` size in FormActions.
 - Don't use `variant="secondary"` (the grey Clear in `TournamentAdminView.tsx`, Reset in `FilteringForm.tsx`); use `outline`.
 - Don't make a trigger solid red (`components/shared/DeleteButton.tsx`, `app/settings/AccountDeletionClient.tsx`) or blue (`components/tournaments/ResetAutomatedChecksButton.tsx`). Use `destructive`, or an AdminMenu item.
 - Don't recolour `AlertDialogAction` with `bg-destructive text-white` (`TournamentSubmissionForm.tsx`, `AccountDeletionClient.tsx`); use ConfirmDialog.
-- Don't put white text on `bg-destructive`. Dark mode's `--destructive` (red-500) gives white 14px text only about 3.8:1, so `destructive-confirm` fills with `bg-destructive-solid` (`hover:bg-destructive-solid/90`): red-600 in dark mode and the usual destructive red in light. Any other solid red fill behind white text, such as shadcn's own `variant="destructive"` in `components/ui/button.tsx`, needs the same token.
+- Don't put white text on `bg-destructive`. Dark mode's `--destructive` (red-500) gives white 14px text only about 3.8:1, so `destructive-confirm` fills with `bg-destructive-solid` (`hover:bg-destructive-solid/90`): red-600 in dark mode and the usual destructive red in light. The shadcn `destructive` variants of `components/ui/button.tsx` and `components/ui/badge.tsx` use it too; any other solid red fill behind white text needs the same token.
 - Don't hand-roll a spinner (`<Loader2 className="mr-2 h-4 w-4 animate-spin" />Deleting...`); use `pending`.
 
 Gallery anchors: `/admin/design#controls-button-sizes`, `/admin/design#controls-button-variants`
@@ -129,7 +129,7 @@ Do:
 Don't:
 
 - Don't wrap `<Button variant="ghost" size="icon" className="h-6 w-6 …">` in `SimpleTooltip` by hand (`components/audit/AuditButton.tsx`, `components/games/GameCardHeader.tsx`, `components/admin-notes/AdminNoteView.tsx`, `components/reports/ReportButton.tsx`). Those are 24px targets with home-made hover fills.
-- Don't put `iconButtonStyle()` on a bare glyph (`components/buttons/DocsButton.tsx`, `SpecButton.tsx`, `SupportButton.tsx`), and don't turn the icon blue on hover (`hover:text-primary` in `DocsButton.tsx`).
+- Don't put `iconButtonStyle()` on a bare glyph, and don't turn the icon blue on hover. The header's docs, API reference and support glyphs did both; they are now labelled links in its More menu, and `components/buttons/DocsButton.tsx`, `SpecButton.tsx` and `SupportButton.tsx` are unused.
 - Don't rely on the tooltip of a disabled IconButton: a disabled button gets no pointer events. Say why it is disabled somewhere visible, such as an AdminMenu item's `description`.
 
 Gallery anchor: `/admin/design#controls-icon-button`
@@ -176,6 +176,7 @@ Props:
 
 - `actions`: MenuActions (see [ActionMenu and MenuAction](#actionmenu-and-menuaction)). Falsy entries are skipped, so `isLazer && { … }` works. With no visible actions the menu renders nothing.
 - `title`: a muted line at the top of the menu, usually the entity's name.
+- `header`: a richer top section, passed to ActionMenu (see below).
 - `notification`: shows the one notification dot on the button; the string is its screen-reader text ("Has admin notes").
 - `onArt`: the dark pill, for a hero with cover art.
 - `data-testid`: on the button; the menu content gets `{testid}-content`.
@@ -271,7 +272,28 @@ import {
   }
   actions={actions}
 />;
+
+// A rich header above the items, such as an account's avatar, name and role:
+<ActionMenu
+  header={
+    <span className="flex items-center gap-3">
+      <OsuAvatar … />
+      <span className="flex min-w-0 flex-col items-start gap-1">
+        <span className="truncate font-semibold">{player.username}</span>
+        <ProfileRoleBadge scopes={scopes} />
+      </span>
+    </span>
+  }
+  trigger={…}
+  actions={accountActions}
+/>;
 ```
+
+ActionMenu props besides `trigger` and `actions`:
+
+- `title`: the muted line at the top (AdminMenu's `title`, RowActionsMenu's `itemName`).
+- `header`: richer content above `title` and the items, over a separator, in 14px text up to 288px wide. It is not focusable, so links and buttons belong in `actions`. AdminMenu passes it through.
+- `align`, `side`, `contentClassName`, `data-testid` (on the menu content).
 
 MenuAction fields:
 
@@ -285,6 +307,8 @@ MenuAction fields:
 - `hidden`: leaves the item out. `id`: the React key when two items share a label. `testId`.
 
 `groupMenuActions(actions)` in `@/lib/kit/controls/menu` does the grouping (unit-tested): groups by first appearance, destructive last, hidden and falsy entries dropped.
+
+Gallery anchor: `/admin/design#controls-action-menu`
 
 ## DialogTemplate
 
@@ -341,7 +365,7 @@ Don't:
 
 - Don't pad `DialogContent` yourself (`className="p-4"` in `TournamentAdminView.tsx`, `AdminNoteView.tsx`, `MatchAdminView.tsx`) or build your own strips (`px-5` in `BeatmapAdminView.tsx`).
 - Don't use Title Case ("Report Details" in `app/reports/MyReportsClient.tsx`) or prefix titles with "Confirm" ("Confirm delete tournament" in `DeleteButton.tsx`, "Confirm match data refetch" in `RefetchMatchDataButton.tsx`).
-- Don't use the shadcn `DialogContent` directly in new UI; its backdrop is 80% black while AlertDialog's is 50%.
+- Don't use the shadcn `DialogContent` directly in new UI: it has no header and footer strips and pads itself. Its backdrop matches now (black at 50%, as for alert dialogs and sheets), so a page that still uses it needs no backdrop override either.
 
 Gallery anchor: `/admin/design#controls-dialog-template`
 
@@ -449,7 +473,7 @@ Do:
 
 - Use the shadcn `Input`, `Textarea`, `Select` and `Checkbox` as they are.
 - Give each field the rules its schema has: required or optional, the options it allows, its minimum and maximum, and its format (`lib/orpc/schema/tournamentSubmission.ts`, `lib/validation-schema.ts`, `components/filtering/FilteringForm.tsx`). The forum post URL is required and accepts only links that start with `https://osu.ppy.sh/community/forums/topics/` or `https://osu.ppy.sh/wiki/en/Tournaments/`; lobby sizes are 1v1 to 8v8; a rank restriction is a whole number of at least 1.
-- Write validation messages as statements about the field, as the site's schemas do: "Tournament name is required", "Rank restriction must be at least 1", "Lobby size cannot exceed 8". Where a schema's message is imperative or zod's default, write the same shape: "Rank restriction must be a whole number", not "Enter a rank as a whole number"; "Ruleset is required". Name the field as its label does: "Forum post URL is required", not "Forum URL is required".
+- Write validation messages as statements about the field, as the site's schemas do: "Tournament name is required", "Rank restriction must be a whole number", "Lobby size cannot exceed 8", "Matches cannot exceed 1,000". Name the field as its label does: "Forum post URL is required", not "Forum URL is required". The tournament fields' messages are shared constants in `@/lib/orpc/schema/tournamentMessages` (`RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE`, `maxMatchIdsMessage(n)` and the rest), safe on the client; import them rather than retyping them.
 - Keep a form's existing labels, help text and placeholders when it moves onto these parts. Add a notice or help line only when the page already says it.
 
 Don't:

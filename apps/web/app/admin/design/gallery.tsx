@@ -64,12 +64,12 @@ export function Specimen({
       <div className="flex flex-col gap-0.5">
         <h3 className="font-medium">{name}</h3>
         {importPath ? (
-          <p className="text-xs break-words text-muted-foreground proportional-nums">
+          <p className="text-xs break-words text-muted-foreground">
             {importPath}
           </p>
         ) : null}
         {description ? (
-          <p className="max-w-prose text-sm text-muted-foreground proportional-nums">
+          <p className="max-w-prose text-sm text-muted-foreground">
             {description}
           </p>
         ) : null}
@@ -112,7 +112,7 @@ export function GallerySection({
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-semibold">{title}</h2>
         {description ? (
-          <p className="max-w-prose text-sm text-muted-foreground proportional-nums">
+          <p className="max-w-prose text-sm text-muted-foreground">
             {description}
           </p>
         ) : null}

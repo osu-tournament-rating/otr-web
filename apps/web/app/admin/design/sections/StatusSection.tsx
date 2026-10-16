@@ -154,11 +154,9 @@ function StatusSheet() {
                         decorative
                       />
                     </span>
-                    <span className="font-medium proportional-nums">
-                      {name}
-                    </span>
+                    <span className="font-medium">{name}</span>
                   </div>
-                  <p className="text-sm text-pretty text-muted-foreground proportional-nums">
+                  <p className="text-sm text-pretty text-muted-foreground">
                     {summary.charAt(0).toUpperCase() + summary.slice(1)}
                   </p>
                 </li>

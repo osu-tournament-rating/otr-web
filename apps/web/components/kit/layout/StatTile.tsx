@@ -74,8 +74,9 @@ export function StatTile({
   const figure = (
     <span
       className={cn(
-        // 4px between an adornment (the tier icon) and the value.
-        'flex min-w-0 items-center gap-1',
+        // 4px between an adornment (the tier icon) and the value. Tabular
+        // figures keep values in a row of tiles the same width per digit.
+        'flex min-w-0 items-center gap-1 tabular-nums',
         layout === 'inline' ? 'text-lg font-semibold' : 'text-xl font-bold',
         // After the size: tailwind-merge drops a leading that precedes it.
         'leading-none'

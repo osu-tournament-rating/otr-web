@@ -16,6 +16,8 @@ export type AdminMenuProps = {
   actions: readonly (MenuAction | false | null | undefined)[];
   /** A muted line at the top of the menu, such as the entity's name. */
   title?: React.ReactNode;
+  /** A richer top section than `title`, as ActionMenu's `header`. */
+  header?: React.ReactNode;
   /** On cover art: the dark pill, white in both themes. */
   onArt?: boolean;
   /** Shows the notification dot on the button; the text is for screen readers ("Has admin notes"). */
@@ -34,6 +36,7 @@ export type AdminMenuProps = {
 export function AdminMenu({
   actions,
   title,
+  header,
   onArt = false,
   notification,
   label = 'Admin',
@@ -43,6 +46,7 @@ export function AdminMenu({
   return (
     <ActionMenu
       title={title}
+      header={header}
       actions={actions}
       data-testid={testId ? `${testId}-content` : undefined}
       trigger={

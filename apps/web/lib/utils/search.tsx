@@ -57,7 +57,7 @@ export const highlightMatch = (
           const shouldHighlight = index % 2 === 1;
 
           return shouldHighlight ? (
-            <span key={index} className="font-semibold text-primary">
+            <span key={index} className="font-semibold text-link">
               {part}
             </span>
           ) : (

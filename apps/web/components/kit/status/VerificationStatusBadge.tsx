@@ -74,8 +74,7 @@ export function VerificationStatusBadge({
           })}
     >
       <VerificationStatusGlyph status={status} />
-      {/* No digits here; proportional figures keep Inter's hyphen narrow. */}
-      <span className="proportional-nums">{name}</span>
+      <span>{name}</span>
       {hasWarnings ? (
         <span className="inline-flex">
           <StatusWarningMarker className={MARKER_SIZES[size]} />

@@ -42,10 +42,7 @@ export default async function DesignReferencePage() {
   }
 
   return (
-    <div
-      className="flex flex-col gap-8 px-4 sm:px-0"
-      data-testid="design-reference"
-    >
+    <div className="flex flex-col gap-8" data-testid="design-reference">
       <div className="flex flex-col gap-4">
         <PageHeader
           icon={Palette}

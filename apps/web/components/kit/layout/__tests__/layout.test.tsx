@@ -105,6 +105,21 @@ describe('SectionHeader', () => {
 
     expect(html).toMatch(/class="-my-1 [^"]*"><button/);
   });
+
+  it('sets the meta in tabular figures, with or without actions', () => {
+    const alone = render(<SectionHeader title="Scores" meta="1,368 scores" />);
+    const withActions = render(
+      <SectionHeader
+        title="Scores"
+        meta="1,368 scores"
+        actions={<button type="button">Full range</button>}
+      />
+    );
+
+    for (const html of [alone, withActions]) {
+      expect(html).toMatch(/class="[^"]*\btabular-nums\b[^"]*">1,368 scores/);
+    }
+  });
 });
 
 describe('Tile', () => {
@@ -233,7 +248,7 @@ describe('HeroTabs', () => {
     expect(html).toContain('aria-label="Tournament views"');
     expect(html.match(/aria-current="page"/g)).toHaveLength(1);
     expect(html).toMatch(/data-testid="tab-beatmaps" aria-current="page"/);
-    expect(html).toContain('62');
+    expect(html).toMatch(/class="[^"]*\btabular-nums\b[^"]*">62</);
   });
 });
 
@@ -279,6 +294,14 @@ describe('StatTile', () => {
 
     expect(stacked).toMatch(/class="[^"]*\btext-xl\b[^"]*\bleading-none\b/);
     expect(inline).toMatch(/class="[^"]*\btext-lg\b[^"]*\bleading-none\b/);
+  });
+
+  it('sets the value in tabular figures in both layouts', () => {
+    const stacked = render(<StatTile label="Rating" value="2,214.8" />);
+    const inline = render(<StatTile layout="inline" label="AR" value="8.0" />);
+
+    expect(stacked).toMatch(/class="[^"]*\btabular-nums\b[^"]*\btext-xl\b/);
+    expect(inline).toMatch(/class="[^"]*\btabular-nums\b[^"]*\btext-lg\b/);
   });
 });
 

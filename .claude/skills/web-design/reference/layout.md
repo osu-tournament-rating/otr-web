@@ -56,7 +56,7 @@ export default function Page() {
 }
 ```
 
-- The 16px side margin on phones, the 20px margin from `sm`, the 24px top offset on phones and the 40px top offset on desktop all come from the root layout's `main` (`apps/web/app/layout.tsx`), so a page never adds its own padding. Until the second pull request lands, `main` still has the old padding (`pb-5 sm:px-5 sm:py-10`, none on phones); the planned value is `px-4 pt-6 pb-10 sm:px-5 sm:pt-10`.
+- The 16px side margin on phones, the 20px margin from `sm`, the 24px top offset on phones, the 40px top offset on desktop and the 40px under the last panel all come from the root layout's `main` (`px-4 pt-6 pb-10 sm:px-5 sm:pt-10` in `apps/web/app/layout.tsx`), so a page never adds its own padding or container.
 - Side-by-side panels go in a grid inside the frame: `<div className="grid gap-4 lg:grid-cols-3">`.
 
 Do:
@@ -66,7 +66,7 @@ Do:
 
 Don't:
 
-- Don't use `container`, `mx-auto`, `px-4 sm:px-0` or `py-6 sm:py-0` on a page root. These cap the width at tablet sizes and run panels to the screen edge on phones. Today they live on the home page (`app/page.tsx`), the beatmap, tournament, leaderboard, player and match pages, tournament submission, filter reports, audit logs, `app/audit/layout.tsx` and most `loading.tsx` files.
+- Don't use `container`, `mx-auto`, `px-4 sm:px-0` or `py-6 sm:py-0` on a page root. `container` caps the width at tablet sizes, and with the layout's own margin a page's `px-4` doubles the phone gutter to 32px. Pages that still have them (the beatmap, tournament, leaderboard, player and match pages, tournament submission, filter reports, audit logs, `app/audit/layout.tsx` and most `loading.tsx` files) drop them when they move onto PageFrame.
 - Don't use `gap-2`, `md:gap-2`, `gap-10` or `space-y-*` between panels (leaderboard, player, match, tournament, filter reports, admin, reports and settings pages do today).
 
 Gallery anchor: `/admin/design#layout-page-frame`
@@ -220,7 +220,7 @@ Props:
 
 - `aria-label`: names the set of views. Required.
 - `value`: the current tab; that link gets `aria-current="page"` and the blue underline.
-- `items`: `value`, `label`, `href`, optional `icon`, `count` (already formatted) and `testId`.
+- `items`: `value`, `label`, `href`, optional `icon`, `count` (already formatted; shown muted in tabular figures) and `testId`.
 
 `parseHeroTab(raw, tabs, fallback)` reads `?tab=` and falls back for a missing or unknown value.
 
@@ -325,7 +325,7 @@ Props:
 - `icon`: optional, always muted.
 - `title`: sentence case. Renders as h2; pass `level={3}` (or 4) when the panel sits under another heading.
 - `infoText`: how to read the section, shown through InfoButton (named "About {title}").
-- `meta`: short muted text such as a count, with separators.
+- `meta`: short muted text such as a count, with separators. It is set in tabular figures.
 - `actions`: small controls for the whole section, after the meta. A `sm` (32px) button fits inside the 48px strip, so a header with actions is as tall as one without and side-by-side panels keep their dividers level.
 
 Do:
@@ -421,26 +421,13 @@ One number with its label, such as a rating, a rank, a count or a win rate. Stat
 ```tsx
 import TierIcon from '@/components/icons/TierIcon';
 import { StatTile, StatTileGrid } from '@/components/kit/layout/StatTile';
-import TapTooltip from '@/components/tap-tooltip';
 
 <StatTileGrid columns={3}>
   <StatTile
     label="Rating"
     value="2,215"
     adornment={
-      <TapTooltip
-        content="Grandmaster II"
-        triggerAriaLabel="Tier: Grandmaster II"
-        triggerClassName="w-auto rounded-full"
-      >
-        <TierIcon
-          tier="Grandmaster"
-          subTier={2}
-          width={22}
-          height={22}
-          className="block"
-        />
-      </TapTooltip>
+      <TierIcon tier="Grandmaster" subTier={2} tooltip width={22} height={22} />
     }
     sub="Peak 2,302"
   />
@@ -451,8 +438,8 @@ import TapTooltip from '@/components/tap-tooltip';
 Props:
 
 - `label`: sentence case, 12px muted. `icon` puts a small muted icon before it.
-- `value`: already formatted (separators on counts, never on years or IDs). It renders 20px bold (18px semibold inline) with `leading-none`, so the value line is as tall as the text, like the beatmap tiles.
-- `adornment`: sits 4px left of the value and overhangs its 20px line, so a 20–24px icon does not push the value or sub line out of step with the next tile. The profile's tier icon goes here; there is no separate tier tile. Its name must open on tap, and TierIcon's own `tooltip` prop is hover-only, so wrap the icon in TapTooltip as above.
+- `value`: already formatted (separators on counts, never on years or IDs). It renders 20px bold (18px semibold inline) with `leading-none`, so the value line is as tall as the text, like the beatmap tiles, and in tabular figures, so digits line up from tile to tile. Tabular figures also widen Inter's hyphen; a hyphenated word as a value (rare) takes `<span className="proportional-nums">`.
+- `adornment`: sits 4px left of the value and overhangs its 20px line, so a 20–24px icon does not push the value or sub line out of step with the next tile. The profile's tier icon goes here; there is no separate tier tile. Pass TierIcon's `tooltip`: it wraps the icon in a TapTooltip, so the tier's name opens on tap, hover and keyboard focus.
 - `sub`: one muted line under the value.
 - `infoText`: adds a small InfoButton after the label.
 - `layout="inline"`: the value on the label's line, with `children` (such as a gauge) underneath. For attribute grids like CS, AR, OD and HP.

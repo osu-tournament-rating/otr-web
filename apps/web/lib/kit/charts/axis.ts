@@ -40,9 +40,13 @@ export const CHART_BAR_RADIUS: [number, number, number, number] = [4, 4, 0, 0];
 
 export const CHART_LINE_WIDTH = 2;
 
-/** The hover cursor: a muted band behind bars, a border-coloured rule on lines. */
+/**
+ * The hover cursor: an accent band at half strength behind bars (`--muted`
+ * matches the dark panel, so a muted band vanished there), a border-coloured
+ * rule on lines. ChartContainer paints the bar band the same way.
+ */
 export const CHART_CURSOR = {
-  bar: { fill: 'var(--muted)' },
+  bar: { fill: 'var(--accent)', fillOpacity: 0.5 },
   line: { stroke: 'var(--border)', strokeWidth: 1 },
 } as const;
 

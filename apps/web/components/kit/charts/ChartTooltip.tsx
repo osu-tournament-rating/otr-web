@@ -90,8 +90,8 @@ export interface ChartTooltipPayloadItem {
  * `@/components/ui/chart` (Recharts' `Tooltip`), as the beatmap charts do:
  * `<ChartTooltip content={<ChartTooltipContent valueFormatter={formatCountTick} />} />`.
  * Recharts fills in `active`, `payload` and `label`. It replaces the shadcn
- * `ChartTooltipContent` from `@/components/ui/chart`, whose values follow the
- * visitor's locale.
+ * `ChartTooltipContent` from `@/components/ui/chart`, which has no
+ * `valueFormatter`, footer or kit marker.
  */
 export function ChartTooltipContent({
   active,

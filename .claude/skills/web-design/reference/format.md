@@ -204,6 +204,7 @@ formatId(4012345); // "4012345"
 ```
 
 - Counts, ranks, ratings and every other quantity get thousands separators. Years and IDs are labels and never do; this includes osu! IDs, beatmap IDs and chart axes of years.
+- Figures: the body sets Inter's default proportional figures, because its tabular figures also widen the hyphen (`Pre - verified`). Numbers that sit in columns or change in place take `tabular-nums`. The kit already sets it on numeric table cells, phone-row ranks and values, stat tile values, section header meta, list toolbar counts, hero tab counts, badge counts, pagination and load-more readouts, rating changes, and chart ticks and tooltips; add it yourself only to a number outside those. Never put it on prose or labels.
 - Ratings show as whole numbers. Use `formatRatingPrecise` only where the decimals are the point (a tooltip, an export).
 - Nothing prints `-0`: values are rounded half away from zero first.
 
@@ -240,16 +241,16 @@ import { RatingDelta } from '@/components/kit/format/RatingDelta';
 
 Contrast of the text (WCAG 2, 4.5:1 needed):
 
-| Theme | Direction | Token value | Card  | Panel | Tile  | Popover |
-| ----- | --------- | ----------- | ----- | ----- | ----- | ------- |
-| Light | Up        | green-800   | 6.7:1 | 6.7:1 | 6.6:1 | 6.3:1   |
-| Light | Down      | red-800     | 7.9:1 | 7.9:1 | 7.8:1 | 7.4:1   |
-| Light | Flat      | muted       | 4.6:1 | 4.6:1 | 4.6:1 | 4.4:1   |
-| Dark  | Up        | green-400   | 10:1  | 9.6:1 | 9.5:1 | 9.5:1   |
-| Dark  | Down      | red-500     | 4.7:1 | 4.5:1 | 4.4:1 | 4.4:1   |
-| Dark  | Flat      | muted       | 6.5:1 | 6.2:1 | 6.1:1 | 6.0:1   |
+| Theme | Direction | Token value | Card   | Panel | Tile  | Popover | Tooltip |
+| ----- | --------- | ----------- | ------ | ----- | ----- | ------- | ------- |
+| Light | Up        | green-800   | 6.6:1  | 6.6:1 | 6.5:1 | 6.3:1   | 5.5:1   |
+| Light | Down      | red-800     | 7.8:1  | 7.8:1 | 7.7:1 | 7.4:1   | 6.5:1   |
+| Light | Flat      | muted       | 4.9:1  | 4.9:1 | 4.8:1 | 4.7:1   | 4.7:1   |
+| Dark  | Up        | green-400   | 10.1:1 | 9.7:1 | 9.5:1 | 9.4:1   | 6.4:1   |
+| Dark  | Down      | red-400     | 6.2:1  | 5.9:1 | 5.8:1 | 5.8:1   | 3.9:1   |
+| Dark  | Flat      | muted       | 6.5:1  | 6.2:1 | 6.1:1 | 6.0:1   | 5.1:1   |
 
-Dark red sits at the limit on the panel and just under it on tiles and popovers; the fix belongs in the token (`--destructive-foreground` in `.dark`), not in this component.
+Card is `bg-card`, panel the Panel surface, tile a Tile on a panel, popover `bg-popover`, and tooltip the `bg-accent` surface of the shadcn tooltip and TapTooltip, where flat takes the tooltip's own muted text (`--accent-muted-foreground`). Every pair clears 4.5:1 except a fall in a dark tooltip.
 
 Do:
 
@@ -259,7 +260,7 @@ Don't:
 
 - Don't wrap it in a tinted pill or badge. Legacy: `components/rating/RatingDelta.tsx` (pill, `text-green-500` on a 10% tint, about 2.2:1 in light mode), used by the profile match table, profile tournament cards and match stats.
 - Don't show two decimals. Legacy: `components/player/PlayerRatingChartTable.tsx` and `PlayerRatingChartTooltip.tsx`.
-- Don't put it on `bg-accent` (shadcn tooltips) in dark mode: no red or muted text reaches 4.5:1 there. Use a popover surface.
+- Don't put it in a shadcn tooltip or a TapTooltip (`bg-accent`): in dark mode a fall's red-400 is 3.9:1 there. Show the change on the page, or in a chart tooltip card (`ChartTooltipContent`, on `bg-background`) or a popover.
 
 Gallery anchor: `/admin/design#format-rating-delta`
 
@@ -328,7 +329,7 @@ The duplicates it settles:
 | Lobby size        | Team size, Team Size, Lobby Size | `tournaments/list/TournamentListFilter.tsx`, `beatmap/BeatmapPoolsDialog.tsx`, `stats/TournamentsByLobbySizeChart.tsx`, audit                                            |
 | Rank restriction  | Rank range, Rank Range           | `beatmap/BeatmapPoolsDialog.tsx`, audit                                                                                                                                  |
 | Open rank (value) | Open                             | `player/PlayerTournamentCard.tsx`, the tournament page (`apps/web/app/tournaments/[id]/page.tsx`), `formatRankRangeBound` in `lib/beatmaps/rankRange.ts`                 |
-| Forum post URL    | Forum URL                        | `tournaments/TournamentAdminView.tsx`, audit, and the validation messages in `lib/validation-schema.ts` and `lib/orpc/schema/tournament*.ts`                             |
+| Forum post URL    | Forum URL                        | `tournaments/TournamentAdminView.tsx`, audit (the validation messages already say Forum post URL, from `lib/orpc/schema/tournamentMessages.ts`)                          |
 | Ruleset           | Game mode, Mode                  | form tooltips in `tournaments/TournamentSubmissionForm.tsx`, `filtering/FilteringForm.tsx`                                                                               |
 | Peak rating       | Highest rating                   | `player/PlayerRatingChart.tsx`                                                                                                                                           |
 | Match cost        | Match Cost                       | `tournaments/TournamentTopPerformers.tsx`; the match page highlight `Top Match Cost` (`matches/MatchStatsUtils.ts`) names the best value, so it becomes `Top match cost` |
@@ -411,7 +412,7 @@ Renders `Mods  ~~HD, HR~~ → HD`: the label in 12px muted, the old value muted 
 - `entityType`, `field`, `change`: as stored, `{ originalValue, newValue }`.
 - `users`: names for the user IDs the entry references, keyed by ID. A missing name reads `Deleted user (12)`.
 - `renderValue(value, side)`: replace a value's text, for example to put the status family's icon before a verification status (`value.status` is set for those).
-- Values without digits use proportional figures: the body's `tabular-nums` widens Inter's hyphen, so `Pre-verified` would read `Pre - verified`. Do the same (`proportional-nums`) for hyphenated words in your own prose.
+- Values are prose, in the body's proportional figures, so `Pre-verified` keeps Inter's narrow hyphen. Don't add `tabular-nums` (it would read `Pre - verified`) or `proportional-nums` (the body already has it).
 
 The helpers behind it, in `@/lib/kit/format/audit`:
 

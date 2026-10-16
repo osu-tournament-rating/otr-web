@@ -49,6 +49,9 @@ describe('ListToolbar', () => {
     expect(html).toContain('search-slot');
     expect(html).toContain('aria-live="polite"');
     expect(text(html)).toContain('1,204 tournaments');
+    expect(html).toMatch(
+      /class="[^"]*\btabular-nums\b[^"]*">1,204 tournaments</
+    );
     expect(html).not.toContain('border-t pt-3');
   });
 
@@ -185,6 +188,7 @@ describe('filters', () => {
     const active = render(<FilterButton count={3} />);
     expect(active).toContain('aria-label="Filters, 3 active"');
     expect(text(active)).toBe('Filters3');
+    expect(active).toMatch(/class="[^"]*\btabular-nums\b[^"]*"[^>]*>3</);
     // The kit Button at lg, level with the search field and sort.
     expect(active).toContain('data-variant="outline"');
     expect(active).toContain('h-10');
@@ -246,6 +250,29 @@ describe('filters', () => {
     expect(html).toContain('Verified only');
     expect(html).toContain('role="switch"');
     expect(html).toContain('aria-checked="true"');
+  });
+
+  it('leaves the switch and slider tracks to the primitives', () => {
+    const toggle = render(
+      <SwitchFilter
+        label="Verified only"
+        checked={false}
+        onCheckedChange={noop}
+      />
+    );
+    const range = render(
+      <RangeFilter
+        label="Star rating"
+        min={0}
+        max={10}
+        value={{}}
+        onValueChange={noop}
+      />
+    );
+
+    expect(toggle).toContain('data-[state=unchecked]:bg-muted-foreground/30');
+    expect(range).toContain('bg-muted-foreground/25');
+    expect(range).not.toContain('[&_[data-slot=slider-track]]');
   });
 
   it('picks dates with buttons, never a native date input', () => {

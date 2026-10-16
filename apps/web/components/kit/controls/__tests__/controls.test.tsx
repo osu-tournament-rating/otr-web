@@ -48,6 +48,14 @@ describe('Button', () => {
     ).toContain('hover:bg-accent');
   });
 
+  it('keeps a ghost button filled while its menu is open', () => {
+    const classes = classOf(render(<Button variant="ghost">More</Button>));
+
+    expect(classes).toContain('data-[state=open]:bg-accent');
+    // The hover fill comes from the shadcn variant, once.
+    expect(classes.match(/hover:bg-accent/g)).toHaveLength(1);
+  });
+
   it('never fills a destructive trigger, only the final confirm', () => {
     const trigger = classOf(
       render(<Button variant="destructive">Delete tournament</Button>)

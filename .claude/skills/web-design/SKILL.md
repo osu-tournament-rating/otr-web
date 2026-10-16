@@ -69,7 +69,9 @@ If the library has no component for what you need, build it in the library
 - **Formatting.** Dates "Jul 20 – Aug 3, 2024", timestamps "Jul 20, 2024,
   15:42 UTC", relative time only in feeds. Ranks "#1,234". Rating changes
   with one decimal. Rulesets osu!, taiko, catch, mania 4K, mania 7K. Never
-  format with the visitor's locale or time zone.
+  format with the visitor's locale or time zone. Numbers in columns or that
+  change in place take tabular figures (the kit sets them); prose keeps the
+  body's proportional ones.
 - **Accessibility.** Keyboard reachable, visible focus, status never by
   colour alone, text at 4.5:1 and marks at 3:1 in both themes.
 

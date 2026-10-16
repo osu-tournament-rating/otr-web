@@ -98,7 +98,7 @@ export function ListToolbar({
                 <span
                   aria-live="polite"
                   aria-atomic="true"
-                  className="text-xs whitespace-nowrap text-muted-foreground"
+                  className="text-xs whitespace-nowrap text-muted-foreground tabular-nums"
                 >
                   {count}
                 </span>

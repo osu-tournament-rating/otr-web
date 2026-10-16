@@ -4,6 +4,7 @@ import { VerificationStatus } from '@otr/core/osu';
 import {
   ArrowDownWideNarrow,
   CalendarDays,
+  ChevronDown,
   Database,
   ExternalLink,
   Filter,
@@ -12,6 +13,7 @@ import {
   GitMerge,
   History,
   ListChecks,
+  LogOut,
   Music2,
   NotebookPen,
   PencilLine,
@@ -19,11 +21,14 @@ import {
   Plus,
   RefreshCw,
   RotateCcw,
+  Settings,
+  ShieldCheck,
   Swords,
   Target,
   Trash2,
   Trophy,
   Unlink,
+  User,
   UserRound,
   Users,
   X,
@@ -33,6 +38,7 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GallerySection, Specimen } from '../gallery';
+import { ActionMenu } from '@/components/kit/controls/ActionMenu';
 import { AdminMenu } from '@/components/kit/controls/AdminMenu';
 import { Button, type ButtonSize } from '@/components/kit/controls/Button';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
@@ -59,8 +65,10 @@ import { RowList, RowListItem } from '@/components/kit/layout/RowList';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { typeScale } from '@/components/kit/layout/Typography';
 import { Badge } from '@/components/kit/status/Badge';
+import { NotificationDot } from '@/components/kit/status/NotificationDot';
 import { VerificationStatusBadge } from '@/components/kit/status/VerificationStatusBadge';
 import { VerificationStatusIcon } from '@/components/kit/status/VerificationStatusIcon';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
@@ -80,8 +88,21 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatLobbySize } from '@/lib/kit/format/fields';
-import { formatCount } from '@/lib/kit/format/number';
 import { RATED_RULESETS, RULESET_NAMES } from '@/lib/kit/format/ruleset';
+import {
+  FORUM_POST_URL_PREFIX_MESSAGE,
+  FORUM_POST_URL_REQUIRED_MESSAGE,
+  FORUM_POST_URL_SOURCE_MESSAGE,
+  LOBBY_SIZE_REQUIRED_MESSAGE,
+  RANK_RESTRICTION_MINIMUM_MESSAGE,
+  RANK_RESTRICTION_REQUIRED_MESSAGE,
+  RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE,
+  RULESET_REQUIRED_MESSAGE,
+  TOURNAMENT_ABBREVIATION_REQUIRED_MESSAGE,
+  TOURNAMENT_NAME_REQUIRED_MESSAGE,
+  maxBeatmapIdsMessage,
+  maxMatchIdsMessage,
+} from '@/lib/orpc/schema/tournamentMessages';
 import { MAX_SUBMISSION_IDS } from '@/lib/orpc/schema/tournamentSubmission';
 import { cn } from '@/lib/utils';
 
@@ -302,11 +323,8 @@ function IconButtons() {
 
 // The tournament fields' rules, from lib/orpc/schema/tournamentSubmission.ts
 // (submission) and tournamentEditFormSchema in lib/validation-schema.ts
-// (edit). Messages name the field as its label does, and a missing value
-// reads "… is required" in place of zod's default message.
-const NAME_REQUIRED = 'Tournament name is required';
-const ABBREVIATION_REQUIRED = 'Tournament abbreviation is required';
-const FORUM_POST_URL_REQUIRED = 'Forum post URL is required';
+// (edit), with their shared messages from tournamentMessages.ts. Messages
+// name the field as its label does, and a missing value reads "… is required".
 const FORUM_POST_URL_PATTERN =
   /^(https:\/\/osu\.ppy\.sh\/(community\/forums\/topics\/\d+|wiki\/en\/Tournaments\/[^?#]*))(\?.*)?$/;
 const FORUM_POST_URL_PREFIXES = [
@@ -316,21 +334,18 @@ const FORUM_POST_URL_PREFIXES = [
 
 /** The edit dialog's rule: a link under either prefix. */
 function validateEditedForumPostUrl(value: string) {
-  if (value.trim() === '') return FORUM_POST_URL_REQUIRED;
+  if (value.trim() === '') return FORUM_POST_URL_REQUIRED_MESSAGE;
   return (
     FORUM_POST_URL_PREFIXES.some((prefix) => value.startsWith(prefix)) ||
-    'Forum post URL must be from "https://osu.ppy.sh/community/forums/topics/" or "https://osu.ppy.sh/wiki/en/Tournaments/"'
+    FORUM_POST_URL_PREFIX_MESSAGE
   );
 }
 
 /** The submission form's rule: a forum topic or a tournament wiki page. */
 function validateSubmittedForumPostUrl(value: string) {
   const url = value.trim();
-  if (url === '') return FORUM_POST_URL_REQUIRED;
-  return (
-    FORUM_POST_URL_PATTERN.test(url) ||
-    "Forum post URL must be from osu.ppy.sh forums or the osu! wiki's tournaments section"
-  );
+  if (url === '') return FORUM_POST_URL_REQUIRED_MESSAGE;
+  return FORUM_POST_URL_PATTERN.test(url) || FORUM_POST_URL_SOURCE_MESSAGE;
 }
 
 type EditValues = { abbreviation: string; name: string; forumUrl: string };
@@ -389,7 +404,7 @@ function EditTournamentDialog({
           <FormField
             control={form.control}
             name="abbreviation"
-            rules={{ required: ABBREVIATION_REQUIRED }}
+            rules={{ required: TOURNAMENT_ABBREVIATION_REQUIRED_MESSAGE }}
             render={({ field }) => (
               <FormItem>
                 <FormFieldLabel>Abbreviation</FormFieldLabel>
@@ -403,7 +418,7 @@ function EditTournamentDialog({
           <FormField
             control={form.control}
             name="name"
-            rules={{ required: NAME_REQUIRED }}
+            rules={{ required: TOURNAMENT_NAME_REQUIRED_MESSAGE }}
             render={({ field }) => (
               <FormItem className="sm:col-span-2">
                 <FormFieldLabel>Name</FormFieldLabel>
@@ -760,6 +775,57 @@ function RowActionsDemo() {
   );
 }
 
+/** An ActionMenu with a header: the account menu's avatar, name and role. */
+function ActionMenuHeaderDemo() {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <ActionMenu
+        data-testid="gallery-action-menu-content"
+        header={
+          <span className="flex items-center gap-3">
+            <Avatar className="size-9 ring-1 ring-border">
+              <AvatarFallback className="font-medium">A</AvatarFallback>
+            </Avatar>
+            <span className="flex min-w-0 flex-col items-start gap-1">
+              <span className="max-w-full truncate font-semibold">apricot</span>
+              <Badge size="sm">
+                <ShieldCheck aria-hidden />
+                Admin
+              </Badge>
+            </span>
+          </span>
+        }
+        actions={[
+          { label: 'My profile', icon: User, href: '#controls-action-menu' },
+          { label: 'Settings', icon: Settings, href: '#controls-action-menu' },
+          {
+            label: 'My reports',
+            icon: Flag,
+            href: '#controls-action-menu',
+            trailing: <NotificationDot label="Unread report updates" />,
+          },
+          {
+            label: 'Log out',
+            icon: LogOut,
+            group: 'session',
+            onSelect: () => {},
+          },
+        ]}
+        trigger={
+          <Button variant="ghost" size="sm">
+            apricot
+            <ChevronDown
+              className="-mr-0.5 text-muted-foreground"
+              aria-hidden
+            />
+          </Button>
+        }
+      />
+      <Caption>The header sits above the items and is not focusable.</Caption>
+    </div>
+  );
+}
+
 /** The dialog anatomy drawn in place, so both themes show it. */
 function DialogAnatomy({
   title,
@@ -920,10 +986,10 @@ const LOBBY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8];
 
 /** Validates a whole-number rank restriction of at least 1. */
 function validateRankRestriction(value: string) {
-  if (value.trim() === '') return 'Rank restriction is required';
+  if (value.trim() === '') return RANK_RESTRICTION_REQUIRED_MESSAGE;
   const rank = Number(value);
-  if (!Number.isInteger(rank)) return 'Rank restriction must be a whole number';
-  return rank >= 1 || 'Rank restriction must be at least 1';
+  if (!Number.isInteger(rank)) return RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE;
+  return rank >= 1 || RANK_RESTRICTION_MINIMUM_MESSAGE;
 }
 
 // The submission form's link formats: an ID or an osu! URL on each line.
@@ -943,16 +1009,15 @@ function parseLinkIds(value: string, pattern: RegExp, maxId = Infinity) {
   });
 }
 
-/**
- * The submission schema's checks on a list of links. Its limit message,
- * "Submit at most 1000 matches", is reworded as a statement.
- */
+/** The submission schema's checks on a list of links, with its messages. */
 function validateLinkIds(ids: number[], noun: 'match' | 'beatmap') {
   if (ids.some((id) => id === 0)) {
     return `All ${noun} links must be valid osu! ${noun} IDs or URLs`;
   }
   if (ids.length > MAX_SUBMISSION_IDS) {
-    return `${noun === 'match' ? 'Matches' : 'Beatmaps'} cannot exceed ${formatCount(MAX_SUBMISSION_IDS)}`;
+    return noun === 'match'
+      ? maxMatchIdsMessage(MAX_SUBMISSION_IDS)
+      : maxBeatmapIdsMessage(MAX_SUBMISSION_IDS);
   }
   return (
     new Set(ids).size === ids.length || `Duplicate ${noun} IDs are not allowed`
@@ -1019,7 +1084,7 @@ function FormLayoutDemo() {
               <FormField
                 control={form.control}
                 name="abbreviation"
-                rules={{ required: 'Tournament abbreviation is required' }}
+                rules={{ required: TOURNAMENT_ABBREVIATION_REQUIRED_MESSAGE }}
                 render={({ field }) => (
                   <FormItem>
                     <FormFieldLabel info={ABBREVIATION_INFO}>
@@ -1035,7 +1100,7 @@ function FormLayoutDemo() {
               <FormField
                 control={form.control}
                 name="name"
-                rules={{ required: 'Tournament name is required' }}
+                rules={{ required: TOURNAMENT_NAME_REQUIRED_MESSAGE }}
                 render={({ field }) => (
                   <FormItem>
                     <FormFieldLabel info="Full tournament name (e.g. osu! World Cup 2024)">
@@ -1069,7 +1134,7 @@ function FormLayoutDemo() {
               <FormField
                 control={form.control}
                 name="ruleset"
-                rules={{ required: 'Ruleset is required' }}
+                rules={{ required: RULESET_REQUIRED_MESSAGE }}
                 render={({ field }) => (
                   <FormItem>
                     <FormFieldLabel info="Game mode the tournament is played in">
@@ -1096,7 +1161,7 @@ function FormLayoutDemo() {
               <FormField
                 control={form.control}
                 name="lobbySize"
-                rules={{ required: 'Lobby size is required' }}
+                rules={{ required: LOBBY_SIZE_REQUIRED_MESSAGE }}
                 render={({ field }) => (
                   <FormItem>
                     <FormFieldLabel info="Number of players per team in each match">
@@ -1245,7 +1310,7 @@ function FormFieldLabelDemo() {
 
   React.useEffect(() => {
     setError('rankRangeLowerBound', {
-      message: 'Rank restriction must be a whole number',
+      message: RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE,
     });
   }, [setError]);
 
@@ -1352,6 +1417,15 @@ export default function ControlsSection() {
         stacked
       >
         <RowActionsDemo />
+      </Specimen>
+
+      <Specimen
+        id="controls-action-menu"
+        name="ActionMenu with a header"
+        importPath={`${KIT}/ActionMenu`}
+        description="The menu AdminMenu and RowActionsMenu are built on, for another trigger. Its header holds richer content than a title, such as an avatar with a name and role; AdminMenu passes it through. Menus open in the page's theme."
+      >
+        <ActionMenuHeaderDemo />
       </Specimen>
 
       <Specimen
