@@ -383,11 +383,6 @@ function AdminMenuDemo() {
                 onSelect: () => {},
               },
               {
-                label: 'Audit history',
-                icon: History,
-                href: '#controls-admin-menu',
-              },
-              {
                 label: 'Accept pre-verified data',
                 icon: ListChecks,
                 group: 'data',
@@ -537,11 +532,6 @@ function OnArtDemo() {
                 icon: PencilLine,
                 disabled: true,
                 description: 'Only beatmaps the osu! API no longer serves',
-              },
-              {
-                label: 'Audit history',
-                icon: History,
-                href: '#controls-on-art',
               },
             ]}
           />

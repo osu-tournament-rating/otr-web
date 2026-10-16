@@ -155,13 +155,17 @@ const [deleting, setDeleting] = useState(false);
         actions={[
           { label: 'Edit tournament', icon: PencilLine, onSelect: () => setEditing(true) },
           { label: 'Admin notes', icon: NotebookPen, trailing: <Badge size="sm">{formatBadgeCount(notes.length)}</Badge>, onSelect: openNotes },
-          { label: 'Audit history', icon: History, href: `/audit/tournaments/${tournament.id}` },
           { label: 'Reset automated checks', icon: RotateCcw, group: 'data', onSelect: () => setResetting(true) },
           { label: 'Refetch match data', icon: RefreshCw, group: 'data', onSelect: () => setRefetching(true) },
           { label: 'Delete tournament', icon: Trash2, destructive: true, onSelect: () => setDeleting(true) },
         ]}
       />
     )
+  }
+  actions={
+    <IconButton asChild variant="outline" label="Audit history" icon={History}>
+      <Link href={`/audit/tournaments/${tournament.id}`} />
+    </IconButton>
   }
 />
 <TournamentEditDialog open={editing} onOpenChange={setEditing} />
@@ -182,13 +186,14 @@ Do:
 
 - Label every item with a verb and the noun: "Edit tournament", "Refetch match data", "Delete pooled beatmaps".
 - Group with `group`: edit and notes first, then data operations, then (automatically) the destructive group.
-- Keep public actions (report, open on osu!, audio preview) in the hero's `actions`, not in the admin menu.
+- Keep public actions (report, open on osu!, audio preview, audit history) in the hero's `actions`, not in the admin menu.
 
 Don't:
 
 - Don't build a row of admin icons in different colours (`app/tournaments/[id]/page.tsx`: AuditButton, AdminNoteView, TournamentAdminView; `components/matches/MatchCard.tsx`; the pill cluster in `components/beatmap/BeatmapAdminView.tsx`).
 - Don't hide operations inside an edit dialog's button bar (the Accept, Reset, Refetch and Delete icons in `TournamentAdminView.tsx`); each becomes a menu item with its own ConfirmDialog.
 - Don't colour admin items or their icons; icons are muted, only destructive items are red.
+- Don't put audit history in the admin menu or behind an admin check. Audit pages are public; the link belongs in the hero's `actions` for everyone. Only tournaments, matches, games and scores link to one.
 
 Gallery anchors: `/admin/design#controls-admin-menu`, `/admin/design#controls-on-art`
 
@@ -210,15 +215,15 @@ import { RowActionsMenu } from '@/components/kit/controls/RowActionsMenu';
           icon: Flag,
           onSelect: () => setReporting(true),
         },
+        {
+          label: 'Audit history',
+          icon: History,
+          href: `/audit/games/${game.id}`,
+        },
         isAdmin && {
           label: 'Edit game',
           icon: PencilLine,
           onSelect: () => setEditing(true),
-        },
-        isAdmin && {
-          label: 'Audit history',
-          icon: History,
-          href: `/audit/games/${game.id}`,
         },
         isAdmin && {
           label: 'Delete game',
@@ -237,6 +242,7 @@ Props:
 - `actions`: as AdminMenu.
 - `itemName`: what the row is. It names the button for screen readers ("Actions for Hidden Chamber [Insane]") and heads the menu. Always set it in a list, or every button is just "Actions".
 - `label`: the tooltip, "Actions" by default.
+- Public items (report, audit history) are for everyone; gate only the admin items with `isAdmin &&`. With every admin item hidden, the menu still holds the public ones.
 - `onArt`: the round dark pill, for a card header on cover art (`components/games/GameCardHeader.tsx`).
 - `size`: `sm` (default) or `default`.
 

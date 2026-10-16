@@ -79,12 +79,10 @@ const noop = () => {};
 
 const BEATMAP_ADMIN_ACTIONS: MenuAction[] = [
   { label: 'Edit beatmap', icon: PencilLine, onSelect: noop },
-  { label: 'Audit history', icon: History, href: '#layout-detail-hero-art' },
 ];
 
 const TOURNAMENT_ADMIN_ACTIONS: MenuAction[] = [
   { label: 'Edit tournament', icon: PencilLine, onSelect: noop },
-  { label: 'Audit history', icon: History, href: '#layout-detail-hero-tabs' },
   { label: 'Reset automated checks', icon: RotateCcw, onSelect: noop },
   {
     label: 'Delete tournament',
@@ -280,7 +278,7 @@ export default function LayoutSection() {
         id="layout-detail-hero-art-status"
         name="DetailHero with art and a status"
         importPath={`${KIT}/DetailHero`}
-        description="A status on art: VerificationStatusBadge with the `overlay` variant, AdminMenu with `onArt` and IconButton with the `overlay` variant, all white on the dark matte in both themes."
+        description="A status on art: VerificationStatusBadge with the `overlay` variant, AdminMenu with `onArt`, and the public actions (audit history and the forum link) as IconButtons with the `overlay` variant, all white on the dark matte in both themes."
         stacked
       >
         <DetailHero
@@ -310,11 +308,21 @@ export default function LayoutSection() {
             />
           }
           actions={
-            <IconButton
-              variant="overlay"
-              icon={ExternalLink}
-              label="View on the osu! forum"
-            />
+            <>
+              <IconButton
+                asChild
+                variant="overlay"
+                icon={History}
+                label="Audit history"
+              >
+                <a href="#layout-detail-hero-art-status" />
+              </IconButton>
+              <IconButton
+                variant="overlay"
+                icon={ExternalLink}
+                label="View on the osu! forum"
+              />
+            </>
           }
         />
       </Specimen>
@@ -351,11 +359,21 @@ export default function LayoutSection() {
             />
           }
           actions={
-            <IconButton
-              variant="outline"
-              icon={ExternalLink}
-              label="View on the osu! forum"
-            />
+            <>
+              <IconButton
+                asChild
+                variant="outline"
+                icon={History}
+                label="Audit history"
+              >
+                <a href="#layout-detail-hero-tabs" />
+              </IconButton>
+              <IconButton
+                variant="outline"
+                icon={ExternalLink}
+                label="View on the osu! forum"
+              />
+            </>
           }
           tabs={
             <HeroTabs

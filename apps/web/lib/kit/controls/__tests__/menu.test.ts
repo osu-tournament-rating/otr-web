@@ -17,11 +17,11 @@ describe('groupMenuActions', () => {
     const groups = groupMenuActions<Action>([
       { label: 'Edit tournament' },
       { label: 'Admin notes' },
-      { label: 'Audit history' },
+      { label: 'Reset automated checks' },
     ]);
 
     expect(labels(groups)).toEqual([
-      ['Edit tournament', 'Admin notes', 'Audit history'],
+      ['Edit tournament', 'Admin notes', 'Reset automated checks'],
     ]);
   });
 
@@ -31,13 +31,13 @@ describe('groupMenuActions', () => {
       { label: 'Refetch match data', group: 'data' },
       { label: 'Admin notes', group: 'edit' },
       { label: 'Refetch beatmap data', group: 'data' },
-      { label: 'Audit history' },
+      { label: 'Accept pre-verified data' },
     ]);
 
     expect(labels(groups)).toEqual([
       ['Edit tournament', 'Admin notes'],
       ['Refetch match data', 'Refetch beatmap data'],
-      ['Audit history'],
+      ['Accept pre-verified data'],
     ]);
   });
 
