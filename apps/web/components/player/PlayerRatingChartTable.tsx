@@ -1,121 +1,140 @@
-import Link from 'next/link';
-import { RatingAdjustmentTypeEnumhelper } from '@/lib/enum-helpers';
-import { formattedDate } from './PlayerRatingChartTooltip';
+import { DateText } from '@/components/kit/format/DateText';
+import { RatingDelta } from '@/components/kit/format/RatingDelta';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../ui/table';
-import { sortData } from '@/lib/utils/playerRatingChart';
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from '@/components/kit/tables/DataTable';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
+import { formatDate } from '@/lib/kit/format/date';
+import { formatNumber, formatRating } from '@/lib/kit/format/number';
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
-import { RatingAdjustmentType } from '@otr/core/osu';
+import { sortData } from '@/lib/utils/playerRatingChart';
 
-interface PlayerRatingChartTableProps {
-  data: PlayerRatingAdjustment[];
-  activeTab: 'rating' | 'volatility';
+import {
+  RATING_ADJUSTMENT_TYPE_LABELS,
+  type RatingMetric,
+} from './rating-adjustment';
+
+function formatMetric(metric: RatingMetric, value: number): string {
+  return metric === 'rating'
+    ? formatRating(value)
+    : formatNumber(value, { decimals: 2 });
 }
 
-function getAdjustmentTypeColor(
-  type: RatingAdjustmentType,
-  delta: number
-): string {
-  switch (type) {
-    case RatingAdjustmentType.Decay:
-    case RatingAdjustmentType.VolatilityDecay:
-      return 'bg-accent';
-    case RatingAdjustmentType.Match:
-      return delta > 0 ? 'bg-success' : 'bg-destructive';
-    default:
-      return 'bg-primary';
-  }
-}
-
+/**
+ * The rating history as a table, newest first, inside a scrolling box with
+ * its header pinned. On phones it becomes rows that keep the value and the
+ * change in view.
+ */
 export default function PlayerRatingChartTable({
   data,
-  activeTab,
-}: PlayerRatingChartTableProps) {
+  metric,
+}: {
+  data: PlayerRatingAdjustment[];
+  metric: RatingMetric;
+}) {
+  const rows = sortData(data, true);
+  const metricLabel = metric === 'rating' ? 'Rating' : 'Volatility';
+  const lowerIsBetter = metric === 'volatility';
+  const valueOf = (point: PlayerRatingAdjustment) =>
+    metric === 'rating' ? point.ratingAfter : point.volatilityAfter;
+  const deltaOf = (point: PlayerRatingAdjustment) =>
+    metric === 'rating' ? point.ratingDelta : point.volatilityDelta;
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow className="bg-muted">
-          <TableHead>Date</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead className="text-right">
-            {activeTab === 'rating' ? 'Rating' : 'Volatility'}
-          </TableHead>
-          <TableHead className="text-right">Change</TableHead>
-          <TableHead>Match</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody className="max-h-[300px]">
-        {sortData(data, true).map((point, index) => (
-          <TableRow key={index} className="hover:bg-muted">
-            <TableCell>{formattedDate(point.timestamp)}</TableCell>
-            <TableCell>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`inline-block h-3 w-3 rounded-full ${getAdjustmentTypeColor(
-                    point.adjustmentType,
-                    point.ratingDelta
-                  )}`}
-                />
-                {
-                  RatingAdjustmentTypeEnumhelper.getMetadata(
-                    point.adjustmentType
-                  ).text
+    // Focusable, so the box scrolls by keyboard.
+    <div
+      role="region"
+      tabIndex={0}
+      aria-label={`${metricLabel} history`}
+      className="max-h-80 overflow-y-auto border-t outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-inset"
+    >
+      <DataTable
+        stickyHeader="scroll-area"
+        fixed
+        aria-label={`${metricLabel} history`}
+        phoneRows={
+          <PhoneRowList aria-label={`${metricLabel} history`}>
+            {rows.map((point, index) => (
+              <PhoneRow
+                key={`${point.timestamp}-${index}`}
+                title={
+                  point.match ? (
+                    <EntityLink href={`/matches/${point.match.id}`}>
+                      {point.match.name}
+                    </EntityLink>
+                  ) : (
+                    RATING_ADJUSTMENT_TYPE_LABELS[point.adjustmentType]
+                  )
                 }
-              </div>
-            </TableCell>
-            <TableCell className="text-right font-medium">
-              {activeTab === 'rating'
-                ? point.ratingAfter.toFixed(0)
-                : point.volatilityAfter.toFixed(2)}
-            </TableCell>
-            {activeTab === 'rating' ? (
-              <TableCell
-                className={`text-right font-medium ${
-                  point.ratingDelta > 0
-                    ? 'text-success-foreground'
-                    : point.ratingDelta < 0
-                      ? 'text-destructive-foreground'
-                      : ''
-                }`}
-              >
-                {point.ratingDelta > 0 ? '+' : ''}
-                {point.ratingDelta.toFixed(2)}
-              </TableCell>
-            ) : (
-              <TableCell
-                className={`text-right font-medium ${
-                  point.volatilityDelta < 0
-                    ? 'text-success-foreground'
-                    : point.volatilityDelta > 0
-                      ? 'text-destructive-foreground'
-                      : ''
-                }`}
-              >
-                {point.volatilityDelta > 0 ? '+' : ''}
-                {point.volatilityDelta.toFixed(2)}
-              </TableCell>
-            )}
-            <TableCell className="max-w-[300px] truncate overflow-y-clip text-muted-foreground">
-              {point.match?.id && point.match?.name ? (
-                <Link
-                  href={`/matches/${point.match.id}`}
-                  className="hover:text-primary"
-                >
-                  {point.match.name}
-                </Link>
-              ) : (
-                '-'
-              )}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+                // Without a match the title already names the type.
+                description={
+                  point.match
+                    ? `${formatDate(point.timestamp)} · ${RATING_ADJUSTMENT_TYPE_LABELS[point.adjustmentType]}`
+                    : formatDate(point.timestamp)
+                }
+                value={formatMetric(metric, valueOf(point))}
+                valueDescription={
+                  <RatingDelta
+                    value={deltaOf(point)}
+                    lowerIsBetter={lowerIsBetter}
+                  />
+                }
+              />
+            ))}
+          </PhoneRowList>
+        }
+      >
+        <DataTableHeader>
+          <DataTableRow>
+            <DataTableHead className="w-32">Date</DataTableHead>
+            <DataTableHead className="w-36">Type</DataTableHead>
+            <DataTableHead numeric className="w-24">
+              {metricLabel}
+            </DataTableHead>
+            <DataTableHead numeric className="w-24">
+              Change
+            </DataTableHead>
+            <DataTableHead>Match</DataTableHead>
+          </DataTableRow>
+        </DataTableHeader>
+        <DataTableBody>
+          {rows.map((point, index) => (
+            <DataTableRow key={`${point.timestamp}-${index}`}>
+              <DataTableCell muted>
+                <DateText date={point.timestamp} />
+              </DataTableCell>
+              <DataTableCell>
+                {RATING_ADJUSTMENT_TYPE_LABELS[point.adjustmentType]}
+              </DataTableCell>
+              <DataTableCell numeric className="font-medium">
+                {formatMetric(metric, valueOf(point))}
+              </DataTableCell>
+              <DataTableCell numeric>
+                <RatingDelta
+                  value={deltaOf(point)}
+                  lowerIsBetter={lowerIsBetter}
+                />
+              </DataTableCell>
+              <DataTableCell>
+                {point.match ? (
+                  <EntityLink
+                    href={`/matches/${point.match.id}`}
+                    title={point.match.name}
+                  >
+                    {point.match.name}
+                  </EntityLink>
+                ) : null}
+              </DataTableCell>
+            </DataTableRow>
+          ))}
+        </DataTableBody>
+      </DataTable>
+    </div>
   );
 }

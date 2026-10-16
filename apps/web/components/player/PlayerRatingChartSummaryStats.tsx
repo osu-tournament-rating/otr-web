@@ -1,51 +1,38 @@
-import { TrendingUp, TrendingDown } from 'lucide-react';
-import TRText from '../rating/TRText';
-import { sortData } from '@/lib/utils/playerRatingChart';
+import { RatingDelta } from '@/components/kit/format/RatingDelta';
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
+import { sortData } from '@/lib/utils/playerRatingChart';
 
-interface PlayerRatingChartSummaryStatsProps {
-  data: PlayerRatingAdjustment[];
-  /** Suffix shown when a time filter narrows the window */
-  rangeLabel?: string;
-}
+import type { RatingMetric } from './rating-adjustment';
 
+/**
+ * The change across the charted points: the last value less the first, so
+ * a time range shows the change within it.
+ */
 export default function PlayerRatingChartSummaryStats({
   data,
+  metric,
   rangeLabel,
-}: PlayerRatingChartSummaryStatsProps) {
+}: {
+  data: PlayerRatingAdjustment[];
+  metric: RatingMetric;
+  /** Said after the change when a time range narrows the chart. */
+  rangeLabel?: string;
+}) {
   if (data.length === 0) return null;
 
-  const sortedData = sortData(data, false);
-  const currentRating = sortedData[sortedData.length - 1]?.ratingAfter || 0;
-  const initialRating = sortedData[0]?.ratingAfter || 0;
-  const totalChange = currentRating - initialRating;
-  const isPositive = totalChange >= 0;
+  const sorted = sortData(data, false);
+  const valueOf = (point: PlayerRatingAdjustment) =>
+    metric === 'rating' ? point.ratingAfter : point.volatilityAfter;
+  const totalChange = valueOf(sorted[sorted.length - 1]) - valueOf(sorted[0]);
 
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="text-muted-foreground">Total Change</span>
-      <span
-        className={`flex items-center gap-1 font-semibold ${
-          isPositive ? 'text-success-foreground' : 'text-destructive-foreground'
-        }`}
-        aria-label={`Total change ${isPositive ? 'up' : 'down'} ${Math.abs(
-          totalChange
-        ).toFixed(0)} TR`}
-      >
-        {isPositive ? (
-          <TrendingUp className="h-4 w-4" />
-        ) : (
-          <TrendingDown className="h-4 w-4" />
-        )}
-        <span className="flex items-baseline gap-1">
-          {isPositive ? '+' : ''}
-          {totalChange.toFixed(0)}
-          <TRText />
-        </span>
-      </span>
-      {rangeLabel && (
-        <span className="text-xs text-muted-foreground">{rangeLabel}</span>
-      )}
-    </div>
+    <p className="flex items-center gap-2 text-sm text-muted-foreground">
+      Total change
+      <RatingDelta
+        value={totalChange}
+        lowerIsBetter={metric === 'volatility'}
+      />
+      {rangeLabel ? <span className="text-xs">{rangeLabel}</span> : null}
+    </p>
   );
 }

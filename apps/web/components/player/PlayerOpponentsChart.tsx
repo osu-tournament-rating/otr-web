@@ -1,26 +1,28 @@
 'use client';
 
-import PlayerFrequencyChart from './PlayerFrequencyChart';
+import { Swords } from 'lucide-react';
+
+import { seriesColor } from '@/lib/kit/color/categorical';
 import type { PlayerFrequency } from '@/lib/orpc/schema/playerStats';
 
-interface PlayerOpponentsChartProps {
-  className?: string;
-  opponents: PlayerFrequency[];
-}
+import PlayerFrequencyChart from './PlayerFrequencyChart';
 
 export default function PlayerOpponentsChart({
   className,
   opponents,
-}: PlayerOpponentsChartProps) {
+}: {
+  className?: string;
+  opponents: PlayerFrequency[];
+}) {
   return (
     <PlayerFrequencyChart
       className={className}
       data={opponents}
-      type="opponents"
-      title="Frequent Opponents"
-      description="Most frequently played against opponents"
-      emptyMessage="No opponent data available"
-      chartColor="var(--chart-2)"
+      title="Frequent opponents"
+      icon={Swords}
+      infoText="Most frequently played against opponents"
+      emptyTitle="No opponent data available"
+      color={seriesColor(1)}
     />
   );
 }

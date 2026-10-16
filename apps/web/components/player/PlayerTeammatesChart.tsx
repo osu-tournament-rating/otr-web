@@ -1,26 +1,28 @@
 'use client';
 
-import PlayerFrequencyChart from './PlayerFrequencyChart';
+import { Users } from 'lucide-react';
+
+import { seriesColor } from '@/lib/kit/color/categorical';
 import type { PlayerFrequency } from '@/lib/orpc/schema/playerStats';
 
-interface PlayerTeammatesChartProps {
-  className?: string;
-  teammates: PlayerFrequency[];
-}
+import PlayerFrequencyChart from './PlayerFrequencyChart';
 
 export default function PlayerTeammatesChart({
   className,
   teammates,
-}: PlayerTeammatesChartProps) {
+}: {
+  className?: string;
+  teammates: PlayerFrequency[];
+}) {
   return (
     <PlayerFrequencyChart
       className={className}
       data={teammates}
-      type="teammates"
-      title="Frequent Teammates"
-      description="Most frequently played with teammates"
-      emptyMessage="No teammate data available"
-      chartColor="var(--primary)"
+      title="Frequent teammates"
+      icon={Users}
+      infoText="Most frequently played with teammates"
+      emptyTitle="No teammate data available"
+      color={seriesColor(0)}
     />
   );
 }

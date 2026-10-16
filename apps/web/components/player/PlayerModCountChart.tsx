@@ -1,183 +1,134 @@
 'use client';
 
-import { ModsEnumHelper } from '@/lib/enum-helpers';
+import { ChartPie } from 'lucide-react';
+import { useMemo } from 'react';
+import { Cell, Label, Pie, PieChart } from 'recharts';
+
+import { ChartLegend } from '@/components/kit/charts/ChartLegend';
+import { ChartTooltipContent } from '@/components/kit/charts/ChartTooltip';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { Panel, PanelBody } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
+import { formatCountTick } from '@/lib/kit/charts/format';
+import { formatCount, formatPercent } from '@/lib/kit/format/number';
 import type { PlayerModStats } from '@/lib/orpc/schema/playerStats';
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '../ui/chart';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../ui/card';
-import { PieChart, Pie, Label } from 'recharts';
-import * as React from 'react';
-import { getModColor } from '@/lib/utils/mods';
 import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
-import { formatChartNumber, formatPercentage } from '@/lib/utils/chart';
+import { cn } from '@/lib/utils';
 
-interface ProcessedEntry {
-  label: string;
-  count: number;
-  fill: string;
-}
+import { groupModStats } from './mod-stats';
 
-interface PlayerModCountChartProps {
-  modStats: PlayerModStats[];
-  className?: string;
-}
+const INFO_TEXT = `Mods played in at least ${MOD_CHART_DISPLAY_THRESHOLD}% of all verified games.`;
 
+/** How a player's games split across mods, as a donut in the mod palette. */
 export default function PlayerModCountChart({
   modStats,
   className,
-}: PlayerModCountChartProps) {
-  const processedData = React.useMemo(() => {
-    if (!modStats || modStats.length === 0) {
-      return [];
-    }
+}: {
+  modStats: PlayerModStats[];
+  className?: string;
+}) {
+  const chartData = useMemo(() => groupModStats(modStats, 'count'), [modStats]);
+  const totalGames = chartData.reduce((sum, entry) => sum + entry.count, 0);
 
-    const totalGames = modStats.reduce((sum, stat) => sum + stat.count, 0);
-    const threshold = (totalGames * MOD_CHART_DISPLAY_THRESHOLD) / 100.0;
-
-    const modMap = new Map<string, ProcessedEntry>();
-
-    modStats.forEach((stat) => {
-      const metadata = ModsEnumHelper.getMetadata(stat.mods);
-      let label = metadata
-        .map((meta) => meta.text)
-        .join('')
-        .replace(/NF/g, '')
-        .replace(/SO/g, '');
-
-      if (label === '') {
-        label = 'NM';
-      }
-
-      const count = stat.count || 1;
-
-      if (modMap.has(label)) {
-        const existing = modMap.get(label)!;
-        modMap.set(label, {
-          ...existing,
-          count: existing.count + count,
-        });
-      } else {
-        modMap.set(label, {
-          label,
-          count,
-          fill: getModColor(stat.mods),
-        });
-      }
-    });
-
-    return Array.from(modMap.values())
-      .filter((entry) => entry.count >= threshold)
-      .sort((a, b) => b.count - a.count);
-  }, [modStats]);
-
-  const totalGames = React.useMemo(() => {
-    return processedData.reduce((sum, entry) => sum + entry.count, 0);
-  }, [processedData]);
-
-  const chartConfig: ChartConfig = {
-    count: {
-      label: 'Games',
-      color: 'var(--chart-1)',
-    },
-  };
-
-  const renderCenterLabel = React.useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (props: any) => {
-      const { viewBox } = props;
-      if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
-        return (
-          <text
-            x={viewBox.cx}
-            y={viewBox.cy}
-            textAnchor="middle"
-            dominantBaseline="middle"
-          >
-            <tspan
-              x={viewBox.cx}
-              y={viewBox.cy}
-              className="fill-foreground text-2xl font-bold"
-            >
-              {formatChartNumber(totalGames)}
-            </tspan>
-            <tspan
-              x={viewBox.cx}
-              y={(viewBox.cy || 0) + 24}
-              className="fill-muted-foreground"
-            >
-              Games
-            </tspan>
-          </text>
-        );
-      }
-      return null;
-    },
-    [totalGames]
-  );
-
-  if (processedData.length === 0) {
+  if (chartData.length === 0) {
     return (
-      <Card className={className}>
-        <CardHeader className="items-center">
-          <CardTitle>Mod Distribution</CardTitle>
-          <CardDescription>No mod data available</CardDescription>
-        </CardHeader>
-      </Card>
+      <Panel className={className}>
+        <SectionHeader
+          icon={ChartPie}
+          title="Mod distribution"
+          infoText={INFO_TEXT}
+        />
+        <EmptyState
+          size="compact"
+          icon={ChartPie}
+          title="No mod data available"
+        />
+      </Panel>
     );
   }
 
   return (
-    <Card className={className}>
-      <CardHeader className="items-center">
-        <CardTitle>Mod Distribution</CardTitle>
-        <CardDescription>
-          Displaying mods played in &ge;{MOD_CHART_DISPLAY_THRESHOLD}% of all
-          verified games
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pb-0 font-sans">
-        <ChartContainer config={chartConfig} className="min-h-[190px] w-full">
+    <Panel className={cn('flex flex-col', className)}>
+      <SectionHeader
+        icon={ChartPie}
+        title="Mod distribution"
+        infoText={INFO_TEXT}
+      />
+      <PanelBody className="flex flex-1 flex-col gap-3">
+        <ChartLegend
+          items={chartData.map((entry) => ({
+            key: entry.label,
+            label: (
+              <span>
+                {entry.label}{' '}
+                <span className="text-foreground tabular-nums">
+                  {formatPercent(entry.count / totalGames)}
+                </span>
+              </span>
+            ),
+            color: entry.fill,
+          }))}
+        />
+        <ChartContainer
+          config={{}}
+          className="aspect-auto min-h-60 w-full flex-1"
+        >
           <PieChart>
             <Pie
-              data={processedData}
-              innerRadius="50%"
-              outerRadius="70%"
-              paddingAngle={3}
+              data={chartData}
               dataKey="count"
               nameKey="label"
-              label={({ name, percent }) =>
-                `${name} (${formatPercentage((percent ?? 0) * 100, 1)})`
-              }
+              innerRadius="58%"
+              outerRadius="90%"
+              paddingAngle={2}
+              stroke="none"
+              isAnimationActive={false}
             >
-              <Label content={renderCenterLabel} />
+              {chartData.map((entry) => (
+                <Cell key={entry.label} fill={entry.fill} />
+              ))}
+              <Label
+                content={({ viewBox }) => {
+                  if (!viewBox || !('cx' in viewBox) || !('cy' in viewBox)) {
+                    return null;
+                  }
+                  const cx = viewBox.cx ?? 0;
+                  const cy = viewBox.cy ?? 0;
+
+                  return (
+                    <text x={cx} y={cy} textAnchor="middle">
+                      <tspan
+                        x={cx}
+                        y={cy - 2}
+                        className="fill-foreground text-2xl font-bold tabular-nums"
+                      >
+                        {formatCount(totalGames)}
+                      </tspan>
+                      <tspan
+                        x={cx}
+                        y={cy + 18}
+                        className="fill-muted-foreground text-xs"
+                      >
+                        Games
+                      </tspan>
+                    </text>
+                  );
+                }}
+              />
             </Pie>
             <ChartTooltip
               content={
                 <ChartTooltipContent
-                  indicator="line"
-                  className="font-sans"
-                  labelFormatter={(value, payload) => {
-                    if (payload && payload.length > 0 && payload[0].payload) {
-                      return payload[0].payload.label;
-                    }
-                    return value;
-                  }}
+                  valueFormatter={(value) =>
+                    `${formatCountTick(value)} (${formatPercent(value / totalGames)})`
+                  }
                 />
               }
             />
           </PieChart>
         </ChartContainer>
-      </CardContent>
-    </Card>
+      </PanelBody>
+    </Panel>
   );
 }

@@ -1,62 +1,75 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { RatingAdjustmentType } from '@otr/core/osu';
+import { Calendar, ChartLine } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  LineChartIcon,
-  Info,
-  Calendar,
-  Table as TableIcon,
-} from 'lucide-react';
-import PlayerRatingChartOptions, {
-  PlayerRatingChartFilterValues,
-} from './PlayerRatingChartOptions';
-import SimpleTooltip from '@/components/simple-tooltip';
-import TapTooltip from '@/components/tap-tooltip';
+import { useEffect, useMemo, useState } from 'react';
+
+import TierIcon from '@/components/icons/TierIcon';
+import { Panel, PanelBody } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { ChoiceChip } from '@/components/kit/lists/ChoiceChip';
+import { ScopeSwitch } from '@/components/kit/lists/ScopeSwitch';
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Card } from '../ui/card';
-import { useTheme } from 'next-themes';
-import PlayerRatingChartSummaryStats from './PlayerRatingChartSummaryStats';
+import { formatRating } from '@/lib/kit/format/number';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 import { sortData } from '@/lib/utils/playerRatingChart';
+import { getTierFromRating } from '@/lib/utils/tierData';
+
+import PlayerRatingChartSummaryStats from './PlayerRatingChartSummaryStats';
 import PlayerRatingChartTable from './PlayerRatingChartTable';
 import PlayerRatingChartView from './PlayerRatingChartView';
-import TierIcon from '../icons/TierIcon';
-import TRText from '../rating/TRText';
-import { getTierFromRating } from '@/lib/utils/tierData';
-import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
-import { RatingAdjustmentType } from '@otr/core/osu';
-import { cn } from '@/lib/utils';
-import { stickyTableHeaderInScrollArea } from '@/lib/utils/table';
+import type { RatingMetric } from './rating-adjustment';
 
 type TimeRangeOption = 'all' | '1y' | '6m' | '3m' | 'custom';
+type ViewMode = 'chart' | 'table';
 
+const TIME_RANGE_LABELS: Record<TimeRangeOption, string> = {
+  all: 'All time',
+  '1y': 'Last year',
+  '6m': 'Last 6 months',
+  '3m': 'Last 3 months',
+  custom: 'Custom range',
+};
+
+// UTC calendar arithmetic, like the dates in the address, so a shared link
+// reads as the same preset in every time zone.
 const DATE_PRESETS: Record<
   Exclude<TimeRangeOption, 'all' | 'custom'>,
   (endDate: Date) => Date
 > = {
   '1y': (endDate) => {
     const start = new Date(endDate);
-    start.setFullYear(start.getFullYear() - 1);
+    start.setUTCFullYear(start.getUTCFullYear() - 1);
     return start;
   },
   '6m': (endDate) => {
     const start = new Date(endDate);
-    start.setMonth(start.getMonth() - 6);
+    start.setUTCMonth(start.getUTCMonth() - 6);
     return start;
   },
   '3m': (endDate) => {
     const start = new Date(endDate);
-    start.setMonth(start.getMonth() - 3);
+    start.setUTCMonth(start.getUTCMonth() - 3);
     return start;
   },
 };
+
+const METRIC_OPTIONS = [
+  { value: 'rating', label: 'Rating' },
+  { value: 'volatility', label: 'Volatility' },
+] as const;
+
+const VIEW_OPTIONS = [
+  { value: 'chart', label: 'Chart' },
+  { value: 'table', label: 'Table' },
+] as const;
 
 const toDateOnlyIso = (date: Date) => date.toISOString().split('T')[0];
 
@@ -104,18 +117,25 @@ const deriveTimeRange = (startDate?: Date, endDate?: Date): TimeRangeOption => {
   return 'custom';
 };
 
-interface PlayerRatingChartProps {
-  adjustments: PlayerRatingAdjustment[];
-  highestRating: number | undefined;
-}
+const isDecay = (point: PlayerRatingAdjustment) =>
+  point.adjustmentType === RatingAdjustmentType.Decay ||
+  point.adjustmentType === RatingAdjustmentType.VolatilityDecay;
 
+/**
+ * The rating history panel: rating or volatility as a line or a table,
+ * with a time range (kept in the address, where the whole profile reads
+ * it) and a switch for decay adjustments. The peak rating and its tier sit
+ * in the header.
+ */
 export default function PlayerRatingChart({
   adjustments,
   highestRating,
-}: PlayerRatingChartProps) {
+}: {
+  adjustments: PlayerRatingAdjustment[];
+  highestRating: number | undefined;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { resolvedTheme } = useTheme();
 
   const dateMinParam = searchParams.get('dateMin');
   const dateMaxParam = searchParams.get('dateMax');
@@ -123,12 +143,9 @@ export default function PlayerRatingChart({
   const [timeRange, setTimeRange] = useState<TimeRangeOption>(() =>
     deriveTimeRange(parseDateParam(dateMinParam), parseDateParam(dateMaxParam))
   );
-  const [activeTab, setActiveTab] = useState<'rating' | 'volatility'>('rating');
-  const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
-  const [filterValues, setFilterValues] =
-    useState<PlayerRatingChartFilterValues>({
-      showDecay: true,
-    });
+  const [metric, setMetric] = useState<RatingMetric>('rating');
+  const [viewMode, setViewMode] = useState<ViewMode>('chart');
+  const [showDecay, setShowDecay] = useState(true);
 
   useEffect(() => {
     const derivedRange = deriveTimeRange(
@@ -139,26 +156,22 @@ export default function PlayerRatingChart({
     setTimeRange((prev) => (prev === derivedRange ? prev : derivedRange));
   }, [dateMinParam, dateMaxParam]);
 
-  const { showDecay } = filterValues;
+  const filteredData = useMemo(
+    () =>
+      adjustments.filter((point) => {
+        // Volatility decay never moves the rating line.
+        if (
+          metric === 'rating' &&
+          point.adjustmentType === RatingAdjustmentType.VolatilityDecay
+        ) {
+          return false;
+        }
+        return showDecay || !isDecay(point);
+      }),
+    [adjustments, showDecay, metric]
+  );
 
-  const filteredData = useMemo(() => {
-    return adjustments.filter((point) => {
-      if (
-        activeTab === 'rating' &&
-        point.adjustmentType === RatingAdjustmentType.VolatilityDecay
-      ) {
-        return false;
-      }
-      if (!showDecay) {
-        return (
-          point.adjustmentType !== RatingAdjustmentType.Decay &&
-          point.adjustmentType !== RatingAdjustmentType.VolatilityDecay
-        );
-      }
-      return true;
-    });
-  }, [adjustments, showDecay, activeTab]);
-
+  // The volatility line plots one point per day.
   const dailyData = useMemo(() => {
     const dailyMap = new Map<string, PlayerRatingAdjustment>();
 
@@ -174,179 +187,124 @@ export default function PlayerRatingChart({
     const nextRange = value as TimeRangeOption;
     setTimeRange(nextRange);
 
-    const now = new Date();
+    if (nextRange === 'custom') return;
+
     const params = new URLSearchParams(searchParams.toString());
 
-    if (nextRange === '1y') {
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(now.getFullYear() - 1);
-
-      params.set('dateMin', oneYearAgo.toISOString().split('T')[0]);
-      params.set('dateMax', now.toISOString().split('T')[0]);
-      const query = params.toString();
-      router.push(query ? `?${query}` : '?', { scroll: false });
-    } else if (nextRange === '6m') {
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(now.getMonth() - 6);
-
-      params.set('dateMin', sixMonthsAgo.toISOString().split('T')[0]);
-      params.set('dateMax', now.toISOString().split('T')[0]);
-      const query = params.toString();
-      router.push(query ? `?${query}` : '?', { scroll: false });
-    } else if (nextRange === '3m') {
-      const threeMonthsAgo = new Date();
-      threeMonthsAgo.setMonth(now.getMonth() - 3);
-
-      params.set('dateMin', threeMonthsAgo.toISOString().split('T')[0]);
-      params.set('dateMax', now.toISOString().split('T')[0]);
-      const query = params.toString();
-      router.push(query ? `?${query}` : '?', { scroll: false });
-    } else if (nextRange === 'all') {
+    if (nextRange === 'all') {
       params.delete('dateMin');
       params.delete('dateMax');
-      const query = params.toString();
-      router.push(query ? `?${query}` : '?', { scroll: false });
+    } else {
+      const now = new Date();
+      params.set('dateMin', toDateOnlyIso(DATE_PRESETS[nextRange](now)));
+      params.set('dateMax', toDateOnlyIso(now));
     }
+
+    const query = params.toString();
+    router.push(query ? `?${query}` : '?', { scroll: false });
   };
 
-  const { tier: peakTier, subTier: peakSubTier } = getTierFromRating(
-    highestRating ?? 0
-  );
+  const peak =
+    highestRating !== undefined ? getTierFromRating(highestRating) : null;
 
   return (
-    <Card data-testid="player-rating-chart" className="p-6 font-sans">
-      <Tabs
-        value={viewMode}
-        onValueChange={(v) => setViewMode(v as 'chart' | 'table')}
-      >
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <LineChartIcon className="h-6 w-6 text-primary" />
-            <h3 className="font-sans text-lg font-semibold">Rating History</h3>
-            <TapTooltip
-              side="top"
-              triggerAriaLabel="About rating history"
-              triggerClassName="flex w-auto shrink-0 items-center rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
-              content={
-                <span className="block max-w-56">
-                  Shows your rating changes over time. Each entry represents a
-                  rating adjustment from a match or rating decay. The dashed
-                  line marks the all-time peak rating.
-                </span>
-              }
+    <Panel data-testid="player-rating-chart">
+      <SectionHeader
+        icon={ChartLine}
+        title="Rating history"
+        infoText="Shows rating changes over time. Each entry represents a rating adjustment from a match or rating decay. The dashed line marks the all-time peak rating."
+        meta={
+          peak && highestRating !== undefined ? (
+            <span
+              data-testid="rating-chart-peak"
+              className="flex items-center gap-1.5"
             >
-              <Info className="h-4 w-4" aria-hidden />
-            </TapTooltip>
+              <TierIcon
+                tier={peak.tier}
+                subTier={peak.subTier}
+                tooltip
+                width={16}
+                height={16}
+              />
+              <span>
+                Peak rating{' '}
+                <span className="font-medium text-foreground tabular-nums">
+                  {formatRating(highestRating)}
+                </span>
+              </span>
+            </span>
+          ) : undefined
+        }
+      />
 
-            {highestRating != null && (
-              <>
-                <span className="h-4 w-px bg-border" />
-                <SimpleTooltip
-                  side="bottom"
-                  content="Highest rating ever reached"
-                >
-                  <span
-                    className="inline-flex cursor-help items-center gap-2 rounded-md bg-popover px-2.5 py-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                    tabIndex={0}
-                    aria-label={`Peak rating ${highestRating.toFixed(0)}`}
-                  >
-                    <TierIcon
-                      tier={peakTier}
-                      subTier={peakSubTier}
-                      width={16}
-                      height={16}
-                    />
-                    <span className="flex items-baseline gap-1">
-                      <span className="text-sm font-semibold text-foreground">
-                        {highestRating.toFixed(0)}
-                      </span>
-                      <TRText />
-                      <span className="text-xs text-muted-foreground">
-                        peak
-                      </span>
-                    </span>
-                  </span>
-                </SimpleTooltip>
-              </>
-            )}
-          </div>
-
-          <div className="flex w-full items-center gap-2 sm:w-auto">
-            <TabsList data-testid="rating-chart-toggle" className="font-sans">
-              <TabsTrigger value="chart">
-                <LineChartIcon className="mr-1.5 h-4 w-4" />
-                Chart
-              </TabsTrigger>
-              <TabsTrigger value="table">
-                <TableIcon className="mr-1.5 h-4 w-4" />
-                Table
-              </TabsTrigger>
-            </TabsList>
-
-            <Select value={timeRange} onValueChange={handleTimeRangeChange}>
-              <SelectTrigger className="flex-1 font-sans sm:w-[160px] sm:flex-none">
-                <Calendar className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Time Range" />
-              </SelectTrigger>
-              <SelectContent className="font-sans">
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="1y">Last Year</SelectItem>
-                <SelectItem value="6m">Last 6 Months</SelectItem>
-                <SelectItem value="3m">Last 3 Months</SelectItem>
-                {timeRange === 'custom' && (
-                  <SelectItem value="custom">Custom Range</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-
-            <span className="hidden h-5 w-px bg-border sm:block" />
-
-            <PlayerRatingChartOptions
-              filter={filterValues}
-              onFilterChange={setFilterValues}
-            />
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <ScopeSwitch
+            label="Rating or volatility"
+            value={metric}
+            onValueChange={setMetric}
+            options={METRIC_OPTIONS}
+          />
+          <ScopeSwitch
+            data-testid="rating-chart-toggle"
+            label="View"
+            value={viewMode}
+            onValueChange={setViewMode}
+            options={VIEW_OPTIONS}
+          />
         </div>
-
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as 'rating' | 'volatility')}
+        <div className="flex flex-wrap items-center gap-2">
+          <ChoiceChip
+            selected={showDecay}
+            onClick={() => setShowDecay((value) => !value)}
           >
-            <TabsList className="font-sans">
-              <TabsTrigger value="rating">Rating</TabsTrigger>
-              <TabsTrigger value="volatility">Volatility</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <PlayerRatingChartSummaryStats
-            data={filteredData}
-            rangeLabel={timeRange === 'all' ? undefined : 'in range'}
-          />
+            Display decay
+          </ChoiceChip>
+          <Select value={timeRange} onValueChange={handleTimeRangeChange}>
+            <SelectTrigger
+              aria-label="Time range"
+              className="h-8 bg-background dark:bg-input/50 dark:shadow-none"
+            >
+              <Calendar aria-hidden />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(['all', '1y', '6m', '3m'] as const).map((range) => (
+                <SelectItem key={range} value={range}>
+                  {TIME_RANGE_LABELS[range]}
+                </SelectItem>
+              ))}
+              {timeRange === 'custom' ? (
+                <SelectItem value="custom">
+                  {TIME_RANGE_LABELS.custom}
+                </SelectItem>
+              ) : null}
+            </SelectContent>
+          </Select>
         </div>
+      </div>
 
-        <TabsContent value="chart">
+      <div className="px-4 pt-3">
+        <PlayerRatingChartSummaryStats
+          data={filteredData}
+          metric={metric}
+          rangeLabel={timeRange === 'all' ? undefined : 'in range'}
+        />
+      </div>
+
+      {viewMode === 'chart' ? (
+        <PanelBody>
           <PlayerRatingChartView
-            data={
-              viewMode === 'chart' && activeTab === 'rating'
-                ? filteredData
-                : dailyData
-            }
-            activeTab={activeTab}
+            data={metric === 'rating' ? filteredData : dailyData}
+            metric={metric}
             highestRating={highestRating}
-            theme={resolvedTheme}
           />
-        </TabsContent>
-        <TabsContent
-          value="table"
-          className={cn(
-            'max-h-75 overflow-y-scroll',
-            stickyTableHeaderInScrollArea
-          )}
-        >
-          <PlayerRatingChartTable data={filteredData} activeTab={activeTab} />
-        </TabsContent>
-      </Tabs>
-    </Card>
+        </PanelBody>
+      ) : (
+        <div className="mt-3">
+          <PlayerRatingChartTable data={filteredData} metric={metric} />
+        </div>
+      )}
+    </Panel>
   );
 }

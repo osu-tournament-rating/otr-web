@@ -1,87 +1,89 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy } from 'lucide-react';
 import { useState } from 'react';
-import { PlayerTournamentListItem } from '@/lib/orpc/schema/tournament';
-import { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
+
+import { Button } from '@/components/kit/controls/Button';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { Panel } from '@/components/kit/layout/Panel';
+import { RowList } from '@/components/kit/layout/RowList';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { formatCount, formatCountOf } from '@/lib/kit/format/number';
+import { formatLoadedReadout } from '@/lib/kit/tables/pagination';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
+import type { PlayerTournamentListItem } from '@/lib/orpc/schema/tournament';
+
 import PlayerTournamentCard from './PlayerTournamentCard';
 
-interface PlayerTournamentsListProps {
-  tournaments: PlayerTournamentListItem[];
-  adjustments: PlayerRatingAdjustment[];
-}
+const INITIAL_COUNT = 5;
+const LOAD_MORE_COUNT = 25;
 
+/**
+ * A player's tournaments as divided rows, five at first, with "Show more"
+ * revealing the rest 25 at a time. Each row expands its own matches.
+ */
 export default function PlayerTournamentsList({
   tournaments,
   adjustments,
-}: PlayerTournamentsListProps) {
-  const LOAD_MORE_COUNT = 25;
-  const [displayCount, setDisplayCount] = useState(5);
-
-  const displayedTournaments = tournaments.slice(0, displayCount);
-
-  if (tournaments.length === 0) {
-    return <NoResultsCard />;
-  }
+}: {
+  tournaments: PlayerTournamentListItem[];
+  adjustments: PlayerRatingAdjustment[];
+}) {
+  const [displayCount, setDisplayCount] = useState(INITIAL_COUNT);
+  const remaining = Math.max(tournaments.length - displayCount, 0);
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-row items-center gap-2">
-          <Trophy className="h-6 w-6 text-primary" />
-          <CardTitle
-            data-testid="tournament-history-title"
-            className="text-xl font-bold"
-          >
-            Tournament History
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col space-y-4">
-        {displayedTournaments.map((tournament) => (
-          <PlayerTournamentCard
-            key={tournament.id}
-            tournament={tournament}
-            adjustments={adjustments}
-          />
-        ))}
-        {tournaments.length > displayCount && (
-          <Button
-            variant="outline"
-            className="w-full justify-center"
-            onClick={() =>
-              setDisplayCount(
-                Math.min(displayCount + LOAD_MORE_COUNT, tournaments.length)
-              )
-            }
-          >
-            Show more ({tournaments.length - displayCount} more)
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function NoResultsCard() {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-row items-center gap-2">
-          <Trophy className="h-6 w-6 text-primary" />
-          <CardTitle
-            data-testid="tournament-history-title"
-            className="text-xl font-bold"
-          >
-            Tournament History
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center space-y-2 text-center">
-        <p className="text-muted-foreground">No tournament data available</p>
-      </CardContent>
-    </Card>
+    <Panel>
+      <SectionHeader
+        data-testid="tournament-history-title"
+        icon={Trophy}
+        title="Tournament history"
+        meta={
+          tournaments.length > 0
+            ? formatCountOf(tournaments.length, 'tournament')
+            : undefined
+        }
+      />
+      {tournaments.length === 0 ? (
+        <EmptyState
+          icon={Trophy}
+          title="No tournament data available"
+          titleAs="h3"
+        />
+      ) : (
+        <>
+          <RowList>
+            {tournaments.slice(0, displayCount).map((tournament) => (
+              <PlayerTournamentCard
+                key={tournament.id}
+                tournament={tournament}
+                adjustments={adjustments}
+              />
+            ))}
+          </RowList>
+          {remaining > 0 ? (
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t bg-muted/20 px-4 py-3 dark:bg-muted">
+              <p
+                className="text-xs text-muted-foreground tabular-nums"
+                aria-live="polite"
+              >
+                Showing {formatLoadedReadout(displayCount, tournaments.length)}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setDisplayCount((count) =>
+                    Math.min(count + LOAD_MORE_COUNT, tournaments.length)
+                  )
+                }
+              >
+                Show more ({formatCount(remaining)} more)
+              </Button>
+            </div>
+          ) : null}
+        </>
+      )}
+    </Panel>
   );
 }

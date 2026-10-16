@@ -1,173 +1,141 @@
 'use client';
 
-import { useMemo } from 'react';
-import { BarChart, XAxis, YAxis, Bar } from 'recharts';
-import { ModsEnumHelper } from '@/lib/enum-helpers';
-import { getModColor, normalizedScore } from '@/lib/utils/mods';
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '../ui/chart';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../ui/card';
-import { InfoIcon } from 'lucide-react';
-import TapTooltip from '../tap-tooltip';
-import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
-import { formatChartNumber } from '@/lib/utils/chart';
-import type { PlayerModStats } from '@/lib/orpc/schema/playerStats';
 import { Mods } from '@otr/core/osu';
+import { ChartBarBig } from 'lucide-react';
+import { useMemo } from 'react';
+import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from 'recharts';
 
-interface ChartDataEntry {
-  label: string;
-  averageScore: number;
-  count: number;
-  fill: string;
-  mods: number;
-}
+import { ChartTooltipContent } from '@/components/kit/charts/ChartTooltip';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { Panel, PanelBody } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
+import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
+import {
+  CHART_CURSOR,
+  CHART_MARGIN,
+  chartAxisProps,
+  niceAxisProps,
+} from '@/lib/kit/charts/axis';
+import { formatCompactTick, formatCountTick } from '@/lib/kit/charts/format';
+import {
+  DEFAULT_MAX_TICKS,
+  NARROW_MAX_TICKS,
+  getNiceTicks,
+} from '@/lib/kit/charts/ticks';
+import type { PlayerModStats } from '@/lib/orpc/schema/playerStats';
+import { MOD_CHART_DISPLAY_THRESHOLD } from '@/lib/utils/playerModCharts';
+import { cn } from '@/lib/utils';
 
-interface PlayerModStatsChartProps {
-  className?: string;
-  modStats: PlayerModStats[];
-}
+import { groupModStats } from './mod-stats';
 
+const BAR_SIZE = 24;
+const ROW_HEIGHT = 36;
+const AXIS_HEIGHT = 32;
+// The last tick label is centred on the plot's edge; leave it room.
+const MARGIN = { ...CHART_MARGIN, right: 24 };
+// Rounded at the data end, square at the axis.
+const HORIZONTAL_BAR_RADIUS: [number, number, number, number] = [0, 4, 4, 0];
+
+/**
+ * Average score per mod, with the mod multipliers removed, as horizontal
+ * bars in the mod palette.
+ */
 export default function PlayerModStatsChart({
   className,
   modStats,
-}: PlayerModStatsChartProps) {
-  const chartConfig: ChartConfig = {
-    averageScore: {
-      label: 'Score',
-      color: 'var(--chart-1)',
-    },
-  };
+}: {
+  className?: string;
+  modStats: PlayerModStats[];
+}) {
+  const maxTicks = useIsNarrowChart() ? NARROW_MAX_TICKS : DEFAULT_MAX_TICKS;
+  const chartData = useMemo(
+    () => groupModStats(modStats, 'averageScore'),
+    [modStats]
+  );
+  const hasEasyMod = chartData.some((entry) => entry.mods & Mods.Easy);
 
-  const chartData = useMemo(() => {
-    if (!modStats || modStats.length === 0) {
-      return [];
-    }
-
-    const totalGames = modStats.reduce((sum, stat) => sum + stat.count, 0);
-    const threshold = (totalGames * MOD_CHART_DISPLAY_THRESHOLD) / 100.0;
-
-    const modMap = new Map<string, ChartDataEntry>();
-
-    modStats.forEach((stat) => {
-      const normalizedAverageScore = normalizedScore(
-        stat.mods,
-        stat.averageScore
-      );
-
-      const metadata = ModsEnumHelper.getMetadata(stat.mods);
-      let label = metadata
-        .map((meta) => meta.text)
-        .join('')
-        .replace(/NF/g, '')
-        .replace(/SO/g, '');
-
-      if (label === '') {
-        label = 'NM';
-      }
-
-      const count = stat.count || 1;
-
-      if (modMap.has(label)) {
-        const existing = modMap.get(label)!;
-        const totalCount = existing.count + count;
-        const weightedSum =
-          existing.averageScore * existing.count +
-          normalizedAverageScore * count;
-
-        modMap.set(label, {
-          label,
-          averageScore: Math.round(weightedSum / totalCount),
-          count: totalCount,
-          fill: getModColor(stat.mods),
-          mods: existing.mods | stat.mods,
-        });
-      } else {
-        modMap.set(label, {
-          label,
-          averageScore: normalizedAverageScore,
-          count,
-          fill: getModColor(stat.mods),
-          mods: stat.mods,
-        });
-      }
-    });
-
-    return Array.from(modMap.values())
-      .filter((entry) => entry.count >= threshold)
-      .map(({ label, averageScore, fill, mods }) => ({
-        label,
-        averageScore,
-        fill,
-        mods,
-      }))
-      .sort((a, b) => b.averageScore - a.averageScore);
-  }, [modStats]);
+  const infoText = (
+    <>
+      Mods played in at least {MOD_CHART_DISPLAY_THRESHOLD}% of all verified
+      ScoreV2 games.
+      {hasEasyMod ? ' All EZ scores are multiplied by 1.75x.' : null}
+    </>
+  );
 
   if (chartData.length === 0) {
     return (
-      <Card className={className}>
-        <CardHeader className="items-center">
-          <CardTitle>Mod Performance</CardTitle>
-          <CardDescription>No mod performance data available</CardDescription>
-        </CardHeader>
-      </Card>
+      <Panel className={className}>
+        <SectionHeader
+          icon={ChartBarBig}
+          title="Mod performance"
+          infoText={infoText}
+        />
+        <EmptyState
+          size="compact"
+          icon={ChartBarBig}
+          title="No mod performance data available"
+        />
+      </Panel>
     );
   }
 
-  const hasEasyMod = chartData.some((entry) => entry.mods & Mods.Easy);
+  const xTicks = getNiceTicks(
+    0,
+    Math.max(...chartData.map((entry) => entry.averageScore)),
+    { integer: true, maxTicks }
+  );
 
   return (
-    <Card className={className}>
-      <CardHeader className="items-center">
-        <CardTitle className="flex items-center gap-2">
-          <span>Mod Performance</span>
-          {hasEasyMod && (
-            <TapTooltip
-              side="top"
-              triggerAriaLabel="About EZ scores"
-              triggerClassName="flex w-auto shrink-0 items-center rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
-              content="All EZ scores are multiplied by 1.75x"
-            >
-              <InfoIcon className="h-4 w-4" aria-hidden />
-            </TapTooltip>
-          )}
-        </CardTitle>
-        <CardDescription>
-          Displaying mods played in &ge;{MOD_CHART_DISPLAY_THRESHOLD}% of all
-          verified ScoreV2 games
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="overflow-hidden pb-0 font-sans">
-        <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
-          <BarChart data={chartData} layout="vertical">
+    <Panel className={cn('flex flex-col', className)}>
+      <SectionHeader
+        icon={ChartBarBig}
+        title="Mod performance"
+        infoText={infoText}
+      />
+      <PanelBody className="flex flex-1 flex-col justify-center">
+        <ChartContainer
+          config={{}}
+          className="aspect-auto w-full"
+          style={{ height: chartData.length * ROW_HEIGHT + AXIS_HEIGHT }}
+        >
+          <BarChart data={chartData} layout="vertical" margin={MARGIN}>
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
             <XAxis
-              type="number"
-              ticks={[0, 200_000, 400_000, 600_000, 800_000]}
-              tickFormatter={(value) =>
-                value > 0 ? `${formatChartNumber(value / 1000)}k` : '0'
-              }
+              {...chartAxisProps}
+              {...niceAxisProps(xTicks)}
+              tickFormatter={formatCompactTick}
             />
             <YAxis
+              {...chartAxisProps}
               dataKey="label"
               type="category"
-              tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
+              width="auto"
               interval={0}
             />
-            <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
-            <Bar dataKey="averageScore" radius={[0, 4, 4, 0]} barSize={26} />
+            <ChartTooltip
+              cursor={CHART_CURSOR.bar}
+              content={
+                <ChartTooltipContent
+                  nameFormatter={() => 'Average score'}
+                  valueFormatter={formatCountTick}
+                />
+              }
+            />
+            <Bar
+              dataKey="averageScore"
+              name="Average score"
+              barSize={BAR_SIZE}
+              radius={HORIZONTAL_BAR_RADIUS}
+              isAnimationActive={false}
+            >
+              {chartData.map((entry) => (
+                <Cell key={entry.label} fill={entry.fill} />
+              ))}
+            </Bar>
           </BarChart>
         </ChartContainer>
-      </CardContent>
-    </Card>
+      </PanelBody>
+    </Panel>
   );
 }

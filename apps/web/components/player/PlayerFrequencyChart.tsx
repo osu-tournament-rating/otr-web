@@ -1,218 +1,100 @@
 'use client';
 
-import { useMemo, useCallback, useState, type ComponentProps } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { BarChart, XAxis, YAxis, Bar } from 'recharts';
-import { ChartConfig, ChartContainer, ChartTooltip } from '../ui/chart';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { type ComponentProps, useCallback, useMemo, useState } from 'react';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
-const CHART_CONSTANTS = {
-  DESKTOP_DISPLAY_LIMIT: 10,
-  MOBILE_DISPLAY_LIMIT: 7,
-  AVATAR_SIZE: {
-    TICK: 32,
-    TOOLTIP: 40,
-  },
-  // Room around a tick avatar so its focus ring isn't clipped
-  TICK_FOCUS_RING: 3,
-  CHART_MARGIN: {
-    top: 20,
-    right: 0,
-    left: -30,
-    bottom: 0,
-  },
-  BAR_SIZE: 30,
-  BAR_RADIUS: [4, 4, 0, 0] as [number, number, number, number],
-  X_AXIS_HEIGHT: 50,
-  DEFAULT_AVATAR_URL: 'https://a.ppy.sh',
-} as const;
+import { ChartTooltipContent } from '@/components/kit/charts/ChartTooltip';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { Panel, PanelBody } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
+import {
+  CHART_BAR_RADIUS,
+  CHART_CURSOR,
+  CHART_MARGIN,
+  chartAxisProps,
+  chartGridProps,
+  chartValueAxisProps,
+  niceAxisProps,
+} from '@/lib/kit/charts/axis';
+import { formatCountTick } from '@/lib/kit/charts/format';
+import { getNiceTicks } from '@/lib/kit/charts/ticks';
+import type { KitIcon } from '@/lib/kit/layout/icon';
+import type { PlayerFrequency } from '@/lib/orpc/schema/playerStats';
+import { cn } from '@/lib/utils';
+
+const DESKTOP_DISPLAY_LIMIT = 10;
+const PHONE_DISPLAY_LIMIT = 7;
+const AVATAR_SIZE = 32;
+// Room around a tick avatar so its focus ring isn't clipped.
+const TICK_FOCUS_RING = 3;
+const X_AXIS_HEIGHT = 48;
+const BAR_SIZE = 28;
+const AVATAR_BASE_URL = 'https://a.ppy.sh';
 
 interface ChartDataEntry {
   username: string;
   frequency: number;
   playerId: number;
   osuId: number;
-  avatarUrl: string;
 }
 
-type ChartType = 'teammates' | 'opponents';
-
-interface PlayerFrequencyChartProps {
-  className?: string;
-  data: PlayerFrequency[];
-  type: ChartType;
-  title?: string;
-  description?: string;
-  emptyMessage?: string;
-  chartColor?: string;
-}
-
-function isValidPlayerFrequency(item: unknown): item is PlayerFrequency {
-  return (
-    item !== null &&
-    typeof item === 'object' &&
-    'player' in item &&
-    'frequency' in item &&
-    typeof (item as { player: unknown }).player === 'object' &&
-    (item as { player: unknown }).player !== null &&
-    'username' in (item as { player: object }).player &&
-    'osuId' in (item as { player: object }).player
-  );
-}
-
-function isChartDataEntry(data: unknown): data is ChartDataEntry {
-  return (
-    data !== null &&
-    typeof data === 'object' &&
-    'username' in data &&
-    'frequency' in data &&
-    'playerId' in data &&
-    'osuId' in data &&
-    'avatarUrl' in data
-  );
-}
-
-function CustomTooltip({
-  active,
-  payload,
-  imageErrors,
-  transparentAvatars,
-  onImageLoad,
-  onImageError,
-}: {
-  active?: boolean;
-  payload?: Array<{ payload: unknown }>;
-  imageErrors: Set<number>;
-  transparentAvatars: Set<number>;
-  onImageLoad: (
-    event: React.SyntheticEvent<HTMLImageElement>,
-    osuId: number
-  ) => void;
-  onImageError: (osuId: number) => void;
-}) {
-  if (!active || !payload?.length) return null;
-
-  const data = payload[0].payload;
-
-  if (!isChartDataEntry(data)) {
-    return null;
-  }
-
-  const hasImageError = imageErrors.has(data.osuId);
-  const isTransparent = transparentAvatars.has(data.osuId);
-  const shouldUseFallback = hasImageError || isTransparent;
-  const avatarSize = CHART_CONSTANTS.AVATAR_SIZE.TOOLTIP;
-
-  return (
-    <div className="rounded-lg border bg-background p-3 shadow-lg">
-      <div className="flex items-center gap-3">
-        {shouldUseFallback ? (
-          <div
-            className="rounded-full bg-accent"
-            style={{ width: avatarSize, height: avatarSize }}
-            aria-label={`${data.username} avatar`}
-          />
-        ) : (
-          <Image
-            src={data.avatarUrl}
-            alt={`${data.username} avatar`}
-            width={avatarSize}
-            height={avatarSize}
-            className="rounded-full"
-            style={{ imageRendering: 'crisp-edges' }}
-            onLoad={(e) => onImageLoad(e, data.osuId)}
-            onError={() => onImageError(data.osuId)}
-          />
-        )}
-        <div>
-          <p className="text-sm font-semibold">{data.username}</p>
-          <p className="text-xs text-muted-foreground">
-            Matches played: {data.frequency}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
+/**
+ * The players someone meets most, as bars with each player's avatar under
+ * theirs, linking to that profile. Teammates and opponents are neutral
+ * series: they take the first two categorical slots, never a good or bad
+ * colour.
+ */
 export default function PlayerFrequencyChart({
   className,
   data,
-  type,
   title,
-  description,
-  emptyMessage,
-  chartColor,
-}: PlayerFrequencyChartProps) {
+  icon,
+  infoText,
+  emptyTitle,
+  color,
+}: {
+  className?: string;
+  data: PlayerFrequency[];
+  title: string;
+  icon: KitIcon;
+  infoText: string;
+  emptyTitle: string;
+  /** The series colour, from `seriesColor`. */
+  color: string;
+}) {
   const searchParams = useSearchParams();
-  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
-  const [transparentAvatars, setTransparentAvatars] = useState<Set<number>>(
-    new Set()
+  const isPhone = useMediaQuery('(max-width: 767px)');
+  const [failedAvatars, setFailedAvatars] = useState<Set<number>>(
+    () => new Set()
   );
 
-  const defaultTitle =
-    type === 'teammates' ? 'Frequent Teammates' : 'Frequent Opponents';
-  const defaultDescription =
-    type === 'teammates'
-      ? 'Most frequently played with teammates'
-      : 'Most frequently played against opponents';
-  const defaultEmptyMessage =
-    type === 'teammates'
-      ? 'No teammate data available'
-      : 'No opponent data available';
-  const defaultChartColor =
-    type === 'teammates' ? 'var(--chart-1)' : 'var(--chart-2)';
-
-  const chartConfig: ChartConfig = {
-    frequency: {
-      label: 'Games',
-      color: chartColor || defaultChartColor,
-    },
-  };
-
-  const chartData = useMemo(() => {
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      return { desktop: [], mobile: [] };
-    }
-
-    try {
-      const processedData = data
-        .filter(isValidPlayerFrequency)
+  const chartData = useMemo<ChartDataEntry[]>(
+    () =>
+      data
         .map((item) => ({
           username: item.player.username,
           frequency: item.frequency,
           playerId: item.player.id,
           osuId: item.player.osuId,
-          avatarUrl: `${CHART_CONSTANTS.DEFAULT_AVATAR_URL}/${item.player.osuId}`,
         }))
-        .sort((a, b) => b.frequency - a.frequency);
+        .sort((a, b) => b.frequency - a.frequency)
+        .slice(0, isPhone ? PHONE_DISPLAY_LIMIT : DESKTOP_DISPLAY_LIMIT),
+    [data, isPhone]
+  );
 
-      return {
-        desktop: processedData.slice(0, CHART_CONSTANTS.DESKTOP_DISPLAY_LIMIT),
-        mobile: processedData.slice(0, CHART_CONSTANTS.MOBILE_DISPLAY_LIMIT),
-      };
-    } catch (error) {
-      console.error('Error processing chart data:', error);
-      return { desktop: [], mobile: [] };
-    }
-  }, [data]);
-
-  const handleImageError = useCallback((osuId: number) => {
-    setImageErrors((prev) => new Set(prev).add(osuId));
+  const handleAvatarError = useCallback((osuId: number) => {
+    setFailedAvatars((prev) => new Set(prev).add(osuId));
   }, []);
 
-  const handleImageLoad = useCallback(
+  // Some osu! avatars are fully transparent; those get the fallback disc too.
+  const handleAvatarLoad = useCallback(
     (event: React.SyntheticEvent<HTMLImageElement>, osuId: number) => {
       const img = event.currentTarget;
-
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
@@ -221,25 +103,20 @@ export default function PlayerFrequencyChart({
       canvas.height = img.naturalHeight;
       ctx.drawImage(img, 0, 0);
 
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      let isTransparent = true;
-
-      for (let i = 3; i < data.length; i += 4) {
-        if (data[i] > 10) {
-          isTransparent = false;
-          break;
+      try {
+        const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        for (let i = 3; i < pixels.length; i += 4) {
+          if (pixels[i] > 10) return;
         }
-      }
-
-      if (isTransparent) {
-        setTransparentAvatars((prev) => new Set(prev).add(osuId));
+        handleAvatarError(osuId);
+      } catch {
+        // A cross-origin image can't be read; leave it as it is.
       }
     },
-    []
+    [handleAvatarError]
   );
 
-  // Link by o!TR ID: a numeric key is tried as an o!TR ID before an osu! ID
+  // Link by o!TR ID: a numeric key is tried as an o!TR ID before an osu! ID.
   const profileHref = useCallback(
     (playerId: number) => {
       const ruleset = searchParams.get('ruleset');
@@ -250,185 +127,113 @@ export default function PlayerFrequencyChart({
     [searchParams]
   );
 
-  const createCustomXAxisTick = useCallback(
-    (tickData: ChartDataEntry[]) => {
-      const TickComponent = (props: {
-        x?: number;
-        y?: number;
-        payload?: { value: string };
-      }) => {
-        const { x, y, payload } = props;
+  const AvatarTick = useCallback(
+    (props: { x?: number; y?: number; payload?: { value: string } }) => {
+      const { x, y, payload } = props;
+      const player = chartData.find(
+        (entry) => entry.username === payload?.value
+      );
 
-        if (!payload?.value || x === undefined || y === undefined) {
-          return <g />;
-        }
+      if (!player || x === undefined || y === undefined) {
+        return <g />;
+      }
 
-        const player = tickData.find((p) => p.username === payload.value);
+      const showFallback = failedAvatars.has(player.osuId);
 
-        if (!player || !isChartDataEntry(player)) {
-          return <g />;
-        }
-
-        const hasImageError = imageErrors.has(player.osuId);
-        const isTransparent = transparentAvatars.has(player.osuId);
-        const shouldUseFallback = hasImageError || isTransparent;
-        const avatarSize = CHART_CONSTANTS.AVATAR_SIZE.TICK;
-        const ring = CHART_CONSTANTS.TICK_FOCUS_RING;
-
-        return (
-          <g transform={`translate(${x},${y})`}>
-            <foreignObject
-              x={-avatarSize / 2 - ring}
-              y={5 - ring}
-              width={avatarSize + ring * 2}
-              height={avatarSize + ring * 2}
+      return (
+        <g transform={`translate(${x},${y})`}>
+          <foreignObject
+            x={-AVATAR_SIZE / 2 - TICK_FOCUS_RING}
+            y={6 - TICK_FOCUS_RING}
+            width={AVATAR_SIZE + TICK_FOCUS_RING * 2}
+            height={AVATAR_SIZE + TICK_FOCUS_RING * 2}
+          >
+            <Link
+              href={profileHref(player.playerId)}
+              className="flex rounded-full focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+              style={{ margin: TICK_FOCUS_RING }}
+              aria-label={player.username}
+              title={player.username}
             >
-              <Link
-                href={profileHref(player.playerId)}
-                className="flex rounded-full focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
-                style={{ margin: ring }}
-                aria-label={`View ${player.username}'s profile`}
-                title={player.username}
-              >
-                {shouldUseFallback ? (
-                  <div
-                    className="rounded-full bg-accent"
-                    style={{ width: avatarSize, height: avatarSize }}
-                    aria-label={`${player.username} avatar`}
-                  />
-                ) : (
-                  <Image
-                    src={player.avatarUrl}
-                    alt={`${player.username} avatar`}
-                    width={avatarSize}
-                    height={avatarSize}
-                    className="rounded-full"
-                    style={{ imageRendering: 'crisp-edges' }}
-                    onLoad={(e) => handleImageLoad(e, player.osuId)}
-                    onError={() => handleImageError(player.osuId)}
-                  />
-                )}
-              </Link>
-            </foreignObject>
-          </g>
-        );
-      };
-      TickComponent.displayName = 'CustomXAxisTick';
-      return TickComponent;
+              {showFallback ? (
+                <span
+                  className="block rounded-full bg-accent"
+                  style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
+                />
+              ) : (
+                <Image
+                  src={`${AVATAR_BASE_URL}/${player.osuId}`}
+                  alt=""
+                  width={AVATAR_SIZE}
+                  height={AVATAR_SIZE}
+                  className="rounded-full"
+                  style={{ imageRendering: 'crisp-edges' }}
+                  onLoad={(event) => handleAvatarLoad(event, player.osuId)}
+                  onError={() => handleAvatarError(player.osuId)}
+                />
+              )}
+            </Link>
+          </foreignObject>
+        </g>
+      );
     },
-    [
-      profileHref,
-      imageErrors,
-      transparentAvatars,
-      handleImageError,
-      handleImageLoad,
-    ]
+    [chartData, failedAvatars, profileHref, handleAvatarError, handleAvatarLoad]
   );
 
-  if (chartData.desktop.length === 0) {
+  if (chartData.length === 0) {
     return (
-      <Card className={className}>
-        <CardHeader className="items-center">
-          <CardTitle>{title || defaultTitle}</CardTitle>
-          <CardDescription>
-            {emptyMessage || defaultEmptyMessage}
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <Panel className={className}>
+        <SectionHeader icon={icon} title={title} infoText={infoText} />
+        <EmptyState size="compact" icon={icon} title={emptyTitle} />
+      </Panel>
     );
   }
 
+  const yTicks = getNiceTicks(
+    0,
+    Math.max(...chartData.map((entry) => entry.frequency)),
+    { integer: true }
+  );
+
   return (
-    <Card className={className}>
-      <CardHeader className="items-center">
-        <CardTitle>{title || defaultTitle}</CardTitle>
-        <CardDescription>{description || defaultDescription}</CardDescription>
-      </CardHeader>
-      <CardContent className="overflow-hidden pb-0 font-sans">
-        <div className="hidden md:block">
-          <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-            <BarChart
-              data={chartData.desktop}
-              margin={CHART_CONSTANTS.CHART_MARGIN}
-            >
-              <XAxis
-                dataKey="username"
-                tick={
-                  createCustomXAxisTick(chartData.desktop) as ComponentProps<
-                    typeof XAxis
-                  >['tick']
-                }
-                interval={0}
-                height={CHART_CONSTANTS.X_AXIS_HEIGHT}
-              />
-              <YAxis
-                allowDecimals={false}
-                domain={[0, 'dataMax']}
-                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
-                tickFormatter={(value: number) => value.toString()}
-              />
-              <ChartTooltip
-                content={
-                  <CustomTooltip
-                    imageErrors={imageErrors}
-                    transparentAvatars={transparentAvatars}
-                    onImageLoad={handleImageLoad}
-                    onImageError={handleImageError}
-                  />
-                }
-              />
-              <Bar
-                dataKey="frequency"
-                fill={chartColor || defaultChartColor}
-                radius={CHART_CONSTANTS.BAR_RADIUS}
-                barSize={CHART_CONSTANTS.BAR_SIZE}
-              />
-            </BarChart>
-          </ChartContainer>
-        </div>
-        <div className="block md:hidden">
-          <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-            <BarChart
-              data={chartData.mobile}
-              margin={CHART_CONSTANTS.CHART_MARGIN}
-            >
-              <XAxis
-                dataKey="username"
-                tick={
-                  createCustomXAxisTick(chartData.mobile) as ComponentProps<
-                    typeof XAxis
-                  >['tick']
-                }
-                interval={0}
-                height={CHART_CONSTANTS.X_AXIS_HEIGHT}
-              />
-              <YAxis
-                allowDecimals={false}
-                domain={[0, 'dataMax']}
-                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
-                tickFormatter={(value: number) => value.toString()}
-              />
-              <ChartTooltip
-                content={
-                  <CustomTooltip
-                    imageErrors={imageErrors}
-                    transparentAvatars={transparentAvatars}
-                    onImageLoad={handleImageLoad}
-                    onImageError={handleImageError}
-                  />
-                }
-              />
-              <Bar
-                dataKey="frequency"
-                fill={chartColor || defaultChartColor}
-                radius={CHART_CONSTANTS.BAR_RADIUS}
-                barSize={CHART_CONSTANTS.BAR_SIZE}
-              />
-            </BarChart>
-          </ChartContainer>
-        </div>
-      </CardContent>
-    </Card>
+    <Panel className={cn('flex flex-col', className)}>
+      <SectionHeader icon={icon} title={title} infoText={infoText} />
+      <PanelBody className="flex flex-1 flex-col justify-center">
+        <ChartContainer config={{}} className="aspect-auto h-72 w-full">
+          <BarChart data={chartData} margin={CHART_MARGIN}>
+            <CartesianGrid {...chartGridProps} />
+            <XAxis
+              {...chartAxisProps}
+              dataKey="username"
+              tick={AvatarTick as ComponentProps<typeof XAxis>['tick']}
+              interval={0}
+              height={X_AXIS_HEIGHT}
+            />
+            <YAxis
+              {...chartValueAxisProps}
+              {...niceAxisProps(yTicks)}
+              tickFormatter={formatCountTick}
+            />
+            <ChartTooltip
+              cursor={CHART_CURSOR.bar}
+              content={
+                <ChartTooltipContent
+                  nameFormatter={() => 'Matches'}
+                  valueFormatter={formatCountTick}
+                />
+              }
+            />
+            <Bar
+              dataKey="frequency"
+              name="Matches"
+              fill={color}
+              radius={CHART_BAR_RADIUS}
+              barSize={BAR_SIZE}
+              isAnimationActive={false}
+            />
+          </BarChart>
+        </ChartContainer>
+      </PanelBody>
+    </Panel>
   );
 }
-import type { PlayerFrequency } from '@/lib/orpc/schema/playerStats';
