@@ -18,6 +18,20 @@ import { z } from 'zod';
 import { leaderboardTierFilterValues } from './utils/leaderboard';
 import { TournamentListFilter } from './types';
 import { toRankRangeFilter } from '@/lib/filters/tournament-rank';
+import {
+  LEADERBOARD_SEARCH_MAX_LENGTH,
+  LEADERBOARD_SEARCH_MIN_LENGTH,
+  leaderboardSortKeys,
+} from '@/lib/orpc/schema/leaderboard';
+import {
+  FORUM_POST_URL_PREFIX_MESSAGE,
+  FORUM_POST_URL_REQUIRED_MESSAGE,
+  LOBBY_SIZE_MAXIMUM_MESSAGE,
+  LOBBY_SIZE_MINIMUM_MESSAGE,
+  RANK_RESTRICTION_MINIMUM_MESSAGE,
+  TOURNAMENT_ABBREVIATION_REQUIRED_MESSAGE,
+  TOURNAMENT_NAME_REQUIRED_MESSAGE,
+} from '@/lib/orpc/schema/tournamentMessages';
 
 // Replaces zod v3's removed `EnumLike`.
 type EnumLike = Record<string, string | number>;
@@ -46,6 +60,51 @@ const booleanStringSchema = z
   .refine((val) => val === 'true' || val === 'false')
   .transform((val) => val === 'true');
 
+const RULESET_VALUES = Object.values(Ruleset).filter(
+  (value): value is Ruleset => typeof value === 'number'
+);
+
+/**
+ * Every valid ruleset in a URL param that may repeat (`ruleset=0&ruleset=4`),
+ * in enum order. Unknown values drop out, so a junk value never empties the
+ * rest.
+ */
+const rulesetListParamSchema = z
+  .unknown()
+  .optional()
+  .transform((raw): Ruleset[] => {
+    const requested = new Set(
+      (Array.isArray(raw) ? raw : [raw]).map((value) => {
+        if (typeof value === 'number') return value;
+        if (typeof value === 'string' && value.trim() !== '') {
+          return Number(value);
+        }
+        return Number.NaN;
+      })
+    );
+
+    return RULESET_VALUES.filter((ruleset) => requested.has(ruleset));
+  });
+
+/**
+ * Merges the `ruleset` and `rulesets` params. `ruleset` stays a single value
+ * for pages that pick one ruleset (set only when exactly one is chosen);
+ * `rulesets` holds every choice, for pages that pick several.
+ */
+const toRulesetFilter = (
+  fromRuleset: Ruleset[],
+  fromRulesets: Ruleset[]
+): { ruleset?: Ruleset; rulesets?: Ruleset[] } => {
+  const rulesets = RULESET_VALUES.filter(
+    (ruleset) => fromRuleset.includes(ruleset) || fromRulesets.includes(ruleset)
+  );
+
+  return {
+    ruleset: rulesets.length === 1 ? rulesets[0] : undefined,
+    rulesets: rulesets.length > 0 ? rulesets : undefined,
+  };
+};
+
 /** The last millisecond of `date`'s UTC day. */
 const endOfUTCDay = (date: Date) => {
   const end = new Date(date);
@@ -54,22 +113,28 @@ const endOfUTCDay = (date: Date) => {
 };
 
 export const tournamentEditFormSchema = z.object({
-  name: z.string().min(1),
-  abbreviation: z.string().min(1),
+  name: z.string().min(1, TOURNAMENT_NAME_REQUIRED_MESSAGE),
+  abbreviation: z.string().min(1, TOURNAMENT_ABBREVIATION_REQUIRED_MESSAGE),
+  // Each failure stops the checks after it, so the field shows one message
   forumUrl: z
     .string()
-    .url()
+    .min(1, { error: FORUM_POST_URL_REQUIRED_MESSAGE, abort: true })
+    .url({ error: FORUM_POST_URL_PREFIX_MESSAGE, abort: true })
     .refine(
       (value) =>
         value.startsWith('https://osu.ppy.sh/community/forums/topics/') ||
         value.startsWith('https://osu.ppy.sh/wiki/en/Tournaments/'),
       {
-        message:
-          'Forum URL must be from "https://osu.ppy.sh/community/forums/topics/" or "https://osu.ppy.sh/wiki/en/Tournaments/"',
+        message: FORUM_POST_URL_PREFIX_MESSAGE,
       }
     ),
-  rankRangeLowerBound: z.coerce.number().min(1),
-  lobbySize: z.coerce.number().min(1).max(8),
+  rankRangeLowerBound: z.coerce
+    .number()
+    .min(1, RANK_RESTRICTION_MINIMUM_MESSAGE),
+  lobbySize: z.coerce
+    .number()
+    .min(1, LOBBY_SIZE_MINIMUM_MESSAGE)
+    .max(8, LOBBY_SIZE_MAXIMUM_MESSAGE),
   ruleset: numericEnumValueSchema(Ruleset),
   verificationStatus: numericEnumValueSchema(VerificationStatus),
   rejectionReason: bitwiseEnumValueSchema(TournamentRejectionReason),
@@ -90,8 +155,11 @@ export const defaultTournamentListFilter: Partial<TournamentListFilter> = {
 export const tournamentListFilterSchema = z
   .object({
     verified: z.union([z.boolean(), booleanStringSchema]).catch(false),
-    ruleset: numericEnumValueSchema(Ruleset).optional().catch(undefined),
+    ruleset: rulesetListParamSchema,
+    rulesets: rulesetListParamSchema,
     searchQuery: z.string().catch(''),
+    // The kit's search key, which the header search's "See all" links use.
+    q: z.string().optional().catch(undefined),
     dateMin: z.coerce.date().optional().catch(undefined),
     // The public list API compares end times with <=, so a "through" date
     // has to cover its whole UTC day.
@@ -130,8 +198,10 @@ export const tournamentListFilterSchema = z
     ),
     descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
   })
-  .transform((filter) => ({
+  .transform(({ ruleset, rulesets, q, ...filter }) => ({
     ...filter,
+    searchQuery: filter.searchQuery || (q ?? ''),
+    ...toRulesetFilter(ruleset, rulesets),
     ...toRankRangeFilter({
       min: filter.minRankRange,
       max: filter.maxRankRange,
@@ -230,6 +300,16 @@ export const leaderboardFilterSchema = z.object({
     .optional()
     .catch(undefined),
   userId: z.coerce.number().min(1).optional().catch(undefined),
+  // The kit's list param keys: `q`, and `sort` with `dir`.
+  q: z
+    .string()
+    .trim()
+    .min(LEADERBOARD_SEARCH_MIN_LENGTH)
+    .max(LEADERBOARD_SEARCH_MAX_LENGTH)
+    .optional()
+    .catch(undefined),
+  sort: z.enum(leaderboardSortKeys).optional().catch(undefined),
+  dir: z.enum(['asc', 'desc']).optional().catch(undefined),
 });
 
 export const beatmapListSortValues = [
@@ -251,39 +331,45 @@ export const defaultBeatmapListFilter = {
 };
 
 // Every field carries .catch so junk URL params degrade to their defaults.
-export const beatmapListFilterSchema = z.object({
-  page: z.coerce.number().int().min(1).optional().catch(undefined),
-  // Mirrors BeatmapListRequestSchema.searchQuery's max.
-  q: z.string().max(200).catch(''),
-  ruleset: z.coerce.number().int().min(0).max(5).optional().catch(undefined),
-  minSr: z.coerce.number().min(0).max(15).optional().catch(undefined),
-  maxSr: z.coerce.number().min(0).max(15).optional().catch(undefined),
-  minBpm: z.coerce.number().min(0).optional().catch(undefined),
-  maxBpm: z.coerce.number().min(0).optional().catch(undefined),
-  minCs: z.coerce.number().min(0).max(10).optional().catch(undefined),
-  maxCs: z.coerce.number().min(0).max(10).optional().catch(undefined),
-  minAr: z.coerce.number().min(0).max(10).optional().catch(undefined),
-  maxAr: z.coerce.number().min(0).max(10).optional().catch(undefined),
-  minOd: z.coerce.number().min(0).max(10).optional().catch(undefined),
-  maxOd: z.coerce.number().min(0).max(10).optional().catch(undefined),
-  minHp: z.coerce.number().min(0).max(10).optional().catch(undefined),
-  maxHp: z.coerce.number().min(0).max(10).optional().catch(undefined),
-  minLength: z.coerce.number().int().min(0).optional().catch(undefined),
-  maxLength: z.coerce.number().int().min(0).optional().catch(undefined),
-  minGameCount: z.coerce.number().int().min(0).optional().catch(undefined),
-  maxGameCount: z.coerce.number().int().min(0).optional().catch(undefined),
-  minTournamentCount: z.coerce
-    .number()
-    .int()
-    .min(0)
-    .optional()
-    .catch(undefined),
-  maxTournamentCount: z.coerce
-    .number()
-    .int()
-    .min(0)
-    .optional()
-    .catch(undefined),
-  sort: z.enum(beatmapListSortValues).catch('gameCount'),
-  descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
-});
+export const beatmapListFilterSchema = z
+  .object({
+    page: z.coerce.number().int().min(1).optional().catch(undefined),
+    // Mirrors BeatmapListRequestSchema.searchQuery's max.
+    q: z.string().max(200).catch(''),
+    ruleset: rulesetListParamSchema,
+    rulesets: rulesetListParamSchema,
+    minSr: z.coerce.number().min(0).max(15).optional().catch(undefined),
+    maxSr: z.coerce.number().min(0).max(15).optional().catch(undefined),
+    minBpm: z.coerce.number().min(0).optional().catch(undefined),
+    maxBpm: z.coerce.number().min(0).optional().catch(undefined),
+    minCs: z.coerce.number().min(0).max(10).optional().catch(undefined),
+    maxCs: z.coerce.number().min(0).max(10).optional().catch(undefined),
+    minAr: z.coerce.number().min(0).max(10).optional().catch(undefined),
+    maxAr: z.coerce.number().min(0).max(10).optional().catch(undefined),
+    minOd: z.coerce.number().min(0).max(10).optional().catch(undefined),
+    maxOd: z.coerce.number().min(0).max(10).optional().catch(undefined),
+    minHp: z.coerce.number().min(0).max(10).optional().catch(undefined),
+    maxHp: z.coerce.number().min(0).max(10).optional().catch(undefined),
+    minLength: z.coerce.number().int().min(0).optional().catch(undefined),
+    maxLength: z.coerce.number().int().min(0).optional().catch(undefined),
+    minGameCount: z.coerce.number().int().min(0).optional().catch(undefined),
+    maxGameCount: z.coerce.number().int().min(0).optional().catch(undefined),
+    minTournamentCount: z.coerce
+      .number()
+      .int()
+      .min(0)
+      .optional()
+      .catch(undefined),
+    maxTournamentCount: z.coerce
+      .number()
+      .int()
+      .min(0)
+      .optional()
+      .catch(undefined),
+    sort: z.enum(beatmapListSortValues).catch('gameCount'),
+    descending: z.union([z.boolean(), booleanStringSchema]).catch(true),
+  })
+  .transform(({ ruleset, rulesets, ...filter }) => ({
+    ...filter,
+    ...toRulesetFilter(ruleset, rulesets),
+  }));

@@ -17,6 +17,23 @@ export const leaderboardTierKeys = [
 
 export const LeaderboardTierKeySchema = z.enum(leaderboardTierKeys);
 
+/**
+ * The columns the leaderboard sorts by. Rank and tier follow rating, so
+ * `rating` covers them too.
+ */
+export const leaderboardSortKeys = [
+  'rating',
+  'tournaments',
+  'matches',
+  'winRate',
+] as const;
+
+export const LeaderboardSortSchema = z.enum(leaderboardSortKeys);
+
+/** Mirrors the other list searches: one character matches too much. */
+export const LEADERBOARD_SEARCH_MIN_LENGTH = 2;
+export const LEADERBOARD_SEARCH_MAX_LENGTH = 200;
+
 export const TierProgressSchema = z.object({
   currentTier: z.string(),
   currentSubTier: z.number().int().min(1).max(3).nullable(),
@@ -73,6 +90,24 @@ export const LeaderboardRequestSchema = z.object({
   minWinRate: z.number().min(0).max(1).optional(),
   maxWinRate: z.number().min(0).max(1).optional(),
   tiers: LeaderboardTierKeySchema.array().optional(),
+  searchQuery: z
+    .string()
+    .trim()
+    .min(LEADERBOARD_SEARCH_MIN_LENGTH)
+    .max(LEADERBOARD_SEARCH_MAX_LENGTH)
+    .optional()
+    .describe(
+      'Keeps players whose username contains this text, ignoring case. Ranks stay global.'
+    ),
+  sort: LeaderboardSortSchema.optional().describe(
+    'Column to sort by. Without `sort` or `descending`, players are in global rank order.'
+  ),
+  descending: z
+    .boolean()
+    .optional()
+    .describe(
+      'Sort direction; defaults to true (highest first). Ties fall back to global rank.'
+    ),
   friend: z.boolean().optional(),
   userId: z.number().int().min(1).optional(),
 });
@@ -87,6 +122,7 @@ export const LeaderboardResponseSchema = z.object({
 });
 
 export type LeaderboardTierKey = z.infer<typeof LeaderboardTierKeySchema>;
+export type LeaderboardSort = z.infer<typeof LeaderboardSortSchema>;
 export type LeaderboardEntry = z.infer<typeof LeaderboardEntrySchema>;
 export type LeaderboardRequest = z.infer<typeof LeaderboardRequestSchema>;
 export type LeaderboardResponse = z.infer<typeof LeaderboardResponseSchema>;

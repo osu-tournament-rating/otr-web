@@ -29,6 +29,7 @@ import {
   normalizeReportCreateContent,
   normalizeStoredReportContent,
 } from './reportContent';
+import { buildReportListOrder } from './reportListOrder';
 import { hasUnreadAdminUpdate } from './reportReadStatus';
 import { getReportReasons, isReportReasonKeyValid } from './reportTemplates';
 
@@ -273,7 +274,8 @@ export const listReports = protectedProcedure
     const [reports, countResult] = await Promise.all([
       context.db.query.dataReports.findMany({
         where: whereClause,
-        orderBy: desc(schema.dataReports.created),
+        orderBy: (reports) =>
+          buildReportListOrder(reports, input.sort, input.descending),
         limit: input.pageSize,
         offset: (input.page - 1) * input.pageSize,
         with: {
@@ -350,9 +352,14 @@ export const listReports = protectedProcedure
       }))
     );
 
+    const totalCount = countResult[0]?.count ?? 0;
+
     return {
       reports: mappedReports,
-      totalCount: countResult[0]?.count ?? 0,
+      totalCount,
+      page: input.page,
+      pageSize: input.pageSize,
+      totalPages: Math.ceil(totalCount / input.pageSize),
     };
   });
 

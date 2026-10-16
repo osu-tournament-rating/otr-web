@@ -55,3 +55,99 @@ describe.each([
     expect(issuePaths(result)).toContain('beatmapIds');
   });
 });
+
+const issueMessages = (
+  result: { error?: { issues: { path: PropertyKey[]; message: string }[] } },
+  path: string
+) =>
+  result.error?.issues
+    .filter((issue) => issue.path.join('.') === path)
+    .map((issue) => issue.message) ?? [];
+
+describe.each([
+  ['input schema', TournamentSubmissionInputSchema],
+  ['form schema', tournamentSubmissionFormSchema],
+] as const)('%s messages', (_, schema) => {
+  test('states the match and beatmap limits with separators', () => {
+    const result = schema.safeParse(
+      submission(
+        sequentialIds(MAX_SUBMISSION_IDS + 1),
+        sequentialIds(MAX_SUBMISSION_IDS + 1)
+      )
+    );
+
+    expect(issueMessages(result, 'ids')).toContain(
+      'Matches cannot exceed 1,000'
+    );
+    expect(issueMessages(result, 'beatmapIds')).toContain(
+      'Beatmaps cannot exceed 1,000'
+    );
+  });
+
+  test('names the forum post URL, with one message per failure', () => {
+    const empty = schema.safeParse({ ...submission([1], []), forumUrl: '  ' });
+    const elsewhere = schema.safeParse({
+      ...submission([1], []),
+      forumUrl: 'https://example.com/topic/1',
+    });
+
+    // The form shows the last message it sets for a field, so an empty field
+    // must not also report the source rule.
+    expect(issueMessages(empty, 'forumUrl')).toEqual([
+      'Forum post URL is required',
+    ]);
+    expect(issueMessages(elsewhere, 'forumUrl')).toEqual([
+      "Forum post URL must be from osu.ppy.sh forums or the osu! wiki's tournaments section",
+    ]);
+  });
+
+  test('asks for a whole-number rank restriction of at least 1', () => {
+    const fraction = schema.safeParse({
+      ...submission([1], []),
+      rankRangeLowerBound: 1000.5,
+    });
+    const zero = schema.safeParse({
+      ...submission([1], []),
+      rankRangeLowerBound: 0,
+    });
+    const notANumber = schema.safeParse({
+      ...submission([1], []),
+      rankRangeLowerBound: Number.NaN,
+    });
+
+    expect(issueMessages(fraction, 'rankRangeLowerBound')).toEqual([
+      'Rank restriction must be a whole number',
+    ]);
+    expect(issueMessages(zero, 'rankRangeLowerBound')).toEqual([
+      'Rank restriction must be at least 1',
+    ]);
+    expect(issueMessages(notANumber, 'rankRangeLowerBound')).toEqual([
+      'Rank restriction must be a whole number',
+    ]);
+  });
+
+  test('says which required choice is missing', () => {
+    const result = schema.safeParse({
+      ...submission([1], []),
+      ruleset: undefined,
+      rankRangeLowerBound: undefined,
+      lobbySize: undefined,
+    });
+
+    expect(issueMessages(result, 'ruleset')).toEqual(['Ruleset is required']);
+    expect(issueMessages(result, 'rankRangeLowerBound')).toEqual([
+      'Rank restriction is required',
+    ]);
+    expect(issueMessages(result, 'lobbySize')).toEqual([
+      'Lobby size is required',
+    ]);
+  });
+
+  test('keeps the lobby size bounds', () => {
+    const result = schema.safeParse({ ...submission([1], []), lobbySize: 9 });
+
+    expect(issueMessages(result, 'lobbySize')).toEqual([
+      'Lobby size cannot exceed 8',
+    ]);
+  });
+});

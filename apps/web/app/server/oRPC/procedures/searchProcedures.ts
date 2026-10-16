@@ -23,16 +23,22 @@ import {
 import { buildTierProgress } from '@/lib/utils/tierProgress';
 import { Ruleset, VerificationStatus } from '@otr/core/osu';
 
-import { protectedProcedure } from './base';
+import { publicProcedure } from './base';
 
 const DEFAULT_RESULT_LIMIT = 5;
 
-export const searchEntities = protectedProcedure
+/**
+ * The header search. Open to signed-out visitors, since every result is
+ * public: the entities have public pages, and a matched former username comes
+ * from the player's public osu! profile. A session only adds `isFriend`. Not
+ * in the public REST API.
+ */
+export const searchEntities = publicProcedure
   .input(SearchRequestSchema)
   .output(SearchResponseSchema)
   .route({
     summary: 'Search entities',
-    tags: ['authenticated'],
+    tags: ['search'],
     method: 'GET',
     path: '/search',
   })
@@ -88,8 +94,9 @@ export const searchEntities = protectedProcedure
       const { condition: beatmapCondition, rank: beatmapCombinedScore } =
         beatmapSearch;
 
-      const session = context.session as
-        { dbPlayer?: { id?: number | null } | null } | undefined;
+      const session = context.session as {
+        dbPlayer?: { id?: number | null } | null;
+      } | null;
       const currentPlayerId = session?.dbPlayer?.id;
 
       let friendIds: Set<number> = new Set();

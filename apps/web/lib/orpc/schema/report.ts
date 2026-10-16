@@ -41,11 +41,18 @@ export const ReportTemplatesResponseSchema = z.object({
   templates: z.array(ReportReasonSchema),
 });
 
+/** `created` is when the report came in; `resolvedAt` when an admin closed it. */
+export const ReportListSortSchema = z.enum(['created', 'resolvedAt']);
+
 export const ReportListInputSchema = z.object({
   status: z.nativeEnum(ReportStatus).optional(),
   entityType: z.nativeEnum(ReportEntityType).optional(),
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(1).max(100).default(20),
+  /** Defaults to `created`. Open reports have no `resolvedAt` and sort last. */
+  sort: ReportListSortSchema.optional(),
+  /** Defaults to true: newest first. */
+  descending: z.boolean().optional(),
 });
 
 export const ReportResolveInputSchema = z.object({
@@ -102,6 +109,9 @@ export const ReportSchema = reportBaseSchema.extend({
 export const ReportListResponseSchema = z.object({
   reports: z.array(ReportSchema),
   totalCount: z.number().int().nonnegative(),
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1),
+  totalPages: z.number().int().min(0),
 });
 
 /** A reporter's own view: no reporter or resolver identity, plus an unread flag. */
@@ -137,6 +147,7 @@ export type ReportTemplatesResponse = z.infer<
   typeof ReportTemplatesResponseSchema
 >;
 export type ReportListInput = z.infer<typeof ReportListInputSchema>;
+export type ReportListSort = z.infer<typeof ReportListSortSchema>;
 export type ReportResolveInput = z.infer<typeof ReportResolveInputSchema>;
 export type ReportGetInput = z.infer<typeof ReportGetInputSchema>;
 export type ReportReopenInput = z.infer<typeof ReportReopenInputSchema>;
