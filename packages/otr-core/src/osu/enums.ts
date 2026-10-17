@@ -176,7 +176,10 @@ export enum TournamentQuerySortType {
   Id = 0,
   StartTime = 1,
   EndTime = 2,
-  // TODO: remove
+  /**
+   * Best `searchQuery` match first. The public `GET /tournaments?sort=3` uses
+   * it, so it stays and keeps its number.
+   */
   SearchQueryRelevance = 3,
   SubmissionDate = 4,
   LobbySize = 5,
