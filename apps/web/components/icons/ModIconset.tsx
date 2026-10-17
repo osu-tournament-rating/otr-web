@@ -18,7 +18,10 @@ export default function ModIconset({
 }) {
   // Clear NF
   mods &= ~Mods.NoFail;
-  let metadata = ModsEnumHelper.getMetadata(mods).map(({ text }) => text);
+  // Mods without an acronym have no icon
+  let metadata = ModsEnumHelper.getMetadata(mods)
+    .map(({ text }) => text)
+    .filter((text) => text !== '');
   if (mods === Mods.None && !freemod) {
     metadata = ['NM'];
   }
