@@ -8,6 +8,6 @@ let envLoaded = false;
 export function loadRootEnv(): void {
   if (envLoaded) return;
 
-  loadEnv({ path: join(projectRoot, '.env') });
+  loadEnv({ path: join(projectRoot, '.env'), quiet: true });
   envLoaded = true;
 }
