@@ -13,15 +13,17 @@ configuration from the root `.env.example`; never copy credentials, commit
 
 `dotenvy` looks for `.env` in the working directory, then in each parent, and
 loads the first one it finds without overriding variables already set. A run
-from `apps/processor` therefore reads otr's root `.env`, whose
-`DATABASE_URL` is the local development database. A `.env` in this directory
-would shadow the root one.
+from `apps/processor` therefore reads the root `.env` of its checkout. A `.env`
+in this directory would shadow the root one.
 
-Running the binary changes its target database. Never use production or a
-shared database for verification. Use the assigned disposable database on port
-`5434` for manual runs, and set `DATABASE_URL` for the run so the root `.env`
-cannot pick the target. Existing isolated Testcontainers tests can use their
-assigned dynamic ports.
+Running the binary rewrites every rating in its target database, so run it only
+against your worktree's own stack. `apps/scripts/otr up rabbitmq --no-web`
+points the worktree's `DATABASE_URL` and `RABBITMQ_AMQP_URL` at that stack, and
+a run from this directory then uses both. `rabbitmq` gives the stats messages a
+broker; without it the processor logs the failed connection and continues
+without messaging. Never run the binary from the main checkout, whose `.env`
+targets the developer's database, or against production, the dev tier, or a
+template database. Testcontainers tests start their own databases.
 
 ## Commands
 
