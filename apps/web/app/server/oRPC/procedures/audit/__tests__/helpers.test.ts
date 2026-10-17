@@ -131,6 +131,16 @@ describe('assembleEvents', () => {
     expect(event.changedFields).toEqual(['name', 'submittedByUserId']);
   });
 
+  it('leaves generated search columns out of the changed fields', () => {
+    const [event] = assembleEvents([
+      groupedRow({
+        changedFields: ['match_rank_vector', 'name', 'search_vector'],
+      }),
+    ]);
+
+    expect(event.changedFields).toEqual(['name']);
+  });
+
   it('does not aggregate separate system events', () => {
     const events = assembleEvents([
       groupedRow({ eventKey: 'event:1', eventId: 1, actionUserId: null }),
@@ -471,6 +481,26 @@ describe('audit change key normalization', () => {
         newValue: 4,
       },
     });
+  });
+
+  it('drops generated search columns from older rows', () => {
+    expect(
+      camelizeChangesKeys({
+        name: { originalValue: 'Old', newValue: 'New' },
+        match_rank_vector: { originalValue: "'old':1", newValue: "'new':1" },
+        SearchVector: { OriginalValue: "'old':1", NewValue: "'new':1" },
+      })
+    ).toEqual({
+      name: { originalValue: 'Old', newValue: 'New' },
+    });
+  });
+
+  it('returns null when only generated search columns changed', () => {
+    expect(
+      camelizeChangesKeys({
+        match_rank_vector: { originalValue: "'old':1", newValue: "'new':1" },
+      })
+    ).toBeNull();
   });
 });
 

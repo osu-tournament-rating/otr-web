@@ -177,7 +177,10 @@ function normalizeChangeValue(value: unknown): unknown {
   return result;
 }
 
-/** Camelizes JSONB change keys and drops no-op fields; triggers write snake_case, migrated rows camelCase. */
+/** Generated search columns. Triggers skip them now, but older audit rows still carry them. */
+const GENERATED_CHANGE_FIELDS = new Set(['searchVector', 'matchRankVector']);
+
+/** Camelizes JSONB change keys and drops no-op and generated fields; triggers write snake_case, migrated rows camelCase. */
 export function camelizeChangesKeys(
   changes: Record<string, unknown> | null
 ): Record<string, unknown> | null {
@@ -190,6 +193,7 @@ export function camelizeChangesKeys(
     );
     const camelKey =
       snakeCamelKey.charAt(0).toLowerCase() + snakeCamelKey.slice(1);
+    if (GENERATED_CHANGE_FIELDS.has(camelKey)) continue;
     const normalizedValue = normalizeChangeValue(value);
 
     if (normalizedValue && typeof normalizedValue === 'object') {
@@ -497,11 +501,12 @@ export function assembleEvents(rows: GroupedAuditRow[]): AssembledEvent[] {
     const changedFields = new Set<string>();
     for (const row of topRows) {
       for (const field of row.changedFields) {
-        changedFields.add(
-          field.replace(/_([a-z])/g, (_, character: string) =>
-            character.toUpperCase()
-          )
+        const camelField = field.replace(/_([a-z])/g, (_, character: string) =>
+          character.toUpperCase()
         );
+        if (!GENERATED_CHANGE_FIELDS.has(camelField)) {
+          changedFields.add(camelField);
+        }
       }
     }
 
