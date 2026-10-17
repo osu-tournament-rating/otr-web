@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { STORAGE_STATE } from './fixtures/auth';
+import { STORAGE_STATE, TEST_ADMIN_PLAYER_ID } from './fixtures/auth';
+import { createOrpcClientForRole } from './fixtures/orpc';
 import { ROUTES } from './fixtures/test-config';
 
 /** Admin dashboard and reports pages; read-only interactions only. */
@@ -39,6 +40,34 @@ test.describe('Admin pages', () => {
         await expect(input).toBeVisible();
         await input.fill('Stage');
         await expect(input).toHaveValue('Stage');
+      });
+
+      test('the ban dialog names its reason group', async ({ page }) => {
+        // The admin's own account: setup signed it in, so lookup finds it.
+        // Cancelling leaves it unbanned.
+        const { username } = await createOrpcClientForRole('admin').players.get(
+          { id: TEST_ADMIN_PLAYER_ID }
+        );
+
+        await page.goto(ROUTES.admin);
+        await page.waitForLoadState('networkidle');
+
+        const lookup = page.getByTestId('admin-tool-user-lookup');
+        await lookup.getByLabel('Username').fill(username);
+        await lookup.getByRole('button', { name: 'Search' }).click();
+        await lookup
+          .getByRole('button', { name: /^(Ban user|Update ban reason)$/ })
+          .click();
+
+        const dialog = page.getByRole('alertdialog', {
+          name: 'Ban this user?',
+        });
+        const reasons = dialog.getByRole('radiogroup', { name: 'Ban reason' });
+        await expect(reasons).toBeVisible();
+        expect(await reasons.getByRole('radio').count()).toBeGreaterThan(0);
+
+        await dialog.getByRole('button', { name: 'Cancel' }).click();
+        await expect(dialog).toBeHidden();
       });
     });
 
