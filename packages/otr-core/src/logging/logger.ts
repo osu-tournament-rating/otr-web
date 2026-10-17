@@ -1,5 +1,6 @@
 import pino from 'pino';
 import { trace } from '@opentelemetry/api';
+import { optionalEnv } from '../utils/env';
 import type { Logger, LogContext, LogLevel } from './types';
 
 const IGNORED_KEYS = new Set(['level', 'time', 'msg', 'pid', 'hostname']);
@@ -109,7 +110,7 @@ const traceBindings = () => {
 };
 
 function createPinoLogger(serviceName: string): pino.Logger {
-  const level = (process.env.LOG_LEVEL as LogLevel) ?? 'info';
+  const level = (optionalEnv(process.env.LOG_LEVEL) as LogLevel) ?? 'info';
 
   return pino(
     {

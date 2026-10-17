@@ -15,6 +15,7 @@ import {
   ATTR_DEPLOYMENT_ENVIRONMENT_NAME,
   ATTR_SERVICE_NAME,
 } from '@opentelemetry/semantic-conventions';
+import { optionalEnv } from '../utils/env';
 
 export interface StartTracingOptions {
   /** Fallback when OTEL_SERVICE_NAME is unset. */
@@ -25,6 +26,9 @@ let provider: NodeTracerProvider | null = null;
 
 const resolveEnvironment = (): string =>
   process.env.NODE_ENV === 'production' ? 'production' : 'development';
+
+export const resolveServiceName = (fallback: string): string =>
+  optionalEnv(process.env.OTEL_SERVICE_NAME) ?? fallback;
 
 /**
  * Registers the global tracer provider. Tracing stays off until
@@ -48,7 +52,7 @@ export function startTracing({
   provider = new NodeTracerProvider({
     resource: defaultResource().merge(
       resourceFromAttributes({
-        [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME ?? serviceName,
+        [ATTR_SERVICE_NAME]: resolveServiceName(serviceName),
         [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: resolveEnvironment(),
       })
     ),
