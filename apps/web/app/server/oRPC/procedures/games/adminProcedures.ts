@@ -42,6 +42,7 @@ export const updateGameAdmin = adminMutationProcedure
     const existing = await context.db.query.games.findFirst({
       columns: {
         id: true,
+        mods: true,
         startTime: true,
         endTime: true,
       },
@@ -75,6 +76,8 @@ export const updateGameAdmin = adminMutationProcedure
             scoringType: input.scoringType,
             teamType: input.teamType,
             mods: input.mods,
+            // The site shows lazer mods over the flags, so edited flags replace them.
+            ...(input.mods !== existing.mods && { lazerMods: null }),
             verificationStatus: input.verificationStatus,
             rejectionReason: input.rejectionReason,
             warningFlags: nextWarningFlags,

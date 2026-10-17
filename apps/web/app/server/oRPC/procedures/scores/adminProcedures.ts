@@ -33,7 +33,7 @@ export const updateScoreAdmin = adminMutationProcedure
     await context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, async () => {
         const existing = await tx.query.gameScores.findFirst({
-          columns: { id: true },
+          columns: { id: true, mods: true },
           where: eq(schema.gameScores.id, input.id),
         });
 
@@ -58,6 +58,8 @@ export const updateScoreAdmin = adminMutationProcedure
             statPerfect: input.statPerfect,
             grade: input.grade,
             mods: input.mods,
+            // The site shows lazer mods over the flags, so edited flags replace them.
+            ...(input.mods !== existing.mods && { lazerMods: null }),
             team: input.team,
             ruleset: input.ruleset,
             verificationStatus: input.verificationStatus,

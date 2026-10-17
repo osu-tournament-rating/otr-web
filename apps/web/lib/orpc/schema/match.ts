@@ -26,6 +26,15 @@ import { PlayerSchema } from './player';
 
 const AdminNoteContentSchema = z.string().trim().min(1);
 
+/** A mod as osu!lazer reports it, with the settings the player changed. */
+export const LazerModSchema = z.object({
+  acronym: z.string(),
+  settings: z.record(z.string(), z.unknown()).optional(),
+});
+
+/** Every mod of a lazer game or score; null for stable data. */
+const LazerModsSchema = z.array(LazerModSchema).nullable();
+
 const matchTournamentBaseSchema = tournamentSelectSchema.pick({
   id: true,
   name: true,
@@ -76,6 +85,7 @@ export const GameScoreSchema = gameScoreSelectSchema
     team: TeamSchema,
     ruleset: RulesetSchema,
     verificationStatus: VerificationStatusSchema,
+    lazerMods: LazerModsSchema,
     adminNotes: z.array(AdminNoteSchema).default([]),
   });
 
@@ -84,6 +94,7 @@ const gameBaseSchema = gameSelectSchema.omit(CreatedUpdatedOmit).extend({
   scoringType: ScoringTypeSchema,
   teamType: TeamTypeSchema,
   verificationStatus: VerificationStatusSchema,
+  lazerMods: LazerModsSchema,
   isFreeMod: z.boolean(),
   beatmap: MatchBeatmapSchema.nullable(),
   adminNotes: z.array(AdminNoteSchema).default([]),
