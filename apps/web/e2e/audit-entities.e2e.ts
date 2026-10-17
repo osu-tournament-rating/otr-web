@@ -192,3 +192,50 @@ for (const entity of ENTITY_CASES) {
     });
   });
 }
+
+test.describe('Audit timeline on a phone', () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  test("a match's history fits the screen without sideways scroll", async ({
+    page,
+  }) => {
+    await gotoAudit(page, ROUTES.auditMatch(TEST_AUDIT_MATCH_ID));
+
+    const entries = page.locator('[data-testid="timeline-entry"]');
+    await expect(entries.first()).toBeVisible({ timeout: 15000 });
+    expect(await entries.count()).toBeGreaterThan(1);
+
+    // Open every entry, so the field diffs count toward the width too.
+    const closed = page.locator(
+      '[data-testid="timeline-entry-toggle"][aria-expanded="false"]'
+    );
+    while ((await closed.count()) > 0) {
+      await closed.first().click();
+    }
+    await expect(
+      page.locator('[data-testid="timeline-entry-diff"]').first()
+    ).toBeVisible();
+
+    const scrollWidth = await page.evaluate(
+      () => document.documentElement.scrollWidth
+    );
+    expect(scrollWidth).toBeLessThanOrEqual(375);
+
+    // The panel clips what spills past it, so the page alone can't show a
+    // row that is too wide; each row and its time must fit as well.
+    const tooWide = await entries.evaluateAll((rows) =>
+      rows
+        .filter((row) => row.scrollWidth > row.clientWidth)
+        .map((row) => row.id)
+    );
+    expect(tooWide).toEqual([]);
+
+    const timeRights = await entries
+      .locator('time')
+      .evaluateAll((times) =>
+        times.map((time) => time.getBoundingClientRect().right)
+      );
+    expect(timeRights.length).toBeGreaterThan(1);
+    expect(Math.max(...timeRights)).toBeLessThanOrEqual(375);
+  });
+});
