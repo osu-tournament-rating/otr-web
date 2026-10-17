@@ -35,6 +35,31 @@ describe('ScoreAutomationChecks', () => {
     expect(result & ScoreRejectionReason.InvalidMods).not.toBe(0);
   });
 
+  it('flags lazer mods outside the allowed set', () => {
+    const score = createScore({
+      lazerMods: [{ acronym: 'HD' }, { acronym: 'BR' }],
+    });
+
+    const result = checker.process(score, Ruleset.Osu);
+
+    expect(result & ScoreRejectionReason.InvalidMods).not.toBe(0);
+  });
+
+  it('accepts allowed lazer mods with custom settings', () => {
+    const score = createScore({
+      mods: Mods.DoubleTime,
+      lazerMods: [
+        { acronym: 'DT', settings: { speed_change: 1.2 } },
+        { acronym: 'DA', settings: { approach_rate: 9.5 } },
+        { acronym: 'CL' },
+      ],
+    });
+
+    const result = checker.process(score, Ruleset.Osu);
+
+    expect(result).toBe(ScoreRejectionReason.None);
+  });
+
   it('flags ruleset mismatches', () => {
     const score = createScore({ ruleset: Ruleset.Taiko });
 

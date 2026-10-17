@@ -5,6 +5,7 @@ import {
   Team,
   VerificationStatus,
 } from '@otr/core/osu';
+import type { LazerMod } from '@otr/core/osu/lazer-mods';
 
 import type { AutomationGame, AutomationScore } from './types';
 
@@ -14,6 +15,39 @@ const INVALID_MODS = new Set<Mods>([
   Mods.Relax,
   Mods.Autoplay,
   Mods.Relax2,
+]);
+
+/**
+ * The lazer mods a tournament plays with. Any other mod is invalid, including
+ * mods lazer adds later. Settings are not checked, so custom speeds and
+ * Difficulty Adjust values pass.
+ */
+const VALID_LAZER_MODS = new Set([
+  'NF',
+  'EZ',
+  'TD',
+  'HD',
+  'HR',
+  'DT',
+  'NC',
+  'HT',
+  'DC',
+  'FL',
+  'SO',
+  'FI',
+  'MR',
+  'CL',
+  'DA',
+  '1K',
+  '2K',
+  '3K',
+  '4K',
+  '5K',
+  '6K',
+  '7K',
+  '8K',
+  '9K',
+  '10K',
 ]);
 
 const PLACEHOLDER_THRESHOLD = new Date('1970-01-01T00:00:00.000Z').getTime();
@@ -35,8 +69,9 @@ export const isPreVerifiedOrVerified = (status: VerificationStatus) =>
   status === VerificationStatus.PreVerified ||
   status === VerificationStatus.Verified;
 
-export const hasInvalidMods = (mods: Mods) =>
-  Array.from(INVALID_MODS).some((flag) => (mods & flag) === flag);
+export const hasInvalidMods = (mods: Mods, lazerMods: LazerMod[] | null) =>
+  Array.from(INVALID_MODS).some((flag) => (mods & flag) === flag) ||
+  (lazerMods?.some((mod) => !VALID_LAZER_MODS.has(mod.acronym)) ?? false);
 
 export const combineRejection = <T extends number>(current: T, next: T): T =>
   (current | next) as T;

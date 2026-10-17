@@ -14,9 +14,13 @@ Automated checks are performed in a bottom-up hierarchical order. Child entities
 Each score in each game is evaluated against the following checks in order.
 
 1. **Minimum Score**: If score value ≤ 1,000, apply `ScoreBelowMinimum` rejection. Otherwise, proceed.
-1. **Invalid Mods**: If score contains SuddenDeath, Perfect, Relax, Autoplay, or Relax2 mods, apply `InvalidMods` rejection. Otherwise, proceed.
+1. **Invalid Mods**: If score contains SuddenDeath, Perfect, Relax, Autoplay, or Relax2 mods, or any [[#Allowed lazer mods|lazer mod not on the allowed list]], apply `InvalidMods` rejection. Otherwise, proceed.
 1. **Ruleset Match**: If score ruleset differs from tournament ruleset, apply `RulesetMismatch` rejection. Otherwise, proceed.
 1. **Status Assignment**: If no rejection reasons were applied, set status to `PreVerified`. Otherwise, set to `PreRejected`.
+
+### Allowed lazer mods
+
+osu!lazer games and scores keep every mod they were played with. Only these lazer mods are allowed: NoFail (NF), Easy (EZ), Touch Device (TD), Hidden (HD), HardRock (HR), DoubleTime (DT), Nightcore (NC), HalfTime (HT), Daycore (DC), Flashlight (FL), SpunOut (SO), FadeIn (FI), Mirror (MR), Classic (CL), Difficulty Adjust (DA), and the mania key mods 1K to 10K. Any other mod, such as Barrel Roll or Autopilot, is invalid, including mods added to lazer later. Mod settings are not checked, so custom speeds such as DT at 1.2x pass.
 
 ## Game Checks
 
@@ -24,7 +28,7 @@ Each game in each match is evaluated against the following checks in order.
 
 1. **Beatmap Usage**: If beatmap is null, skip to the next check. If tournament has a known pool and beatmap is not in the pool, apply `BeatmapNotPooled` rejection. If no pool is defined and the beatmap appears exactly once across the tournament, apply `BeatmapUsedOnce` warning.
 1. **End Time**: If end time is null, unparseable, or ≤ Unix epoch (1970-01-01), apply `NoEndTime` rejection. Otherwise, proceed.
-1. **Invalid Mods**: If game contains SuddenDeath, Perfect, Relax, Autoplay, or Relax2 mods, apply `InvalidMods` rejection. Otherwise, proceed.
+1. **Invalid Mods**: If game contains SuddenDeath, Perfect, Relax, Autoplay, or Relax2 mods, or any [[#Allowed lazer mods|lazer mod not on the allowed list]], apply `InvalidMods` rejection. Otherwise, proceed.
 1. **Ruleset Match**: If game ruleset differs from tournament ruleset, apply `RulesetMismatch` rejection. Otherwise, proceed.
 1. **Score Counts**: If total score count is 0, apply `NoScores` rejection. If valid score count is 0, apply `NoValidScores` rejection. If valid score count is odd or does not match lobby size requirements, apply `LobbySizeMismatch` rejection. Otherwise, proceed. Valid scores are scores which are PreVerified or Verified.
 1. **Scoring Type**: If scoring type is not ScoreV2 or Lazer, apply `InvalidScoringType` rejection. Otherwise, proceed.
@@ -74,11 +78,11 @@ The tournament is evaluated against the following checks in order.
 | Entity | Rejection Reason | Trigger Condition |
 |--------|------------------|-------------------|
 | Score | `ScoreBelowMinimum` | Score value ≤ 1,000 |
-| Score | `InvalidMods` | Contains SuddenDeath, Perfect, Relax, Autoplay, or Relax2 |
+| Score | `InvalidMods` | Contains SuddenDeath, Perfect, Relax, Autoplay, or Relax2, or a lazer mod not on the allowed list |
 | Score | `RulesetMismatch` | Ruleset differs from tournament |
 | Game | `BeatmapNotPooled` | Beatmap not in tournament pool (when pool exists) |
 | Game | `NoEndTime` | End time is null or ≤ Unix epoch |
-| Game | `InvalidMods` | Contains SuddenDeath, Perfect, Relax, Autoplay, or Relax2 |
+| Game | `InvalidMods` | Contains SuddenDeath, Perfect, Relax, Autoplay, or Relax2, or a lazer mod not on the allowed list |
 | Game | `RulesetMismatch` | Ruleset differs from tournament |
 | Game | `NoScores` | Zero scores present |
 | Game | `NoValidScores` | Zero PreVerified or Verified scores |

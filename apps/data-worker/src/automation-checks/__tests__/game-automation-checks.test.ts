@@ -170,6 +170,21 @@ describe('GameAutomationChecks', () => {
     expect(result & GameRejectionReason.InvalidMods).not.toBe(0);
   });
 
+  it('flags lazer mods outside the allowed set', () => {
+    const tournament = createTournament();
+    const match = createMatch({ games: [] });
+    tournament.matches = [match];
+
+    const game = createGame({
+      lazerMods: [{ acronym: 'FR' }],
+      matchId: match.id,
+    });
+
+    const result = checker.process(game, tournament);
+
+    expect(result & GameRejectionReason.InvalidMods).not.toBe(0);
+  });
+
   it('flags missing end time', () => {
     const tournament = createTournament();
     const match = createMatch({ games: [] });
