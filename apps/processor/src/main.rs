@@ -1,6 +1,6 @@
 use clap::Parser;
 use otr_processor::{
-    args::{first_env, Args, DATABASE_URL_VARS, RABBITMQ_URL_VARS},
+    args::{first_env, unset_blank_env, Args, ARGS_ENV_VARS, DATABASE_URL_VARS, RABBITMQ_URL_VARS},
     database::db::DbClient,
     messaging::RabbitMqPublisher,
     model::{otr_model::OtrModel, rating_utils::create_initial_ratings},
@@ -23,7 +23,8 @@ async fn main() {
     // Initialize env vars
     let _ = dotenvy::dotenv();
 
-    // Parse args
+    // Parse args, treating a blank variable as unset
+    unset_blank_env(&ARGS_ENV_VARS);
     let args = Args::parse();
 
     // Initialize tracing with indicatif integration
