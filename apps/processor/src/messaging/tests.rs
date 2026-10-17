@@ -1,4 +1,4 @@
-use crate::messaging::{MessageMetadata, ProcessTournamentStatsMessage, RabbitMqConfig, RabbitMqPublisher};
+use crate::messaging::{Broker, MessageMetadata, ProcessTournamentStatsMessage, RabbitMqConfig, RabbitMqPublisher};
 use chrono::Utc;
 use std::time::Duration;
 
@@ -53,6 +53,27 @@ mod publisher_tests {
 
         let health = publisher.health_check().await.unwrap();
         assert!(!health);
+    }
+
+    #[test]
+    fn test_publisher_reports_the_broker_it_dials() {
+        let publisher = RabbitMqPublisher::new(
+            "amqp://user:secret@broker.example:5673/",
+            "test.exchange".to_string(),
+            "test.routing.key".to_string()
+        );
+
+        let broker = publisher.broker().unwrap();
+
+        assert_eq!(
+            broker,
+            Broker {
+                host: "broker.example".to_string(),
+                port: 5673,
+                vhost: "/".to_string()
+            }
+        );
+        assert!(!format!("{broker:?}").contains("secret"));
     }
 
     #[test]

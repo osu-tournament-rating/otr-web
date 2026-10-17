@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 use lapin::{
     options::{BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions},
     types::{AMQPValue, FieldTable},
+    uri::AMQPUri,
     BasicProperties, Channel, Connection, ConnectionProperties, ExchangeKind
 };
 use serde::{Deserialize, Serialize};
@@ -45,29 +46,47 @@ pub struct MessageMetadata {
 
 const DEFAULT_PRIORITY: u8 = 5;
 
+/// The broker a connection URL names, without its credentials, so it is safe to log
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Broker {
+    pub host: String,
+    pub port: u16,
+    pub vhost: String
+}
+
+impl From<&AMQPUri> for Broker {
+    fn from(uri: &AMQPUri) -> Self {
+        Self {
+            host: uri.authority.host.clone(),
+            port: uri.authority.port,
+            vhost: uri.vhost.clone()
+        }
+    }
+}
+
 /// RabbitMQ publisher for sending tournament processing events
 pub struct RabbitMqPublisher {
     connection: Option<Arc<Connection>>,
     channel: Option<Channel>,
     config: RabbitMqConfig,
+    /// The URL that every connection, including a reconnect, dials
     connection_url: String
 }
 
 impl RabbitMqPublisher {
-    /// Creates a new RabbitMQ publisher instance
-    pub fn new(exchange: String, routing_key: String) -> Self {
+    /// Creates a publisher for the broker at `url`
+    pub fn new(url: &str, exchange: String, routing_key: String) -> Self {
         let config = RabbitMqConfig {
             exchange,
             routing_key,
             ..Default::default()
         };
-        let connection_url = config.connection_url();
 
         Self {
             connection: None,
             channel: None,
             config,
-            connection_url
+            connection_url: url.to_owned()
         }
     }
 
@@ -88,9 +107,15 @@ impl RabbitMqPublisher {
         Ok(publisher)
     }
 
+    /// The broker this publisher dials
+    pub fn broker(&self) -> Result<Broker, PublisherError> {
+        Ok(Broker::from(&parse_url(&self.connection_url)?))
+    }
+
     /// Connects to RabbitMQ and initializes the publisher
-    pub async fn connect(&mut self, rabbitmq_url: &str) -> Result<(), PublisherError> {
-        let uri = parse_amqp_uri(rabbitmq_url).map_err(|e| lapin::Error::from(std::io::Error::other(e)))?;
+    pub async fn connect(&mut self) -> Result<(), PublisherError> {
+        let uri = parse_url(&self.connection_url)?;
+        let broker = Broker::from(&uri);
         let connection = Connection::connect_uri(uri, ConnectionProperties::default()).await?;
         let connection = Arc::new(connection);
 
@@ -137,7 +162,12 @@ impl RabbitMqPublisher {
         self.connection = Some(connection);
         self.channel = Some(channel);
 
-        info!(url = %self.config.connection_url_safe(), "Connected to RabbitMQ");
+        info!(
+            host = %broker.host,
+            port = broker.port,
+            vhost = %broker.vhost,
+            "Connected to RabbitMQ"
+        );
         info!(
             queue = %self.config.routing_key,
             exchange = %self.config.exchange,
@@ -151,12 +181,11 @@ impl RabbitMqPublisher {
     pub async fn connect_with_retry(&mut self) -> Result<(), PublisherError> {
         let mut attempt = 0;
         let mut delay = self.config.retry_delay;
-        let connection_url = self.connection_url.clone();
 
         loop {
             attempt += 1;
 
-            match self.connect(&connection_url).await {
+            match self.connect().await {
                 Ok(_) => return Ok(()),
                 Err(e) => {
                     if attempt >= self.config.retry_attempts {
@@ -283,6 +312,10 @@ impl RabbitMqPublisher {
         info!("RabbitMQ connection closed");
         Ok(())
     }
+}
+
+fn parse_url(url: &str) -> Result<AMQPUri, PublisherError> {
+    parse_amqp_uri(url).map_err(|e| lapin::Error::from(std::io::Error::other(e)).into())
 }
 
 impl Drop for RabbitMqPublisher {
