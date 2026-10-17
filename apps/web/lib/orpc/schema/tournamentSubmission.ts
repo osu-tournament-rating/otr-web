@@ -1,7 +1,21 @@
 import { z } from 'zod';
 
-import { TournamentRejectionReason } from '@otr/core/osu';
-import { RulesetSchema } from './constants';
+import { Ruleset, TournamentRejectionReason } from '@otr/core/osu';
+import {
+  FORUM_POST_URL_REQUIRED_MESSAGE,
+  FORUM_POST_URL_SOURCE_MESSAGE,
+  LOBBY_SIZE_MAXIMUM_MESSAGE,
+  LOBBY_SIZE_MINIMUM_MESSAGE,
+  LOBBY_SIZE_REQUIRED_MESSAGE,
+  RANK_RESTRICTION_MINIMUM_MESSAGE,
+  RANK_RESTRICTION_REQUIRED_MESSAGE,
+  RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE,
+  RULESET_REQUIRED_MESSAGE,
+  TOURNAMENT_ABBREVIATION_REQUIRED_MESSAGE,
+  TOURNAMENT_NAME_REQUIRED_MESSAGE,
+  maxBeatmapIdsMessage,
+  maxMatchIdsMessage,
+} from './tournamentMessages';
 
 const getEnumNumericValues = (enumObject: Record<string, unknown>): number[] =>
   Object.values(enumObject).filter(
@@ -21,20 +35,24 @@ const createBitwiseEnumSchema = (enumObject: Record<string, unknown>) => {
     });
 };
 
+/** A missing value reads "… is required" instead of zod's default message. */
+const requiredMessage =
+  (message: string) =>
+  (issue: { input?: unknown }): string | undefined =>
+    issue.input === undefined ? message : undefined;
+
 const hasUniqueValues = (values: readonly number[]) =>
   new Set(values).size === values.length;
 
 const FORUM_URL_PATTERN =
   /^(https:\/\/osu\.ppy\.sh\/(community\/forums\/topics\/\d+|wiki\/en\/Tournaments\/[^?#]*))(\?.*)?$/;
 
+// An empty field reports only that it is required, not also the source rule
 const forumUrlSchema = z
   .string()
   .trim()
-  .min(1, 'Forum URL is required')
-  .regex(
-    FORUM_URL_PATTERN,
-    "URL must be from osu.ppy.sh forums or the osu! wiki's tournaments section"
-  )
+  .min(1, { error: FORUM_POST_URL_REQUIRED_MESSAGE, abort: true })
+  .regex(FORUM_URL_PATTERN, FORUM_POST_URL_SOURCE_MESSAGE)
   .transform((value) => value.split('?')[0]);
 
 export const MAX_SUBMISSION_IDS = 1000;
@@ -42,23 +60,30 @@ export const MAX_SUBMISSION_IDS = 1000;
 const matchIdSchema = z.number().int().positive();
 const beatmapIdSchema = z.number().int().positive().max(20_000_000);
 
-const MAX_MATCH_IDS_MESSAGE = `Submit at most ${MAX_SUBMISSION_IDS} matches`;
-const MAX_BEATMAP_IDS_MESSAGE = `Submit at most ${MAX_SUBMISSION_IDS} beatmaps`;
+const MAX_MATCH_IDS_MESSAGE = maxMatchIdsMessage(MAX_SUBMISSION_IDS);
+const MAX_BEATMAP_IDS_MESSAGE = maxBeatmapIdsMessage(MAX_SUBMISSION_IDS);
 
 const baseSubmissionSchema = z.object({
-  name: z.string().min(1, 'Tournament name is required'),
-  abbreviation: z.string().min(1, 'Tournament abbreviation is required'),
+  name: z.string().min(1, TOURNAMENT_NAME_REQUIRED_MESSAGE),
+  abbreviation: z.string().min(1, TOURNAMENT_ABBREVIATION_REQUIRED_MESSAGE),
   forumUrl: forumUrlSchema,
-  ruleset: RulesetSchema,
+  ruleset: z.enum(Ruleset, {
+    error: requiredMessage(RULESET_REQUIRED_MESSAGE),
+  }),
   rankRangeLowerBound: z
-    .number()
-    .int()
-    .min(1, 'Rank restriction must be at least 1'),
+    .number({
+      error: (issue) =>
+        issue.input === undefined
+          ? RANK_RESTRICTION_REQUIRED_MESSAGE
+          : RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE,
+    })
+    .int(RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE)
+    .min(1, RANK_RESTRICTION_MINIMUM_MESSAGE),
   lobbySize: z
-    .number()
+    .number({ error: requiredMessage(LOBBY_SIZE_REQUIRED_MESSAGE) })
     .int()
-    .min(1, 'Lobby size must be at least 1')
-    .max(8, 'Lobby size cannot exceed 8'),
+    .min(1, LOBBY_SIZE_MINIMUM_MESSAGE)
+    .max(8, LOBBY_SIZE_MAXIMUM_MESSAGE),
   rejectionReason: createBitwiseEnumSchema(TournamentRejectionReason).default(
     TournamentRejectionReason.None
   ),

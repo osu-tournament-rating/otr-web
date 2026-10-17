@@ -4,6 +4,7 @@ import { VerificationStatus } from '@otr/core/osu';
 import {
   ArrowDownWideNarrow,
   CalendarDays,
+  ChevronDown,
   Database,
   ExternalLink,
   Filter,
@@ -12,6 +13,7 @@ import {
   GitMerge,
   History,
   ListChecks,
+  LogOut,
   Music2,
   NotebookPen,
   PencilLine,
@@ -19,11 +21,15 @@ import {
   Plus,
   RefreshCw,
   RotateCcw,
+  Settings,
+  ShieldCheck,
   Swords,
   Target,
   Trash2,
   Trophy,
   Unlink,
+  Upload,
+  User,
   UserRound,
   Users,
   X,
@@ -33,6 +39,8 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GallerySection, Specimen } from '../gallery';
+import { DELETE_CASCADE_DESCRIPTION } from '@/components/admin-forms/adminFormFields';
+import { ActionMenu } from '@/components/kit/controls/ActionMenu';
 import { AdminMenu } from '@/components/kit/controls/AdminMenu';
 import { Button, type ButtonSize } from '@/components/kit/controls/Button';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
@@ -59,8 +67,10 @@ import { RowList, RowListItem } from '@/components/kit/layout/RowList';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { typeScale } from '@/components/kit/layout/Typography';
 import { Badge } from '@/components/kit/status/Badge';
+import { NotificationDot } from '@/components/kit/status/NotificationDot';
 import { VerificationStatusBadge } from '@/components/kit/status/VerificationStatusBadge';
 import { VerificationStatusIcon } from '@/components/kit/status/VerificationStatusIcon';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
@@ -71,6 +81,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -80,8 +91,21 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatLobbySize } from '@/lib/kit/format/fields';
-import { formatCount } from '@/lib/kit/format/number';
 import { RATED_RULESETS, RULESET_NAMES } from '@/lib/kit/format/ruleset';
+import {
+  FORUM_POST_URL_PREFIX_MESSAGE,
+  FORUM_POST_URL_REQUIRED_MESSAGE,
+  FORUM_POST_URL_SOURCE_MESSAGE,
+  LOBBY_SIZE_REQUIRED_MESSAGE,
+  RANK_RESTRICTION_MINIMUM_MESSAGE,
+  RANK_RESTRICTION_REQUIRED_MESSAGE,
+  RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE,
+  RULESET_REQUIRED_MESSAGE,
+  TOURNAMENT_ABBREVIATION_REQUIRED_MESSAGE,
+  TOURNAMENT_NAME_REQUIRED_MESSAGE,
+  maxBeatmapIdsMessage,
+  maxMatchIdsMessage,
+} from '@/lib/orpc/schema/tournamentMessages';
 import { MAX_SUBMISSION_IDS } from '@/lib/orpc/schema/tournamentSubmission';
 import { cn } from '@/lib/utils';
 
@@ -95,17 +119,6 @@ const wait = (ms: number) =>
 function Caption({ children }: { children: React.ReactNode }) {
   return <span className={typeScale.meta}>{children}</span>;
 }
-
-/** The delete confirmation's wording, from components/shared/DeleteButton.tsx. */
-const DELETE_DESCRIPTION = (
-  <>
-    <p>
-      This action will cascade to all children. All associated data will be
-      permanently removed.
-    </p>
-    <p>This action cannot be undone.</p>
-  </>
-);
 
 const SIZES: { size: ButtonSize; name: string; use: string }[] = [
   {
@@ -290,23 +303,62 @@ function IconButtons() {
           icon={Swords}
           title="Matches"
           meta="124 matches"
-          actions={<IconButton label="Add matches" icon={Plus} />}
+          actions={
+            <Button variant="outline" size="sm" icon={Plus}>
+              Add matches
+            </Button>
+          }
         />
         <PanelBody className={typeScale.bodyMuted}>
-          In a section header strip: small and ghost.
+          A section&apos;s main action keeps its label: a small outline button.
         </PanelBody>
       </Panel>
+      <DisclosureDemo />
     </div>
+  );
+}
+
+/**
+ * `expanded` makes an IconButton a disclosure toggle for a row that expands
+ * in place: aria-expanded, and no open fill, which belongs to menu triggers.
+ */
+function DisclosureDemo() {
+  const [open, setOpen] = React.useState(true);
+  const game = GAMES[0];
+
+  return (
+    <Panel>
+      <SectionHeader icon={Swords} title="Games" meta="1 game" />
+      <RowList>
+        <RowListItem>
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium">{game.name}</p>
+              <p className={typeScale.bodyMuted}>{game.detail}</p>
+            </div>
+            <IconButton
+              label={`Details for ${game.name}`}
+              icon={ChevronDown}
+              expanded={open}
+              onClick={() => setOpen((value) => !value)}
+              className="[&>svg]:transition-transform aria-expanded:[&>svg]:rotate-180"
+            />
+          </div>
+          {open ? (
+            <p className={cn(typeScale.bodyMuted, 'mt-3 border-t pt-3')}>
+              Expanded in place: the toggle keeps its resting look.
+            </p>
+          ) : null}
+        </RowListItem>
+      </RowList>
+    </Panel>
   );
 }
 
 // The tournament fields' rules, from lib/orpc/schema/tournamentSubmission.ts
 // (submission) and tournamentEditFormSchema in lib/validation-schema.ts
-// (edit). Messages name the field as its label does, and a missing value
-// reads "… is required" in place of zod's default message.
-const NAME_REQUIRED = 'Tournament name is required';
-const ABBREVIATION_REQUIRED = 'Tournament abbreviation is required';
-const FORUM_POST_URL_REQUIRED = 'Forum post URL is required';
+// (edit), with their shared messages from tournamentMessages.ts. Messages
+// name the field as its label does, and a missing value reads "… is required".
 const FORUM_POST_URL_PATTERN =
   /^(https:\/\/osu\.ppy\.sh\/(community\/forums\/topics\/\d+|wiki\/en\/Tournaments\/[^?#]*))(\?.*)?$/;
 const FORUM_POST_URL_PREFIXES = [
@@ -316,21 +368,18 @@ const FORUM_POST_URL_PREFIXES = [
 
 /** The edit dialog's rule: a link under either prefix. */
 function validateEditedForumPostUrl(value: string) {
-  if (value.trim() === '') return FORUM_POST_URL_REQUIRED;
+  if (value.trim() === '') return FORUM_POST_URL_REQUIRED_MESSAGE;
   return (
     FORUM_POST_URL_PREFIXES.some((prefix) => value.startsWith(prefix)) ||
-    'Forum post URL must be from "https://osu.ppy.sh/community/forums/topics/" or "https://osu.ppy.sh/wiki/en/Tournaments/"'
+    FORUM_POST_URL_PREFIX_MESSAGE
   );
 }
 
 /** The submission form's rule: a forum topic or a tournament wiki page. */
 function validateSubmittedForumPostUrl(value: string) {
   const url = value.trim();
-  if (url === '') return FORUM_POST_URL_REQUIRED;
-  return (
-    FORUM_POST_URL_PATTERN.test(url) ||
-    "Forum post URL must be from osu.ppy.sh forums or the osu! wiki's tournaments section"
-  );
+  if (url === '') return FORUM_POST_URL_REQUIRED_MESSAGE;
+  return FORUM_POST_URL_PATTERN.test(url) || FORUM_POST_URL_SOURCE_MESSAGE;
 }
 
 type EditValues = { abbreviation: string; name: string; forumUrl: string };
@@ -389,7 +438,7 @@ function EditTournamentDialog({
           <FormField
             control={form.control}
             name="abbreviation"
-            rules={{ required: ABBREVIATION_REQUIRED }}
+            rules={{ required: TOURNAMENT_ABBREVIATION_REQUIRED_MESSAGE }}
             render={({ field }) => (
               <FormItem>
                 <FormFieldLabel>Abbreviation</FormFieldLabel>
@@ -403,7 +452,7 @@ function EditTournamentDialog({
           <FormField
             control={form.control}
             name="name"
-            rules={{ required: NAME_REQUIRED }}
+            rules={{ required: TOURNAMENT_NAME_REQUIRED_MESSAGE }}
             render={({ field }) => (
               <FormItem className="sm:col-span-2">
                 <FormFieldLabel>Name</FormFieldLabel>
@@ -464,7 +513,6 @@ function AdminMenuDemo() {
         }
         adminActions={
           <AdminMenu
-            title="Break The Meta Cup"
             notification="Has admin notes"
             actions={[
               {
@@ -557,7 +605,7 @@ function AdminMenuDemo() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title="Delete this tournament?"
-        description={DELETE_DESCRIPTION}
+        description={DELETE_CASCADE_DESCRIPTION}
         confirmLabel="Delete tournament"
         pendingLabel="Deleting…"
         onConfirm={() => wait(1200)}
@@ -614,9 +662,6 @@ function OnArtDemo() {
               {
                 label: 'Edit beatmap data',
                 icon: PencilLine,
-                disabled: true,
-                description:
-                  'Only beatmaps the osu! API no longer serves can be edited by hand',
               },
             ]}
           />
@@ -630,19 +675,29 @@ function OnArtDemo() {
         {ART}
         <div className="absolute inset-0 bg-black/60" aria-hidden />
         <div className="relative flex items-center justify-between gap-2">
-          <span className="text-sm text-white/80">Team vs · ScoreV2</span>
+          <span className="text-sm text-white/80">Team Vs · ScoreV2</span>
           <RowActionsMenu
             onArt
             itemName="HAELEQUIN [alacat's Light Insane]"
             actions={[
-              { label: 'Edit game', icon: PencilLine, onSelect: () => {} },
-              { label: 'Admin notes', icon: NotebookPen, onSelect: () => {} },
+              { label: 'Report an issue', icon: Flag, onSelect: () => {} },
               {
                 label: 'View audit history',
                 icon: History,
                 href: '#controls-on-art',
               },
-              { label: 'Report an issue', icon: Flag, onSelect: () => {} },
+              {
+                label: 'Edit game',
+                icon: PencilLine,
+                group: 'admin',
+                onSelect: () => {},
+              },
+              {
+                label: 'Admin notes',
+                icon: NotebookPen,
+                group: 'admin',
+                onSelect: () => {},
+              },
               {
                 label: 'Merge games',
                 icon: GitMerge,
@@ -669,17 +724,17 @@ function OnArtDemo() {
 const GAMES = [
   {
     name: 'Hidden Chamber [Insane]',
-    detail: 'Team vs · HR · 3:12',
+    detail: 'Team Vs · HR · 3:12',
     status: VerificationStatus.Verified,
   },
   {
     name: 'Kokoro no Kakera [Extra]',
-    detail: 'Team vs · DT · 2:48',
+    detail: 'Team Vs · DT · 2:48',
     status: VerificationStatus.PreRejected,
   },
   {
-    name: 'Ghost Rule [Tiebreaker]',
-    detail: 'Team vs · FM · 4:05',
+    name: 'Arigatou Sayonara (PSYQUI Remix) [Tiebreaker]',
+    detail: 'Team Vs · FM · 4:05',
     status: VerificationStatus.None,
   },
 ];
@@ -692,7 +747,7 @@ function RowActionsDemo() {
       <Panel>
         <SectionHeader icon={Swords} title="Games" meta="3 games" />
         <RowList>
-          {GAMES.map((game) => (
+          {GAMES.map((game, index) => (
             <RowListItem
               key={game.name}
               leading={
@@ -710,21 +765,26 @@ function RowActionsDemo() {
               trailing={
                 <RowActionsMenu
                   itemName={game.name}
+                  notification={index === 0 ? 'Has admin notes' : undefined}
                   actions={[
+                    {
+                      label: 'View audit history',
+                      icon: History,
+                      href: '#controls-row-actions-menu',
+                    },
                     {
                       label: 'Edit game',
                       icon: PencilLine,
+                      group: 'admin',
                       onSelect: () => {},
                     },
                     {
                       label: 'Admin notes',
                       icon: NotebookPen,
+                      group: 'admin',
+                      trailing:
+                        index === 0 ? <Badge size="sm">1</Badge> : undefined,
                       onSelect: () => {},
-                    },
-                    {
-                      label: 'View audit history',
-                      icon: History,
-                      href: '#controls-row-actions-menu',
                     },
                     {
                       label: 'Merge games',
@@ -751,12 +811,63 @@ function RowActionsDemo() {
           if (!open) setDeleting(null);
         }}
         title="Delete this game?"
-        description={DELETE_DESCRIPTION}
+        description={DELETE_CASCADE_DESCRIPTION}
         confirmLabel="Delete game"
         pendingLabel="Deleting…"
         onConfirm={() => wait(1000)}
       />
     </>
+  );
+}
+
+/** An ActionMenu with a header: the account menu's avatar, name and role. */
+function ActionMenuHeaderDemo() {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <ActionMenu
+        data-testid="gallery-action-menu-content"
+        header={
+          <span className="flex items-center gap-3">
+            <Avatar className="size-9 ring-1 ring-border">
+              <AvatarFallback className="font-medium">A</AvatarFallback>
+            </Avatar>
+            <span className="flex min-w-0 flex-col items-start gap-1">
+              <span className="max-w-full truncate font-semibold">apricot</span>
+              <Badge size="sm">
+                <ShieldCheck aria-hidden />
+                Admin
+              </Badge>
+            </span>
+          </span>
+        }
+        actions={[
+          { label: 'My profile', icon: User, href: '#controls-action-menu' },
+          { label: 'Settings', icon: Settings, href: '#controls-action-menu' },
+          {
+            label: 'My reports',
+            icon: Flag,
+            href: '#controls-action-menu',
+            trailing: <NotificationDot label="Unread report updates" />,
+          },
+          {
+            label: 'Log out',
+            icon: LogOut,
+            group: 'session',
+            onSelect: () => {},
+          },
+        ]}
+        trigger={
+          <Button variant="ghost" size="sm">
+            apricot
+            <ChevronDown
+              className="-mr-0.5 text-muted-foreground"
+              aria-hidden
+            />
+          </Button>
+        }
+      />
+      <Caption>The header sits above the items and is not focusable.</Caption>
+    </div>
   );
 }
 
@@ -799,7 +910,7 @@ function DialogAnatomy({
       <DialogFooterStrip start={footerStart}>{footer}</DialogFooterStrip>
       {closable ? (
         <div className="absolute top-3 right-4">
-          <IconButton label="Close" icon={X} />
+          <IconButton label="Close" icon={X} tooltip={false} />
         </div>
       ) : null}
     </div>
@@ -856,7 +967,7 @@ function ConfirmDialogDemo() {
         }
       >
         <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-          {DELETE_DESCRIPTION}
+          {DELETE_CASCADE_DESCRIPTION}
         </div>
       </DialogAnatomy>
       <div className="flex flex-wrap gap-2">
@@ -867,7 +978,7 @@ function ConfirmDialogDemo() {
             </Button>
           }
           title="Delete this tournament?"
-          description={DELETE_DESCRIPTION}
+          description={DELETE_CASCADE_DESCRIPTION}
           confirmLabel="Delete tournament"
           pendingLabel="Deleting…"
           onConfirm={() => wait(1200)}
@@ -892,7 +1003,7 @@ function ConfirmDialogDemo() {
             </Button>
           }
           title="Delete this match?"
-          description={DELETE_DESCRIPTION}
+          description={DELETE_CASCADE_DESCRIPTION}
           confirmLabel="Delete match"
           pendingLabel="Deleting…"
           errorText="Failed to delete match"
@@ -920,10 +1031,10 @@ const LOBBY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8];
 
 /** Validates a whole-number rank restriction of at least 1. */
 function validateRankRestriction(value: string) {
-  if (value.trim() === '') return 'Rank restriction is required';
+  if (value.trim() === '') return RANK_RESTRICTION_REQUIRED_MESSAGE;
   const rank = Number(value);
-  if (!Number.isInteger(rank)) return 'Rank restriction must be a whole number';
-  return rank >= 1 || 'Rank restriction must be at least 1';
+  if (!Number.isInteger(rank)) return RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE;
+  return rank >= 1 || RANK_RESTRICTION_MINIMUM_MESSAGE;
 }
 
 // The submission form's link formats: an ID or an osu! URL on each line.
@@ -943,16 +1054,15 @@ function parseLinkIds(value: string, pattern: RegExp, maxId = Infinity) {
   });
 }
 
-/**
- * The submission schema's checks on a list of links. Its limit message,
- * "Submit at most 1000 matches", is reworded as a statement.
- */
+/** The submission schema's checks on a list of links, with its messages. */
 function validateLinkIds(ids: number[], noun: 'match' | 'beatmap') {
   if (ids.some((id) => id === 0)) {
     return `All ${noun} links must be valid osu! ${noun} IDs or URLs`;
   }
   if (ids.length > MAX_SUBMISSION_IDS) {
-    return `${noun === 'match' ? 'Matches' : 'Beatmaps'} cannot exceed ${formatCount(MAX_SUBMISSION_IDS)}`;
+    return noun === 'match'
+      ? maxMatchIdsMessage(MAX_SUBMISSION_IDS)
+      : maxBeatmapIdsMessage(MAX_SUBMISSION_IDS);
   }
   return (
     new Set(ids).size === ids.length || `Duplicate ${noun} IDs are not allowed`
@@ -989,7 +1099,7 @@ function FormLayoutDemo() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        icon={Trophy}
+        icon={Upload}
         title="Tournament submission"
         description="Use this form to submit a new tournament for verification and tracking."
         actions={
@@ -1019,7 +1129,7 @@ function FormLayoutDemo() {
               <FormField
                 control={form.control}
                 name="abbreviation"
-                rules={{ required: 'Tournament abbreviation is required' }}
+                rules={{ required: TOURNAMENT_ABBREVIATION_REQUIRED_MESSAGE }}
                 render={({ field }) => (
                   <FormItem>
                     <FormFieldLabel info={ABBREVIATION_INFO}>
@@ -1035,12 +1145,10 @@ function FormLayoutDemo() {
               <FormField
                 control={form.control}
                 name="name"
-                rules={{ required: 'Tournament name is required' }}
+                rules={{ required: TOURNAMENT_NAME_REQUIRED_MESSAGE }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel info="Full tournament name (e.g. osu! World Cup 2024)">
-                      Name
-                    </FormFieldLabel>
+                    <FormFieldLabel>Name</FormFieldLabel>
                     <FormControl>
                       <Input placeholder="osu! World Cup 2024" {...field} />
                     </FormControl>
@@ -1069,12 +1177,10 @@ function FormLayoutDemo() {
               <FormField
                 control={form.control}
                 name="ruleset"
-                rules={{ required: 'Ruleset is required' }}
+                rules={{ required: RULESET_REQUIRED_MESSAGE }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel info="Game mode the tournament is played in">
-                      Ruleset
-                    </FormFieldLabel>
+                    <FormFieldLabel>Ruleset</FormFieldLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger className="w-full">
@@ -1096,7 +1202,7 @@ function FormLayoutDemo() {
               <FormField
                 control={form.control}
                 name="lobbySize"
-                rules={{ required: 'Lobby size is required' }}
+                rules={{ required: LOBBY_SIZE_REQUIRED_MESSAGE }}
                 render={({ field }) => (
                   <FormItem>
                     <FormFieldLabel info="Number of players per team in each match">
@@ -1160,10 +1266,7 @@ function FormLayoutDemo() {
                 }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel
-                      info="osu! match IDs or URLs"
-                      hint="One per line"
-                    >
+                    <FormFieldLabel hint="IDs or URLs, one per line">
                       Matches
                     </FormFieldLabel>
                     <FormControl>
@@ -1189,10 +1292,7 @@ function FormLayoutDemo() {
                 }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormFieldLabel
-                      info="osu! beatmap IDs or URLs"
-                      hint="One per line"
-                    >
+                    <FormFieldLabel hint="IDs or URLs, one per line">
                       Beatmaps
                     </FormFieldLabel>
                     <FormControl>
@@ -1245,7 +1345,7 @@ function FormFieldLabelDemo() {
 
   React.useEffect(() => {
     setError('rankRangeLowerBound', {
-      message: 'Rank restriction must be a whole number',
+      message: RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE,
     });
   }, [setError]);
 
@@ -1295,8 +1395,75 @@ function FormFieldLabelDemo() {
             </FormItem>
           )}
         />
+        <PlainFieldLabelDemo />
+        <GroupFieldLabelDemo />
       </div>
     </Form>
+  );
+}
+
+/** A label outside react-hook-form: `htmlFor` with the control's id. */
+function PlainFieldLabelDemo() {
+  const id = React.useId();
+  const [lobbySize, setLobbySize] = React.useState('');
+  return (
+    <div className="flex flex-col gap-2 border-t pt-4">
+      <FormFieldLabel
+        htmlFor={id}
+        info="Number of players per team in each match"
+        hint="htmlFor, no form"
+      >
+        Lobby size
+      </FormFieldLabel>
+      <Select value={lobbySize} onValueChange={setLobbySize}>
+        <SelectTrigger id={id} className="w-full">
+          <SelectValue placeholder="Any" />
+        </SelectTrigger>
+        <SelectContent>
+          {LOBBY_SIZES.map((size) => (
+            <SelectItem key={size} value={String(size)}>
+              {formatLobbySize(size)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+const PRIORITIES = ['Low', 'Normal', 'High'] as const;
+
+/**
+ * A label for a group of controls, as the admin home's Priority: `groupId`
+ * on the label and `aria-labelledby` on the RadioGroup.
+ */
+function GroupFieldLabelDemo() {
+  const labelId = React.useId();
+  const [priority, setPriority] = React.useState<string>('Normal');
+  return (
+    <div className="flex flex-col gap-2 border-t pt-4">
+      <FormFieldLabel groupId={labelId} hint="groupId, a radio group">
+        Priority
+      </FormFieldLabel>
+      <RadioGroup
+        aria-labelledby={labelId}
+        value={priority}
+        onValueChange={setPriority}
+        className="flex flex-wrap gap-4"
+      >
+        {PRIORITIES.map((option) => (
+          <div key={option} className="flex items-center gap-2">
+            <RadioGroupItem value={option} id={`${labelId}-${option}`} />
+            <Label
+              htmlFor={`${labelId}-${option}`}
+              className="cursor-pointer font-normal"
+            >
+              {option}
+            </Label>
+          </div>
+        ))}
+      </RadioGroup>
+    </div>
   );
 }
 
@@ -1326,10 +1493,28 @@ export default function ControlsSection() {
       </Specimen>
 
       <Specimen
+        id="controls-button-wrap"
+        name="Button with a long label"
+        importPath={`${KIT}/Button`}
+        description="A label that can be longer than a phone is wide, such as a cascade level's counts in the audit log, wraps with wrap: the size's height becomes the minimum and the label aligns left."
+      >
+        <div className="flex max-w-52 flex-wrap gap-2">
+          <Button variant="outline" size="sm" wrap>
+            46 matches: 45 verified, 1 rejected
+            <ChevronDown aria-hidden />
+          </Button>
+          <Button variant="outline" size="sm" wrap>
+            12 games
+            <ChevronDown aria-hidden />
+          </Button>
+        </div>
+      </Specimen>
+
+      <Specimen
         id="controls-icon-button"
         name="IconButton"
         importPath={`${KIT}/IconButton`}
-        description="Every icon-only control: an accessible name, a tooltip that repeats it, and a hover fill. Small and ghost unless it sits beside inputs."
+        description="Every icon-only control: an accessible name, a tooltip that repeats it (except an X that closes or clears, with tooltip={false}), and a hover fill. Small and ghost unless it sits beside inputs. The fill stays while a menu or dialog it opens is open; a disclosure toggle (expanded) for a row that expands in place sets aria-expanded and keeps its resting look."
       >
         <IconButtons />
       </Specimen>
@@ -1348,10 +1533,19 @@ export default function ControlsSection() {
         id="controls-row-actions-menu"
         name="RowActionsMenu"
         importPath={`${KIT}/RowActionsMenu`}
-        description="One overflow button at the end of a row or card in place of a cluster of icons, such as each game on a match page."
+        description="One overflow button at the end of a row or card in place of a cluster of icons, such as each game on a match page. itemName names each button, so keep it unique per row, and heads the menu, truncated at the width the items set, as on the last game. A notification puts the dot on the button and its text in the button's name, as on the first game."
         stacked
       >
         <RowActionsDemo />
+      </Specimen>
+
+      <Specimen
+        id="controls-action-menu"
+        name="ActionMenu with a header"
+        importPath={`${KIT}/ActionMenu`}
+        description="The menu AdminMenu and RowActionsMenu are built on, for another trigger. Its header holds richer content than a title, such as an avatar with a name and role; AdminMenu passes it through. Menus open in the page's theme."
+      >
+        <ActionMenuHeaderDemo />
       </Specimen>
 
       <Specimen
@@ -1396,7 +1590,7 @@ export default function ControlsSection() {
         id="controls-form-field-label"
         name="FormFieldLabel"
         importPath={`${KIT}/FormFieldLabel`}
-        description="A field label with the info button for help and an optional muted hint. Labels keep one height, so inputs side by side line up, and turn red with the field's error."
+        description="A field label with the info button for help and an optional muted hint. Labels keep one height, so inputs side by side line up, and turn red with the field's error. Outside a react-hook-form field, pass htmlFor with the control's id; for a radio group, groupId with the group's aria-labelledby (the last two examples)."
       >
         <FormFieldLabelDemo />
       </Specimen>

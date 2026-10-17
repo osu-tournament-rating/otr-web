@@ -12,7 +12,7 @@ import {
   sql,
 } from 'drizzle-orm';
 import * as schema from '@otr/core/db/schema';
-import { Ruleset, VerificationStatus } from '@otr/core/osu';
+import { VerificationStatus } from '@otr/core/osu';
 
 import {
   BeatmapListRequestSchema,
@@ -28,6 +28,10 @@ import {
   filterBeatmapModDistribution,
 } from '@/lib/utils/mods';
 import { publicProcedure } from './base';
+import {
+  buildBeatmapRulesetCondition,
+  collectRulesets,
+} from './shared/rulesetFilter';
 
 const DEFAULT_MAX_SR = 200;
 
@@ -86,17 +90,11 @@ export const listBeatmaps = publicProcedure
         filters.push(gte(schema.beatmaps.totalLength, input.minLength));
       if (input.maxLength !== undefined)
         filters.push(lte(schema.beatmaps.totalLength, input.maxLength));
-      if (
-        input.ruleset === Ruleset.Mania4k ||
-        input.ruleset === Ruleset.Mania7k
-      ) {
-        // Mirrors getBeatmapDisplayRuleset; \y is Postgres's word boundary
-        const keyPattern = input.ruleset === Ruleset.Mania4k ? '4k' : '7k';
-        filters.push(
-          sql`(${schema.beatmaps.ruleset} = ${input.ruleset} OR (${schema.beatmaps.ruleset} = ${Ruleset.ManiaOther} AND ${schema.beatmaps.diffName} ~* ${`\\y${keyPattern}\\y`}))`
-        );
-      } else if (input.ruleset !== undefined) {
-        filters.push(eq(schema.beatmaps.ruleset, input.ruleset));
+      const rulesetCondition = buildBeatmapRulesetCondition(
+        collectRulesets(input.ruleset, input.rulesets)
+      );
+      if (rulesetCondition) {
+        filters.push(rulesetCondition);
       }
 
       if (input.minGameCount !== undefined) {

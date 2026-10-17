@@ -5,40 +5,55 @@ import {
   AlertCircle,
   ArrowLeft,
   ChartNoAxesColumn,
+  ChevronDown,
   ClipboardList,
+  Clock,
   Compass,
   Copy,
   Flag,
   Gauge,
   History,
   Lock,
+  Medal,
   Music,
   RefreshCw,
   ShieldAlert,
   ShieldQuestion,
+  SlidersHorizontal,
   Trash2,
   Trophy,
   Users,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import { GallerySection, Specimen } from '../gallery';
+import { SiteBannerContent } from '@/components/banner/SiteBanner';
 import SectionError from '@/components/error/SectionError';
 import { Button } from '@/components/kit/controls/Button';
 import { Callout } from '@/components/kit/feedback/Callout';
 import { CalloutChip } from '@/components/kit/feedback/CalloutChip';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import {
+  ChartPlotSkeleton,
+  HeroTabsSkeleton,
+  ListToolbarSkeleton,
+  LoadMoreSkeleton,
   PanelSkeleton,
   PhoneRowListSkeleton,
   RowListSkeleton,
+  RulesetSwitchSkeleton,
   SectionHeaderSkeleton,
+  SkeletonBlock,
+  SkeletonText,
   StatTileGridSkeleton,
   TableSkeleton,
   type TableSkeletonColumn,
 } from '@/components/kit/feedback/Skeletons';
 import { StatusPage } from '@/components/kit/feedback/StatusPage';
+import { RatingDelta } from '@/components/kit/format/RatingDelta';
+import { HeroTabs } from '@/components/kit/layout/HeroTabs';
+import { PageHeader } from '@/components/kit/layout/PageHeader';
 import { Panel, PanelBody } from '@/components/kit/layout/Panel';
 import { RowList, RowListItem } from '@/components/kit/layout/RowList';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
@@ -54,17 +69,24 @@ import {
   DataTableRow,
 } from '@/components/kit/tables/DataTable';
 import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { LoadMore } from '@/components/kit/tables/LoadMore';
 import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { ActiveFilterChips } from '@/components/kit/lists/ActiveFilterChips';
+import { FilterButton } from '@/components/kit/lists/FilterButton';
 import { ListToolbar } from '@/components/kit/lists/ListToolbar';
 import { RulesetChips } from '@/components/kit/lists/RulesetChips';
+import { RulesetSwitch } from '@/components/kit/lists/RulesetSwitch';
 import { ScopeSwitch } from '@/components/kit/lists/ScopeSwitch';
+import { SearchField } from '@/components/kit/lists/SearchField';
+import { SortControl } from '@/components/kit/lists/SortControl';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { seriesColor } from '@/lib/kit/color/categorical';
 import { formatLobbySize } from '@/lib/kit/format/fields';
 import { formatCountOf } from '@/lib/kit/format/number';
 import { formatChoiceFilterLabel } from '@/lib/kit/lists/filters';
+import { cn } from '@/lib/utils';
 
 const KIT = '@/components/kit/feedback';
 
@@ -333,6 +355,7 @@ function CompactErrorDemo() {
 }
 
 function InlineErrorDemo() {
+  const reasonId = useId();
   const list = useRetryDemo(false);
   const row = useRetryDemo(false);
   const field = useRetryDemo(false);
@@ -376,7 +399,7 @@ function InlineErrorDemo() {
       <Panel>
         <SectionHeader icon={Flag} title="Report a data issue" />
         <PanelBody className="flex flex-col gap-2">
-          <Label htmlFor="feedback-report-reason">
+          <Label htmlFor={reasonId}>
             Reason{' '}
             <span aria-hidden="true" className="text-destructive-foreground">
               *
@@ -385,7 +408,7 @@ function InlineErrorDemo() {
           </Label>
           <Select disabled>
             <SelectTrigger
-              id="feedback-report-reason"
+              id={reasonId}
               aria-required="true"
               className="w-full"
             >
@@ -403,6 +426,9 @@ function InlineErrorDemo() {
     </div>
   );
 }
+
+const TIER_BREAKDOWN_INFO =
+  "Charts NM, HD, HR and DT scores only, grouped by each player's pre-match rating at the time of play. Tiers with fewer than 5 scores are hidden.";
 
 function OverviewSkeletonDemo() {
   const [loading, setLoading] = useState(true);
@@ -431,6 +457,354 @@ function OverviewSkeletonDemo() {
               <StatTile label="Matches" value="312" sub="Win rate 58.3%" />
             </StatTileGrid>
           </PanelBody>
+        </Panel>
+      )}
+      {/* The real info button, and a meta bar as wide as the loaded meta,
+          so the strip wraps on a phone where the loaded one does. */}
+      {loading ? (
+        <PanelSkeleton className="h-40">
+          <SectionHeaderSkeleton
+            icon={Medal}
+            title="Tier breakdown"
+            infoText={TIER_BREAKDOWN_INFO}
+            meta="w-40"
+          />
+        </PanelSkeleton>
+      ) : (
+        <Panel className="h-40">
+          <SectionHeader
+            icon={Medal}
+            title="Tier breakdown"
+            infoText={TIER_BREAKDOWN_INFO}
+            meta="1,368 of 1,368 scores rated"
+          />
+        </Panel>
+      )}
+    </div>
+  );
+}
+
+/**
+ * An audit history's header, whose name and description follow the entity:
+ * SkeletonText keeps each line's height inside the real PageHeader, and
+ * SkeletonBlock stands in for the 36px button.
+ */
+function TextSkeletonDemo() {
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <LoadToggle loading={loading} onChange={setLoading} />
+      {loading ? (
+        <PageHeader
+          icon={History}
+          title={<SkeletonText className="h-7 w-56" />}
+          description={<SkeletonText className="w-40" />}
+          // Page actions stack full width on phones.
+          actions={<SkeletonBlock className="h-9 w-full sm:w-28" />}
+        />
+      ) : (
+        <PageHeader
+          icon={History}
+          title="Break The Meta Cup"
+          description="Tournament #401"
+          actions={
+            <Button variant="outline" icon={Flag}>
+              Report
+            </Button>
+          }
+        />
+      )}
+    </div>
+  );
+}
+
+/** The tournament list's toolbar, loading and loaded. */
+function ToolbarSkeletonDemo() {
+  const [loading, setLoading] = useState(true);
+  const [rulesets, setRulesets] = useState<Ruleset[]>([]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <LoadToggle loading={loading} onChange={setLoading} />
+      {loading ? (
+        <PanelSkeleton label="Loading tournaments">
+          <ListToolbarSkeleton search sort filters rulesets={6} count />
+          <RowListSkeleton rows={2} leading="none" />
+        </PanelSkeleton>
+      ) : (
+        <Panel>
+          <ListToolbar
+            label="Search and filter tournaments"
+            search={
+              <SearchField
+                label="Search tournaments by name or abbreviation"
+                placeholder="Name or abbreviation"
+                value=""
+                onSearch={() => {}}
+              />
+            }
+            sort={
+              <SortControl
+                label="Sort tournaments by"
+                options={[{ value: 'endTime', label: 'End date' }]}
+                value={{ key: 'endTime', direction: 'desc' }}
+                onValueChange={() => {}}
+              />
+            }
+            filters={<FilterButton count={0} />}
+            rulesets={
+              <RulesetChips value={rulesets} onValueChange={setRulesets} />
+            }
+            count={formatCountOf(1_284, 'tournament')}
+          />
+          <TournamentRows tournaments={TOURNAMENTS.slice(0, 2)} />
+        </Panel>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A RulesetSwitch list, as on the leaderboard: no All chip, so the blocks
+ * take each ruleset's width (`rulesetsAll={false}`).
+ */
+function SwitchToolbarSkeletonDemo() {
+  const [loading, setLoading] = useState(true);
+  const [ruleset, setRuleset] = useState<Ruleset>(Ruleset.Osu);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <LoadToggle loading={loading} onChange={setLoading} />
+      {loading ? (
+        <PanelSkeleton label="Loading leaderboard">
+          <ListToolbarSkeleton search rulesets={5} rulesetsAll={false} count />
+          <RowListSkeleton rows={2} />
+        </PanelSkeleton>
+      ) : (
+        <Panel>
+          <ListToolbar
+            label="Search and filter players"
+            search={
+              <SearchField
+                label="Search players"
+                placeholder="Search by username"
+                value=""
+                onSearch={() => {}}
+              />
+            }
+            rulesets={
+              <RulesetSwitch value={ruleset} onValueChange={setRuleset} />
+            }
+            count={formatCountOf(12_483, 'player')}
+          />
+          <RowList>
+            {PLAYERS.slice(0, 2).map((player) => (
+              <RowListItem
+                key={player.name}
+                leading={<PlayerAvatar name={player.name} />}
+                title={player.name}
+                description={player.country}
+                trailing={
+                  <span className="font-semibold">{player.rating}</span>
+                }
+              />
+            ))}
+          </RowList>
+        </Panel>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A chart panel with a RulesetSwitch strip, as on the stats page: the real
+ * header, RulesetSwitchSkeleton, and ChartPlotSkeleton as tall as the plot.
+ */
+function ChartSkeletonDemo() {
+  const [loading, setLoading] = useState(true);
+  const [ruleset, setRuleset] = useState<Ruleset>(Ruleset.Osu);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <LoadToggle loading={loading} onChange={setLoading} />
+      {loading ? (
+        <PanelSkeleton label="Loading rating distribution">
+          <SectionHeaderSkeleton
+            icon={ChartNoAxesColumn}
+            title="Rating distribution"
+            meta="w-22"
+          />
+          <RulesetSwitchSkeleton className="border-b px-4 py-3" />
+          <div className="p-4">
+            <ChartPlotSkeleton className="h-40" />
+          </div>
+        </PanelSkeleton>
+      ) : (
+        <Panel>
+          <SectionHeader
+            icon={ChartNoAxesColumn}
+            title="Rating distribution"
+            meta={formatCountOf(8_412, 'player')}
+          />
+          <div className="border-b px-4 py-3">
+            <RulesetSwitch value={ruleset} onValueChange={setRuleset} />
+          </div>
+          <div className="p-4">
+            <div className="flex h-40 items-end gap-1">
+              {[18, 34, 62, 88, 100, 74, 46, 28, 14, 6].map((height) => (
+                <span
+                  key={height}
+                  className="flex-1 rounded-t-sm"
+                  style={{
+                    height: `${height}%`,
+                    backgroundColor: seriesColor(0),
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </Panel>
+      )}
+    </div>
+  );
+}
+
+/**
+ * An audit history's panel, whose tabs sit at its top: HeroTabsSkeleton
+ * with the real labels, then the toolbar.
+ */
+function TabsSkeletonDemo() {
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <LoadToggle loading={loading} onChange={setLoading} />
+      {loading ? (
+        <PanelSkeleton label="Loading audit history">
+          <HeroTabsSkeleton
+            labels={['Tournament', 'Matches']}
+            className="border-b"
+          />
+          <ListToolbarSkeleton leading="w-44" count />
+        </PanelSkeleton>
+      ) : (
+        <Panel>
+          <HeroTabs
+            aria-label="Audit history views"
+            value="tournament"
+            className="border-b"
+            items={[
+              {
+                value: 'tournament',
+                label: 'Tournament',
+                href: '#feedback-skeleton-tabs',
+              },
+              {
+                value: 'matches',
+                label: 'Matches',
+                href: '#feedback-skeleton-tabs',
+              },
+            ]}
+          />
+          <ListToolbar
+            label="Filter audit events"
+            leading={
+              <span className="flex h-10 items-center text-sm font-medium">
+                Show system events
+              </span>
+            }
+            count={formatCountOf(214, 'event')}
+          />
+        </Panel>
+      )}
+    </div>
+  );
+}
+
+const HISTORY = [
+  { name: 'Corsace Open 2025', record: '5–2', change: 18.7 },
+  { name: 'Oceania Taiko Cup 2026', record: '3–3', change: -4.2 },
+];
+
+/**
+ * Rows that stack on phones, as the profile's tournament history: the name
+ * and a detail line, then small stats and a toggle, under the text on a
+ * phone and on the right from `sm`; a "Show more" footer under them.
+ */
+function StackedRowsSkeletonDemo() {
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <LoadToggle loading={loading} onChange={setLoading} />
+      {loading ? (
+        <PanelSkeleton label="Loading tournament history">
+          <SectionHeaderSkeleton icon={Trophy} title="Tournament history" />
+          <RowListSkeleton
+            rows={HISTORY.length}
+            leading="none"
+            stats={2}
+            statsAction
+          />
+          <LoadMoreSkeleton />
+        </PanelSkeleton>
+      ) : (
+        <Panel>
+          <SectionHeader
+            icon={Trophy}
+            title="Tournament history"
+            meta={formatCountOf(14, 'tournament')}
+          />
+          <RowList>
+            {HISTORY.map((tournament) => (
+              <RowListItem key={tournament.name}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                  <div className="min-w-0 flex-1">
+                    <h3 className={typeScale.rowTitle}>
+                      <EntityLink href="#feedback-skeleton-rows">
+                        {tournament.name}
+                      </EntityLink>
+                    </h3>
+                    <p className={cn('mt-1', typeScale.bodyMuted)}>
+                      osu! · 4v4 · 2025
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 sm:justify-end">
+                    <dl className="flex items-center gap-4">
+                      <div className="min-w-14 sm:text-right">
+                        <dt className="text-xs text-muted-foreground">
+                          Matches
+                        </dt>
+                        <dd className="text-sm font-semibold tabular-nums">
+                          {tournament.record}
+                        </dd>
+                      </div>
+                      <div className="min-w-14 sm:text-right">
+                        <dt className="text-xs text-muted-foreground">
+                          Rating
+                        </dt>
+                        <dd className="text-sm font-semibold">
+                          <RatingDelta value={tournament.change} />
+                        </dd>
+                      </div>
+                    </dl>
+                    <Button variant="ghost" size="sm" className="gap-1">
+                      Matches
+                      <ChevronDown aria-hidden />
+                    </Button>
+                  </div>
+                </div>
+              </RowListItem>
+            ))}
+          </RowList>
+          <LoadMore
+            label="Show more"
+            hasMore
+            shownCount={HISTORY.length}
+            totalCount={14}
+            onLoadMore={() => {}}
+          />
         </Panel>
       )}
     </div>
@@ -486,7 +860,10 @@ function TableSkeletonDemo() {
           <TableSkeleton
             columns={REPORT_COLUMNS}
             rows={REPORTS.length}
-            phoneRows={<PhoneRowListSkeleton rows={REPORTS.length} />}
+            phoneRows={
+              // The loaded phone rows end in a 20px status badge.
+              <PhoneRowListSkeleton rows={REPORTS.length} value="badge" />
+            }
           />
         </PanelSkeleton>
       ) : (
@@ -554,6 +931,7 @@ function TableSkeletonDemo() {
   );
 }
 
+/** The art behind app/not-found.tsx, with the same image classes. */
 function NotFoundBackground() {
   return (
     <Image
@@ -561,7 +939,10 @@ function NotFoundBackground() {
       alt=""
       fill
       sizes="100vw"
-      className="object-contain object-top sm:object-cover sm:object-center"
+      // The art is empty in the middle. Always show all of it: cropped, the
+      // outer shapes end in a hard edge at the column's sides. On phones it
+      // sits at the top, so the shapes flank the icon and stay off the text.
+      className="object-contain object-top sm:object-center"
     />
   );
 }
@@ -620,7 +1001,7 @@ export default function FeedbackSection() {
         id="feedback-section-error-inline"
         name="SectionError, inline"
         importPath="@/components/error/SectionError"
-        description="The inline size is one line with Try again beside it, for a failure inside a list, an expanded row or a form field. It replaces the hand-built Retry rows."
+        description="The inline size is one line with Try again beside it, for a failure inside content that otherwise loaded: the next batch of a feed, an expanded row or a form field's options. The loaded rows stay above it."
       >
         <InlineErrorDemo />
       </Specimen>
@@ -629,7 +1010,7 @@ export default function FeedbackSection() {
         id="feedback-skeleton-panel"
         name="PanelSkeleton, SectionHeaderSkeleton and StatTileGridSkeleton"
         importPath={`${KIT}/Skeletons`}
-        description="Loading screens are built from the same panels as the page, with the real static titles, so nothing shifts when the data arrives. Switch between the two states."
+        description="Loading screens are built from the same panels as the page, with the real static titles, so nothing shifts when the data arrives. A loading header keeps the loaded one's info button and a meta bar as wide as its meta. Switch between the two states."
       >
         <div className="flex flex-col gap-4">
           <OverviewSkeletonDemo />
@@ -641,19 +1022,62 @@ export default function FeedbackSection() {
         id="feedback-skeleton-table"
         name="TableSkeleton and PhoneRowListSkeleton"
         importPath={`${KIT}/Skeletons`}
-        description="A DataTable while it loads: the real header strip and the loaded table's columns. Below tablet width it shows phone rows, as the loaded table does. Switch between the two states."
+        description="A DataTable while it loads: the real header strip and the loaded table's columns. Below tablet width it shows phone rows, as the loaded table does, with a badge, a 32px button or a 32px leading avatar where the loaded rows have one. Switch between the two states."
         stacked
       >
         <TableSkeletonDemo />
       </Specimen>
 
       <Specimen
+        id="feedback-skeleton-toolbar"
+        name="ListToolbarSkeleton"
+        importPath={`${KIT}/Skeletons`}
+        description="A list's toolbar while the list loads: the real strip with a block for each control, on the rows the loaded toolbar puts them, so the rows under it start in the same place. The second list picks one ruleset with a RulesetSwitch, which has no All chip, so its skeleton passes rulesetsAll={false}. Switch between the two states."
+        stacked
+      >
+        <div className="flex flex-col gap-6">
+          <ToolbarSkeletonDemo />
+          <SwitchToolbarSkeletonDemo />
+        </div>
+      </Specimen>
+
+      <Specimen
+        id="feedback-skeleton-tabs"
+        name="HeroTabsSkeleton"
+        importPath={`${KIT}/Skeletons`}
+        description="A tab strip while its page loads: 44px tabs with the real labels when they are static, bars when they follow the data. Inside a panel it takes the loaded strip's border. Switch between the two states."
+      >
+        <TabsSkeletonDemo />
+      </Specimen>
+
+      <Specimen
+        id="feedback-skeleton-chart"
+        name="ChartPlotSkeleton and RulesetSwitchSkeleton"
+        importPath={`${KIT}/Skeletons`}
+        description="A chart panel while it loads: the real header, a RulesetSwitch strip with one block per chip, and the plot as one block as tall as the loaded plot. Switch between the two states."
+      >
+        <ChartSkeletonDemo />
+      </Specimen>
+
+      <Specimen
         id="feedback-skeleton-rows"
         name="RowListSkeleton"
         importPath={`${KIT}/Skeletons`}
-        description="RowList rows while a list loads: leading avatar, cover or nothing, a title and detail line, and the key number."
+        description="RowList rows while a list loads: leading avatar, cover or nothing, a title and detail line, and the key number. Rows that stack on phones, like the profile's tournament history, take stats (under the text on a phone, on the right from sm) and LoadMoreSkeleton for their Show more footer."
       >
-        <RowsSkeletonDemo />
+        <div className="flex flex-col gap-6">
+          <RowsSkeletonDemo />
+          <StackedRowsSkeletonDemo />
+        </div>
+      </Specimen>
+
+      <Specimen
+        id="feedback-skeleton-text"
+        name="SkeletonText and SkeletonBlock"
+        importPath={`${KIT}/Skeletons`}
+        description="For text and controls inside a real component whose content follows the data, such as an audit history's header: SkeletonText is an inline bar that keeps its line's height, SkeletonBlock a block with a control's height, width and corners."
+      >
+        <TextSkeletonDemo />
       </Specimen>
 
       <Specimen
@@ -759,17 +1183,21 @@ export default function FeedbackSection() {
             Permanently delete your account and remove your data from o!TR. Your
             player profile will remain public.
           </Callout>
+          {/* The filter tool's forum post text: hosts paste this exact
+              format, so it keeps its ISO time. */}
           <Callout
             tone="info"
-            title="Filtering information"
+            title="Forum post text"
             action={
               <Button variant="outline" size="sm" icon={Copy}>
-                Copy to clipboard
+                Copy
               </Button>
             }
           >
-            o!TR Filtering performed at: 2026-10-13 18:42:07 UTC (Report ID:
-            4821)
+            <code className="font-sans [overflow-wrap:anywhere]">
+              o!TR Filtering performed at: 2026-10-13 18:42:07 UTC (Report ID:
+              4821)
+            </code>
           </Callout>
         </div>
       </Specimen>
@@ -778,29 +1206,66 @@ export default function FeedbackSection() {
         id="feedback-callout-banner"
         name="Callout, banner"
         importPath={`${KIT}/Callout`}
-        description="The banner variant is the full-width strip under the site header, for site-wide notices such as the weekly maintenance window."
+        description="The banner variant is the full-width strip under the site header, for site-wide notices such as the weekly maintenance window. There is one strip (SiteBannerContent, shown here as the site renders it): the maintenance warning, the signed-out note on its own, or both in the warning during the window, never as a second banner."
         stacked
       >
-        <Callout tone="warning" variant="banner" role="status">
-          Ratings are pending recalculation, performance may be degraded
-        </Callout>
+        <div className="flex flex-col gap-3">
+          <SiteBannerContent maintenance signedIn />
+          <SiteBannerContent maintenance={false} signedIn={false} />
+          <SiteBannerContent maintenance signedIn={false} />
+        </div>
+      </Specimen>
+
+      <Specimen
+        id="feedback-callout-merge"
+        name="Two notices on one page"
+        importPath={`${KIT}/Callout`}
+        description="Never two callouts in a stack. The registrant filtering tool (owner decision, 16 Oct): outside the weekly maintenance window it shows its one notice, Host compliance, above the form. During the window the site banner says the window is on, and the page shows only the notice that the tool is paused, in place of Host compliance and the form; the compliance rules apply only while the tool is on."
+        stacked
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <span className={typeScale.meta}>Outside the window</span>
+            <Callout tone="warning" title="Host compliance">
+              Hosts must comply with the{' '}
+              <a href="#feedback-callout-merge">
+                official tournament support filtering rules
+              </a>
+              .
+            </Callout>
+            <Panel>
+              <SectionHeader icon={SlidersHorizontal} title="Filter criteria" />
+              <PanelBody className={typeScale.bodyMuted}>
+                The filtering form.
+              </PanelBody>
+            </Panel>
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className={typeScale.meta}>During the window</span>
+            <SiteBannerContent maintenance signedIn />
+            <Callout
+              tone="warning"
+              icon={Clock}
+              title="Filtering is temporarily unavailable"
+            >
+              Ratings are currently recalculating, please check back later.
+            </Callout>
+          </div>
+        </div>
       </Specimen>
 
       <Specimen
         id="feedback-callout-chip"
         name="CalloutChip"
         importPath={`${KIT}/CalloutChip`}
-        description="A short warning inside a panel, in the callout's colours. Its detail opens on tap, hover and focus. The rows under the header show each tone at both sizes, labelled by tone."
+        description="A short warning inside a panel, in the callout's colours. Its words say it all, so nothing opens from it. The rows under the header show each tone at both sizes, labelled by tone."
       >
         <Panel>
           <SectionHeader
             icon={ChartNoAxesColumn}
             title="Tournament rank restrictions"
             actions={
-              <CalloutChip
-                icon={ShieldQuestion}
-                detail="Includes data that has not been verified"
-              >
+              <CalloutChip icon={ShieldQuestion}>
                 Includes unverified
               </CalloutChip>
             }

@@ -2,6 +2,7 @@ import type * as React from 'react';
 
 import { InfoButton } from '@/components/kit/layout/InfoButton';
 import { MissingValue } from '@/components/kit/tables/MissingValue';
+import { aboutLabel } from '@/lib/kit/layout/about-label';
 import {
   Table,
   TableBody,
@@ -47,6 +48,7 @@ export function DataTable({
   stickyHeader = false,
   fixed = false,
   phoneRows,
+  phoneSort,
   containerClassName,
   className,
   ...props
@@ -63,6 +65,13 @@ export function DataTable({
   fixed?: boolean;
   /** Rows shown instead of the table below tablet width (`PhoneRowList`). */
   phoneRows?: React.ReactNode;
+  /**
+   * The sort for the phone rows, which have no headers to click: a
+   * `SortControl size="sm"` wired to the same `SortState` as the table's
+   * SortableHeaders. It sits in a strip above the rows, below tablet width
+   * only. Leave it out when the list's toolbar already has a sort.
+   */
+  phoneSort?: React.ReactNode;
   /** Classes for the wrapper around the table. */
   containerClassName?: string;
 }) {
@@ -89,6 +98,21 @@ export function DataTable({
       </div>
       {hasPhoneRows ? (
         <div data-slot="data-table-phone" className="md:hidden">
+          {phoneSort ? (
+            // Stands in for the header strip the phone rows replace.
+            <div
+              data-slot="data-table-phone-sort"
+              className="flex items-center gap-3 border-b bg-muted px-4 py-2"
+            >
+              <span
+                aria-hidden="true"
+                className="shrink-0 text-xs font-medium text-muted-foreground"
+              >
+                Sort by
+              </span>
+              <div className="min-w-0 flex-1">{phoneSort}</div>
+            </div>
+          ) : null}
           {phoneRows}
         </div>
       ) : null}
@@ -170,7 +194,7 @@ export function DataTableHead({
             size="sm"
             label={
               infoLabel ??
-              (typeof children === 'string' ? `About ${children}` : 'About')
+              (typeof children === 'string' ? aboutLabel(children) : 'About')
             }
           >
             {info}

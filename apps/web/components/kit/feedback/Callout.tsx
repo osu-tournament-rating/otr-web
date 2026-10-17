@@ -54,7 +54,8 @@ export function Callout({
       >
         <p className={cn('flex items-center gap-1.5', TEXT_LINKS)}>
           <Icon className="size-3.5 shrink-0" aria-hidden />
-          <span>
+          {/* Balanced lines: a wrapped strip never ends on one word. */}
+          <span className="text-balance">
             {title ? <span className="font-semibold">{title} </span> : null}
             {children}
           </span>

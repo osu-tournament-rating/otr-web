@@ -13,7 +13,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
-import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/kit/controls/IconButton';
 import { Slider } from '@/components/ui/slider';
 import {
   DEFAULT_PREVIEW_VOLUME,
@@ -58,7 +58,7 @@ export default function AudioPlayerControls() {
     : state.isPlaying
       ? 'Pause beatmap preview'
       : state.error
-        ? 'Retry beatmap preview'
+        ? 'Try again to play beatmap preview'
         : 'Play beatmap preview';
   const volumePercent = volumeToSliderPercent(state.volume);
   const VolumeIcon = isMuted ? VolumeX : volumePercent < 50 ? Volume1 : Volume2;
@@ -95,29 +95,26 @@ export default function AudioPlayerControls() {
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-0 rounded-lg bg-black/30"
                 />
-                <Button
+                <IconButton
                   data-testid="audio-transport-play-pause"
-                  type="button"
-                  size="icon"
-                  className="absolute top-1/2 left-1/2 size-9 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-md transition-transform hover:scale-105 active:scale-95"
+                  variant="overlay"
+                  size="default"
+                  label={playLabel}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
                   onClick={() =>
                     state.isPlaying || state.isLoading ? pause() : play(track)
                   }
-                  aria-label={playLabel}
                 >
                   {state.isLoading ? (
-                    <Loader2
-                      className="size-4 animate-spin"
-                      aria-hidden="true"
-                    />
+                    <Loader2 className="animate-spin" aria-hidden="true" />
                   ) : state.isPlaying ? (
-                    <Pause className="size-4" aria-hidden="true" />
+                    <Pause aria-hidden="true" />
                   ) : state.error ? (
-                    <RefreshCw className="size-4" aria-hidden="true" />
+                    <RefreshCw aria-hidden="true" />
                   ) : (
-                    <Play className="size-4" aria-hidden="true" />
+                    <Play aria-hidden="true" />
                   )}
-                </Button>
+                </IconButton>
               </div>
 
               <div className="min-w-0">
@@ -130,7 +127,7 @@ export default function AudioPlayerControls() {
                 <p
                   className={cn(
                     'mt-0.5 truncate text-xs text-muted-foreground',
-                    state.error && 'text-destructive'
+                    state.error && 'text-destructive-foreground'
                   )}
                   role={state.error ? 'status' : undefined}
                 >
@@ -149,16 +146,11 @@ export default function AudioPlayerControls() {
             />
 
             <div className="flex min-w-0 items-center justify-end gap-1.5">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="size-8 text-muted-foreground hover:text-foreground"
+              <IconButton
+                label={isMuted ? 'Unmute preview' : 'Mute preview'}
+                icon={VolumeIcon}
                 onClick={toggleMute}
-                aria-label={isMuted ? 'Unmute preview' : 'Mute preview'}
-              >
-                <VolumeIcon className="size-4" aria-hidden="true" />
-              </Button>
+              />
               <Slider
                 data-testid="audio-transport-volume"
                 className={cn('w-16 flex-none sm:w-24', TRACK_CLASS)}
@@ -176,17 +168,14 @@ export default function AudioPlayerControls() {
             </div>
           </div>
 
-          <Button
+          <IconButton
             data-testid="audio-transport-close"
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 size-8 text-muted-foreground hover:text-foreground sm:top-1/2 sm:-translate-y-1/2"
+            label="Close audio preview"
+            icon={X}
+            tooltip={false}
+            className="absolute top-2 right-2 sm:top-1/2 sm:-translate-y-1/2"
             onClick={close}
-            aria-label="Close audio preview"
-          >
-            <X className="size-4" aria-hidden="true" />
-          </Button>
+          />
 
           <span className="sr-only" aria-live="polite">
             {state.error ||
@@ -245,7 +234,7 @@ function PreviewTimeline({
     <div className="flex min-w-0 items-center gap-2.5">
       <span
         data-testid="audio-transport-current-time"
-        className="w-8 shrink-0 text-right text-xs text-muted-foreground"
+        className="w-8 shrink-0 text-right text-xs text-muted-foreground tabular-nums"
       >
         {formatPreviewTime(position)}
       </span>
@@ -264,7 +253,7 @@ function PreviewTimeline({
       />
       <span
         data-testid="audio-transport-duration"
-        className="w-8 shrink-0 text-xs text-muted-foreground"
+        className="w-8 shrink-0 text-xs text-muted-foreground tabular-nums"
       >
         {formatPreviewTime(duration)}
       </span>

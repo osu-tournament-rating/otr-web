@@ -70,7 +70,9 @@ export function DetailHero({
   return (
     <Panel as="header" data-slot="detail-hero" className={className} {...props}>
       {hasArt ? (
-        <div className="group relative isolate h-48 overflow-hidden bg-muted sm:h-56">
+        // At least 192px (224px from sm); a long title grows the strip
+        // instead of running under the controls in its corners.
+        <div className="group relative isolate flex min-h-48 flex-col overflow-hidden bg-muted sm:min-h-56">
           <div className="absolute inset-0">{art}</div>
           <div className={cn('absolute inset-0', ART_MATTE)} aria-hidden />
 
@@ -87,9 +89,12 @@ export function DetailHero({
 
           <div
             className={cn(
-              'relative z-10 flex h-full items-end p-4 sm:p-6',
+              'relative z-10 flex flex-1 items-end p-4 sm:p-6',
               ON_ART_TEXT,
-              actions && 'pr-28 sm:pr-32'
+              actions && 'pr-28 sm:pr-32',
+              // Keeps the name clear of the Admin pill: the pill's row
+              // (16px or 24px in, 32px tall) and a 16px gap stay empty.
+              adminActions && 'pt-16 sm:pt-[4.5rem]'
             )}
           >
             {identity}

@@ -52,6 +52,25 @@ const WARNING_MARKER_SIZES: Record<VerificationStatusIconSize, string> = {
   lg: 'size-3.5',
 };
 
+/** `default` on any surface; `overlay` on cover art. */
+export type VerificationStatusIconVariant = 'default' | 'overlay';
+
+/**
+ * The overlay's dark disc. At 80% black it keeps every glyph colour at 3:1
+ * or more over white art (tested in `status.test.tsx`), and `dark` gives the
+ * glyph the dark theme's lighter colours whatever the page's theme. The
+ * padding makes a 24px disc (and tap target) around the 16px glyph.
+ */
+export const OVERLAY_DISC_ALPHA = 0.8;
+
+const OVERLAY_CLASSES = 'dark rounded-full bg-black/80 ring-1 ring-white/15';
+
+const OVERLAY_PADDING: Record<VerificationStatusIconSize, string> = {
+  sm: 'p-0.5',
+  md: 'p-1',
+  lg: 'p-1',
+};
+
 /**
  * The bare status glyph in its status colour, hidden from assistive tech.
  * Use it where the status name is already written next to it, such as a
@@ -91,11 +110,13 @@ export function StatusWarningMarker({ className }: { className?: string }) {
 /**
  * Verification status as an icon, for table cells, game pips and dense
  * rows. Every state reads in greyscale; warnings add a marker. Pass
- * `tooltip` wherever the name is not written next to it.
+ * `tooltip` wherever the name is not written next to it. On cover art, use
+ * `variant="overlay"`, which sets the glyph on a dark disc.
  */
 export function VerificationStatusIcon({
   status,
   size = 'md',
+  variant = 'default',
   warnings,
   rejectionReasons,
   reviewer,
@@ -106,6 +127,8 @@ export function VerificationStatusIcon({
 }: VerificationStatusDetailsProps & {
   /** `sm` for inline text, `md` for rows, `lg` for headers. */
   size?: VerificationStatusIconSize;
+  /** `overlay` sets the glyph on a dark disc, for cover art only. */
+  variant?: VerificationStatusIconVariant;
   /** `tap` opens on tap, hover and focus; use `hover` only inside a link. */
   tooltip?: VerificationStatusTooltipMode;
   /** Hide it from assistive tech because the name is written beside it. */
@@ -119,8 +142,10 @@ export function VerificationStatusIcon({
   const icon = (
     <span
       data-slot="verification-status-icon"
+      data-variant={variant}
       className={cn(
         'inline-flex shrink-0 items-center gap-0.5 align-middle',
+        variant === 'overlay' && [OVERLAY_CLASSES, OVERLAY_PADDING[size]],
         className
       )}
       {...(hidden

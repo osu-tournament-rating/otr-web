@@ -1,16 +1,24 @@
 'use client';
 
-import { Ruleset, VerificationStatus } from '@otr/core/osu';
-import { LayoutGrid, Rows3, Table2 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Mods, Ruleset, VerificationStatus } from '@otr/core/osu';
+import { ChartLine, LayoutGrid, Rows3, Table2, Trophy } from 'lucide-react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type * as React from 'react';
 
 import { GallerySection, Specimen } from '../gallery';
+import {
+  LEADERBOARD_LIST_PARAMS,
+  LEADERBOARD_MATCHES_SCALE,
+  LEADERBOARD_RANGES,
+  LEADERBOARD_TIER_LABELS,
+} from '@/app/leaderboard/list-params';
+import { AuditSystemSwitch } from '@/components/audit/AuditSystemSwitch';
 import BeatmapCover from '@/components/beatmaps/BeatmapCover';
 import { Button } from '@/components/kit/controls/Button';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import { Panel } from '@/components/kit/layout/Panel';
 import { RowList, RowListItem } from '@/components/kit/layout/RowList';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import {
   ActiveFilterChips,
   type ActiveFilter,
@@ -45,6 +53,7 @@ import { tieredScale } from '@/lib/filters/scale';
 import { tournamentRankScale } from '@/lib/filters/tournament-rank';
 import { formatDateRange } from '@/lib/kit/format/date';
 import { formatLobbySize, formatRankRange } from '@/lib/kit/format/fields';
+import { formatMods } from '@/lib/kit/format/mods';
 import {
   formatCount,
   formatCountOf,
@@ -67,6 +76,7 @@ import {
   dayRangeParam,
   defineListParams,
   enumParam,
+  flagsParam,
   getDefaultListState,
   listStateHref,
   pageParam,
@@ -77,6 +87,11 @@ import {
   type ListState,
 } from '@/lib/kit/lists/params';
 import { normalizeSearchTerm } from '@/lib/kit/lists/search';
+import { useListState } from '@/lib/kit/lists/use-list-state';
+import {
+  leaderboardTierKeys,
+  type LeaderboardSort,
+} from '@/lib/orpc/schema/leaderboard';
 import {
   VERIFICATION_STATUS_ORDER,
   getVerificationStatusName,
@@ -92,7 +107,7 @@ type TournamentSortKey = 'endTime' | 'startTime' | 'submitted' | 'lobbySize';
 // The tournament list's own sort keys. Like the list, a new key keeps the
 // current direction.
 const TOURNAMENT_SORTS: readonly SortOption<TournamentSortKey>[] = [
-  { value: 'endTime', label: 'Completion date' },
+  { value: 'endTime', label: 'End date' },
   { value: 'startTime', label: 'Start date' },
   { value: 'submitted', label: 'Submission date' },
   { value: 'lobbySize', label: 'Lobby size' },
@@ -345,8 +360,8 @@ function TournamentToolbarDemo() {
           label="Search and filter tournaments"
           search={
             <SearchField
-              label="Search tournaments"
-              placeholder="Search by name or abbreviation"
+              label="Search tournaments by name or abbreviation"
+              placeholder="Name or abbreviation"
               value={state.q}
               pending={list.isPending}
               onSearch={(q) => setState({ q })}
@@ -503,48 +518,23 @@ const DEMO_BEATMAPS = [
   },
 ] as const;
 
-const LEADERBOARD_PARAMS = defineListParams({
-  q: searchParam(),
-  page: pageParam(),
-  friends: booleanParam({ role: 'scope' }),
-  ruleset: enumParam(RATED_RULESETS, { default: Ruleset.Osu, role: 'scope' }),
-  rating: rangeParam({ min: 100, max: 3500, integer: true }),
-  matches: rangeParam({ min: 1, max: 1000, integer: true }),
-  tier: arrayParam([
-    'bronze',
-    'silver',
-    'gold',
-    'platinum',
-    'emerald',
-    'diamond',
-    'master',
-    'grandmaster',
-    'eliteGrandmaster',
-  ] as const),
-});
+// The leaderboard's own spec, sort options and tier chips
+// (components/leaderboard/LeaderboardToolbar.tsx); its osu! rank, win rate
+// and country filters are left out here.
+const LEADERBOARD_SORTS: readonly SortOption<LeaderboardSort>[] = [
+  { value: 'rating', label: 'Rating', defaultDirection: 'desc' },
+  { value: 'tournaments', label: 'Tournaments', defaultDirection: 'desc' },
+  { value: 'matches', label: 'Matches', defaultDirection: 'desc' },
+  { value: 'winRate', label: 'Win rate', defaultDirection: 'desc' },
+];
 
-const TIER_OPTIONS = [
-  { value: 'bronze', label: 'Bronze' },
-  { value: 'silver', label: 'Silver' },
-  { value: 'gold', label: 'Gold' },
-  { value: 'platinum', label: 'Platinum' },
-  { value: 'emerald', label: 'Emerald' },
-  { value: 'diamond', label: 'Diamond' },
-  { value: 'master', label: 'Master' },
-  { value: 'grandmaster', label: 'Grandmaster' },
-  { value: 'eliteGrandmaster', label: 'Elite Grandmaster' },
-] as const;
-
-const matchesScale = tieredScale({
-  tiers: [
-    { start: 1, end: 50, step: 1 },
-    { start: 50, end: 200, step: 5 },
-    { start: 200, end: 1000, step: 25 },
-  ],
-});
+const TIER_OPTIONS = leaderboardTierKeys.map((tier) => ({
+  value: tier,
+  label: LEADERBOARD_TIER_LABELS[tier],
+}));
 
 function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
-  const list = useDemoListState(LEADERBOARD_PARAMS, {
+  const list = useDemoListState(LEADERBOARD_LIST_PARAMS, {
     rating: { min: 1500 },
   });
   const { state, setState } = list;
@@ -562,6 +552,14 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
             onSearch={(q) => setState({ q })}
           />
         }
+        sort={
+          <SortControl
+            label="Sort players by"
+            options={LEADERBOARD_SORTS}
+            value={state.sort}
+            onValueChange={(sort) => setState({ sort })}
+          />
+        }
         filters={
           <FilterPanel
             title="Filter players"
@@ -570,8 +568,8 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
           >
             <RangeFilter
               label="Rating"
-              min={100}
-              max={3500}
+              valueLabel="rating"
+              {...LEADERBOARD_RANGES.rating}
               step={20}
               value={state.rating}
               onValueChange={(rating) => setState({ rating })}
@@ -579,27 +577,24 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
             <RangeFilter
               label="Matches"
               valueLabel="matches"
-              min={1}
-              max={1000}
-              scale={matchesScale}
+              {...LEADERBOARD_RANGES.matches}
+              scale={LEADERBOARD_MATCHES_SCALE}
               value={state.matches}
               onValueChange={(matches) => setState({ matches })}
             />
             <ChoiceFilter
               label="Tiers"
               options={TIER_OPTIONS}
-              value={state.tier}
-              onValueChange={(tier) => setState({ tier })}
+              value={state.tiers}
+              onValueChange={(tiers) => setState({ tiers })}
             />
           </FilterPanel>
         }
         scope={
           <ScopeSwitch
             label="Players to show"
-            value={state.friends ? 'friends' : 'all'}
-            onValueChange={(scope) =>
-              setState({ friends: scope === 'friends' })
-            }
+            value={state.friend ? 'friends' : 'all'}
+            onValueChange={(scope) => setState({ friend: scope === 'friends' })}
             options={[
               { value: 'all', label: 'All' },
               {
@@ -632,16 +627,12 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
                 onRemove: () => setState({ matches: {} }),
               },
               {
-                key: 'tier',
+                key: 'tiers',
                 label: formatChoiceFilterLabel(
                   'Tiers',
-                  state.tier.map(
-                    (tier) =>
-                      TIER_OPTIONS.find((option) => option.value === tier)
-                        ?.label ?? tier
-                  )
+                  state.tiers.map((tier) => LEADERBOARD_TIER_LABELS[tier])
                 ),
-                onRemove: () => setState({ tier: [] }),
+                onRemove: () => setState({ tiers: [] }),
               },
             ]}
             onClearAll={list.clearFilters}
@@ -674,6 +665,196 @@ function LeaderboardToolbarDemo({ hasFriends }: { hasFriends: boolean }) {
   );
 }
 
+// The admin report queue: no search, a status scope, and a date sort.
+type ReportSortKey = 'created' | 'resolvedAt';
+type ReportScope = 'all' | 'pending' | 'confirmed' | 'dismissed';
+
+const NEWEST_FIRST = { desc: 'Newest first', asc: 'Oldest first' } as const;
+
+const REPORT_SORTS: readonly SortOption<ReportSortKey>[] = [
+  { value: 'created', label: 'Date submitted', directionLabels: NEWEST_FIRST },
+  {
+    value: 'resolvedAt',
+    label: 'Date reviewed',
+    directionLabels: NEWEST_FIRST,
+  },
+];
+
+const REPORT_SCOPES: readonly { value: ReportScope; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'dismissed', label: 'Dismissed' },
+];
+
+const REPORT_COUNTS: Record<ReportScope, number> = {
+  all: 1_214,
+  pending: 48,
+  confirmed: 903,
+  dismissed: 263,
+};
+
+function ReportQueueToolbarDemo() {
+  const [scope, setScope] = useState<ReportScope>('pending');
+  const [sort, setSort] = useState<{
+    key: ReportSortKey;
+    direction: 'asc' | 'desc';
+  }>({ key: 'created', direction: 'desc' });
+
+  return (
+    <Panel>
+      <ListToolbar
+        label="Sort and filter reports"
+        scope={
+          <ScopeSwitch
+            label="Status"
+            value={scope}
+            onValueChange={setScope}
+            options={REPORT_SCOPES}
+          />
+        }
+        sort={
+          <SortControl
+            label="Sort reports by"
+            options={REPORT_SORTS}
+            value={sort}
+            onValueChange={setSort}
+          />
+        }
+        count={formatCountOf(REPORT_COUNTS[scope], 'report')}
+      />
+      <RowList>
+        {DEMO_REPORTS.map((report) => (
+          <RowListItem
+            key={report.entity}
+            title={
+              <EntityLink href="#lists-toolbar-no-search">
+                {report.entity}
+              </EntityLink>
+            }
+            description={`${report.type} · ${report.reason}`}
+          />
+        ))}
+      </RowList>
+    </Panel>
+  );
+}
+
+// An entity's audit history (components/audit/AuditEntityTimeline.tsx):
+// "Show system events" widens the list rather than filtering it, so it leads
+// the strip, and the count stays on the right of the same line.
+const AUDIT_HISTORY_ROWS = [
+  { sentence: 'apricot verified', system: false },
+  { sentence: 'System pre-verified', system: true },
+  { sentence: 'Hobbes updated', system: false },
+] as const;
+
+function AuditHistoryToolbarDemo() {
+  const [system, setSystem] = useState(false);
+  const rows = AUDIT_HISTORY_ROWS.filter((row) => system || !row.system);
+
+  return (
+    <Panel>
+      <ListToolbar
+        label="Filter audit history"
+        leading={
+          <AuditSystemSwitch checked={system} onCheckedChange={setSystem} />
+        }
+        count={formatCountOf(rows.length, 'change')}
+      />
+      <RowList>
+        {rows.map((row) => (
+          <RowListItem key={row.sentence} title={row.sentence} />
+        ))}
+      </RowList>
+    </Panel>
+  );
+}
+
+const AUDIT_ACTIONS = [
+  { value: 'created', label: 'Created' },
+  { value: 'updated', label: 'Updated' },
+  { value: 'deleted', label: 'Deleted' },
+] as const;
+
+type AuditAction = (typeof AUDIT_ACTIONS)[number]['value'];
+
+/**
+ * The audit log's strip: a switch that widens the feed leads it, and the
+ * Filters button follows on the same line, on the right, even on a phone.
+ */
+function LeadingFiltersToolbarDemo() {
+  const [system, setSystem] = useState(false);
+  const [actions, setActions] = useState<AuditAction[]>([]);
+
+  return (
+    <Panel>
+      <ListToolbar
+        label="Filter audit events"
+        leading={
+          <AuditSystemSwitch checked={system} onCheckedChange={setSystem} />
+        }
+        filters={
+          <FilterPanel
+            title="Filter audit events"
+            activeCount={actions.length > 0 ? 1 : 0}
+            onClearAll={() => setActions([])}
+          >
+            <ChoiceFilter
+              label="Action type"
+              options={AUDIT_ACTIONS}
+              value={actions}
+              onValueChange={setActions}
+            />
+          </FilterPanel>
+        }
+        activeFilters={
+          <ActiveFilterChips
+            onClearAll={() => setActions([])}
+            filters={[
+              {
+                key: 'action',
+                label: formatChoiceFilterLabel(
+                  'Action type',
+                  actions.map(
+                    (action) =>
+                      AUDIT_ACTIONS.find((option) => option.value === action)
+                        ?.label ?? action
+                  )
+                ),
+                onRemove: () => setActions([]),
+              },
+            ]}
+          />
+        }
+      />
+      <RowList>
+        {AUDIT_DEMO_EVENTS.map((event) => (
+          <RowListItem key={event} title={event} />
+        ))}
+      </RowList>
+    </Panel>
+  );
+}
+
+const AUDIT_DEMO_EVENTS = [
+  'apricot verified tournament Corsace Open 2025',
+  'Raikouhou submitted tournament Oceania Taiko Cup 2026',
+] as const;
+
+const DEMO_REPORTS = [
+  {
+    type: 'Match',
+    entity: 'CO25: (Lunar Lobster) vs (Team Rocket)',
+    reason: 'Incorrect match result',
+  },
+  {
+    type: 'Tournament',
+    entity: 'Break The Meta Cup',
+    reason: 'Incorrect tournament details',
+  },
+] as const;
+
 function BeatmapToolbarDemo() {
   const [layout, setLayout] = useState('compact');
   const [sort, setSort] = useState<{
@@ -690,8 +871,9 @@ function BeatmapToolbarDemo() {
         label="Search and filter beatmaps"
         search={
           <SearchField
-            label="Search beatmaps"
-            placeholder="Search title, artist, difficulty, mapper, or ID"
+            // The short placeholder fits a phone; the name keeps the full scope.
+            label="Search beatmaps by title, artist, difficulty, mapper or ID"
+            placeholder="Title, artist, mapper or ID"
             value={query}
             onSearch={setQuery}
           />
@@ -797,8 +979,8 @@ function SearchFieldDemo() {
   return (
     <div className="flex flex-col gap-4">
       <SearchField
-        label="Search tournaments"
-        placeholder="Search by name or abbreviation"
+        label="Search tournaments by name or abbreviation"
+        placeholder="Name or abbreviation"
         value={term}
         pending={pending}
         onSearch={(next) => {
@@ -812,8 +994,8 @@ function SearchFieldDemo() {
         State: {`{ q: '${term}' }`}
       </p>
       <SearchField
-        label="Search tournaments"
-        placeholder="Search by name or abbreviation"
+        label="Search tournaments by name or abbreviation"
+        placeholder="Name or abbreviation"
         value="c"
         onSearch={() => {}}
       />
@@ -827,7 +1009,7 @@ function SortControlDemo() {
     direction: 'asc' | 'desc';
   }>({ key: 'endTime', direction: 'desc' });
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <SortControl
         label="Sort tournaments by"
         options={TOURNAMENT_SORTS}
@@ -837,6 +1019,33 @@ function SortControlDemo() {
       <p className="text-xs text-muted-foreground">
         State: {`{ key: '${sort.key}', direction: '${sort.direction}' }`}
       </p>
+      {/* size="sm": 32px, so the header strip keeps its 48px height. */}
+      <Panel>
+        <SectionHeader
+          icon={Trophy}
+          title="Tournaments"
+          actions={
+            <SortControl
+              size="sm"
+              label="Sort tournaments by"
+              options={TOURNAMENT_SORTS}
+              value={sort}
+              onValueChange={setSort}
+            />
+          }
+        />
+        <RowList>
+          {DEMO_TOURNAMENTS.slice(0, 2).map((row) => (
+            <RowListItem
+              key={row.id}
+              title={
+                <EntityLink href="#lists-sort-control">{row.name}</EntityLink>
+              }
+              description={formatDateRange(row.start, row.end)}
+            />
+          ))}
+        </RowList>
+      </Panel>
     </div>
   );
 }
@@ -878,7 +1087,66 @@ function ScopeSwitchDemo() {
           },
         ]}
       />
+      {/* The same control as a view toggle, at the top of a panel. */}
+      <Suspense fallback={null}>
+        <RatingViewToggleDemo />
+      </Suspense>
     </div>
+  );
+}
+
+// The profile's rating history views, as a shallow list state: the chart's
+// data is all on the client, so the address changes without a server render.
+// The decay chip is on by default, so only `decay=false` is ever written.
+const RATING_VIEW_PARAMS = defineListParams({
+  metric: enumParam(['rating', 'volatility'] as const, {
+    default: 'rating',
+    role: 'scope',
+  }),
+  view: enumParam(['chart', 'table'] as const, {
+    default: 'chart',
+    role: 'scope',
+  }),
+  decay: booleanParam({ default: true, role: 'scope' }),
+});
+
+function RatingViewToggleDemo() {
+  const list = useListState(RATING_VIEW_PARAMS, { shallow: true });
+  const { state, setState } = list;
+
+  return (
+    <Panel>
+      <SectionHeader icon={ChartLine} title="Rating history" />
+      <div className="flex flex-wrap items-center gap-2 px-4 pt-4">
+        <ScopeSwitch
+          label="Rating or volatility"
+          value={state.metric}
+          onValueChange={(metric) => setState({ metric })}
+          options={[
+            { value: 'rating', label: 'Rating' },
+            { value: 'volatility', label: 'Volatility' },
+          ]}
+        />
+        <ScopeSwitch
+          label="View"
+          value={state.view}
+          onValueChange={(view) => setState({ view })}
+          options={[
+            { value: 'chart', label: 'Chart' },
+            { value: 'table', label: 'Table' },
+          ]}
+        />
+        <ChoiceChip
+          selected={state.decay}
+          onClick={() => setState({ decay: !state.decay })}
+        >
+          Display decay
+        </ChoiceChip>
+      </div>
+      <p className="px-4 pt-3 pb-4 text-xs break-all text-muted-foreground">
+        Address: {list.hrefFor({})}
+      </p>
+    </Panel>
   );
 }
 
@@ -1191,7 +1459,49 @@ function Address({ href }: { href: string }) {
   ));
 }
 
+// A bitflag enum: a list of flags in state, one bitmask in the address.
+const MOD_FLAGS: readonly Mods[] = [
+  Mods.Hidden,
+  Mods.HardRock,
+  Mods.DoubleTime,
+  Mods.Flashlight,
+];
+
+const MOD_PARAMS = defineListParams({ mods: flagsParam(MOD_FLAGS) });
+
+const MOD_OPTIONS = MOD_FLAGS.map((mod) => ({
+  value: mod,
+  label: formatMods(mod),
+}));
+
+function FlagsParamDemo() {
+  const [mods, setMods] = useState<Mods[]>([Mods.Hidden, Mods.HardRock]);
+  return (
+    <div className="flex flex-col gap-2 border-t pt-4">
+      <ChoiceFilter
+        label="Mods"
+        description="flagsParam: chosen flags in state, one bitmask in the address."
+        options={MOD_OPTIONS}
+        value={mods}
+        onValueChange={setMods}
+      />
+      <p className="text-xs break-words text-muted-foreground">
+        <Address href={listStateHref('/beatmaps', MOD_PARAMS, { mods })} />
+      </p>
+    </div>
+  );
+}
+
 function ListStateDemo() {
+  return (
+    <div className="flex flex-col gap-4">
+      <AddressExamples />
+      <FlagsParamDemo />
+    </div>
+  );
+}
+
+function AddressExamples() {
   const defaults = getDefaultListState(TOURNAMENT_PARAMS);
   return (
     <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[max-content_minmax(0,1fr)] sm:items-baseline sm:gap-y-3">
@@ -1205,7 +1515,7 @@ function ListStateDemo() {
           >
             {example.note}
           </dt>
-          <dd className="break-words proportional-nums">
+          <dd className="break-words">
             <Address
               href={listStateHref('/tournaments', TOURNAMENT_PARAMS, {
                 ...defaults,
@@ -1240,10 +1550,33 @@ export default function ListsSection() {
         id="lists-toolbar-scope"
         name="ListToolbar with a scope and one ruleset"
         importPath={`${KIT}/ListToolbar`}
-        description="The leaderboard: All / Friends and a ruleset switch share the second row. Clear all keeps the scope, ruleset and search."
+        description="The leaderboard, with its own list spec: search, sort and Filters, then All / Friends and a ruleset switch on the second row with the count. Clear all keeps the scope, ruleset, sort and search."
         stacked
       >
         <LeaderboardToolbarDemo hasFriends />
+      </Specimen>
+
+      <Specimen
+        id="lists-toolbar-no-search"
+        name="ListToolbar without a search"
+        importPath={`${KIT}/ListToolbar`}
+        description="The admin report queue: with no search the toolbar is one strip, the scope on the left and the count, sort and Filters on the right. On phones the count follows the scope on its line when they fit; a four-option scope like this one fills its line, so the count moves down beside sort rather than onto a line of its own."
+        stacked
+      >
+        <ReportQueueToolbarDemo />
+      </Specimen>
+
+      <Specimen
+        id="lists-toolbar-leading"
+        name="ListToolbar with a leading control"
+        importPath={`${KIT}/ListToolbar`}
+        description="A control that is neither a search nor a filter goes in leading: first on the strip, before the scope or search. The audit pages' Show system events switch widens the list rather than filtering it, so it leads. Without a search the count, sort and Filters stay on the right of the same strip: an entity's audit history puts its count there, and the audit log its Filters, on one line on phones too until they don't fit."
+        stacked
+      >
+        <div className="flex flex-col gap-6">
+          <AuditHistoryToolbarDemo />
+          <LeadingFiltersToolbarDemo />
+        </div>
       </Specimen>
 
       <Specimen
@@ -1269,7 +1602,7 @@ export default function ListsSection() {
         id="lists-sort-control"
         name="SortControl"
         importPath={`${KIT}/SortControl`}
-        description="A key dropdown and a direction button. It shares { key, direction } with sortable table headers, so both show the same choice."
+        description="A key dropdown and a direction button. It shares { key, direction } with sortable table headers, so both show the same choice. 40px in a list toolbar; size sm (32px) in a section header's actions, as below, and in a DataTable's phone sort strip."
       >
         <SortControlDemo />
       </Specimen>
@@ -1296,7 +1629,7 @@ export default function ListsSection() {
         id="lists-scope-switch"
         name="ScopeSwitch"
         importPath={`${KIT}/ScopeSwitch`}
-        description="Whose rows the list shows. An option that cannot be chosen says why through an info button."
+        description="A segmented choice of two to four options: whose rows a list shows, or which view of a section is on screen (Rating / Volatility, Chart / Table). An option that cannot be chosen says why through an info button. The rating history toggles here, with its Display decay chip, keep their choice in the address with useListState's shallow option, as the profile does; try them and the back button."
       >
         <ScopeSwitchDemo />
       </Specimen>
@@ -1328,6 +1661,9 @@ export default function ListsSection() {
         importPath={`${KIT}/FilterPanel`}
         description="One panel layout for every list: the beatmap list's range fields, with CS and AR at half width, and tournament filters built from ChoiceFilter, DayRangeFilter and SwitchFilter. Fields apply as you change them; number boxes sit beside the label and long labels wrap. Clear all resets that panel's fields only. Each panel is drawn open under its button, where the popover opens."
         stacked
+        // On a phone the popover is the screen's width less 32px; the frame
+        // drops its side padding so the panel is as wide here.
+        frameClassName="max-sm:px-0"
       >
         <FilterFieldsDemo />
       </Specimen>
@@ -1354,7 +1690,7 @@ export default function ListsSection() {
         id="lists-list-state"
         name="useListState and the list params"
         importPath="@/lib/kit/lists/use-list-state"
-        description="Every control that changes a list lives in the address, described once with the builders in @/lib/kit/lists/params. Defaults are left out, invalid values are ignored, and other params such as a tab are kept."
+        description="Every control that changes a list lives in the address, described once with the builders in @/lib/kit/lists/params. Defaults are left out, invalid values are ignored, and other params such as a tab are kept. A bitflag filter (flagsParam) is a list of flags in state and one number in the address. The rating history views under ScopeSwitch use the shallow option, which changes this page's address without a server render."
         stacked
       >
         <ListStateDemo />

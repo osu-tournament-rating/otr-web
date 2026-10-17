@@ -21,7 +21,10 @@ describe('beatmap ruleset presentation', () => {
 
   test('keeps the native ruleset when no key-mode marker is present', () => {
     expect(getBeatmapDisplayRuleset(Ruleset.Taiko, 'Oni')).toBe(Ruleset.Taiko);
-    expect(getBeatmapRulesetLabel(Ruleset.Catch, 'Rain')).toBe('osu!catch');
+    expect(getBeatmapRulesetLabel(Ruleset.Catch, 'Rain')).toBe('catch');
+    expect(getBeatmapRulesetLabel(Ruleset.ManiaOther, "Kyou's 4K MX")).toBe(
+      'mania 4K'
+    );
   });
 
   test('identifies every mania key-mode ruleset', () => {
@@ -38,12 +41,7 @@ describe('beatmap attribute rows', () => {
   test('keeps every osu! attribute gauged and unmuted', () => {
     const rows = getBeatmapAttributeRows(Ruleset.Osu);
 
-    expect(rows.map((row) => row.abbreviation)).toEqual([
-      'CS',
-      'AR',
-      'OD',
-      'HP',
-    ]);
+    expect(rows.map((row) => row.label)).toEqual(['CS', 'AR', 'OD', 'HP']);
     expect(rows.map((row) => row.key)).toEqual(['cs', 'ar', 'od', 'hp']);
     expect(rows.every((row) => !row.muted)).toBe(true);
     expect(rows.every((row) => row.gauge !== false)).toBe(true);
@@ -53,24 +51,19 @@ describe('beatmap attribute rows', () => {
   test('leads taiko with OD and HP, muting the gauge-less CS and AR', () => {
     const rows = getBeatmapAttributeRows(Ruleset.Taiko);
 
-    expect(rows.map((row) => row.abbreviation)).toEqual([
-      'OD',
-      'HP',
-      'CS',
-      'AR',
-    ]);
+    expect(rows.map((row) => row.label)).toEqual(['OD', 'HP', 'CS', 'AR']);
     expect(rows.slice(0, 2).every((row) => !row.muted)).toBe(true);
     expect(rows.slice(2)).toEqual([
       {
-        abbreviation: 'CS',
-        label: 'Circle size',
+        label: 'CS',
+        fullName: 'Circle size',
         key: 'cs',
         muted: true,
         gauge: false,
       },
       {
-        abbreviation: 'AR',
-        label: 'Approach rate',
+        label: 'AR',
+        fullName: 'Approach rate',
         key: 'ar',
         muted: true,
         gauge: false,
@@ -81,16 +74,11 @@ describe('beatmap attribute rows', () => {
   test('leads catch with AR and CS, muting only OD', () => {
     const rows = getBeatmapAttributeRows(Ruleset.Catch);
 
-    expect(rows.map((row) => row.abbreviation)).toEqual([
-      'AR',
-      'CS',
-      'HP',
-      'OD',
-    ]);
+    expect(rows.map((row) => row.label)).toEqual(['AR', 'CS', 'HP', 'OD']);
     expect(rows.slice(0, 3).every((row) => !row.muted)).toBe(true);
     expect(rows[3]).toEqual({
-      abbreviation: 'OD',
-      label: 'Overall difficulty',
+      label: 'OD',
+      fullName: 'Overall difficulty',
       key: 'od',
       muted: true,
       gauge: false,
@@ -102,15 +90,10 @@ describe('beatmap attribute rows', () => {
     (ruleset) => {
       const rows = getBeatmapAttributeRows(ruleset);
 
-      expect(rows.map((row) => row.abbreviation)).toEqual([
-        'Keys',
-        'OD',
-        'HP',
-        'AR',
-      ]);
+      expect(rows.map((row) => row.label)).toEqual(['Keys', 'OD', 'HP', 'AR']);
+      // "Keys" is a word, not a short form: nothing to spell out.
       expect(rows[0]).toEqual({
-        abbreviation: 'Keys',
-        label: 'Key count',
+        label: 'Keys',
         key: 'cs',
         gauge: false,
         integer: true,
@@ -118,8 +101,8 @@ describe('beatmap attribute rows', () => {
       expect(rows[1]?.muted).toBeUndefined();
       expect(rows[2]?.muted).toBeUndefined();
       expect(rows[3]).toEqual({
-        abbreviation: 'AR',
-        label: 'Approach rate',
+        label: 'AR',
+        fullName: 'Approach rate',
         key: 'ar',
         muted: true,
         gauge: false,

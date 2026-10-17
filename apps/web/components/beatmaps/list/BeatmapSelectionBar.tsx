@@ -2,7 +2,8 @@
 
 import type { ReactNode } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/kit/controls/Button';
+import { formatCount } from '@/lib/kit/format/number';
 import { useAudioPlayer } from '@/lib/hooks/useAudioPlayer';
 import { cn } from '@/lib/utils';
 
@@ -37,7 +38,7 @@ export default function BeatmapSelectionBar({
         className="pointer-events-auto flex items-center gap-2 rounded-full border bg-popover/95 py-1.5 pr-1.5 pl-4 shadow-lg backdrop-blur animate-in fade-in slide-in-from-bottom-2"
       >
         <span aria-live="polite" className="text-sm font-medium">
-          {count} selected
+          {formatCount(count)} selected
         </span>
         <Button
           variant="ghost"

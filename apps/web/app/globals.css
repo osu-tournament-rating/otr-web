@@ -12,9 +12,23 @@
  */
 @custom-variant dark (&:is(.dark *):not(.theme-light *));
 
+/*
+ * No site-wide tabular-nums: Inter's tabular figures also widen the hyphen
+ * ("Pre - verified"). Numeric contexts set it themselves, such as numeric
+ * table cells, phone rows, rating deltas and chart ticks and tooltips.
+ */
 @layer base {
   body {
     letter-spacing: var(--tracking-normal);
+  }
+
+  /*
+   * Recharts sizes tick labels in this span, appended to the body, to decide
+   * which labels fit. ChartContainer draws its ticks with tabular figures, so
+   * measure them that way too; narrower proportional figures let the labels
+   * crowd together.
+   */
+  #recharts_measurement_span {
     font-variant-numeric: tabular-nums;
   }
 }
@@ -35,19 +49,6 @@
   --font-sans: Inter, sans-serif;
   --font-mono: Inter, sans-serif;
   --default-font-family: Inter, sans-serif;
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -55,6 +56,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-solid: var(--destructive-solid);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-muted-foreground: var(--accent-muted-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
@@ -72,11 +74,6 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --color-card-alt: var(--card-alt);
-  --color-card-alt-foreground: var(--card-alt-foreground);
-  --color-card-alt-border: var(--card-alt-border);
-  --color-card-alt-hover: var(--card-alt-hover);
-  --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --radius: 0.5rem;
   --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
   --tracking-tight: calc(var(--tracking-normal) - 0.025em);
@@ -93,13 +90,6 @@
   --shadow-xs: var(--shadow-xs);
   --shadow-2xs: var(--shadow-2xs);
   --spacing: var(--spacing);
-  --letter-spacing: var(--letter-spacing);
-  --shadow-offset-y: var(--shadow-offset-y);
-  --shadow-offset-x: var(--shadow-offset-x);
-  --shadow-spread: var(--shadow-spread);
-  --shadow-blur: var(--shadow-blur);
-  --shadow-opacity: var(--shadow-opacity);
-  --color-shadow-color: var(--shadow-color);
 
   /* Component library tokens. Values live in :root and .dark below; the
      web-design skill's color reference says when to use each. */
@@ -132,6 +122,7 @@
   --color-game-frame: var(--game-frame);
   --color-score-card: var(--score-card);
   --color-notification: var(--notification);
+  --color-support: var(--support);
   --color-tier-elite-grandmaster: var(--tier-elite-grandmaster);
   --color-tier-grandmaster: var(--tier-grandmaster);
   --color-tier-master: var(--tier-master);
@@ -149,11 +140,6 @@
 
   --color-warning: var(--color-amber-600);
   --color-warning-foreground: var(--color-amber-800);
-  /* Verification status chart fills */
-  --color-status-pending: var(--color-muted-foreground);
-  --color-status-awaiting: var(--color-yellow-400);
-  --color-status-rejected: var(--color-red-500);
-  --color-status-verified: var(--color-green-400);
 }
 
 :root,
@@ -161,7 +147,8 @@
   --background: oklch(0.99 0 0);
   --foreground: oklch(0 0 0);
   --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(54.517% 0.00006 271.152);
+  /* 4.7:1 on muted and popover surfaces, the lightest it can be there. */
+  --muted-foreground: oklch(0.53 0 0);
   --card: oklch(0.98 0 0);
   --card-foreground: oklch(0 0 0);
   --popover: oklch(0.96 0 0);
@@ -178,87 +165,27 @@
   --link: oklch(0.547 0.174 262.51);
   --accent: oklch(0.92 0 0);
   --accent-foreground: oklch(0 0 0);
+  /* Muted text on --accent (tooltips), where --muted-foreground is under 4.5:1. */
+  --accent-muted-foreground: oklch(0.5 0 0);
   --secondary: oklch(0.92 0 0);
   --secondary-foreground: oklch(0 0 0);
 
   --destructive: var(--color-red-600);
   /* Solid fill behind white text, such as the final destructive confirm. */
   --destructive-solid: var(--color-red-600);
-  --destructive-foreground: var(--color-red-800);
+  /* Red text. Tailwind's red-800, spelled out so lib/kit/color can test it. */
+  --destructive-foreground: oklch(44.4% 0.177 26.899);
 
   --warning: var(--color-warning);
   --warning-foreground: var(--color-warning-foreground);
 
   --ring: oklch(0 0 0);
 
-  --chart-1: var(--primary);
-  --chart-2: oklch(0.69 0.2 23.91);
-  --chart-3: oklch(0.56 0 0);
-  --chart-4: oklch(0.44 0 0);
-  --chart-5: oklch(0.92 0 0);
   --radius: 0.5rem;
-
-  --score-performance-label: hsl(51 60% 55%);
-  --team-no-team: #333;
-  --team-red: var(--color-red-500);
-  --team-blue: var(--primary);
-
-  /* Tournament rank-range ramp (ordinal: Open -> 100k+). Each color has to
-     clear 3:1 against its own card (WCAG 1.4.11), which the light and dark
-     cards need different lightnesses for. Pairwise separation is not a
-     requirement: symbol and dash carry the category redundantly. */
-  --rank-range-open: hsl(217, 80%, 60%);
-  --rank-range-lt1k: hsl(190, 70%, 40%);
-  --rank-range-1k: hsl(151, 55%, 40%);
-  --rank-range-10k: hsl(40, 90%, 38%);
-  --rank-range-100k: hsl(5, 80%, 63%);
-
-  /* Tier text colors */
-  --text-elite-grandmaster: var(--primary);
-  --text-grandmaster: hsl(0, 80%, 55%);
-  --text-master: hsl(266, 81%, 61%);
-  --text-diamond: hsl(280, 65%, 60%);
-  --text-emerald: hsl(144, 65%, 50%);
-  --text-platinum: hsl(197, 54%, 46%);
-  --text-gold: hsl(43, 69%, 57%);
-  --text-silver: hsl(0, 0%, 55%);
-  --text-bronze: hsl(27, 63%, 48%);
 
   --header-height-px: calc(var(--spacing) * 16);
 
-  --sidebar: oklch(0.96 0 0);
-
-  --sidebar-foreground: oklch(0 0 0);
-
-  --sidebar-primary: oklch(0 0 0);
-
-  --sidebar-primary-foreground: oklch(1 0 0);
-
-  --sidebar-accent: oklch(0.94 0 0);
-
-  --sidebar-accent-foreground: oklch(0 0 0);
-
-  --sidebar-border: oklch(0.94 0 0);
-
-  --sidebar-ring: oklch(0 0 0);
-
   --font-sans: Inter, sans-serif;
-
-  --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-
-  --shadow-color: hsl(0 0% 0%);
-
-  --shadow-opacity: 0.18;
-
-  --shadow-blur: 2px;
-
-  --shadow-spread: 0px;
-
-  --shadow-offset-x: 0px;
-
-  --shadow-offset-y: 1px;
-
-  --letter-spacing: 0em;
 
   --spacing: 0.25rem;
 
@@ -284,57 +211,6 @@
   --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
 
   --tracking-normal: 0em;
-
-  --mod-hard-rock: hsl(5.12, 83.23%, 69.61%);
-
-  --mod-hidden: hsl(49, 86%, 70%);
-
-  --mod-freemod: hsl(35, 82%, 74%);
-
-  --mod-flashlight: hsl(236, 36%, 39%);
-
-  --mod-easy: hsl(114, 86%, 69%);
-
-  --mod-half-time: hsl(145, 66%, 54%);
-
-  --mod-double-time: hsl(251, 86%, 70%);
-
-  --mod-nightcore: hsl(271, 86%, 70%);
-
-  --mod-hidden-hard-rock: hsla(337, 100%, 60%, 0.918);
-
-  --mod-hidden-easy: hsla(41, 100%, 64%, 0.945);
-
-  --mod-easy-double-time: hsla(180, 59%, 48%, 0.952);
-
-  --mod-hidden-flashlight: hsl(197, 36%, 39%);
-
-  --mod-hidden-double-time: hsla(276, 84%, 70%, 0.952);
-
-  --mod-mirror: hsl(215, 70%, 84%);
-
-  --mod-spun-out: hsl(331, 67%, 61%);
-
-  --mod-relax: hsl(198, 86%, 49%);
-
-  --mod-random: hsl(141, 54%, 57%);
-
-  --mod-sudden-death: hsl(27, 100%, 61%);
-
-  --mod-mania-key: hsl(207, 78%, 73%);
-
-  --mod-touch-device: hsl(27, 100%, 61%);
-
-  /* Grade bar colors. SS/S/A match the canonical osu! grade badges
-     (public/icons/grades/*.svg) so the bar agrees with the Scores tab;
-     B-D are a monotonic muted ramp, flipped per theme so worse grades
-     always recede toward the card background. */
-  --grade-ss: #de31ae;
-  --grade-s: #02b5c3;
-  --grade-a: #88da20;
-  --grade-b: oklch(0.45 0 0);
-  --grade-c: oklch(0.6 0 0);
-  --grade-d: oklch(0.75 0 0);
 
   /* Repeats the @theme status values so a light subtree inside a dark page
      (the design gallery) gets the light ones. Same values as @theme. */
@@ -393,6 +269,9 @@
   /* The one notification dot colour. */
   --notification: #4589f2;
 
+  /* The support heart on hover, the pink it always had. */
+  --support: oklch(0.656 0.241 354.308);
+
   /* Tier text. */
   --tier-elite-grandmaster: #256acf;
   --tier-grandmaster: #d81821;
@@ -414,24 +293,24 @@
   --score-grade-d: #7a7a7a;
 
   /* Mod marks. Every value takes black text on a solid fill. */
-  --mod-nm: #0b8d9e;
-  --mod-hd: #948000;
-  --mod-hr: #d9524f;
-  --mod-dt: #876fd5;
-  --mod-ht: #0b9360;
-  --mod-ez: #628d00;
-  --mod-fl: #6076b5;
-  --mod-hdhr: #d1528c;
-  --mod-ezhd: #bd6c00;
-  --mod-ezdt: #2b89c0;
-  --mod-hdfl: #957164;
-  --mod-hddt: #af63ba;
-  --mod-sd: #d75a21;
-  --mod-td: #9d8757;
-  --mod-rx: #279785;
-  --mod-mr: #9181b0;
-  --mod-rd: #469b4c;
-  --mod-key: #5f8fa3;
+  --mod-nm: #4589f2;
+  --mod-hd: #a18902;
+  --mod-hr: #db675e;
+  --mod-dt: #8971f4;
+  --mod-ht: #029f54;
+  --mod-ez: #1aa101;
+  --mod-fl: #6970b7;
+  --mod-hdhr: #ff3381;
+  --mod-ezhd: #b87f04;
+  --mod-ezdt: #049a9b;
+  --mod-hdfl: #4a7d91;
+  --mod-hddt: #b568e9;
+  --mod-sd: #d56f01;
+  --mod-td: #a4846f;
+  --mod-rx: #0394ce;
+  --mod-mr: #778cab;
+  --mod-rd: #5a986c;
+  --mod-key: #5590be;
 }
 
 .dark {
@@ -450,24 +329,12 @@
   --destructive: var(--color-red-500);
   /* Red-500 under white text is about 3.8:1; red-600 clears 4.5:1. */
   --destructive-solid: var(--color-red-600);
-  --destructive-foreground: var(--color-red-500);
+  /* Red text: Tailwind's red-400, spelled out so lib/kit/color can test it.
+     Red-500 fell under 4.5:1 on tiles and popovers. */
+  --destructive-foreground: oklch(70.4% 0.191 22.216);
 
   --warning: var(--color-warning);
   --warning-foreground: var(--color-warning-foreground);
-
-  /* Dark mode tier text colors */
-  --text-silver: hsl(0, 0%, 70%);
-
-  /* Brighter rank ranges: the light card's darker values drop under 3:1 here. */
-  --rank-range-lt1k: hsl(190, 70%, 47%);
-  --rank-range-1k: hsl(151, 55%, 45%);
-  --rank-range-10k: hsl(40, 85%, 52%);
-
-  /* B-D flip on the dark card so the ramp stays monotonic away from the
-     surface: B stays brightest, D recedes toward the card background. */
-  --grade-b: oklch(0.85 0 0);
-  --grade-c: oklch(0.7 0 0);
-  --grade-d: oklch(0.55 0 0);
 
   --card-foreground: oklch(1 0 0);
   --popover: oklch(0.23 0 264.49);
@@ -483,27 +350,12 @@
   --secondary-foreground: oklch(1 0 0);
   --accent: oklch(0.35 0 0);
   --accent-foreground: oklch(1 0 0);
+  --accent-muted-foreground: oklch(0.75 0 0);
   --input: oklch(0.32 0 0);
   --ring: oklch(0.67 0.17 258.51);
 
   --radius: 0.5rem;
-  --sidebar: oklch(0.2 0 264.47);
-  --sidebar-foreground: oklch(1 0 0);
-  --sidebar-primary: oklch(0.67 0.17 258.51);
-  --sidebar-primary-foreground: oklch(0 0 0);
-  --sidebar-accent: oklch(0.32 0 0);
-  --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-border: oklch(0.32 0 0);
-  --sidebar-ring: oklch(0.72 0 0);
   --font-sans: Inter, sans-serif;
-  --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-  --shadow-color: hsl(0 0% 0%);
-  --shadow-opacity: 0.18;
-  --shadow-blur: 2px;
-  --shadow-spread: 0px;
-  --shadow-offset-x: 0px;
-  --shadow-offset-y: 1px;
-  --letter-spacing: 0em;
   --spacing: 0.25rem;
   --shadow-2xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
   --shadow-xs: 0px 1px 2px 0px hsl(0 0% 0% / 0.09);
@@ -554,6 +406,7 @@
   --score-card: #242424;
 
   --notification: #4e93fc;
+  --support: oklch(0.656 0.241 354.308);
 
   --tier-elite-grandmaster: #4e93fc;
   --tier-grandmaster: #f9433e;
@@ -572,24 +425,24 @@
   --score-grade-c: #ababab;
   --score-grade-d: #808080;
 
-  --mod-nm: #4cb8c9;
-  --mod-hd: #c1aa2a;
-  --mod-hr: #ff8780;
-  --mod-dt: #b09bff;
-  --mod-ht: #4cbd88;
-  --mod-ez: #87b930;
-  --mod-fl: #758ccc;
-  --mod-hdhr: #ff80b5;
-  --mod-ezhd: #ef9437;
-  --mod-ezdt: #68c1fb;
-  --mod-hdfl: #ae887b;
-  --mod-hddt: #db8de8;
-  --mod-sd: #fd7d48;
-  --mod-td: #d9c190;
-  --mod-rx: #70d6c2;
-  --mod-mr: #d4c3f5;
-  --mod-rd: #82d785;
-  --mod-key: #a1d3e8;
+  --mod-nm: #4e93fc;
+  --mod-hd: #f4dc71;
+  --mod-hr: #f27c71;
+  --mod-dt: #8971f4;
+  --mod-ht: #3cd77d;
+  --mod-ez: #7af46c;
+  --mod-fl: #6970b7;
+  --mod-hdhr: #ff3381;
+  --mod-ezhd: #ffc365;
+  --mod-ezdt: #32c3c3;
+  --mod-hdfl: #4a7d91;
+  --mod-hddt: #bf72f3;
+  --mod-sd: #ff9238;
+  --mod-td: #cbaa94;
+  --mod-rx: #11a8e8;
+  --mod-mr: #bad1f3;
+  --mod-rd: #83c395;
+  --mod-key: #84c0f0;
 }
 
 @layer base {
@@ -622,48 +475,9 @@
   }
 }
 
-@layer utilities {
-  /* Tier text color classes */
-  .text-elite-grandmaster {
-    color: var(--text-elite-grandmaster);
-  }
-  .text-grandmaster {
-    color: var(--text-grandmaster);
-  }
-  .text-master {
-    color: var(--text-master);
-  }
-  .text-diamond {
-    color: var(--text-diamond);
-  }
-  .text-emerald {
-    color: var(--text-emerald);
-  }
-  .text-platinum {
-    color: var(--text-platinum);
-  }
-  .text-gold {
-    color: var(--text-gold);
-  }
-  .text-silver {
-    color: var(--text-silver);
-  }
-  .text-bronze {
-    color: var(--text-bronze);
-  }
-}
-
 @layer components {
   .team-container {
-    --team-color: var(--team-no-team);
-    --team-flex-col-dir: column;
     --team-flex-row-dir: row;
-
-    --score-text-color: color-mix(
-      in oklab,
-      var(--foreground) 60%,
-      var(--team-color) 40%
-    );
 
     @apply order-1 w-full;
 
@@ -671,35 +485,11 @@
       flex-direction: var(--team-flex-row-dir);
     }
 
-    .team-flex-col {
-      flex-direction: var(--team-flex-col-dir);
-    }
-
-    .performance-item {
-      @apply flex flex-col items-start justify-center;
-
-      .label {
-        @apply text-xs font-semibold text-(--score-performance-label) opacity-95;
-      }
-
-      .value {
-        @apply text-base tracking-tighter;
-
-        color: color-mix(
-          in oklab,
-          var(--foreground) 90%,
-          var(--team-color) 10%
-        );
-      }
-    }
-
     &:not([data-team='NoTeam']) {
       @apply lg:w-1/2;
     }
 
     &[data-team='Red'] {
-      --team-color: var(--team-red);
-
       @apply order-2;
 
       /* --var(--breakpoint-lg) */
@@ -709,13 +499,10 @@
     }
 
     &[data-team='Blue'] {
-      --team-color: var(--team-blue);
-
       @apply order-3;
 
       /* --var(--breakpoint-lg) */
       @media (width >= 64rem) {
-        --team-flex-col-dir: column-reverse;
         --team-flex-row-dir: row-reverse;
 
         @apply flex-row-reverse pl-0.5;

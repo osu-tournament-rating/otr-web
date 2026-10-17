@@ -6,10 +6,12 @@
  */
 
 import {
+  FilteringFailReason,
   GameRejectionReason,
   GameWarningFlags,
   MatchRejectionReason,
   MatchWarningFlags,
+  RatingAdjustmentType,
   ScoreGrade,
   ScoreRejectionReason,
   ScoringType,
@@ -137,6 +139,51 @@ export const DATA_FETCH_STATUS_LABELS: Readonly<
   [DataFetchStatus.Error]: 'Error',
 };
 
+/** The kinds of change in a player's rating history. */
+export const RATING_ADJUSTMENT_TYPE_LABELS: Readonly<
+  Record<RatingAdjustmentType, string>
+> = {
+  [RatingAdjustmentType.Initial]: 'Initial',
+  [RatingAdjustmentType.Decay]: 'Decay',
+  [RatingAdjustmentType.Match]: 'Match',
+  [RatingAdjustmentType.VolatilityDecay]: 'Volatility decay',
+};
+
+/** Why a player failed the filter tool's criteria: a short name per flag. */
+export const FILTERING_FAIL_REASON_LABELS: Readonly<
+  Record<FilteringFailReason, string>
+> = {
+  [FilteringFailReason.None]: 'None',
+  [FilteringFailReason.MinRating]: 'Low rating',
+  [FilteringFailReason.MaxRating]: 'High rating',
+  [FilteringFailReason.NotEnoughTournaments]: 'Low tournaments',
+  [FilteringFailReason.PeakRatingTooHigh]: 'High peak',
+  [FilteringFailReason.NotEnoughMatches]: 'Low matches',
+  [FilteringFailReason.TooManyMatches]: 'High matches',
+  [FilteringFailReason.TooManyTournaments]: 'High tournaments',
+};
+
+/** The sentence behind each filter failure name, for its tooltip. */
+export const FILTERING_FAIL_REASON_DESCRIPTIONS: Readonly<
+  Record<FilteringFailReason, string>
+> = {
+  [FilteringFailReason.None]: 'No failure reason',
+  [FilteringFailReason.MinRating]:
+    "The player's rating is below the minimum threshold",
+  [FilteringFailReason.MaxRating]:
+    "The player's rating is above the maximum threshold",
+  [FilteringFailReason.NotEnoughTournaments]:
+    'The player has not played in the minimum specified number of tournaments',
+  [FilteringFailReason.PeakRatingTooHigh]:
+    "The player's all-time peak rating exceeds the maximum allowed",
+  [FilteringFailReason.NotEnoughMatches]:
+    'The player has not played in the minimum specified number of matches',
+  [FilteringFailReason.TooManyMatches]:
+    'The player has played in more than the maximum specified number of matches',
+  [FilteringFailReason.TooManyTournaments]:
+    'The player has participated in more than the maximum specified number of tournaments',
+};
+
 /** The osu! API's beatmap `ranked` values; o!TR stores them as they come. */
 export const RANKED_STATUS_LABELS: EnumLabels = {
   [-2]: 'Graveyard',
@@ -153,29 +200,40 @@ export function formatEnumValue(value: number, labels: EnumLabels): string {
   return labels[value] ?? `Unknown (${value})`;
 }
 
+/** The single-bit keys of a label table, lowest first. */
+function namedFlags(labels: EnumLabels): number[] {
+  return Object.keys(labels)
+    .map(Number)
+    .filter((flag) => flag > 0 && (flag & (flag - 1)) === 0)
+    .sort((left, right) => left - right);
+}
+
+/**
+ * The named flags set in a bitflag value, in bit order, so a caller can look
+ * each one up in several tables (a name and a description). Bits with no
+ * name are left out; zero, negative and fractional values give an empty list.
+ */
+export function getSetFlags<Flag extends number>(
+  value: number,
+  labels: Readonly<Record<Flag, string>>
+): Flag[] {
+  if (!Number.isInteger(value) || value <= 0) return [];
+  return namedFlags(labels).filter((flag) => (value & flag) !== 0) as Flag[];
+}
+
 /**
  * The name of every flag set in a bitflag value, in bit order: `['No scores',
  * 'Invalid mods']`. Bits with no name read `Unknown (64)`. Zero, negative and
  * fractional values give an empty list.
  */
 export function getFlagLabels(value: number, labels: EnumLabels): string[] {
-  if (!Number.isInteger(value) || value <= 0) return [];
+  const flags = getSetFlags(value, labels);
+  const names = flags.map((flag) => labels[flag]);
 
-  const names: string[] = [];
-  let unknown = value;
-
-  const flags = Object.keys(labels)
-    .map(Number)
-    .filter((flag) => flag > 0 && (flag & (flag - 1)) === 0)
-    .sort((left, right) => left - right);
-
-  for (const flag of flags) {
-    if (value & flag) {
-      names.push(labels[flag]);
-      unknown &= ~flag;
-    }
+  if (Number.isInteger(value) && value > 0) {
+    const unknown = flags.reduce((rest, flag) => rest & ~flag, value);
+    if (unknown !== 0) names.push(`Unknown (${unknown})`);
   }
-  if (unknown !== 0) names.push(`Unknown (${unknown})`);
 
   return names;
 }

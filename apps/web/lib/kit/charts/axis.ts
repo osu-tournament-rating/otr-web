@@ -38,11 +38,38 @@ export const CHART_MARGIN = { top: 8, right: 12, bottom: 0, left: 0 } as const;
 /** Rounded data ends for vertical bars, square at the baseline. */
 export const CHART_BAR_RADIUS: [number, number, number, number] = [4, 4, 0, 0];
 
+/*
+ * Row (horizontal) bar charts, `layout="vertical"` in Recharts: categories
+ * on the left, the count along the bottom.
+ */
+
+/** Rows run left to right, so their data end is on the right. */
+export const CHART_ROW_BAR_RADIUS: [number, number, number, number] = [
+  0, 4, 4, 0,
+];
+
+/**
+ * Room for half of the last count label, which centres on the plot's right
+ * edge (`1,500` would otherwise be cut to `1,50`).
+ */
+export const CHART_ROW_MARGIN = { ...CHART_MARGIN, right: 20 } as const;
+
+/** Dashed vertical gridlines, one per count tick, for row bar charts. */
+export const chartRowGridProps = {
+  strokeDasharray: chartGridProps.strokeDasharray,
+  horizontal: false,
+  vertical: true,
+} as const;
+
 export const CHART_LINE_WIDTH = 2;
 
-/** The hover cursor: a muted band behind bars, a border-coloured rule on lines. */
+/**
+ * The hover cursor: an accent band at half strength behind bars (`--muted`
+ * matches the dark panel, so a muted band vanished there), a border-coloured
+ * rule on lines. ChartContainer paints the bar band the same way.
+ */
 export const CHART_CURSOR = {
-  bar: { fill: 'var(--muted)' },
+  bar: { fill: 'var(--accent)', fillOpacity: 0.5 },
   line: { stroke: 'var(--border)', strokeWidth: 1 },
 } as const;
 

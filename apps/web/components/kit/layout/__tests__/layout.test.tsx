@@ -3,9 +3,13 @@ import { Trophy } from 'lucide-react';
 import type * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import * as BeatmapSection from '@/components/beatmap/BeatmapSection';
 import { DetailHero, HeroMetaItem } from '@/components/kit/layout/DetailHero';
 import { HeroTabs } from '@/components/kit/layout/HeroTabs';
+import {
+  HeroTabsList,
+  HeroTabsRoot,
+  HeroTabsTrigger,
+} from '@/components/kit/layout/HeroTabsList';
 import { InfoButton } from '@/components/kit/layout/InfoButton';
 import { PageFrame } from '@/components/kit/layout/PageFrame';
 import { PageHeader } from '@/components/kit/layout/PageHeader';
@@ -14,21 +18,12 @@ import { RowList, RowListItem } from '@/components/kit/layout/RowList';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { StatTile, StatTileGrid } from '@/components/kit/layout/StatTile';
 import { Tile } from '@/components/kit/layout/Tile';
-import { Eyebrow, typeScale } from '@/components/kit/layout/Typography';
+import { typeScale } from '@/components/kit/layout/Typography';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ROW_HOVER_TINT, ROW_TITLE_HOVER } from '@/lib/kit/tables/row';
 
 const render = (node: React.ReactNode) =>
   renderToStaticMarkup(<TooltipProvider>{node}</TooltipProvider>);
-
-describe('BeatmapSection', () => {
-  it('re-exports the kit under its old names', () => {
-    expect(BeatmapSection.SectionCard).toBe(Panel);
-    expect(BeatmapSection.SectionHeader).toBe(SectionHeader);
-    expect(BeatmapSection.Tile).toBe(Tile);
-    expect(BeatmapSection.Eyebrow).toBe(Eyebrow);
-  });
-});
 
 describe('Panel', () => {
   it('is a section with the reference surface by default', () => {
@@ -80,7 +75,7 @@ describe('SectionHeader', () => {
       <SectionHeader title="Tier breakdown" infoText="How to read it" />
     );
 
-    expect(html).toContain('aria-label="About Tier breakdown"');
+    expect(html).toContain('aria-label="About tier breakdown"');
   });
 
   it('puts meta beside the actions when both are given', () => {
@@ -104,6 +99,21 @@ describe('SectionHeader', () => {
     );
 
     expect(html).toMatch(/class="-my-1 [^"]*"><button/);
+  });
+
+  it('sets the meta in tabular figures, with or without actions', () => {
+    const alone = render(<SectionHeader title="Scores" meta="1,368 scores" />);
+    const withActions = render(
+      <SectionHeader
+        title="Scores"
+        meta="1,368 scores"
+        actions={<button type="button">Full range</button>}
+      />
+    );
+
+    for (const html of [alone, withActions]) {
+      expect(html).toMatch(/class="[^"]*\btabular-nums\b[^"]*">1,368 scores/);
+    }
   });
 });
 
@@ -134,6 +144,18 @@ describe('InfoButton', () => {
       '<button type="button" aria-label="About percentile"'
     );
     expect(html).toContain('aria-hidden="true"');
+    expect(html).toContain('text-muted-foreground hover:text-foreground');
+  });
+
+  it('turns white on art', () => {
+    const html = render(
+      <InfoButton label="About star rating" onArt>
+        Explanation
+      </InfoButton>
+    );
+
+    expect(html).toContain('text-white/80 hover:text-white');
+    expect(html).not.toContain('text-muted-foreground');
   });
 });
 
@@ -200,6 +222,26 @@ describe('DetailHero', () => {
     expect(html).toContain('Admin');
   });
 
+  it('keeps a long title clear of the Admin pill on art', () => {
+    const withAdmin = render(
+      <DetailHero
+        title="A tournament name long enough to wrap onto three lines"
+        art={<span data-art />}
+        adminActions={<button type="button">Admin</button>}
+      />
+    );
+    // The strip grows with its content instead of clipping it, and the
+    // pill's corner row stays empty.
+    expect(withAdmin).toContain('min-h-48');
+    expect(withAdmin).toContain('sm:min-h-56');
+    expect(withAdmin).toContain('pt-16 sm:pt-[4.5rem]');
+
+    const withoutAdmin = render(
+      <DetailHero title="HAELEQUIN" art={<span data-art />} />
+    );
+    expect(withoutAdmin).not.toContain('pt-16');
+  });
+
   it('attaches tabs below a divider', () => {
     const html = render(
       <DetailHero title="Match" tabs={<nav aria-label="Match views" />} />
@@ -233,7 +275,71 @@ describe('HeroTabs', () => {
     expect(html).toContain('aria-label="Tournament views"');
     expect(html.match(/aria-current="page"/g)).toHaveLength(1);
     expect(html).toMatch(/data-testid="tab-beatmaps" aria-current="page"/);
-    expect(html).toContain('62');
+    expect(html).toMatch(/class="[^"]*\btabular-nums\b[^"]*">62</);
+    expect(html).not.toContain('sr-only');
+  });
+
+  it('shows a compact label on phones and keeps the full one for screen readers', () => {
+    const html = render(
+      <HeroTabs
+        aria-label="Audit history views"
+        value="self"
+        items={[
+          {
+            value: 'self',
+            label: 'This tournament',
+            compactLabel: 'Tournament',
+            href: '?tab=self',
+          },
+        ]}
+      />
+    );
+
+    expect(html).toContain(
+      '<span aria-hidden="true" class="sm:hidden">Tournament</span><span class="max-sm:sr-only">This tournament</span>'
+    );
+  });
+
+  it('hides counts below sm but keeps them in the name', () => {
+    const html = render(
+      <HeroTabs
+        aria-label="Audit history views"
+        value="matches"
+        countsFrom="sm"
+        items={[
+          {
+            value: 'matches',
+            label: 'Matches',
+            count: '1,000+',
+            href: '?tab=matches',
+          },
+        ]}
+      />
+    );
+
+    expect(html).toContain('max-sm:[&amp;_[data-slot=hero-tab-count]]:sr-only');
+    expect(html).toContain('data-slot="hero-tab-count"');
+    expect(html).toContain('1,000+');
+  });
+});
+
+describe('HeroTabsList', () => {
+  it('takes the same compact labels and count breakpoint', () => {
+    const html = render(
+      <HeroTabsRoot defaultValue="games">
+        <HeroTabsList aria-label="Match views" countsFrom="md">
+          <HeroTabsTrigger value="games" count="9" compactLabel="Games">
+            All games
+          </HeroTabsTrigger>
+        </HeroTabsList>
+      </HeroTabsRoot>
+    );
+
+    expect(html).toContain('max-md:[&amp;_[data-slot=hero-tab-count]]:sr-only');
+    expect(html).toContain(
+      '<span aria-hidden="true" class="sm:hidden">Games</span>'
+    );
+    expect(html).toContain('All games');
   });
 });
 
@@ -265,6 +371,38 @@ describe('StatTile', () => {
     expect(html).toMatch(/<span class="-my-1 [^"]*"><span data-tier/);
   });
 
+  it('takes a node as its label, such as a short form with its full name', () => {
+    const html = render(
+      <StatTile
+        layout="inline"
+        label={
+          <>
+            <span aria-hidden="true">CS</span>
+            <span className="sr-only">Circle size</span>
+          </>
+        }
+        value="4.0"
+        infoText="How big the circles are."
+        infoLabel="About circle size"
+      />
+    );
+
+    // Plain text on screen, nothing to tap: the full name is for screen
+    // readers only.
+    expect(html).toContain(
+      '<span class="truncate"><span aria-hidden="true">CS</span><span class="sr-only">Circle size</span></span>'
+    );
+    expect(html).toContain('aria-label="About circle size"');
+  });
+
+  it('names the info button after a text label', () => {
+    const html = render(
+      <StatTile label="Win rate" value="62%" infoText="Matches won." />
+    );
+    expect(html).toContain('<span class="truncate">Win rate</span>');
+    expect(html).toContain('aria-label="About win rate"');
+  });
+
   it('puts the value on the label line in the inline layout', () => {
     const html = render(<StatTile layout="inline" label="AR" value="8.0" />);
 
@@ -279,6 +417,14 @@ describe('StatTile', () => {
 
     expect(stacked).toMatch(/class="[^"]*\btext-xl\b[^"]*\bleading-none\b/);
     expect(inline).toMatch(/class="[^"]*\btext-lg\b[^"]*\bleading-none\b/);
+  });
+
+  it('sets the value in tabular figures in both layouts', () => {
+    const stacked = render(<StatTile label="Rating" value="2,214.8" />);
+    const inline = render(<StatTile layout="inline" label="AR" value="8.0" />);
+
+    expect(stacked).toMatch(/class="[^"]*\btabular-nums\b[^"]*\btext-xl\b/);
+    expect(inline).toMatch(/class="[^"]*\btabular-nums\b[^"]*\btext-lg\b/);
   });
 });
 

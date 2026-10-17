@@ -1,13 +1,15 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Check, ChevronsUpDown, X } from 'lucide-react';
-import { AuditActionType, AuditEntityType } from '@otr/core/osu';
-import { AuditEntityTypeEnumHelper } from '@/lib/enum-helpers';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Check } from 'lucide-react';
+
+import { ActiveFilterChips } from '@/components/kit/lists/ActiveFilterChips';
+import {
+  ChoiceFilter,
+  FilterField,
+  FilterPanel,
+} from '@/components/kit/lists/FilterPanel';
+import { ListToolbar } from '@/components/kit/lists/ListToolbar';
 import {
   Command,
   CommandEmpty,
@@ -16,340 +18,228 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
+import { ENTITY_TYPE_LABELS } from '@/lib/audit-entity-types';
+import { formatChoiceFilterLabel } from '@/lib/kit/lists/filters';
+import type { ListState } from '@/lib/kit/lists/params';
+import type { UseListStateResult } from '@/lib/kit/lists/use-list-state';
+import { cn } from '@/lib/utils';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  getFieldOptionsWithEntityType,
-  parseFieldOptionValue,
-  type FieldOption,
-} from './auditFieldConfig';
+  AUDIT_ACTION_OPTIONS,
+  AUDIT_FIELD_OPTIONS,
+  AUDIT_LOG_PARAMS,
+  AUDITED_ENTITY_TYPES,
+  getAuditFieldOption,
+  getEntityTypeName,
+  toAuditEntityType,
+  type AuditFieldOption,
+} from './auditParams';
+import { AuditSystemSwitch } from './AuditSystemSwitch';
 
-const ALL_ENTITY_TYPES = [
-  AuditEntityType.Tournament,
-  AuditEntityType.Match,
-  AuditEntityType.Game,
-  AuditEntityType.Score,
-  AuditEntityType.Beatmap,
-] as const;
+type AuditLogList = UseListStateResult<typeof AUDIT_LOG_PARAMS>;
+type AuditLogState = ListState<typeof AUDIT_LOG_PARAMS>;
 
-const ALL_ACTION_TYPES = [
-  AuditActionType.Created,
-  AuditActionType.Updated,
-  AuditActionType.Deleted,
-] as const;
+const ENTITY_OPTIONS = AUDITED_ENTITY_TYPES.map((entityType) => ({
+  value: ENTITY_TYPE_LABELS[entityType],
+  label: getEntityTypeName(entityType),
+}));
 
-const ACTION_TYPE_LABELS: Record<AuditActionType, string> = {
-  [AuditActionType.Created]: 'Created',
-  [AuditActionType.Updated]: 'Updated',
-  [AuditActionType.Deleted]: 'Deleted',
-};
+function actionName(value: string): string {
+  return (
+    AUDIT_ACTION_OPTIONS.find((option) => option.value === value)?.label ??
+    value
+  );
+}
 
-export type FilterState = {
-  entityTypes: AuditEntityType[];
-  fieldsChanged: { entityType: AuditEntityType; fieldName: string }[];
-  showSystem: boolean;
-  actionTypes: AuditActionType[];
-};
+function entityName(value: string): string {
+  const entityType = toAuditEntityType(value);
+  return entityType === undefined ? value : getEntityTypeName(entityType);
+}
 
-type AuditFilterBarProps = {
-  filters: FilterState;
-  onChange: (filters: FilterState) => void;
-};
+/** "Name (Tournament)": field names repeat across entity types. */
+function fieldName(value: string): string {
+  const option = getAuditFieldOption(value);
+  return option
+    ? `${option.label} (${getEntityTypeName(option.entityType)})`
+    : value;
+}
 
-function EntityTypeSelect({
-  selected,
-  onChange,
+/**
+ * Searchable list of every audited field, grouped by entity type. A
+ * handful of chips would not fit about a hundred fields.
+ */
+function FieldFilter({
+  value,
+  entityFilter,
+  onValueChange,
 }: {
-  selected: AuditEntityType[];
-  onChange: (types: AuditEntityType[]) => void;
+  value: readonly string[];
+  entityFilter: readonly string[];
+  onValueChange: (value: string[]) => void;
 }) {
-  const toggle = (entityType: AuditEntityType) => {
-    if (selected.includes(entityType)) {
-      onChange(selected.filter((t) => t !== entityType));
-    } else {
-      onChange([...selected, entityType]);
-    }
+  const groups = useMemo(() => {
+    const allowed = new Set(
+      entityFilter.map(toAuditEntityType).filter((type) => type !== undefined)
+    );
+    return AUDITED_ENTITY_TYPES.filter(
+      (entityType) => allowed.size === 0 || allowed.has(entityType)
+    ).map((entityType) => ({
+      entityType,
+      options: AUDIT_FIELD_OPTIONS.filter(
+        (option) => option.entityType === entityType
+      ),
+    }));
+  }, [entityFilter]);
+
+  const toggle = (option: AuditFieldOption) => {
+    const next = value.includes(option.value)
+      ? value.filter((item) => item !== option.value)
+      : [...value, option.value];
+    onValueChange(next);
   };
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          data-testid="filter-entity-type"
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1"
-        >
-          Entity Type
-          <ChevronsUpDown className="h-3 w-3 opacity-50" />
-          {selected.length > 0 && (
-            <Badge variant="secondary" className="ml-1 h-5 px-1 text-xs">
-              {selected.length}
-            </Badge>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-48 p-0" align="start">
-        <Command>
-          <CommandList>
-            <CommandGroup>
-              {ALL_ENTITY_TYPES.map((et) => {
-                const label = AuditEntityTypeEnumHelper.getMetadata(et).text;
-                const isSelected = selected.includes(et);
+    <FilterField label="Field updated">
+      <Command
+        data-testid="filter-field-updated"
+        className="rounded-md border bg-background dark:bg-input/30"
+      >
+        <CommandInput placeholder="Search fields" aria-label="Search fields" />
+        <CommandList className="max-h-56">
+          <CommandEmpty>No fields found.</CommandEmpty>
+          {groups.map((group) => (
+            <CommandGroup
+              key={group.entityType}
+              heading={getEntityTypeName(group.entityType)}
+            >
+              {group.options.map((option) => {
+                const selected = value.includes(option.value);
                 return (
-                  <CommandItem key={et} onSelect={() => toggle(et)}>
+                  <CommandItem
+                    key={option.value}
+                    value={option.value}
+                    keywords={[
+                      option.label,
+                      getEntityTypeName(option.entityType),
+                    ]}
+                    onSelect={() => toggle(option)}
+                  >
                     <Check
+                      aria-hidden="true"
                       className={cn(
-                        'h-3.5 w-3.5',
-                        isSelected ? 'opacity-100' : 'opacity-0'
+                        'size-3.5 text-foreground',
+                        selected ? 'opacity-100' : 'opacity-0'
                       )}
                     />
-                    {label}
+                    <span className="min-w-0 flex-1">{option.label}</span>
+                    {selected ? (
+                      <span className="sr-only">, selected</span>
+                    ) : null}
                   </CommandItem>
                 );
               })}
             </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+          ))}
+        </CommandList>
+      </Command>
+    </FilterField>
   );
 }
 
-function FieldSelect({
-  selected,
-  onChange,
-  entityTypeFilter,
-}: {
-  selected: { entityType: AuditEntityType; fieldName: string }[];
-  onChange: (
-    fields: { entityType: AuditEntityType; fieldName: string }[]
-  ) => void;
-  entityTypeFilter: AuditEntityType[];
-}) {
-  const allOptions = useMemo(() => getFieldOptionsWithEntityType(), []);
-
-  const filteredOptions = useMemo(() => {
-    if (entityTypeFilter.length === 0) return allOptions;
-    return allOptions.filter((opt) =>
-      entityTypeFilter.includes(opt.entityType)
-    );
-  }, [allOptions, entityTypeFilter]);
-
-  const isSelected = (opt: FieldOption) =>
-    selected.some(
-      (s) =>
-        s.entityType === opt.entityType &&
-        s.fieldName === opt.value.split(':')[1]
-    );
-
-  const toggle = (opt: FieldOption) => {
-    const parsed = parseFieldOptionValue(opt.value);
-    if (!parsed) return;
-
-    if (isSelected(opt)) {
-      onChange(
-        selected.filter(
-          (s) =>
-            !(
-              s.entityType === parsed.entityType &&
-              s.fieldName === parsed.fieldName
-            )
-        )
-      );
-    } else {
-      onChange([
-        ...selected,
-        { entityType: parsed.entityType, fieldName: parsed.fieldName },
-      ]);
-    }
-  };
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          data-testid="filter-field-updated"
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1"
-        >
-          Field Updated
-          <ChevronsUpDown className="h-3 w-3 opacity-50" />
-          {selected.length > 0 && (
-            <Badge variant="secondary" className="ml-1 h-5 px-1 text-xs">
-              {selected.length}
-            </Badge>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-64 p-0" align="start">
-        <Command>
-          <CommandInput placeholder="Search fields..." />
-          <CommandList>
-            <CommandEmpty>No fields found.</CommandEmpty>
-            <CommandGroup>
-              {filteredOptions.map((opt) => (
-                <CommandItem key={opt.value} onSelect={() => toggle(opt)}>
-                  <Check
-                    className={cn(
-                      'h-3.5 w-3.5',
-                      isSelected(opt) ? 'opacity-100' : 'opacity-0'
-                    )}
-                  />
-                  <span className="flex-1">{opt.label}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {opt.entityLabel}
-                  </span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-function ActionTypeSelect({
-  selected,
-  onChange,
-}: {
-  selected: AuditActionType[];
-  onChange: (types: AuditActionType[]) => void;
-}) {
-  const toggle = (actionType: AuditActionType) => {
-    if (selected.includes(actionType)) {
-      onChange(selected.filter((t) => t !== actionType));
-    } else {
-      onChange([...selected, actionType]);
-    }
-  };
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          data-testid="filter-action-type"
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1"
-        >
-          Action Type
-          <ChevronsUpDown className="h-3 w-3 opacity-50" />
-          {selected.length > 0 && (
-            <Badge variant="secondary" className="ml-1 h-5 px-1 text-xs">
-              {selected.length}
-            </Badge>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-48 p-0" align="start">
-        <Command>
-          <CommandList>
-            <CommandGroup>
-              {ALL_ACTION_TYPES.map((at) => {
-                const isSelected = selected.includes(at);
-                return (
-                  <CommandItem key={at} onSelect={() => toggle(at)}>
-                    <Check
-                      className={cn(
-                        'h-3.5 w-3.5',
-                        isSelected ? 'opacity-100' : 'opacity-0'
-                      )}
-                    />
-                    {ACTION_TYPE_LABELS[at]}
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
+/**
+ * The audit log's toolbar strip: the Filters button with action type,
+ * entity type and changed field, the system events switch, and a chip per
+ * active filter. Every control lives in the page address.
+ */
 export default function AuditFilterBar({
-  filters,
-  onChange,
-}: AuditFilterBarProps): React.JSX.Element {
-  const hasActiveFilters =
-    filters.entityTypes.length > 0 ||
-    filters.fieldsChanged.length > 0 ||
-    filters.actionTypes.length > 0;
+  list,
+}: {
+  list: AuditLogList;
+}): React.JSX.Element {
+  const { state, setState } = list;
 
-  const handleEntityTypesChange = (entityTypes: AuditEntityType[]) => {
-    const prunedFields =
-      entityTypes.length > 0
-        ? filters.fieldsChanged.filter((f) =>
-            entityTypes.includes(f.entityType)
-          )
-        : filters.fieldsChanged;
-
-    onChange({ ...filters, entityTypes, fieldsChanged: prunedFields });
+  // Choosing entity types drops fields that belong to the others.
+  const setEntities = (entity: AuditLogState['entity']) => {
+    const field =
+      entity.length > 0
+        ? state.field.filter((value) => {
+            const option = getAuditFieldOption(value);
+            return (
+              option !== undefined &&
+              entity.includes(ENTITY_TYPE_LABELS[option.entityType])
+            );
+          })
+        : state.field;
+    setState({ entity, field });
   };
 
   return (
-    <div
+    <ListToolbar
       data-testid="audit-filter-bar"
-      className="flex flex-wrap items-center gap-2"
-    >
-      <ActionTypeSelect
-        selected={filters.actionTypes}
-        onChange={(actionTypes) => onChange({ ...filters, actionTypes })}
-      />
-
-      <EntityTypeSelect
-        selected={filters.entityTypes}
-        onChange={handleEntityTypesChange}
-      />
-
-      <FieldSelect
-        selected={filters.fieldsChanged}
-        onChange={(fieldsChanged) => onChange({ ...filters, fieldsChanged })}
-        entityTypeFilter={filters.entityTypes}
-      />
-
-      <div className="flex items-center gap-2">
-        <Checkbox
+      label="Filter audit events"
+      filters={
+        <FilterPanel
+          title="Filter audit events"
+          activeCount={list.activeFilterCount}
+          onClearAll={list.clearFilters}
+        >
+          <ChoiceFilter
+            label="Action type"
+            options={AUDIT_ACTION_OPTIONS}
+            value={state.action}
+            onValueChange={(action) => setState({ action })}
+          />
+          <ChoiceFilter
+            label="Entity type"
+            options={ENTITY_OPTIONS}
+            value={state.entity}
+            onValueChange={setEntities}
+          />
+          <FieldFilter
+            value={state.field}
+            entityFilter={state.entity}
+            onValueChange={(field) => setState({ field })}
+          />
+        </FilterPanel>
+      }
+      // Not a filter: it widens the feed, so it leads the strip.
+      leading={
+        <AuditSystemSwitch
           data-testid="filter-show-system"
-          id="show-system"
-          checked={filters.showSystem}
-          onCheckedChange={(checked) =>
-            onChange({ ...filters, showSystem: checked === true })
-          }
+          checked={state.system}
+          onCheckedChange={(system) => setState({ system })}
         />
-        <label
-          htmlFor="show-system"
-          className="cursor-pointer text-sm text-muted-foreground"
-        >
-          Show system events
-        </label>
-      </div>
-
-      {hasActiveFilters && (
-        <Button
-          data-testid="filter-clear"
-          variant="ghost"
-          size="sm"
-          className="h-8 gap-1 px-2 text-xs"
-          onClick={() =>
-            onChange({
-              ...filters,
-              entityTypes: [],
-              fieldsChanged: [],
-              actionTypes: [],
-            })
-          }
-        >
-          <X className="h-3 w-3" />
-          Clear filters
-        </Button>
-      )}
-    </div>
+      }
+      activeFilters={
+        <ActiveFilterChips
+          onClearAll={list.clearFilters}
+          filters={[
+            {
+              key: 'action',
+              label: formatChoiceFilterLabel(
+                'Action type',
+                state.action.map(actionName)
+              ),
+              onRemove: () => setState({ action: [] }),
+            },
+            {
+              key: 'entity',
+              label: formatChoiceFilterLabel(
+                'Entity type',
+                state.entity.map(entityName)
+              ),
+              onRemove: () => setState({ entity: [] }),
+            },
+            {
+              key: 'field',
+              label: formatChoiceFilterLabel(
+                'Field updated',
+                state.field.map(fieldName)
+              ),
+              onRemove: () => setState({ field: [] }),
+            },
+          ]}
+        />
+      }
+    />
   );
 }

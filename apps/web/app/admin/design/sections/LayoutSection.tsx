@@ -1,6 +1,6 @@
 'use client';
 
-import { VerificationStatus } from '@otr/core/osu';
+import { Ruleset, VerificationStatus } from '@otr/core/osu';
 import {
   Activity,
   ArrowUpRight,
@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Clock3,
   ExternalLink,
-  Flag,
   Gamepad2,
   Gauge,
   Globe,
@@ -40,6 +39,7 @@ import type { MenuAction } from '@/components/kit/controls/ActionMenu';
 import { AdminMenu } from '@/components/kit/controls/AdminMenu';
 import { Button } from '@/components/kit/controls/Button';
 import { IconButton } from '@/components/kit/controls/IconButton';
+import { CountryName } from '@/components/kit/country/CountryFlag';
 import { DetailHero, HeroMetaItem } from '@/components/kit/layout/DetailHero';
 import { HeroTabs } from '@/components/kit/layout/HeroTabs';
 import {
@@ -58,10 +58,10 @@ import { StatTile, StatTileGrid } from '@/components/kit/layout/StatTile';
 import { Tile } from '@/components/kit/layout/Tile';
 import { Eyebrow, typeScale } from '@/components/kit/layout/Typography';
 import { ListToolbar } from '@/components/kit/lists/ListToolbar';
+import { RulesetSwitch } from '@/components/kit/lists/RulesetSwitch';
 import { SearchField } from '@/components/kit/lists/SearchField';
 import { VerificationStatusBadge } from '@/components/kit/status/VerificationStatusBadge';
 import { EntityLink } from '@/components/kit/tables/EntityLink';
-import TapTooltip from '@/components/tap-tooltip';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { formatCountOf } from '@/lib/kit/format/number';
@@ -93,6 +93,14 @@ const TOURNAMENT_ADMIN_ACTIONS: MenuAction[] = [
   },
 ];
 
+/** The beatmap attributes, by the names the beatmap page gives them. */
+const BEATMAP_ATTRIBUTES = [
+  { short: 'CS', full: 'Circle size', value: 4 },
+  { short: 'AR', full: 'Approach rate', value: 8 },
+  { short: 'OD', full: 'Overall difficulty', value: 6.5 },
+  { short: 'HP', full: 'HP drain', value: 6 },
+];
+
 const TOURNAMENTS = [
   {
     name: 'Break The Meta Cup',
@@ -116,11 +124,11 @@ function TournamentListDemo() {
   return (
     <Panel>
       <ListToolbar
-        label="Search tournaments"
+        label="Search and filter tournaments"
         search={
           <SearchField
-            label="Search tournaments"
-            placeholder="Search by name or abbreviation"
+            label="Search tournaments by name or abbreviation"
+            placeholder="Name or abbreviation"
             value={query}
             onSearch={setQuery}
           />
@@ -142,6 +150,42 @@ function TournamentListDemo() {
         ))}
       </RowList>
     </Panel>
+  );
+}
+
+/** The profile's hero: avatar, name, country link and ruleset switch. */
+function PlayerHeroDemo() {
+  const [ruleset, setRuleset] = React.useState<Ruleset>(Ruleset.Osu);
+
+  return (
+    <DetailHero
+      leading={
+        <Avatar className="size-16">
+          <AvatarFallback className="text-lg font-semibold">D</AvatarFallback>
+        </Avatar>
+      }
+      title="distantmemory"
+      meta={
+        <a
+          href="#layout-detail-hero-player"
+          aria-label="United States leaderboard"
+          className="inline-flex min-w-0 rounded-sm transition-colors outline-none hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        >
+          <CountryName code="US" name="United States" />
+        </a>
+      }
+      actions={
+        <IconButton
+          variant="outline"
+          icon={ExternalLink}
+          label="View profile on osu! website"
+        />
+      }
+    >
+      <div className="px-4 py-3 sm:px-6">
+        <RulesetSwitch value={ruleset} onValueChange={setRuleset} />
+      </div>
+    </DetailHero>
   );
 }
 
@@ -253,13 +297,7 @@ export default function LayoutSection() {
               </HeroMetaItem>
             </>
           }
-          adminActions={
-            <AdminMenu
-              onArt
-              title="HAELEQUIN"
-              actions={BEATMAP_ADMIN_ACTIONS}
-            />
-          }
+          adminActions={<AdminMenu onArt actions={BEATMAP_ADMIN_ACTIONS} />}
           actions={
             <Button variant="overlay" size="sm" icon={Play}>
               Preview
@@ -306,7 +344,6 @@ export default function LayoutSection() {
           adminActions={
             <AdminMenu
               onArt
-              title="Break The Meta Cup"
               notification="Has admin notes"
               actions={TOURNAMENT_ADMIN_ACTIONS}
             />
@@ -327,6 +364,49 @@ export default function LayoutSection() {
                 label="View tournament on osu! website"
               />
             </>
+          }
+        />
+      </Specimen>
+
+      <Specimen
+        id="layout-detail-hero-art-long"
+        name="DetailHero with art and a long title"
+        importPath={`${KIT}/DetailHero`}
+        description="A long name never runs under the Admin pill: the pill's corner row stays clear, and the strip grows past 192px (224px from sm) instead of clipping the name. An InfoButton on art takes `onArt`."
+        stacked
+      >
+        <DetailHero
+          art={<HeroArt />}
+          title="Merami Household Winter Cup 2021: Double Elimination Bracket Stage"
+          titleSuffix="MHWC21"
+          status={
+            <VerificationStatusBadge
+              status={VerificationStatus.PreVerified}
+              variant="overlay"
+              tooltip="tap"
+            />
+          }
+          meta={
+            <>
+              <span className="inline-flex items-center gap-1">
+                <HeroMetaItem icon={Users}>2v2</HeroMetaItem>
+                <InfoButton onArt label="About lobby size">
+                  Number of players per team in each match
+                </InfoButton>
+              </span>
+              <HeroMetaItem icon={CalendarDays}>Jan 8 – 30, 2022</HeroMetaItem>
+            </>
+          }
+          adminActions={<AdminMenu onArt actions={TOURNAMENT_ADMIN_ACTIONS} />}
+          actions={
+            <IconButton
+              asChild
+              variant="overlay"
+              icon={History}
+              label="View audit history"
+            >
+              <a href="#layout-detail-hero-art-long" />
+            </IconButton>
           }
         />
       </Specimen>
@@ -356,12 +436,7 @@ export default function LayoutSection() {
               <HeroMetaItem icon={CalendarDays}>Dec 4 – 18, 2021</HeroMetaItem>
             </>
           }
-          adminActions={
-            <AdminMenu
-              title="Break The Meta Cup"
-              actions={TOURNAMENT_ADMIN_ACTIONS}
-            />
-          }
+          adminActions={<AdminMenu actions={TOURNAMENT_ADMIN_ACTIONS} />}
           actions={
             <>
               <IconButton
@@ -383,6 +458,9 @@ export default function LayoutSection() {
             <HeroTabs
               aria-label="Tournament views"
               value="matches"
+              // As on the tournament page: four tabs with counts fit a
+              // 360px phone once the counts stay in the names below sm.
+              countsFrom="sm"
               items={[
                 {
                   value: 'matches',
@@ -416,33 +494,63 @@ export default function LayoutSection() {
         id="layout-detail-hero-player"
         name="DetailHero with a leading avatar"
         importPath={`${KIT}/DetailHero`}
-        description="Player pages put the avatar in `leading`, before the name. The rating tiles follow in their own panel, not inside the hero."
+        description="The profile puts the 64px avatar in `leading`, before the name, and the country as a CountryName that opens the country's leaderboard. Its ruleset switch is a row under the title block (`children`); the rating tiles follow in their own panel, not inside the hero."
         stacked
       >
-        <DetailHero
-          leading={
-            <Avatar className="size-14 sm:size-16">
-              <AvatarFallback className="text-lg font-semibold">
-                D
-              </AvatarFallback>
-            </Avatar>
-          }
-          title="distantmemory"
-          meta={
-            <>
-              <HeroMetaItem icon={Flag}>United States</HeroMetaItem>
-              <HeroMetaItem icon={Trophy}>86 tournaments</HeroMetaItem>
-              <HeroMetaItem icon={Swords}>1,204 matches</HeroMetaItem>
-            </>
-          }
-          actions={
-            <IconButton
-              variant="outline"
-              icon={ExternalLink}
-              label="View profile on osu! website"
+        <PlayerHeroDemo />
+      </Specimen>
+
+      <Specimen
+        id="layout-hero-tabs-panel"
+        name="HeroTabs at the top of a panel"
+        importPath={`${KIT}/HeroTabs`}
+        description="A page with a PageHeader, such as an entity's audit history, puts its view tabs at the top of its one panel, over a divider (a `border-b` className). `compactLabel` and `countsFrom` sm let four tabs with counts fit a 360px phone; the counts stay in each tab's accessible name."
+        stacked
+      >
+        <div className="flex flex-col gap-4">
+          <PageHeader
+            icon={History}
+            title="Corsace Open 2025"
+            back={{ href: '#layout-hero-tabs-panel', label: 'View tournament' }}
+          />
+          <Panel>
+            <HeroTabs
+              aria-label="Audit history views"
+              value="self"
+              countsFrom="sm"
+              className="border-b"
+              items={[
+                {
+                  value: 'self',
+                  label: 'This tournament',
+                  compactLabel: 'Tournament',
+                  href: '#layout-hero-tabs-panel',
+                },
+                {
+                  value: 'matches',
+                  label: 'Matches',
+                  count: '412',
+                  href: '#layout-hero-tabs-panel',
+                },
+                {
+                  value: 'games',
+                  label: 'Games',
+                  count: '3,104',
+                  href: '#layout-hero-tabs-panel',
+                },
+                {
+                  value: 'scores',
+                  label: 'Scores',
+                  count: '1,000+',
+                  href: '#layout-hero-tabs-panel',
+                },
+              ]}
             />
-          }
-        />
+            <PanelBody className={typeScale.bodyMuted}>
+              Toolbar and events
+            </PanelBody>
+          </Panel>
+        </div>
       </Specimen>
 
       <Specimen
@@ -465,12 +573,10 @@ export default function LayoutSection() {
             }
             tabs={
               <HeroTabsList aria-label="Match views">
-                <HeroTabsTrigger value="games" icon={Swords} count="9">
+                <HeroTabsTrigger value="games" count="9">
                   Games
                 </HeroTabsTrigger>
-                <HeroTabsTrigger value="stats" icon={ChartLine}>
-                  Stats
-                </HeroTabsTrigger>
+                <HeroTabsTrigger value="stats">Stats</HeroTabsTrigger>
               </HeroTabsList>
             }
           />
@@ -547,7 +653,7 @@ export default function LayoutSection() {
         id="layout-info-button"
         name="InfoButton"
         importPath={`${KIT}/InfoButton`}
-        description="The one help button: a muted circled i that opens on hover, keyboard focus and tap. It replaces every circled question mark and hover-only icon."
+        description="The one help button: a muted circled i that opens on hover, keyboard focus and tap. Never a circled question mark or an explanation that opens on hover only."
       >
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-1.5">
@@ -560,6 +666,13 @@ export default function LayoutSection() {
             <Eyebrow>Peak rating</Eyebrow>
             <InfoButton label="About peak rating" size="sm">
               Highest rating ever reached
+            </InfoButton>
+          </div>
+          {/* onArt: on a hero's dark matte, white in both themes. */}
+          <div className="flex items-center gap-1.5 rounded-md bg-black/60 px-3 py-2 text-sm font-medium text-white">
+            Lobby size
+            <InfoButton label="About lobby size" onArt>
+              Number of players per team in each match
             </InfoButton>
           </div>
         </div>
@@ -579,21 +692,13 @@ export default function LayoutSection() {
                 label="Rating"
                 value="2,215"
                 adornment={
-                  // TierIcon's own `tooltip` is hover-only; TapTooltip lets a
-                  // tap read the tier name.
-                  <TapTooltip
-                    content="Grandmaster II"
-                    triggerAriaLabel="Tier: Grandmaster II"
-                    triggerClassName="w-auto rounded-full"
-                  >
-                    <TierIcon
-                      tier="Grandmaster"
-                      subTier={2}
-                      width={22}
-                      height={22}
-                      className="block"
-                    />
-                  </TapTooltip>
+                  <TierIcon
+                    tier="Grandmaster"
+                    subTier={2}
+                    tooltip
+                    width={22}
+                    height={22}
+                  />
                 }
                 sub="Peak 2,302"
               />
@@ -621,19 +726,19 @@ export default function LayoutSection() {
         id="layout-stat-tile-inline"
         name="StatTile, inline layout"
         importPath={`${KIT}/StatTile`}
-        description="A short value on the label's line, with room for a gauge underneath. Use it for attribute grids."
+        description="A short value on the label's line, with room for a gauge underneath. Use it for attribute grids. CS, AR, OD and HP show as plain text; screen readers hear the full name from an sr-only span."
       >
         <StatTileGrid columns={2}>
-          {[
-            { label: 'Circle size', value: 4 },
-            { label: 'Approach rate', value: 8 },
-            { label: 'Overall difficulty', value: 6.5 },
-            { label: 'HP drain', value: 6 },
-          ].map((attribute) => (
+          {BEATMAP_ATTRIBUTES.map((attribute) => (
             <StatTile
-              key={attribute.label}
+              key={attribute.short}
               layout="inline"
-              label={attribute.label}
+              label={
+                <>
+                  <span aria-hidden="true">{attribute.short}</span>
+                  <span className="sr-only">{attribute.full}</span>
+                </>
+              }
               value={attribute.value.toFixed(1)}
             >
               <Progress
@@ -695,7 +800,7 @@ export default function LayoutSection() {
         id="layout-row-list"
         name="RowList and RowListItem"
         importPath={`${KIT}/RowList`}
-        description="Lists inside a panel are divided rows. Link the name; give a row `href` only where the whole row already opens today. Such rows get the shared hover tint and their title turns blue on hover."
+        description="Lists inside a panel are divided rows. Link the name; give a row `href` only on lists whose rows open as a whole (the tournament list, the beatmap list, search results), and say in `linkLabel` whatever the row must say aloud. Such rows get the shared hover tint and their title turns blue on hover."
       >
         <div className="flex flex-col gap-4">
           <Panel>

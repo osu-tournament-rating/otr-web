@@ -46,7 +46,7 @@ function MultiSelect({
   selected,
   onChange,
   className,
-  placeholder = 'Select options...',
+  placeholder = 'Select options…',
   disabled = false,
   invalid,
   id,
@@ -183,7 +183,9 @@ function MultiSelect({
                 : placeholder
           }
           className={cn(
-            'w-full justify-between',
+            // Drawn like the Select triggers beside it in the edit dialogs:
+            // no fill, normal weight, no hover tint.
+            'w-full justify-between bg-transparent px-3 font-normal hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent',
             selected.length > 1 ? 'h-full' : 'h-9',
             'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
             className
@@ -250,7 +252,7 @@ function MultiSelect({
       >
         <Command ref={commandRef} shouldFilter={false}>
           <CommandInput
-            placeholder="Search..."
+            placeholder="Search…"
             value={searchValue}
             onValueChange={setSearchValue}
             onKeyDown={handleSearchKeyDown}

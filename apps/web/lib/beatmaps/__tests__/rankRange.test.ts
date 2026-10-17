@@ -56,10 +56,22 @@ describe('RANK_RANGE_BUCKETS', () => {
   });
 });
 
+describe('bucket colours', () => {
+  test('take categorical slots 1 to 5 in bucket order', () => {
+    expect(RANK_RANGE_BUCKETS.map((bucket) => bucket.color)).toEqual([
+      'var(--series-1)',
+      'var(--series-2)',
+      'var(--series-3)',
+      'var(--series-4)',
+      'var(--series-5)',
+    ]);
+  });
+});
+
 describe('bucketRankRanges', () => {
   test('returns all five buckets in display order for no pools', () => {
     expect(bucketRankRanges([])).toEqual([
-      { key: 'open', label: 'Open', count: 0 },
+      { key: 'open', label: 'Open rank', count: 0 },
       { key: 'lt1k', label: '<1k', count: 0 },
       { key: '1kPlus', label: '1k+', count: 0 },
       { key: '10kPlus', label: '10k+', count: 0 },

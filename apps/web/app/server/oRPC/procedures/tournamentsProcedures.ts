@@ -1,10 +1,9 @@
 import { ORPCError } from '@orpc/server';
 import {
   SQL,
-  SQLWrapper,
-  AnyColumn,
   and,
   asc,
+  count,
   desc,
   eq,
   gte,
@@ -19,10 +18,13 @@ import * as schema from '@otr/core/db/schema';
 import {
   TournamentDetailSchema,
   TournamentListItemSchema,
+  TournamentListPageResponseSchema,
   TournamentListRequestSchema,
   TournamentListResponseSchema,
   TournamentIdInputSchema,
+  type TournamentListRequest,
 } from '@/lib/orpc/schema/tournament';
+import type { DatabaseClient } from '@/lib/db';
 import {
   calculateBeatmapListModDistribution,
   filterBeatmapModDistribution,
@@ -42,21 +44,230 @@ import {
   ScoringType,
   Team,
   TeamType,
-  TournamentQuerySortType,
   VerificationStatus,
 } from '@otr/core/osu';
 
+import { containsPattern } from './shared/likePattern';
+import {
+  buildTournamentRulesetCondition,
+  collectRulesets,
+} from './shared/rulesetFilter';
+import { buildTournamentListOrder } from './shared/tournamentListOrder';
 import { deriveTournamentWinRecord } from './shared/winRecord';
 
 const DEFAULT_PAGE_SIZE = 30;
 const MAX_PAGE_SIZE = 100;
-const LIKE_ESCAPE_PATTERN = /[%_\\]/g;
-
-const escapeLikePattern = (value: string) =>
-  value.replace(LIKE_ESCAPE_PATTERN, (match) => `\\${match}`);
 
 const normalizeStatNumber = (value: number) =>
   Number.isFinite(value) ? value : 0;
+
+function resolveTournamentListPaging(input: TournamentListRequest) {
+  const page = Math.max(input.page ?? 1, 1);
+  const pageSize = Math.max(
+    1,
+    Math.min(input.pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
+  );
+
+  return { page, pageSize, offset: (page - 1) * pageSize };
+}
+
+/** The filters and order the plain and the paged tournament lists share. */
+function buildTournamentListQuery(input: TournamentListRequest) {
+  const filters: SQL<unknown>[] = [];
+  let searchTerm: string | undefined;
+
+  if (input.verified) {
+    filters.push(
+      eq(schema.tournaments.verificationStatus, VerificationStatus.Verified)
+    );
+  }
+
+  const rulesetCondition = buildTournamentRulesetCondition(
+    collectRulesets(input.ruleset, input.rulesets)
+  );
+
+  if (rulesetCondition) {
+    filters.push(rulesetCondition);
+  }
+
+  if (input.verificationStatus && input.verificationStatus.length > 0) {
+    filters.push(
+      inArray(schema.tournaments.verificationStatus, input.verificationStatus)
+    );
+  }
+
+  if (input.rejectionReason !== undefined) {
+    filters.push(
+      sql`${schema.tournaments.rejectionReason} & ${input.rejectionReason} > 0`
+    );
+  }
+
+  if (input.submittedBy !== undefined) {
+    filters.push(eq(schema.tournaments.submittedByUserId, input.submittedBy));
+  }
+
+  if (input.verifiedBy !== undefined) {
+    filters.push(eq(schema.tournaments.verifiedByUserId, input.verifiedBy));
+  }
+
+  if (input.lobbySize && input.lobbySize.length > 0) {
+    filters.push(inArray(schema.tournaments.lobbySize, input.lobbySize));
+  }
+
+  if (input.minRankRange !== undefined) {
+    filters.push(
+      gte(schema.tournaments.rankRangeLowerBound, input.minRankRange)
+    );
+  }
+
+  if (input.maxRankRange !== undefined) {
+    filters.push(
+      lte(schema.tournaments.rankRangeLowerBound, input.maxRankRange)
+    );
+  }
+
+  if (input.dateMin) {
+    filters.push(gte(schema.tournaments.startTime, input.dateMin));
+  }
+
+  if (input.dateMax) {
+    filters.push(lte(schema.tournaments.endTime, input.dateMax));
+  }
+
+  if (input.searchQuery) {
+    searchTerm = input.searchQuery.trim();
+    if (searchTerm.length > 0) {
+      const searchPattern = containsPattern(searchTerm);
+      const nameOrAbbreviation = or(
+        ilike(schema.tournaments.name, searchPattern),
+        ilike(schema.tournaments.abbreviation, searchPattern)
+      );
+
+      if (nameOrAbbreviation) {
+        filters.push(nameOrAbbreviation);
+      }
+    }
+  }
+
+  const whereClause = filters.length > 0 ? and(...filters) : undefined;
+
+  const orderBy = buildTournamentListOrder({
+    sort: input.sort,
+    descending: input.descending,
+    searchTerm: searchTerm || undefined,
+  });
+
+  return { whereClause, orderBy };
+}
+
+/** One page of list items, each with its admin notes. */
+async function fetchTournamentListItems(
+  db: DatabaseClient,
+  {
+    whereClause,
+    orderBy,
+    limit,
+    offset,
+  }: {
+    whereClause: SQL<unknown> | undefined;
+    orderBy: SQL<unknown>[];
+    limit: number;
+    offset: number;
+  }
+) {
+  const submitterUser = alias(schema.users, 'submitterUser');
+  const submitterPlayer = alias(schema.players, 'submitterPlayer');
+  const verifierUser = alias(schema.users, 'verifierUser');
+  const verifierPlayer = alias(schema.players, 'verifierPlayer');
+
+  const baseQuery = db
+    .select({
+      id: schema.tournaments.id,
+      created: schema.tournaments.created,
+      name: schema.tournaments.name,
+      abbreviation: schema.tournaments.abbreviation,
+      forumUrl: schema.tournaments.forumUrl,
+      rankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
+      ruleset: schema.tournaments.ruleset,
+      lobbySize: schema.tournaments.lobbySize,
+      startTime: schema.tournaments.startTime,
+      endTime: schema.tournaments.endTime,
+      verificationStatus: schema.tournaments.verificationStatus,
+      rejectionReason: schema.tournaments.rejectionReason,
+      isLazer: schema.tournaments.isLazer,
+      submittedByUsername: submitterPlayer.username,
+      verifiedByUsername: verifierPlayer.username,
+    })
+    .from(schema.tournaments)
+    .leftJoin(
+      submitterUser,
+      eq(schema.tournaments.submittedByUserId, submitterUser.id)
+    )
+    .leftJoin(submitterPlayer, eq(submitterUser.playerId, submitterPlayer.id))
+    .leftJoin(
+      verifierUser,
+      eq(schema.tournaments.verifiedByUserId, verifierUser.id)
+    )
+    .leftJoin(verifierPlayer, eq(verifierUser.playerId, verifierPlayer.id));
+
+  const conditionedQuery =
+    whereClause !== undefined ? baseQuery.where(whereClause) : baseQuery;
+
+  const rows = await conditionedQuery
+    .orderBy(...orderBy)
+    .limit(limit)
+    .offset(offset);
+
+  const adminNotesByTournamentId = new Map<
+    number,
+    ReturnType<typeof mapAdminNoteRow>[]
+  >();
+
+  if (rows.length > 0) {
+    const adminNoteRows = await db
+      .select(selectAdminNoteFields(schema.tournamentAdminNotes))
+      .from(schema.tournamentAdminNotes)
+      .leftJoin(
+        schema.users,
+        eq(schema.users.id, schema.tournamentAdminNotes.adminUserId)
+      )
+      .leftJoin(schema.players, eq(schema.players.id, schema.users.playerId))
+      .where(
+        inArray(
+          schema.tournamentAdminNotes.referenceId,
+          rows.map((row) => row.id)
+        )
+      )
+      .orderBy(desc(schema.tournamentAdminNotes.created));
+
+    for (const noteRow of adminNoteRows as AdminNoteRow[]) {
+      const notes = adminNotesByTournamentId.get(noteRow.referenceId) ?? [];
+      notes.push(mapAdminNoteRow(noteRow));
+      adminNotesByTournamentId.set(noteRow.referenceId, notes);
+    }
+  }
+
+  return rows.map((row) =>
+    TournamentListItemSchema.parse({
+      id: row.id,
+      created: row.created,
+      name: row.name,
+      abbreviation: row.abbreviation,
+      forumUrl: row.forumUrl,
+      rankRangeLowerBound: row.rankRangeLowerBound,
+      ruleset: row.ruleset as Ruleset,
+      lobbySize: row.lobbySize,
+      startTime: row.startTime ?? null,
+      endTime: row.endTime ?? null,
+      verificationStatus: row.verificationStatus as VerificationStatus,
+      rejectionReason: row.rejectionReason,
+      isLazer: row.isLazer,
+      submittedByUsername: row.submittedByUsername ?? null,
+      verifiedByUsername: row.verifiedByUsername ?? null,
+      adminNotes: adminNotesByTournamentId.get(row.id) ?? [],
+    })
+  );
+}
 
 export const listTournaments = publicProcedure
   .input(TournamentListRequestSchema)
@@ -69,252 +280,71 @@ export const listTournaments = publicProcedure
   })
   .handler(async ({ input, context }) => {
     try {
-      const page = Math.max(input.page ?? 1, 1);
-      const pageSize = Math.max(
-        1,
-        Math.min(input.pageSize ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
-      );
-      const offset = (page - 1) * pageSize;
+      const { pageSize, offset } = resolveTournamentListPaging(input);
+      const { whereClause, orderBy } = buildTournamentListQuery(input);
 
-      const filters: SQL<unknown>[] = [];
-      let searchTerm: string | undefined;
-      let searchPattern: string | undefined;
-
-      if (input.verified) {
-        filters.push(
-          eq(schema.tournaments.verificationStatus, VerificationStatus.Verified)
-        );
-      }
-
-      if (input.ruleset !== undefined) {
-        filters.push(eq(schema.tournaments.ruleset, input.ruleset));
-      }
-
-      if (input.verificationStatus && input.verificationStatus.length > 0) {
-        filters.push(
-          inArray(
-            schema.tournaments.verificationStatus,
-            input.verificationStatus
-          )
-        );
-      }
-
-      if (input.rejectionReason !== undefined) {
-        filters.push(
-          sql`${schema.tournaments.rejectionReason} & ${input.rejectionReason} > 0`
-        );
-      }
-
-      if (input.submittedBy !== undefined) {
-        filters.push(
-          eq(schema.tournaments.submittedByUserId, input.submittedBy)
-        );
-      }
-
-      if (input.verifiedBy !== undefined) {
-        filters.push(eq(schema.tournaments.verifiedByUserId, input.verifiedBy));
-      }
-
-      if (input.lobbySize && input.lobbySize.length > 0) {
-        filters.push(inArray(schema.tournaments.lobbySize, input.lobbySize));
-      }
-
-      if (input.minRankRange !== undefined) {
-        filters.push(
-          gte(schema.tournaments.rankRangeLowerBound, input.minRankRange)
-        );
-      }
-
-      if (input.maxRankRange !== undefined) {
-        filters.push(
-          lte(schema.tournaments.rankRangeLowerBound, input.maxRankRange)
-        );
-      }
-
-      if (input.dateMin) {
-        filters.push(gte(schema.tournaments.startTime, input.dateMin));
-      }
-
-      if (input.dateMax) {
-        filters.push(lte(schema.tournaments.endTime, input.dateMax));
-      }
-
-      if (input.searchQuery) {
-        searchTerm = input.searchQuery.trim();
-        if (searchTerm.length > 0) {
-          searchPattern = `%${escapeLikePattern(searchTerm)}%`;
-          const nameOrAbbreviation = or(
-            ilike(schema.tournaments.name, searchPattern),
-            ilike(schema.tournaments.abbreviation, searchPattern)
-          );
-
-          if (nameOrAbbreviation) {
-            filters.push(nameOrAbbreviation);
-          }
-        }
-      }
-
-      const whereClause = filters.length > 0 ? and(...filters) : undefined;
-
-      const sortValue = input.sort ?? TournamentQuerySortType.EndTime;
-      const isDescending = input.descending ?? true;
-      const orderBy: SQL<unknown>[] = [];
-
-      const direction = <T extends SQLWrapper | AnyColumn>(
-        expr: T
-      ): SQL<unknown> => (isDescending ? desc(expr) : asc(expr));
-
-      const searchPrefixPattern =
-        searchTerm && searchTerm.length > 0
-          ? `${escapeLikePattern(searchTerm)}%`
-          : undefined;
-
-      switch (sortValue) {
-        case TournamentQuerySortType.Id:
-          orderBy.push(direction(schema.tournaments.id));
-          break;
-        case TournamentQuerySortType.StartTime:
-          orderBy.push(direction(schema.tournaments.startTime));
-          break;
-        case TournamentQuerySortType.EndTime:
-          orderBy.push(direction(schema.tournaments.endTime));
-          break;
-        case TournamentQuerySortType.LobbySize:
-          orderBy.push(direction(schema.tournaments.lobbySize));
-          break;
-        case TournamentQuerySortType.SubmissionDate:
-          orderBy.push(direction(schema.tournaments.created));
-          break;
-        case TournamentQuerySortType.SearchQueryRelevance:
-          if (searchTerm && searchPattern && searchPrefixPattern) {
-            orderBy.push(
-              desc(
-                sql<number>`CASE
-                  WHEN ${schema.tournaments.name} ILIKE ${searchPrefixPattern} THEN 3
-                  WHEN ${schema.tournaments.abbreviation} ILIKE ${searchPrefixPattern} THEN 2
-                  WHEN ${schema.tournaments.name} ILIKE ${searchPattern} THEN 1
-                  ELSE 0
-                END`
-              )
-            );
-          }
-          orderBy.push(desc(schema.tournaments.created));
-          break;
-        default:
-          orderBy.push(direction(schema.tournaments.endTime));
-          break;
-      }
-
-      if (orderBy.length === 0) {
-        orderBy.push(desc(schema.tournaments.created));
-      }
-
-      const submitterUser = alias(schema.users, 'submitterUser');
-      const submitterPlayer = alias(schema.players, 'submitterPlayer');
-      const verifierUser = alias(schema.users, 'verifierUser');
-      const verifierPlayer = alias(schema.players, 'verifierPlayer');
-
-      const baseQuery = context.db
-        .select({
-          id: schema.tournaments.id,
-          created: schema.tournaments.created,
-          name: schema.tournaments.name,
-          abbreviation: schema.tournaments.abbreviation,
-          forumUrl: schema.tournaments.forumUrl,
-          rankRangeLowerBound: schema.tournaments.rankRangeLowerBound,
-          ruleset: schema.tournaments.ruleset,
-          lobbySize: schema.tournaments.lobbySize,
-          startTime: schema.tournaments.startTime,
-          endTime: schema.tournaments.endTime,
-          verificationStatus: schema.tournaments.verificationStatus,
-          rejectionReason: schema.tournaments.rejectionReason,
-          isLazer: schema.tournaments.isLazer,
-          submittedByUsername: submitterPlayer.username,
-          verifiedByUsername: verifierPlayer.username,
-        })
-        .from(schema.tournaments)
-        .leftJoin(
-          submitterUser,
-          eq(schema.tournaments.submittedByUserId, submitterUser.id)
-        )
-        .leftJoin(
-          submitterPlayer,
-          eq(submitterUser.playerId, submitterPlayer.id)
-        )
-        .leftJoin(
-          verifierUser,
-          eq(schema.tournaments.verifiedByUserId, verifierUser.id)
-        )
-        .leftJoin(verifierPlayer, eq(verifierUser.playerId, verifierPlayer.id));
-
-      const conditionedQuery =
-        whereClause !== undefined
-          ? baseQuery.where(whereClause as SQL<unknown>)
-          : baseQuery;
-
-      const rows = await conditionedQuery
-        .orderBy(...orderBy)
-        .limit(pageSize)
-        .offset(offset);
-
-      const adminNotesByTournamentId = new Map<
-        number,
-        ReturnType<typeof mapAdminNoteRow>[]
-      >();
-
-      if (rows.length > 0) {
-        const adminNoteRows = await context.db
-          .select(selectAdminNoteFields(schema.tournamentAdminNotes))
-          .from(schema.tournamentAdminNotes)
-          .leftJoin(
-            schema.users,
-            eq(schema.users.id, schema.tournamentAdminNotes.adminUserId)
-          )
-          .leftJoin(
-            schema.players,
-            eq(schema.players.id, schema.users.playerId)
-          )
-          .where(
-            inArray(
-              schema.tournamentAdminNotes.referenceId,
-              rows.map((row) => row.id)
-            )
-          )
-          .orderBy(desc(schema.tournamentAdminNotes.created));
-
-        for (const noteRow of adminNoteRows as AdminNoteRow[]) {
-          const notes = adminNotesByTournamentId.get(noteRow.referenceId) ?? [];
-          notes.push(mapAdminNoteRow(noteRow));
-          adminNotesByTournamentId.set(noteRow.referenceId, notes);
-        }
-      }
-
-      return rows.map((row) =>
-        TournamentListItemSchema.parse({
-          id: row.id,
-          created: row.created,
-          name: row.name,
-          abbreviation: row.abbreviation,
-          forumUrl: row.forumUrl,
-          rankRangeLowerBound: row.rankRangeLowerBound,
-          ruleset: row.ruleset as Ruleset,
-          lobbySize: row.lobbySize,
-          startTime: row.startTime ?? null,
-          endTime: row.endTime ?? null,
-          verificationStatus: row.verificationStatus as VerificationStatus,
-          rejectionReason: row.rejectionReason,
-          isLazer: row.isLazer,
-          submittedByUsername: row.submittedByUsername ?? null,
-          verifiedByUsername: row.verifiedByUsername ?? null,
-          adminNotes: adminNotesByTournamentId.get(row.id) ?? [],
-        })
-      );
+      return await fetchTournamentListItems(context.db, {
+        whereClause,
+        orderBy,
+        limit: pageSize,
+        offset,
+      });
     } catch (error) {
       console.error('[orpc] tournaments.list failed', error);
 
       throw new ORPCError('INTERNAL_SERVER_ERROR', {
         message:
           error instanceof Error ? error.message : 'Failed to load tournaments',
+      });
+    }
+  });
+
+/**
+ * The site's numbered tournament list: the same filters, sort and pages as
+ * `listTournaments`, plus the total the filters match. Not in the public API,
+ * whose list response stays a bare array.
+ */
+export const listTournamentsPage = publicProcedure
+  .input(TournamentListRequestSchema)
+  .output(TournamentListPageResponseSchema)
+  .route({
+    summary: 'List one numbered page of tournaments with the total count',
+    tags: ['tournaments'],
+    method: 'GET',
+    path: '/tournaments/list-page',
+  })
+  .handler(async ({ input, context }) => {
+    try {
+      const { page, pageSize, offset } = resolveTournamentListPaging(input);
+      const { whereClause, orderBy } = buildTournamentListQuery(input);
+
+      const [items, countRows] = await Promise.all([
+        fetchTournamentListItems(context.db, {
+          whereClause,
+          orderBy,
+          limit: pageSize,
+          offset,
+        }),
+        context.db
+          .select({ count: count() })
+          .from(schema.tournaments)
+          .where(whereClause),
+      ]);
+
+      const totalCount = Number(countRows[0]?.count ?? 0);
+
+      return {
+        items,
+        totalCount,
+        page,
+        pageSize,
+        totalPages: Math.ceil(totalCount / pageSize),
+      };
+    } catch (error) {
+      console.error('[orpc] tournaments.listPage failed', error);
+
+      throw new ORPCError('INTERNAL_SERVER_ERROR', {
+        message: 'Failed to load tournaments',
       });
     }
   });

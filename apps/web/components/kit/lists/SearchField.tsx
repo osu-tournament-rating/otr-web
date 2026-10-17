@@ -163,6 +163,7 @@ export function SearchField({
           <IconButton
             label="Clear search"
             icon={X}
+            tooltip={false}
             onClick={clear}
             className="absolute top-1/2 right-1 -translate-y-1/2"
           />

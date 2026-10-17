@@ -1,216 +1,190 @@
 import {
   CalendarDays,
   ChevronRight,
-  StickyNote,
+  NotebookPen,
   Target,
   Users,
 } from 'lucide-react';
-import { VerificationStatus } from '@otr/core/osu';
 
-import AdminNoteContent from '@/components/admin-notes/AdminNoteContent';
-import VerificationBadge from '@/components/badges/VerificationBadge';
-import { LazerBadge } from '@/components/badges/LazerBadge';
-import RulesetIcon from '@/components/icons/RulesetIcon';
+import { DateRangeText } from '@/components/kit/format/DateRangeText';
+import { RulesetName } from '@/components/kit/format/RulesetName';
+import { RowListItem } from '@/components/kit/layout/RowList';
+import { Badge } from '@/components/kit/status/Badge';
+import { NotInRatings } from '@/components/kit/status/NotInRatings';
+import { VerificationStatusIcon } from '@/components/kit/status/VerificationStatusIcon';
+import { formatDateRange } from '@/lib/kit/format/date';
+import { formatLobbySize, formatRankRange } from '@/lib/kit/format/fields';
+import { formatCountOf } from '@/lib/kit/format/number';
+import { getRulesetLabel } from '@/lib/kit/format/ruleset';
+import { getRejectionReasonTexts } from '@/lib/kit/status/reasons';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { RulesetEnumHelper } from '@/lib/enum-helpers';
-import { type AdminNotePreview } from '@/lib/orpc/schema/common';
+  NOT_IN_RATINGS_YET_LABEL,
+  getVerificationStatusName,
+  isNotInRatingsYet,
+} from '@/lib/kit/status/verification';
 import { type TournamentListItem } from '@/lib/orpc/schema/tournament';
-import { formatRankRange } from '@/lib/utils/number';
 
-const monthDayFormatter = new Intl.DateTimeFormat('en-US', {
-  month: 'short',
-  day: 'numeric',
-  timeZone: 'UTC',
-});
+/**
+ * The row grid, shared with the column labels and the loading rows. Phones
+ * stack the name, the format and the dates; tablets put the format and the
+ * dates on one line under the name; from `lg` the three are columns.
+ */
+export const TOURNAMENT_ROW_COLUMNS =
+  'md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-x-6 lg:grid-cols-[minmax(0,1fr)_18rem_230px] lg:gap-5';
 
-const fullDateFormatter = new Intl.DateTimeFormat('en-US', {
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
-  timeZone: 'UTC',
-});
+/** The name cell spans the tablet grid's two columns. */
+export const TOURNAMENT_ROW_NAME_CELL = 'min-w-0 md:col-span-2 lg:col-span-1';
 
-function formatRankRangeDisplay(rankRange: number): string {
-  return rankRange === 1 ? 'Open rank' : formatRankRange(rankRange);
-}
-
-function formatTournamentDates(
-  startTime: Date | string | null,
-  endTime: Date | string | null
+/**
+ * The row link's accessible name. It replaces everything inside the row for
+ * a screen reader, so it carries the row's words in the order they show
+ * (name, abbreviation, "Not in ratings yet", lazer, format, dates), the
+ * status icon's word before them and the admin note count after: "View
+ * pre-verified tournament TimeFall Origins TF, not in ratings yet, osu!,
+ * 4v4, Open rank, Jul 4 – 26, 2026". The visible words stay whole and in
+ * order inside the name, so voice control finds the row by what it shows
+ * (WCAG 2.5.3, label in name).
+ */
+export function getTournamentRowLabel(
+  tournament: Pick<
+    TournamentListItem,
+    | 'name'
+    | 'abbreviation'
+    | 'verificationStatus'
+    | 'isLazer'
+    | 'adminNotes'
+    | 'ruleset'
+    | 'lobbySize'
+    | 'rankRangeLowerBound'
+    | 'startTime'
+    | 'endTime'
+  >
 ): string {
-  const startDate = startTime ? new Date(startTime) : null;
-  const endDate = endTime ? new Date(endTime) : null;
+  const status = getVerificationStatusName(
+    tournament.verificationStatus
+  ).toLowerCase();
+  const noteCount = tournament.adminNotes.length;
 
-  if (startDate && endDate) {
-    const sameDay =
-      startDate.getUTCFullYear() === endDate.getUTCFullYear() &&
-      startDate.getUTCMonth() === endDate.getUTCMonth() &&
-      startDate.getUTCDate() === endDate.getUTCDate();
-
-    if (sameDay) {
-      return fullDateFormatter.format(startDate);
-    }
-
-    if (startDate.getUTCFullYear() === endDate.getUTCFullYear()) {
-      return `${monthDayFormatter.format(startDate)} – ${fullDateFormatter.format(endDate)}`;
-    }
-
-    return `${fullDateFormatter.format(startDate)} – ${fullDateFormatter.format(endDate)}`;
-  }
-
-  const availableDate = startDate ?? endDate;
-  return availableDate
-    ? fullDateFormatter.format(availableDate)
-    : 'Dates unavailable';
+  return [
+    `View ${status} tournament ${tournament.name} ${tournament.abbreviation}`.trim(),
+    isNotInRatingsYet(tournament.verificationStatus) &&
+      NOT_IN_RATINGS_YET_LABEL.toLowerCase(),
+    tournament.isLazer && 'lazer',
+    getRulesetLabel(tournament.ruleset),
+    formatLobbySize(tournament.lobbySize),
+    formatRankRange(tournament.rankRangeLowerBound),
+    formatDateRange(tournament.startTime, tournament.endTime, { empty: '' }),
+    noteCount > 0 && formatCountOf(noteCount, 'admin note'),
+  ]
+    .filter(Boolean)
+    .join(', ');
 }
 
-function AdminNotesTooltip({
-  notes,
-  tournamentName,
-}: {
-  notes: AdminNotePreview[];
-  tournamentName: string;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span
-          data-testid="tournament-admin-notes-trigger"
-          aria-label={`${notes.length} admin ${notes.length === 1 ? 'note' : 'notes'} for ${tournamentName}`}
-          className="inline-flex size-5 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
-        >
-          <StickyNote className="size-4" aria-hidden="true" />
-        </span>
-      </TooltipTrigger>
-      <TooltipContent
-        side="top"
-        align="start"
-        sideOffset={8}
-        collisionPadding={16}
-        hideArrow
-        className="w-80 max-w-[calc(100vw-2rem)] border bg-popover p-0 text-sm text-popover-foreground shadow-lg"
-      >
-        <div
-          data-testid="tournament-admin-notes-content"
-          className="max-h-64 divide-y overflow-y-auto"
-        >
-          {notes.map((note) => (
-            <div key={note.id} className="p-3">
-              <AdminNoteContent note={note} authorLink={false} />
-            </div>
-          ))}
-        </div>
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
+/**
+ * One tournament in the list. The whole row opens the tournament, as it
+ * always has, so the name is plain text and the status icon's tooltip opens
+ * on hover; "Not in ratings yet" says the undecided states in words.
+ *
+ * A tournament with admin notes shows a note icon after its abbreviation,
+ * and the link's name says how many. The row is one link, so it holds no
+ * preview a tap or keyboard could open; the notes open from the tournament
+ * page.
+ */
 export default function TournamentListRow({
   tournament,
 }: {
   tournament: TournamentListItem;
 }) {
-  const dateRange = formatTournamentDates(
-    tournament.startTime,
-    tournament.endTime
-  );
-  const isAwaitingReview = ![
-    VerificationStatus.Verified,
-    VerificationStatus.Rejected,
-  ].includes(tournament.verificationStatus);
-  const rulesetLabel =
-    RulesetEnumHelper.getMetadata(tournament.ruleset).text.replace(
-      'osu!',
-      ''
-    ) || 'osu!';
+  const notInRatings = isNotInRatingsYet(tournament.verificationStatus);
+  const noteCount = tournament.adminNotes.length;
 
   return (
-    <div
-      data-testid="tournament-card"
-      className="grid gap-3 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_18rem_230px] lg:items-center lg:gap-5"
+    <RowListItem
+      href={`/tournaments/${tournament.id}`}
+      linkLabel={getTournamentRowLabel(tournament)}
+      data-testid="tournament-list-item"
     >
-      <div className="min-w-0">
-        <div className="flex min-w-0 items-center gap-2">
-          <VerificationBadge
-            interactive={false}
-            verificationStatus={tournament.verificationStatus}
-            rejectionReason={tournament.rejectionReason}
-            entityType="tournament"
-            verifierUsername={tournament.verifiedByUsername ?? undefined}
-          />
-          <h2
-            title={tournament.name}
-            className="min-w-0 truncate text-base leading-snug font-semibold text-foreground transition-colors group-hover:text-primary sm:text-lg"
-          >
-            {tournament.name}
-          </h2>
-          <span
-            data-testid="tournament-abbreviation"
-            className="shrink-0 text-xs font-medium text-muted-foreground"
-          >
-            {tournament.abbreviation}
-          </span>
-          <span
-            data-testid="tournament-admin-note-slot"
-            className="inline-flex size-5 shrink-0 items-center justify-center"
-          >
-            {tournament.adminNotes.length > 0 && (
-              <AdminNotesTooltip
-                notes={tournament.adminNotes}
-                tournamentName={tournament.name}
+      <div
+        data-testid="tournament-card"
+        className={`grid gap-2 ${TOURNAMENT_ROW_COLUMNS}`}
+      >
+        <div className={TOURNAMENT_ROW_NAME_CELL}>
+          {/* Below `lg` a long name wraps rather than losing its end (often
+              the year); the icon, abbreviation and note mark stay level with
+              its first 24px line. From `lg` the column is wide: one line. */}
+          <div className="flex min-w-0 items-start gap-2 lg:items-center">
+            <span className="flex h-6 shrink-0 items-center">
+              <VerificationStatusIcon
+                status={tournament.verificationStatus}
+                rejectionReasons={getRejectionReasonTexts(
+                  'tournament',
+                  tournament.rejectionReason
+                )}
+                reviewer={tournament.verifiedByUsername ?? undefined}
+                tooltip="hover"
               />
-            )}
-          </span>
-        </div>
-        {(isAwaitingReview || tournament.isLazer) && (
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {isAwaitingReview && (
-              <span className="inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-2 text-xs font-medium whitespace-nowrap text-warning-foreground">
-                <span
-                  className="size-1.5 rounded-full bg-current"
+            </span>
+            <span
+              data-row-title
+              title={tournament.name}
+              className="min-w-0 text-base font-medium break-words lg:truncate"
+            >
+              {tournament.name}
+            </span>
+            <span
+              data-testid="tournament-abbreviation"
+              className="flex h-6 shrink-0 items-center text-xs text-muted-foreground"
+            >
+              {tournament.abbreviation}
+            </span>
+            <span
+              data-testid="tournament-admin-note-slot"
+              className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center lg:mt-0"
+            >
+              {noteCount > 0 && (
+                <NotebookPen
+                  data-testid="tournament-admin-notes-marker"
+                  className="size-4 text-muted-foreground"
                   aria-hidden="true"
                 />
-                Awaiting review
-              </span>
-            )}
-            {tournament.isLazer && <LazerBadge isLazer={tournament.isLazer} />}
+              )}
+            </span>
           </div>
-        )}
-      </div>
+          {(notInRatings || tournament.isLazer) && (
+            <div className="mt-1 flex flex-wrap items-center gap-2 pl-6">
+              <NotInRatings status={tournament.verificationStatus} />
+              {tournament.isLazer && (
+                <Badge variant="outline" size="sm">
+                  lazer
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
 
-      <div className="flex items-center gap-x-4 text-sm text-muted-foreground">
-        <span className="inline-flex w-28 shrink-0 items-center gap-1.5">
-          <RulesetIcon
-            ruleset={tournament.ruleset}
-            className="size-4 shrink-0 fill-current"
-            aria-hidden="true"
-          />
-          {rulesetLabel}
-        </span>
-        <span className="inline-flex w-12 shrink-0 items-center gap-1.5">
-          <Users className="size-4 shrink-0" aria-hidden="true" />
-          {tournament.lobbySize}v{tournament.lobbySize}
-        </span>
-        <span className="inline-flex w-24 shrink-0 items-center gap-1.5">
-          <Target className="size-4 shrink-0" aria-hidden="true" />
-          {formatRankRangeDisplay(tournament.rankRangeLowerBound)}
-        </span>
-      </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pl-6 text-sm text-muted-foreground lg:pl-0">
+          <RulesetName ruleset={tournament.ruleset} className="lg:w-24" />
+          <span className="inline-flex shrink-0 items-center gap-1.5 lg:w-12">
+            <Users className="size-4 shrink-0" aria-hidden="true" />
+            {formatLobbySize(tournament.lobbySize)}
+          </span>
+          <span className="inline-flex items-center gap-1.5 tabular-nums">
+            <Target className="size-4 shrink-0" aria-hidden="true" />
+            {formatRankRange(tournament.rankRangeLowerBound)}
+          </span>
+        </div>
 
-      <div className="flex min-w-0 items-center justify-between gap-3 text-sm text-muted-foreground lg:justify-end">
-        <span className="inline-flex min-w-0 items-center gap-1.5 whitespace-nowrap lg:text-right">
-          <CalendarDays className="size-4 shrink-0" aria-hidden="true" />
-          <span>{dateRange}</span>
-        </span>
-        <ChevronRight
-          className="size-4 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
-          aria-hidden="true"
-        />
+        <div className="flex min-w-0 items-center justify-between gap-3 pl-6 text-sm text-muted-foreground md:justify-end md:pl-0">
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            <CalendarDays className="size-4 shrink-0" aria-hidden="true" />
+            <DateRangeText
+              start={tournament.startTime}
+              end={tournament.endTime}
+            />
+          </span>
+          <ChevronRight className="size-4 shrink-0" aria-hidden="true" />
+        </div>
       </div>
-    </div>
+    </RowListItem>
   );
 }

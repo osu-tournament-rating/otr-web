@@ -58,11 +58,21 @@ export function getNiceTicks(
     const pad =
       high === 0 ? 1 : 10 ** (Math.floor(Math.log10(Math.abs(high))) - 1);
     const padded = integer ? Math.max(1, pad) : pad;
-    return getNiceTicks(
-      low >= 0 ? Math.max(0, low - padded) : low - padded,
-      high + padded,
-      { maxTicks, integer, within }
-    );
+    const paddedLow = low >= 0 ? Math.max(0, low - padded) : low - padded;
+
+    // Inside the data there is one value to label, and only that one: a
+    // padded tick (2023 beside the one year 2024) names nothing in the data.
+    // The domain keeps its padding so a numeric axis does not collapse.
+    if (within) {
+      return {
+        min: trimFloatDrift(paddedLow),
+        max: trimFloatDrift(high + padded),
+        step: trimFloatDrift(padded),
+        ticks: [low],
+      };
+    }
+
+    return getNiceTicks(paddedLow, high + padded, { maxTicks, integer });
   }
 
   const exponent = Math.floor(Math.log10(high - low));
@@ -107,6 +117,26 @@ export function getNiceTicks(
   const min = Math.floor(low);
   const max = Math.max(min + 1, Math.ceil(high));
   return { min, max, step: max - min, ticks: [min, max] };
+}
+
+/**
+ * Ticks for a category axis of evenly spaced whole numbers, such as years or
+ * rating bucket starts, given in ascending order: every value when they all
+ * fit, otherwise the tick rule's round values that are in the data, so every
+ * tick names a bar.
+ */
+export function getCategoryTicks(
+  values: readonly number[],
+  maxTicks = DEFAULT_MAX_TICKS
+): number[] {
+  if (values.length <= maxTicks) return [...values];
+
+  const present = new Set(values);
+  return getNiceTicks(values[0], values[values.length - 1], {
+    integer: true,
+    within: true,
+    maxTicks,
+  }).ticks.filter((tick) => present.has(tick));
 }
 
 const DAY_MS = 86_400_000;

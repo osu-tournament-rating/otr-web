@@ -2,7 +2,11 @@ import { describe, expect, it } from 'bun:test';
 
 import { getNiceAxis } from '@/lib/beatmaps/chart-axis';
 import { niceAxisProps } from '@/lib/kit/charts/axis';
-import { getNiceTicks, getTimeTicks } from '@/lib/kit/charts/ticks';
+import {
+  getCategoryTicks,
+  getNiceTicks,
+  getTimeTicks,
+} from '@/lib/kit/charts/ticks';
 
 const ALLOWED_MANTISSAS = [1, 2, 2.5, 5];
 
@@ -103,6 +107,23 @@ describe('getNiceTicks within the data', () => {
     expect(buckets.ticks).toEqual([500, 1_000, 1_500, 2_000, 2_500]);
   });
 
+  it('labels only the one value of a flat range', () => {
+    // One year of data: no padded 2023 or 2025 beside it.
+    const year = getNiceTicks(2024, 2024, { within: true, integer: true });
+    expect(year.ticks).toEqual([2024]);
+    expect(year.min).toBeLessThan(2024);
+    expect(year.max).toBeGreaterThan(2024);
+
+    expect(getNiceTicks(1, 1, { within: true, integer: true }).ticks).toEqual([
+      1,
+    ]);
+    expect(getNiceTicks(0, 0, { within: true }).ticks).toEqual([0]);
+    expect(getNiceTicks(812_455, 812_455, { within: true }).ticks).toEqual([
+      812_455,
+    ]);
+    expect(getNiceTicks(-3.5, -3.5, { within: true }).ticks).toEqual([-3.5]);
+  });
+
   it('still uses the shared steps and limit', () => {
     for (let max = 3; max < 5_000; max += 41) {
       for (const min of [0, 1, max / 3]) {
@@ -112,6 +133,33 @@ describe('getNiceTicks within the data', () => {
         expect(ticks[0]).toBeGreaterThanOrEqual(min);
         expect(ticks[ticks.length - 1]).toBeLessThanOrEqual(max);
       }
+    }
+  });
+});
+
+describe('getCategoryTicks', () => {
+  it('labels every category when they all fit', () => {
+    expect(getCategoryTicks([2024])).toEqual([2024]);
+    expect(getCategoryTicks([1500, 1525, 1550], 4)).toEqual([1500, 1525, 1550]);
+  });
+
+  it('picks round values from the data by the tick rule', () => {
+    const years = Array.from({ length: 12 }, (_, index) => 2015 + index);
+    expect(getCategoryTicks(years, 6)).toEqual([
+      2016, 2018, 2020, 2022, 2024, 2026,
+    ]);
+    expect(getCategoryTicks(years, 4)).toEqual([2015, 2020, 2025]);
+
+    const starts = Array.from({ length: 117 }, (_, index) => 100 + index * 25);
+    expect(getCategoryTicks(starts)).toEqual([
+      500, 1000, 1500, 2000, 2500, 3000,
+    ]);
+  });
+
+  it('only ever ticks values that are in the data', () => {
+    const odd = Array.from({ length: 9 }, (_, index) => 3 + index * 7);
+    for (const tick of getCategoryTicks(odd, 4)) {
+      expect(odd).toContain(tick);
     }
   });
 });

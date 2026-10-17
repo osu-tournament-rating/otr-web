@@ -17,6 +17,11 @@ import { AdminNotePreviewSchema, AdminNoteSchema } from './common';
 import { GameSchema, MatchSchema, MatchWinRecordSchema } from './match';
 import { PlayerSchema } from './player';
 import { TournamentQuerySortType } from '@otr/core/osu';
+import {
+  FORUM_POST_URL_PREFIX_MESSAGE,
+  RANK_RESTRICTION_MINIMUM_MESSAGE,
+  RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE,
+} from './tournamentMessages';
 
 export const TournamentListRequestSchema = z.object({
   page: z.number().int().min(1).default(1),
@@ -24,6 +29,12 @@ export const TournamentListRequestSchema = z.object({
   verified: z.boolean().optional(),
   searchQuery: z.string().trim().min(1).optional(),
   ruleset: RulesetSchema.optional(),
+  rulesets: z
+    .array(RulesetSchema)
+    .optional()
+    .describe(
+      'Rulesets to include. A tournament matches when its ruleset is any of these or `ruleset`; empty means every ruleset.'
+    ),
   dateMin: z.string().optional(),
   dateMax: z.string().optional(),
   verificationStatus: z.array(VerificationStatusSchema).optional(),
@@ -62,6 +73,15 @@ export const TournamentListItemSchema = tournamentSelectSchema
   });
 
 export const TournamentListResponseSchema = TournamentListItemSchema.array();
+
+/** One numbered page of the list, with the total the filters match. */
+export const TournamentListPageResponseSchema = z.object({
+  items: TournamentListItemSchema.array(),
+  totalCount: z.number().int().nonnegative(),
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1),
+  totalPages: z.number().int().min(0),
+});
 
 export const PlayerTournamentListItemSchema = TournamentListItemSchema.omit({
   adminNotes: true,
@@ -140,11 +160,13 @@ export const TournamentAdminUpdateInputSchema = z.object({
         value.startsWith('https://osu.ppy.sh/community/forums/topics/') ||
         value.startsWith('https://osu.ppy.sh/wiki/en/Tournaments/'),
       {
-        message:
-          'Forum URL must be from "https://osu.ppy.sh/community/forums/topics/" or "https://osu.ppy.sh/wiki/en/Tournaments/"',
+        message: FORUM_POST_URL_PREFIX_MESSAGE,
       }
     ),
-  rankRangeLowerBound: z.number().int().min(1),
+  rankRangeLowerBound: z
+    .number()
+    .int(RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE)
+    .min(1, RANK_RESTRICTION_MINIMUM_MESSAGE),
   ruleset: RulesetSchema,
   lobbySize: z.number().int().min(1).max(8),
   verificationStatus: VerificationStatusSchema,
@@ -284,6 +306,9 @@ export type { VerificationStatusValue };
 
 export type TournamentListRequest = z.infer<typeof TournamentListRequestSchema>;
 export type TournamentListItem = z.infer<typeof TournamentListItemSchema>;
+export type TournamentListPageResponse = z.infer<
+  typeof TournamentListPageResponseSchema
+>;
 export type PlayerTournamentListItem = z.infer<
   typeof PlayerTournamentListItemSchema
 >;

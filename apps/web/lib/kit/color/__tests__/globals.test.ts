@@ -76,6 +76,17 @@ describe('globals.css', () => {
     expect(lightMuted).toBe(SURFACES.light.muted);
     expect(darkPanel).toBe(SURFACES.dark.card);
     expect(toHex(darkMuted)).toBe(SURFACES.dark.muted);
+
+    for (const [theme, block] of [
+      ['light', light],
+      ['dark', dark],
+    ] as const) {
+      for (const surface of ['popover', 'accent'] as const) {
+        expect(toHex(parseColor(block.get(`--${surface}`)!))).toBe(
+          SURFACES[theme][surface]
+        );
+      }
+    }
   });
 
   it('resolves the text colours the palettes are checked with', () => {

@@ -11,14 +11,15 @@ const buttonVariants = cva(
       variant: {
         default:
           'bg-primary-solid text-primary-foreground shadow-xs hover:bg-primary-solid/90',
+        // destructive-solid: dark mode's --destructive is too light behind white text.
         destructive:
-          'bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
+          'bg-destructive-solid text-white shadow-xs hover:bg-destructive-solid/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
         outline:
           'border border-input bg-popover shadow-xs hover:bg-accent hover:text-accent-foreground',
         secondary:
           'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
-        ghost: 'hover:bg-none hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        link: 'text-link underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',

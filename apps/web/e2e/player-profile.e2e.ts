@@ -15,18 +15,22 @@ test.describe('Player Profile Page', () => {
       await expect(username).not.toBeEmpty();
     });
 
-    test('displays rating stats card with tier, rating, and ranks', async ({
+    test('displays rating stats with the tier icon, rating, and ranks', async ({
       page,
     }) => {
       await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
       await page.waitForLoadState('networkidle');
 
-      await expect(page.locator('[data-testid="stat-card-tier"]')).toBeVisible({
-        timeout: 10000,
-      });
+      const ratingTile = page.locator('[data-testid="stat-card-rating"]');
+      await expect(ratingTile).toBeVisible({ timeout: 10000 });
+      // No tier tile: the tier icon sits beside the rating and names the
+      // tier from a button, so a tap can read it.
       await expect(
-        page.locator('[data-testid="stat-card-rating"]')
-      ).toBeVisible({ timeout: 10000 });
+        ratingTile.locator('[data-testid="stat-card-tier"]')
+      ).toBeVisible();
+      await expect(
+        ratingTile.getByRole('button', { name: /^Tier: / })
+      ).toBeVisible();
       await expect(
         page.locator('[data-testid="stat-card-global"]')
       ).toBeVisible({ timeout: 10000 });
@@ -60,25 +64,33 @@ test.describe('Player Profile Page', () => {
   });
 
   test.describe('Filters and UI Updates', () => {
-    test('displays ruleset selector buttons', async ({ page }) => {
+    test('displays labelled ruleset chips', async ({ page }) => {
       await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
       await page.waitForLoadState('networkidle');
 
-      const rulesetButtons = page.locator('[data-testid^="ruleset-button-"]');
-      await expect(rulesetButtons.first()).toBeVisible({ timeout: 10000 });
-      const count = await rulesetButtons.count();
-      expect(count).toBe(5);
+      const rulesetChips = page
+        .getByRole('radiogroup', { name: 'Ruleset' })
+        .getByRole('radio');
+      await expect(rulesetChips.first()).toBeVisible({ timeout: 10000 });
+      await expect(rulesetChips).toHaveText([
+        'osu!',
+        'taiko',
+        'catch',
+        'mania 4K',
+        'mania 7K',
+      ]);
     });
 
     test('changes URL when selecting different ruleset', async ({ page }) => {
       await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
       await page.waitForLoadState('networkidle');
 
-      const taikoButton = page.locator('[data-testid="ruleset-button-1"]');
-      await expect(taikoButton).toBeVisible({ timeout: 10000 });
-      await taikoButton.click();
+      const taikoChip = page.getByRole('radio', { name: 'taiko' });
+      await expect(taikoChip).toBeVisible({ timeout: 10000 });
+      await taikoChip.click();
       await page.waitForURL(/ruleset=1/, { timeout: 10000 });
       expect(page.url()).toContain('ruleset=1');
+      await expect(taikoChip).toBeChecked();
     });
 
     test('preserves ruleset in URL on page reload', async ({ page }) => {
@@ -95,11 +107,13 @@ test.describe('Player Profile Page', () => {
       await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
       await page.waitForLoadState('networkidle');
 
-      const rulesetButtons = page.locator('[data-testid^="ruleset-button-"]');
-      const buttonCount = await rulesetButtons.count();
+      const rulesetChips = page
+        .getByRole('radiogroup', { name: 'Ruleset' })
+        .getByRole('radio');
+      const chipCount = await rulesetChips.count();
 
-      if (buttonCount > 1) {
-        await rulesetButtons.nth(1).click();
+      if (chipCount > 1) {
+        await rulesetChips.nth(1).click();
         await page.waitForLoadState('networkidle');
       }
     });
@@ -128,6 +142,31 @@ test.describe('Player Profile Page', () => {
         const buttonCount = await toggleButtons.count();
         expect(buttonCount).toBeGreaterThanOrEqual(2);
       }
+    });
+
+    test('rating history views stay in the address', async ({ page }) => {
+      await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
+      await page.waitForLoadState('networkidle');
+
+      const chart = page.locator('[data-testid="player-rating-chart"]');
+      await expect(chart).toBeVisible({ timeout: 15000 });
+
+      await chart.getByRole('radio', { name: 'Volatility' }).click();
+      await chart.getByRole('radio', { name: 'Table' }).click();
+      await expect(page).toHaveURL(/metric=volatility/);
+      await expect(page).toHaveURL(/view=table/);
+      await expect(
+        chart.getByRole('region', { name: 'Volatility history' })
+      ).toBeVisible();
+
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await expect(
+        chart.getByRole('radio', { name: 'Volatility' })
+      ).toBeChecked();
+      await expect(
+        chart.getByRole('region', { name: 'Volatility history' })
+      ).toBeVisible({ timeout: 10000 });
     });
 
     test('displays mod stats charts', async ({ page }) => {
@@ -159,7 +198,9 @@ test.describe('Player Profile Page', () => {
       await page.goto(ROUTES.playerProfile(999_999_999));
       await page.waitForLoadState('networkidle');
 
-      await expect(page.getByText('404 Not Found')).toBeVisible({
+      await expect(
+        page.getByRole('heading', { level: 1, name: 'Page not found' })
+      ).toBeVisible({
         timeout: 10000,
       });
       await expect(page.getByText('Player could not load')).toHaveCount(0);
@@ -175,6 +216,60 @@ test.describe('Player Profile Page', () => {
         '[data-testid="tournament-history-title"]'
       );
       await expect(tournamentSection).toBeVisible({ timeout: 10000 });
+    });
+
+    test('Show more reveals more tournaments', async ({ page }) => {
+      await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
+      await page.waitForLoadState('networkidle');
+
+      const panel = page.locator('[data-slot="panel"]').filter({
+        has: page.locator('[data-testid="tournament-history-title"]'),
+      });
+      const rows = panel.locator('[data-testid="player-tournament-row"]');
+      await expect(rows.first()).toBeVisible({ timeout: 10000 });
+      const footer = panel.locator('[data-slot="load-more"]');
+      // The test player may have five tournaments or fewer.
+      test.skip(
+        !(await footer.isVisible()),
+        'The test player has no more tournaments to show'
+      );
+
+      await expect(footer).toContainText('Showing 5 of ');
+      await footer.getByRole('button', { name: 'Show more' }).click();
+      await expect
+        .poll(() => rows.count(), { timeout: 10000 })
+        .toBeGreaterThan(5);
+    });
+
+    test('a tournament row labels its won–lost pair as the record', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
+      await page.waitForLoadState('networkidle');
+
+      const row = page.locator('[data-testid="player-tournament-row"]').first();
+      await expect(row).toBeVisible({ timeout: 10000 });
+      await expect(row.getByText('Record', { exact: true })).toBeVisible();
+      await expect(
+        row.getByText(/^[\d,]+ wins? and [\d,]+ loss(es)?$/)
+      ).toHaveCount(1);
+      // One "Matches": the button, not a stat beside it.
+      await expect(row.getByText('Matches', { exact: true })).toHaveCount(1);
+    });
+
+    test('a tournament row expands its matches in place', async ({ page }) => {
+      await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
+      await page.waitForLoadState('networkidle');
+
+      const toggle = page.getByRole('button', { name: /^Matches in / }).first();
+      await expect(toggle).toHaveAttribute('aria-expanded', 'false', {
+        timeout: 10000,
+      });
+      await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+      const matchesId = await toggle.getAttribute('aria-controls');
+      await expect(page.locator(`[id="${matchesId}"]`)).toBeVisible();
     });
   });
 

@@ -1,90 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { ChevronRight, PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { AuditActionType, AuditEntityType } from '@otr/core/osu';
 import type {
-  AuditActionUser,
   AuditEntry,
-  AuditEventAction,
   CascadeContext,
   UnauditedSubmission,
 } from '@/lib/orpc/schema/audit';
-import {
-  ACTION_LABELS,
-  ACTION_TEXT_COLORS,
-  classifyAction,
-} from '@/lib/audit-actions';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { OsuAvatar } from '@/components/ui/osu-avatar';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ACTION_LABELS, classifyAction } from '@/lib/audit-actions';
+import { RelativeTime } from '@/components/kit/format/RelativeTime';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import AuditDiffDisplay from './AuditDiffDisplay';
+import { formatCountOf } from '@/lib/kit/format/number';
+import {
+  AuditActor,
+  AuditChanges,
+  AuditRowDetails,
+  AuditRowLine,
+  AuditRowToggle,
+  readChanges,
+} from './AuditRow';
 import CascadeContextBanner from './CascadeContextBanner';
-import RelativeTime from './RelativeTime';
-
-const ACTION_ICONS: Record<AuditActionType, typeof PlusCircle> = {
-  [AuditActionType.Created]: PlusCircle,
-  [AuditActionType.Updated]: Pencil,
-  [AuditActionType.Deleted]: Trash2,
-};
-
-const ACTION_BADGE_COLORS: Record<AuditEventAction, string> = {
-  verification: 'bg-success/5 border-success/15',
-  pre_verification: 'bg-success/5 border-success/15',
-  rejection: 'bg-destructive/5 border-destructive/15',
-  pre_rejection: 'bg-warning/5 border-warning/15',
-  submission: 'bg-green-500/5 border-green-500/15',
-  update: 'bg-blue-500/5 border-blue-500/15',
-  deletion: 'bg-destructive/5 border-destructive/15',
-};
-
-function ActionUserLabel({
-  user,
-  fallback,
-}: {
-  user: AuditActionUser | null;
-  fallback: string;
-}): React.JSX.Element {
-  return (
-    <span className="flex items-center gap-1.5 text-sm">
-      {user ? (
-        <>
-          {user.osuId ? (
-            <OsuAvatar osuId={user.osuId} username={user.username} size={20} />
-          ) : (
-            <Avatar className="h-5 w-5">
-              <AvatarFallback className="text-xs">
-                {user.username?.[0]?.toUpperCase() ?? '?'}
-              </AvatarFallback>
-            </Avatar>
-          )}
-          {user.playerId ? (
-            <Link
-              href={`/players/${user.playerId}`}
-              className="text-primary hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {user.username ?? `User ${user.id}`}
-            </Link>
-          ) : (
-            <span className="text-foreground">
-              {user.username ?? `User ${user.id}`}
-            </span>
-          )}
-        </>
-      ) : (
-        <span className="text-muted-foreground italic">{fallback}</span>
-      )}
-    </span>
-  );
-}
 
 /** A submission the audit log never recorded, read from the tournament itself. */
 export function AuditSubmissionRow({
@@ -93,37 +32,21 @@ export function AuditSubmissionRow({
   submission: UnauditedSubmission;
 }): React.JSX.Element {
   return (
-    <div data-testid="timeline-submission" className="border-b border-border">
-      <div className="flex items-center gap-3 px-3 pt-2.5 pb-1">
-        <PlusCircle
-          className={cn('h-4 w-4 shrink-0', ACTION_TEXT_COLORS.submission)}
-        />
-
-        <Badge
-          variant="outline"
-          className={cn(
-            'shrink-0 text-xs',
-            ACTION_TEXT_COLORS.submission,
-            ACTION_BADGE_COLORS.submission
-          )}
-        >
-          Submitted
-        </Badge>
-
-        <ActionUserLabel user={submission.submittedBy} fallback="Unknown" />
-
-        <span className="flex-1" />
-
-        <RelativeTime
-          dateString={submission.created}
-          className="shrink-0 text-xs text-muted-foreground"
-        />
-      </div>
-
-      <p className="pr-3 pb-2.5 pl-10 text-xs text-muted-foreground">
+    <li data-testid="timeline-submission" className="px-4 py-3">
+      <AuditRowLine
+        action="submission"
+        sentence={
+          <>
+            <AuditActor user={submission.submittedBy} fallback="Unknown" />{' '}
+            {ACTION_LABELS.submission}
+          </>
+        }
+        meta={<RelativeTime date={submission.created} />}
+      />
+      <p className="mt-1 pl-7 text-xs text-muted-foreground">
         From the tournament record. Submissions were not audited at the time.
       </p>
-    </div>
+    </li>
   );
 }
 
@@ -136,6 +59,11 @@ type AuditEntryRowProps = {
   heading?: React.ReactNode;
 };
 
+/**
+ * One entry in an entity's audit history: who did what, the time, and the
+ * changed fields, which open in place. Verification changes carry the one
+ * status icon; everything else reads as plain words.
+ */
 export default function AuditEntryRow({
   entry,
   cascadeContext,
@@ -146,108 +74,78 @@ export default function AuditEntryRow({
   const changes =
     entry.actionType === AuditActionType.Deleted
       ? null
-      : (entry.changes as Record<
-          string,
-          { originalValue: unknown; newValue: unknown }
-        > | null);
+      : readChanges(entry.changes);
   const changeCount = changes ? Object.keys(changes).length : 0;
   const action = classifyAction(entry.actionType, entry.changes);
-  // The verified badge already says what changed.
+  // The status icon already says what a verification changed.
   const [isOpen, setIsOpen] = useState(
     action !== 'verification' && changeCount > 0 && changeCount < 10
   );
 
-  const actionLabel = ACTION_LABELS[action];
-  const ActionIcon = ACTION_ICONS[entry.actionType];
-
   return (
     <Collapsible
-      data-testid="timeline-entry"
+      asChild
       open={isOpen}
-      onOpenChange={setIsOpen}
+      onOpenChange={changeCount > 0 ? setIsOpen : undefined}
     >
-      <div
+      <li
+        data-testid="timeline-entry"
         id={`audit-${entry.id}`}
-        className={cn(
-          'group border-b border-border transition-colors',
-          isOpen ? 'bg-muted/30' : 'hover:bg-accent/50'
-        )}
+        className="scroll-mt-24 px-4 py-3 transition-colors"
       >
-        {heading && <div className="px-3 pt-2">{heading}</div>}
+        {heading ? <div className="mb-1.5 pl-7">{heading}</div> : null}
 
-        {cascadeContext && (
-          <div className="px-3 pt-2">
+        <AuditRowLine
+          action={action}
+          sentence={
+            <>
+              <AuditActor user={entry.actionUser} fallback="System" />{' '}
+              <span data-testid="timeline-action-badge">
+                {ACTION_LABELS[action]}
+              </span>
+            </>
+          }
+          meta={
+            <>
+              {changeCount > 0 ? (
+                <span>{formatCountOf(changeCount, 'field')} changed</span>
+              ) : null}
+              <RelativeTime date={entry.created} />
+            </>
+          }
+          toggle={
+            changeCount > 0 ? (
+              <CollapsibleTrigger asChild>
+                <AuditRowToggle
+                  open={isOpen}
+                  data-testid="timeline-entry-toggle"
+                />
+              </CollapsibleTrigger>
+            ) : undefined
+          }
+        />
+
+        {cascadeContext ? (
+          <div className="mt-2 pl-7">
             <CascadeContextBanner
               context={cascadeContext}
               viewedEntity={viewedEntity}
             />
           </div>
-        )}
+        ) : null}
 
-        <CollapsibleTrigger asChild disabled={changeCount === 0}>
-          <button
-            className={cn(
-              'flex w-full items-center gap-3 px-3 py-2.5 text-left',
-              changeCount === 0 && 'cursor-default'
-            )}
-          >
-            <ActionIcon
-              className={cn('h-4 w-4 shrink-0', ACTION_TEXT_COLORS[action])}
-            />
-
-            <Badge
-              data-testid="timeline-action-badge"
-              variant="outline"
-              className={cn(
-                'shrink-0 text-xs',
-                ACTION_TEXT_COLORS[action],
-                ACTION_BADGE_COLORS[action]
-              )}
-            >
-              {actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)}
-            </Badge>
-
-            <ActionUserLabel user={entry.actionUser} fallback="System" />
-
-            <span className="flex-1" />
-
-            {changeCount > 0 && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <ChevronRight
-                  className={cn(
-                    'h-3.5 w-3.5 transition-transform',
-                    isOpen && 'rotate-90'
-                  )}
-                />
-                {changeCount} field{changeCount !== 1 ? 's' : ''} changed
-              </span>
-            )}
-
-            <RelativeTime
-              dateString={entry.created}
-              className="shrink-0 text-xs text-muted-foreground"
-            />
-          </button>
-        </CollapsibleTrigger>
-
-        <CollapsibleContent data-testid="timeline-entry-diff">
-          {changes && changeCount > 0 && (
-            <div className="border-t border-border bg-muted/20 px-3 py-2">
-              <div className="flex flex-col gap-1 pl-7">
-                {Object.entries(changes).map(([fieldName, change]) => (
-                  <AuditDiffDisplay
-                    key={fieldName}
-                    fieldName={fieldName}
-                    change={change}
-                    entityType={entry.entityType}
-                    referencedUsers={entry.referencedUsers}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </CollapsibleContent>
-      </div>
+        {changes && changeCount > 0 ? (
+          <CollapsibleContent data-testid="timeline-entry-diff">
+            <AuditRowDetails>
+              <AuditChanges
+                entityType={entry.entityType}
+                changes={changes}
+                users={entry.referencedUsers}
+              />
+            </AuditRowDetails>
+          </CollapsibleContent>
+        ) : null}
+      </li>
     </Collapsible>
   );
 }

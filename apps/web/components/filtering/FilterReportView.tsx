@@ -1,31 +1,24 @@
 'use client';
 
-import { useState } from 'react';
-import {
-  Loader2,
-  Search,
-  FileText,
-  ClipboardCheck,
-  Filter,
-  CheckCircle2,
-  XCircle,
-  Users,
-  TrendingUp,
-  TrendingDown,
-  ListFilter,
-  Download,
-} from 'lucide-react';
+import { useEffect } from 'react';
+import useSWR from 'swr';
+import { ClipboardCheck, FileText, ListFilter, Search } from 'lucide-react';
 import { z } from 'zod';
-import { useForm, Resolver } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from 'sonner';
 import { ORPCError } from '@orpc/client';
-import FilteringResultsTable from '@/components/filtering/FilteringResultsTable';
-import RulesetIcon from '@/components/icons/RulesetIcon';
-import StatCard from '@/components/shared/StatCard';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+
+import SectionError from '@/components/error/SectionError';
+import { Button } from '@/components/kit/controls/Button';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import {
+  PanelSkeleton,
+  PhoneRowListSkeleton,
+  SectionHeaderSkeleton,
+  StatTileGridSkeleton,
+  TableSkeleton,
+} from '@/components/kit/feedback/Skeletons';
+import { Panel, PanelBody } from '@/components/kit/layout/Panel';
 import {
   Form,
   FormControl,
@@ -34,326 +27,225 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { FilterReport, FilteringResult } from '@/lib/orpc/schema/filtering';
+import { Input } from '@/components/ui/input';
+import { formatId } from '@/lib/kit/format/number';
+import { defineListParams, numberParam } from '@/lib/kit/lists/params';
+import { useListState } from '@/lib/kit/lists/use-list-state';
 import { orpc } from '@/lib/orpc/orpc';
-import { RulesetEnumHelper } from '@/lib/enum-helpers';
-import { downloadCSV } from '@/lib/utils/csv';
-import { getFailureReasons } from './FailureReasonsBadges';
+import { cn } from '@/lib/utils';
+import FilteringResultsTable from './FilteringResultsTable';
+import FilterReportSummary from './FilterReportSummary';
+import { csvDay, downloadFilterCsv } from './filterCsv';
+
+/** The largest ID Postgres stores in an `integer` column. */
+const MAX_REPORT_ID = 2_147_483_647;
+
+/** The report on screen lives in the address: `/tools/filter-reports?report=12`. */
+export const FILTER_REPORT_PARAMS = defineListParams({
+  report: numberParam({
+    min: 1,
+    max: MAX_REPORT_ID,
+    integer: true,
+    role: 'scope',
+  }),
+});
 
 const filterReportSchema = z.object({
   reportId: z
     .string()
+    .trim()
     .min(1, 'Report ID is required')
     .regex(/^\d+$/, 'Report ID must be a number')
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 1 && num <= 2147483647;
-    }, 'Number is too large'),
+    .refine((value) => Number(value) >= 1, 'Report ID must be at least 1')
+    .refine(
+      (value) => Number(value) <= MAX_REPORT_ID,
+      `Report ID cannot exceed ${MAX_REPORT_ID}`
+    ),
 });
 
 type FilterReportForm = z.infer<typeof filterReportSchema>;
 
+/** FilteringResultsTable's columns, for its loading rows. */
+const RESULTS_SKELETON_COLUMNS = [
+  { label: 'Status', width: 'w-28' },
+  { label: 'Player' },
+  { label: 'Failures' },
+  { label: 'osu! ID', width: 'w-32', align: 'end' },
+  { label: 'Rating', width: 'w-28', align: 'end' },
+] as const;
+
+/**
+ * The summary and results panels while a report loads. The report's ID is
+ * already in the address, so its title is real; bars stand in for the rest.
+ */
+function ReportSkeleton({ reportId }: { reportId: number }) {
+  return (
+    <>
+      <PanelSkeleton label="Loading filter report">
+        <SectionHeaderSkeleton
+          icon={ClipboardCheck}
+          title={`Filter report #${formatId(reportId)}`}
+          // "Aug 6, 2026, 14:31 UTC", which fits beside the title on a phone.
+          meta="w-32"
+        />
+        <PanelBody>
+          <StatTileGridSkeleton
+            columns={3}
+            labels={[
+              'Passed',
+              'Failed',
+              'Total players',
+              'Ruleset',
+              'Minimum rating',
+              'Maximum rating',
+            ]}
+          />
+        </PanelBody>
+      </PanelSkeleton>
+      <PanelSkeleton>
+        <SectionHeaderSkeleton icon={ListFilter} title="Results" actions={1} />
+        <TableSkeleton
+          rows={4}
+          columns={RESULTS_SKELETON_COLUMNS}
+          phoneRows={<PhoneRowListSkeleton rows={4} leading={32} />}
+        />
+      </PanelSkeleton>
+    </>
+  );
+}
+
+/**
+ * Looks up a stored filter report by its ID, kept in the address so a
+ * report can be shared or reloaded, and shows its summary and results.
+ */
 export function FilterReportView() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [report, setReport] = useState<FilterReport | null>(null);
-  const [results, setResults] = useState<FilteringResult | null>(null);
+  const { state, setState } = useListState(FILTER_REPORT_PARAMS);
+  const reportId = state.report;
 
   const form = useForm<FilterReportForm>({
-    resolver: zodResolver(filterReportSchema) as Resolver<FilterReportForm>,
-    defaultValues: {
-      reportId: '',
-    },
+    resolver: zodResolver(filterReportSchema),
+    defaultValues: { reportId: reportId ? String(reportId) : '' },
   });
 
-  const onSubmit = async (data: FilterReportForm) => {
-    setIsLoading(true);
-    setReport(null);
-    setResults(null);
+  // The back button or a link can change the report under the form.
+  useEffect(() => {
+    form.reset({ reportId: reportId ? String(reportId) : '' });
+  }, [form, reportId]);
 
-    try {
-      const report = await orpc.filtering.report({
-        id: parseInt(data.reportId, 10),
-      });
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
+    reportId ? (['filter-report', reportId] as const) : null,
+    ([, id]) => orpc.filtering.report({ id }),
+    { revalidateOnFocus: false, shouldRetryOnError: false }
+  );
 
-      setReport(report);
-      if (report.response) {
-        setResults(report.response);
-      } else {
-        toast.error('Filter report exists but contains no results data');
-      }
-    } catch (error) {
-      if (error instanceof ORPCError && error.code === 'NOT_FOUND') {
-        toast.error('Filter report does not exist.');
-        return;
-      }
+  const notFound = error instanceof ORPCError && error.code === 'NOT_FOUND';
+  const report = reportId && data?.id === reportId ? data : null;
+  // The lookup strip stands alone once a report is showing below it.
+  const hasBody = !reportId || Boolean(error);
 
-      toast.error('Failed to load filter report. Please try again.');
-    } finally {
-      setIsLoading(false);
+  const onSubmit = ({ reportId: value }: FilterReportForm) => {
+    const id = Number(value);
+    if (id === reportId) {
+      void mutate();
+      return;
     }
+    setState({ report: id });
   };
-
-  const handleNewLookup = () => {
-    setReport(null);
-    setResults(null);
-    form.reset();
-  };
-
-  const handleDownloadCSV = () => {
-    if (!results) return;
-
-    const headers = [
-      'osu! ID',
-      'Username',
-      'Player ID',
-      'Status',
-      'Rating',
-      'Failure Reasons',
-    ];
-
-    const rows = results.filteringResults.map((player) => [
-      player.osuId?.toString() || 'N/A',
-      player.username || 'N/A',
-      player.playerId?.toString() || 'N/A',
-      player.isSuccess ? 'Passed' : 'Failed',
-      player.currentRating != null ? player.currentRating.toString() : 'N/A',
-      getFailureReasons(player.failureReason ?? undefined).join(', '),
-    ]);
-
-    downloadCSV(
-      rows,
-      headers,
-      `filter-report-${report?.id || 'unknown'}-${new Date().toISOString().split('T')[0]}.csv`
-    );
-  };
-
-  const hasReport = report && results;
 
   return (
-    <div
-      data-testid="filter-report-view"
-      className="flex flex-col gap-4 md:gap-2"
-    >
-      {!hasReport ? (
-        <Card>
-          <CardContent className="py-8 sm:py-12">
-            <div className="mx-auto flex max-w-md flex-col items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
-                <FileText className="h-8 w-8 text-primary" />
-              </div>
-              <div className="text-center">
-                <h2 className="text-xl font-semibold">
-                  Look Up a Filter Report
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Enter a report ID to view detailed filtering results for
-                  tournament participants.
-                </p>
-              </div>
-              <Form {...form}>
-                <form
-                  data-testid="filter-report-form"
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="w-full"
-                >
-                  <FormField
-                    control={form.control}
-                    name="reportId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Report ID</FormLabel>
-                        <div className="flex gap-2">
-                          <FormControl>
-                            <Input
-                              data-testid="filter-report-id-input"
-                              placeholder="Enter report ID"
-                              type="text"
-                              {...field}
-                              disabled={isLoading}
-                            />
-                          </FormControl>
-                          <Button
-                            type="submit"
-                            data-testid="filter-report-submit"
-                            disabled={isLoading}
-                            aria-label="Load filter report"
-                          >
-                            {isLoading ? (
-                              <Loader2 className="size-4 animate-spin" />
-                            ) : (
-                              <Search className="size-4" />
-                            )}
-                            <span className="ml-2">Load Report</span>
-                          </Button>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </form>
-              </Form>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <Card className="p-6">
-            <div className="flex flex-col gap-4 rounded-lg bg-popover p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-muted/50">
-                  <ClipboardCheck className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-medium">
-                    Filter Report #{report.id}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Generated on{' '}
-                    {new Date(report.created).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleDownloadCSV}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="size-4" />
-                  Download CSV
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={handleNewLookup}
-                  className="flex items-center gap-2"
-                >
-                  <Search className="size-4" />
-                  New Lookup
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-              <StatCard
-                icon={
-                  <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-500" />
-                }
-                label="Passed"
-                value={results.playersPassed}
-                valueClassName="text-green-600 dark:text-green-500"
-              />
-              <StatCard
-                icon={
-                  <XCircle className="h-5 w-5 text-red-600 dark:text-red-500" />
-                }
-                label="Failed"
-                value={results.playersFailed}
-                valueClassName="text-red-600 dark:text-red-500"
-              />
-              <StatCard
-                icon={<Users className="h-5 w-5 text-primary" />}
-                label="Total Players"
-                value={results.filteringResults.length}
-              />
-              {report.request && (
-                <StatCard
-                  icon={
-                    <RulesetIcon
-                      ruleset={report.request.ruleset}
-                      className="size-5 fill-primary"
-                    />
-                  }
-                  label="Ruleset"
-                  value={
-                    RulesetEnumHelper.metadata[report.request.ruleset].text
-                  }
-                />
-              )}
-            </div>
-          </Card>
-
-          {report.request && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Filter className="h-6 w-6 text-primary" />
-                  <CardTitle className="text-xl font-bold">
-                    Filter Criteria
-                  </CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                  <StatCard
-                    icon={
-                      <RulesetIcon
-                        ruleset={report.request.ruleset}
-                        className="size-5 fill-primary"
+    <>
+      <Panel data-testid="filter-report-view">
+        <Form {...form}>
+          <form
+            data-testid="filter-report-form"
+            role="search"
+            aria-label="Look up a filter report"
+            noValidate
+            onSubmit={form.handleSubmit(onSubmit)}
+            className={cn(
+              'bg-muted/20 p-3 sm:p-4 dark:bg-muted',
+              hasBody && 'border-b'
+            )}
+          >
+            <FormField
+              control={form.control}
+              name="reportId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Report ID</FormLabel>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input
+                        data-testid="filter-report-id-input"
+                        placeholder="Enter report ID"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        className="h-10 sm:max-w-64"
+                        {...field}
                       />
-                    }
-                    label="Ruleset"
-                    value={
-                      RulesetEnumHelper.metadata[report.request.ruleset].text
-                    }
-                  />
-                  <StatCard
-                    icon={<TrendingUp className="h-5 w-5 text-primary" />}
-                    label="Min. Rating"
-                    value={report.request.minRating ?? 'Not set'}
-                    valueClassName={
-                      !report.request.minRating
-                        ? 'text-muted-foreground'
-                        : undefined
-                    }
-                  />
-                  <StatCard
-                    icon={<TrendingDown className="h-5 w-5 text-primary" />}
-                    label="Max Rating"
-                    value={report.request.maxRating ?? 'Not set'}
-                    valueClassName={
-                      !report.request.maxRating
-                        ? 'text-muted-foreground'
-                        : undefined
-                    }
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                    </FormControl>
+                    <Button
+                      type="submit"
+                      size="lg"
+                      icon={Search}
+                      data-testid="filter-report-submit"
+                      pending={isLoading}
+                    >
+                      Load report
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </form>
+        </Form>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ListFilter className="h-6 w-6 text-primary" />
-                  <CardTitle className="text-xl font-bold">Results</CardTitle>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={handleDownloadCSV}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="size-4" />
-                  Download CSV
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <FilteringResultsTable
-                results={results}
-                onDownloadCSV={handleDownloadCSV}
-                hideCard
-              />
-            </CardContent>
-          </Card>
-        </>
-      )}
-    </div>
+        {!reportId ? (
+          <EmptyState
+            data-testid="filter-report-empty"
+            icon={FileText}
+            title="Look up a filter report"
+          />
+        ) : notFound ? (
+          <EmptyState
+            data-testid="filter-report-not-found"
+            icon={FileText}
+            title="Filter report does not exist"
+            description={`No filter report has the ID ${formatId(reportId)}.`}
+          />
+        ) : error ? (
+          <SectionError
+            title="Filter report could not load"
+            retrying={isValidating}
+            onRetry={() => void mutate()}
+          />
+        ) : null}
+      </Panel>
+
+      {reportId && !error ? (
+        report ? (
+          <>
+            <FilterReportSummary
+              reportId={report.id}
+              created={report.created}
+              results={report.response}
+              request={report.request}
+            />
+            <FilteringResultsTable
+              results={report.response}
+              onDownloadCSV={() =>
+                downloadFilterCsv(
+                  report.response,
+                  `filter-report-${report.id}-${csvDay()}.csv`
+                )
+              }
+            />
+          </>
+        ) : (
+          <ReportSkeleton reportId={reportId} />
+        )
+      ) : null}
+    </>
   );
 }

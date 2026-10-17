@@ -40,7 +40,7 @@ export function PageHeader({
       )}
       {...props}
     >
-      <div className="max-w-2xl min-w-0">
+      <div className="max-w-3xl min-w-0">
         {back ? (
           <Link
             href={back.href}
@@ -62,7 +62,9 @@ export function PageHeader({
           </h1>
         </div>
         {description ? (
-          <p className={cn('mt-3', typeScale.pageDescription)}>{description}</p>
+          <p className={cn('mt-3 text-pretty', typeScale.pageDescription)}>
+            {description}
+          </p>
         ) : null}
       </div>
 

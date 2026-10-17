@@ -2,75 +2,19 @@
 
 import { useMemo } from 'react';
 
-import { getVerificationStatusPriority, type MatchRow } from './matchRow';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { formatUTCDayRange, playWeekKey } from '@/lib/utils/date';
-import { cn } from '@/lib/utils';
+import { formatDateRange } from '@/lib/kit/format/date';
+import { formatCountOf } from '@/lib/kit/format/number';
+import type { SortState } from '@/lib/kit/lists/sort';
+import { sortRows, type SortValue } from '@/lib/kit/tables/sort';
+
 import MatchLedgerRow from './MatchLedgerRow';
-
-export type SortKey =
-  'newest' | 'oldest' | 'name' | 'games' | 'closest' | 'status';
-
-const sortLabels: Record<SortKey, string> = {
-  newest: 'Date, newest first',
-  oldest: 'Date, oldest first',
-  name: 'Match name',
-  games: 'Games played',
-  closest: 'Closest result',
-  status: 'Verification status',
-};
-
-const startedAt = (match: MatchRow) =>
-  match.startDate ? new Date(match.startDate).getTime() : 0;
-
-const margin = (match: MatchRow) =>
-  match.winRecord
-    ? match.winRecord.winnerPoints - match.winRecord.loserPoints
-    : Number.POSITIVE_INFINITY;
-
-const comparators: Record<SortKey, (a: MatchRow, b: MatchRow) => number> = {
-  newest: (a, b) => startedAt(b) - startedAt(a),
-  oldest: (a, b) => startedAt(a) - startedAt(b),
-  name: (a, b) => a.name.localeCompare(b.name),
-  games: (a, b) => b.games.length - a.games.length,
-  closest: (a, b) => margin(a) - margin(b) || startedAt(b) - startedAt(a),
-  status: (a, b) =>
-    getVerificationStatusPriority(a.status.verificationStatus) -
-    getVerificationStatusPriority(b.status.verificationStatus),
-};
-
-export function MatchSortSelect({
-  value,
-  onChange,
-}: {
-  value: SortKey;
-  onChange: (value: SortKey) => void;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground">Sort</span>
-      <Select value={value} onValueChange={(next) => onChange(next as SortKey)}>
-        <SelectTrigger className="h-8 w-44 sm:w-52" aria-label="Sort matches">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {Object.entries(sortLabels).map(([key, label]) => (
-            <SelectItem key={key} value={key}>
-              {label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
+import {
+  getVerificationStatusPriority,
+  playWeekKey,
+  type MatchRow,
+  type MatchSortKey,
+} from './matchRow';
 
 export type MatchGroup = {
   key: string;
@@ -79,11 +23,40 @@ export type MatchGroup = {
   matches: MatchRow[];
 };
 
-/** Sorts matches, grouping them by play week only when sorting by date. */
-export function groupMatches(matches: MatchRow[], sort: SortKey): MatchGroup[] {
-  const sorted = [...matches].sort(comparators[sort]);
+const startedAt = (match: MatchRow) =>
+  match.startDate ? new Date(match.startDate).getTime() : null;
 
-  if (sort !== 'newest' && sort !== 'oldest') {
+const SORT_VALUES: Readonly<
+  Record<MatchSortKey, (match: MatchRow) => SortValue>
+> = {
+  date: startedAt,
+  name: (match) => match.name,
+  games: (match) => match.games.length,
+  // A match without a result has no margin and sorts last.
+  margin: (match) =>
+    match.winRecord
+      ? match.winRecord.winnerPoints - match.winRecord.loserPoints
+      : null,
+  status: (match) =>
+    getVerificationStatusPriority(match.status.verificationStatus),
+};
+
+/**
+ * Sorts matches, grouping them by play week when sorting by date. Ties keep
+ * the newest match first.
+ */
+export function groupMatches(
+  matches: MatchRow[],
+  sort: SortState<MatchSortKey>
+): MatchGroup[] {
+  const newestFirst = sortRows(
+    matches,
+    { key: 'date', direction: 'desc' },
+    SORT_VALUES
+  );
+  const sorted = sortRows(newestFirst, sort, SORT_VALUES);
+
+  if (sort.key !== 'date') {
     return sorted.length ? [{ key: 'all', label: null, matches: sorted }] : [];
   }
 
@@ -91,12 +64,13 @@ export function groupMatches(matches: MatchRow[], sort: SortKey): MatchGroup[] {
   const undated: MatchRow[] = [];
 
   for (const match of sorted) {
-    if (!match.startDate) {
+    const time = startedAt(match);
+    if (time === null) {
       undated.push(match);
       continue;
     }
 
-    const week = playWeekKey(new Date(match.startDate));
+    const week = playWeekKey(new Date(time));
     const weekMatches = byWeek.get(week);
     if (weekMatches) {
       weekMatches.push(match);
@@ -105,36 +79,35 @@ export function groupMatches(matches: MatchRow[], sort: SortKey): MatchGroup[] {
     }
   }
 
-  const weeks: MatchGroup[] = [...byWeek]
-    .sort(([a], [b]) => (sort === 'oldest' ? a - b : b - a))
-    .map(([week, weekMatches]) => {
-      const times = weekMatches.map(startedAt);
+  const groups: MatchGroup[] = [...byWeek].map(([week, weekMatches]) => {
+    const times = weekMatches.map((match) => startedAt(match) ?? 0);
 
-      return {
-        key: String(week),
-        label: formatUTCDayRange(
-          new Date(Math.min(...times)),
-          new Date(Math.max(...times))
-        ),
-        matches: weekMatches,
-      };
-    });
+    return {
+      key: String(week),
+      label: formatDateRange(Math.min(...times), Math.max(...times)),
+      matches: weekMatches,
+    };
+  });
 
   if (undated.length) {
-    weeks.push({ key: 'undated', label: 'No start time', matches: undated });
+    groups.push({ key: 'undated', label: 'No start time', matches: undated });
   }
 
-  return weeks;
+  return groups;
 }
 
 interface TournamentMatchesLedgerProps {
   matches: MatchRow[];
-  sort: SortKey;
+  sort: SortState<MatchSortKey>;
   selectedMatchIds?: Set<number>;
   onSelectMatch?: (matchId: number, checked: boolean) => void;
   onSelectMatches?: (matchIds: number[], checked: boolean) => void;
 }
 
+/**
+ * The tournament's matches as rows, grouped by play week when sorted by
+ * date, each group under a strip that stays in view while it scrolls.
+ */
 export default function TournamentMatchesLedger({
   matches,
   sort,
@@ -145,27 +118,21 @@ export default function TournamentMatchesLedger({
   const groups = useMemo(() => groupMatches(matches, sort), [matches, sort]);
 
   return (
-    <div className="rounded-lg border bg-card">
-      {groups.length === 0 && (
-        <p className="p-6 text-center text-sm text-muted-foreground">
-          No matches found.
-        </p>
-      )}
-      {groups.map((group, index) => {
+    <div>
+      {groups.map((group) => {
         const ids = group.matches.map((match) => match.id);
         const selectedCount = selectedMatchIds
           ? ids.filter((id) => selectedMatchIds.has(id)).length
           : 0;
 
         return (
-          <section key={group.key}>
+          <section
+            key={group.key}
+            aria-label={group.label ?? 'Matches'}
+            className="not-first:border-t"
+          >
             {group.label !== null && (
-              <header
-                className={cn(
-                  'z-10 flex items-center gap-2 border-b bg-muted px-3 py-1.5 md:sticky md:top-(--header-height-px)',
-                  index === 0 && 'rounded-t-lg'
-                )}
-              >
+              <header className="z-10 flex h-9 items-center gap-3 border-b bg-muted px-4 md:sticky md:top-(--header-height-px)">
                 {onSelectMatches && (
                   <Checkbox
                     checked={
@@ -181,21 +148,22 @@ export default function TournamentMatchesLedger({
                     aria-label={`Select matches from ${group.label}`}
                   />
                 )}
-                <span className="text-sm font-semibold">{group.label}</span>
-                <span className="text-xs text-muted-foreground">
-                  · {group.matches.length}{' '}
-                  {group.matches.length === 1 ? 'match' : 'matches'}
+                <h3 className="text-sm font-medium">{group.label}</h3>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {formatCountOf(group.matches.length, 'match', 'matches')}
                 </span>
               </header>
             )}
-            {group.matches.map((match) => (
-              <MatchLedgerRow
-                key={match.id}
-                match={match}
-                isSelected={selectedMatchIds?.has(match.id) ?? false}
-                onSelect={onSelectMatch}
-              />
-            ))}
+            <ul className="divide-y">
+              {group.matches.map((match) => (
+                <MatchLedgerRow
+                  key={match.id}
+                  match={match}
+                  isSelected={selectedMatchIds?.has(match.id) ?? false}
+                  onSelect={onSelectMatch}
+                />
+              ))}
+            </ul>
           </section>
         );
       })}

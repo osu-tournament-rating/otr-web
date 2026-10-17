@@ -1,5 +1,7 @@
 import { AuditEntityType } from '@otr/core/osu';
 
+import { formatCount } from '@/lib/kit/format/number';
+
 export const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   [AuditEntityType.Tournament]: 'tournament',
   [AuditEntityType.Match]: 'match',
@@ -16,21 +18,26 @@ export const ENTITY_TYPE_PLURALS: Record<AuditEntityType, string> = {
   [AuditEntityType.Beatmap]: 'beatmaps',
 };
 
-const numberFormat = new Intl.NumberFormat('en-US');
+/** "match" for one, "matches" for any other count. */
+export function entityNoun(entityType: AuditEntityType, count: number): string {
+  return count === 1
+    ? ENTITY_TYPE_LABELS[entityType]
+    : ENTITY_TYPE_PLURALS[entityType];
+}
 
-/** "of 118 matches" while some children went untouched, otherwise just "matches". */
-export function childCountTail(
+/**
+ * How many entities an event touched: "85 of 118 matches" while some went
+ * untouched, otherwise "118 matches".
+ */
+export function formatAffectedCount(
   entityType: AuditEntityType,
   affectedCount: number,
   totalCount: number | null
 ): string {
-  const showsTotal = totalCount !== null && totalCount > affectedCount;
-  const counted = showsTotal ? totalCount : affectedCount;
-  const label =
-    counted === 1
-      ? ENTITY_TYPE_LABELS[entityType]
-      : ENTITY_TYPE_PLURALS[entityType];
-  return showsTotal ? `of ${numberFormat.format(counted)} ${label}` : label;
+  if (totalCount !== null && totalCount > affectedCount) {
+    return `${formatCount(affectedCount)} of ${formatCount(totalCount)} ${entityNoun(entityType, totalCount)}`;
+  }
+  return `${formatCount(affectedCount)} ${entityNoun(entityType, affectedCount)}`;
 }
 
 /** URL path slug for an entity type. */

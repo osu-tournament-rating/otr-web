@@ -62,22 +62,28 @@ const ids = (groups: ReturnType<typeof groupMatches>) =>
 
 describe('groupMatches', () => {
   it('groups date sorts by play week, undated last', () => {
-    const newest = groupMatches(matches, 'newest');
+    const newest = groupMatches(matches, { key: 'date', direction: 'desc' });
     expect(newest.map((group) => group.label)).toEqual([
-      'Sat, Jul 27, 2024',
-      'Sat, Jul 20 – Sun, Jul 21, 2024',
+      'Jul 27, 2024',
+      'Jul 20 – 21, 2024',
       'No start time',
     ]);
     expect(ids(newest)).toEqual([[2], [3, 1], [4]]);
 
-    expect(ids(groupMatches(matches, 'oldest'))).toEqual([[1, 3], [2], [4]]);
+    expect(
+      ids(groupMatches(matches, { key: 'date', direction: 'asc' }))
+    ).toEqual([[1, 3], [2], [4]]);
   });
 
   it('sorts every other key across the whole tournament', () => {
     for (const [sort, order] of [
-      ['name', [3, 1, 2, 4]],
-      ['games', [3, 1, 4, 2]],
-      ['closest', [2, 1, 3, 4]],
+      [{ key: 'name', direction: 'asc' }, [3, 1, 2, 4]],
+      [{ key: 'name', direction: 'desc' }, [4, 2, 1, 3]],
+      [{ key: 'games', direction: 'desc' }, [3, 1, 4, 2]],
+      [{ key: 'games', direction: 'asc' }, [2, 4, 1, 3]],
+      // A match without a result has no margin and sorts last both ways.
+      [{ key: 'margin', direction: 'asc' }, [2, 1, 3, 4]],
+      [{ key: 'margin', direction: 'desc' }, [3, 1, 2, 4]],
     ] as const) {
       const groups = groupMatches(matches, sort);
       expect(groups).toHaveLength(1);
@@ -86,8 +92,18 @@ describe('groupMatches', () => {
     }
   });
 
+  it('breaks ties with the newest match first', () => {
+    const tied = [
+      match(1, '2024-07-20T12:00:00Z', { games: 2 }),
+      match(2, '2024-07-27T12:00:00Z', { games: 2 }),
+    ];
+    expect(
+      ids(groupMatches(tied, { key: 'games', direction: 'desc' }))
+    ).toEqual([[2, 1]]);
+  });
+
   it('returns no groups without matches', () => {
-    expect(groupMatches([], 'newest')).toEqual([]);
-    expect(groupMatches([], 'name')).toEqual([]);
+    expect(groupMatches([], { key: 'date', direction: 'desc' })).toEqual([]);
+    expect(groupMatches([], { key: 'name', direction: 'asc' })).toEqual([]);
   });
 });

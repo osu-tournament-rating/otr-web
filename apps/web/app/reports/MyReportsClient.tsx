@@ -1,388 +1,276 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { Flag } from 'lucide-react';
+import { useCallback, useEffect } from 'react';
+import useSWR from 'swr';
 
 import SectionError from '@/components/error/SectionError';
-import { Badge } from '@/components/ui/badge';
+import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { SkeletonText } from '@/components/kit/feedback/Skeletons';
+import { DateText } from '@/components/kit/format/DateText';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { NotificationDot } from '@/components/kit/status/NotificationDot';
+import { ReportStatusBadge } from '@/components/kit/status/ReportStatusBadge';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from '@/components/kit/tables/DataTable';
+import { PaginationFooter } from '@/components/kit/tables/PaginationFooter';
+import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
+import { ViewButton } from '@/components/kit/tables/ViewButton';
+import { ReportDetails } from '@/components/reports/ReportDetails';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  ReportEntityCell,
+  ReportEntityName,
+} from '@/components/reports/ReportEntityName';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Label } from '@/components/ui/label';
-import {
-  ReportEntityTypeEnumHelper,
-  ReportStatusEnumHelper,
-} from '@/lib/enum-helpers';
+  formatReportSubject,
+  getReportEntityTypeName,
+} from '@/components/reports/report-presentation';
 import { notifyReportChange } from '@/lib/hooks/useReportCount';
+import { formatCountOf } from '@/lib/kit/format/number';
+import { useListState } from '@/lib/kit/lists/use-list-state';
+import { clampPage, getTotalPages } from '@/lib/kit/tables/pagination';
 import { orpc } from '@/lib/orpc/orpc';
 import type { MyReport } from '@/lib/orpc/schema/report';
-import { ReportEntityType, ReportStatus } from '@otr/core/osu';
-import { cn } from '@/lib/utils';
-import { stickyTableHeaderFromLg } from '@/lib/utils/table';
 
-const formatDateTime = (value: string | null | undefined) => {
-  if (!value) return '—';
-  const timestamp = new Date(value);
-  if (Number.isNaN(timestamp.getTime())) return '—';
-  return timestamp.toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-};
+import { MY_REPORTS_COLUMNS as COLUMN } from './columns';
+import { MY_REPORTS_PAGE_SIZE, MY_REPORTS_PARAMS } from './list-params';
+import { MyReportsTableSkeleton } from './MyReportsFrame';
 
-const formatFieldName = (field: string) =>
-  field
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, (str) => str.toUpperCase())
-    .trim();
+const UNREAD_LABEL = 'Unread admin update';
 
-const getLegacySuggestedChanges = (
-  report: Pick<MyReport, 'reason' | 'suggestedChanges'>
-): Record<string, string> => {
-  const changes = report.suggestedChanges as Record<string, string>;
-  const entries = Object.entries(changes);
+/**
+ * The visitor's own reports, newest first, for everyone, admins included.
+ * Each row opens its report from a labelled View button; the entity name
+ * links to the entity on its own.
+ */
+export default function MyReportsClient() {
+  const list = useListState(MY_REPORTS_PARAMS);
+  const { data, error, isValidating, mutate } = useSWR(
+    'my-reports',
+    () => orpc.reports.listMine({}),
+    { revalidateOnFocus: false, shouldRetryOnError: false }
+  );
 
-  if (
-    entries.length === 1 &&
-    entries[0]?.[0] === 'reason' &&
-    entries[0][1] === report.reason.label
-  ) {
-    return {};
-  }
+  const reports = data?.reports ?? [];
+  const totalPages = getTotalPages(reports.length, MY_REPORTS_PAGE_SIZE);
+  const requestedPage = list.state.page;
+  const page = clampPage(requestedPage, totalPages);
+  const start = (page - 1) * MY_REPORTS_PAGE_SIZE;
+  const pageReports = reports.slice(start, start + MY_REPORTS_PAGE_SIZE);
 
-  return changes;
-};
+  // An old link to a page past the end shows the last page instead.
+  const { setState } = list;
+  useEffect(() => {
+    if (data && requestedPage > totalPages) {
+      setState({ page: totalPages }, { history: 'replace' });
+    }
+  }, [data, requestedPage, setState, totalPages]);
 
-function getEntityLink(
-  entityType: ReportEntityType,
-  entityId: number,
-  matchId?: number
-): string {
-  switch (entityType) {
-    case ReportEntityType.Tournament:
-      return `/tournaments/${entityId}`;
-    case ReportEntityType.Match:
-      return `/matches/${entityId}`;
-    case ReportEntityType.Game:
-      return matchId ? `/matches/${matchId}?gameId=${entityId}` : '#';
-    case ReportEntityType.Score:
-      return matchId ? `/matches/${matchId}?scoreId=${entityId}` : '#';
-    default:
-      return '#';
-  }
-}
+  const markViewed = useCallback(
+    (report: MyReport) => {
+      if (!report.hasUnreadUpdate) return;
 
-function getStatusBadge(status: ReportStatus) {
-  const metadata = ReportStatusEnumHelper.getMetadata(status);
+      void mutate(
+        (current) =>
+          current && {
+            ...current,
+            reports: current.reports.map((item) =>
+              item.id === report.id ? { ...item, hasUnreadUpdate: false } : item
+            ),
+          },
+        { revalidate: false }
+      );
+      orpc.reports
+        .markMineViewed({ reportId: report.id })
+        .then(notifyReportChange)
+        .catch((cause) => {
+          console.error('[my-reports] failed to mark report viewed', cause);
+        });
+    },
+    [mutate]
+  );
+
   return (
-    <Badge
-      variant={
-        status === ReportStatus.Pending
-          ? 'secondary'
-          : status === ReportStatus.Approved
-            ? 'default'
-            : 'destructive'
-      }
-      className={cn(
-        status === ReportStatus.Approved &&
-          'bg-success text-green-950 hover:bg-success/90'
+    <Panel data-testid="my-reports-card">
+      <SectionHeader
+        icon={Flag}
+        title="Reports"
+        meta={
+          data ? (
+            reports.length > 0 ? (
+              formatCountOf(reports.length, 'report')
+            ) : undefined
+          ) : error ? undefined : (
+            <SkeletonText className="h-3 w-20" />
+          )
+        }
+      />
+      {!data && error ? (
+        <SectionError
+          title="Your reports could not load"
+          retrying={isValidating}
+          onRetry={() => void mutate()}
+        />
+      ) : !data ? (
+        <div role="status" aria-label="Loading reports">
+          <MyReportsTableSkeleton />
+        </div>
+      ) : reports.length === 0 ? (
+        <EmptyState
+          icon={Flag}
+          title="No reports yet"
+          description="You haven't submitted any reports."
+          data-testid="my-reports-empty"
+        />
+      ) : (
+        <>
+          <DataTable
+            fixed
+            // Up to 50 rows a page, so the header stays in view.
+            stickyHeader
+            aria-label="Reports"
+            data-testid="my-reports-list"
+            phoneRows={
+              <PhoneRowList aria-label="Reports">
+                {pageReports.map((report) => (
+                  <PhoneRow
+                    key={report.id}
+                    data-testid="my-reports-phone-row"
+                    data-report-id={report.id}
+                    // The View button belongs to the name's line.
+                    align="start"
+                    title={
+                      <>
+                        {report.hasUnreadUpdate ? (
+                          <NotificationDot label={UNREAD_LABEL} />
+                        ) : null}
+                        <ReportEntityName report={report} />
+                      </>
+                    }
+                    description={
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <ReportStatusBadge status={report.status} size="sm" />
+                        <span className="truncate">{report.reason.label}</span>
+                      </span>
+                    }
+                    value={
+                      <MyReportDialog report={report} onOpen={markViewed} />
+                    }
+                  />
+                ))}
+              </PhoneRowList>
+            }
+          >
+            <DataTableHeader>
+              <DataTableRow>
+                <DataTableHead className={COLUMN.unread.width}>
+                  <span className="sr-only">Unread</span>
+                </DataTableHead>
+                <DataTableHead>{COLUMN.entity.label}</DataTableHead>
+                <DataTableHead>{COLUMN.reason.label}</DataTableHead>
+                <DataTableHead className={COLUMN.status.width}>
+                  {COLUMN.status.label}
+                </DataTableHead>
+                <DataTableHead
+                  className={COLUMN.submitted.width}
+                  showFrom={COLUMN.submitted.showFrom}
+                >
+                  {COLUMN.submitted.label}
+                </DataTableHead>
+                <DataTableHead
+                  className={COLUMN.view.width}
+                  align={COLUMN.view.align}
+                >
+                  <span className="sr-only">Actions</span>
+                </DataTableHead>
+              </DataTableRow>
+            </DataTableHeader>
+            <DataTableBody>
+              {pageReports.map((report) => (
+                <DataTableRow
+                  key={report.id}
+                  data-testid="my-reports-row"
+                  data-report-id={report.id}
+                >
+                  <DataTableCell empty={false}>
+                    {report.hasUnreadUpdate ? (
+                      <NotificationDot
+                        label={UNREAD_LABEL}
+                        data-testid="my-reports-unread-dot"
+                      />
+                    ) : null}
+                  </DataTableCell>
+                  <DataTableCell>
+                    <ReportEntityCell report={report} />
+                  </DataTableCell>
+                  <DataTableCell>{report.reason.label}</DataTableCell>
+                  <DataTableCell>
+                    <ReportStatusBadge status={report.status} size="sm" />
+                  </DataTableCell>
+                  <DataTableCell muted showFrom={COLUMN.submitted.showFrom}>
+                    <DateText date={report.created} />
+                  </DataTableCell>
+                  <DataTableCell align="end" empty={false}>
+                    <MyReportDialog
+                      report={report}
+                      onOpen={markViewed}
+                      viewTestId="my-reports-view-details"
+                    />
+                  </DataTableCell>
+                </DataTableRow>
+              ))}
+            </DataTableBody>
+          </DataTable>
+          <PaginationFooter
+            page={page}
+            pageSize={MY_REPORTS_PAGE_SIZE}
+            totalCount={reports.length}
+            getPageHref={(target) => list.hrefFor({ page: target })}
+            label="Report pages"
+          />
+        </>
       )}
-    >
-      {metadata.text}
-    </Badge>
+    </Panel>
   );
 }
 
-export default function MyReportsClient() {
-  const [reports, setReports] = useState<MyReport[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [loadAttempt, setLoadAttempt] = useState(0);
-  const [selectedReport, setSelectedReport] = useState<MyReport | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const selectedLegacyChanges = selectedReport
-    ? getLegacySuggestedChanges(selectedReport)
-    : {};
-
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setLoadFailed(false);
-    orpc.reports
-      .listMine({})
-      .then((data) => {
-        if (active) setReports(data.reports);
-      })
-      .catch((error) => {
-        console.error('[my-reports] failed to fetch reports', error);
-        if (active) setLoadFailed(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [loadAttempt]);
-
-  const handleViewDetails = useCallback((report: MyReport) => {
-    setSelectedReport(report);
-    setDetailsOpen(true);
-
-    if (!report.hasUnreadUpdate) return;
-
-    setReports((prev) =>
-      prev.map((r) =>
-        r.id === report.id ? { ...r, hasUnreadUpdate: false } : r
-      )
-    );
-    orpc.reports
-      .markMineViewed({ reportId: report.id })
-      .then(notifyReportChange)
-      .catch((error) => {
-        console.error('[my-reports] failed to mark report viewed', error);
-      });
-  }, []);
-
+/**
+ * The View button and the report it opens. Opening a report with an unread
+ * admin update marks it read.
+ */
+function MyReportDialog({
+  report,
+  onOpen,
+  viewTestId,
+}: {
+  report: MyReport;
+  onOpen: (report: MyReport) => void;
+  viewTestId?: string;
+}) {
   return (
-    <div className="space-y-6">
-      <Card data-testid="my-reports-card">
-        <CardHeader>
-          <CardTitle>Reports</CardTitle>
-          <CardDescription>
-            Data issues you&apos;ve reported and their current status
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center gap-3 py-8 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-              Loading your reports...
-            </div>
-          ) : loadFailed ? (
-            <SectionError
-              title="Your reports could not load"
-              onRetry={() => setLoadAttempt((attempt) => attempt + 1)}
-            />
-          ) : reports.length === 0 ? (
-            <p
-              className="py-8 text-center text-sm text-muted-foreground"
-              data-testid="my-reports-empty"
-            >
-              You haven&apos;t submitted any reports.
-            </p>
-          ) : (
-            <div
-              className={cn(
-                'overflow-x-auto rounded-lg border',
-                stickyTableHeaderFromLg
-              )}
-              data-testid="my-reports-list"
-            >
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted">
-                    <TableHead className="w-8" />
-                    <TableHead>Type</TableHead>
-                    <TableHead>Entity</TableHead>
-                    <TableHead>Reason</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Submitted</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reports.map((report) => (
-                    <TableRow
-                      key={report.id}
-                      data-testid="my-reports-row"
-                      data-report-id={report.id}
-                      className="cursor-pointer"
-                      onClick={() => handleViewDetails(report)}
-                    >
-                      <TableCell className="py-3">
-                        {report.hasUnreadUpdate && (
-                          <span
-                            className="block size-2.5 rounded-full bg-blue-500"
-                            data-testid="my-reports-unread-dot"
-                            role="img"
-                            aria-label="Unread admin update"
-                            title="Unread admin update"
-                          />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {
-                          ReportEntityTypeEnumHelper.getMetadata(
-                            report.entityType
-                          ).text
-                        }
-                      </TableCell>
-                      <TableCell className="max-w-[20rem] truncate">
-                        <button
-                          type="button"
-                          className="block max-w-full cursor-pointer truncate text-left"
-                          onClick={(event) => {
-                            // The row already opens the details on a pointer click
-                            event.stopPropagation();
-                            handleViewDetails(report);
-                          }}
-                        >
-                          {report.entityDisplayName}
-                        </button>
-                      </TableCell>
-                      <TableCell className="min-w-48 font-medium">
-                        {report.reason.label}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(report.status)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {formatDateTime(report.created)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent
-          className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"
-          data-testid="my-report-detail"
-        >
-          <DialogHeader>
-            <DialogTitle>Report Details</DialogTitle>
-            <DialogDescription>
-              {selectedReport &&
-                ReportEntityTypeEnumHelper.getMetadata(
-                  selectedReport.entityType
-                ).text}{' '}
-              • {selectedReport?.entityDisplayName}
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedReport && (
-            <div className="space-y-6">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Status
-                  </Label>
-                  <div className="mt-1">
-                    {getStatusBadge(selectedReport.status)}
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Entity
-                  </Label>
-                  <p className="mt-1 text-sm">
-                    <Link
-                      href={getEntityLink(
-                        selectedReport.entityType,
-                        selectedReport.entityId,
-                        selectedReport.matchId
-                      )}
-                      className="text-primary hover:underline"
-                    >
-                      {selectedReport.entityDisplayName}
-                    </Link>
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Submitted
-                  </Label>
-                  <p className="text-sm">
-                    {formatDateTime(selectedReport.created)}
-                  </p>
-                </div>
-                {selectedReport.resolvedAt && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">
-                      Reviewed
-                    </Label>
-                    <p className="text-sm">
-                      {formatDateTime(selectedReport.resolvedAt)}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-lg border bg-muted/30 p-4">
-                <Label className="text-xs text-muted-foreground">Reason</Label>
-                <p className="mt-1 text-sm font-medium">
-                  {selectedReport.reason.label}
-                </p>
-              </div>
-
-              <div>
-                <Label className="text-xs text-muted-foreground">
-                  Additional information
-                </Label>
-                <p className="mt-2 rounded-lg border bg-muted/30 p-4 text-sm wrap-anywhere whitespace-pre-wrap">
-                  {selectedReport.additionalInformation ||
-                    'No additional information was provided.'}
-                </p>
-              </div>
-
-              {Object.keys(selectedLegacyChanges).length > 0 && (
-                <div className="rounded-lg border p-4">
-                  <Label className="text-xs text-muted-foreground">
-                    Original report details
-                  </Label>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {Object.keys(selectedLegacyChanges).map((field) => (
-                      <Badge key={field} variant="secondary">
-                        {formatFieldName(field)}
-                      </Badge>
-                    ))}
-                  </div>
-                  {Object.values(selectedLegacyChanges).some(
-                    (value) => value
-                  ) && (
-                    <p className="mt-3 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
-                      {Object.values(selectedLegacyChanges)[0] ?? '—'}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {selectedReport.adminNote && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">
-                    Comment
-                  </Label>
-                  <p className="mt-2 rounded-md bg-muted/50 p-3 text-sm [overflow-wrap:anywhere] whitespace-pre-wrap">
-                    {selectedReport.adminNote}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+    <DialogTemplate
+      trigger={
+        <ViewButton
+          subject={formatReportSubject(report)}
+          data-testid={viewTestId}
+        />
+      }
+      title="Report details"
+      description={`${getReportEntityTypeName(report.entityType)} · ${report.entityDisplayName}`}
+      onOpenChange={(open) => {
+        if (open) onOpen(report);
+      }}
+      data-testid="my-report-detail"
+    >
+      <ReportDetails report={report} />
+    </DialogTemplate>
   );
 }

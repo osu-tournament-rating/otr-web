@@ -1,35 +1,43 @@
 'use client';
 
+import type { Ruleset } from '@otr/core/osu';
+import { Music } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Loader2, Music } from 'lucide-react';
 
-import BeatmapEmptyState from '@/components/beatmaps/BeatmapEmptyState';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import PlayerBeatmapCard from './PlayerBeatmapCard';
+import SectionError from '@/components/error/SectionError';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { Panel } from '@/components/kit/layout/Panel';
+import { RowList } from '@/components/kit/layout/RowList';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { LoadMore } from '@/components/kit/tables/LoadMore';
+import { formatCountOf } from '@/lib/kit/format/number';
 import { orpc } from '@/lib/orpc/orpc';
-import { PlayerBeatmapStats } from '@/lib/orpc/schema/playerBeatmaps';
-import { Ruleset } from '@otr/core/osu';
+import type { PlayerBeatmapStats } from '@/lib/orpc/schema/playerBeatmaps';
 
-interface PlayerBeatmapsListProps {
-  playerId?: number;
-  ruleset?: Ruleset;
-  initialBeatmaps: PlayerBeatmapStats[];
-  totalCount: number;
-}
+import PlayerBeatmapCard from './PlayerBeatmapCard';
 
+const LOAD_MORE_COUNT = 25;
+
+/**
+ * The beatmaps a player mapped that were pooled in tracked tournaments. The
+ * first few come from the server; "Show more" fetches the rest 25 at a time.
+ */
 export default function PlayerBeatmapsList({
   playerId,
   ruleset,
   initialBeatmaps,
   totalCount: initialTotal,
-}: PlayerBeatmapsListProps) {
-  const LOAD_MORE_COUNT = 25;
+}: {
+  playerId?: number;
+  ruleset?: Ruleset;
+  initialBeatmaps: PlayerBeatmapStats[];
+  totalCount: number;
+}) {
   const [beatmaps, setBeatmaps] =
     useState<PlayerBeatmapStats[]>(initialBeatmaps);
   const [totalCount, setTotalCount] = useState(initialTotal);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
   // Bumped on reset so a page still loading for the old list is dropped
   const listVersion = useRef(0);
 
@@ -38,7 +46,7 @@ export default function PlayerBeatmapsList({
     listVersion.current += 1;
     setBeatmaps(initialBeatmaps);
     setTotalCount(initialTotal);
-    setErrorMessage(null);
+    setHasError(false);
     setIsLoading(false);
   }, [initialBeatmaps, initialTotal, playerId, ruleset]);
 
@@ -53,7 +61,7 @@ export default function PlayerBeatmapsList({
 
     const version = listVersion.current;
     setIsLoading(true);
-    setErrorMessage(null);
+    setHasError(false);
 
     try {
       const response = await orpc.players.beatmaps({
@@ -81,7 +89,7 @@ export default function PlayerBeatmapsList({
       }
 
       console.error('Failed to load additional beatmaps', error);
-      setErrorMessage('Failed to load more beatmaps. Please try again.');
+      setHasError(true);
     } finally {
       if (version === listVersion.current) {
         setIsLoading(false);
@@ -90,47 +98,48 @@ export default function PlayerBeatmapsList({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-row items-center gap-2">
-          <Music className="h-6 w-6 text-primary" />
-          <CardTitle className="text-xl font-bold">Pooled beatmaps</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col space-y-2">
-        {isEmpty && (
-          <BeatmapEmptyState
-            testId="player-beatmaps-empty"
-            title="No pooled beatmaps"
-            body="No beatmaps by this player have been pooled in a tracked tournament."
+    <Panel>
+      <SectionHeader
+        icon={Music}
+        title="Pooled beatmaps"
+        meta={isEmpty ? undefined : formatCountOf(totalCount, 'beatmap')}
+      />
+      {isEmpty ? (
+        <EmptyState
+          data-testid="player-beatmaps-empty"
+          icon={Music}
+          title="No pooled beatmaps"
+          titleAs="h3"
+          description="No beatmaps by this player have been pooled in a tracked tournament."
+        />
+      ) : (
+        <RowList>
+          {beatmaps.map((beatmap) => (
+            <PlayerBeatmapCard key={beatmap.id} beatmap={beatmap} />
+          ))}
+        </RowList>
+      )}
+      {hasError ? (
+        <div className="border-t px-4 py-4">
+          <SectionError
+            size="inline"
+            title="More beatmaps could not load"
+            retrying={isLoading}
+            onRetry={() => void handleLoadMore()}
           />
-        )}
-        {beatmaps.map((beatmap) => (
-          <PlayerBeatmapCard key={beatmap.id} beatmap={beatmap} />
-        ))}
-        {errorMessage && (
-          <p className="text-sm text-destructive" role="alert">
-            {errorMessage}
-          </p>
-        )}
-        {remainingCount > 0 && playerId && (
-          <Button
-            variant="outline"
-            className="w-full justify-center"
-            disabled={isLoading}
-            onClick={handleLoadMore}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                Loading…
-              </>
-            ) : (
-              `Show more (${remainingCount} more)`
-            )}
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      ) : isEmpty || !playerId ? null : (
+        <LoadMore
+          label="Show more"
+          hasMore={remainingCount > 0}
+          loading={isLoading}
+          shownCount={beatmaps.length}
+          totalCount={totalCount}
+          // The server's first batch; a list that fits in it needs no footer.
+          pageSize={initialBeatmaps.length}
+          onLoadMore={() => void handleLoadMore()}
+        />
+      )}
+    </Panel>
   );
 }

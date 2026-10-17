@@ -1,12 +1,16 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { Settings } from 'lucide-react';
 import { Suspense } from 'react';
 
 import AccountDeletionClient from '@/app/settings/AccountDeletionClient';
 import ApiKeySettingsClient from '@/app/settings/ApiKeySettingsClient';
 import FriendsSyncClient from '@/app/settings/FriendsSyncClient';
 import ThemeHotkeyClient from '@/app/settings/ThemeHotkeyClient';
+import {
+  FriendsPanelSkeleton,
+  SettingsFrame,
+  ShortcutsPanelSkeleton,
+} from '@/app/settings/SettingsFrame';
 import { auth } from '@/lib/auth/auth';
 import { orpc } from '@/lib/orpc/orpc';
 import { getFriendCount } from '@/lib/db/player-friends';
@@ -30,27 +34,18 @@ export default async function SettingsPage() {
   const friendCount = playerId ? await getFriendCount(playerId) : 0;
 
   return (
-    <div className="flex flex-col gap-10">
-      <header className="space-y-3">
-        <div className="flex items-center gap-3">
-          <Settings className="size-6 text-primary" />
-          <h1 className="text-3xl font-semibold">Settings</h1>
-        </div>
-      </header>
-
-      <div className="space-y-8">
-        <Suspense fallback={null}>
-          <FriendsSyncClient friendCount={friendCount} />
-        </Suspense>
-        <ApiKeySettingsClient
-          initialKeys={keys}
-          rateLimit={{ maxRequests: 60, timeWindowMs: 60_000 }}
-        />
-        <Suspense fallback={null}>
-          <ThemeHotkeyClient />
-        </Suspense>
-        <AccountDeletionClient />
-      </div>
-    </div>
+    <SettingsFrame>
+      <Suspense fallback={<FriendsPanelSkeleton />}>
+        <FriendsSyncClient friendCount={friendCount} />
+      </Suspense>
+      <ApiKeySettingsClient
+        initialKeys={keys}
+        rateLimit={{ maxRequests: 60, timeWindowMs: 60_000 }}
+      />
+      <Suspense fallback={<ShortcutsPanelSkeleton />}>
+        <ThemeHotkeyClient />
+      </Suspense>
+      <AccountDeletionClient />
+    </SettingsFrame>
   );
 }

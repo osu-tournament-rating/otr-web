@@ -1,87 +1,75 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy } from 'lucide-react';
 import { useState } from 'react';
-import { PlayerTournamentListItem } from '@/lib/orpc/schema/tournament';
-import { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
+
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { Panel } from '@/components/kit/layout/Panel';
+import { RowList } from '@/components/kit/layout/RowList';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { LoadMore } from '@/components/kit/tables/LoadMore';
+import { formatCountOf } from '@/lib/kit/format/number';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
+import type { PlayerTournamentListItem } from '@/lib/orpc/schema/tournament';
+
 import PlayerTournamentCard from './PlayerTournamentCard';
 
-interface PlayerTournamentsListProps {
-  tournaments: PlayerTournamentListItem[];
-  adjustments: PlayerRatingAdjustment[];
-}
+const INITIAL_COUNT = 5;
+const LOAD_MORE_COUNT = 25;
 
+/**
+ * A player's tournaments as divided rows, five at first, with "Show more"
+ * revealing the rest 25 at a time. Each row expands its own matches.
+ */
 export default function PlayerTournamentsList({
   tournaments,
   adjustments,
-}: PlayerTournamentsListProps) {
-  const LOAD_MORE_COUNT = 25;
-  const [displayCount, setDisplayCount] = useState(5);
-
-  const displayedTournaments = tournaments.slice(0, displayCount);
-
-  if (tournaments.length === 0) {
-    return <NoResultsCard />;
-  }
+}: {
+  tournaments: PlayerTournamentListItem[];
+  adjustments: PlayerRatingAdjustment[];
+}) {
+  const [displayCount, setDisplayCount] = useState(INITIAL_COUNT);
+  const shownCount = Math.min(displayCount, tournaments.length);
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-row items-center gap-2">
-          <Trophy className="h-6 w-6 text-primary" />
-          <CardTitle
-            data-testid="tournament-history-title"
-            className="text-xl font-bold"
-          >
-            Tournament History
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col space-y-4">
-        {displayedTournaments.map((tournament) => (
-          <PlayerTournamentCard
-            key={tournament.id}
-            tournament={tournament}
-            adjustments={adjustments}
-          />
-        ))}
-        {tournaments.length > displayCount && (
-          <Button
-            variant="outline"
-            className="w-full justify-center"
-            onClick={() =>
-              setDisplayCount(
-                Math.min(displayCount + LOAD_MORE_COUNT, tournaments.length)
+    <Panel>
+      <SectionHeader
+        data-testid="tournament-history-title"
+        icon={Trophy}
+        title="Tournament history"
+        meta={
+          tournaments.length > 0
+            ? formatCountOf(tournaments.length, 'tournament')
+            : undefined
+        }
+      />
+      {tournaments.length === 0 ? (
+        <EmptyState icon={Trophy} title="No tournaments" titleAs="h3" />
+      ) : (
+        <>
+          <RowList>
+            {tournaments.slice(0, displayCount).map((tournament) => (
+              <PlayerTournamentCard
+                key={tournament.id}
+                tournament={tournament}
+                adjustments={adjustments}
+              />
+            ))}
+          </RowList>
+          <LoadMore
+            label="Show more"
+            hasMore={shownCount < tournaments.length}
+            shownCount={shownCount}
+            totalCount={tournaments.length}
+            pageSize={INITIAL_COUNT}
+            onLoadMore={() =>
+              setDisplayCount((count) =>
+                Math.min(count + LOAD_MORE_COUNT, tournaments.length)
               )
             }
-          >
-            Show more ({tournaments.length - displayCount} more)
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function NoResultsCard() {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-row items-center gap-2">
-          <Trophy className="h-6 w-6 text-primary" />
-          <CardTitle
-            data-testid="tournament-history-title"
-            className="text-xl font-bold"
-          >
-            Tournament History
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center space-y-2 text-center">
-        <p className="text-muted-foreground">No tournament data available</p>
-      </CardContent>
-    </Card>
+          />
+        </>
+      )}
+    </Panel>
   );
 }

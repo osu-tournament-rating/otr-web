@@ -1,9 +1,8 @@
 'use client';
 
-import { useCallback } from 'react';
-import Link from 'next/link';
+import { Fragment, useCallback } from 'react';
 import useSWRInfinite from 'swr/infinite';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ClipboardList } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
 import type { DescendantAuditItem } from '@/lib/orpc/schema/audit';
 import {
@@ -12,14 +11,19 @@ import {
   ENTITY_TYPE_PLURALS,
 } from '@/lib/audit-entity-types';
 import SectionError from '@/components/error/SectionError';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { RowList } from '@/components/kit/layout/RowList';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { LoadMore } from '@/components/kit/tables/LoadMore';
+import { formatId } from '@/lib/kit/format/number';
 import { orpc } from '@/lib/orpc/orpc';
 import AuditEntryRow from './AuditEntryRow';
 import {
-  LoadMoreButton,
-  TimelineEmptyState,
+  TIMELINE_BATCH,
   TimelineSkeleton,
-  TimelineSummary,
+  TimelineToolbar,
 } from './AuditEntityTimeline';
+import { getEntityTypeName, nameOr } from './auditParams';
 
 type DescendantResponse = {
   page: number;
@@ -30,41 +34,43 @@ type DescendantResponse = {
   items: DescendantAuditItem[];
 };
 
-function titleCase(value: string): string {
-  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
-}
-
+/** Where the changed entity sits: its ancestors, muted, then its own name. */
 function EntityHeading({
   entity,
 }: {
   entity: DescendantAuditItem['entity'];
 }): React.JSX.Element {
-  const label = ENTITY_TYPE_LABELS[entity.entityType];
+  const name = (
+    entityType: AuditEntityType,
+    entityId: number,
+    entityName: string | null
+  ) =>
+    nameOr(
+      entityName,
+      `${getEntityTypeName(entityType)} #${formatId(entityId)}`
+    );
 
   return (
-    <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+    <p className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-xs text-muted-foreground">
       {entity.path.map((ancestor) => (
-        <span
-          key={`${ancestor.entityType}-${ancestor.entityId}`}
-          className="flex items-center gap-1"
-        >
-          <Link
+        <Fragment key={`${ancestor.entityType}-${ancestor.entityId}`}>
+          <EntityLink
             href={`/audit/${entityTypeToSlug(ancestor.entityType)}/${ancestor.entityId}`}
-            className="hover:text-foreground hover:underline"
+            wrap
+            className="font-normal text-muted-foreground"
           >
-            {ancestor.entityName ??
-              `${titleCase(ENTITY_TYPE_LABELS[ancestor.entityType])} #${ancestor.entityId}`}
-          </Link>
-          <ChevronRight className="h-3 w-3" />
-        </span>
+            {name(ancestor.entityType, ancestor.entityId, ancestor.entityName)}
+          </EntityLink>
+          <ChevronRight aria-hidden="true" className="size-3 shrink-0" />
+        </Fragment>
       ))}
-      <Link
+      <EntityLink
         href={`/audit/${entityTypeToSlug(entity.entityType)}/${entity.entityId}`}
-        className="font-medium text-primary hover:underline"
+        wrap
       >
-        {entity.entityName ?? `${titleCase(label)} #${entity.entityId}`}
-      </Link>
-    </div>
+        {name(entity.entityType, entity.entityId, entity.entityName)}
+      </EntityLink>
+    </p>
   );
 }
 
@@ -73,13 +79,17 @@ type AuditDescendantTimelineProps = {
   entityId: number;
   descendantType: AuditEntityType;
   showSystem?: boolean;
+  /** The switch for the toolbar strip, owned by the page. */
+  systemSwitch: React.ReactNode;
 };
 
+/** Changes to an entity's matches, games or scores, newest first. */
 export default function AuditDescendantTimeline({
   entityType,
   entityId,
   descendantType,
   showSystem = false,
+  systemSwitch,
 }: AuditDescendantTimelineProps): React.JSX.Element {
   const getKey = useCallback(
     (pageIndex: number, previousPageData: DescendantResponse | null) => {
@@ -105,7 +115,7 @@ export default function AuditDescendantTimeline({
           entityId: eId,
           descendantType: dType,
           showSystem: withSystem,
-          pageSize: 50,
+          pageSize: TIMELINE_BATCH,
           page,
         }),
       {
@@ -122,46 +132,65 @@ export default function AuditDescendantTimeline({
   const totalPages = responsePages[0]?.pages ?? 0;
   const hasMore = size < totalPages;
   const plural = ENTITY_TYPE_PLURALS[descendantType];
+  const total = responsePages[0]?.total;
+  const capped = responsePages[0]?.totalCapped ?? false;
+
+  const toolbar = (
+    <TimelineToolbar
+      systemSwitch={systemSwitch}
+      total={total}
+      capped={capped}
+      loading={isLoading}
+    />
+  );
 
   if (isLoading) {
-    return <TimelineSkeleton />;
+    return (
+      <>
+        {toolbar}
+        <TimelineSkeleton />
+      </>
+    );
   }
 
   if (error && !data) {
     return (
-      <SectionError
-        title={`Changed ${plural} could not load`}
-        retrying={isValidating}
-        onRetry={() => void mutate()}
-      />
+      <>
+        {toolbar}
+        <SectionError
+          title={`Changed ${plural} could not load`}
+          retrying={isValidating}
+          onRetry={() => void mutate()}
+        />
+      </>
     );
   }
 
   if (allItems.length === 0) {
     return (
-      <TimelineEmptyState
-        title={`No ${plural} changed`}
-        description={
-          showSystem
-            ? `No changes have been recorded against this ${ENTITY_TYPE_LABELS[entityType]}'s ${plural}.`
-            : `No manual changes have been recorded against this ${ENTITY_TYPE_LABELS[entityType]}'s ${plural}. Enable system events to see automated processing.`
-        }
-      />
+      <>
+        {toolbar}
+        <EmptyState
+          data-testid="audit-timeline-empty"
+          icon={ClipboardList}
+          title={`No ${plural} changed`}
+          description={
+            showSystem
+              ? `No changes have been recorded against this ${ENTITY_TYPE_LABELS[entityType]}'s ${plural}.`
+              : `No manual changes have been recorded against this ${ENTITY_TYPE_LABELS[entityType]}'s ${plural}. Enable system events to see automated processing.`
+          }
+        />
+      </>
     );
   }
 
   return (
-    <div data-testid="audit-descendant-timeline" className="space-y-4">
-      <TimelineSummary
-        total={responsePages[0]?.total ?? allItems.length}
-        hasMore={hasMore}
-        latestChange={allItems[0]?.entry.created ?? null}
-        capped={responsePages[0]?.totalCapped}
-      />
+    <div data-testid="audit-descendant-timeline" className="contents">
+      {toolbar}
 
-      <div
+      <RowList
         data-testid="timeline-entry-list"
-        className="divide-y divide-border rounded-lg border border-border"
+        aria-label={`Changed ${plural}`}
       >
         {allItems.map((item) => (
           <AuditEntryRow
@@ -170,12 +199,27 @@ export default function AuditDescendantTimeline({
             heading={<EntityHeading entity={item.entity} />}
           />
         ))}
-      </div>
+      </RowList>
 
-      {hasMore && (
-        <LoadMoreButton
-          onClick={() => setSize(size + 1)}
-          disabled={isValidating}
+      {/* A failed "Load more" keeps the changes already showing. */}
+      {error ? (
+        <div className="border-t px-4 py-4">
+          <SectionError
+            size="inline"
+            title={`More changed ${plural} could not load`}
+            retrying={isValidating}
+            onRetry={() => void mutate()}
+            className="justify-center"
+          />
+        </div>
+      ) : (
+        <LoadMore
+          hasMore={hasMore}
+          loading={isValidating && size > responsePages.length}
+          shownCount={allItems.length}
+          totalCount={capped ? null : total}
+          pageSize={TIMELINE_BATCH}
+          onLoadMore={() => void setSize(size + 1)}
         />
       )}
     </div>

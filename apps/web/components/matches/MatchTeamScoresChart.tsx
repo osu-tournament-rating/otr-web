@@ -1,25 +1,36 @@
 'use client';
 
+import { Team, VerificationStatus } from '@otr/core/osu';
+import { ChartLine } from 'lucide-react';
 import { useMemo } from 'react';
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
-import { LineChart as LineChartIcon } from 'lucide-react';
 
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  type ChartConfig,
-} from '@/components/ui/chart';
-import { Card } from '@/components/ui/card';
-import { Game } from '@/lib/orpc/schema/match';
-import { ModsEnumHelper } from '@/lib/enum-helpers';
-import { Mods, Team, VerificationStatus } from '@otr/core/osu';
+import { ChartLegend } from '@/components/kit/charts/ChartLegend';
+import { ChartTooltipContent } from '@/components/kit/charts/ChartTooltip';
+import { Panel, PanelBody } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { getBeatmapArtist, getBeatmapTitle } from '@/lib/beatmaps/presentation';
-
-interface TeamScoresChartProps {
-  games: Game[] | undefined;
-}
+import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
+import {
+  CHART_CURSOR,
+  CHART_LINE_WIDTH,
+  CHART_MARGIN,
+  chartAxisProps,
+  chartGridProps,
+  chartValueAxisProps,
+  niceAxisProps,
+} from '@/lib/kit/charts/axis';
+import { formatCompactTick, formatCountTick } from '@/lib/kit/charts/format';
+import {
+  DEFAULT_MAX_TICKS,
+  NARROW_MAX_TICKS,
+  getNiceTicks,
+} from '@/lib/kit/charts/ticks';
+import { getTeamColor } from '@/lib/kit/color/teams';
+import { formatMods } from '@/lib/kit/format/mods';
+import { formatCount, formatCountOf } from '@/lib/kit/format/number';
+import type { Game } from '@/lib/orpc/schema/match';
 
 export interface TeamScoreChartPoint {
   mapNumber: number;
@@ -34,26 +45,14 @@ export interface TeamScoreChartPoint {
   scoreDifference: number;
 }
 
-const CHART_CONFIG = {
-  redScore: {
-    label: 'Red team',
-    color: 'var(--team-red)',
-  },
-  blueScore: {
-    label: 'Blue team',
-    color: 'var(--team-blue)',
-  },
-} satisfies ChartConfig;
+const SERIES = [
+  { key: 'redScore', label: 'Red team', color: getTeamColor(Team.Red) },
+  { key: 'blueScore', label: 'Blue team', color: getTeamColor(Team.Blue) },
+] as const;
 
-function formatMods(mods: number): string {
-  if (mods === 0 || mods === Mods.None) return 'NM';
-
-  const modTexts = ModsEnumHelper.getFlags(mods as Mods)
-    .map((flag) => ModsEnumHelper.metadata[flag].text)
-    .filter(Boolean);
-
-  return modTexts.length > 0 ? modTexts.join(' ') : 'NM';
-}
+const SERIES_LABELS: Record<string, string> = Object.fromEntries(
+  SERIES.map((series) => [series.key, series.label])
+);
 
 export function buildTeamScoreChartData(
   games: Game[] | undefined
@@ -106,182 +105,142 @@ export function buildTeamScoreChartData(
   });
 }
 
-function getYAxis(data: TeamScoreChartPoint[]) {
-  const scores = data.flatMap((point) => [point.redScore, point.blueScore]);
-
-  if (scores.length === 0) {
-    return {
-      domain: [0, 100_000] as [number, number],
-      ticks: [0, 25_000, 50_000, 75_000, 100_000],
-    };
-  }
-
-  const minimum = Math.min(...scores);
-  const maximum = Math.max(...scores);
-  const spread = maximum - minimum;
-  const padding = Math.max(spread * 0.1, 5_000);
-  const domainMinimum = Math.max(
-    0,
-    Math.floor((minimum - padding) / 5_000) * 5_000
-  );
-  let domainMaximum = Math.ceil((maximum + padding) / 5_000) * 5_000;
-
-  if (domainMaximum <= domainMinimum) {
-    domainMaximum = domainMinimum + 20_000;
-  }
-
-  const interval = (domainMaximum - domainMinimum) / 4;
-
-  return {
-    domain: [domainMinimum, domainMaximum] as [number, number],
-    ticks: Array.from(
-      { length: 5 },
-      (_, index) => domainMinimum + interval * index
-    ),
-  };
+/** The result of one game, as the tooltip's footer and the chart's summary say it. */
+function describeResult(point: TeamScoreChartPoint): string {
+  if (point.winner === 'tie') return 'Game tied';
+  const team = point.winner === 'red' ? 'Red' : 'Blue';
+  return `${team} wins by ${formatCount(Math.abs(point.scoreDifference))}`;
 }
 
-interface TooltipProps {
-  active?: boolean;
-  payload?: Array<{ payload: TeamScoreChartPoint }>;
-}
-
-function TeamScoreTooltip({ active, payload }: TooltipProps) {
-  const point = payload?.[0]?.payload;
-
-  if (!active || !point) return null;
-
-  const result =
-    point.winner === 'tie'
-      ? 'Map tied'
-      : `${point.winner === 'red' ? 'Red' : 'Blue'} wins by ${Math.abs(point.scoreDifference).toLocaleString()}`;
-
+function TooltipTitle({ point }: { point: TeamScoreChartPoint }) {
   return (
-    <div className="max-w-72 rounded-lg border bg-popover p-3 text-xs text-popover-foreground shadow-md">
-      <div className="flex items-center justify-between gap-3 text-muted-foreground">
+    <div className="flex max-w-64 flex-col gap-0.5">
+      <span className="flex items-center justify-between gap-3">
         <span>Game {point.mapNumber}</span>
-        <span>{point.mods}</span>
-      </div>
-      <p className="mt-1 truncate text-sm font-medium">
+        <span className="font-normal text-muted-foreground">{point.mods}</span>
+      </span>
+      <span className="truncate font-normal">
         {point.beatmapArtist} – {point.beatmapTitle}
-      </p>
-      <p className="truncate text-muted-foreground">
+      </span>
+      <span className="truncate font-normal text-muted-foreground">
         [{point.beatmapDifficulty}]
-      </p>
-
-      <div className="mt-3 space-y-1.5 border-t pt-2.5">
-        <div className="flex items-center justify-between gap-6">
-          <span className="flex items-center gap-1.5">
-            <span
-              className="size-2 rounded-full bg-(--team-red)"
-              aria-hidden="true"
-            />
-            Red team
-          </span>
-          <span className="font-medium">{point.redScore.toLocaleString()}</span>
-        </div>
-        <div className="flex items-center justify-between gap-6">
-          <span className="flex items-center gap-1.5">
-            <span
-              className="size-2 rounded-full bg-(--team-blue)"
-              aria-hidden="true"
-            />
-            Blue team
-          </span>
-          <span className="font-medium">
-            {point.blueScore.toLocaleString()}
-          </span>
-        </div>
-      </div>
-
-      <p className="mt-2 border-t pt-2 text-muted-foreground">{result}</p>
+      </span>
     </div>
   );
 }
 
-function formatAxisScore(value: number): string {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `${Math.round(value / 1_000)}K`;
-  return value.toString();
-}
+const pointOf = (payload: readonly { payload?: unknown }[]) =>
+  payload[0]?.payload as TeamScoreChartPoint | undefined;
 
-function formatGameCount(value: number): string {
-  return `${value} ${value === 1 ? 'game' : 'games'}`;
-}
-
-export default function MatchTeamScoresChart({ games }: TeamScoresChartProps) {
+/**
+ * Each team's verified total per game, as two lines in the team colours,
+ * with the beatmap and result of a game on hover.
+ */
+export default function MatchTeamScoresChart({
+  games,
+}: {
+  games: Game[] | undefined;
+}) {
+  const isNarrow = useIsNarrowChart();
   const chartData = useMemo(() => buildTeamScoreChartData(games), [games]);
-  const { domain, ticks } = useMemo(() => getYAxis(chartData), [chartData]);
-  const redWins = chartData.filter((point) => point.winner === 'red').length;
-  const blueWins = chartData.filter((point) => point.winner === 'blue').length;
-  const ties = chartData.filter((point) => point.winner === 'tie').length;
+
+  const xTicks = useMemo(() => {
+    const numbers = chartData.map((point) => point.mapNumber);
+    return getNiceTicks(Math.min(...numbers), Math.max(...numbers), {
+      integer: true,
+      within: true,
+      maxTicks: isNarrow ? NARROW_MAX_TICKS : DEFAULT_MAX_TICKS,
+    });
+  }, [chartData, isNarrow]);
+  const yTicks = useMemo(() => {
+    const scores = chartData.flatMap((point) => [
+      point.redScore,
+      point.blueScore,
+    ]);
+    return getNiceTicks(Math.min(...scores), Math.max(...scores), {
+      integer: true,
+    });
+  }, [chartData]);
 
   if (chartData.length === 0) {
     return null;
   }
 
-  return (
-    <Card data-testid="team-scores-chart" className="gap-4 !p-4 sm:!p-6">
-      <div className="flex items-start gap-2">
-        <LineChartIcon className="mt-0.5 size-6 shrink-0 text-primary" />
-        <div>
-          <h3 className="text-lg font-semibold">Team Score Progression</h3>
-          <p className="text-sm text-muted-foreground">
-            Verified team totals across {chartData.length}{' '}
-            {chartData.length === 1 ? 'game' : 'games'}
-          </p>
-        </div>
-      </div>
+  const count = (winner: TeamScoreChartPoint['winner']) =>
+    formatCountOf(
+      chartData.filter((point) => point.winner === winner).length,
+      'game'
+    );
+  const ties = chartData.filter((point) => point.winner === 'tie').length;
 
-      <ChartContainer
-        config={CHART_CONFIG}
-        className="aspect-auto h-[240px] w-full sm:h-[300px]"
-        role="img"
-        aria-label={`Line chart of verified team scores. Red won ${formatGameCount(redWins)}, Blue won ${formatGameCount(blueWins)}, and ${formatGameCount(ties)} ${ties === 1 ? 'was' : 'were'} tied.`}
-      >
-        <LineChart
-          data={chartData}
-          margin={{ top: 4, right: 12, left: 0, bottom: 0 }}
+  return (
+    <Panel data-testid="team-scores-chart">
+      <SectionHeader
+        icon={ChartLine}
+        title="Team score progression"
+        meta={formatCountOf(chartData.length, 'verified game')}
+      />
+      <PanelBody className="flex flex-col gap-3">
+        <ChartLegend
+          marker="line"
+          items={SERIES.map((series) => ({
+            key: series.key,
+            label: series.label,
+            color: series.color,
+          }))}
+        />
+        <ChartContainer
+          config={{}}
+          className="aspect-auto h-60 w-full sm:h-72"
+          role="img"
+          aria-label={`Line chart of verified team scores. Red won ${count('red')}, Blue won ${count('blue')}, and ${formatCountOf(ties, 'game')} ${ties === 1 ? 'was' : 'were'} tied.`}
         >
-          <CartesianGrid vertical={false} strokeDasharray="3 3" />
-          <XAxis
-            dataKey="mapLabel"
-            tickLine={false}
-            axisLine={false}
-            minTickGap={20}
-            tickMargin={8}
-          />
-          <YAxis
-            domain={domain}
-            ticks={ticks}
-            tickFormatter={formatAxisScore}
-            tickLine={false}
-            axisLine={false}
-            tickMargin={6}
-            width={44}
-          />
-          <ChartTooltip content={<TeamScoreTooltip />} />
-          <ChartLegend content={<ChartLegendContent />} />
-          <Line
-            type="monotone"
-            dataKey="redScore"
-            stroke="var(--color-redScore)"
-            strokeWidth={2.5}
-            dot={{ r: 3, fill: 'var(--color-redScore)', strokeWidth: 0 }}
-            activeDot={{ r: 5, strokeWidth: 0 }}
-            isAnimationActive={false}
-          />
-          <Line
-            type="monotone"
-            dataKey="blueScore"
-            stroke="var(--color-blueScore)"
-            strokeWidth={2.5}
-            dot={{ r: 3, fill: 'var(--color-blueScore)', strokeWidth: 0 }}
-            activeDot={{ r: 5, strokeWidth: 0 }}
-            isAnimationActive={false}
-          />
-        </LineChart>
-      </ChartContainer>
-    </Card>
+          <LineChart data={chartData} margin={CHART_MARGIN}>
+            <CartesianGrid {...chartGridProps} />
+            <XAxis
+              {...chartAxisProps}
+              {...niceAxisProps(xTicks)}
+              dataKey="mapNumber"
+              tickFormatter={formatCountTick}
+            />
+            <YAxis
+              {...chartValueAxisProps}
+              {...niceAxisProps(yTicks)}
+              tickFormatter={formatCompactTick}
+            />
+            <ChartTooltip
+              cursor={CHART_CURSOR.line}
+              content={
+                <ChartTooltipContent
+                  marker="line"
+                  valueFormatter={formatCountTick}
+                  nameFormatter={(key) => SERIES_LABELS[key] ?? key}
+                  labelFormatter={(_, payload) => {
+                    const point = pointOf(payload);
+                    return point ? <TooltipTitle point={point} /> : null;
+                  }}
+                  footer={(payload) => {
+                    const point = pointOf(payload);
+                    return point ? describeResult(point) : null;
+                  }}
+                />
+              }
+            />
+            {SERIES.map((series) => (
+              <Line
+                key={series.key}
+                type="monotone"
+                dataKey={series.key}
+                stroke={series.color}
+                strokeWidth={CHART_LINE_WIDTH}
+                dot={{ r: 3, fill: series.color, strokeWidth: 0 }}
+                activeDot={{ r: 5, strokeWidth: 0 }}
+                isAnimationActive={false}
+              />
+            ))}
+          </LineChart>
+        </ChartContainer>
+      </PanelBody>
+    </Panel>
   );
 }

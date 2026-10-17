@@ -40,7 +40,8 @@ export default function GlobalError({ retry }: { retry: () => void }) {
         />
       </head>
       <body className="flex min-h-screen flex-col bg-background font-sans text-foreground">
-        <main className="mx-auto flex w-full max-w-[1050px] flex-1 items-center sm:px-5">
+        {/* The root layout's frame, centring the error in the window. */}
+        <main className="mx-auto flex w-full max-w-[1050px] flex-1 items-center px-4 pt-6 pb-10 sm:px-5 sm:pt-10">
           <RouteError title="o!TR could not load" retry={retry} />
         </main>
       </body>

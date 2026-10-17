@@ -1,44 +1,38 @@
-import { ChevronLeft, FoldHorizontal, UnfoldHorizontal } from 'lucide-react';
+import {
+  ChartNoAxesColumn,
+  ChevronLeft,
+  FoldHorizontal,
+  UnfoldHorizontal,
+} from 'lucide-react';
 import type * as React from 'react';
 
-import { Toggle } from '@/components/ui/toggle';
+import { ChartTooltipBody } from '@/components/kit/charts/ChartTooltip';
+import { Button } from '@/components/kit/controls/Button';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import type {
   BoxPlotMarks,
   BoxPlotQuartiles,
   ScaleTick,
 } from '@/lib/beatmaps/chart-axis';
+import { formatCountOf } from '@/lib/kit/format/number';
 import { cn } from '@/lib/utils';
-import { formatChartNumber } from '@/lib/utils/chart';
 
-export type { ScaleTick };
-
-// The beatmap kit became the shared layout kit; these names stay for the
-// beatmap and tournament pages that import them from here.
-export { Panel as SectionCard } from '@/components/kit/layout/Panel';
-export { SectionHeader } from '@/components/kit/layout/SectionHeader';
-export { Tile } from '@/components/kit/layout/Tile';
-export { Eyebrow } from '@/components/kit/layout/Typography';
-
-/** The color chip that fronts every mod, grade, and rank-bracket label. */
-export function Swatch({ color }: { color: string }) {
-  return (
-    <span
-      className="size-2 shrink-0 rounded-xs"
-      style={{ backgroundColor: color }}
-      aria-hidden="true"
-    />
-  );
-}
-
-export function EmptyState({
-  children = 'Not enough data',
+/** A beatmap chart with too little data to draw: the kit's compact empty state. */
+export function NotEnoughData({
+  description,
+  className,
 }: {
-  children?: React.ReactNode;
+  description?: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-      {children}
-    </p>
+    <EmptyState
+      size="compact"
+      icon={ChartNoAxesColumn}
+      title="Not enough data"
+      description={description}
+      className={className}
+    />
   );
 }
 
@@ -130,25 +124,13 @@ function RingCap({ color, percent }: { color: string; percent: number }) {
   );
 }
 
-/** Hollow ring glyph echoing the box plot's min/max marks. */
-function RingGlyph({ color }: { color: string }) {
-  return (
-    <span
-      className="size-1.5 shrink-0 rounded-full border bg-transparent"
-      style={{ borderColor: color }}
-      aria-hidden="true"
-    />
-  );
-}
-
-/** The five-number readout behind every box plot row. */
+/** The five-number readout behind every box plot row, in the kit's chart tooltip. */
 export function BoxPlotTooltipContent({
   labelIcon,
   label,
   scoreCount,
   measureLabel,
   quartiles,
-  color,
   format,
 }: {
   labelIcon: React.ReactNode;
@@ -157,44 +139,36 @@ export function BoxPlotTooltipContent({
   /** Names the measure on the median line: `Median`, `Median accuracy`. */
   measureLabel: string;
   quartiles: BoxPlotQuartiles;
-  color: string;
   format: (value: number) => string;
 }) {
   return (
-    <div className="min-w-44 space-y-1">
-      <div className="flex items-center justify-between gap-4 border-b pb-1.5">
-        <span className="flex items-center gap-1.5 text-xs font-medium">
+    <ChartTooltipBody
+      className="min-w-44"
+      title={
+        <span className="flex items-center gap-1.5">
           {labelIcon}
           {label}
         </span>
-        <span className="text-xs text-muted-foreground">
-          {`${formatChartNumber(scoreCount)} scores`}
-        </span>
-      </div>
-
-      <div className="flex items-baseline justify-between gap-4">
-        <span className="text-xs text-muted-foreground">{measureLabel}</span>
-        <span className="text-sm font-semibold">
-          {format(quartiles.median)}
-        </span>
-      </div>
-
-      <div className="flex items-baseline justify-between gap-4">
-        <span className="text-xs text-muted-foreground">Middle 50%</span>
-        <span className="text-xs">
-          {`${format(quartiles.p25)} – ${format(quartiles.p75)}`}
-        </span>
-      </div>
-
-      <div className="flex items-baseline justify-between gap-4">
-        <span className="text-xs text-muted-foreground">Range</span>
-        <span className="flex items-center gap-1.5 text-xs">
-          <RingGlyph color={color} />
-          {`${format(quartiles.min)} – ${format(quartiles.max)}`}
-          <RingGlyph color={color} />
-        </span>
-      </div>
-    </div>
+      }
+      rows={[
+        {
+          key: 'median',
+          label: measureLabel,
+          value: format(quartiles.median),
+        },
+        {
+          key: 'middle',
+          label: 'Middle 50%',
+          value: `${format(quartiles.p25)} – ${format(quartiles.p75)}`,
+        },
+        {
+          key: 'range',
+          label: 'Range',
+          value: `${format(quartiles.min)} – ${format(quartiles.max)}`,
+        },
+      ]}
+      footer={formatCountOf(scoreCount, 'score')}
+    />
   );
 }
 
@@ -214,7 +188,7 @@ export function ScaleAxis({
         className={cn(leftSpacerClassName, 'shrink-0')}
         aria-hidden="true"
       />
-      <div className="relative h-5 min-w-0 flex-1">
+      <div className="relative h-5 min-w-0 flex-1 tabular-nums">
         {ticks.map((tick) => (
           <div key={tick.value}>
             <span
@@ -253,51 +227,17 @@ export function FullRangeToggle({
   label: string;
 }) {
   return (
-    // h-6 keeps the 24px target (WCAG 2.5.8).
-    <Toggle
+    // -my-1 keeps the 32px button inside the 24px label row beside it.
+    <Button
+      variant="ghost"
       size="sm"
-      pressed={pressed}
-      onPressedChange={onPressedChange}
+      icon={pressed ? FoldHorizontal : UnfoldHorizontal}
+      aria-pressed={pressed}
       aria-label={label}
-      className="h-6 shrink-0 cursor-pointer gap-1 px-1.5 text-xs font-medium text-muted-foreground data-[state=on]:text-accent-foreground"
+      onClick={() => onPressedChange(!pressed)}
+      className="-my-1 shrink-0 text-xs text-muted-foreground aria-pressed:bg-accent aria-pressed:text-accent-foreground"
     >
-      {pressed ? (
-        <FoldHorizontal className="size-3.5" aria-hidden />
-      ) : (
-        <UnfoldHorizontal className="size-3.5" aria-hidden />
-      )}
       Full range
-    </Toggle>
-  );
-}
-
-/** Icon + label over a large value, the body of every Tournament activity tile. */
-export function TileStat({
-  icon: Icon,
-  label,
-  sublabel,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
-  label: string;
-  sublabel?: string;
-  value: string;
-}) {
-  // <span>, not <dt>/<dd>: the "Pooled in" tile is a <button>.
-  return (
-    <>
-      <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
-        <Icon className="size-3.5 shrink-0" aria-hidden />
-        <span className="truncate">{label}</span>
-      </span>
-      <span className="mt-1 block text-xl leading-none font-bold">
-        {value}
-        {sublabel ? (
-          <span className="mt-0.5 block text-xs leading-tight font-normal text-muted-foreground">
-            {sublabel}
-          </span>
-        ) : null}
-      </span>
-    </>
+    </Button>
   );
 }

@@ -29,15 +29,16 @@ export const PREVIEW_STATUS_ICONS: Record<PreviewButtonStatus, LucideIcon> = {
   idle: Play,
 };
 
-export const PREVIEW_ACTION_LABELS: Record<PreviewButtonStatus, string> = {
+const PREVIEW_ACTION_LABELS: Record<PreviewButtonStatus, string> = {
   loading: 'Loading preview',
   playing: 'Pause preview',
-  error: 'Retry preview',
+  // Starts with the labelled button's visible "Try again" (label in name).
+  error: 'Try again to play preview',
   paused: 'Resume preview',
   idle: 'Play preview',
 };
 
-export interface PreviewButtonState {
+interface PreviewButtonState {
   status: PreviewButtonStatus;
   actionLabel: string;
   isActive: boolean;

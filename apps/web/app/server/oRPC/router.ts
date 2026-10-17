@@ -48,6 +48,7 @@ import {
 import {
   getTournament,
   listTournaments,
+  listTournamentsPage,
 } from './procedures/tournamentsProcedures';
 import { submitTournament } from './procedures/tournaments/tournamentSubmissionProcedure';
 import {
@@ -237,6 +238,7 @@ export const router = base.router({
   },
   tournaments: {
     list: listTournaments,
+    listPage: listTournamentsPage,
     get: getTournament,
     submit: submitTournament,
     adminNotes: {

@@ -1,17 +1,23 @@
 import { describe, expect, it } from 'bun:test';
 import {
+  FilteringFailReason,
   GameRejectionReason,
   MatchRejectionReason,
+  RatingAdjustmentType,
   TeamType,
 } from '@otr/core/osu';
 
 import {
+  FILTERING_FAIL_REASON_DESCRIPTIONS,
+  FILTERING_FAIL_REASON_LABELS,
   formatEnumValue,
   formatFlags,
   getFlagLabels,
+  getSetFlags,
   GAME_REJECTION_REASON_LABELS,
   MATCH_REJECTION_REASON_LABELS,
   RANKED_STATUS_LABELS,
+  RATING_ADJUSTMENT_TYPE_LABELS,
   TEAM_TYPE_LABELS,
 } from '../enum-labels';
 
@@ -84,11 +90,66 @@ describe('formatFlags', () => {
   });
 });
 
+describe('getSetFlags', () => {
+  it('lists the named flags set, lowest first', () => {
+    expect(
+      getSetFlags(
+        FilteringFailReason.TooManyTournaments | FilteringFailReason.MinRating,
+        FILTERING_FAIL_REASON_LABELS
+      )
+    ).toEqual([
+      FilteringFailReason.MinRating,
+      FilteringFailReason.TooManyTournaments,
+    ]);
+  });
+
+  it('leaves out unnamed bits and values that are not flags', () => {
+    expect(getSetFlags(1 | 4096, MATCH_REJECTION_REASON_LABELS)).toEqual([1]);
+    expect(getSetFlags(0, FILTERING_FAIL_REASON_LABELS)).toEqual([]);
+    expect(getSetFlags(-3, FILTERING_FAIL_REASON_LABELS)).toEqual([]);
+    expect(getSetFlags(2.5, FILTERING_FAIL_REASON_LABELS)).toEqual([]);
+  });
+});
+
+describe('filter failure reasons', () => {
+  it('names each failure and explains it', () => {
+    const value =
+      FilteringFailReason.MinRating | FilteringFailReason.PeakRatingTooHigh;
+
+    expect(getFlagLabels(value, FILTERING_FAIL_REASON_LABELS)).toEqual([
+      'Low rating',
+      'High peak',
+    ]);
+    expect(
+      getSetFlags(value, FILTERING_FAIL_REASON_LABELS).map(
+        (flag) => FILTERING_FAIL_REASON_DESCRIPTIONS[flag]
+      )
+    ).toEqual([
+      "The player's rating is below the minimum threshold",
+      "The player's all-time peak rating exceeds the maximum allowed",
+    ]);
+  });
+});
+
+describe('rating adjustment types', () => {
+  it('names every kind', () => {
+    expect(
+      formatEnumValue(
+        RatingAdjustmentType.VolatilityDecay,
+        RATING_ADJUSTMENT_TYPE_LABELS
+      )
+    ).toBe('Volatility decay');
+    expect(Object.keys(RATING_ADJUSTMENT_TYPE_LABELS)).toHaveLength(4);
+  });
+});
+
 describe('label wording', () => {
   it('is sentence case', () => {
     const tables = [
       GAME_REJECTION_REASON_LABELS,
       MATCH_REJECTION_REASON_LABELS,
+      FILTERING_FAIL_REASON_LABELS,
+      RATING_ADJUSTMENT_TYPE_LABELS,
     ];
     for (const labels of tables) {
       for (const label of Object.values(labels)) {

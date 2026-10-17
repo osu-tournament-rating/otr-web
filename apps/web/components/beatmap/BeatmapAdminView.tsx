@@ -1,99 +1,85 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Gauge,
-  Info,
-  Loader2,
-  Music2,
-  PencilLine,
-  Shapes,
-  TriangleAlert,
-  UserRound,
-} from 'lucide-react';
+import { Gauge, Music2, PencilLine, Shapes, UserRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type * as React from 'react';
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useForm, type Control } from 'react-hook-form';
 import { z } from 'zod';
 
-import { AuditEntityType, Ruleset } from '@otr/core/osu';
+import { Ruleset } from '@otr/core/osu';
 import { DataFetchStatus } from '@otr/core/db/data-fetch-status';
 
-import AuditButton from '@/components/audit/AuditButton';
 import PlayerPicker from '@/components/beatmap/PlayerPicker';
-import RulesetSelectContent from '@/components/select/RulesetSelectContent';
-import SimpleTooltip from '@/components/simple-tooltip';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { AdminMenu } from '@/components/kit/controls/AdminMenu';
+import { Button } from '@/components/kit/controls/Button';
+import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
+import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
+import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
+import { FormGrid } from '@/components/kit/controls/FormPanel';
+import { Callout } from '@/components/kit/feedback/Callout';
+import { InfoButton } from '@/components/kit/layout/InfoButton';
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { hasAdminScope } from '@/lib/auth/roles';
 import { useSession } from '@/lib/hooks/useSession';
+import { RULESET_NAMES } from '@/lib/kit/format/ruleset';
+import { aboutLabel } from '@/lib/kit/layout/about-label';
 import { orpc } from '@/lib/orpc/orpc';
 import type { BeatmapWithDetails } from '@/lib/orpc/schema/beatmapStats';
 import type { PlayerLookupResult } from '@/lib/orpc/schema/player';
-import { formatDuration, parseDuration } from '@/lib/utils/date';
+import { formatDuration, parseDuration } from '@/lib/kit/format/date';
 import { errorSaveToast, saveToast } from '@/lib/utils/toasts';
 
-const required = z.string().trim().min(1, 'Required');
+const required = (label: string) =>
+  z.string().trim().min(1, `${label} is required`);
 
-const decimal = (max: number) =>
-  required.refine((value) => {
+const decimal = (label: string, max: number) =>
+  required(label).refine((value) => {
     const parsed = Number(value);
     return Number.isFinite(parsed) && parsed >= 0 && parsed <= max;
-  }, `Enter a number from 0 to ${max}`);
+  }, `${label} must be a number from 0 to ${max}`);
 
-const count = required.refine((value) => {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed >= 0;
-}, 'Enter a whole number, 0 or more');
+const count = (label: string) =>
+  required(label).refine((value) => {
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed >= 0;
+  }, `${label} must be a whole number, 0 or more`);
 
-const duration = required.refine((value) => {
-  const seconds = parseDuration(value);
-  return seconds !== null && seconds <= 86_400;
-}, 'Enter a length as mm:ss');
+const duration = (label: string) =>
+  required(label).refine((value) => {
+    const seconds = parseDuration(value);
+    return seconds !== null && seconds <= 86_400;
+  }, `${label} must be written as mm:ss`);
 
 export const formSchema = z.object({
-  diffName: required,
+  diffName: required('Difficulty'),
   ruleset: z.string(),
-  sr: decimal(100),
-  bpm: decimal(10_000),
-  totalLength: duration,
-  drainLength: duration,
-  cs: decimal(10),
-  hp: decimal(10),
-  od: decimal(10),
-  ar: decimal(10),
-  countCircle: count,
-  countSlider: count,
-  countSpinner: count,
+  sr: decimal('Star rating', 100),
+  bpm: decimal('BPM', 10_000),
+  totalLength: duration('Length'),
+  drainLength: duration('Drain length'),
+  cs: decimal('CS', 10),
+  hp: decimal('HP', 10),
+  od: decimal('OD', 10),
+  ar: decimal('AR', 10),
+  countCircle: count('Circles'),
+  countSlider: count('Sliders'),
+  countSpinner: count('Spinners'),
   maxCombo: z
     .string()
     .trim()
@@ -101,7 +87,7 @@ export const formSchema = z.object({
       if (value === '') return true;
       const parsed = Number(value);
       return Number.isInteger(parsed) && parsed >= 0;
-    }, 'Enter a whole number, 0 or more'),
+    }, 'Max combo must be a whole number, 0 or more'),
   titleOverride: z.string().trim().max(512),
   artistOverride: z.string().trim().max(512),
 });
@@ -131,14 +117,69 @@ const toPlayer = (player: {
   playerId: player.id,
 });
 
+/**
+ * Only beatmaps the osu! API no longer serves can be edited by hand; on any
+ * other beatmap an admin has nothing to do, so the hero shows no menu.
+ */
+export function canEditBeatmapByHand(
+  beatmap: Pick<BeatmapWithDetails, 'dataFetchStatus'>
+) {
+  return beatmap.dataFetchStatus === DataFetchStatus.NotFound;
+}
+
+/**
+ * The beatmap hero's one admin control: an "Admin" menu, on the cover art
+ * when there is one, and the edit dialog it opens. Renders nothing for
+ * visitors, or on a beatmap the osu! API still serves.
+ */
 export default function BeatmapAdminView({
   beatmap,
+  onArt = true,
 }: {
   beatmap: BeatmapWithDetails;
+  /** The hero has cover art, so the menu takes the dark pill. */
+  onArt?: boolean;
 }) {
   const session = useSession();
+  const [editing, setEditing] = useState(false);
+
+  if (!hasAdminScope(session?.scopes ?? []) || !canEditBeatmapByHand(beatmap)) {
+    return null;
+  }
+
+  return (
+    <>
+      <AdminMenu
+        onArt={onArt}
+        data-testid="beatmap-admin-menu"
+        actions={[
+          {
+            label: 'Edit beatmap data',
+            icon: PencilLine,
+            onSelect: () => setEditing(true),
+            testId: 'beatmap-edit-action',
+          },
+        ]}
+      />
+      <BeatmapEditDialog
+        beatmap={beatmap}
+        open={editing}
+        onOpenChange={setEditing}
+      />
+    </>
+  );
+}
+
+function BeatmapEditDialog({
+  beatmap,
+  open,
+  onOpenChange,
+}: {
+  beatmap: BeatmapWithDetails;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<FooterMode>('edit');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -176,11 +217,6 @@ export default function BeatmapAdminView({
   const [setOwner, setSetOwner] = useState<PlayerLookupResult[]>(initialOwner);
   const [mappers, setMappers] = useState<PlayerLookupResult[]>(initialMappers);
 
-  if (!hasAdminScope(session?.scopes ?? [])) {
-    return null;
-  }
-
-  const isDeleted = beatmap.dataFetchStatus === DataFetchStatus.NotFound;
   const isDirty =
     form.formState.isDirty ||
     !sameOsuIds(setOwner, initialOwner) ||
@@ -204,7 +240,7 @@ export default function BeatmapAdminView({
       reset();
     }
 
-    setOpen(next);
+    onOpenChange(next);
   }
 
   async function save() {
@@ -249,7 +285,7 @@ export default function BeatmapAdminView({
       });
 
       saveToast();
-      setOpen(false);
+      onOpenChange(false);
       setMode('edit');
       router.refresh();
     } catch {
@@ -263,258 +299,205 @@ export default function BeatmapAdminView({
   }
 
   return (
-    <div className="flex items-center gap-0.5 rounded-full border border-white/20 bg-black/50 p-0.5 shadow-lg backdrop-blur-sm">
-      <AuditButton
-        entityType={AuditEntityType.Beatmap}
-        entityId={beatmap.id}
-        darkMode
-      />
-      <Dialog open={open} onOpenChange={requestClose}>
-        <SimpleTooltip
-          content={
-            isDeleted
-              ? 'Edit beatmap data'
-              : 'Only beatmaps the osu! API no longer serves can be edited by hand'
+    <>
+      <Form {...form}>
+        <DialogTemplate
+          open={open}
+          onOpenChange={requestClose}
+          title="Edit beatmap"
+          description="The osu! API no longer serves this beatmap. What you enter here is what the site will show."
+          size="lg"
+          onSubmit={form.handleSubmit(() => setMode('confirm'))}
+          notice={
+            <>
+              <Callout tone="danger" title="Saving is permanent">
+                This beatmap stops receiving osu! API updates for good. Nothing
+                can undo it.
+              </Callout>
+              {saveError ? (
+                <p
+                  role="alert"
+                  className="text-sm font-medium text-destructive-foreground"
+                >
+                  {saveError}
+                </p>
+              ) : null}
+            </>
+          }
+          footerStart={
+            mode === 'confirm' ? (
+              <span className="text-foreground">
+                Pin this beatmap permanently?
+              </span>
+            ) : undefined
+          }
+          footer={
+            mode === 'edit' ? (
+              <>
+                <Button variant="outline" onClick={() => requestClose(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="destructive">
+                  Save changes
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  disabled={saving}
+                  onClick={() => setMode('edit')}
+                >
+                  Back
+                </Button>
+                <Button
+                  variant="destructive-confirm"
+                  pending={saving}
+                  onClick={save}
+                >
+                  {saving ? 'Saving…' : 'Save permanently'}
+                </Button>
+              </>
+            )
           }
         >
-          <span>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={!isDeleted}
-                aria-label="Edit beatmap data"
-                className="size-6 rounded-full text-white/70 hover:bg-white/20 hover:text-white"
-              >
-                <PencilLine className="size-3" />
-              </Button>
-            </DialogTrigger>
-          </span>
-        </SimpleTooltip>
-        <DialogContent className="flex flex-col gap-0 overflow-y-hidden p-0 sm:max-w-2xl">
-          <DialogHeader className="border-b px-5 py-4 pr-12">
-            <DialogTitle>Edit beatmap</DialogTitle>
-            <DialogDescription>
-              The osu! API no longer serves this beatmap. What you enter here is
-              what the site will show.
-            </DialogDescription>
-          </DialogHeader>
-
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(() => setMode('confirm'))}
-              className="flex min-h-0 flex-col"
-            >
-              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
-                <FieldGroup icon={Music2} title="Identity">
-                  <FormField
-                    control={form.control}
-                    name="diffName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FieldLabel>Difficulty</FieldLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="artistOverride"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FieldLabel>Artist</FieldLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="titleOverride"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FieldLabel>Title</FieldLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </FieldGroup>
-
-                <FieldGroup icon={UserRound} title="Attribution">
+          <FieldGroup icon={Music2} title="Identity">
+            <FormField
+              control={form.control}
+              name="diffName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldLabel>Difficulty</FormFieldLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormGrid>
+              <FormField
+                control={form.control}
+                name="artistOverride"
+                render={({ field }) => (
                   <FormItem>
-                    <FieldLabel>Set owner</FieldLabel>
-                    <PlayerPicker
-                      value={setOwner}
-                      onChange={setSetOwner}
-                      label="set owner"
-                    />
+                    <FormFieldLabel>Artist</FormFieldLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
-                  <FormItem>
-                    <FieldLabel>Mappers</FieldLabel>
-                    <PlayerPicker
-                      value={mappers}
-                      onChange={setMappers}
-                      multiple
-                      label="mappers"
-                    />
-                  </FormItem>
-                </FieldGroup>
-
-                <FieldGroup
-                  icon={Gauge}
-                  title="Difficulty and timing"
-                  info="CS carries the key count in osu!mania."
-                >
-                  <FormField
-                    control={form.control}
-                    name="ruleset"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FieldLabel>Ruleset</FieldLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <RulesetSelectContent />
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {DIFFICULTY_FIELDS.map((field) => (
-                      <NumberField
-                        key={field.name}
-                        control={form.control}
-                        {...field}
-                      />
-                    ))}
-                  </div>
-                </FieldGroup>
-
-                <FieldGroup icon={Shapes} title="Objects">
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {OBJECT_FIELDS.map((field) => (
-                      <NumberField
-                        key={field.name}
-                        control={form.control}
-                        {...field}
-                      />
-                    ))}
-                  </div>
-                </FieldGroup>
-              </div>
-
-              <div className="space-y-3 border-t bg-muted/30 px-5 py-4">
-                <Alert
-                  variant="destructive"
-                  className="border-destructive/40 bg-destructive/5"
-                >
-                  <TriangleAlert />
-                  <AlertTitle>Saving is permanent</AlertTitle>
-                  <AlertDescription>
-                    This beatmap stops receiving osu! API updates for good.
-                    Nothing can undo it.
-                  </AlertDescription>
-                </Alert>
-
-                {saveError ? (
-                  <p className="text-sm font-medium text-destructive-foreground">
-                    {saveError}
-                  </p>
-                ) : null}
-
-                {mode === 'edit' ? (
-                  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => requestClose(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit" variant="destructive">
-                      Save changes
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-                    <p className="text-sm sm:mr-auto">
-                      Pin this beatmap permanently?
-                    </p>
-                    <div className="flex flex-col-reverse gap-2 sm:flex-row">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={saving}
-                        onClick={() => setMode('edit')}
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        disabled={saving}
-                        onClick={save}
-                      >
-                        {saving ? (
-                          <>
-                            <Loader2 className="animate-spin" />
-                            Saving
-                          </>
-                        ) : (
-                          'Save permanently'
-                        )}
-                      </Button>
-                    </div>
-                  </div>
                 )}
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+              />
+              <FormField
+                control={form.control}
+                name="titleOverride"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldLabel>Title</FormFieldLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </FormGrid>
+          </FieldGroup>
 
-      <AlertDialog open={discarding} onOpenChange={setDiscarding}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Discard your changes?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Everything you typed into this beatmap will be lost.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep editing</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                reset();
-                setOpen(false);
-              }}
-            >
-              Discard
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+          <FieldGroup icon={UserRound} title="Attribution">
+            <FormItem>
+              <FormFieldLabel>Set owner</FormFieldLabel>
+              <PlayerPicker
+                value={setOwner}
+                onChange={setSetOwner}
+                label="set owner"
+              />
+            </FormItem>
+            <FormItem>
+              <FormFieldLabel>Mappers</FormFieldLabel>
+              <PlayerPicker
+                value={mappers}
+                onChange={setMappers}
+                multiple
+                label="mappers"
+              />
+            </FormItem>
+          </FieldGroup>
+
+          <FieldGroup
+            icon={Gauge}
+            title="Difficulty and timing"
+            info="CS carries the key count in osu!mania."
+          >
+            <FormField
+              control={form.control}
+              name="ruleset"
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldLabel>Ruleset</FormFieldLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.entries(RULESET_NAMES).map(([value, name]) => (
+                        <SelectItem key={value} value={value}>
+                          {name.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormGrid columns={4}>
+              {DIFFICULTY_FIELDS.map((field) => (
+                <NumberField
+                  key={field.name}
+                  control={form.control}
+                  {...field}
+                />
+              ))}
+            </FormGrid>
+          </FieldGroup>
+
+          <FieldGroup icon={Shapes} title="Objects">
+            <FormGrid columns={4}>
+              {OBJECT_FIELDS.map((field) => (
+                <NumberField
+                  key={field.name}
+                  control={form.control}
+                  {...field}
+                />
+              ))}
+            </FormGrid>
+          </FieldGroup>
+        </DialogTemplate>
+      </Form>
+
+      <ConfirmDialog
+        open={discarding}
+        onOpenChange={setDiscarding}
+        title="Discard your changes?"
+        description={
+          <p>Everything you typed into this beatmap will be lost.</p>
+        }
+        confirmLabel="Discard changes"
+        cancelLabel="Keep editing"
+        onConfirm={() => {
+          reset();
+          onOpenChange(false);
+        }}
+      />
+    </>
   );
 }
 
+/** One group of fields in the dialog body, under a small heading. */
 function FieldGroup({
   icon: Icon,
   title,
@@ -526,42 +509,26 @@ function FieldGroup({
   info?: string;
   children: React.ReactNode;
 }) {
+  const headingId = useId();
+
   return (
-    <section className="rounded-lg border bg-muted/25">
-      <div className="flex items-center gap-2 border-b px-3 py-2">
+    <section
+      aria-labelledby={headingId}
+      className="flex flex-col gap-4 not-first:border-t not-first:pt-4"
+    >
+      <div className="flex items-center gap-2">
         <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-        <h3 className="text-sm font-medium">{title}</h3>
+        <h3 id={headingId} className="text-sm font-semibold">
+          {title}
+        </h3>
         {info ? (
-          <SimpleTooltip content={info}>
-            <button
-              type="button"
-              aria-label={`About ${title}`}
-              className="shrink-0 rounded-full text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <Info className="size-3.5" aria-hidden />
-            </button>
-          </SimpleTooltip>
+          <InfoButton label={aboutLabel(title)} align="start">
+            {info}
+          </InfoButton>
         ) : null}
       </div>
-      <div className="space-y-3 p-3">{children}</div>
+      {children}
     </section>
-  );
-}
-
-function FieldLabel({
-  children,
-  hint,
-}: {
-  children: React.ReactNode;
-  hint?: string;
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-2">
-      <FormLabel className="truncate">{children}</FormLabel>
-      {hint ? (
-        <span className="shrink-0 text-xs text-muted-foreground">{hint}</span>
-      ) : null}
-    </div>
   );
 }
 
@@ -579,7 +546,7 @@ function NumberField({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FieldLabel hint={hint}>{label}</FieldLabel>
+          <FormFieldLabel hint={hint}>{label}</FormFieldLabel>
           <FormControl>
             {step ? (
               <Input
@@ -587,10 +554,16 @@ function NumberField({
                 step={step}
                 inputMode="decimal"
                 placeholder={placeholder}
+                className="tabular-nums"
                 {...field}
               />
             ) : (
-              <Input inputMode="numeric" placeholder={placeholder} {...field} />
+              <Input
+                inputMode="numeric"
+                placeholder={placeholder}
+                className="tabular-nums"
+                {...field}
+              />
             )}
           </FormControl>
           <FormMessage />

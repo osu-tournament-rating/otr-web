@@ -1,10 +1,5 @@
 import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 
-export type ChartDataPoint = {
-  formattedAxisDate: string;
-  timestampValue: number;
-} & PlayerRatingAdjustment;
-
 /** Sorts rating adjustments by timestamp. */
 export function sortData(
   data: PlayerRatingAdjustment[],

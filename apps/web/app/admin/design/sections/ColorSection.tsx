@@ -1,7 +1,8 @@
 'use client';
 
-import { Team } from '@otr/core/osu';
+import { Team, VerificationStatus } from '@otr/core/osu';
 import {
+  ChartBarBig,
   ChartColumn,
   ChartColumnStacked,
   ChartLine,
@@ -27,6 +28,10 @@ import {
 import { GallerySection, Specimen } from '../gallery';
 import { ChartLegend } from '@/components/kit/charts/ChartLegend';
 import {
+  CountBarChart,
+  type CountBarDatum,
+} from '@/components/kit/charts/CountBarChart';
+import {
   ChartTooltipBody,
   ChartTooltipCard,
   ChartTooltipContent,
@@ -35,6 +40,7 @@ import { SeriesMarker } from '@/components/kit/charts/SeriesMarker';
 import { Button } from '@/components/kit/controls/Button';
 import { Panel, PanelBody } from '@/components/kit/layout/Panel';
 import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { Tile } from '@/components/kit/layout/Tile';
 import { ChoiceChip } from '@/components/kit/lists/ChoiceChip';
 import { NotificationDot } from '@/components/kit/status/NotificationDot';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
@@ -73,24 +79,34 @@ import {
   getStarRatingForegroundColor,
   getStarRatingMarkColor,
 } from '@/lib/kit/color/star-rating';
-import { SURFACES, TEXT_COLORS, type Theme } from '@/lib/kit/color/surfaces';
+import {
+  SURFACES,
+  TEXT_COLORS,
+  type Surface,
+  type Theme,
+} from '@/lib/kit/color/surfaces';
 import {
   getTeamColor,
   getTeamTextColor,
   getTeamTintClass,
 } from '@/lib/kit/color/teams';
 import type { ThemeColor } from '@/lib/kit/color/theme-color';
-import { TIER_TEXT_CLASS } from '@/lib/kit/color/tiers';
+import { TIER_TEXT_CLASS, getTierColor } from '@/lib/kit/color/tiers';
 import {
+  ACCENT_SURFACE_CLASSES,
   CALLOUT_COLORS,
   TOKEN_GROUPS,
   type CalloutTone,
   type TokenEntry,
 } from '@/lib/kit/color/tokens';
 import { getStatusHueColor } from '@/lib/kit/color/verification';
-import { RATINGS_GROUPS } from '@/lib/kit/status/verification';
+import {
+  RATINGS_GROUPS,
+  getVerificationStatusCopy,
+} from '@/lib/kit/status/verification';
 import { formatDate } from '@/lib/kit/format/date';
-import { formatCount } from '@/lib/kit/format/number';
+import { formatLobbySize } from '@/lib/kit/format/fields';
+import { formatCount, formatPercent } from '@/lib/kit/format/number';
 import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
 import { cn } from '@/lib/utils';
 import { tierNames } from '@/lib/utils/tierData';
@@ -116,14 +132,20 @@ function ThemeValue({
   );
 }
 
-function contrastNote(color: ThemeColor, theme: Theme): string {
+function contrastNote(
+  color: ThemeColor,
+  theme: Theme,
+  surface: Surface = 'card'
+): string {
   const value = color[theme];
+  const ratio = formatContrast(contrastRatio(value, SURFACES[theme][surface]));
+  const on = surface === 'card' ? '' : ` on ${surface}`;
 
   switch (color.role) {
     case 'text':
-      return `${formatContrast(contrastRatio(value, SURFACES[theme].card))} text`;
+      return `${ratio} text${on}`;
     case 'mark':
-      return `${formatContrast(contrastRatio(value, SURFACES[theme].card))} mark`;
+      return `${ratio} mark${on}`;
     case 'surface':
       return `${formatContrast(contrastRatio(TEXT_COLORS[theme].muted, value))} muted text`;
     default:
@@ -132,7 +154,7 @@ function contrastNote(color: ThemeColor, theme: Theme): string {
 }
 
 function TokenSwatch({ entry }: { entry: TokenEntry }) {
-  const { color, label, utility } = entry;
+  const { color, label, utility, surface } = entry;
 
   return (
     <li className="flex min-w-0 items-center gap-3 rounded-lg border bg-card px-3 py-2 dark:bg-muted/75">
@@ -153,8 +175,8 @@ function TokenSwatch({ entry }: { entry: TokenEntry }) {
         </p>
         <p className="text-muted-foreground">
           <ThemeValue
-            light={contrastNote(color, 'light')}
-            dark={contrastNote(color, 'dark')}
+            light={contrastNote(color, 'light', surface)}
+            dark={contrastNote(color, 'dark', surface)}
           />
         </p>
       </div>
@@ -279,6 +301,51 @@ function MatchSurfaceDemo() {
         Team Red wins by{' '}
         {formatCount(teamTotal(Team.Red) - teamTotal(Team.Blue))}
       </p>
+    </div>
+  );
+}
+
+/**
+ * The theme text colours on the surfaces they sit on: a panel, a tile, and the
+ * tooltip surface, where muted text switches to its accent value.
+ */
+function ThemeTextDemo() {
+  const preVerified = getVerificationStatusCopy(VerificationStatus.PreVerified);
+  // The summary normally follows "Pre-verified:"; on its own line it starts a sentence.
+  const summary =
+    preVerified.summary.charAt(0).toUpperCase() + preVerified.summary.slice(1);
+
+  return (
+    <div className="@container">
+      <div className="grid gap-3 @lg:grid-cols-[minmax(0,1fr)_auto] @lg:items-start">
+        <Panel>
+          <PanelBody className="flex flex-col gap-3 text-sm">
+            <p>text-foreground</p>
+            <p className="text-muted-foreground">text-muted-foreground</p>
+            <p className="text-destructive-foreground">
+              text-destructive-foreground
+            </p>
+            <Tile className="flex flex-col gap-1">
+              <p className="text-xs text-muted-foreground">
+                text-muted-foreground on a tile
+              </p>
+              <p className="text-destructive-foreground">
+                text-destructive-foreground on a tile
+              </p>
+            </Tile>
+          </PanelBody>
+        </Panel>
+        {/* Drawn open: the tooltip surface with its scoped muted text. */}
+        <div
+          className={cn(
+            'flex max-w-64 flex-col gap-1 rounded-md px-3 py-1.5 text-xs text-pretty',
+            ACCENT_SURFACE_CLASSES
+          )}
+        >
+          <p className="font-semibold">{preVerified.name}</p>
+          <p className="text-muted-foreground">{summary}</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -747,11 +814,115 @@ function DistributionDemo() {
   );
 }
 
+const LOBBY_SIZE_COUNTS = [612, 1_840, 455, 1_288, 61, 132, 9, 27];
+
+const TOURNAMENTS_BY_LOBBY_SIZE: CountBarDatum[] = LOBBY_SIZE_COUNTS.map(
+  (count, index) => ({
+    key: String(index + 1),
+    label: formatLobbySize(index + 1),
+    count,
+  })
+);
+
+const TOURNAMENTS_BY_RULESET: CountBarDatum[] = RULESETS.map(
+  (ruleset, index) => ({
+    key: ruleset.key,
+    label: ruleset.label,
+    count: [5_812, 921, 604, 1_377, 233][index],
+  })
+);
+
+/** The ratings groups, each bar in its own verification colour. */
+const TOURNAMENTS_BY_STATUS: CountBarDatum[] = RATINGS_GROUPS.map((group) => ({
+  key: group.key,
+  label: group.label,
+  count: VERIFICATION_COUNTS[group.key],
+  fill: getStatusHueColor(group.hue),
+}));
+
+const STATUS_TOTAL = TOURNAMENTS_BY_STATUS.reduce(
+  (sum, bar) => sum + bar.count,
+  0
+);
+
+function CountBarDemo() {
+  return (
+    <div className="@container">
+      <div className="grid gap-4 @2xl:grid-cols-2">
+        <Panel>
+          <SectionHeader
+            icon={ChartColumn}
+            title="Tournaments by lobby size"
+            level={4}
+          />
+          <PanelBody>
+            <CountBarChart
+              data={TOURNAMENTS_BY_LOBBY_SIZE}
+              valueName="Tournaments"
+            />
+          </PanelBody>
+        </Panel>
+        <Panel>
+          <SectionHeader
+            icon={ChartBarBig}
+            title="Tournaments by ruleset"
+            level={4}
+          />
+          <PanelBody>
+            <CountBarChart
+              data={TOURNAMENTS_BY_RULESET}
+              layout="rows"
+              valueName="Tournaments"
+            />
+          </PanelBody>
+        </Panel>
+        <Panel className="@2xl:col-span-2">
+          <SectionHeader
+            icon={ChartBarBig}
+            title="Tournaments by status"
+            level={4}
+            meta={`${formatCount(STATUS_TOTAL)} tournaments`}
+          />
+          <PanelBody>
+            <CountBarChart
+              data={TOURNAMENTS_BY_STATUS}
+              layout="rows"
+              valueName="Tournaments"
+              className="h-44"
+              footer={(bar) =>
+                `${formatPercent(bar.count / STATUS_TOTAL)} of all tournaments`
+              }
+            />
+          </PanelBody>
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Tier marks side by side, in tier order as named above, the way the rating
+ * distribution draws neighbouring buckets.
+ */
+function TierMarks() {
+  return (
+    <div className="flex h-8 gap-px overflow-hidden rounded-md" aria-hidden>
+      {tierNames.map((tier) => (
+        <span
+          key={tier}
+          className="flex-1"
+          style={{ backgroundColor: getTierColor(tier) }}
+        />
+      ))}
+    </div>
+  );
+}
+
 const TICK_EXAMPLES: {
   data: string;
   min: number;
   max: number;
-  /** What the player rating chart's own rule drew. */
+  /** What a local powers-of-5 rule draws for the same data. */
   before?: string;
 }[] = [
   {
@@ -790,7 +961,7 @@ function TickRuleDemo() {
               </span>
               {example.before ? (
                 <span className="text-xs text-muted-foreground">
-                  Rating chart before: {example.before}
+                  A powers-of-5 rule: {example.before}
                 </span>
               ) : null}
             </span>
@@ -806,8 +977,20 @@ export default function ColorSection() {
     <GallerySection
       id="color"
       title="Colour and charts"
-      description="Theme tokens, domain palettes and the shared chart parts. Ratios are measured against the panel surface of each theme: marks and icons need 3:1, text 4.5:1."
+      description="Theme tokens, domain palettes and the shared chart parts. Ratios are measured against the panel surface of each theme unless the note names another: marks and icons need 3:1, text 4.5:1."
     >
+      <Specimen
+        id="color-text"
+        name="Theme text"
+        importPath={`${COLOR_LIB}/tokens`}
+        description="Text, muted text and red text clear 4.5:1 on panels, tiles and popovers. Tooltips sit on the accent surface, where muted text takes its own darker (light) or lighter (dark) value; the tooltip primitives apply it, so text-muted-foreground inside a tooltip just works."
+      >
+        <div className="flex flex-col gap-3">
+          <ThemeTextDemo />
+          <TokenList groupId="text" />
+        </div>
+      </Specimen>
+
       <Specimen
         id="color-categorical-palette"
         name="Categorical palette"
@@ -867,12 +1050,13 @@ export default function ColorSection() {
       <Specimen
         id="color-accent-rule"
         name="Accent rule"
-        description="Blue means you can act on it or it is selected: links on hover, primary buttons, the selected chip. Buttons fill with primary-solid, blue text uses link, and icons and borders use primary. Section icons stay muted, and new things get the one notification dot."
+        description="Blue means you can act on it or it is selected: links on hover, primary buttons, the selected chip. Buttons fill with primary-solid, blue text uses link, and icons and borders use primary. Section icons stay muted, new things get the one notification dot, and the header's support heart turns pink on hover."
       >
         <div className="flex flex-col gap-3">
           <AccentRule />
           <TokenList groupId="brand" />
           <TokenList groupId="accent" />
+          <TokenList groupId="support" />
         </div>
       </Specimen>
 
@@ -880,7 +1064,7 @@ export default function ColorSection() {
         id="color-tiers"
         name="Tier colours"
         importPath={`${COLOR_LIB}/tiers`}
-        description="Tier names as text, stepped per theme to clear 4.5:1. Use the text-tier-* classes."
+        description="Tier names as text, stepped per theme to clear 4.5:1, and the same colours as chart marks. Use the text-tier-* classes for text and getTierColor for fills."
       >
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
@@ -890,6 +1074,7 @@ export default function ColorSection() {
               </span>
             ))}
           </div>
+          <TierMarks />
           <TokenList groupId="tiers" />
         </div>
       </Specimen>
@@ -917,7 +1102,7 @@ export default function ColorSection() {
         id="color-mods"
         name="Mod colours"
         importPath={`${COLOR_LIB}/mods`}
-        description="The revised mod palette: No Mod has its own colour, Sudden Death and Touch Device differ, and every mod clears 3:1 and takes black text as a solid pill. Rare combinations use the Other grey."
+        description="The mod colours the site has always used, each hue kept and only the lightness moved as far as contrast needs, so the light theme's are darker. Touch Device, which once shared Sudden Death's orange, is a greyer orange. Every mod clears 3:1 and takes black text as a solid pill. Rare combinations use the Other grey."
       >
         <div className="@container">
           <ul className="grid grid-cols-3 gap-2 @md:grid-cols-4 @xl:grid-cols-6">
@@ -993,9 +1178,19 @@ export default function ColorSection() {
         id="color-chart-distribution"
         name="Distribution chart"
         importPath={CHART_PARTS}
-        description="A histogram with touching bars and ticks from the shared rule on both axes."
+        description="A histogram with touching bars and ticks from the shared rule on both axes. The stats page's rating distribution adds a cumulative share line on a right-hand percentage axis (components/stats/RatingDistributionChart.tsx), as documented under the Recharts axis props."
       >
         <DistributionDemo />
+      </Specimen>
+
+      <Specimen
+        id="color-chart-count-bars"
+        name="CountBarChart"
+        importPath={`${CHARTS}/CountBarChart`}
+        description="A count per category: columns on a category axis, or rows with the categories on the left for long names. Rows round their right end, draw vertical gridlines and leave room for the last count label. Bars can bring their own colour, as the verification groups do."
+        stacked
+      >
+        <CountBarDemo />
       </Specimen>
 
       <Specimen
@@ -1033,7 +1228,7 @@ export default function ColorSection() {
               },
             ]}
           />
-          <div className="rounded-md bg-accent px-3 py-1.5 text-accent-foreground">
+          <div className={cn('rounded-md px-3 py-1.5', ACCENT_SURFACE_CLASSES)}>
             <ChartTooltipBody
               title="HDHR"
               rows={[
@@ -1096,7 +1291,7 @@ export default function ColorSection() {
         id="color-chart-ticks"
         name="Tick rule"
         importPath="@/lib/kit/charts/ticks"
-        description="Steps of 1, 2, 2.5 or 5 times a power of ten, at most six ticks. The rating chart's old rule produced steps like 13 and 125."
+        description="Steps of 1, 2, 2.5 or 5 times a power of ten, at most six ticks. A local rule that scales by powers of 5 gives steps like 13 and 125; the first two show it for comparison."
       >
         <TickRuleDemo />
       </Specimen>

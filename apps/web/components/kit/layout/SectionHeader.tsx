@@ -1,6 +1,7 @@
 import type * as React from 'react';
 
 import { InfoButton } from '@/components/kit/layout/InfoButton';
+import { aboutLabel } from '@/lib/kit/layout/about-label';
 import type { KitIcon } from '@/lib/kit/layout/icon';
 import { cn } from '@/lib/utils';
 
@@ -47,7 +48,7 @@ export function SectionHeader({
         ) : null}
         <Heading className="truncate font-semibold">{title}</Heading>
         {infoText ? (
-          <InfoButton label={`About ${title}`} side="bottom" align="start">
+          <InfoButton label={aboutLabel(title)} side="bottom" align="start">
             {infoText}
           </InfoButton>
         ) : null}
@@ -57,12 +58,16 @@ export function SectionHeader({
         // actions is as tall as one without.
         <div className="-my-1 flex shrink-0 items-center gap-3">
           {meta ? (
-            <span className="text-xs text-muted-foreground">{meta}</span>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {meta}
+            </span>
           ) : null}
           {actions}
         </div>
       ) : meta ? (
-        <span className="shrink-0 text-xs text-muted-foreground">{meta}</span>
+        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+          {meta}
+        </span>
       ) : null}
     </div>
   );

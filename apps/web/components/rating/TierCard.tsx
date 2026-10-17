@@ -1,9 +1,9 @@
-import React from 'react';
 import TierIcon from '@/components/icons/TierIcon';
+import { Tile } from '@/components/kit/layout/Tile';
+import { TIER_TEXT_CLASS } from '@/lib/kit/color/tiers';
+import { formatRating } from '@/lib/kit/format/number';
 import { cn } from '@/lib/utils';
-
-import { TierName, getTierColor } from '@/lib/utils/tierData';
-import { Card } from '../ui/card';
+import { type TierName, getTierColor } from '@/lib/utils/tierData';
 
 export interface TierCardProps {
   tier: TierName;
@@ -13,6 +13,10 @@ export interface TierCardProps {
   className?: string;
 }
 
+/**
+ * One rung of the tier ladder: the tier's icon in its glow, its name and
+ * the rating that reaches it, on the kit tile.
+ */
 export default function TierCard({
   tier,
   displayName,
@@ -20,28 +24,32 @@ export default function TierCard({
   iconSize,
   className,
 }: TierCardProps) {
-  const tierColor = getTierColor(tier);
+  // The glow is decoration in the tier's own colours.
+  const glow = getTierColor(tier)?.gradient;
+
   return (
-    <Card
+    <Tile
       className={cn(
-        'relative isolate flex flex-col items-center gap-2 rounded-2xl border-none bg-popover p-3',
+        'relative isolate flex flex-col items-center gap-2 py-3',
         className
       )}
     >
       <div
+        aria-hidden
         className={cn(
-          'absolute inset-0 -z-10 rounded-lg bg-gradient-to-br opacity-40 blur-md',
-          tierColor?.gradient.light,
-          tierColor?.gradient.dark
+          'absolute inset-0 -z-10 bg-gradient-to-br opacity-40 blur-md',
+          glow?.light,
+          glow?.dark
         )}
       />
 
-      <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center">
+      <div className="relative flex size-10 shrink-0 items-center justify-center">
         <div
+          aria-hidden
           className={cn(
             'absolute inset-0 rounded-full bg-gradient-to-br opacity-60 blur-sm',
-            tierColor?.gradient.light,
-            tierColor?.gradient.dark
+            glow?.light,
+            glow?.dark
           )}
         />
         <span className="relative z-10">
@@ -50,17 +58,21 @@ export default function TierCard({
             subTier={tier === 'Elite Grandmaster' ? undefined : 1}
             width={iconSize}
             height={iconSize}
-            tooltip={false}
           />
         </span>
       </div>
 
       <div className="flex flex-col items-center text-center">
         <span className="text-sm font-semibold">{displayName}</span>
-        <span className={cn('text-xs font-semibold', tierColor?.textClass)}>
-          {rating}+
+        <span
+          className={cn(
+            'text-xs font-semibold tabular-nums',
+            TIER_TEXT_CLASS[tier]
+          )}
+        >
+          {formatRating(rating)}+
         </span>
       </div>
-    </Card>
+    </Tile>
   );
 }

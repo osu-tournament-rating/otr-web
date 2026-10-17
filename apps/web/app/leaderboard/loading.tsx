@@ -1,44 +1,57 @@
-import { Trophy } from 'lucide-react';
+import { Medal } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import {
+  ListToolbarSkeleton,
+  PhoneRowListSkeleton,
+  TableSkeleton,
+} from '@/components/kit/feedback/Skeletons';
+import { PageFrame } from '@/components/kit/layout/PageFrame';
+import { PageHeader } from '@/components/kit/layout/PageHeader';
+import { Panel } from '@/components/kit/layout/Panel';
+import { LEADERBOARD_COLUMN_WIDTHS } from '@/components/leaderboard/LeaderboardTable';
+
+/** The loaded table's columns at its widths, so the header doesn't shift. */
+const COLUMNS = [
+  { label: 'Rank', width: LEADERBOARD_COLUMN_WIDTHS.rank },
+  { label: 'Player' },
+  { label: 'Tier', width: LEADERBOARD_COLUMN_WIDTHS.tier },
+  { label: 'Rating', width: LEADERBOARD_COLUMN_WIDTHS.rating, align: 'end' },
+  {
+    label: 'Tournaments',
+    width: LEADERBOARD_COLUMN_WIDTHS.tournaments,
+    align: 'end',
+  },
+  { label: 'Matches', width: LEADERBOARD_COLUMN_WIDTHS.matches, align: 'end' },
+  { label: 'Win rate', width: LEADERBOARD_COLUMN_WIDTHS.winRate, align: 'end' },
+] as const;
 
 export default function LeaderboardLoading() {
   return (
-    <div className="container mx-auto flex flex-col gap-4 md:gap-2">
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex flex-row items-center justify-between">
-            <div className="flex flex-row items-center gap-2">
-              <Trophy className="h-6 w-6 text-primary" aria-hidden="true" />
-              <CardTitle className="text-xl font-bold">
-                Global Leaderboard
-              </CardTitle>
-            </div>
-            <Skeleton className="h-9 w-24" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div
-            role="status"
-            aria-label="Loading leaderboard"
-            className="divide-y overflow-hidden rounded-lg border"
-          >
-            <Skeleton className="h-10 w-full rounded-none" />
-            {Array.from({ length: 20 }, (_, index) => (
-              <div key={index} className="flex h-14 items-center gap-4 px-4">
-                <Skeleton className="h-4 w-8" />
-                <Skeleton className="h-4 w-10" />
-                <Skeleton className="size-8 rounded-full" />
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="ml-auto h-4 w-12" />
-                <Skeleton className="hidden h-4 w-12 sm:block" />
-                <Skeleton className="hidden h-4 w-12 md:block" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <PageFrame>
+      <PageHeader
+        icon={Medal}
+        title="Leaderboard"
+        description="Players ranked by tournament rating."
+      />
+      <Panel as="div" role="status" aria-label="Loading leaderboard">
+        {/* The scope block stands in for All / Friends (narrower below sm,
+            as the switch is), which only signed-in visitors see. The
+            rulesets are a RulesetSwitch, so there is no All chip. */}
+        <ListToolbarSkeleton
+          search
+          sort
+          filters
+          scope="w-29 sm:w-31"
+          rulesets={5}
+          rulesetsAll={false}
+          count
+        />
+        <TableSkeleton
+          columns={COLUMNS}
+          rows={20}
+          phoneRows={<PhoneRowListSkeleton rows={12} rank leading={32} />}
+        />
+      </Panel>
+    </PageFrame>
   );
 }

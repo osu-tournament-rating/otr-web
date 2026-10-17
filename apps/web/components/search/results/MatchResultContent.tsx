@@ -12,8 +12,8 @@ interface MatchResultContentProps {
 
 export function MatchResultContent({ data, query }: MatchResultContentProps) {
   return (
-    <div className="flex w-full flex-row items-center gap-3 overflow-hidden">
-      <Swords className="h-5 w-5 flex-shrink-0 text-primary" />
+    <div className="flex w-full min-w-0 items-center gap-3">
+      <Swords aria-hidden className="size-5 shrink-0 text-muted-foreground" />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="truncate font-medium">
           {highlightMatch(data.name ?? 'Unknown match', query)}

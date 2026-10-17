@@ -1,249 +1,265 @@
 'use client';
 
+import type { Ruleset } from '@otr/core/osu';
 import {
   Bar,
+  BarChart,
   CartesianGrid,
   Cell,
-  ComposedChart,
   Line,
   ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  TooltipProps,
   XAxis,
   YAxis,
 } from 'recharts';
+
 import TierIcon from '@/components/icons/TierIcon';
-import { Ruleset } from '@otr/core/osu';
-import SimpleTooltip from '../simple-tooltip';
-import { useRatingDistribution } from '@/lib/hooks/useRatingDistribution';
+import { ChartLegend } from '@/components/kit/charts/ChartLegend';
 import {
-  CHART_CONSTANTS,
-  CHART_COLORS,
-  formatChartNumber,
-  formatPercentage,
-} from '@/lib/utils/chart';
-import { validTiers } from '@/components/icons/TierIcon';
-import { cn } from '@/lib/utils';
+  ChartTooltipContent,
+  type ChartTooltipPayloadItem,
+} from '@/components/kit/charts/ChartTooltip';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
+import {
+  CHART_CURSOR,
+  CHART_LINE_WIDTH,
+  CHART_MARGIN,
+  chartAxisProps,
+  chartGridProps,
+  chartValueAxisProps,
+  niceAxisProps,
+} from '@/lib/kit/charts/axis';
+import {
+  formatCountTick,
+  formatNumberTick,
+  formatPercentTick,
+} from '@/lib/kit/charts/format';
+import {
+  DEFAULT_MAX_TICKS,
+  NARROW_MAX_TICKS,
+  getCategoryTicks,
+} from '@/lib/kit/charts/ticks';
+import { getTierColor } from '@/lib/kit/color/tiers';
+import { formatPercent } from '@/lib/kit/format/number';
+import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
+import { formatTierName } from '@/lib/kit/format/tier';
 
-type TierName = (typeof validTiers)[number];
+import {
+  type RatingBucket,
+  type RatingDistribution,
+  getRatingBucketStart,
+  getRatingDistributionAxes,
+} from './stats-data';
 
-interface RatingDistributionChartProps {
-  ratings: Record<string, number>;
-  ruleset: Ruleset;
-  className?: string;
-  userRating?: number;
+/** Thin bars: a 4px radius would round them into pills. */
+const BUCKET_BAR_RADIUS: [number, number, number, number] = [2, 2, 0, 0];
+
+/** The visitor's own rating: a dashed rule in the text colour. */
+const YOU_COLOR = 'var(--foreground)';
+
+/**
+ * The cumulative share: a solid line in the text colour. The tiers use every
+ * categorical hue (Elite Grandmaster is slot 1's blue), so no series colour
+ * stands apart from the bars; the legend tells it from the dashed You rule.
+ */
+const CUMULATIVE_COLOR = 'var(--foreground)';
+
+/** The share axis's id; the players axis keeps the default, so the grid follows it. */
+const SHARE_AXIS = 'share';
+
+function bucketOf(
+  payload: readonly ChartTooltipPayloadItem[]
+): RatingBucket | undefined {
+  return payload[0]?.payload as RatingBucket | undefined;
 }
 
-type ChartDataItem = {
-  rating: number;
-  count: number;
-  tier?: {
-    tier: string;
-    color: string;
-    baseRating: number;
-  };
-  cumulativePercentage?: number;
-};
-
-interface ExtendedTooltipProps extends TooltipProps<number, string> {
-  payload?: Array<{
-    dataKey: string;
-    value: number;
-    payload: ChartDataItem;
-  }>;
-  label?: string;
-}
-
-function CustomTooltip(props: ExtendedTooltipProps) {
-  const { active, payload, label } = props;
-
-  if (!active || !payload?.length) return null;
-
-  const data = payload[0].payload as ChartDataItem;
-  const barData = payload.find((p) => p.dataKey === 'count');
-  const lineData = payload.find((p) => p.dataKey === 'cumulativePercentage');
-
-  return (
-    <div className="rounded-lg border bg-background p-2 shadow-sm">
-      <div className="flex items-center gap-2">
-        {data.tier && (
-          <TierIcon
-            tier={data.tier.tier as TierName}
-            subTier={1}
-            width={24}
-            height={24}
-          />
-        )}
-        <div>
-          <p className="font-bold">Rating: {label}</p>
-          {data.tier && (
-            <p
-              className="text-sm font-semibold"
-              style={{ color: data.tier.color }}
-            >
-              {data.tier.tier}
-            </p>
-          )}
-        </div>
-      </div>
-      {barData && (
-        <p className="mt-2 text-sm text-muted-foreground">
-          Players: {formatChartNumber(barData.value as number)}
-        </p>
-      )}
-      {lineData && (
-        <p className="text-sm text-muted-foreground">
-          Cumulative: {formatPercentage(lineData.value as number, 1)}
-        </p>
-      )}
-    </div>
-  );
-}
-
-interface CustomXAxisTickProps {
-  x?: number;
-  y?: number;
-  payload?: { value: number };
-  tierData?: { tier: string; baseRating: number }[];
-}
-
-function CustomXAxisTickWithData({
-  x,
-  y,
-  payload,
-  tierData = [],
-}: CustomXAxisTickProps) {
-  if (x === undefined || y === undefined || !payload) {
-    return null;
-  }
-
-  const tier = tierData.find((t) => t.baseRating === payload.value);
-
-  if (!tier) return null;
-
-  return (
-    <g transform={`translate(${x},${y})`}>
-      <foreignObject x={-12} y={5} width={24} height={24}>
-        <SimpleTooltip content={`${tier.tier} (${tier.baseRating} TR)`}>
-          <div>
-            <TierIcon
-              tier={tier.tier as TierName}
-              subTier={1}
-              width={24}
-              height={24}
-            />
-          </div>
-        </SimpleTooltip>
-      </foreignObject>
-    </g>
-  );
-}
-
+/**
+ * Players per rating bucket in one ruleset, each bar in its tier's colour,
+ * with the share of players at or below each bucket as a line on a
+ * percentage axis, and the signed-in player's rating marked "You".
+ */
 export default function RatingDistributionChart({
-  ratings,
   ruleset,
-  className,
+  distribution,
+  bucketSize,
   userRating,
-}: RatingDistributionChartProps) {
-  const { chartData, tierData, isEmpty } = useRatingDistribution({ ratings });
+}: {
+  ruleset: Ruleset;
+  distribution: RatingDistribution;
+  /** The width of a bucket in rating points, as the server groups them. */
+  bucketSize: number;
+  userRating?: number;
+}) {
+  const isNarrow = useIsNarrowChart();
+  const { buckets, tiers } = distribution;
+  const starts = new Set(buckets.map((bucket) => bucket.rating));
 
-  if (isEmpty) {
-    return (
-      <div
-        data-testid={`chart-rating-distribution-${ruleset}`}
-        className={cn('flex h-[250px] items-center justify-center', className)}
-      >
-        <p className="text-muted-foreground">
-          No data available for this ruleset.
-        </p>
-      </div>
-    );
-  }
+  const axes = getRatingDistributionAxes(
+    Math.max(0, ...buckets.map((bucket) => bucket.count))
+  );
+  // Bucket starts are categories, so the ticks stay inside the data.
+  const xTicks = getCategoryTicks(
+    buckets.map((bucket) => bucket.rating),
+    isNarrow ? NARROW_MAX_TICKS : DEFAULT_MAX_TICKS
+  );
+
+  const userBucket =
+    userRating === undefined
+      ? undefined
+      : getRatingBucketStart(userRating, bucketSize);
+  const showUser = userBucket !== undefined && starts.has(userBucket);
 
   return (
     <div
       data-testid={`chart-rating-distribution-${ruleset}`}
-      className={className}
+      className="flex flex-col gap-3"
     >
-      <ResponsiveContainer width="100%" height={CHART_CONSTANTS.DEFAULT_HEIGHT}>
-        <ComposedChart data={chartData} margin={CHART_CONSTANTS.DEFAULT_MARGIN}>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            vertical={false}
-            stroke={CHART_COLORS.mutedForeground}
-          />
+      <ChartLegend
+        items={[
+          ...tiers.map((tier) => ({
+            key: tier,
+            label: formatTierName(tier, undefined),
+            color: getTierColor(tier),
+          })),
+          {
+            key: 'cumulative',
+            label: 'Cumulative',
+            color: CUMULATIVE_COLOR,
+            marker: 'line' as const,
+          },
+          ...(showUser
+            ? [
+                {
+                  key: 'you',
+                  label: 'You',
+                  color: YOU_COLOR,
+                  marker: 'dashed' as const,
+                },
+              ]
+            : []),
+        ]}
+      />
+      <ChartContainer config={{}} className="aspect-auto h-72 w-full">
+        {/* A BarChart, not a ComposedChart, keeps the hover band behind the
+            bucket; Recharts 3 draws a Line in any cartesian chart. */}
+        <BarChart
+          data={buckets}
+          // Room above the plot for the "You" label.
+          margin={{ ...CHART_MARGIN, top: showUser ? 20 : CHART_MARGIN.top }}
+          // On phones a bucket is under 3px wide; a gap would leave no bar.
+          barCategoryGap={isNarrow ? 0 : 1}
+        >
+          <CartesianGrid {...chartGridProps} />
           <XAxis
+            {...chartAxisProps}
             dataKey="rating"
-            tick={<CustomXAxisTickWithData tierData={tierData} />}
-            tickLine={false}
-            axisLine={{ stroke: CHART_COLORS.mutedForeground }}
-            interval="preserveStartEnd"
-            ticks={tierData.map((t) => t.baseRating)}
+            ticks={xTicks}
+            interval={0}
+            tickFormatter={formatNumberTick}
           />
           <YAxis
-            yAxisId="left"
-            tickFormatter={formatChartNumber}
-            tickLine={false}
-            axisLine={false}
-            className="text-xs"
-            stroke={CHART_COLORS.mutedForeground}
+            {...chartValueAxisProps}
+            {...niceAxisProps(axes.count)}
+            tickFormatter={formatCountTick}
           />
           <YAxis
-            yAxisId="right"
+            {...chartValueAxisProps}
+            {...niceAxisProps(axes.share)}
+            yAxisId={SHARE_AXIS}
             orientation="right"
-            tickFormatter={(value) => `${value}%`}
-            tickLine={false}
-            axisLine={false}
-            className="text-xs"
-            stroke={CHART_COLORS.mutedForeground}
-            domain={[0, 100]}
+            tickFormatter={(share: number) => formatPercentTick(share * 100)}
           />
-          <Tooltip
-            content={<CustomTooltip />}
-            cursor={{ fill: CHART_COLORS.accent }}
+          <ChartTooltip
+            cursor={CHART_CURSOR.bar}
+            content={({ active, payload, label }) => (
+              <ChartTooltipContent
+                active={active}
+                // A row for the bar only; the footer gives the line's share.
+                payload={payload?.filter((item) => item.dataKey === 'count')}
+                label={label}
+                labelFormatter={(_, payload) => {
+                  const bucket = bucketOf(payload);
+                  if (!bucket) return null;
+                  return (
+                    <span className="flex items-center gap-1.5">
+                      <TierIcon
+                        tier={bucket.tier}
+                        subTier={bucket.subTier}
+                        width={16}
+                        height={16}
+                        className="shrink-0"
+                      />
+                      {formatTierName(bucket.tier, bucket.subTier)}
+                    </span>
+                  );
+                }}
+                nameFormatter={() => 'Players'}
+                valueFormatter={formatCountTick}
+                footer={(payload) => {
+                  const bucket = bucketOf(payload);
+                  if (!bucket) return null;
+                  return (
+                    <>
+                      <div>
+                        Rating {formatNumberTick(bucket.rating)} –{' '}
+                        {formatNumberTick(bucket.rating + bucketSize - 1)}
+                      </div>
+                      <div>Cumulative {formatPercent(bucket.cumulative)}</div>
+                    </>
+                  );
+                }}
+              />
+            )}
           />
           <Bar
             dataKey="count"
-            radius={CHART_CONSTANTS.BORDER_RADIUS}
-            yAxisId="left"
+            name="Players"
+            radius={BUCKET_BAR_RADIUS}
+            isAnimationActive={false}
           >
-            {chartData.map((entry) => (
-              <Cell
-                key={`cell-${entry.rating}`}
-                fill={entry.tier?.color || CHART_COLORS.primary}
-              />
+            {buckets.map((bucket) => (
+              <Cell key={bucket.rating} fill={bucket.fill} />
             ))}
           </Bar>
+          {/* A 2px ring in the card colour parts the line from the bars it
+              crosses. */}
           <Line
+            dataKey="cumulative"
+            yAxisId={SHARE_AXIS}
             type="monotone"
-            dataKey="cumulativePercentage"
-            stroke={CHART_COLORS.primary}
-            strokeWidth={2}
+            stroke="var(--card)"
+            strokeWidth={CHART_LINE_WIDTH + 4}
             dot={false}
-            yAxisId="right"
+            activeDot={false}
+            isAnimationActive={false}
           />
-          {userRating !== undefined && (
+          <Line
+            dataKey="cumulative"
+            name="Cumulative"
+            yAxisId={SHARE_AXIS}
+            type="monotone"
+            stroke={CUMULATIVE_COLOR}
+            strokeWidth={CHART_LINE_WIDTH}
+            dot={false}
+            activeDot={false}
+            isAnimationActive={false}
+          />
+          {showUser ? (
             <ReferenceLine
-              x={
-                Math.floor(userRating / CHART_CONSTANTS.BUCKET_SIZE) *
-                CHART_CONSTANTS.BUCKET_SIZE
-              }
-              yAxisId="left"
-              stroke="#22c55e"
+              x={userBucket}
+              stroke={YOU_COLOR}
               strokeDasharray="4 4"
-              strokeWidth={2}
+              strokeWidth={1.5}
               label={{
                 value: 'You',
                 position: 'top',
-                fill: '#22c55e',
+                fill: YOU_COLOR,
                 fontSize: 12,
-                fontWeight: 600,
+                fontWeight: 500,
               }}
             />
-          )}
-        </ComposedChart>
-      </ResponsiveContainer>
+          ) : null}
+        </BarChart>
+      </ChartContainer>
     </div>
   );
 }

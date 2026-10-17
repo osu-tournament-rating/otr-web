@@ -1,5 +1,12 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { TEST_TOURNAMENT_ID, ROUTES } from './fixtures/test-config';
+
+async function openFilters(page: Page) {
+  await page
+    .locator('[data-testid="audit-filter-bar"]')
+    .getByRole('button', { name: /^Filters/ })
+    .click();
+}
 
 test.describe('Audit Event Feed Page', () => {
   test.describe('Page Load', () => {
@@ -9,13 +16,15 @@ test.describe('Audit Event Feed Page', () => {
 
       const heading = page.locator('[data-testid="audit-logs-heading"]');
       await expect(heading).toBeVisible({ timeout: 10000 });
-      await expect(heading).toHaveText('Audit Logs');
+      await expect(heading).toHaveText('Audit logs');
 
       const description = page.locator('text=Browse the history of changes');
       await expect(description).toBeVisible();
     });
 
-    test('renders filter bar with all controls', async ({ page }) => {
+    test('renders the toolbar with the filters and the system switch', async ({
+      page,
+    }) => {
       await page.goto(ROUTES.auditLogs);
       await page.waitForLoadState('networkidle');
 
@@ -23,13 +32,7 @@ test.describe('Audit Event Feed Page', () => {
       await expect(filterBar).toBeVisible({ timeout: 10000 });
 
       await expect(
-        page.locator('[data-testid="filter-action-type"]')
-      ).toBeVisible();
-      await expect(
-        page.locator('[data-testid="filter-entity-type"]')
-      ).toBeVisible();
-      await expect(
-        page.locator('[data-testid="filter-field-updated"]')
+        filterBar.getByRole('button', { name: /^Filters/ })
       ).toBeVisible();
       await expect(
         page.locator('[data-testid="filter-show-system"]')
@@ -50,69 +53,99 @@ test.describe('Audit Event Feed Page', () => {
   });
 
   test.describe('Filter Controls', () => {
-    test('action type popover opens and shows options', async ({ page }) => {
-      await page.goto(ROUTES.auditLogs);
-      await page.waitForLoadState('networkidle');
-
-      await page.locator('[data-testid="filter-action-type"]').click();
-      await expect(page.getByRole('option', { name: 'Created' })).toBeVisible();
-      await expect(page.getByRole('option', { name: 'Updated' })).toBeVisible();
-      await expect(page.getByRole('option', { name: 'Deleted' })).toBeVisible();
-    });
-
-    test('entity type popover opens and shows options', async ({ page }) => {
-      await page.goto(ROUTES.auditLogs);
-      await page.waitForLoadState('networkidle');
-
-      await page.locator('[data-testid="filter-entity-type"]').click();
-      await expect(
-        page.getByRole('option', { name: 'Tournament' })
-      ).toBeVisible();
-      await expect(page.getByRole('option', { name: 'Match' })).toBeVisible();
-    });
-
-    test('field updated popover opens with search input', async ({ page }) => {
-      await page.goto(ROUTES.auditLogs);
-      await page.waitForLoadState('networkidle');
-
-      await page.locator('[data-testid="filter-field-updated"]').click();
-      await expect(page.getByPlaceholder('Search fields...')).toBeVisible();
-    });
-
-    test('show system events checkbox toggles', async ({ page }) => {
-      await page.goto(ROUTES.auditLogs);
-      await page.waitForLoadState('networkidle');
-
-      const checkbox = page.locator('[data-testid="filter-show-system"]');
-      await expect(checkbox).toBeVisible();
-      await expect(checkbox).toHaveAttribute('aria-checked', 'false');
-
-      await checkbox.click();
-      await expect(checkbox).toHaveAttribute('aria-checked', 'true');
-
-      await checkbox.click();
-      await expect(checkbox).toHaveAttribute('aria-checked', 'false');
-    });
-
-    test('clear filters button appears when filter is active and resets on click', async ({
+    test('filter panel shows action type, entity type and field options', async ({
       page,
     }) => {
       await page.goto(ROUTES.auditLogs);
       await page.waitForLoadState('networkidle');
 
-      await expect(
-        page.locator('[data-testid="filter-clear"]')
-      ).not.toBeVisible();
+      await openFilters(page);
+      const panel = page.getByRole('dialog', { name: 'Filter audit events' });
+      await expect(panel).toBeVisible();
 
-      await page.locator('[data-testid="filter-entity-type"]').click();
-      await page.getByRole('option', { name: 'Tournament' }).click();
+      for (const name of ['Created', 'Updated', 'Deleted']) {
+        await expect(panel.getByRole('button', { name })).toBeVisible();
+      }
+      await expect(
+        panel.getByRole('button', { name: 'Tournament' })
+      ).toBeVisible();
+      await expect(panel.getByRole('button', { name: 'Match' })).toBeVisible();
+      await expect(panel.getByPlaceholder('Search fields')).toBeVisible();
+    });
+
+    test('show system events switch toggles and is kept in the address', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.auditLogs);
+      await page.waitForLoadState('networkidle');
+
+      const toggle = page.locator('[data-testid="filter-show-system"]');
+      await expect(toggle).toBeVisible();
+      await expect(toggle).toHaveAttribute('aria-checked', 'false');
+
+      await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-checked', 'true');
+      await expect(page).toHaveURL(/[?&]system=true/);
+
+      await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-checked', 'false');
+      await expect(page).not.toHaveURL(/system=/);
+    });
+
+    test('a filter shows as a chip, lives in the address and clears', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.auditLogs);
+      await page.waitForLoadState('networkidle');
+
+      const activeFilters = page.getByRole('group', { name: 'Active filters' });
+      await expect(activeFilters).toHaveCount(0);
+
+      await openFilters(page);
+      await page
+        .getByRole('dialog', { name: 'Filter audit events' })
+        .getByRole('button', { name: 'Tournament' })
+        .click();
       await page.keyboard.press('Escape');
 
-      const clearButton = page.locator('[data-testid="filter-clear"]');
-      await expect(clearButton).toBeVisible();
+      await expect(page).toHaveURL(/[?&]entity=tournament/);
+      await expect(activeFilters).toBeVisible();
+      await expect(activeFilters).toContainText('Entity type: Tournament');
 
-      await clearButton.click();
-      await expect(clearButton).not.toBeVisible();
+      await activeFilters.getByRole('button', { name: 'Clear all' }).click();
+      await expect(activeFilters).toHaveCount(0);
+      await expect(page).not.toHaveURL(/entity=/);
+    });
+
+    test('clear all leaves the system events switch alone', async ({
+      page,
+    }) => {
+      await page.goto(`${ROUTES.auditLogs}?entity=tournament&system=true`);
+      await page.waitForLoadState('networkidle');
+
+      const activeFilters = page.getByRole('group', { name: 'Active filters' });
+      await activeFilters.getByRole('button', { name: 'Clear all' }).click();
+
+      await expect(activeFilters).toHaveCount(0);
+      await expect(page).not.toHaveURL(/entity=/);
+      await expect(page).toHaveURL(/[?&]system=true/);
+      await expect(
+        page.locator('[data-testid="filter-show-system"]')
+      ).toHaveAttribute('aria-checked', 'true');
+    });
+
+    test('filters in the address apply on load', async ({ page }) => {
+      await page.goto(`${ROUTES.auditLogs}?action=updated&entity=match`);
+      await page.waitForLoadState('networkidle');
+
+      const activeFilters = page.getByRole('group', { name: 'Active filters' });
+      await expect(activeFilters).toContainText('Action type: Updated');
+      await expect(activeFilters).toContainText('Entity type: Match');
+      await expect(
+        page.locator('[data-testid="audit-filter-bar"]').getByRole('button', {
+          name: 'Filters, 2 active',
+        })
+      ).toBeVisible();
     });
   });
 
@@ -136,12 +169,14 @@ test.describe('Audit Event Feed Page', () => {
       await expect(description).not.toBeEmpty();
 
       const timestamp = firstCard.locator(
-        '[data-testid="event-card-timestamp"]'
+        '[data-testid="event-card-timestamp"] time'
       );
       await expect(timestamp).toBeVisible();
     });
 
-    test('expandable event card shows diff on click', async ({ page }) => {
+    test('expandable event card shows its details on click', async ({
+      page,
+    }) => {
       await page.goto(ROUTES.auditLogs);
       await page.waitForLoadState('networkidle');
 
@@ -150,15 +185,16 @@ test.describe('Audit Event Feed Page', () => {
 
       const expandableCard = page
         .locator('[data-testid="audit-event-card"]')
-        .filter({
-          has: page.locator('svg.rotate-90, svg:not(.rotate-90)').first(),
-        })
-        .filter({ has: page.locator('button:not([disabled])') })
+        .filter({ has: page.locator('[data-testid="audit-event-toggle"]') })
         .first();
 
       if (await expandableCard.isVisible()) {
-        const trigger = expandableCard.locator('button').first();
-        await trigger.click();
+        const toggle = expandableCard.locator(
+          '[data-testid="audit-event-toggle"]'
+        );
+        await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        await toggle.click();
+        await expect(toggle).toHaveAttribute('aria-expanded', 'true');
 
         const diff = expandableCard.locator('[data-testid="event-card-diff"]');
         await expect(diff).toBeVisible({ timeout: 5000 });
@@ -174,33 +210,23 @@ test.describe('Audit Event Feed Page', () => {
       const eventList = page.locator('[data-testid="audit-event-list"]');
       await expect(eventList).toBeVisible({ timeout: 15000 });
 
-      const cards = page.locator('[data-testid="audit-event-card"]');
-      const cardCount = await cards.count();
+      const toggles = page.locator('[data-testid="audit-event-toggle"]');
+      const toggleCount = await toggles.count();
 
-      for (let i = 0; i < cardCount; i++) {
-        const card = cards.nth(i);
-        const trigger = card.locator('button').first();
-        const isDisabled = (await trigger.getAttribute('disabled')) !== null;
-
-        if (!isDisabled) {
-          await trigger.click();
-          const diffRow = card
-            .locator('[data-testid="audit-diff-row"]')
-            .first();
-          if (await diffRow.isVisible({ timeout: 3000 }).catch(() => false)) {
-            await expect(
-              diffRow.locator('[data-testid="diff-field-label"]')
-            ).toBeVisible();
-            await expect(
-              diffRow.locator('[data-testid="diff-old-value"]')
-            ).toBeVisible();
-            await expect(
-              diffRow.locator('[data-testid="diff-new-value"]')
-            ).toBeVisible();
-            break;
-          }
-          await trigger.click();
+      for (let i = 0; i < toggleCount; i++) {
+        const toggle = toggles.nth(i);
+        await toggle.click();
+        const card = page
+          .locator('[data-testid="audit-event-card"]')
+          .filter({ has: toggle });
+        const diffRow = card.locator('[data-audit-field]').first();
+        if (await diffRow.isVisible({ timeout: 3000 }).catch(() => false)) {
+          await expect(diffRow.locator('dt')).toBeVisible();
+          await expect(diffRow.locator('dt')).not.toBeEmpty();
+          await expect(diffRow.locator('dd')).toBeVisible();
+          break;
         }
+        await toggle.click();
       }
     });
 
@@ -216,9 +242,9 @@ test.describe('Audit Event Feed Page', () => {
       const firstCard = page
         .locator('[data-testid="audit-event-card"]')
         .first();
-      const entityLink = firstCard.locator(
-        '[data-testid="event-card-description"] a[href^="/audit/"]'
-      );
+      const entityLink = firstCard
+        .locator('[data-testid="event-card-description"] a[href^="/audit/"]')
+        .first();
 
       if (await entityLink.isVisible()) {
         const href = await entityLink.getAttribute('href');
@@ -234,42 +260,38 @@ test.describe('Audit Event Feed Page', () => {
 
 test.describe('Entity Audit Timeline Page', () => {
   test.describe('Page Header', () => {
-    test('displays breadcrumb and entity title', async ({ page }) => {
+    test('displays the entity title and which record it is', async ({
+      page,
+    }) => {
       await page.goto(ROUTES.auditTournament(TEST_TOURNAMENT_ID));
       await page.waitForLoadState('networkidle');
 
       const header = page.locator('[data-testid="audit-page-header"]');
       await expect(header).toBeVisible({ timeout: 10000 });
 
-      const breadcrumb = page.locator('[data-testid="audit-breadcrumb"]');
-      await expect(breadcrumb).toBeVisible();
-
       const title = page.locator('[data-testid="audit-entity-title"]');
       await expect(title).toBeVisible();
-      await expect(title).toContainText(`#${TEST_TOURNAMENT_ID}`);
+      await expect(title).not.toBeEmpty();
+
+      await expect(
+        page.locator('[data-testid="audit-entity-description"]')
+      ).toContainText(`#${TEST_TOURNAMENT_ID}`);
+
+      // The page header replaced the breadcrumb.
+      await expect(
+        page.locator('[data-testid="audit-breadcrumb"]')
+      ).toHaveCount(0);
     });
 
-    test('breadcrumb link navigates back to audit feed', async ({ page }) => {
+    test('back link opens the tournament', async ({ page }) => {
       await page.goto(ROUTES.auditTournament(TEST_TOURNAMENT_ID));
       await page.waitForLoadState('networkidle');
 
-      const breadcrumbLink = page.locator(
-        '[data-testid="audit-breadcrumb-link"]'
-      );
-      await expect(breadcrumbLink).toBeVisible({ timeout: 10000 });
-      await expect(breadcrumbLink).toHaveText('Audit Logs');
-
-      await breadcrumbLink.click();
-      await page.waitForURL('**/tools/audit-logs', { timeout: 10000 });
-    });
-
-    test('view entity link exists for tournaments', async ({ page }) => {
-      await page.goto(ROUTES.auditTournament(TEST_TOURNAMENT_ID));
-      await page.waitForLoadState('networkidle');
-
-      const viewLink = page.locator('[data-testid="audit-view-entity-link"]');
-      await expect(viewLink).toBeVisible({ timeout: 10000 });
-      await expect(viewLink).toHaveAttribute(
+      const backLink = page
+        .locator('[data-testid="audit-page-header"]')
+        .getByRole('link', { name: 'View tournament' });
+      await expect(backLink).toBeVisible({ timeout: 10000 });
+      await expect(backLink).toHaveAttribute(
         'href',
         `/tournaments/${TEST_TOURNAMENT_ID}`
       );
@@ -277,7 +299,7 @@ test.describe('Entity Audit Timeline Page', () => {
   });
 
   test.describe('Timeline Content', () => {
-    test('shows change count in summary header', async ({ page }) => {
+    test('shows change count in the toolbar', async ({ page }) => {
       await page.goto(ROUTES.auditTournament(TEST_TOURNAMENT_ID));
       await page.waitForLoadState('networkidle');
 
@@ -286,7 +308,7 @@ test.describe('Entity Audit Timeline Page', () => {
       await expect(summary).toContainText(/\d+ changes?/);
     });
 
-    test('renders timeline entries with action badges', async ({ page }) => {
+    test('renders timeline entries with their actions', async ({ page }) => {
       await page.goto(ROUTES.auditTournament(TEST_TOURNAMENT_ID));
       await page.waitForLoadState('networkidle');
 
@@ -297,9 +319,9 @@ test.describe('Entity Audit Timeline Page', () => {
       const count = await entries.count();
       expect(count).toBeGreaterThan(0);
 
-      const badges = page.locator('[data-testid="timeline-action-badge"]');
-      const badgeCount = await badges.count();
-      expect(badgeCount).toBeGreaterThan(0);
+      const verbs = page.locator('[data-testid="timeline-action-badge"]');
+      const verbCount = await verbs.count();
+      expect(verbCount).toBeGreaterThan(0);
     });
 
     test('timeline entry expands to show field diffs', async ({ page }) => {
@@ -309,29 +331,22 @@ test.describe('Entity Audit Timeline Page', () => {
       const entryList = page.locator('[data-testid="timeline-entry-list"]');
       await expect(entryList).toBeVisible({ timeout: 15000 });
 
-      const entries = page.locator('[data-testid="timeline-entry"]');
-      const entryCount = await entries.count();
+      const entry = page
+        .locator('[data-testid="timeline-entry"]')
+        .filter({ has: page.locator('[data-testid="timeline-entry-toggle"]') })
+        .first();
 
-      for (let i = 0; i < entryCount; i++) {
-        const entry = entries.nth(i);
-        const trigger = entry.locator('button').first();
-        const isDisabled = (await trigger.getAttribute('disabled')) !== null;
-
-        if (!isDisabled) {
-          // Entry may already be open (auto-expands when changeCount > 0 && < 10)
-          const state = await entry.getAttribute('data-state');
-          if (state !== 'open') {
-            await trigger.click();
-          }
-
-          const diff = entry.locator('[data-testid="timeline-entry-diff"]');
-          await expect(diff).toBeVisible({ timeout: 5000 });
-
-          const diffRows = entry.locator('[data-testid="audit-diff-row"]');
-          const rowCount = await diffRows.count();
-          expect(rowCount).toBeGreaterThan(0);
-          break;
+      if (await entry.isVisible()) {
+        // Entries with fewer than 10 changes open on their own.
+        if ((await entry.getAttribute('data-state')) !== 'open') {
+          await entry.locator('[data-testid="timeline-entry-toggle"]').click();
         }
+
+        const diff = entry.locator('[data-testid="timeline-entry-diff"]');
+        await expect(diff).toBeVisible({ timeout: 5000 });
+        expect(
+          await entry.locator('[data-audit-field]').count()
+        ).toBeGreaterThan(0);
       }
     });
 
@@ -346,6 +361,73 @@ test.describe('Entity Audit Timeline Page', () => {
       const timestamp = firstEntry.locator('time');
       await expect(timestamp).toBeVisible();
       await expect(timestamp).not.toBeEmpty();
+    });
+
+    test('a failed load more keeps the rows and offers to try again', async ({
+      page,
+    }) => {
+      // Fail every batch after the first.
+      await page.route('**/rpc/audit/descendants**', async (route) => {
+        if (/"page":[2-9]/.test(route.request().postData() ?? '')) {
+          await route.fulfill({ status: 500, body: '{}' });
+          return;
+        }
+        await route.continue();
+      });
+      await page.goto(
+        `${ROUTES.auditTournament(TEST_TOURNAMENT_ID)}?tab=scores`
+      );
+      await page.waitForLoadState('networkidle');
+
+      const loadMore = page.getByRole('button', { name: 'Load more' });
+      if (!(await loadMore.isVisible({ timeout: 15000 }).catch(() => false))) {
+        return; // Every change fits in one batch.
+      }
+      const rows = page.locator('[data-testid="timeline-entry"]');
+      const shown = await rows.count();
+
+      await loadMore.click();
+      await expect(
+        page.getByText('More changed scores could not load')
+      ).toBeVisible({ timeout: 15000 });
+      await expect(
+        page.getByRole('button', { name: 'Try again' })
+      ).toBeVisible();
+      expect(await rows.count()).toBe(shown);
+    });
+
+    test('tabs switch to descendants and stay in the address', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.auditTournament(TEST_TOURNAMENT_ID));
+      await page.waitForLoadState('networkidle');
+
+      // While the page streams in after a load, React briefly holds a
+      // second, hidden copy of it; only the visible tabs count.
+      const tab = (name: string) =>
+        page
+          .locator(`[data-testid="audit-tab-${name}"]`)
+          .filter({ visible: true });
+
+      const tabs = page.locator('[data-testid="audit-scope-tabs"]');
+      await expect(tabs).toBeVisible({ timeout: 10000 });
+      await expect(tab('self')).toHaveAttribute('aria-current', 'page');
+
+      await tab('matches').click();
+      await expect(page).toHaveURL(/[?&]tab=matches/);
+      await expect(tab('matches')).toHaveAttribute('aria-current', 'page');
+      await expect(
+        page
+          .locator(
+            '[data-testid="timeline-entry-list"], [data-testid="audit-timeline-empty"]'
+          )
+          .first()
+      ).toBeVisible({ timeout: 15000 });
+
+      await page.reload();
+      await expect(tab('matches')).toHaveAttribute('aria-current', 'page', {
+        timeout: 10000,
+      });
     });
   });
 });

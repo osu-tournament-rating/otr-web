@@ -13,6 +13,7 @@ import { NotInRatings } from '@/components/kit/status/NotInRatings';
 import { ReportStatusBadge } from '@/components/kit/status/ReportStatusBadge';
 import { VerificationStatusBadge } from '@/components/kit/status/VerificationStatusBadge';
 import { VerificationStatusIcon } from '@/components/kit/status/VerificationStatusIcon';
+import { VerificationStatusDetails } from '@/components/kit/status/VerificationStatusTooltip';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -21,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MOD_FILL_FOREGROUND, getModPaletteColor } from '@/lib/kit/color/mods';
+import { ACCENT_SURFACE_CLASSES } from '@/lib/kit/color/tokens';
 import { getTierColor } from '@/lib/kit/color/tiers';
 import { formatLobbySize, formatRankRange } from '@/lib/kit/format/fields';
 import { formatCount, formatCountOf } from '@/lib/kit/format/number';
@@ -32,6 +34,7 @@ import {
   VERIFICATION_STATUS_ORDER,
   getVerificationStatusCopy,
 } from '@/lib/kit/status/verification';
+import { cn } from '@/lib/utils';
 import { getBeatmapModLabel } from '@/lib/utils/mods';
 
 const KIT = '@/components/kit/status';
@@ -154,11 +157,9 @@ function StatusSheet() {
                         decorative
                       />
                     </span>
-                    <span className="font-medium proportional-nums">
-                      {name}
-                    </span>
+                    <span className="font-medium">{name}</span>
                   </div>
-                  <p className="text-sm text-pretty text-muted-foreground proportional-nums">
+                  <p className="text-sm text-pretty text-muted-foreground">
                     {summary.charAt(0).toUpperCase() + summary.slice(1)}
                   </p>
                 </li>
@@ -178,7 +179,7 @@ function AdminMenuDemo() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="-mx-2 inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm transition-colors hover:text-link focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none data-[state=open]:text-primary"
+          className="-mx-2 inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none data-[state=open]:bg-accent"
         >
           Admin
           <NotificationDot label="Unseen reports" />
@@ -219,7 +220,7 @@ export default function StatusSection() {
         id="status-verification-icon"
         name="VerificationStatusIcon"
         importPath={`${KIT}/VerificationStatusIcon`}
-        description="Status without its name, for table cells, game pips and dense rows. Give it a tooltip wherever the name is not written beside it; warnings add a small triangle instead of recolouring the icon."
+        description="Status without its name, for table cells, game pips and dense rows. Give it a tooltip wherever the name is not written beside it; warnings add a small triangle instead of recolouring the icon. On cover art, the overlay variant sets the glyph on a dark disc so it reads over bright covers."
       >
         <div className="flex flex-col gap-4">
           <Row label="In text (sm)">
@@ -295,6 +296,50 @@ export default function StatusSection() {
               tooltip="tap"
             />
           </Row>
+          <Row label="On cover art">
+            {/* The game card header: cover art under its scrim, then a dark disc per icon. */}
+            <div className="relative flex h-16 w-full max-w-72 items-start overflow-hidden rounded-lg p-2">
+              <Image
+                src="/images/beatmap-background-narrow.png"
+                alt=""
+                fill
+                sizes="288px"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
+              <ul
+                aria-label="Games"
+                className="dark relative flex items-center gap-2"
+              >
+                {DEMO_GAMES.slice(2, 7).map((game, index) => (
+                  <li key={index} className="inline-flex">
+                    <VerificationStatusIcon
+                      status={game.status}
+                      variant="overlay"
+                      warnings={game.warnings}
+                      rejectionReasons={game.rejectionReasons}
+                      reviewer={game.reviewer}
+                      context={`Game ${index + 3}`}
+                      tooltip="tap"
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Row>
+          <Row label="On white">
+            {/* The hardest case the disc is built for: a bright, flat cover. */}
+            <span className="flex items-center gap-2 rounded-lg bg-white p-2">
+              {VERIFICATION_STATUS_ORDER.map((status) => (
+                <VerificationStatusIcon
+                  key={status}
+                  status={status}
+                  variant="overlay"
+                  tooltip="tap"
+                />
+              ))}
+            </span>
+          </Row>
         </div>
       </Specimen>
 
@@ -341,6 +386,22 @@ export default function StatusSection() {
               reviewer={REVIEWER}
               tooltip="tap"
             />
+          </Row>
+          {/* VerificationStatusDetails is the tooltip's body on its own, for
+              a chart tooltip or a popover; here on the tooltip's surface. */}
+          <Row label="Tooltip body">
+            <div
+              className={cn(
+                'rounded-md px-3 py-1.5 text-xs',
+                ACCENT_SURFACE_CLASSES
+              )}
+            >
+              <VerificationStatusDetails
+                status={VerificationStatus.Rejected}
+                rejectionReasons={['Abnormal win condition']}
+                reviewer={REVIEWER}
+              />
+            </div>
           </Row>
           <Row label="On cover art">
             <div className="relative flex h-24 w-full max-w-72 items-start overflow-hidden rounded-lg p-2">

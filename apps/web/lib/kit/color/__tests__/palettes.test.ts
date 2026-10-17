@@ -12,6 +12,7 @@ import {
   composite,
   contrastRatio,
   parseColor,
+  toHex,
 } from '@/lib/kit/color/contrast';
 import {
   CVD_SEPARATION_TARGET,
@@ -43,7 +44,15 @@ import {
 } from '@/lib/kit/color/teams';
 import type { ThemeColor } from '@/lib/kit/color/theme-color';
 import { TIER_PALETTE, TIER_TEXT_CLASS } from '@/lib/kit/color/tiers';
-import { ALL_TOKENS, CALLOUT_COLORS } from '@/lib/kit/color/tokens';
+import {
+  ACCENT_MUTED_TEXT_COLOR,
+  ACCENT_SURFACE_CLASSES,
+  ALL_TOKENS,
+  CALLOUT_COLORS,
+  DESTRUCTIVE_TEXT_COLOR,
+  FOREGROUND_COLOR,
+  MUTED_TEXT_COLOR,
+} from '@/lib/kit/color/tokens';
 import {
   getRatingsGroupColor,
   getStatusHueColor,
@@ -95,6 +104,73 @@ describe('every palette colour against its cards', () => {
     ]) {
       expect(tokens.has(color.token)).toBe(true);
     }
+  });
+});
+
+describe('theme text', () => {
+  const PANEL_SURFACES = ['card', 'muted', 'popover'] as const;
+
+  for (const theme of THEMES) {
+    it(`clears 4.5:1 on panels, tiles and popovers (${theme})`, () => {
+      const failures = [
+        FOREGROUND_COLOR,
+        MUTED_TEXT_COLOR,
+        DESTRUCTIVE_TEXT_COLOR,
+      ]
+        .flatMap((color) =>
+          PANEL_SURFACES.map((surface) => ({
+            token: color.token,
+            surface,
+            ratio: contrastRatio(color[theme], SURFACES[theme][surface]),
+          }))
+        )
+        .filter(({ ratio }) => ratio < CONTRAST_TEXT);
+
+      expect(failures).toEqual([]);
+    });
+
+    it(`keeps tooltip text legible on the accent surface (${theme})`, () => {
+      const accent = SURFACES[theme].accent;
+
+      expect(
+        contrastRatio(FOREGROUND_COLOR[theme], accent)
+      ).toBeGreaterThanOrEqual(CONTRAST_TEXT);
+      expect(
+        contrastRatio(ACCENT_MUTED_TEXT_COLOR[theme], accent)
+      ).toBeGreaterThanOrEqual(CONTRAST_TEXT);
+      // Why the accent surface needs its own muted text.
+      expect(contrastRatio(MUTED_TEXT_COLOR[theme], accent)).toBeLessThan(
+        CONTRAST_TEXT
+      );
+    });
+
+    it(`keeps muted text muted inside a tooltip (${theme})`, () => {
+      const accent = SURFACES[theme].accent;
+
+      expect(
+        contrastRatio(ACCENT_MUTED_TEXT_COLOR[theme], accent)
+      ).toBeLessThan(contrastRatio(FOREGROUND_COLOR[theme], accent));
+    });
+  }
+
+  it('mirrors the text colours the other palette checks use', () => {
+    for (const theme of THEMES) {
+      expect(toHex(parseColor(FOREGROUND_COLOR[theme]))).toBe(
+        TEXT[theme].foreground
+      );
+      expect(toHex(parseColor(MUTED_TEXT_COLOR[theme]))).toBe(
+        TEXT[theme].muted
+      );
+    }
+  });
+
+  it('scopes muted text to the accent token on the tooltip surface', () => {
+    expect(ACCENT_SURFACE_CLASSES.split(' ')).toEqual(
+      expect.arrayContaining([
+        'bg-accent',
+        `[--muted-foreground:${ACCENT_MUTED_TEXT_COLOR.css}]`,
+      ])
+    );
   });
 });
 

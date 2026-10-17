@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { Fragment, useState } from 'react';
 import useSWRInfinite from 'swr/infinite';
-import { ChevronRight, Info, Loader2 } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { AuditEntityType, VerificationStatus } from '@otr/core/osu';
 import type {
   AuditEntry,
@@ -11,18 +10,22 @@ import type {
   CascadeDescendant,
 } from '@/lib/orpc/schema/audit';
 import {
-  childCountTail,
   entityTypeToSlug,
-  ENTITY_TYPE_LABELS,
   ENTITY_TYPE_PLURALS,
+  formatAffectedCount,
 } from '@/lib/audit-entity-types';
 import { ACTION_NOUNS } from '@/lib/audit-actions';
-import { VerificationStatusEnumHelper } from '@/lib/enum-helpers';
 import { orpc } from '@/lib/orpc/orpc';
-import { Button } from '@/components/ui/button';
-import VerificationBadge from '@/components/badges/VerificationBadge';
+import SectionError from '@/components/error/SectionError';
+import { Button } from '@/components/kit/controls/Button';
+import { RowListSkeleton } from '@/components/kit/feedback/Skeletons';
+import { VerificationStatusIcon } from '@/components/kit/status/VerificationStatusIcon';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { formatId } from '@/lib/kit/format/number';
+import { VERIFICATION_STATUS_COPY } from '@/lib/kit/status/verification';
 import { cn } from '@/lib/utils';
-import ActionBreakdownPhrase from './ActionBreakdownPhrase';
+import { getBreakdownSummaryParts } from './ActionBreakdownPhrase';
+import { getEntityTypeName, nameOr } from './auditParams';
 
 type CascadeContextBannerProps = {
   context: CascadeContext;
@@ -30,20 +33,26 @@ type CascadeContextBannerProps = {
   viewedEntity?: { entityType: AuditEntityType; entityId: number };
 };
 
-const numberFormat = new Intl.NumberFormat('en-US');
-
-function countLabel(descendant: CascadeDescendant): React.ReactNode {
+/**
+ * "85 of 118 matches", or "58 matches: 57 verified, 1 rejected". Each half
+ * wraps as a unit, so a level too wide for a phone breaks after the colon.
+ */
+function CountLabel({ descendant }: { descendant: CascadeDescendant }) {
   const { entityType, affectedCount, totalCount, actionBreakdown } = descendant;
-  const tail = childCountTail(entityType, affectedCount, totalCount);
+  const parts = actionBreakdown
+    ? getBreakdownSummaryParts(actionBreakdown, entityType, totalCount)
+    : [formatAffectedCount(entityType, affectedCount, totalCount)];
 
-  if (actionBreakdown) {
-    return (
-      <>
-        <ActionBreakdownPhrase breakdown={actionBreakdown} /> {tail}
-      </>
-    );
-  }
-  return `${numberFormat.format(affectedCount)} ${tail}`;
+  return (
+    <span>
+      {parts.map((part, index) => (
+        <Fragment key={part}>
+          {index > 0 ? ' ' : null}
+          <span className="inline-block">{part}</span>
+        </Fragment>
+      ))}
+    </span>
+  );
 }
 
 type AffectedEntity = {
@@ -57,7 +66,7 @@ function statusOf(changes: Record<string, unknown>): VerificationStatus | null {
     { newValue?: unknown } | undefined;
   const value = change?.newValue;
   if (typeof value !== 'number') return null;
-  return value in VerificationStatusEnumHelper.metadata
+  return Object.prototype.hasOwnProperty.call(VERIFICATION_STATUS_COPY, value)
     ? (value as VerificationStatus)
     : null;
 }
@@ -128,69 +137,75 @@ function AffectedEntities({
   const affected = groupByEntity(pages.flatMap((page) => page.entries));
   const hasMore = pages[pages.length - 1]?.hasMore ?? false;
   const slug = entityTypeToSlug(entityType);
-  const label = ENTITY_TYPE_LABELS[entityType];
 
   return (
-    <div className="mt-2 flex flex-col gap-1 border-t border-blue-400/20 pt-2">
-      {isLoading && (
-        <span className="flex items-center gap-1.5 text-muted-foreground">
-          <Loader2 className="h-3 w-3 animate-spin" />
-          Loading…
-        </span>
-      )}
+    <div className="flex flex-col gap-2">
+      {isLoading ? (
+        <RowListSkeleton
+          rows={2}
+          leading="none"
+          description={false}
+          trailing={false}
+        />
+      ) : null}
 
-      {error && (
-        <span className="flex items-center gap-2 text-destructive">
-          Unable to load affected {ENTITY_TYPE_PLURALS[entityType]}.
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => void mutate()}
-            disabled={isValidating}
-          >
-            Retry
-          </Button>
-        </span>
-      )}
+      {affected.length > 0 ? (
+        <ul className="flex flex-col gap-1.5 text-sm">
+          {affected.map((entity) => {
+            const status = statusOf(entity.changes);
+            return (
+              <li key={entity.id} className="flex items-center gap-2">
+                <span className="flex w-4 shrink-0 justify-center">
+                  {status !== null ? (
+                    <VerificationStatusIcon
+                      status={status}
+                      size="sm"
+                      tooltip="tap"
+                    />
+                  ) : null}
+                </span>
+                <EntityLink href={`/audit/${slug}/${entity.id}`} wrap>
+                  {nameOr(
+                    entity.entityName,
+                    `${getEntityTypeName(entityType)} #${formatId(entity.id)}`
+                  )}
+                </EntityLink>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
 
-      {affected.map((entity) => {
-        const status = statusOf(entity.changes);
-        return (
-          <div key={entity.id} className="flex items-center gap-1.5">
-            <span className="flex w-5 shrink-0 justify-center">
-              {status !== null && (
-                <VerificationBadge verificationStatus={status} size="xsmall" />
-              )}
-            </span>
-            <Link
-              href={`/audit/${slug}/${entity.id}`}
-              className="text-primary hover:underline"
-            >
-              {entity.entityName ??
-                `${label.charAt(0).toUpperCase()}${label.slice(1)} #${entity.id}`}
-            </Link>
-          </div>
-        );
-      })}
+      {/* Under the list, so a failed later batch keeps the names above. */}
+      {error ? (
+        <SectionError
+          size="inline"
+          title={`${affected.length > 0 ? 'More affected' : 'Affected'} ${ENTITY_TYPE_PLURALS[entityType]} could not load`}
+          retrying={isValidating}
+          onRetry={() => void mutate()}
+        />
+      ) : null}
 
-      {hasMore && !error && (
+      {hasMore && !error ? (
         <Button
-          type="button"
           variant="ghost"
           size="sm"
-          className="self-start"
+          className="-ml-3 self-start"
+          pending={isValidating}
           onClick={() => setSize(size + 1)}
-          disabled={isValidating}
         >
-          {isValidating && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
           Load more
         </Button>
-      )}
+      ) : null}
     </div>
   );
 }
 
+/**
+ * The cascade an entry belongs to, as a muted line in its row: the event
+ * that caused it, or, on the page of the entity that started it, what else
+ * it touched. Each affected level opens a list of those entities.
+ */
 export default function CascadeContextBanner({
   context,
   viewedEntity,
@@ -198,7 +213,10 @@ export default function CascadeContextBanner({
   const [openLevel, setOpenLevel] = useState<AuditEntityType | null>(null);
 
   const slug = entityTypeToSlug(context.topEntityType);
-  const entityName = context.topEntityName ?? `#${context.topEntityId}`;
+  const entityName = nameOr(
+    context.topEntityName,
+    `#${formatId(context.topEntityId)}`
+  );
   const actionLabel = ACTION_NOUNS[context.action];
   const startedHere =
     viewedEntity?.entityType === context.topEntityType &&
@@ -207,66 +225,67 @@ export default function CascadeContextBanner({
   return (
     <div
       data-testid="cascade-context-banner"
-      className="flex items-start gap-2 rounded border-l-2 border-l-blue-400 bg-blue-50/50 px-3 py-2 text-xs dark:bg-blue-900/10"
+      className="flex flex-col gap-2 text-sm"
     >
-      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <span className="text-muted-foreground">
-          {startedHere ? (
-            <>
-              This {actionLabel} also affected
-              {context.descendants.length === 0 ? ' no children' : ':'}
-            </>
-          ) : (
-            <>
-              Part of{' '}
-              <Link
-                href={`/audit/${slug}/${context.topEntityId}`}
-                className="font-medium text-primary hover:underline"
+      <p className="text-muted-foreground">
+        {startedHere ? (
+          <>
+            This {actionLabel} also affected
+            {context.descendants.length === 0 ? ' no children' : ':'}
+          </>
+        ) : (
+          <>
+            Part of {/* The name keeps the text colour in the muted line. */}
+            <EntityLink
+              variant="inline"
+              href={`/audit/${slug}/${context.topEntityId}`}
+              className="text-foreground"
+            >
+              {entityName}
+            </EntityLink>{' '}
+            {actionLabel}
+            {context.descendants.length > 0 && ' — also affected:'}
+          </>
+        )}
+      </p>
+
+      {context.descendants.length > 0 ? (
+        <div
+          data-testid="cascade-impact-levels"
+          className="flex flex-wrap items-center gap-2"
+        >
+          {context.descendants.map((descendant) => {
+            const isOpen = openLevel === descendant.entityType;
+            return (
+              <Button
+                key={descendant.entityType}
+                variant="outline"
+                size="sm"
+                // Wraps on a phone instead of running past the row.
+                wrap
+                aria-expanded={isOpen}
+                onClick={() =>
+                  setOpenLevel(isOpen ? null : descendant.entityType)
+                }
+                className="font-normal [&_svg]:transition-transform"
               >
-                {entityName}
-              </Link>{' '}
-              {actionLabel}
-              {context.descendants.length > 0 && ' — also affected:'}
-            </>
-          )}
-        </span>
+                <CountLabel descendant={descendant} />
+                <ChevronDown
+                  aria-hidden
+                  className={cn(
+                    'text-muted-foreground',
+                    isOpen && 'rotate-180'
+                  )}
+                />
+              </Button>
+            );
+          })}
+        </div>
+      ) : null}
 
-        {context.descendants.length > 0 && (
-          <div
-            data-testid="cascade-impact-levels"
-            className="mt-1 flex flex-wrap items-center gap-1.5"
-          >
-            {context.descendants.map((descendant) => {
-              const isOpen = openLevel === descendant.entityType;
-              return (
-                <Button
-                  key={descendant.entityType}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-6 gap-1 px-2 text-xs font-normal"
-                  onClick={() =>
-                    setOpenLevel(isOpen ? null : descendant.entityType)
-                  }
-                >
-                  <ChevronRight
-                    className={cn(
-                      'h-3 w-3 transition-transform',
-                      isOpen && 'rotate-90'
-                    )}
-                  />
-                  {countLabel(descendant)}
-                </Button>
-              );
-            })}
-          </div>
-        )}
-
-        {openLevel !== null && (
-          <AffectedEntities context={context} entityType={openLevel} />
-        )}
-      </div>
+      {openLevel !== null ? (
+        <AffectedEntities context={context} entityType={openLevel} />
+      ) : null}
     </div>
   );
 }

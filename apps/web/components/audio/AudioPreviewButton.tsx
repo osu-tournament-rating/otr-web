@@ -1,54 +1,59 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
+import { Button, type ButtonVariant } from '@/components/kit/controls/Button';
 import {
-  PREVIEW_STATUS_ICONS,
   usePreviewButtonState,
   type PreviewButtonStatus,
 } from '@/lib/hooks/useAudioPlayer';
-import { cn } from '@/lib/utils';
+
+import { PreviewStatusIcon } from './PreviewStatusIcon';
 
 const SHORT_LABELS: Record<PreviewButtonStatus, string> = {
   loading: 'Loading',
   playing: 'Pause',
-  error: 'Retry',
+  error: 'Try again',
   paused: 'Resume',
   idle: 'Preview',
 };
 
 interface AudioPreviewButtonProps {
   beatmapsetOsuId: number | undefined;
+  /** `overlay` on cover art, as in the beatmap hero; `outline` elsewhere. */
+  variant?: Extract<ButtonVariant, 'overlay' | 'outline'>;
   className?: string;
   artist?: string;
   title?: string;
   difficulty?: string;
 }
 
+/**
+ * The labelled preview button: "Preview", then "Pause", "Resume" or, after
+ * a failed load, "Try again".
+ */
 export default function AudioPreviewButton({
   beatmapsetOsuId,
+  variant = 'overlay',
   className,
   artist,
   title,
   difficulty,
 }: AudioPreviewButtonProps) {
-  const { status, actionLabel, isActive, isLoading, hasError, handleClick } =
+  const { status, actionLabel, isActive, hasError, handleClick } =
     usePreviewButtonState({ beatmapsetOsuId, artist, title, difficulty });
 
   if (!beatmapsetOsuId) return null;
 
-  const Icon = PREVIEW_STATUS_ICONS[status];
-
   return (
     <Button
-      variant="secondary"
+      variant={variant}
       size="sm"
-      className={cn('gap-1.5', isActive && 'ring-2 ring-primary/60', className)}
+      className={className}
       onClick={handleClick}
       aria-label={actionLabel}
       aria-pressed={isActive && !hasError}
       data-preview-state={status}
     >
-      <Icon className={cn('h-3.5 w-3.5', isLoading && 'animate-spin')} />
+      <PreviewStatusIcon status={status} />
       {SHORT_LABELS[status]}
     </Button>
   );

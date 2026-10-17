@@ -1,144 +1,157 @@
-'use client';
-
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Medal, Award } from 'lucide-react';
 import { Ruleset } from '@otr/core/osu';
-import Link from 'next/link';
+import { Trophy } from 'lucide-react';
+
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { RatingDelta } from '@/components/kit/format/RatingDelta';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from '@/components/kit/tables/DataTable';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
 import { OsuAvatar } from '@/components/ui/osu-avatar';
-import TRText from '../rating/TRText';
+import { formatNumber, formatRank } from '@/lib/kit/format/number';
 import { TournamentPlayerStats } from '@/lib/orpc/schema/tournament';
 
-interface TournamentTopPerformersProps {
-  playerStats: TournamentPlayerStats[];
-  className?: string;
+/** Players need this many matches to count as a top performer. */
+const MIN_MATCHES = 3;
+
+const playerHref = (
+  player: TournamentPlayerStats['player'],
+  ruleset: Ruleset
+) => `/players/${player.id}?ruleset=${ruleset}`;
+
+/** The name, with a 24px avatar inside its link in the table. */
+function PlayerLink({
+  player,
+  ruleset,
+  avatar = true,
+}: {
+  player: TournamentPlayerStats['player'];
   ruleset: Ruleset;
+  /** Off on phone rows, which show a 32px avatar beside the name and its line. */
+  avatar?: boolean;
+}) {
+  return (
+    <EntityLink
+      href={playerHref(player, ruleset)}
+      leading={
+        avatar ? (
+          <OsuAvatar
+            osuId={player.osuId}
+            username={player.username}
+            size={24}
+          />
+        ) : undefined
+      }
+    >
+      {player.username}
+    </EntityLink>
+  );
 }
 
+const formatMatchCost = (value: number) => formatNumber(value, { decimals: 2 });
+const formatAverage = (value: number) => formatNumber(value, { decimals: 1 });
+
+/** The three players with the best average match cost (3+ matches). */
 export default function TournamentTopPerformers({
   playerStats,
-  className,
   ruleset,
-}: TournamentTopPerformersProps) {
+}: {
+  playerStats: TournamentPlayerStats[];
+  ruleset: Ruleset;
+}) {
   const topPerformers = playerStats
-    .filter((stats) => stats.matchesPlayed >= 3)
+    .filter((stats) => stats.matchesPlayed >= MIN_MATCHES)
     .sort((a, b) => b.averageMatchCost - a.averageMatchCost)
     .slice(0, 3);
 
-  if (topPerformers.length === 0) {
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            Top Performers
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            No qualifying performers found (min. 3 matches)
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const getPositionIcon = (position: number) => {
-    switch (position) {
-      case 1:
-        return <Trophy className="h-4 w-4 text-yellow-500" />;
-      case 2:
-        return <Medal className="h-4 w-4 text-gray-400" />;
-      case 3:
-        return <Award className="h-4 w-4 text-amber-600" />;
-      default:
-        return null;
-    }
-  };
-
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Trophy className="h-5 w-5 text-yellow-500" />
-          Top Performers
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {topPerformers.map((stats, index) => {
-          const position = index + 1;
-          const trChange = stats.averageRatingDelta;
-
-          return (
-            <div
-              key={stats.player.id}
-              className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/50"
-            >
-              <div className="flex items-center gap-2">
-                {getPositionIcon(position)}
-                <span className="text-sm font-medium text-muted-foreground">
-                  #{position}
-                </span>
-              </div>
-
-              <OsuAvatar
-                osuId={stats.player.osuId}
-                username={stats.player.username}
-                size={32}
-              />
-
-              <div className="min-w-0 flex-1">
-                <Link
-                  href={`/players/${stats.player.id}?ruleset=${ruleset}`}
-                  className="block truncate text-sm font-medium"
-                >
-                  {stats.player.username}
-                </Link>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-4">
-                <div className="text-right">
-                  <div className="font-medium">
-                    {stats.averageMatchCost.toFixed(2)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Match Cost
-                  </div>
-                </div>
-
-                <div className="hidden text-right md:block">
-                  <div className="font-medium">
-                    {stats.averagePlacement.toFixed(1)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Avg. Placement
-                  </div>
-                </div>
-
-                <div className="hidden text-right md:block">
-                  <div className="font-medium">
-                    {(stats.gamesPlayed / stats.matchesPlayed).toFixed(1)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Avg. Games
-                  </div>
-                </div>
-
-                <div className="hidden text-right sm:block">
-                  <div
-                    className={`font-medium ${trChange >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                  >
-                    {trChange >= 0 ? '+' : ''}
-                    {trChange.toFixed(1)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    <TRText />
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+    <Panel>
+      <SectionHeader icon={Trophy} title="Top performers" />
+      {topPerformers.length === 0 ? (
+        <EmptyState
+          size="compact"
+          icon={Trophy}
+          title="No qualifying players"
+          description={`Players need at least ${MIN_MATCHES} matches to qualify.`}
+        />
+      ) : (
+        <DataTable
+          aria-label="Top performers"
+          phoneRows={
+            <PhoneRowList as="ol" aria-label="Top performers">
+              {topPerformers.map((stats, index) => (
+                <PhoneRow
+                  key={stats.player.id}
+                  rank={formatRank(index + 1)}
+                  leading={
+                    <OsuAvatar
+                      osuId={stats.player.osuId}
+                      username={stats.player.username}
+                      size={32}
+                    />
+                  }
+                  leadingHref={playerHref(stats.player, ruleset)}
+                  title={
+                    <PlayerLink
+                      player={stats.player}
+                      ruleset={ruleset}
+                      avatar={false}
+                    />
+                  }
+                  // One phone line holds only one figure beside the match
+                  // cost; average games stays in the table.
+                  description={`Avg. placement ${formatAverage(stats.averagePlacement)}`}
+                  value={formatMatchCost(stats.averageMatchCost)}
+                  valueDescription="Match cost"
+                />
+              ))}
+            </PhoneRowList>
+          }
+        >
+          <DataTableHeader>
+            <DataTableRow>
+              <DataTableHead className="w-16">Rank</DataTableHead>
+              <DataTableHead>Player</DataTableHead>
+              <DataTableHead numeric>Match cost</DataTableHead>
+              <DataTableHead numeric>Avg. placement</DataTableHead>
+              <DataTableHead numeric>Avg. games</DataTableHead>
+              <DataTableHead numeric>Avg. rating change</DataTableHead>
+            </DataTableRow>
+          </DataTableHeader>
+          <DataTableBody>
+            {topPerformers.map((stats, index) => (
+              <DataTableRow key={stats.player.id}>
+                <DataTableCell className="font-medium tabular-nums">
+                  {formatRank(index + 1)}
+                </DataTableCell>
+                <DataTableCell>
+                  <PlayerLink player={stats.player} ruleset={ruleset} />
+                </DataTableCell>
+                <DataTableCell numeric>
+                  {formatMatchCost(stats.averageMatchCost)}
+                </DataTableCell>
+                <DataTableCell numeric>
+                  {formatAverage(stats.averagePlacement)}
+                </DataTableCell>
+                <DataTableCell numeric>
+                  {formatAverage(stats.gamesPlayed / stats.matchesPlayed)}
+                </DataTableCell>
+                <DataTableCell numeric>
+                  <RatingDelta value={stats.averageRatingDelta} />
+                </DataTableCell>
+              </DataTableRow>
+            ))}
+          </DataTableBody>
+        </DataTable>
+      )}
+    </Panel>
   );
 }

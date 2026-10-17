@@ -2,6 +2,7 @@ import type * as React from 'react';
 
 import { InfoButton } from '@/components/kit/layout/InfoButton';
 import { Tile } from '@/components/kit/layout/Tile';
+import { aboutLabel } from '@/lib/kit/layout/about-label';
 import type { KitIcon } from '@/lib/kit/layout/icon';
 import { cn } from '@/lib/utils';
 
@@ -39,12 +40,17 @@ export function StatTile({
   adornment,
   sub,
   infoText,
+  infoLabel,
   layout = 'stacked',
   children,
   className,
   ...props
 }: Omit<React.ComponentProps<'div'>, 'children'> & {
-  label: string;
+  /**
+   * Sentence case; it truncates. A node can give a short form, such as CS,
+   * its full name for screen readers in an `sr-only` span.
+   */
+  label: React.ReactNode;
   /** Already formatted, with separators on counts. */
   value: React.ReactNode;
   /** A small muted icon before the label. */
@@ -55,6 +61,12 @@ export function StatTile({
   sub?: React.ReactNode;
   /** How to read the stat, shown through an info button. */
   infoText?: React.ReactNode;
+  /**
+   * The info button's name. Defaults to "About {label}" for a text label,
+   * lower-cased mid-sentence ("About win rate");
+   * set it when the label is a node.
+   */
+  infoLabel?: string;
   /** `inline` puts a short value on the label's line, for attribute grids. */
   layout?: 'stacked' | 'inline';
   /** Extra content under everything, such as a gauge. */
@@ -65,7 +77,14 @@ export function StatTile({
       {Icon ? <Icon className="size-3.5 shrink-0" aria-hidden /> : null}
       <span className="truncate">{label}</span>
       {infoText ? (
-        <InfoButton label={`About ${label}`} size="sm" className="-my-0.5">
+        <InfoButton
+          label={
+            infoLabel ??
+            (typeof label === 'string' ? aboutLabel(label) : 'About')
+          }
+          size="sm"
+          className="-my-0.5"
+        >
           {infoText}
         </InfoButton>
       ) : null}
@@ -74,8 +93,9 @@ export function StatTile({
   const figure = (
     <span
       className={cn(
-        // 4px between an adornment (the tier icon) and the value.
-        'flex min-w-0 items-center gap-1',
+        // 4px between an adornment (the tier icon) and the value. Tabular
+        // figures keep values in a row of tiles the same width per digit.
+        'flex min-w-0 items-center gap-1 tabular-nums',
         layout === 'inline' ? 'text-lg font-semibold' : 'text-xl font-bold',
         // After the size: tailwind-merge drops a leading that precedes it.
         'leading-none'

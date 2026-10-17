@@ -64,7 +64,7 @@ const tierBounds: TierBounds = tierKeyOrder.reduce<TierBounds>(
 export const getTierBounds = (tierKey: LeaderboardTierKey) =>
   tierBounds[tierKey];
 
-export const getTierKeyFromRating = (rating: number): LeaderboardTierKey => {
+const getTierKeyFromRating = (rating: number): LeaderboardTierKey => {
   for (let index = tierKeyOrder.length - 1; index >= 0; index -= 1) {
     const key = tierKeyOrder[index];
     const bounds = tierBounds[key];

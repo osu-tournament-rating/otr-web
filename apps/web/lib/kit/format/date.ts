@@ -133,10 +133,45 @@ export function formatTimestamp(
   const date = toDate(input);
   if (!date) return empty;
 
+  return `${fullDate(date)}, ${clockTime(date, seconds)} UTC`;
+}
+
+function clockTime(date: Date, seconds: boolean): string {
   const time = `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
-  return `${fullDate(date)}, ${time}${
-    seconds ? `:${pad(date.getUTCSeconds())}` : ''
-  } UTC`;
+  return seconds ? `${time}:${pad(date.getUTCSeconds())}` : time;
+}
+
+/**
+ * Two moments, such as a game's start and end, in UTC on a 24-hour clock:
+ *
+ * - `15:42 – 15:45 UTC` when both fall on the same UTC day, with the day
+ *   left out unless `showDate` asks for it (`Jul 20, 2024, 15:42 – 15:45 UTC`)
+ * - `Jul 20, 2024, 23:58 UTC – Jul 21, 2024, 00:02 UTC` across days
+ * - `From …` or `Until …` with the full timestamp when one end is missing
+ * - `empty` (an em dash) when both are
+ */
+export function formatTimeRange(
+  start: DateInput | null | undefined,
+  end: DateInput | null | undefined,
+  {
+    seconds = false,
+    showDate = false,
+    empty = EMPTY_VALUE,
+  }: { seconds?: boolean; showDate?: boolean; empty?: string } = {}
+): string {
+  const from = toDate(start);
+  const to = toDate(end);
+
+  if (!from && !to) return empty;
+  if (!to) return `From ${formatTimestamp(from, { seconds })}`;
+  if (!from) return `Until ${formatTimestamp(to, { seconds })}`;
+
+  if (fullDate(from) !== fullDate(to)) {
+    return `${formatTimestamp(from, { seconds })}${RANGE_SEPARATOR}${formatTimestamp(to, { seconds })}`;
+  }
+
+  const times = `${clockTime(from, seconds)}${RANGE_SEPARATOR}${clockTime(to, seconds)} UTC`;
+  return showDate ? `${fullDate(from)}, ${times}` : times;
 }
 
 /**
@@ -166,6 +201,40 @@ export function formatRelativeTime(
   else return fullDate(date);
 
   return diff >= 0 ? `${amount} ago` : `in ${amount}`;
+}
+
+/**
+ * A length in seconds, such as a beatmap's: `2:04`, or `1:02:04` from an
+ * hour. Fractions of a second are dropped; missing, negative or unreadable
+ * input prints `empty` (an em dash).
+ */
+export function formatDuration(
+  seconds: number | null | undefined,
+  { empty = EMPTY_VALUE }: { empty?: string } = {}
+): string {
+  if (seconds === null || seconds === undefined) return empty;
+  if (!Number.isFinite(seconds) || seconds < 0) return empty;
+
+  const total = Math.floor(seconds);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const rest = pad(total % 60);
+
+  return hours > 0 ? `${hours}:${pad(minutes)}:${rest}` : `${minutes}:${rest}`;
+}
+
+/**
+ * Reads a length typed as `formatDuration` writes it, back into seconds:
+ * `3:45`, `1:23:45`, or bare seconds (`225`). Returns null for anything
+ * else, such as `3:75` or `abc`.
+ */
+export function parseDuration(value: string): number | null {
+  const trimmed = value.trim();
+  if (!/^\d+(:[0-5]?\d){0,2}$/.test(trimmed)) return null;
+
+  return trimmed
+    .split(':')
+    .reduce((total, part) => total * 60 + Number(part), 0);
 }
 
 /** The machine-readable value for a `<time dateTime>` attribute, in UTC. */

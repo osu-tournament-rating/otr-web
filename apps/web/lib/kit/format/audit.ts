@@ -11,9 +11,8 @@ import {
   getVerificationStatusName,
   VERIFICATION_STATUS_COPY,
 } from '@/lib/kit/status/verification';
-import { formatDuration } from '@/lib/utils/date';
 
-import { formatTimestamp } from './date';
+import { formatDuration, formatTimestamp } from './date';
 import { EMPTY_VALUE } from './empty';
 import {
   DATA_FETCH_STATUS_LABELS,

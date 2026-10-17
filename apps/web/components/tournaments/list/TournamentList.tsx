@@ -1,295 +1,78 @@
-'use client';
-
-import { useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { SearchX } from 'lucide-react';
-import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import useSWRInfinite, { type SWRInfiniteKeyLoader } from 'swr/infinite';
-import { type Fetcher } from 'swr';
-
-import SectionError from '@/components/error/SectionError';
-import TournamentListRow from '@/components/tournaments/TournamentListRow';
-import { Button } from '@/components/ui/button';
+import { RowList, RowListItem } from '@/components/kit/layout/RowList';
+import TournamentListRow, {
+  TOURNAMENT_ROW_COLUMNS,
+  TOURNAMENT_ROW_NAME_CELL,
+} from '@/components/tournaments/TournamentListRow';
 import { Skeleton } from '@/components/ui/skeleton';
-import { orpc } from '@/lib/orpc/orpc';
-import {
-  type TournamentListItem,
-  type TournamentListRequest,
-} from '@/lib/orpc/schema/tournament';
-import { type TournamentListFilter } from '@/lib/types';
-import { hasRankRangeFilter } from '@/lib/filters/tournament-rank';
+import { type TournamentListItem } from '@/lib/orpc/schema/tournament';
+import { cn } from '@/lib/utils';
 
-const pageSize = 30;
-
-const toDateParam = (value?: Date | string) =>
-  value ? (value instanceof Date ? value.toISOString() : value) : undefined;
-
-const serializeFilter = (
-  filter: TournamentListFilter,
-  page: number
-): TournamentListRequest => ({
-  page,
-  pageSize,
-  verified: filter.verified,
-  ruleset: filter.ruleset,
-  searchQuery: filter.searchQuery?.trim()
-    ? filter.searchQuery.trim()
-    : undefined,
-  dateMin: toDateParam(filter.dateMin),
-  dateMax: toDateParam(filter.dateMax),
-  verificationStatus:
-    filter.verificationStatus && filter.verificationStatus.length > 0
-      ? filter.verificationStatus
-      : undefined,
-  rejectionReason: filter.rejectionReason,
-  submittedBy: filter.submittedBy,
-  verifiedBy: filter.verifiedBy,
-  lobbySize:
-    filter.lobbySize && filter.lobbySize.length > 0
-      ? filter.lobbySize
-      : undefined,
-  minRankRange: filter.minRankRange,
-  maxRankRange: filter.maxRankRange,
-  sort: filter.sort,
-  descending: filter.descending,
-});
-
-const fetcher =
-  (): Fetcher<TournamentListItem[], TournamentListRequest> => async (params) =>
-    await orpc.tournaments.list(params);
-
-const getKey = (
-  filter: TournamentListFilter
-): SWRInfiniteKeyLoader<TournamentListItem[], TournamentListRequest | null> => {
-  return (index, previous) => {
-    if (previous && previous.length === 0) return null;
-    return serializeFilter(filter, index + 1);
-  };
-};
-
-function hasActiveFilters(filter: TournamentListFilter) {
-  return Boolean(
-    filter.verified ||
-    filter.ruleset !== undefined ||
-    filter.searchQuery?.trim() ||
-    filter.dateMin ||
-    filter.dateMax ||
-    filter.verificationStatus?.length ||
-    filter.rejectionReason !== undefined ||
-    filter.submittedBy !== undefined ||
-    filter.verifiedBy !== undefined ||
-    filter.lobbySize?.length ||
-    hasRankRangeFilter(filter)
+/** The column labels over the rows from `lg`, pinned under the site header. */
+function TournamentListColumns() {
+  return (
+    <div
+      aria-hidden="true"
+      className={cn(
+        'hidden h-8 items-center border-b bg-muted px-4 text-xs font-medium text-muted-foreground lg:sticky lg:top-(--header-height-px) lg:z-10 lg:grid',
+        TOURNAMENT_ROW_COLUMNS
+      )}
+    >
+      <span>Tournament</span>
+      <span>Format</span>
+      {/* Ends where the dates do, before the rows' chevron (16px + 12px). */}
+      <span className="pr-7 text-right">Dates</span>
+    </div>
   );
 }
 
+/** One page of the tournament list: rows that each open their tournament. */
 export default function TournamentList({
-  filter,
+  tournaments,
 }: {
-  filter: TournamentListFilter;
+  tournaments: TournamentListItem[];
 }) {
-  const { data, error, setSize, isValidating, isLoading, mutate } =
-    useSWRInfinite(getKey(filter), fetcher(), {
-      revalidateOnFocus: false,
-      revalidateFirstPage: false,
-    });
-
-  const listRef = useRef<HTMLDivElement | null>(null);
-  const tournamentData = data ? data.flat() : [];
-  const expectNextPage = data?.at(-1)?.length === pageSize;
-  const virtualCount =
-    tournamentData.length +
-    (expectNextPage && tournamentData.length > 0 ? 1 : 0);
-
-  const virtualizer = useWindowVirtualizer({
-    count: virtualCount,
-    estimateSize: () => 112,
-    overscan: 6,
-    scrollMargin: listRef.current?.offsetTop ?? 0,
-    getItemKey: (index) => tournamentData[index]?.id ?? `loader-${index}`,
-  });
-
-  const virtualizedItems = virtualizer.getVirtualItems();
-
-  useEffect(() => {
-    const lastItem = virtualizedItems.at(-1);
-
-    if (!lastItem || error || !expectNextPage || isLoading || isValidating) {
-      return;
-    }
-
-    if (lastItem.index >= tournamentData.length) {
-      setSize((size) => size + 1);
-    }
-  }, [
-    error,
-    expectNextPage,
-    isLoading,
-    isValidating,
-    setSize,
-    tournamentData.length,
-    virtualizedItems,
-  ]);
-
-  if (error && !data) {
-    return (
-      <SectionError
-        title="Tournaments could not load"
-        description="The archive is temporarily unavailable. Try the request again."
-        retrying={isValidating}
-        onRetry={() => void mutate()}
-      />
-    );
-  }
-
-  if (!data) {
-    return <TournamentListSkeleton />;
-  }
-
-  if (tournamentData.length === 0) {
-    return <EmptyState isFiltered={hasActiveFilters(filter)} />;
-  }
-
   return (
     <>
-      <ListHeader />
-      <div
-        ref={listRef}
-        role="list"
-        aria-label="Tournament submissions"
-        aria-busy={isValidating}
-        className="relative w-full"
-        style={{ height: `${virtualizer.getTotalSize()}px` }}
-      >
-        <div
-          className="absolute top-0 left-0 w-full divide-y"
-          style={{
-            transform: `translateY(${
-              (virtualizedItems[0]?.start ?? 0) -
-              virtualizer.options.scrollMargin
-            }px)`,
-          }}
-        >
-          {virtualizedItems.map((item) => {
-            const isPlaceholder = item.index >= tournamentData.length;
-
-            return (
-              <div
-                key={item.key}
-                data-index={item.index}
-                ref={virtualizer.measureElement}
-                role="listitem"
-              >
-                {isPlaceholder ? (
-                  error ? (
-                    <LoadMoreError onRetry={() => void mutate()} />
-                  ) : (
-                    <ListItemSkeleton label="Loading more tournaments" />
-                  )
-                ) : (
-                  <Link
-                    href={`/tournaments/${tournamentData[item.index].id}`}
-                    data-testid="tournament-list-item"
-                    aria-label={`View ${tournamentData[item.index].name}`}
-                    className="group block transition-colors hover:bg-muted/40 focus-visible:relative focus-visible:z-10 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset dark:hover:bg-secondary/70"
-                  >
-                    <TournamentListRow
-                      tournament={tournamentData[item.index]}
-                    />
-                  </Link>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {!expectNextPage && tournamentData.length >= pageSize && (
-        <p className="border-t px-4 py-3 text-center text-xs text-muted-foreground">
-          You&apos;ve reached the end of the archive.
-        </p>
-      )}
+      <TournamentListColumns />
+      <RowList aria-label="Tournament submissions">
+        {tournaments.map((tournament) => (
+          <TournamentListRow key={tournament.id} tournament={tournament} />
+        ))}
+      </RowList>
     </>
   );
 }
 
-function ListHeader() {
+/** The rows while the list loads, the same height as loaded rows. */
+export function TournamentListSkeleton({ rows = 8 }: { rows?: number }) {
   return (
-    <div
-      aria-hidden="true"
-      className="hidden grid-cols-[minmax(0,1fr)_18rem_230px] gap-5 border-b bg-muted px-5 py-2.5 text-xs font-medium text-muted-foreground lg:sticky lg:top-(--header-height-px) lg:z-30 lg:grid dark:bg-secondary"
-    >
-      <span>Tournament</span>
-      <span>Format</span>
-      <span className="text-right">Dates</span>
-    </div>
-  );
-}
-
-export function TournamentListSkeleton() {
-  return (
-    <div role="status" aria-label="Loading tournaments">
-      <ListHeader />
-      <div className="divide-y">
-        {Array.from({ length: 7 }, (_, index) => (
-          <ListItemSkeleton key={index} />
+    <>
+      <TournamentListColumns />
+      <RowList aria-hidden="true">
+        {Array.from({ length: rows }, (_, index) => (
+          <RowListItem key={index}>
+            <div className={cn('grid gap-2', TOURNAMENT_ROW_COLUMNS)}>
+              <div
+                className={cn(
+                  'flex h-6 items-center gap-2',
+                  TOURNAMENT_ROW_NAME_CELL
+                )}
+              >
+                <Skeleton className="size-4 rounded-full" />
+                <Skeleton className="h-4 w-3/5" />
+              </div>
+              <div className="flex h-5 items-center gap-4 pl-6 lg:pl-0">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-10" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+              <div className="flex h-5 items-center pl-6 md:justify-end md:pl-0">
+                <Skeleton className="h-4 w-36" />
+              </div>
+            </div>
+          </RowListItem>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function ListItemSkeleton({ label }: { label?: string }) {
-  return (
-    <div className="grid min-h-28 gap-3 px-4 py-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_18rem_230px] lg:items-center lg:gap-5">
-      {label && <span className="sr-only">{label}</span>}
-      <div className="space-y-3">
-        <Skeleton className="h-5 w-3/5" />
-        <Skeleton className="h-6 w-24" />
-      </div>
-      <div className="flex gap-3">
-        <Skeleton className="h-4 w-16" />
-        <Skeleton className="h-4 w-12" />
-        <Skeleton className="h-4 w-20" />
-      </div>
-      <Skeleton className="h-4 w-36 lg:ml-auto" />
-    </div>
-  );
-}
-
-function EmptyState({ isFiltered }: { isFiltered: boolean }) {
-  return (
-    <div
-      data-testid="tournament-empty-state"
-      className="flex min-h-72 flex-col items-center justify-center px-5 py-12 text-center"
-    >
-      <span className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted dark:bg-secondary">
-        <SearchX className="size-6 text-muted-foreground" aria-hidden="true" />
-      </span>
-      <h2 className="text-lg font-semibold">
-        {isFiltered ? 'No tournaments match' : 'No tournaments yet'}
-      </h2>
-      <p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
-        {isFiltered
-          ? 'Try a different name, ruleset, or fewer filters.'
-          : 'No tournament submissions are available right now.'}
-      </p>
-      {isFiltered && (
-        <Button asChild variant="outline" className="mt-5">
-          <Link href="/tournaments">Clear filters</Link>
-        </Button>
-      )}
-    </div>
-  );
-}
-
-function LoadMoreError({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div className="flex items-center justify-center gap-3 px-4 py-5 text-sm text-muted-foreground">
-      <span>More tournaments could not load.</span>
-      <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-        Retry
-      </Button>
-    </div>
+      </RowList>
+    </>
   );
 }

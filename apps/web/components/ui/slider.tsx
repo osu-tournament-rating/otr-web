@@ -45,8 +45,9 @@ function Slider({
     >
       <SliderPrimitive.Track
         data-slot="slider-track"
+        // Not bg-muted: on a light popover the track would vanish.
         className={cn(
-          'relative grow overflow-hidden rounded-full bg-muted data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5'
+          'relative grow overflow-hidden rounded-full bg-muted-foreground/25 data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5'
         )}
       >
         <SliderPrimitive.Range

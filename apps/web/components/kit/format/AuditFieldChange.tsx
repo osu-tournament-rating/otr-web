@@ -40,20 +40,13 @@ function Value({
   }
 
   const content = renderValue ? renderValue(value, side) : value.text;
-  // Words such as "Pre-verified": tabular figures widen Inter's hyphen.
-  const figures = /\d/.test(value.text) ? undefined : 'proportional-nums';
 
   return side === 'old' ? (
-    <del
-      className={cn(
-        'text-muted-foreground decoration-muted-foreground/70',
-        figures
-      )}
-    >
+    <del className="text-muted-foreground decoration-muted-foreground/70">
       {content}
     </del>
   ) : (
-    <ins className={cn('text-foreground no-underline', figures)}>{content}</ins>
+    <ins className="text-foreground no-underline">{content}</ins>
   );
 }
 
@@ -62,6 +55,7 @@ function Value({
  * value muted and struck through, an arrow, and the new value. Mods,
  * timestamps, enums and user IDs are written out (`HD, HR`, `Jul 20, 2024,
  * 15:42 UTC`, `Verified`, a username). Use inside `AuditChangeList`.
+ * Extra props, such as `data-testid`, go on the row.
  */
 export function AuditFieldChange({
   entityType,
@@ -70,6 +64,7 @@ export function AuditFieldChange({
   users,
   renderValue,
   className,
+  ...props
 }: {
   entityType: AuditEntityType;
   field: string;
@@ -81,8 +76,7 @@ export function AuditFieldChange({
     value: FormattedAuditValue,
     side: 'old' | 'new'
   ) => React.ReactNode;
-  className?: string;
-}) {
+} & Omit<React.HTMLAttributes<HTMLDivElement>, 'children'>) {
   const before = formatAuditValue(entityType, field, change.originalValue, {
     users,
   });
@@ -97,6 +91,7 @@ export function AuditFieldChange({
         'grid gap-0.5 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-baseline sm:gap-3',
         className
       )}
+      {...props}
     >
       <dt className="text-xs font-medium text-muted-foreground">
         {getAuditFieldLabel(entityType, field)}

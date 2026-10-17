@@ -1,14 +1,14 @@
-import React from 'react';
-import TierCard from './TierCard';
 import { tierData } from '@/lib/utils/tierData';
 
+import TierCard from './TierCard';
+
+/**
+ * Every tier with the rating that reaches it, as a grid of tiles. It sits
+ * straight inside its panel, with no frame of its own.
+ */
 export default function RatingLadder() {
   return (
-    <div
-      className={
-        'grid grid-cols-2 gap-2 rounded-2xl border bg-card p-4 sm:grid-cols-3 xl:auto-cols-fr xl:grid-flow-col'
-      }
-    >
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:auto-cols-fr xl:grid-flow-col">
       {tierData.map((item) => (
         <TierCard
           key={item.tier}

@@ -1,26 +1,32 @@
 'use client';
 
-import PlayerFrequencyChart from './PlayerFrequencyChart';
+import type { Ruleset } from '@otr/core/osu';
+import { Users } from 'lucide-react';
+
+import { seriesColor } from '@/lib/kit/color/categorical';
 import type { PlayerFrequency } from '@/lib/orpc/schema/playerStats';
 
-interface PlayerTeammatesChartProps {
-  className?: string;
-  teammates: PlayerFrequency[];
-}
+import PlayerFrequencyChart from './PlayerFrequencyChart';
 
 export default function PlayerTeammatesChart({
   className,
   teammates,
-}: PlayerTeammatesChartProps) {
+  ruleset,
+}: {
+  className?: string;
+  teammates: PlayerFrequency[];
+  /** The ruleset the profile shows; the chart's links open it too. */
+  ruleset: Ruleset;
+}) {
   return (
     <PlayerFrequencyChart
       className={className}
       data={teammates}
-      type="teammates"
-      title="Frequent Teammates"
-      description="Most frequently played with teammates"
-      emptyMessage="No teammate data available"
-      chartColor="var(--primary)"
+      title="Frequent teammates"
+      icon={Users}
+      emptyTitle="No teammate data"
+      ruleset={ruleset}
+      color={seriesColor(0)}
     />
   );
 }

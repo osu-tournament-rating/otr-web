@@ -13,31 +13,6 @@ export const tierNames = [
 
 export type TierName = (typeof tierNames)[number];
 
-export function getTierString(tier: TierName, subTier: number | undefined) {
-  if (tier === 'Elite Grandmaster') {
-    return 'Elite Grandmaster';
-  }
-
-  const romanNumeral = (() => {
-    switch (subTier) {
-      case 1:
-        return 'I';
-      case 2:
-        return 'II';
-      case 3:
-        return 'III';
-      default:
-        return '';
-    }
-  })();
-
-  if (romanNumeral === '') {
-    return tier.toString();
-  }
-
-  return `${tier} ${romanNumeral}`;
-}
-
 export function getTierColor(tier: TierName) {
   if (tier in tierColors) {
     return tierColors[tier];
@@ -46,7 +21,7 @@ export function getTierColor(tier: TierName) {
   return tierColors['Silver'];
 }
 
-export type TierColor = {
+type TierColor = {
   /**
    * Glow around the tier icon, as `from-color-000 to-color-000`. Dark classes
    * carry their full `dark:` prefix so Tailwind can find them.
@@ -56,78 +31,67 @@ export type TierColor = {
 
     light: string;
   };
-
-  textClass: string;
 };
 
-/** Tier colors for glows and accents. */
-export const tierColors: Partial<{ [key in TierName]: TierColor }> = {
+/** Tier colors for the tier ladder's glows. */
+const tierColors: Partial<{ [key in TierName]: TierColor }> = {
   'Elite Grandmaster': {
     gradient: {
       dark: 'dark:from-blue-500/40 dark:to-blue-700/50',
       light: 'from-blue-500/30 to-blue-700/40',
     },
-    textClass: 'text-elite-grandmaster',
   },
   Grandmaster: {
     gradient: {
       dark: 'dark:from-red-500/40 dark:to-red-700/50',
       light: 'from-red-500/30 to-red-700/40',
     },
-    textClass: 'text-grandmaster',
   },
   Master: {
     gradient: {
       dark: 'dark:from-purple-400/40 dark:to-purple-600/30',
       light: 'from-purple-400/30 to-purple-600/20',
     },
-    textClass: 'text-master',
   },
   Diamond: {
     gradient: {
       dark: 'dark:from-purple-400/40 dark:to-purple-700/20',
       light: 'from-purple-400/30 to-purple-700/10',
     },
-    textClass: 'text-diamond',
   },
   Platinum: {
     gradient: {
       dark: 'dark:from-cyan-500/30 dark:to-cyan-700/10',
       light: 'from-cyan-600/20 to-cyan-800/10',
     },
-    textClass: 'text-platinum',
   },
   Gold: {
     gradient: {
       dark: 'dark:from-yellow-500/30 dark:to-yellow-700/10',
       light: 'from-yellow-600/20 to-yellow-800/10',
     },
-    textClass: 'text-gold',
   },
   Emerald: {
     gradient: {
       dark: 'dark:from-emerald-500/30 dark:to-emerald-700/10',
       light: 'from-emerald-600/20 to-emerald-800/10',
     },
-    textClass: 'text-emerald',
   },
   Silver: {
     gradient: {
       dark: 'dark:from-slate-400/30 dark:to-slate-600/10',
       light: 'from-slate-500/20 to-slate-700/10',
     },
-    textClass: 'text-silver',
   },
   Bronze: {
     gradient: {
       dark: '',
       light: '',
     },
-    textClass: 'text-bronze',
   },
 };
 
-export type TierDataType = {
+type TierDataType = {
   tier: TierName;
 
   /** Minimum rating required to reach the tier. */

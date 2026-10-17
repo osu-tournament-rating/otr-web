@@ -1,21 +1,23 @@
 'use client';
 
-import { ListFilter } from 'lucide-react';
+import { ListFilter, ShieldQuestion } from 'lucide-react';
 import * as React from 'react';
 import { Label, Pie, PieChart, Sector } from 'recharts';
 import type { PieSectorDataItem } from 'recharts/types/polar/Pie';
 
-import UnverifiedDataBadge from '@/components/badges/UnverifiedDataBadge';
+import { NotEnoughData } from '@/components/beatmap/BeatmapSection';
 import {
-  EmptyState,
-  Eyebrow,
-  SectionCard,
-  SectionHeader,
-  Swatch,
-  Tile,
-} from '@/components/beatmap/BeatmapSection';
+  ChartTooltipBody,
+  ChartTooltipCard,
+} from '@/components/kit/charts/ChartTooltip';
+import { SeriesMarker } from '@/components/kit/charts/SeriesMarker';
+import { CalloutChip } from '@/components/kit/feedback/CalloutChip';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { Tile } from '@/components/kit/layout/Tile';
+import { Eyebrow } from '@/components/kit/layout/Typography';
+import { Badge } from '@/components/kit/status/Badge';
 import TapTooltip from '@/components/tap-tooltip';
-import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import type { RankRangeBucketKey } from '@/lib/beatmaps/rankRange';
 import { RANK_RANGE_BUCKETS, bucketRankRanges } from '@/lib/beatmaps/rankRange';
@@ -26,13 +28,19 @@ import type {
   BeatmapRankRangeModDistribution,
   BeatmapTournamentUsage,
 } from '@/lib/orpc/schema/beatmapStats';
+import { CATEGORICAL_OTHER } from '@/lib/kit/color/categorical';
+import { GRADE_PALETTE } from '@/lib/kit/color/grades';
+import { getModPaletteColor } from '@/lib/kit/color/mods';
+import {
+  formatCount,
+  formatCountOf,
+  formatPercent,
+} from '@/lib/kit/format/number';
 import { cn } from '@/lib/utils';
-import { formatChartNumber, formatPercentage } from '@/lib/utils/chart';
 import {
   BEATMAP_MOD_OTHER_LABEL,
   calculateBeatmapModDistribution,
   collapseBeatmapModDistribution,
-  getModColor,
 } from '@/lib/utils/mods';
 import { ScoreGrade, VerificationStatus } from '@otr/core/osu';
 
@@ -58,11 +66,11 @@ function toModSegments(
     label,
     scoreCount,
     percentage,
-    percentageLabel: formatPercentage(percentage, 1),
+    percentageLabel: formatPercent(percentage / 100),
     fill:
       label === BEATMAP_MOD_OTHER_LABEL
-        ? 'var(--muted-foreground)'
-        : getModColor(mods),
+        ? CATEGORICAL_OTHER.css
+        : getModPaletteColor(mods),
   }));
 }
 
@@ -90,13 +98,17 @@ const GRADE_GROUPS = [
   {
     label: 'SS',
     grades: [ScoreGrade.SSH, ScoreGrade.SS],
-    fill: 'var(--grade-ss)',
+    fill: GRADE_PALETTE.SS.css,
   },
-  { label: 'S', grades: [ScoreGrade.SH, ScoreGrade.S], fill: 'var(--grade-s)' },
-  { label: 'A', grades: [ScoreGrade.A], fill: 'var(--grade-a)' },
-  { label: 'B', grades: [ScoreGrade.B], fill: 'var(--grade-b)' },
-  { label: 'C', grades: [ScoreGrade.C], fill: 'var(--grade-c)' },
-  { label: 'D', grades: [ScoreGrade.D], fill: 'var(--grade-d)' },
+  {
+    label: 'S',
+    grades: [ScoreGrade.SH, ScoreGrade.S],
+    fill: GRADE_PALETTE.S.css,
+  },
+  { label: 'A', grades: [ScoreGrade.A], fill: GRADE_PALETTE.A.css },
+  { label: 'B', grades: [ScoreGrade.B], fill: GRADE_PALETTE.B.css },
+  { label: 'C', grades: [ScoreGrade.C], fill: GRADE_PALETTE.C.css },
+  { label: 'D', grades: [ScoreGrade.D], fill: GRADE_PALETTE.D.css },
 ] as const;
 
 function buildGradeSegments(gradeDistribution: BeatmapGradeCount[]) {
@@ -127,7 +139,7 @@ function buildGradeSegments(gradeDistribution: BeatmapGradeCount[]) {
     return {
       ...group,
       percentage,
-      percentageLabel: formatPercentage(percentage, 1),
+      percentageLabel: formatPercent(percentage / 100),
     };
   });
 }
@@ -144,7 +156,7 @@ interface DisplaySegment {
 function formatSegmentValue(
   segment: Pick<DisplaySegment, 'percentageLabel' | 'scoreCount'>
 ): string {
-  return `${segment.percentageLabel} · ${formatChartNumber(segment.scoreCount)}`;
+  return `${segment.percentageLabel} · ${formatCount(segment.scoreCount)}`;
 }
 
 function SegmentBar({
@@ -192,9 +204,9 @@ function SegmentLegend({
     >
       {segments.map((segment) => (
         <li key={segment.label} className="flex items-center gap-1.5">
-          <Swatch color={segment.fill} />
+          <SeriesMarker color={segment.fill} />
           <span className="text-muted-foreground">{segment.label}</span>
-          <span className="font-medium whitespace-nowrap text-foreground">
+          <span className="font-medium whitespace-nowrap text-foreground tabular-nums">
             {formatSegmentValue(segment)}
           </span>
         </li>
@@ -211,7 +223,7 @@ function FreemodPickRows({ segments }: { segments: ModSegment[] }) {
       {segments.map((segment) => (
         <li key={segment.label} className="flex min-h-5 items-center gap-2">
           <span className="flex w-16 shrink-0 items-center gap-1.5">
-            <Swatch color={segment.fill} />
+            <SeriesMarker color={segment.fill} />
             <span className="truncate text-xs text-muted-foreground">
               {segment.label}
             </span>
@@ -229,7 +241,7 @@ function FreemodPickRows({ segments }: { segments: ModSegment[] }) {
               }}
             />
           </span>
-          <span className="w-24 shrink-0 text-right text-xs font-medium text-foreground">
+          <span className="w-24 shrink-0 text-right text-xs font-medium text-foreground tabular-nums">
             {formatSegmentValue(segment)}
           </span>
         </li>
@@ -243,9 +255,12 @@ function FreemodPickChips({ segments }: { segments: ModSegment[] }) {
     <ul aria-label="Freemod mod picks" className="flex flex-wrap gap-1.5">
       {segments.map((segment) => (
         <li key={segment.label}>
-          <Badge variant="outline" className="gap-1.5">
-            <Swatch color={segment.fill} />
-            {`${segment.label} ${formatChartNumber(segment.scoreCount)}`}
+          <Badge
+            variant="outline"
+            swatch={segment.fill}
+            className="tabular-nums"
+          >
+            {`${segment.label} ${formatCount(segment.scoreCount)}`}
           </Badge>
         </li>
       ))}
@@ -262,59 +277,47 @@ interface RankRangeSlice {
 
 const TOOLTIP_MOD_ROW_CAP = 5;
 
-function RankBucketTooltipBody({
-  slice,
-  bucketMods,
-}: {
-  slice: RankRangeSlice;
-  bucketMods?: { scoreCount: number; segments: ModSegment[] };
-}) {
+/** The readout for one rank restriction bucket: its pools, then its mods. */
+function rankBucketReadout(
+  slice: RankRangeSlice,
+  bucketMods?: { scoreCount: number; segments: ModSegment[] }
+): React.ComponentProps<typeof ChartTooltipBody> {
   const shown = bucketMods?.segments.slice(0, TOOLTIP_MOD_ROW_CAP) ?? [];
   const rest = bucketMods?.segments.slice(TOOLTIP_MOD_ROW_CAP) ?? [];
-  const hasModRows = shown.length > 0;
-
-  return (
-    <div className="min-w-44 space-y-1 text-xs">
-      <div className={cn('space-y-0.5', hasModRows && 'border-b pb-1.5')}>
-        <div className="flex items-center gap-1.5 font-medium">
-          <Swatch color={slice.fill} />
-          {`${slice.label} · ${formatChartNumber(slice.count)} ${
-            slice.count === 1 ? 'pool' : 'pools'
-          }`}
-        </div>
-        <p className="text-muted-foreground">
-          {bucketMods
-            ? `Mods in ${formatChartNumber(bucketMods.scoreCount)} verified scores`
-            : 'No verified scores in this bracket'}
-        </p>
-      </div>
-
-      {shown.map((segment) => (
-        <div
-          key={segment.label}
-          className="flex items-baseline justify-between gap-4"
-        >
-          <span className="flex items-baseline gap-1.5">
-            <Swatch color={segment.fill} />
-            <span className="font-medium">{segment.label}</span>
-          </span>
-          <span>{formatSegmentValue(segment)}</span>
-        </div>
-      ))}
-
-      {rest.length > 0 ? (
-        <div className="flex items-baseline justify-between gap-4 text-muted-foreground">
-          <span>{`+${rest.length} more`}</span>
-          <span>
-            {formatPercentage(
-              rest.reduce((total, segment) => total + segment.percentage, 0),
-              1
-            )}
-          </span>
-        </div>
-      ) : null}
-    </div>
+  const restShare = rest.reduce(
+    (total, segment) => total + segment.percentage,
+    0
   );
+
+  return {
+    className: 'min-w-44',
+    title: (
+      <span className="flex items-center gap-1.5">
+        <SeriesMarker color={slice.fill} />
+        {`${slice.label} · ${formatCountOf(slice.count, 'pool')}`}
+      </span>
+    ),
+    rows: [
+      ...shown.map((segment) => ({
+        key: segment.label,
+        label: segment.label,
+        value: formatSegmentValue(segment),
+        color: segment.fill,
+      })),
+      ...(rest.length > 0
+        ? [
+            {
+              key: 'more',
+              label: `+${formatCount(rest.length)} more`,
+              value: formatPercent(restShare / 100),
+            },
+          ]
+        : []),
+    ],
+    footer: bucketMods
+      ? `Mods in ${formatCountOf(bucketMods.scoreCount, 'verified score')}`
+      : 'No verified scores in this bracket',
+  };
 }
 
 function RankRangePie({
@@ -341,9 +344,9 @@ function RankRangePie({
             <tspan
               x={viewBox.cx}
               y={viewBox.cy}
-              className="fill-foreground text-2xl font-bold"
+              className="fill-foreground text-2xl font-bold tabular-nums"
             >
-              {formatChartNumber(totalPools)}
+              {formatCount(totalPools)}
             </tspan>
             <tspan
               x={viewBox.cx}
@@ -411,12 +414,9 @@ function RankRangePie({
             if (!active || !slice) return null;
 
             return (
-              <div className="rounded-lg border border-border/50 bg-background px-3 py-2 shadow-xl">
-                <RankBucketTooltipBody
-                  slice={slice}
-                  bucketMods={modsByBucket.get(slice.key)}
-                />
-              </div>
+              <ChartTooltipCard
+                {...rankBucketReadout(slice, modsByBucket.get(slice.key))}
+              />
             );
           }}
         />
@@ -482,22 +482,22 @@ export default function BeatmapDistributionsCard({
   }, [pools]);
 
   return (
-    <SectionCard
+    <Panel
       data-testid="beatmap-mod-distribution-chart"
-      // overflow-visible: the rank-range tooltip runs past the card edge
+      // overflow-visible: the rank restriction tooltip runs past the panel edge
       className={cn('flex flex-col overflow-visible', className)}
     >
       <SectionHeader icon={ListFilter} title="Distributions" />
 
       {modSegments.length === 0 ? (
-        <EmptyState />
+        <NotEnoughData />
       ) : (
         <div className="flex flex-1 flex-col divide-y">
           <div className="space-y-3 px-4 py-4">
             <div className="flex items-baseline justify-between gap-2">
               <Eyebrow>Mod distribution</Eyebrow>
-              <span className="text-xs text-muted-foreground">
-                {`${formatChartNumber(totalScoreCount)} scores`}
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {formatCountOf(totalScoreCount, 'score')}
               </span>
             </div>
             <SegmentBar
@@ -517,9 +517,7 @@ export default function BeatmapDistributionsCard({
                   <Eyebrow>Grades</Eyebrow>
                 </div>
                 {gradeSegments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Not enough data
-                  </p>
+                  <NotEnoughData className="py-4" />
                 ) : (
                   <>
                     <SegmentBar
@@ -539,8 +537,8 @@ export default function BeatmapDistributionsCard({
                 <div className="flex items-baseline justify-between gap-2">
                   <Eyebrow>Freemod picks</Eyebrow>
                   {freemodPicks.freemodGameCount > 0 ? (
-                    <span className="text-xs text-muted-foreground">
-                      {`${formatChartNumber(freemodPicks.freemodScoreCount)} scores · ${formatChartNumber(freemodPicks.freemodGameCount)} games`}
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {`${formatCountOf(freemodPicks.freemodScoreCount, 'score')} · ${formatCountOf(freemodPicks.freemodGameCount, 'game')}`}
                     </span>
                   ) : null}
                 </div>
@@ -552,9 +550,7 @@ export default function BeatmapDistributionsCard({
                   )}
                 >
                   {freemodSegments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      Not enough data
-                    </p>
+                    <NotEnoughData className="py-4" />
                   ) : freemodPicks.freemodScoreCount < 5 ? (
                     <FreemodPickChips segments={freemodSegments} />
                   ) : (
@@ -570,9 +566,11 @@ export default function BeatmapDistributionsCard({
             >
               <div className="flex flex-1 flex-col space-y-3">
                 <div className="flex flex-col items-start gap-2">
-                  <Eyebrow>Tournament rank ranges</Eyebrow>
+                  <Eyebrow>Tournament rank restrictions</Eyebrow>
                   {hasUnverifiedPools && rankSlices.length > 0 ? (
-                    <UnverifiedDataBadge />
+                    <CalloutChip icon={ShieldQuestion}>
+                      Includes unverified
+                    </CalloutChip>
                   ) : null}
                 </div>
 
@@ -583,21 +581,17 @@ export default function BeatmapDistributionsCard({
                   )}
                 >
                   {rankSlices.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      Not enough data
-                    </p>
+                    <NotEnoughData className="py-4" />
                   ) : rankSlices.length === 1 ? (
                     <Tile
                       data-testid="beatmap-rank-range-summary"
                       className="py-6"
                     >
                       <p className="flex items-center justify-center gap-1.5 text-center text-sm font-medium">
-                        <Swatch color={rankSlices[0].fill} />
+                        <SeriesMarker color={rankSlices[0].fill} />
                         {rankSlices[0].count === 1
-                          ? `1 pool · ${rankSlices[0].label} rank`
-                          : `All ${formatChartNumber(rankSlices[0].count)} pools · ${
-                              rankSlices[0].label
-                            } rank`}
+                          ? `1 pool · ${rankSlices[0].label}`
+                          : `All ${formatCountOf(rankSlices[0].count, 'pool')} · ${rankSlices[0].label}`}
                       </p>
                     </Tile>
                   ) : (
@@ -608,7 +602,7 @@ export default function BeatmapDistributionsCard({
                         modsByBucket={modsByBucket}
                       />
                       <ul
-                        aria-label="Tournaments by rank range"
+                        aria-label="Tournaments by rank restriction"
                         className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs"
                       >
                         {rankSlices.map((slice) => (
@@ -616,19 +610,21 @@ export default function BeatmapDistributionsCard({
                             <TapTooltip
                               side="top"
                               content={
-                                <RankBucketTooltipBody
-                                  slice={slice}
-                                  bucketMods={modsByBucket.get(slice.key)}
+                                <ChartTooltipBody
+                                  {...rankBucketReadout(
+                                    slice,
+                                    modsByBucket.get(slice.key)
+                                  )}
                                 />
                               }
                               triggerClassName="flex w-auto items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors hover:bg-accent"
                             >
-                              <Swatch color={slice.fill} />
+                              <SeriesMarker color={slice.fill} />
                               <span className="text-muted-foreground">
                                 {slice.label}
                               </span>
-                              <span className="font-medium text-foreground">
-                                {formatChartNumber(slice.count)}
+                              <span className="font-medium text-foreground tabular-nums">
+                                {formatCount(slice.count)}
                               </span>
                             </TapTooltip>
                           </li>
@@ -642,6 +638,6 @@ export default function BeatmapDistributionsCard({
           </div>
         </div>
       )}
-    </SectionCard>
+    </Panel>
   );
 }

@@ -21,7 +21,7 @@ function Command({
     <CommandPrimitive
       data-slot="command"
       className={cn(
-        'flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground',
+        'group/command flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground',
         className
       )}
       {...props}
@@ -134,6 +134,12 @@ function CommandSeparator({
   );
 }
 
+/**
+ * The active item (the one Enter picks) is tinted while focus is inside the
+ * command, so arrow keys show where they are, or while the pointer is over
+ * the list. An inline list that nobody is using shows no tint, so its first
+ * item never looks chosen.
+ */
 function CommandItem({
   className,
   ...props
@@ -142,7 +148,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 group-hover/list:data-[selected=true]:bg-accent group-hover/list:data-[selected=true]:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
+        "relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 group-focus-within/command:data-[selected=true]:bg-accent group-focus-within/command:data-[selected=true]:text-accent-foreground group-hover/list:data-[selected=true]:bg-accent group-hover/list:data-[selected=true]:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground",
         className
       )}
       {...props}

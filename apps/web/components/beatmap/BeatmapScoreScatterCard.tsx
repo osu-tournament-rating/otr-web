@@ -1,6 +1,6 @@
 'use client';
 
-import { ChartScatter } from 'lucide-react';
+import { ChartScatter, EyeOff } from 'lucide-react';
 import * as React from 'react';
 import {
   CartesianGrid,
@@ -12,16 +12,12 @@ import {
   YAxis,
 } from 'recharts';
 
-import {
-  EmptyState,
-  SectionCard,
-  SectionHeader,
-} from '@/components/beatmap/BeatmapSection';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
+import { NotEnoughData } from '@/components/beatmap/BeatmapSection';
+import { ChartTooltipContent } from '@/components/kit/charts/ChartTooltip';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { formatScoreTick, getScatterAxis } from '@/lib/beatmaps/chart-axis';
 import {
   RANK_RANGE_BUCKETS,
@@ -30,8 +26,20 @@ import {
 } from '@/lib/beatmaps/rankRange';
 import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
 import type { BeatmapScoreSample } from '@/lib/orpc/schema/beatmapStats';
+import {
+  CHART_CURSOR,
+  chartAxisProps,
+  chartGridProps,
+  niceAxisProps,
+} from '@/lib/kit/charts/axis';
+import { formatCountTick } from '@/lib/kit/charts/format';
+import {
+  DEFAULT_MAX_TICKS,
+  NARROW_MAX_TICKS,
+  getNiceTicks,
+} from '@/lib/kit/charts/ticks';
+import { formatCount, formatCountOf } from '@/lib/kit/format/number';
 import { cn } from '@/lib/utils';
-import { formatChartNumber } from '@/lib/utils/chart';
 import { getBeatmapModLabel } from '@/lib/utils/mods';
 
 interface BeatmapScoreScatterCardProps {
@@ -105,26 +113,42 @@ function linearRegression(
   return { slope, intercept };
 }
 
-function TooltipRow({
-  label,
-  value,
-  muted = false,
-}: {
-  label: string;
-  value: string;
-  muted?: boolean;
-}) {
+/**
+ * The kit chart tooltip for one score: its rank restriction as the title,
+ * rating and score as rows, and its mods underneath. A pinned point reports
+ * its real score, not the floor it is drawn on.
+ */
+function ScatterTooltip(
+  props: React.ComponentProps<typeof ChartTooltipContent>
+) {
+  const point = props.payload?.[0]?.payload as ScatterPoint | undefined;
+
   return (
-    <div className="flex w-full items-baseline justify-between gap-4">
-      <span className="text-muted-foreground">{label}</span>
-      <span
-        className={
-          muted ? 'text-muted-foreground' : 'font-medium text-foreground'
-        }
-      >
-        {value}
-      </span>
-    </div>
+    <ChartTooltipContent
+      {...props}
+      // Scatter tooltips carry no x label; the title comes from the point.
+      label=""
+      marker="dot"
+      labelFormatter={() =>
+        point ? (
+          <span className="flex items-center gap-1.5">
+            <RankRangeKey bucket={BUCKET_BY_KEY[point.rankRange]} />
+            {point.rankRangeLabel}
+          </span>
+        ) : null
+      }
+      valueFormatter={(value, item) => {
+        const scored = item.payload as ScatterPoint | undefined;
+        return item.name === 'Score' && scored
+          ? formatCount(scored.score)
+          : formatCount(value);
+      }}
+      footer={() =>
+        point
+          ? `Mods ${point.modLabel}${point.clamped ? ' · below the chart floor' : ''}`
+          : null
+      }
+    />
   );
 }
 
@@ -190,7 +214,7 @@ function RankRangeLegend({
 
   return (
     <ul
-      aria-label="Rank ranges"
+      aria-label="Rank restrictions"
       className="flex flex-wrap gap-x-2 gap-y-1 text-xs"
     >
       {entries.map(({ bucket, count, hasTrend }) => {
@@ -207,7 +231,7 @@ function RankRangeLegend({
                   : `Hide ${bucket.label} scores`
               }
               className={cn(
-                'flex items-center gap-1.5 rounded-md px-1.5 py-1 transition-colors',
+                'flex min-h-8 cursor-pointer items-center gap-1.5 rounded-md px-1.5 transition-colors',
                 'hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
                 isHidden && 'opacity-50'
               )}
@@ -218,8 +242,8 @@ function RankRangeLegend({
                 withLine={hasTrend}
               />
               <span className="font-medium">{bucket.label}</span>
-              <span className="text-muted-foreground">
-                {formatChartNumber(count)}
+              <span className="text-muted-foreground tabular-nums">
+                {formatCount(count)}
               </span>
             </button>
           </li>
@@ -303,18 +327,14 @@ export default function BeatmapScoreScatterCard({
     [series, hiddenRanges]
   );
 
-  const ratingDomain = React.useMemo<[number, number] | null>(() => {
+  const ratingAxis = React.useMemo(() => {
     if (ratedPoints.length === 0) return null;
 
     const ratings = ratedPoints.map((point) => point.rating);
-    const min = Math.min(...ratings);
-    const max = Math.max(...ratings);
-    const range = max - min;
-    if (range === 0) return [min, max];
-
-    const step = Math.pow(10, Math.floor(Math.log10(range / 4)));
-    return [Math.floor(min / step) * step, Math.ceil(max / step) * step];
-  }, [ratedPoints]);
+    return getNiceTicks(Math.min(...ratings), Math.max(...ratings), {
+      maxTicks: isNarrow ? NARROW_MAX_TICKS : DEFAULT_MAX_TICKS,
+    });
+  }, [ratedPoints, isNarrow]);
 
   const trends = React.useMemo(() => {
     const fits = new Map<RankRangeBucketKey, RangeTrend>();
@@ -358,46 +378,46 @@ export default function BeatmapScoreScatterCard({
     if (series.length === 0) return '';
 
     const ranges = series.map(({ bucket, points }) => {
-      const count = `${bucket.label}: ${formatChartNumber(points.length)} scores`;
+      const count = `${bucket.label}: ${formatCountOf(points.length, 'score')}`;
       const trend = trends.get(bucket.key);
       if (!trend) return `${count}, too few for a trend line.`;
 
       const per100 = Math.round(trend.slope * 100);
       if (per100 === 0) return `${count}, trend is flat.`;
 
-      return `${count}, trend ${per100 > 0 ? 'rises' : 'falls'} about ${formatChartNumber(Math.abs(per100))} score per 100 rating.`;
+      return `${count}, trend ${per100 > 0 ? 'rises' : 'falls'} about ${formatCount(Math.abs(per100))} score per 100 rating.`;
     });
 
-    return `${formatChartNumber(ratedPoints.length)} scores plotted against pre-match rating. ${ranges.join(' ')}`;
+    return `${formatCountOf(ratedPoints.length, 'score')} plotted against pre-match rating. ${ranges.join(' ')}`;
   }, [series, trends, ratedPoints.length]);
 
   const meta =
     sample.points.length < sample.totalScoreCount
-      ? `${formatChartNumber(sample.points.length)} of ${formatChartNumber(sample.totalScoreCount)} scores`
-      : `${formatChartNumber(sample.points.length)} scores`;
+      ? `${formatCount(sample.points.length)} of ${formatCountOf(sample.totalScoreCount, 'score')}`
+      : formatCountOf(sample.points.length, 'score');
 
   const footnote: string[] = [];
   if (unratedCount > 0) {
     footnote.push(
-      `${formatChartNumber(unratedCount)} scores without pre-match ratings hidden`
+      `${formatCountOf(unratedCount, 'score')} without pre-match ratings hidden`
     );
   }
   if (clampedCount > 0) {
     footnote.push(
-      `${formatChartNumber(clampedCount)} low outlier${clampedCount === 1 ? '' : 's'} pinned to the axis floor`
+      `${formatCountOf(clampedCount, 'low outlier')} pinned to the axis floor`
     );
   }
 
   return (
-    <SectionCard data-testid="beatmap-score-scatter" className={cn(className)}>
+    <Panel data-testid="beatmap-score-scatter" className={className}>
       <SectionHeader icon={ChartScatter} title="Score scatter" meta={meta} />
       {sample.points.length === 0 ? (
-        <EmptyState />
+        <NotEnoughData />
       ) : ratedPoints.length === 0 ||
-        ratingDomain === null ||
+        ratingAxis === null ||
         scoreAxis === null ? (
         <div className="flex h-[300px] items-center justify-center px-4">
-          <EmptyState />
+          <NotEnoughData />
         </div>
       ) : (
         <div className="space-y-3 px-4 py-4">
@@ -409,9 +429,12 @@ export default function BeatmapScoreScatterCard({
           <p className="sr-only">{chartDescription}</p>
           {visibleSeries.length === 0 ? (
             <div className="flex h-[300px] items-center justify-center">
-              <EmptyState>
-                All rank ranges are hidden. Select one above to show scores.
-              </EmptyState>
+              <EmptyState
+                size="compact"
+                icon={EyeOff}
+                title="All rank restrictions are hidden"
+                description="Select one above to show scores."
+              />
             </div>
           ) : (
             <ChartContainer
@@ -420,20 +443,17 @@ export default function BeatmapScoreScatterCard({
             >
               {/* No `title`: Recharts emits an SVG <title> that hijacks hover */}
               <ScatterChart
-                margin={{ top: 8, right: 12, bottom: 22, left: 0 }}
+                // Room on the right for the last rating label on the edge.
+                margin={{ top: 8, right: 24, bottom: 22, left: 0 }}
                 desc={chartDescription}
               >
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid {...chartGridProps} />
                 <XAxis
+                  {...chartAxisProps}
                   dataKey="rating"
                   name="Pre-match rating"
-                  type="number"
-                  domain={ratingDomain}
-                  tickFormatter={(value: number) =>
-                    formatChartNumber(Math.round(value))
-                  }
-                  tickLine={false}
-                  axisLine={false}
+                  {...niceAxisProps(ratingAxis)}
+                  tickFormatter={formatCountTick}
                   label={{
                     value: 'Pre-match rating',
                     position: 'insideBottom',
@@ -444,14 +464,14 @@ export default function BeatmapScoreScatterCard({
                   }}
                 />
                 <YAxis
+                  {...chartAxisProps}
                   dataKey="plotScore"
                   name="Score"
                   type="number"
                   domain={[scoreAxis.min, scoreAxis.max]}
                   ticks={scoreAxis.ticks}
+                  interval={0}
                   tickFormatter={(value: number) => formatScoreTick(value)}
-                  tickLine={false}
-                  axisLine={false}
                   width={64}
                   label={{
                     value: 'Score',
@@ -464,63 +484,8 @@ export default function BeatmapScoreScatterCard({
                   }}
                 />
                 <ChartTooltip
-                  cursor={{ strokeDasharray: '3 3' }}
-                  content={
-                    <ChartTooltipContent
-                      labelFormatter={(_, payload) => {
-                        const point = payload?.[0]?.payload as
-                          ScatterPoint | undefined;
-                        if (!point) return null;
-                        return (
-                          <span className="flex items-center gap-1.5">
-                            <RankRangeKey
-                              bucket={BUCKET_BY_KEY[point.rankRange]}
-                            />
-                            <span>{point.rankRangeLabel}</span>
-                          </span>
-                        );
-                      }}
-                      formatter={(value, name, item, index, entries) => {
-                        const numeric =
-                          typeof value === 'number' ? value : Number(value);
-                        const isRating = name === 'Pre-match rating';
-                        const point = (
-                          item as { payload?: ScatterPoint } | undefined
-                        )?.payload;
-                        const isLastRow =
-                          index ===
-                          (Array.isArray(entries) ? entries.length : 1) - 1;
-                        // Read the raw payload: a pinned point never reports the floor.
-                        const shown = isRating
-                          ? Math.round(numeric)
-                          : (point?.score ?? numeric);
-
-                        return (
-                          <>
-                            <TooltipRow
-                              label={String(name)}
-                              value={formatChartNumber(shown)}
-                            />
-                            {isLastRow && point ? (
-                              <>
-                                <TooltipRow
-                                  label="Mods"
-                                  value={point.modLabel}
-                                />
-                                {point.clamped ? (
-                                  <TooltipRow
-                                    label="Note"
-                                    value="below chart floor"
-                                    muted
-                                  />
-                                ) : null}
-                              </>
-                            ) : null}
-                          </>
-                        );
-                      }}
-                    />
-                  }
+                  cursor={{ ...CHART_CURSOR.line, strokeDasharray: '3 3' }}
+                  content={<ScatterTooltip />}
                 />
                 {visibleSeries.map(({ bucket, points }) => (
                   <Scatter
@@ -574,6 +539,6 @@ export default function BeatmapScoreScatterCard({
           ) : null}
         </div>
       )}
-    </SectionCard>
+    </Panel>
   );
 }

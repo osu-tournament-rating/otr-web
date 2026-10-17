@@ -22,20 +22,42 @@ import {
   getBeatmapRulesetLabel,
   isManiaRuleset,
 } from '@/lib/beatmaps/presentation';
-import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
+import type { BeatmapTableRow } from '@/lib/beatmaps/table-row';
+import { formatCount, formatCountOf } from '@/lib/kit/format/number';
+import { ROW_HOVER_TINT } from '@/lib/kit/tables/row';
 import { cn } from '@/lib/utils';
-import { formatDuration } from '@/lib/utils/date';
+import { formatDuration } from '@/lib/kit/format/date';
 
 interface BeatmapListRowsProps extends ComponentProps<'div'> {
-  beatmaps: BeatmapListItem[];
+  beatmaps: BeatmapTableRow[];
+  /**
+   * A tournament's pool: its own game counts and no tournament count, titles
+   * under the pool's heading, and the ruleset only where the pool mixes them.
+   */
+  pool?: boolean;
 }
 
-/** The compact list surface: a full-bleed cover beside a single text block. */
+/**
+ * The compact list surface: a full-bleed cover beside a single text block.
+ * The beatmap list's compact layout, and on phones its table and a
+ * tournament's pool.
+ */
 export default function BeatmapListRows({
   beatmaps,
+  pool = false,
   className,
   ...props
 }: BeatmapListRowsProps) {
+  // A row title sits one level under the heading above the list.
+  const Title = pool ? 'h3' : 'h2';
+  const showRuleset =
+    !pool ||
+    new Set(
+      beatmaps.map((beatmap) =>
+        getBeatmapDisplayRuleset(beatmap.ruleset, beatmap.diffName)
+      )
+    ).size > 1;
+
   return (
     <div
       role="list"
@@ -53,15 +75,17 @@ export default function BeatmapListRows({
           beatmap.ruleset,
           beatmap.diffName
         );
-        const topMods = beatmap.topMods ?? [];
         const showMods = !isManiaRuleset(ruleset);
 
         return (
-          <article
+          <div
             key={beatmap.id}
             role="listitem"
             data-testid={`beatmap-list-row-${beatmap.osuId}`}
-            className="group relative grid gap-3 p-3 transition-colors hover:bg-muted/35 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-stretch sm:gap-4 sm:p-4 lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[14rem_minmax(0,1fr)] dark:hover:bg-secondary/60"
+            className={cn(
+              'group relative grid gap-3 p-3 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-stretch sm:gap-4 sm:p-4 lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[14rem_minmax(0,1fr)]',
+              ROW_HOVER_TINT
+            )}
           >
             <Link
               href={href}
@@ -101,13 +125,16 @@ export default function BeatmapListRows({
                   data-testid="beatmap-heading"
                   className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5"
                 >
-                  <h2
+                  <Title
                     data-testid="beatmap-title"
                     title={beatmap.title}
-                    className="min-w-0 text-base leading-snug font-semibold break-words transition-colors group-hover:text-primary sm:text-lg"
+                    className={cn(
+                      'min-w-0 text-base leading-snug font-semibold break-words transition-colors group-hover:text-link sm:text-lg',
+                      beatmap.isDeleted && 'text-muted-foreground line-through'
+                    )}
                   >
                     {beatmap.title}
-                  </h2>
+                  </Title>
                   <p
                     data-testid="beatmap-difficulty-name"
                     title={beatmap.diffName}
@@ -149,6 +176,7 @@ export default function BeatmapListRows({
                       {beatmap.creator ?? 'Unknown mapper'}
                     </span>
                   </p>
+                  {beatmap.isDeleted ? <p>Deleted from osu!</p> : null}
                 </div>
               </div>
 
@@ -157,20 +185,22 @@ export default function BeatmapListRows({
                   data-testid="beatmap-primary-metrics"
                   className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted-foreground sm:text-sm"
                 >
-                  <BeatmapMetric
-                    testId="beatmap-ruleset"
-                    icon={
-                      <RulesetIcon
-                        ruleset={ruleset}
-                        className="size-4 shrink-0 fill-current"
-                        aria-hidden="true"
-                      />
-                    }
-                    value={rulesetLabel}
-                  />
+                  {showRuleset ? (
+                    <BeatmapMetric
+                      testId="beatmap-ruleset"
+                      icon={
+                        <RulesetIcon
+                          ruleset={ruleset}
+                          className="size-4 shrink-0 fill-current"
+                          aria-hidden="true"
+                        />
+                      }
+                      value={rulesetLabel}
+                    />
+                  ) : null}
                   <StarRatingPill
                     starRating={beatmap.sr}
-                    className="ml-1 min-w-15"
+                    className={cn('min-w-15', showRuleset && 'ml-1')}
                   />
                   <BeatmapMetric
                     className="w-14"
@@ -207,28 +237,38 @@ export default function BeatmapListRows({
                         aria-hidden="true"
                       />
                     }
-                    value={beatmap.verifiedGameCount.toLocaleString('en-US')}
+                    value={formatCount(beatmap.gameCount)}
                     valueClassName="min-w-[3ch]"
-                    ariaLabel={`${beatmap.verifiedGameCount.toLocaleString('en-US')} verified games`}
-                  />
-                  <BeatmapMetric
-                    testId="beatmap-tournaments-count"
-                    icon={
-                      <Trophy className="size-4 shrink-0" aria-hidden="true" />
-                    }
-                    value={beatmap.verifiedTournamentCount.toLocaleString(
-                      'en-US'
+                    // The list counts verified games; a pool counts its own.
+                    ariaLabel={formatCountOf(
+                      beatmap.gameCount,
+                      pool ? 'game' : 'verified game'
                     )}
-                    valueClassName="min-w-[3ch]"
-                    ariaLabel={`${beatmap.verifiedTournamentCount.toLocaleString('en-US')} verified tournaments`}
                   />
+                  {pool ? null : (
+                    <BeatmapMetric
+                      testId="beatmap-tournaments-count"
+                      icon={
+                        <Trophy
+                          className="size-4 shrink-0"
+                          aria-hidden="true"
+                        />
+                      }
+                      value={formatCount(beatmap.tournamentCount)}
+                      valueClassName="min-w-[3ch]"
+                      ariaLabel={formatCountOf(
+                        beatmap.tournamentCount,
+                        'verified tournament'
+                      )}
+                    />
+                  )}
                   {showMods ? (
-                    <BeatmapTopMods mods={topMods} fixedWidth />
+                    <BeatmapTopMods mods={beatmap.topMods} fixedWidth />
                   ) : null}
                 </div>
               </div>
             </div>
-          </article>
+          </div>
         );
       })}
     </div>

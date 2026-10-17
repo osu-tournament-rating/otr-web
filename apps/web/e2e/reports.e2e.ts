@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { test, expect } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 import { ReportEntityType, ReportStatus } from '@otr/core/osu';
 
 import { STORAGE_STATE } from './fixtures/auth';
@@ -16,8 +16,69 @@ type UserClient = ReturnType<typeof createOrpcClientForRole>;
 type ReportTarget = {
   entityId: number;
   route: string;
-  scoreScopeId?: number;
 };
+
+/**
+ * Opens the report dialog for an entity: its flag button, or the "Report an
+ * issue" item in the card's actions menu where the page keeps it there.
+ * Retries until the dialog shows, since the dev server can still be
+ * hydrating the page when the first click lands.
+ */
+async function openReportDialog(
+  page: Page,
+  entityType: ReportEntityType,
+  target: ReportTarget
+): Promise<Locator> {
+  const dialog = page.locator(
+    `[data-testid="report-dialog"][data-entity-type="${entityType}"][data-entity-id="${target.entityId}"]`
+  );
+
+  await expect(async () => {
+    if (await dialog.isVisible()) return;
+    await clickReportTrigger(page, entityType, target);
+    await expect(dialog).toBeVisible({ timeout: 3000 });
+  }).toPass({ timeout: 30000 });
+
+  return dialog;
+}
+
+async function clickReportTrigger(
+  page: Page,
+  entityType: ReportEntityType,
+  target: ReportTarget
+): Promise<void> {
+  const triggerSelector = [
+    '[data-testid="report-button"]',
+    `[data-entity-type="${entityType}"]`,
+    `[data-entity-id="${target.entityId}"]`,
+  ].join('');
+
+  const card =
+    entityType === ReportEntityType.Score
+      ? page.locator(`#score-${target.entityId}`)
+      : entityType === ReportEntityType.Game
+        ? page.locator(`#game-${target.entityId}`)
+        : null;
+  if (card) {
+    await expect(card).toBeVisible({ timeout: 10000 });
+    // Score cards show their actions on hover.
+    await card.hover();
+  }
+
+  const scope: Page | Locator = card ?? page;
+  const trigger = scope.locator(`${triggerSelector}:visible`);
+  if ((await trigger.count()) > 0) {
+    await expect(trigger).toHaveCount(1);
+    await trigger.click();
+    return;
+  }
+
+  await scope
+    .getByRole('button', { name: /^Actions for/ })
+    .first()
+    .click();
+  await page.getByRole('menuitem', { name: 'Report an issue' }).click();
+}
 
 const REPORT_SCENARIOS = [
   { name: 'tournament', entityType: ReportEntityType.Tournament },
@@ -72,12 +133,11 @@ async function getReportTarget(
   return {
     entityId: score.id,
     route: ROUTES.match(TEST_MATCH_ID),
-    scoreScopeId: score.id,
   };
 }
 
-/** Report creation and the read-only "Your Reports" view for regular users. */
-test.describe('Your Reports', () => {
+/** Report creation, and My reports: every signed-in user's own reports. */
+test.describe('My reports', () => {
   test.describe('Unauthenticated access', () => {
     test('redirects an unauthenticated visitor to /unauthorized', async ({
       page,
@@ -92,14 +152,17 @@ test.describe('Your Reports', () => {
   test.describe('Admin role', () => {
     test.use({ storageState: STORAGE_STATE.admin });
 
-    test('is redirected to the admin reports view', async ({ page }) => {
+    test('sees their own reports, not the admin queue', async ({ page }) => {
       await page.goto(ROUTES.reports);
       await page.waitForLoadState('networkidle');
 
-      await expect(page).toHaveURL(/\/admin\/reports/, { timeout: 10000 });
+      await expect(page).toHaveURL(/\/reports$/, { timeout: 10000 });
+      await expect(
+        page.getByRole('heading', { level: 1, name: 'My reports' })
+      ).toBeVisible({ timeout: 10000 });
       await expect(
         page.locator('[data-testid="admin-reports-heading"]')
-      ).toBeVisible({ timeout: 10000 });
+      ).toHaveCount(0);
     });
 
     test('requires a comment before closing a report', async ({ page }) => {
@@ -175,30 +238,27 @@ test.describe('Your Reports', () => {
   test.describe('Regular user role', () => {
     test.use({ storageState: STORAGE_STATE.user });
 
-    test('renders the Your Reports heading and card', async ({ page }) => {
+    test('renders the My reports heading and card', async ({ page }) => {
       await page.goto(ROUTES.reports);
       await page.waitForLoadState('networkidle');
 
       await expect(
-        page.getByRole('heading', { level: 1, name: 'Your Reports' })
+        page.getByRole('heading', { level: 1, name: 'My reports' })
       ).toBeVisible({ timeout: 10000 });
       await expect(page.locator('[data-testid="my-reports-card"]')).toBeVisible(
         { timeout: 10000 }
       );
     });
 
-    test('the profile menu exposes Reports (and not Admin) for a regular user', async ({
+    test('the account menu exposes My reports (and not Admin) for a regular user', async ({
       page,
     }) => {
       await page.goto(ROUTES.home);
       await page.waitForLoadState('networkidle');
 
-      await page
-        .getByRole('banner')
-        .getByRole('img', { name: /avatar$/i })
-        .click();
+      await page.locator('[data-testid="account-menu-trigger"]').click();
 
-      const reportsItem = page.getByRole('menuitem', { name: 'Reports' });
+      const reportsItem = page.getByRole('menuitem', { name: /^My reports/ });
       await expect(reportsItem).toBeVisible({ timeout: 10000 });
       await expect(reportsItem).toHaveAttribute('href', ROUTES.reports);
       await expect(page.getByRole('menuitem', { name: 'Admin' })).toHaveCount(
@@ -234,34 +294,21 @@ test.describe('Your Reports', () => {
         await page.goto(target.route);
         await page.waitForLoadState('networkidle');
 
-        const triggerSelector = [
-          '[data-testid="report-button"]',
-          `[data-entity-type="${scenario.entityType}"]`,
-          `[data-entity-id="${target.entityId}"]`,
-        ].join('');
-
-        let trigger = page.locator(`${triggerSelector}:visible`);
-        if (target.scoreScopeId !== undefined) {
-          const scoreCard = page.locator(`#score-${target.scoreScopeId}`);
-          await expect(scoreCard).toBeVisible({ timeout: 10000 });
-          await scoreCard.hover();
-          trigger = scoreCard.locator(`${triggerSelector}:visible`);
-        }
-
-        await expect(trigger).toHaveCount(1);
-        await trigger.click();
-
-        const dialog = page.locator(
-          `[data-testid="report-dialog"][data-entity-type="${scenario.entityType}"][data-entity-id="${target.entityId}"]`
+        const dialog = await openReportDialog(
+          page,
+          scenario.entityType,
+          target
         );
-        await expect(dialog).toBeVisible({ timeout: 10000 });
         await expect(dialog.getByRole('checkbox')).toHaveCount(0);
 
         const reason = dialog.getByRole('combobox', { name: /^Reason/ });
         const submit = dialog.getByRole('button', { name: /submit report/i });
         await expect(reason).toBeEnabled({ timeout: 10000 });
         if (scenario.entityType === ReportEntityType.Tournament) {
-          await expect(submit).toBeDisabled();
+          // Submitting without a reason names the missing field.
+          await submit.click();
+          await expect(dialog.getByText('Reason is required')).toBeVisible();
+          await expect(dialog).toBeVisible();
         }
         await reason.click();
 
@@ -356,14 +403,22 @@ test.describe('Your Reports', () => {
       await expect(
         reportRow.locator('[data-testid="my-reports-unread-dot"]')
       ).toBeVisible({ timeout: 10000 });
-      await reportRow.click();
+      // The row is not clickable; its labelled View button opens the report.
+      await reportRow
+        .getByRole('button', { name: `View report #${created.reportId}` })
+        .click();
 
       const dialog = page.locator('[data-testid="my-report-detail"]');
       await expect(dialog).toBeVisible({ timeout: 10000 });
+      await expect(
+        dialog.getByRole('heading', { name: 'Report details' })
+      ).toBeVisible();
       await expect(dialog.getByText('Comment', { exact: true })).toBeVisible();
       await expect(dialog.getByText('E2E admin comment')).toBeVisible();
       await expect(
-        dialog.getByRole('button', { name: /confirm|dismiss|reopen/i })
+        dialog.getByRole('button', {
+          name: /^(Confirm report|Dismiss|Reopen)$/,
+        })
       ).toHaveCount(0);
 
       await page.keyboard.press('Escape');

@@ -4,7 +4,8 @@ import { eq, sql } from 'drizzle-orm';
 
 export async function getFriendCount(playerId: number): Promise<number> {
   const result = await db
-    .select({ count: sql<number>`count(*)` })
+    // Cast, because Postgres returns count(*) as a bigint, which arrives as a string.
+    .select({ count: sql<number>`count(*)::int` })
     .from(schema.playerFriends)
     .where(eq(schema.playerFriends.playerId, playerId));
   return result[0]?.count ?? 0;

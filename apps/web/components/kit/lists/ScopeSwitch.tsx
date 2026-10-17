@@ -60,7 +60,9 @@ export function ScopeSwitch<T extends string>({
             value={option.value}
             disabled={option.disabled}
             className={cn(
-              'relative inline-flex min-w-12 cursor-pointer items-center justify-center px-3 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none not-first:border-l not-first:border-input',
+              // 8px padding on phones, so four options (the admin report
+              // queue's statuses) fit a 360px screen.
+              'relative inline-flex min-w-12 cursor-pointer items-center justify-center px-2 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none not-first:border-l not-first:border-input sm:px-3',
               // The frame's inner corners: its radius less its 1px border.
               'first:rounded-l-[calc(var(--radius-md)-1px)] last:rounded-r-[calc(var(--radius-md)-1px)]',
               'hover:bg-accent hover:text-foreground',

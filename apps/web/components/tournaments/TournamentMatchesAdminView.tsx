@@ -1,30 +1,36 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { toast } from 'sonner';
-import { Loader2, Plus, Swords, Trash2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Plus, Swords, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useSession } from '@/lib/hooks/useSession';
-import { hasAdminScope } from '@/lib/auth/roles';
-import { orpc } from '@/lib/orpc/orpc';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
+import { useRouter } from 'next/navigation';
+import { useCallback, useId, useState } from 'react';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/kit/controls/Button';
+import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
+import { DialogTemplate } from '@/components/kit/controls/DialogTemplate';
+import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
+import { IconButton } from '@/components/kit/controls/IconButton';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { SortControl } from '@/components/kit/lists/SortControl';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import TournamentMatchesLedger, {
-  MatchSortSelect,
-  type SortKey,
-} from './TournamentMatchesLedger';
-import { MatchRow } from './matchRow';
+import { Textarea } from '@/components/ui/textarea';
+import { hasAdminScope } from '@/lib/auth/roles';
+import { useSession } from '@/lib/hooks/useSession';
+import { formatCount, formatCountOf, formatId } from '@/lib/kit/format/number';
+import { useListState } from '@/lib/kit/lists/use-list-state';
+import { orpc } from '@/lib/orpc/orpc';
+import { cn } from '@/lib/utils';
+
+import TournamentMatchesLedger from './TournamentMatchesLedger';
+import {
+  MATCH_SORT_OPTIONS,
+  TOURNAMENT_MATCH_PARAMS,
+  type MatchRow,
+} from './matchRow';
 
 interface TournamentMatchesAdminViewProps {
   tournamentId: number;
@@ -33,24 +39,27 @@ interface TournamentMatchesAdminViewProps {
   isLazer: boolean;
 }
 
-const parseMatchIds = (input: string): number[] => {
-  return input
-    .split(/[,\n]+/)
-    .map((id) => id.trim())
-    .filter((id) => id)
-    .map((id) => {
-      const str = id.trim();
-      const match = str.match(
-        /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp)\/(\d+))$/
-      );
-      const numericId = match
-        ? Number(match[1] || match[2])
-        : parseInt(str, 10);
-      return isNaN(numericId) || numericId > 2_000_000_000 ? 0 : numericId;
-    })
-    .filter((id) => id > 0);
-};
+const MATCH_LINK_PATTERN =
+  /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp)\/(\d+))$/;
+const MAX_MATCH_ID = 2_000_000_000;
 
+/** The osu! match ID in one entry, or 0 when the entry is not one. */
+function parseMatchId(value: string): number {
+  const match = value.trim().match(MATCH_LINK_PATTERN);
+  const id = match ? Number(match[1] || match[2]) : parseInt(value, 10);
+  return Number.isNaN(id) || id <= 0 || id > MAX_MATCH_ID ? 0 : id;
+}
+
+const splitEntries = (input: string) =>
+  input
+    .split(/[,\n]+/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+/**
+ * The Matches tab: the tournament's matches, sorted by the toolbar (kept in
+ * the address). Admins also add matches and remove a selection of them.
+ */
 export default function TournamentMatchesAdminView({
   tournamentId,
   tournamentName,
@@ -59,42 +68,29 @@ export default function TournamentMatchesAdminView({
 }: TournamentMatchesAdminViewProps) {
   const session = useSession();
   const router = useRouter();
+  const isAdmin = hasAdminScope(session?.scopes);
+  // Every match is on the client already: a sort only rewrites the address.
+  const { state, setState } = useListState(TOURNAMENT_MATCH_PARAMS, {
+    shallow: true,
+  });
+  const lazerCheckboxId = useId();
+
   const [selectedMatchIds, setSelectedMatchIds] = useState<Set<number>>(
     new Set()
   );
-  const [sort, setSort] = useState<SortKey>('newest');
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const [isAdding, setIsAdding] = useState(false);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [matchIdsToAdd, setMatchIdsToAdd] = useState('');
   const [addAsLazer, setAddAsLazer] = useState(isLazer);
 
-  const isAdmin = hasAdminScope(session?.scopes);
-
-  const handleSelectMatch = useCallback((matchId: number, checked: boolean) => {
-    setSelectedMatchIds((prev) => {
-      const newSet = new Set(prev);
-      if (checked) {
-        newSet.add(matchId);
-      } else {
-        newSet.delete(matchId);
-      }
-      return newSet;
-    });
-  }, []);
-
   const handleSelectMatches = useCallback(
     (matchIds: number[], checked: boolean) => {
-      setSelectedMatchIds((prev) => {
-        const next = new Set(prev);
+      setSelectedMatchIds((previous) => {
+        const next = new Set(previous);
         for (const matchId of matchIds) {
-          if (checked) {
-            next.add(matchId);
-          } else {
-            next.delete(matchId);
-          }
+          if (checked) next.add(matchId);
+          else next.delete(matchId);
         }
         return next;
       });
@@ -102,97 +98,50 @@ export default function TournamentMatchesAdminView({
     []
   );
 
-  const handleSelectAll = useCallback(
-    (checked: boolean) => {
-      if (checked) {
-        setSelectedMatchIds(new Set(matches.map((m) => m.id)));
-      } else {
-        setSelectedMatchIds(new Set());
-      }
-    },
-    [matches]
+  const handleSelectMatch = useCallback(
+    (matchId: number, checked: boolean) =>
+      handleSelectMatches([matchId], checked),
+    [handleSelectMatches]
   );
 
-  const handleDeleteSelected = useCallback(async () => {
-    if (selectedMatchIds.size === 0) return;
+  const removeSelected = async () => {
+    const result = await orpc.tournaments.admin.manageMatches({
+      tournamentId,
+      addMatchOsuIds: [],
+      removeMatchIds: Array.from(selectedMatchIds),
+    });
 
-    setIsDeleting(true);
-    try {
-      const matchIds = Array.from(selectedMatchIds);
+    result.warnings?.forEach((warning) => toast.warning(warning));
+    toast.success(
+      `Successfully removed ${formatCountOf(result.removedCount, 'match', 'matches')}`
+    );
+    setSelectedMatchIds(new Set());
+    router.refresh();
+  };
 
-      const result = await orpc.tournaments.admin.manageMatches({
-        tournamentId,
-        addMatchOsuIds: [],
-        removeMatchIds: matchIds,
-      });
+  const addMatches = async () => {
+    const entries = splitEntries(matchIdsToAdd);
 
-      result.warnings?.forEach((warning) => {
-        toast.warning(warning);
-      });
-
-      const count = result.removedCount;
-      toast.success(
-        `Successfully removed ${count} match${count === 1 ? '' : 'es'}`
-      );
-      setSelectedMatchIds(new Set());
-      setIsDeleteDialogOpen(false);
-      router.refresh();
-    } catch (error) {
-      toast.error('Failed to remove matches');
-      console.error('Error removing matches:', error);
-    } finally {
-      setIsDeleting(false);
-    }
-  }, [selectedMatchIds, tournamentId, router]);
-
-  const handleAddMatches = useCallback(async () => {
-    const rawValues = matchIdsToAdd
-      .split(/[,\n]+/)
-      .map((id) => id.trim())
-      .filter((id) => id);
-
-    if (rawValues.length === 0) {
+    if (entries.length === 0) {
       toast.error('Please enter match IDs or URLs');
       return;
     }
 
-    const invalidIds = rawValues.filter((value) => {
-      const str = value.trim();
-      const match = str.match(
-        /^(?:(\d+)|https:\/\/osu\.ppy\.sh\/(?:community\/matches|mp)\/(\d+))$/
+    const invalid = entries.filter((entry) => parseMatchId(entry) === 0);
+    if (invalid.length > 0) {
+      const listed = invalid
+        .slice(0, 3)
+        .map((entry) => `"${entry}"`)
+        .join(', ');
+      toast.error(
+        invalid.length === 1
+          ? `Invalid match ID: ${listed}. IDs must be positive integers not exceeding ${formatCount(MAX_MATCH_ID)}.`
+          : `Invalid match IDs found: ${listed}${invalid.length > 3 ? ` and ${formatCount(invalid.length - 3)} more` : ''}. IDs must be positive integers not exceeding ${formatCount(MAX_MATCH_ID)}.`
       );
-
-      if (!match) {
-        const num = parseInt(str, 10);
-        return isNaN(num) || num <= 0 || num > 2_000_000_000;
-      }
-
-      const numericId = Number(match[1] || match[2]);
-      return numericId <= 0 || numericId > 2_000_000_000;
-    });
-
-    if (invalidIds.length > 0) {
-      const errorMessage =
-        invalidIds.length === 1
-          ? `Invalid match ID: "${invalidIds[0]}". IDs must be positive integers not exceeding 2,000,000,000.`
-          : `Invalid match IDs found: ${invalidIds
-              .slice(0, 3)
-              .map((id) => `"${id}"`)
-              .join(
-                ', '
-              )}${invalidIds.length > 3 ? ` and ${invalidIds.length - 3} more` : ''}. IDs must be positive integers not exceeding 2,000,000,000.`;
-
-      toast.error(errorMessage);
       return;
     }
 
-    const ids = parseMatchIds(matchIdsToAdd);
-    const uniqueIds = Array.from(new Set(ids));
-
-    if (uniqueIds.length === 0) {
-      toast.error('No valid match IDs could be parsed from the input');
-      return;
-    }
+    const uniqueIds = Array.from(new Set(entries.map(parseMatchId)));
 
     setIsAdding(true);
     try {
@@ -205,32 +154,24 @@ export default function TournamentMatchesAdminView({
         removeMatchIds: [],
       });
 
-      result.warnings?.forEach((warning) => {
-        toast.warning(warning);
-      });
+      result.warnings?.forEach((warning) => toast.warning(warning));
 
       const { addedCount, skippedCount } = result;
-
       if (addedCount === 0 && skippedCount > 0) {
         toast.success(
-          `No new matches were added. Skipped ${skippedCount} already existing match${
-            skippedCount === 1 ? '' : 'es'
-          }.`
+          `No new matches were added. Skipped ${formatCountOf(skippedCount, 'already existing match', 'already existing matches')}.`
         );
       } else {
-        const parts = [
-          `Added ${addedCount} match${addedCount === 1 ? '' : 'es'}.`,
-        ];
-
-        if (skippedCount > 0) {
-          parts.push(
-            `Skipped ${skippedCount} match${
-              skippedCount === 1 ? '' : 'es'
-            } already existing.`
-          );
-        }
-
-        toast.success(parts.join(' '));
+        toast.success(
+          [
+            `Added ${formatCountOf(addedCount, 'match', 'matches')}.`,
+            skippedCount > 0
+              ? `Skipped ${formatCountOf(skippedCount, 'match', 'matches')} already existing.`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' ')
+        );
       }
       setMatchIdsToAdd('');
       setIsAddDialogOpen(false);
@@ -241,242 +182,227 @@ export default function TournamentMatchesAdminView({
     } finally {
       setIsAdding(false);
     }
-  }, [matchIdsToAdd, tournamentId, addAsLazer, router]);
+  };
 
-  const header = (
-    <div className="flex flex-wrap items-center gap-2">
-      <Swords className="h-6 w-6 text-primary" />
-      <h3 className="font-sans text-lg font-semibold">Matches</h3>
-      <span className="text-sm text-muted-foreground">({matches.length})</span>
-      <div className="ml-auto">
-        <MatchSortSelect value={sort} onChange={setSort} />
-      </div>
-    </div>
+  const selectedMatches = matches.filter((match) =>
+    selectedMatchIds.has(match.id)
   );
-
-  if (!isAdmin) {
-    return (
-      <div className="space-y-4">
-        {header}
-        <TournamentMatchesLedger matches={matches} sort={sort} />
-      </div>
-    );
-  }
+  const allSelected =
+    matches.length > 0 && selectedMatchIds.size === matches.length;
 
   return (
-    <div className="space-y-4">
-      {header}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/30 p-3">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={
-                selectedMatchIds.size === 0
-                  ? false
-                  : selectedMatchIds.size === matches.length
-                    ? true
-                    : 'indeterminate'
-              }
-              onCheckedChange={handleSelectAll}
-              aria-label="Select all matches"
-            />
-            <span className="text-sm text-muted-foreground">
-              {selectedMatchIds.size > 0
-                ? `${selectedMatchIds.size} selected`
-                : 'Select all'}
-            </span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {selectedMatchIds.size > 0 && (
-              <Dialog
-                open={isDeleteDialogOpen}
-                onOpenChange={setIsDeleteDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Remove selected ({selectedMatchIds.size})
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="flex max-h-[80vh] flex-col overflow-hidden sm:max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Confirm match removal</DialogTitle>
-                    <DialogDescription asChild>
-                      <div>
-                        Are you sure you want to remove{' '}
-                        <strong>{selectedMatchIds.size}</strong> match
-                        {selectedMatchIds.size === 1 ? '' : 'es'} from{' '}
-                        <strong>{tournamentName}</strong>?
-                      </div>
-                    </DialogDescription>
-                  </DialogHeader>
-
-                  <div className="flex-1 space-y-3 overflow-y-auto py-2">
-                    <div className="rounded-lg border bg-muted/30 p-3">
-                      <p className="mb-2 text-sm font-medium">
-                        Matches to be removed:
-                      </p>
-                      <div className="max-h-60 space-y-1 overflow-y-auto">
-                        {Array.from(selectedMatchIds).map((matchId) => {
-                          const match = matches.find((m) => m.id === matchId);
-                          if (!match) return null;
-
-                          return (
-                            <div
-                              key={matchId}
-                              className="rounded px-2 py-1 text-sm hover:bg-muted/50"
-                            >
-                              <div className="flex items-start gap-2">
-                                <Link
-                                  href={`/matches/${match.id}`}
-                                  className="min-w-[3rem] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-primary"
-                                >
-                                  #{match.id}
-                                </Link>
-                                <div className="flex-1">
-                                  <span>
-                                    {match.name || `Match ${match.id}`}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="space-y-1 text-sm text-muted-foreground">
-                      <p>
-                        • This will permanently delete the selected matches from
-                        the tournament
-                      </p>
-                      <p>
-                        • All games and scores within these matches will also be
-                        deleted
-                      </p>
-                      <p>• This action cannot be undone</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsDeleteDialogOpen(false)}
-                      disabled={isDeleting}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={handleDeleteSelected}
-                      disabled={isDeleting}
-                    >
-                      {isDeleting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Removing...
-                        </>
-                      ) : (
-                        <>
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Remove matches
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
+    <Panel>
+      <SectionHeader
+        icon={Swords}
+        title="Matches"
+        // The count is on the Matches tab; the strip keeps its room for the sort.
+        actions={
+          matches.length > 0 || isAdmin ? (
+            <>
+              {matches.length > 0 && (
+                <SortControl
+                  size="sm"
+                  className="w-52 md:w-auto"
+                  label="Sort matches by"
+                  options={MATCH_SORT_OPTIONS}
+                  value={state.sort}
+                  onValueChange={(sort) => setState({ sort })}
+                />
+              )}
+              {isAdmin && matches.length > 0 && (
+                // Beside the sort, a phone's strip has room for the icon
+                // only. Outline, as the sort's own button.
+                <IconButton
+                  variant="outline"
+                  label="Add matches"
+                  icon={Plus}
+                  onClick={() => setIsAddDialogOpen(true)}
+                  className="sm:hidden"
+                />
+              )}
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  icon={Plus}
+                  onClick={() => setIsAddDialogOpen(true)}
+                  className={cn(matches.length > 0 && 'hidden sm:inline-flex')}
+                >
                   Add matches
                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add matches</DialogTitle>
-                  <DialogDescription asChild>
-                    <div>
-                      <p>
-                        Enter osu! match IDs or URLs to add to the tournament.
-                        You can enter multiple values separated by commas or new
-                        lines. Match data will be automatically fetched from the
-                        osu! API.
-                      </p>
-                      <p className="mt-2 text-sm">Accepted formats:</p>
-                      <ul className="mt-1 list-inside list-disc text-sm">
-                        <li>Direct match ID (e.g., 123456789)</li>
-                        <li>
-                          Match URL (e.g.,
-                          https://osu.ppy.sh/community/matches/123456789)
-                        </li>
-                        <li>
-                          Short URL (e.g., https://osu.ppy.sh/mp/123456789)
-                        </li>
-                      </ul>
-                    </div>
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <Textarea
-                    placeholder={`Enter match IDs or URLs`}
-                    value={matchIdsToAdd}
-                    onChange={(e) => setMatchIdsToAdd(e.target.value)}
-                    rows={5}
-                  />
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="lazer-mode"
-                      checked={addAsLazer}
-                      onCheckedChange={(checked) =>
-                        setAddAsLazer(checked === true)
-                      }
-                    />
-                    <Label htmlFor="lazer-mode" className="text-sm">
-                      Lazer matches
-                    </Label>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setIsAddDialogOpen(false);
-                        setMatchIdsToAdd('');
-                      }}
-                      disabled={isAdding}
-                    >
-                      Cancel
-                    </Button>
-                    <Button onClick={handleAddMatches} disabled={isAdding}>
-                      {isAdding ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Adding...
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="h-4 w-4" />
-                          Add matches
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
+              )}
+            </>
+          ) : undefined
+        }
+      />
 
-        <TournamentMatchesLedger
-          matches={matches}
-          sort={sort}
-          selectedMatchIds={selectedMatchIds}
-          onSelectMatch={handleSelectMatch}
-          onSelectMatches={handleSelectMatches}
+      {matches.length === 0 ? (
+        <EmptyState
+          icon={Swords}
+          title="No matches"
+          description="This tournament has no matches."
         />
-      </div>
-    </div>
+      ) : (
+        <>
+          {isAdmin && (
+            <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 border-b px-4 py-2">
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={
+                    selectedMatchIds.size === 0
+                      ? false
+                      : allSelected
+                        ? true
+                        : 'indeterminate'
+                  }
+                  onCheckedChange={(checked) =>
+                    setSelectedMatchIds(
+                      checked === true
+                        ? new Set(matches.map((match) => match.id))
+                        : new Set()
+                    )
+                  }
+                  aria-label="Select all matches"
+                />
+                <span
+                  aria-live="polite"
+                  className="text-sm text-muted-foreground tabular-nums"
+                >
+                  {selectedMatchIds.size > 0
+                    ? `${formatCount(selectedMatchIds.size)} selected`
+                    : 'Select all'}
+                </span>
+              </div>
+              {selectedMatchIds.size > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  icon={Trash2}
+                  onClick={() => setIsRemoveDialogOpen(true)}
+                >
+                  Remove selected
+                </Button>
+              )}
+            </div>
+          )}
+
+          <TournamentMatchesLedger
+            matches={matches}
+            sort={state.sort}
+            selectedMatchIds={isAdmin ? selectedMatchIds : undefined}
+            onSelectMatch={isAdmin ? handleSelectMatch : undefined}
+            onSelectMatches={isAdmin ? handleSelectMatches : undefined}
+          />
+        </>
+      )}
+
+      {isAdmin && (
+        <>
+          <DialogTemplate
+            open={isAddDialogOpen}
+            onOpenChange={(open) => {
+              if (isAdding) return;
+              setIsAddDialogOpen(open);
+              if (!open) setMatchIdsToAdd('');
+            }}
+            title="Add matches"
+            description="Enter osu! match IDs or URLs to add to the tournament. Match data will be automatically fetched from the osu! API."
+            onSubmit={(event) => {
+              event.preventDefault();
+              void addMatches();
+            }}
+            footer={
+              <>
+                <Button
+                  variant="outline"
+                  disabled={isAdding}
+                  onClick={() => {
+                    setIsAddDialogOpen(false);
+                    setMatchIdsToAdd('');
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" icon={Plus} pending={isAdding}>
+                  {isAdding ? 'Adding…' : 'Add matches'}
+                </Button>
+              </>
+            }
+          >
+            <div className="flex flex-col gap-2">
+              <FormFieldLabel
+                htmlFor={`${lazerCheckboxId}-ids`}
+                hint="Separate with commas or new lines"
+              >
+                Matches
+              </FormFieldLabel>
+              <Textarea
+                id={`${lazerCheckboxId}-ids`}
+                placeholder="Enter match IDs or URLs"
+                value={matchIdsToAdd}
+                onChange={(event) => setMatchIdsToAdd(event.target.value)}
+                rows={5}
+              />
+              <ul className="list-inside list-disc text-xs text-muted-foreground">
+                <li>Direct match ID (e.g., 123456789)</li>
+                <li>
+                  Match URL (e.g.,
+                  https://osu.ppy.sh/community/matches/123456789)
+                </li>
+                <li>Short URL (e.g., https://osu.ppy.sh/mp/123456789)</li>
+              </ul>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id={lazerCheckboxId}
+                checked={addAsLazer}
+                onCheckedChange={(checked) => setAddAsLazer(checked === true)}
+              />
+              <Label htmlFor={lazerCheckboxId}>Lazer matches</Label>
+            </div>
+          </DialogTemplate>
+
+          <ConfirmDialog
+            open={isRemoveDialogOpen}
+            onOpenChange={setIsRemoveDialogOpen}
+            title={`Remove ${formatCountOf(selectedMatchIds.size, 'match', 'matches')}?`}
+            description={
+              <>
+                <p>
+                  This will permanently delete the selected matches from{' '}
+                  {tournamentName}. All games and scores within these matches
+                  will also be deleted.
+                </p>
+                <p>This action cannot be undone.</p>
+              </>
+            }
+            confirmLabel="Remove matches"
+            pendingLabel="Removing…"
+            errorText="Failed to remove matches"
+            onConfirm={removeSelected}
+          >
+            <ul className="max-h-60 divide-y overflow-y-auto rounded-lg border text-sm">
+              {selectedMatches.map((match) => (
+                <li
+                  key={match.id}
+                  className="flex items-baseline gap-2 px-3 py-1.5"
+                >
+                  <Link
+                    href={`/matches/${match.id}`}
+                    prefetch={false}
+                    className="shrink-0 text-muted-foreground tabular-nums underline decoration-dotted underline-offset-2 transition-colors hover:text-link"
+                  >
+                    {formatId(match.id)}
+                  </Link>
+                  <span className="min-w-0 truncate">
+                    {match.name || `Match ${formatId(match.id)}`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </ConfirmDialog>
+        </>
+      )}
+    </Panel>
   );
 }

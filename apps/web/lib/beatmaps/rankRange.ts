@@ -1,5 +1,8 @@
-// Tournament rank-range buckets, shared by the stats procedure and the cards.
-// Keep free of server-only imports.
+// Tournament rank restriction buckets, shared by the stats procedure and the
+// cards. Keep free of server-only imports.
+
+import { seriesColor } from '@/lib/kit/color/categorical';
+import { OPEN_RANK_LABEL } from '@/lib/kit/format/fields';
 
 export const RANK_RANGE_BUCKET_KEYS = [
   'open',
@@ -18,7 +21,7 @@ export interface RankRangeBucketDef {
   minBound: number;
   /** Inclusive upper bound; null = open-ended. */
   maxBound: number | null;
-  /** Theme token for every rank-range surface. */
+  /** Categorical slot 1–5 in bucket order, for every rank restriction surface. */
   color: string;
   /** Carries the bucket redundantly with colour, which cannot be made CVD-safe. */
   symbol: 'circle' | 'square' | 'triangle' | 'diamond' | 'cross';
@@ -27,14 +30,14 @@ export interface RankRangeBucketDef {
   dashLinecap: 'butt' | 'round';
 }
 
-/** Display order for every rank-range surface. */
+/** Display order for every rank restriction surface. */
 export const RANK_RANGE_BUCKETS: readonly RankRangeBucketDef[] = [
   {
     key: 'open',
-    label: 'Open',
+    label: OPEN_RANK_LABEL,
     minBound: 1,
     maxBound: 1,
-    color: 'var(--rank-range-open)',
+    color: seriesColor(0),
     symbol: 'circle',
     dash: 'none',
     dashLinecap: 'butt',
@@ -44,7 +47,7 @@ export const RANK_RANGE_BUCKETS: readonly RankRangeBucketDef[] = [
     label: '<1k',
     minBound: 2,
     maxBound: 999,
-    color: 'var(--rank-range-lt1k)',
+    color: seriesColor(1),
     symbol: 'diamond',
     dash: '4 4',
     dashLinecap: 'butt',
@@ -54,7 +57,7 @@ export const RANK_RANGE_BUCKETS: readonly RankRangeBucketDef[] = [
     label: '1k+',
     minBound: 1_000,
     maxBound: 9_999,
-    color: 'var(--rank-range-1k)',
+    color: seriesColor(2),
     symbol: 'triangle',
     dash: '0.1 6',
     dashLinecap: 'round',
@@ -64,7 +67,7 @@ export const RANK_RANGE_BUCKETS: readonly RankRangeBucketDef[] = [
     label: '10k+',
     minBound: 10_000,
     maxBound: 99_999,
-    color: 'var(--rank-range-10k)',
+    color: seriesColor(3),
     symbol: 'square',
     dash: '7 3 2 3',
     dashLinecap: 'butt',
@@ -74,7 +77,7 @@ export const RANK_RANGE_BUCKETS: readonly RankRangeBucketDef[] = [
     label: '100k+',
     minBound: 100_000,
     maxBound: null,
-    color: 'var(--rank-range-100k)',
+    color: seriesColor(4),
     symbol: 'cross',
     dash: '11 5',
     dashLinecap: 'butt',
@@ -123,11 +126,4 @@ export function bucketRankRanges(
   }
 
   return buckets;
-}
-
-/** Renders a raw `tournaments.rankRangeLowerBound`: `Open`, or `10,000+`. */
-export function formatRankRangeBound(rankRangeLowerBound: number): string {
-  if (rankRangeLowerBound === 1) return 'Open';
-
-  return `${rankRangeLowerBound.toLocaleString()}+`;
 }

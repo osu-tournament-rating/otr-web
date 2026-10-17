@@ -3,8 +3,11 @@ import { describe, expect, it } from 'bun:test';
 import {
   formatDate,
   formatDateRange,
+  formatDuration,
   formatRelativeTime,
+  formatTimeRange,
   formatTimestamp,
+  parseDuration,
   toDate,
   toDateTimeAttribute,
 } from '../date';
@@ -249,5 +252,107 @@ describe('toDateTimeAttribute', () => {
       toDateTimeAttribute('2024-07-20T15:42:00Z', { dateOnly: true })
     ).toBe('2024-07-20');
     expect(toDateTimeAttribute(null)).toBeUndefined();
+  });
+});
+
+describe('formatTimeRange', () => {
+  const start = '2024-07-20T15:42:07Z';
+  const end = '2024-07-20T15:45:30Z';
+
+  it('writes two moments on one UTC day as clock times', () => {
+    expect(formatTimeRange(start, end)).toBe('15:42 – 15:45 UTC');
+    expect(formatTimeRange(start, end, { seconds: true })).toBe(
+      '15:42:07 – 15:45:30 UTC'
+    );
+  });
+
+  it('adds the day when asked', () => {
+    expect(formatTimeRange(start, end, { showDate: true })).toBe(
+      'Jul 20, 2024, 15:42 – 15:45 UTC'
+    );
+  });
+
+  it('reads both ends in UTC, whatever zone they arrive in', () => {
+    expect(
+      formatTimeRange('2024-07-20T10:42:07-05:00', '2024-07-20 15:45:30+00')
+    ).toBe('15:42 – 15:45 UTC');
+  });
+
+  it('writes full timestamps when the ends fall on different days', () => {
+    expect(
+      formatTimeRange('2024-07-20T23:58:01Z', '2024-07-21T00:02:10Z', {
+        seconds: true,
+      })
+    ).toBe('Jul 20, 2024, 23:58:01 UTC – Jul 21, 2024, 00:02:10 UTC');
+  });
+
+  it('marks an open end', () => {
+    expect(formatTimeRange(start, null)).toBe('From Jul 20, 2024, 15:42 UTC');
+    expect(formatTimeRange(undefined, end)).toBe(
+      'Until Jul 20, 2024, 15:45 UTC'
+    );
+  });
+
+  it('prints the empty text when both ends are missing or unreadable', () => {
+    expect(formatTimeRange(null, 'not a date')).toBe(EM_DASH);
+    expect(formatTimeRange(null, null, { empty: 'Unknown' })).toBe('Unknown');
+  });
+});
+
+describe('formatDuration', () => {
+  it('writes minutes and seconds under an hour', () => {
+    expect(formatDuration(0)).toBe('0:00');
+    expect(formatDuration(7)).toBe('0:07');
+    expect(formatDuration(124)).toBe('2:04');
+    expect(formatDuration(3599)).toBe('59:59');
+  });
+
+  it('adds hours from an hour', () => {
+    expect(formatDuration(3600)).toBe('1:00:00');
+    expect(formatDuration(3724)).toBe('1:02:04');
+  });
+
+  it('drops fractions of a second', () => {
+    expect(formatDuration(124.9)).toBe('2:04');
+    expect(formatDuration(3724.5)).toBe('1:02:04');
+  });
+
+  it('prints the empty text for missing, negative or unreadable input', () => {
+    expect(formatDuration(null)).toBe(EM_DASH);
+    expect(formatDuration(undefined)).toBe(EM_DASH);
+    expect(formatDuration(Number.NaN)).toBe(EM_DASH);
+    expect(formatDuration(-5)).toBe(EM_DASH);
+    expect(formatDuration(null, { empty: 'Unknown' })).toBe('Unknown');
+  });
+});
+
+describe('parseDuration', () => {
+  it('reads m:ss, h:mm:ss and bare seconds', () => {
+    expect(parseDuration('3:42')).toBe(222);
+    expect(parseDuration('0:07')).toBe(7);
+    expect(parseDuration('1:23:45')).toBe(5025);
+    expect(parseDuration('222')).toBe(222);
+    expect(parseDuration('  3:42 ')).toBe(222);
+  });
+
+  it('rejects anything that is not a duration', () => {
+    for (const input of [
+      '',
+      'abc',
+      '-1',
+      '3:60',
+      '3:',
+      ':42',
+      '1.5',
+      '3:4:5:6',
+    ]) {
+      expect(parseDuration(input)).toBeNull();
+    }
+  });
+
+  it('round-trips through formatDuration', () => {
+    for (const seconds of [0, 7, 222, 720, 3600, 5025]) {
+      expect(parseDuration(formatDuration(seconds))).toBe(seconds);
+    }
   });
 });

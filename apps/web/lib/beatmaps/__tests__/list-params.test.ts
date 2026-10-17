@@ -1,37 +1,108 @@
 import { describe, expect, test } from 'bun:test';
 
+import { Ruleset } from '@otr/core/osu';
+
 import {
-  buildBeatmapSearchParams,
-  minBeatmapSearchLength,
-  normalizeBeatmapSearchQuery,
+  BEATMAP_LIST_PAGE_SIZE,
+  BEATMAP_LIST_PARAMS,
+  beatmapListHref,
+  clearedBeatmapListHref,
+  toBeatmapListRequest,
 } from '@/lib/beatmaps/list-params';
-import { beatmapListFilterSchema } from '@/lib/validation-schema';
+import { parseListState } from '@/lib/kit/lists/params';
 
-const baseFilter = beatmapListFilterSchema.parse({});
+const parse = (query: string) => parseListState(BEATMAP_LIST_PARAMS, query);
 
-describe('normalizeBeatmapSearchQuery', () => {
-  test('drops terms shorter than the minimum', () => {
-    expect(minBeatmapSearchLength).toBe(2);
-    expect(normalizeBeatmapSearchQuery(undefined)).toBeUndefined();
-    expect(normalizeBeatmapSearchQuery('')).toBeUndefined();
-    expect(normalizeBeatmapSearchQuery('a')).toBeUndefined();
-    expect(normalizeBeatmapSearchQuery('  a  ')).toBeUndefined();
+describe('BEATMAP_LIST_PARAMS', () => {
+  test('a bare address is the default list', () => {
+    const state = parse('');
+
+    expect(state.q).toBe('');
+    expect(state.page).toBe(1);
+    expect(state.sort).toEqual({ key: 'gameCount', direction: 'desc' });
+    expect(state.ruleset).toEqual([]);
+    expect(beatmapListHref(state)).toBe('/beatmaps');
   });
 
-  test('keeps trimmed terms at or above the minimum', () => {
-    expect(normalizeBeatmapSearchQuery('ab')).toBe('ab');
-    expect(normalizeBeatmapSearchQuery('  medley  ')).toBe('medley');
+  test('reads the links the list wrote before', () => {
+    const state = parse(
+      'q=medley&ruleset=1&minSr=5&maxSr=7&minGameCount=10&sort=sr&descending=false&page=3'
+    );
+
+    expect(state.q).toBe('medley');
+    expect(state.ruleset).toEqual([Ruleset.Taiko]);
+    expect(state.sr).toEqual({ min: 5, max: 7 });
+    expect(state.games).toEqual({ min: 10 });
+    expect(state.sort).toEqual({ key: 'sr', direction: 'asc' });
+    expect(state.page).toBe(3);
+  });
+
+  test('takes several rulesets and keeps them in chip order', () => {
+    const state = parse('ruleset=5&ruleset=0&ruleset=3');
+
+    expect(state.ruleset).toEqual([Ruleset.Osu, Ruleset.Mania7k]);
+    expect(beatmapListHref(state)).toBe('/beatmaps?ruleset=0&ruleset=5');
+  });
+
+  test('ignores a search below two characters', () => {
+    expect(parse('q=a').q).toBe('');
+    expect(parse('q=+ab+').q).toBe('ab');
+  });
+
+  test('writes the sort as sort and dir, never descending', () => {
+    const href = beatmapListHref({
+      ...parse('descending=false'),
+      sort: { key: 'bpm', direction: 'asc' },
+    });
+
+    expect(href).toBe('/beatmaps?sort=bpm&dir=asc');
+  });
+
+  test('a page override keeps every other param', () => {
+    const state = parse('q=medley&sort=sr');
+
+    expect(beatmapListHref(state, 4)).toBe('/beatmaps?q=medley&page=4&sort=sr');
   });
 });
 
-describe('buildBeatmapSearchParams', () => {
-  test('omits a query below the minimum length', () => {
-    const params = buildBeatmapSearchParams({ ...baseFilter, q: 'a' });
-    expect(params.get('q')).toBeNull();
+describe('clearedBeatmapListHref', () => {
+  test('drops the filters but keeps search, sort and rulesets', () => {
+    const state = parse('q=medley&ruleset=1&minSr=5&maxBpm=200&sort=sr&page=2');
+
+    expect(clearedBeatmapListHref(state)).toBe(
+      '/beatmaps?q=medley&sort=sr&ruleset=1'
+    );
+  });
+});
+
+describe('toBeatmapListRequest', () => {
+  test('maps the state onto the procedure input', () => {
+    const request = toBeatmapListRequest(
+      parse(
+        'q=medley&ruleset=0&ruleset=4&minSr=5&maxLength=120&maxTournamentCount=20&sort=bpm&dir=asc&page=2'
+      )
+    );
+
+    expect(request).toMatchObject({
+      page: 2,
+      pageSize: BEATMAP_LIST_PAGE_SIZE,
+      searchQuery: 'medley',
+      rulesets: [Ruleset.Osu, Ruleset.Mania4k],
+      minSr: 5,
+      maxLength: 120,
+      maxTournamentCount: 20,
+      sort: 'bpm',
+      descending: false,
+    });
+    expect(request.maxSr).toBeUndefined();
+    expect(request.ruleset).toBeUndefined();
   });
 
-  test('serializes a query at the minimum length', () => {
-    const params = buildBeatmapSearchParams({ ...baseFilter, q: ' ab ' });
-    expect(params.get('q')).toBe('ab');
+  test('sends no rulesets or search for the default list', () => {
+    const request = toBeatmapListRequest(parse(''));
+
+    expect(request.rulesets).toBeUndefined();
+    expect(request.searchQuery).toBeUndefined();
+    expect(request).toMatchObject({ sort: 'gameCount', descending: true });
   });
 });

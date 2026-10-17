@@ -9,8 +9,6 @@ import {
   deriveGameIsFreeMod,
   filterBeatmapModDistribution,
   getBeatmapModLabel,
-  getModColor,
-  getModForegroundColor,
   normalizeBeatmapDisplayMods,
   resolveGameDisplayMods,
   selectBeatmapListModGroups,
@@ -25,6 +23,28 @@ describe('beatmap mod display helpers', () => {
     expect(getBeatmapModLabel(Mods.NoFail | Mods.Hidden | Mods.HardRock)).toBe(
       'HDHR'
     );
+  });
+
+  it('names every key mod, so mania scores never read as No Mod (#1027)', () => {
+    for (const [mods, label] of [
+      [Mods.Key1, '1K'],
+      [Mods.Key2, '2K'],
+      [Mods.Key3, '3K'],
+      [Mods.Key4, '4K'],
+      [Mods.Key7, '7K'],
+      [Mods.Key8, '8K'],
+      [Mods.Key9, '9K'],
+    ] as const) {
+      expect(getBeatmapModLabel(mods)).toBe(label);
+    }
+    expect(getBeatmapModLabel(Mods.Hidden | Mods.Key7)).toBe('HD7K');
+    expect(getBeatmapModLabel(Mods.NoFail | Mods.Key7)).toBe('7K');
+
+    const distribution = calculateBeatmapModDistribution([
+      { mods: Mods.None, scoreCount: 4 },
+      { mods: Mods.Key7, scoreCount: 6 },
+    ]);
+    expect(distribution.map(({ label }) => label)).toEqual(['7K', 'NM']);
   });
 
   it('folds Nightcore into DoubleTime everywhere it is displayed', () => {
@@ -46,18 +66,6 @@ describe('beatmap mod display helpers', () => {
         scoreCount,
       }))
     ).toEqual([{ mods: Mods.DoubleTime, label: 'DT', scoreCount: 15 }]);
-  });
-
-  it('colors Nightcore combinations like their DoubleTime equivalents', () => {
-    expect(getModColor(Mods.DoubleTime | Mods.Nightcore)).toBe(
-      'var(--mod-double-time)'
-    );
-    expect(getModColor(Mods.Nightcore)).toBe('var(--mod-double-time)');
-    expect(getModColor(Mods.Hidden | Mods.Nightcore)).toBe(
-      'var(--mod-hidden-double-time)'
-    );
-    expect(getModColor(Mods.Relax)).toBe('var(--mod-relax)');
-    expect(getModColor(Mods.Key7)).toBe('var(--mod-mania-key)');
   });
 
   it('aggregates score-derived combinations using the detail chart rules', () => {
@@ -239,15 +247,6 @@ describe('beatmap list mod display helpers', () => {
 
     expect(selectBeatmapListModGroups(groups)).toEqual([groups[0]]);
     expect(selectBeatmapListModGroups([])).toEqual([]);
-  });
-
-  it('uses a light foreground only for dark flashlight backgrounds', () => {
-    expect(getModForegroundColor(Mods.Flashlight)).toBe('#FFFFFF');
-    expect(getModForegroundColor(Mods.Hidden | Mods.Flashlight)).toBe(
-      '#FFFFFF'
-    );
-    expect(getModForegroundColor(Mods.None)).toBe('#000000');
-    expect(getModForegroundColor(Mods.HardRock)).toBe('#000000');
   });
 });
 

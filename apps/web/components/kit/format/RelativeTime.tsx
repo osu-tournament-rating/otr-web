@@ -1,5 +1,6 @@
 'use client';
 
+import type * as React from 'react';
 import { useEffect, useState } from 'react';
 
 import TapTooltip from '@/components/tap-tooltip';
@@ -19,7 +20,9 @@ const TICK_MS = 30_000;
 /**
  * Time since an event, `3h ago`, with the full UTC timestamp on hover,
  * focus and tap. Only for activity feeds, such as the audit log and
- * reports; everywhere else use `Timestamp` or `DateText`.
+ * reports; everywhere else use `Timestamp` or `DateText`. Extra props, such
+ * as `data-testid`, go on the outer span, which holds the tooltip's button
+ * and the `<time>` inside it.
  */
 export function RelativeTime({
   date,
@@ -27,6 +30,7 @@ export function RelativeTime({
   side = 'top',
   empty = EMPTY_VALUE,
   className,
+  ...props
 }: {
   date: DateInput | null | undefined;
   /** A fixed "now", which also stops the clock. For demos and tests. */
@@ -34,8 +38,7 @@ export function RelativeTime({
   side?: 'top' | 'right' | 'bottom' | 'left';
   /** Shown, muted, when there is no time. Defaults to an em dash. */
   empty?: string;
-  className?: string;
-}) {
+} & Omit<React.HTMLAttributes<HTMLSpanElement>, 'children'>) {
   const isFixed = now !== undefined;
   const [clock, setClock] = useState(() => Date.now());
 
@@ -51,19 +54,23 @@ export function RelativeTime({
 
   if (!dateTime) {
     return (
-      <span className={cn('text-muted-foreground', className)}>{empty}</span>
+      <span className={cn('text-muted-foreground', className)} {...props}>
+        {empty}
+      </span>
     );
   }
 
   return (
-    <TapTooltip
-      content={formatTimestamp(date)}
-      side={side}
-      triggerClassName={cn('inline w-auto whitespace-nowrap', className)}
-    >
-      <time dateTime={dateTime} suppressHydrationWarning>
-        {formatRelativeTime(date, (isFixed && toDate(now)) || clock)}
-      </time>
-    </TapTooltip>
+    <span className={cn('whitespace-nowrap', className)} {...props}>
+      <TapTooltip
+        content={formatTimestamp(date)}
+        side={side}
+        triggerClassName="inline w-auto whitespace-nowrap"
+      >
+        <time dateTime={dateTime} suppressHydrationWarning>
+          {formatRelativeTime(date, (isFixed && toDate(now)) || clock)}
+        </time>
+      </TapTooltip>
+    </span>
   );
 }

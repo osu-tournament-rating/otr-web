@@ -1,62 +1,24 @@
-'use client';
+import { ShieldCheck } from 'lucide-react';
 
-import { Badge, badgeVariants } from '@/components/ui/badge';
-import SimpleTooltip from '@/components/simple-tooltip';
-import { useMemo } from 'react';
-import { VariantProps } from 'class-variance-authority';
-import { Roles } from '@otr/core/osu';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/kit/status/Badge';
+import { hasAdminScope } from '@/lib/auth/roles';
 
-interface ProfileRoleBadgeProps {
-  scopes: string[];
-  className?: string;
-}
-
-type RoleBadge = {
-  label: string;
-  tooltip: string;
-} & VariantProps<typeof badgeVariants>;
-
+/** The visitor's role in the account menu. Admin is the one role it shows. */
 export default function ProfileRoleBadge({
   scopes,
   className,
-}: ProfileRoleBadgeProps) {
-  const roleBadges = useMemo(() => {
-    const badges: RoleBadge[] = [];
-
-    for (const role of scopes) {
-      switch (role) {
-        case Roles.Admin:
-          badges.push({
-            label: 'Admin',
-            tooltip: 'Administrator',
-            variant: 'destructive',
-          });
-          break;
-        default:
-          break;
-      }
-    }
-
-    return badges;
-  }, [scopes]);
-
-  if (!roleBadges.length) {
+}: {
+  scopes: readonly string[];
+  className?: string;
+}) {
+  if (!hasAdminScope(scopes)) {
     return null;
   }
 
   return (
-    <div>
-      {roleBadges.map(({ label, tooltip, variant }) => (
-        <SimpleTooltip key={label} content={tooltip}>
-          <Badge
-            variant={variant}
-            className={cn('h-5 px-1.5 py-0 text-xs', className)}
-          >
-            {label}
-          </Badge>
-        </SimpleTooltip>
-      ))}
-    </div>
+    <Badge size="sm" className={className}>
+      <ShieldCheck aria-hidden />
+      Admin
+    </Badge>
   );
 }

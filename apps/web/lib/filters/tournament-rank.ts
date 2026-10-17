@@ -108,28 +108,3 @@ export const tournamentRankScale: NumericScale = {
   fromPosition: sliderPositionToRank,
   step: moveRankBySliderStops,
 };
-
-/** The slider ceiling means "no upper limit", so it is not sent as a bound. */
-export function toRankRangeFilter({
-  min,
-  max,
-}: {
-  min?: number;
-  max?: number;
-}) {
-  return {
-    minRankRange: min,
-    maxRankRange: max !== undefined && max < RANK_RANGE_MAX ? max : undefined,
-  };
-}
-
-export function hasRankRangeFilter(filter: {
-  minRankRange?: number;
-  maxRankRange?: number;
-}): boolean {
-  return (
-    (filter.minRankRange !== undefined &&
-      filter.minRankRange !== RANK_RANGE_MIN) ||
-    (filter.maxRankRange !== undefined && filter.maxRankRange < RANK_RANGE_MAX)
-  );
-}

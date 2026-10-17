@@ -9,7 +9,8 @@ import { cn } from '@/lib/utils';
 /**
  * - `default`: the one primary action of a form, dialog or page.
  * - `outline`: secondary actions, such as Cancel, Back or a page's second button.
- * - `ghost`: quiet actions inside a panel, such as Clear all or Show more.
+ * - `ghost`: quiet actions inside a panel, such as Clear all or a Load more
+ *   inside an opened row. A list's own footer is LoadMore (outline).
  * - `destructive`: an action that deletes or overwrites data. Red text and
  *   border, never filled; it opens a ConfirmDialog.
  * - `destructive-confirm`: the solid red button that carries out a
@@ -47,17 +48,16 @@ const BASE_VARIANT = {
   overlay: 'outline',
 } as const satisfies Record<ButtonVariant, string>;
 
-// Added on top of the shadcn variant: the hover and open fills it lacks, and
-// the looks it does not have.
+// Added on top of the shadcn variant: the fill while a menu or popover it
+// opens is open, and the looks shadcn does not have. Its hover fills and the
+// solid red behind white text come from the shadcn variants themselves.
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   default: '',
   outline: 'data-[state=open]:bg-accent',
-  ghost:
-    'hover:bg-accent hover:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
+  ghost: 'data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
   destructive:
     'border-destructive/40 text-destructive-foreground hover:bg-destructive/10 hover:text-destructive-foreground focus-visible:border-destructive focus-visible:ring-destructive/20 data-[state=open]:bg-destructive/10 dark:border-destructive/50 dark:hover:bg-destructive/20 dark:focus-visible:ring-destructive/40',
-  // Dark mode's --destructive is too light behind white text.
-  'destructive-confirm': 'bg-destructive-solid hover:bg-destructive-solid/90',
+  'destructive-confirm': '',
   overlay: ON_ART_CONTROL_CLASSES,
 };
 
@@ -70,7 +70,20 @@ export type ButtonProps = Omit<React.ComponentProps<'button'>, 'children'> & {
   pending?: boolean;
   /** Draws the button on its child, such as a `Link`. `icon` still leads. */
   asChild?: boolean;
+  /**
+   * Lets a long label wrap onto more lines instead of running out of its
+   * container on a phone: the button keeps its size's height as a minimum
+   * and grows with the label, which aligns left.
+   */
+  wrap?: boolean;
   children?: React.ReactNode;
+};
+
+// The size's height becomes a minimum, so one line still looks the same.
+const WRAP_CLASSES: Record<ButtonSize, string> = {
+  sm: 'min-h-8',
+  default: 'min-h-9',
+  lg: 'min-h-10',
 };
 
 /**
@@ -84,6 +97,7 @@ export function Button({
   icon: Icon,
   pending = false,
   asChild = false,
+  wrap = false,
   disabled,
   type,
   className,
@@ -106,7 +120,15 @@ export function Button({
       type={asChild ? type : (type ?? 'button')}
       disabled={disabled || pending}
       aria-busy={pending || undefined}
-      className={cn(VARIANT_CLASSES[variant], className)}
+      className={cn(
+        VARIANT_CLASSES[variant],
+        wrap &&
+          cn(
+            'h-auto max-w-full py-1.5 text-left whitespace-normal',
+            WRAP_CLASSES[size]
+          ),
+        className
+      )}
       {...props}
     >
       {leading}

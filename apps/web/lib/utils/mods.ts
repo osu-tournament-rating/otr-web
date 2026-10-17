@@ -1,20 +1,22 @@
 import { Mods } from '@otr/core/osu';
+
+import { getModAcronyms, NO_MOD_LABEL } from '@/lib/kit/format/mods';
 import { ModsEnumHelper } from '../enum-helpers';
 
-export interface BeatmapModScoreCount {
+interface BeatmapModScoreCount {
   mods: number;
   scoreCount: number;
 }
 
-export interface BeatmapModDistributionEntry {
+interface BeatmapModDistributionEntry {
   mods: Mods;
   label: string;
   scoreCount: number;
   percentage: number;
 }
 
-export const BEATMAP_MOD_DISPLAY_THRESHOLD_PERCENTAGE = 1;
-export const BEATMAP_LIST_SECOND_MOD_GROUP_MIN_PERCENTAGE = 20;
+const BEATMAP_MOD_DISPLAY_THRESHOLD_PERCENTAGE = 1;
+const BEATMAP_LIST_SECOND_MOD_GROUP_MIN_PERCENTAGE = 20;
 
 /** Strips NF/SO and folds NC into DT, the display form of a mod combination. */
 export function normalizeBeatmapDisplayMods(mods: number): Mods {
@@ -27,12 +29,15 @@ export function normalizeBeatmapDisplayMods(mods: number): Mods {
   return normalized as Mods;
 }
 
+/**
+ * The beatmap pages' label for a combination: the kit's acronyms after the
+ * display rules, run together (`HDHR`), or `NM`. Every key mod keeps its
+ * name (`7K`), so mania scores never fold into No Mod.
+ */
 export function getBeatmapModLabel(mods: number): string {
-  const label = ModsEnumHelper.getMetadata(normalizeBeatmapDisplayMods(mods))
-    .map(({ text }) => text)
-    .join('');
-
-  return label || 'NM';
+  return (
+    getModAcronyms(normalizeBeatmapDisplayMods(mods)).join('') || NO_MOD_LABEL
+  );
 }
 
 /** Buckets grouped score counts by label and converts them to percentages. */
@@ -85,7 +90,7 @@ export function calculateBeatmapModDistribution(
 }
 
 /** Collapses a score's mods into the broad category used by the beatmap list. */
-export function getBeatmapListModCategory(mods: number): {
+function getBeatmapListModCategory(mods: number): {
   mods: Mods;
   label: string;
 } {
@@ -221,72 +226,6 @@ export function normalizedScore(mods: Mods, score: number): number {
   }
 
   return Math.round(score / multiplier);
-}
-
-/** CSS color variable for a mod combination. */
-export function getModColor(mods: Mods) {
-  mods = normalizeBeatmapDisplayMods(mods);
-
-  switch (mods) {
-    case Mods.None:
-      return 'var(--chart-1)';
-    case Mods.HardRock:
-      return 'var(--mod-hard-rock)';
-    case Mods.Hidden:
-      return 'var(--mod-hidden)';
-    case Mods.Flashlight:
-      return 'var(--mod-flashlight)';
-    case Mods.Easy:
-      return 'var(--mod-easy)';
-    case Mods.DoubleTime:
-      return 'var(--mod-double-time)';
-    case Mods.HalfTime:
-      return 'var(--mod-half-time)';
-    case Mods.Hidden | Mods.HardRock:
-      return 'var(--mod-hidden-hard-rock)';
-    case Mods.Hidden | Mods.Easy:
-      return 'var(--mod-hidden-easy)';
-    case Mods.Easy | Mods.DoubleTime:
-      return 'var(--mod-easy-double-time)';
-    case Mods.Hidden | Mods.Flashlight:
-      return 'var(--mod-hidden-flashlight)';
-    case Mods.Hidden | Mods.DoubleTime:
-      return 'var(--mod-hidden-double-time)';
-    case Mods.SuddenDeath:
-      return 'var(--mod-sudden-death)';
-    case Mods.TouchDevice:
-      return 'var(--mod-touch-device)';
-    case Mods.Relax:
-    case Mods.Autoplay:
-    case Mods.Relax2:
-      return 'var(--mod-relax)';
-    case Mods.Mirror:
-      return 'var(--mod-mirror)';
-    case Mods.Random:
-      return 'var(--mod-random)';
-    case Mods.Key1:
-    case Mods.Key2:
-    case Mods.Key3:
-    case Mods.Key4:
-    case Mods.Key5:
-    case Mods.Key6:
-    case Mods.Key7:
-    case Mods.Key8:
-    case Mods.Key9:
-      return 'var(--mod-mania-key)';
-    default:
-      return 'var(--chart-1)';
-  }
-}
-
-/** Returns a readable neutral foreground for a solid mod-color background. */
-export function getModForegroundColor(mods: Mods): string {
-  const normalizedMods = normalizeBeatmapDisplayMods(mods);
-
-  return normalizedMods === Mods.Flashlight ||
-    normalizedMods === (Mods.Hidden | Mods.Flashlight)
-    ? '#FFFFFF'
-    : '#000000';
 }
 
 /**

@@ -1,6 +1,14 @@
-import { Metadata } from 'next';
-import StatsPageContent from '@/components/stats/StatsPageContent';
+import type { Metadata } from 'next';
+
+import { PageFrame } from '@/components/kit/layout/PageFrame';
+import RatingDistributionPanel from '@/components/stats/RatingDistributionPanel';
+import TournamentsByLobbySizeChart from '@/components/stats/TournamentsByLobbySizeChart';
+import TournamentsByRulesetChart from '@/components/stats/TournamentsByRulesetChart';
+import TournamentsByYearChart from '@/components/stats/TournamentsByYearChart';
+import TournamentVerificationChart from '@/components/stats/TournamentVerificationChart';
 import { orpc } from '@/lib/orpc/orpc';
+
+import { StatsPageHeader } from './StatsPageHeader';
 
 export const metadata: Metadata = {
   title: 'Platform statistics',
@@ -9,7 +17,25 @@ export const metadata: Metadata = {
 
 export default async function StatsPage() {
   // A failure reaches the error screen; this page always exists.
-  const stats = await orpc.stats.platform();
+  const { tournamentStats, ratingStats } = await orpc.stats.platform();
 
-  return <StatsPageContent stats={stats} />;
+  return (
+    <PageFrame>
+      <StatsPageHeader />
+      {/* grid-cols-1 lets a panel shrink below its chart's measured width. */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <TournamentVerificationChart
+          verificationCounts={tournamentStats.countByVerificationStatus}
+        />
+        <TournamentsByYearChart data={tournamentStats.verifiedByYear} />
+        <TournamentsByRulesetChart data={tournamentStats.verifiedByRuleset} />
+        <TournamentsByLobbySizeChart
+          data={tournamentStats.verifiedByLobbySize}
+        />
+      </div>
+      <RatingDistributionPanel
+        ratingsByRuleset={ratingStats.ratingsByRuleset}
+      />
+    </PageFrame>
+  );
 }

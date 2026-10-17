@@ -1,77 +1,82 @@
-import Link from 'next/link';
-import { ChevronRight, ExternalLink } from 'lucide-react';
+import { History } from 'lucide-react';
 import { AuditEntityType } from '@otr/core/osu';
-import { AuditEntityTypeEnumHelper } from '@/lib/enum-helpers';
+
+import { PageHeader } from '@/components/kit/layout/PageHeader';
+import { ENTITY_TYPE_LABELS } from '@/lib/audit-entity-types';
+import { formatId } from '@/lib/kit/format/number';
+import { getEntityTypeName, nameOr } from './auditParams';
+
+export type AuditBackLink = { href: string; label: string };
 
 interface AuditPageHeaderProps {
   entityType: AuditEntityType;
   entityId: number;
   entityName?: string;
+  /**
+   * The way back when the entity's page isn't at its ID: a beatmap's page
+   * at its osu! ID, or the match page a game or score sits on.
+   */
+  back?: AuditBackLink;
 }
 
-function getEntityHref(
+/**
+ * Tournaments and matches open at their ID; anything else goes back to the
+ * audit log unless its page passes `back`.
+ */
+function getBackLink(
   entityType: AuditEntityType,
   entityId: number
-): string | null {
+): AuditBackLink {
   switch (entityType) {
     case AuditEntityType.Tournament:
-      return `/tournaments/${entityId}`;
+      return { href: `/tournaments/${entityId}`, label: 'View tournament' };
     case AuditEntityType.Match:
-      return `/matches/${entityId}`;
+      return { href: `/matches/${entityId}`, label: 'View match' };
     default:
-      return null;
+      return { href: '/tools/audit-logs', label: 'Audit logs' };
   }
 }
 
+/** The entity's name, or "Tournament #775" when it has none. */
+export function getAuditEntityTitle(
+  entityType: AuditEntityType,
+  entityId: number,
+  entityName?: string | null
+): string {
+  return nameOr(
+    entityName,
+    `${getEntityTypeName(entityType)} #${formatId(entityId)}`
+  );
+}
+
+/**
+ * The top of an audit history page: the entity's name as the title, a link
+ * back to the entity (or the audit log, for entities without a page), and
+ * which record this is.
+ */
 export default function AuditPageHeader({
   entityType,
   entityId,
   entityName,
+  back,
 }: AuditPageHeaderProps) {
-  const entityMeta = AuditEntityTypeEnumHelper.getMetadata(entityType);
-  const entityHref = getEntityHref(entityType, entityId);
+  const reference = `${ENTITY_TYPE_LABELS[entityType]} #${formatId(entityId)}`;
 
   return (
-    <div data-testid="audit-page-header" className="flex flex-col gap-3">
-      <nav
-        data-testid="audit-breadcrumb"
-        className="flex items-center gap-1 text-sm text-muted-foreground"
-      >
-        <Link
-          data-testid="audit-breadcrumb-link"
-          href="/tools/audit-logs"
-          className="transition-colors hover:text-foreground"
-        >
-          Audit Logs
-        </Link>
-        <ChevronRight className="h-3.5 w-3.5" />
-        <span>{entityMeta.text}</span>
-        <ChevronRight className="h-3.5 w-3.5" />
-        <span className="font-medium text-foreground">#{entityId}</span>
-      </nav>
-
-      <div className="flex items-center gap-3">
-        <h1
-          data-testid="audit-entity-title"
-          className="text-xl font-bold sm:text-2xl"
-        >
-          {entityMeta.text} #{entityId}
-        </h1>
-        {entityHref && (
-          <Link
-            data-testid="audit-view-entity-link"
-            href={entityHref}
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            View {entityMeta.text.toLowerCase()}
-          </Link>
-        )}
-      </div>
-
-      {entityName && (
-        <p className="text-sm text-muted-foreground">{entityName}</p>
-      )}
-    </div>
+    <PageHeader
+      data-testid="audit-page-header"
+      icon={History}
+      back={back ?? getBackLink(entityType, entityId)}
+      title={
+        <span data-testid="audit-entity-title">
+          {getAuditEntityTitle(entityType, entityId, entityName)}
+        </span>
+      }
+      description={
+        <span data-testid="audit-entity-description">
+          Audit history for {reference}
+        </span>
+      }
+    />
   );
 }

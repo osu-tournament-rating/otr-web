@@ -1,6 +1,6 @@
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/kit/controls/Button';
 import { STATE_LAYOUT, STATE_TONE } from '@/lib/kit/feedback/state-layout';
 import { cn } from '@/lib/utils';
 
@@ -113,44 +113,37 @@ export default function SectionError({
       <p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
         {description}
       </p>
-      <Button
-        type="button"
-        variant="outline"
-        disabled={retrying}
-        onClick={onRetry}
+      <RetryButton
+        size="default"
+        retrying={retrying}
+        onRetry={onRetry}
         className="mt-5"
-      >
-        <RefreshCw
-          className={cn(retrying && 'animate-spin')}
-          aria-hidden="true"
-        />
-        Try again
-      </Button>
+      />
     </div>
   );
 }
 
+/** The kit's outline Button: disabled, with a spinner, while `retrying`. */
 function RetryButton({
   size,
   retrying,
   onRetry,
+  className,
 }: {
   size: 'default' | 'sm';
   retrying: boolean;
   onRetry: () => void;
+  className?: string;
 }) {
   return (
     <Button
-      type="button"
       variant="outline"
       size={size}
-      disabled={retrying}
+      icon={RefreshCw}
+      pending={retrying}
       onClick={onRetry}
+      className={className}
     >
-      <RefreshCw
-        className={cn(retrying && 'animate-spin')}
-        aria-hidden="true"
-      />
       Try again
     </Button>
   );

@@ -1,31 +1,33 @@
-import { Metadata } from 'next';
+import { Swords } from 'lucide-react';
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { z } from 'zod';
-import { Gamepad2, BarChart3, Loader2 } from 'lucide-react';
-import Link from 'next/link';
 
 import GamesListClient from '@/components/games/GamesListClient';
-import MatchCard from '@/components/matches/MatchCard';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { PageFrame } from '@/components/kit/layout/PageFrame';
+import { Panel, PanelBody } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { NotInRatings } from '@/components/kit/status/NotInRatings';
+import MatchHero from '@/components/matches/MatchHero';
 import MatchStatsView from '@/components/matches/MatchStatsView';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { getMatchDisplayName } from '@/components/matches/matchName';
+import { parseMatchTab } from '@/components/matches/matchTabs';
+import { getCountryNames } from '@/lib/kit/format/country';
+import { formatCountOf } from '@/lib/kit/format/number';
 import { getMatchCached } from '@/lib/orpc/queries/match';
-import { MatchDetail } from '@/lib/orpc/schema/match';
-import { VerificationStatus } from '@otr/core/osu';
 import {
   fetchOrpcOptional,
   fetchOrpcOrNotFound,
   parseParamsOrNotFound,
 } from '@/lib/orpc/server-helpers';
 
+import { GameFramesSkeleton } from './skeletons';
+
 type PageProps = {
   params: Promise<{ id: number }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
-
-const MATCH_TABS = ['games', 'stats'] as const;
-type MatchTab = (typeof MATCH_TABS)[number];
-const DEFAULT_TAB: MatchTab = 'games';
 
 const matchPageParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
@@ -48,103 +50,52 @@ export async function generateMetadata({
     return { title: 'Match not found' };
   }
 
-  return { title: match.name };
+  return { title: getMatchDisplayName(match) };
 }
 
 export default async function Page({ params, searchParams }: PageProps) {
   const { id } = parseParamsOrNotFound(matchPageParamsSchema, await params);
-  const { tab: tabParam } = await searchParams;
-  const currentTab: MatchTab = MATCH_TABS.includes(tabParam as MatchTab)
-    ? (tabParam as MatchTab)
-    : DEFAULT_TAB;
-  const createTabHref = (tab: MatchTab) => `/matches/${id}?tab=${tab}`;
-
-  const match: MatchDetail = await fetchOrpcOrNotFound(() =>
-    getMatchCached(id)
-  );
-
-  const isVerified = match.verificationStatus === VerificationStatus.Verified;
-  const gameCount = match.games?.length ?? 0;
-  const statsUnavailableReason =
-    match.verificationStatus === VerificationStatus.PreVerified
-      ? 'awaiting verification'
-      : match.verificationStatus === VerificationStatus.Rejected
-        ? 'rejected'
-        : match.verificationStatus === VerificationStatus.PreRejected
-          ? 'flagged for review'
-          : 'pending processing';
+  const tab = parseMatchTab((await searchParams).tab);
+  const match = await fetchOrpcOrNotFound(() => getMatchCached(id));
+  const games = match.games ?? [];
+  const players = match.players ?? [];
+  // Worked out here, so the score cards' flags never name a country with
+  // the browser's own region names.
+  const countryNames = getCountryNames(players.map((player) => player.country));
 
   return (
-    <div className="container mx-auto flex flex-col gap-4 md:gap-2">
-      <MatchCard match={match} />
+    <PageFrame>
+      <MatchHero match={match} tab={tab} />
+      <NotInRatings
+        status={match.verificationStatus}
+        variant="notice"
+        subject="match"
+      />
 
-      <Tabs value={currentTab} className="w-full">
-        <TabsList data-testid="match-tabs" className="grid w-full grid-cols-2">
-          <TabsTrigger value="games" asChild>
-            <Link href={createTabHref('games')} data-testid="tab-trigger-games">
-              Games
-            </Link>
-          </TabsTrigger>
-          <TabsTrigger value="stats" asChild>
-            <Link href={createTabHref('stats')} data-testid="tab-trigger-stats">
-              Stats
-            </Link>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="games" className="mt-4">
-          <Card className="p-6 font-sans">
-            <div className="flex items-center gap-2">
-              <Gamepad2 className="h-6 w-6 text-primary" />
-              <h3 className="font-sans text-lg font-semibold">Games</h3>
-              <span className="text-sm text-muted-foreground">
-                ({gameCount})
-              </span>
-            </div>
-            {gameCount > 0 ? (
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="size-6 animate-spin text-muted-foreground" />
-                  </div>
-                }
-              >
+      {tab === 'games' ? (
+        <Panel>
+          <SectionHeader
+            icon={Swords}
+            title="Games"
+            meta={formatCountOf(games.length, 'game')}
+          />
+          {games.length > 0 ? (
+            <PanelBody>
+              <Suspense fallback={<GameFramesSkeleton />}>
                 <GamesListClient
-                  games={match.games ?? []}
-                  players={match.players ?? []}
+                  games={games}
+                  players={players}
+                  countryNames={countryNames}
                 />
               </Suspense>
-            ) : (
-              <div className="flex h-32 items-center justify-center text-muted-foreground">
-                No games recorded for this match
-              </div>
-            )}
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="stats" className="mt-4">
-          {isVerified ? (
-            <MatchStatsView match={match} />
+            </PanelBody>
           ) : (
-            <Card className="!p-6">
-              <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                <div className="flex size-12 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                  <BarChart3 className="size-6" aria-hidden="true" />
-                </div>
-                <div>
-                  <p className="text-lg font-semibold">
-                    Statistics Not Available
-                  </p>
-                  <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                    Match statistics are only available for verified matches.
-                    This match is currently {statsUnavailableReason}.
-                  </p>
-                </div>
-              </div>
-            </Card>
+            <EmptyState icon={Swords} title="No games recorded" />
           )}
-        </TabsContent>
-      </Tabs>
-    </div>
+        </Panel>
+      ) : (
+        <MatchStatsView match={match} />
+      )}
+    </PageFrame>
   );
 }

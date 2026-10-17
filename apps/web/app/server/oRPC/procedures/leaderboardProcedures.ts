@@ -11,6 +11,10 @@ import { buildTierProgress, getTierBounds } from '@/lib/utils/tierProgress';
 import { Ruleset } from '@otr/core/osu';
 
 import { publicProcedure, protectedProcedure } from './base';
+import {
+  buildLeaderboardOrder,
+  buildLeaderboardSearchCondition,
+} from './shared/leaderboardQuery';
 import type { DatabaseClient } from '@/lib/db';
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -138,9 +142,12 @@ export async function runLeaderboard({
       scopedPlayerIds && scopedPlayerIds.length > 0
         ? inArray(schema.players.id, scopedPlayerIds)
         : undefined;
-    const baseWhere = playerScopeFilter
-      ? and(playerScopeFilter, ratingRulesetFilter)
-      : ratingRulesetFilter;
+    // Filters players before the per-player aggregation, not after it
+    const usernameFilter = buildLeaderboardSearchCondition(input.searchQuery);
+    const baseWhere =
+      playerScopeFilter || usernameFilter
+        ? and(playerScopeFilter, usernameFilter, ratingRulesetFilter)
+        : ratingRulesetFilter;
     const groupByColumns = [
       schema.playerRatings.id,
       schema.playerRatings.rating,
@@ -273,7 +280,9 @@ export async function runLeaderboard({
       : baseRowsQuery;
 
     const leaderboardRows = await rowsQuery
-      .orderBy(leaderboardBase.ratingGlobalRank)
+      .orderBy(
+        ...buildLeaderboardOrder(leaderboardBase, input.sort, input.descending)
+      )
       .limit(pageSize)
       .offset(offset);
 

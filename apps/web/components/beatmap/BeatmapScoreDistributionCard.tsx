@@ -7,20 +7,18 @@ import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import {
   BoxPlotTooltipContent,
   BoxPlotTrack,
-  EmptyState,
-  Eyebrow,
   FullRangeToggle,
+  NotEnoughData,
   ScaleAxis,
-  SectionCard,
-  SectionHeader,
-  Swatch,
 } from '@/components/beatmap/BeatmapSection';
+import { SCORE_DISTRIBUTION_INFO } from '@/components/beatmap/section-info';
+import { ChartTooltipContent } from '@/components/kit/charts/ChartTooltip';
+import { SeriesMarker } from '@/components/kit/charts/SeriesMarker';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { Eyebrow } from '@/components/kit/layout/Typography';
 import TapTooltip from '@/components/tap-tooltip';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import {
   formatScoreTick,
   getBoxPlotView,
@@ -33,9 +31,26 @@ import type {
   BeatmapModScoreDistribution,
   BeatmapScorePercentilePoint,
 } from '@/lib/orpc/schema/beatmapStats';
+import { seriesColor } from '@/lib/kit/color/categorical';
+import { getModPaletteColor } from '@/lib/kit/color/mods';
+import {
+  CHART_CURSOR,
+  CHART_LINE_WIDTH,
+  CHART_MARGIN,
+  chartAxisProps,
+  chartGridProps,
+  chartValueAxisProps,
+  niceAxisProps,
+} from '@/lib/kit/charts/axis';
+import { formatPercentTick } from '@/lib/kit/charts/format';
+import {
+  DEFAULT_MAX_TICKS,
+  NARROW_MAX_TICKS,
+  getNiceTicks,
+} from '@/lib/kit/charts/ticks';
+import { formatCount, formatCountOf } from '@/lib/kit/format/number';
 import { cn } from '@/lib/utils';
-import { formatChartNumber, formatPercentage } from '@/lib/utils/chart';
-import { getBeatmapModLabel, getModColor } from '@/lib/utils/mods';
+import { getBeatmapModLabel } from '@/lib/utils/mods';
 
 interface BeatmapScoreDistributionCardProps {
   distribution: BeatmapModScoreDistribution[];
@@ -73,27 +88,26 @@ function BoxPlotRow({
   gridPercents: number[];
 }) {
   const label = getBeatmapModLabel(group.mods);
-  const color = getModColor(group.mods);
+  const color = getModPaletteColor(group.mods);
   const quartiles = toScoreQuartiles(group);
 
   return (
     <TapTooltip
-      triggerAriaLabel={`${label}: ${formatChartNumber(group.scoreCount)} scores`}
+      triggerAriaLabel={`${label}: ${formatCountOf(group.scoreCount, 'score')}`}
       content={
         <BoxPlotTooltipContent
-          labelIcon={<Swatch color={color} />}
+          labelIcon={<SeriesMarker color={color} />}
           label={label}
           scoreCount={group.scoreCount}
           measureLabel="Median"
           quartiles={quartiles}
-          color={color}
-          format={formatChartNumber}
+          format={formatCount}
         />
       }
     >
       <div className="flex min-h-7 items-center gap-2">
         <span className="flex w-16 shrink-0 items-center gap-1.5">
-          <Swatch color={color} />
+          <SeriesMarker color={color} />
           <span className="truncate text-xs">{label}</span>
         </span>
 
@@ -113,67 +127,58 @@ function PercentileCurve({
   percentiles: BeatmapScorePercentilePoint[];
 }) {
   const isNarrow = useIsNarrowChart();
+  const scoreTicks = React.useMemo(() => {
+    const scores = percentiles.map((point) => point.score);
+    return getNiceTicks(Math.min(...scores), Math.max(...scores), {
+      within: true,
+      maxTicks: isNarrow ? NARROW_MAX_TICKS : DEFAULT_MAX_TICKS,
+    });
+  }, [percentiles, isNarrow]);
 
   return (
     <ChartContainer
       config={PERCENTILE_CHART_CONFIG}
       className="h-[240px] w-full"
     >
-      <AreaChart
-        data={percentiles}
-        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+      <AreaChart data={percentiles} margin={CHART_MARGIN}>
+        <CartesianGrid {...chartGridProps} />
         <XAxis
+          {...chartAxisProps}
           dataKey="score"
-          type="number"
-          domain={['dataMin', 'dataMax']}
+          {...niceAxisProps(scoreTicks)}
           tickFormatter={(value: number) => formatScoreTick(value)}
-          tickLine={false}
-          axisLine={false}
-          tickCount={isNarrow ? 3 : 5}
         />
         <YAxis
+          {...chartValueAxisProps}
           domain={[0, 100]}
-          tickFormatter={(value: number) => `${value}%`}
-          tickLine={false}
-          axisLine={false}
-          width={40}
+          ticks={[0, 25, 50, 75, 100]}
+          tickFormatter={formatPercentTick}
         />
         <ChartTooltip
+          cursor={CHART_CURSOR.line}
           content={
             <ChartTooltipContent
-              hideLabel
-              hideIndicator
-              formatter={(value, _name, item) => {
-                const point = item?.payload as
+              marker="line"
+              labelFormatter={(_label, payload) => {
+                const point = payload[0]?.payload as
                   BeatmapScorePercentilePoint | undefined;
-                if (point == null || typeof value !== 'number') return null;
-
-                return (
-                  <span className="text-xs">
-                    A score of{' '}
-                    <span className="font-medium">
-                      {formatChartNumber(point.score)}
-                    </span>{' '}
-                    beats{' '}
-                    <span className="font-medium">
-                      {formatPercentage(value, 0)}
-                    </span>{' '}
-                    of tournament plays
-                  </span>
-                );
+                return point ? `A score of ${formatCount(point.score)}` : null;
               }}
+              nameFormatter={() => 'Beats'}
+              valueFormatter={(value) =>
+                `${formatPercentTick(Math.round(value))} of tournament plays`
+              }
             />
           }
         />
         <Area
           type="monotone"
           dataKey="percentile"
-          stroke="var(--chart-1)"
-          fill="var(--chart-1)"
+          name="Beats"
+          stroke={seriesColor(0)}
+          fill={seriesColor(0)}
           fillOpacity={0.15}
-          strokeWidth={2}
+          strokeWidth={CHART_LINE_WIDTH}
           dot={false}
           isAnimationActive={false}
         />
@@ -208,23 +213,16 @@ export default function BeatmapScoreDistributionCard({
   );
 
   return (
-    <SectionCard
-      data-testid="beatmap-score-distribution"
-      className={cn(className)}
-    >
+    <Panel data-testid="beatmap-score-distribution" className={className}>
       <SectionHeader
         icon={ChartCandlestick}
         title="Score distribution"
-        infoText="Charts NM, HD, HR and DT scores only. Mod rows with fewer than 5 scores are hidden."
-        meta={
-          hasBoxData
-            ? `${formatChartNumber(totalScoreCount)} scores`
-            : undefined
-        }
+        infoText={SCORE_DISTRIBUTION_INFO}
+        meta={hasBoxData ? formatCountOf(totalScoreCount, 'score') : undefined}
       />
 
       {!hasData ? (
-        <EmptyState />
+        <NotEnoughData />
       ) : (
         <div className="xl:grid xl:grid-cols-2 xl:divide-x">
           <div className="flex h-full flex-col px-4 py-4">
@@ -258,7 +256,7 @@ export default function BeatmapScoreDistributionCard({
                   ))}
                 </div>
               ) : (
-                <EmptyState />
+                <NotEnoughData />
               )}
               {hasBoxData ? (
                 <ScaleAxis leftSpacerClassName="w-16" ticks={view.ticks} />
@@ -276,11 +274,11 @@ export default function BeatmapScoreDistributionCard({
                 <PercentileCurve percentiles={percentiles} />
               </div>
             ) : (
-              <EmptyState />
+              <NotEnoughData />
             )}
           </div>
         </div>
       )}
-    </SectionCard>
+    </Panel>
   );
 }

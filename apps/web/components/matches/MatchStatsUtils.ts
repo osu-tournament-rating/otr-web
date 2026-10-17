@@ -4,9 +4,14 @@ import {
   PlayerMatchStats,
   RatingAdjustment,
 } from '@/lib/orpc/schema/match';
-import { Team, VerificationStatus } from '@otr/core/osu';
+import { type Ruleset, Team, VerificationStatus } from '@otr/core/osu';
 import { TierName, getTierFromRating } from '@/lib/utils/tierData';
-import { formatAccuracy } from '@/lib/utils/format';
+import {
+  formatAccuracy,
+  formatCount,
+  formatNumber,
+  formatRating,
+} from '@/lib/kit/format/number';
 
 export interface HighlightPlayer {
   id: number;
@@ -34,6 +39,12 @@ export interface HighlightStat {
   helpText?: string;
 }
 
+/** The help behind the Stats tab's headers, shared with its loading screen. */
+export const MATCH_STATISTICS_INFO =
+  'Performance across verified games in this match';
+export const PLAYER_PERFORMANCE_INFO =
+  'Score, accuracy, misses, and placement are per-game averages';
+
 export type TeamColor = 'red' | 'blue';
 
 export interface ProcessedPlayerStats {
@@ -57,17 +68,6 @@ export interface ProcessedPlayerStats {
   averageMisses: number;
   averagePlacement: number;
 }
-
-const SCORE_THRESHOLDS = {
-  MILLION: 1_000_000,
-  HUNDRED_K: 100_000,
-  TEN_K: 10_000,
-  THOUSAND: 1_000,
-} as const;
-
-const PRECISION = {
-  ACCURACY_DECIMAL: 2,
-} as const;
 
 function getRosterTeamMap(match: MatchDetail): Map<number, TeamColor> {
   const playerTeams = new Map<number, TeamColor>();
@@ -178,11 +178,11 @@ function createResultStat(
 
     return {
       id: 'match-result',
-      label: 'Match Result',
+      label: 'Match result',
       value:
         redScore !== undefined && blueScore !== undefined
-          ? `${redScore} – ${blueScore}`
-          : `${winRecord.winnerPoints} – ${winRecord.loserPoints}`,
+          ? `${formatCount(redScore)}–${formatCount(blueScore)}`
+          : `${formatCount(winRecord.winnerPoints)}–${formatCount(winRecord.loserPoints)}`,
       sublabel: winRecord.isTied
         ? 'Draw'
         : winRecord.winnerTeam === Team.Red
@@ -201,7 +201,7 @@ function createResultStat(
 
   return {
     id: 'match-result',
-    label: 'Match Result',
+    label: 'Match result',
     value: '—',
     sublabel: 'Result unavailable',
     icon: 'Swords',
@@ -243,44 +243,36 @@ export function calculateHighlightStats(
     {
       id: 'players',
       label: 'Players',
-      value: players.length.toLocaleString(),
-      sublabel: players.length === 1 ? 'Participant' : 'Participants',
+      value: formatCount(players.length),
       icon: 'Users',
     },
     {
       id: 'rated-games',
-      label: 'Rated Games',
-      value: ratedGames.toLocaleString(),
-      sublabel: ratedGames === 1 ? 'Verified game' : 'Verified games',
+      label: 'Rated games',
+      value: formatCount(ratedGames),
       icon: 'Gamepad2',
-      helpText: 'Only verified games contribute to match statistics.',
     },
     {
       id: 'average-rating',
-      label: 'Average Rating',
-      value:
-        averageRating === null ? '—' : Math.round(averageRating).toString(),
+      label: 'Average rating',
+      value: formatRating(averageRating),
       sublabel: averageRating === null ? 'Ratings unavailable' : undefined,
       icon: 'TrendingUp',
-      metric: averageRating === null ? undefined : 'TR',
       tierIcon: averageTier
         ? { tier: averageTier.tier, subTier: averageTier.subTier }
         : undefined,
     },
     {
       id: 'match-cost',
-      label: 'Top Match Cost',
-      value: topMatchCost.matchCost.toFixed(2),
+      label: 'Top match cost',
+      value: formatMatchCost(topMatchCost.matchCost),
       icon: 'Medal',
       player: createHighlightPlayer(topMatchCost),
     },
     {
       id: 'accuracy',
-      label: 'Top Accuracy',
-      value: formatAccuracy(
-        topAccuracy.averageAccuracy,
-        PRECISION.ACCURACY_DECIMAL
-      ),
+      label: 'Top accuracy',
+      value: formatAccuracy(topAccuracy.averageAccuracy),
       icon: 'Crosshair',
       metric: 'avg',
       player: createHighlightPlayer(topAccuracy),
@@ -288,18 +280,22 @@ export function calculateHighlightStats(
   ];
 }
 
-export function formatScore(score: number): string {
-  if (score >= SCORE_THRESHOLDS.MILLION) {
-    return `${(score / SCORE_THRESHOLDS.MILLION).toFixed(1)}M`;
-  }
-  if (score >= SCORE_THRESHOLDS.HUNDRED_K) {
-    return `${Math.floor(score / SCORE_THRESHOLDS.THOUSAND)}K`;
-  }
-  if (score >= SCORE_THRESHOLDS.TEN_K) {
-    return `${(score / SCORE_THRESHOLDS.THOUSAND).toFixed(0)}K`;
-  }
-  if (score >= SCORE_THRESHOLDS.THOUSAND) {
-    return `${(score / SCORE_THRESHOLDS.THOUSAND).toFixed(1)}K`;
-  }
-  return Math.floor(score).toLocaleString();
+/**
+ * A player's profile in the match's ruleset, as the score cards link it, so
+ * a mania match never opens someone's osu! profile.
+ */
+export function playerProfileHref(playerId: number, ruleset?: Ruleset): string {
+  return ruleset === undefined
+    ? `/players/${playerId}`
+    : `/players/${playerId}?ruleset=${ruleset}`;
+}
+
+/** A match cost, always with two decimals: `1.31`. */
+export function formatMatchCost(matchCost: number): string {
+  return formatNumber(matchCost, { decimals: 2 });
+}
+
+/** A per-game average such as misses or placement, to one decimal: `8.2`. */
+export function formatAverage(value: number): string {
+  return formatNumber(value, { decimals: 1 });
 }

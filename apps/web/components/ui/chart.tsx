@@ -3,6 +3,7 @@
 import * as React from 'react';
 import * as RechartsPrimitive from 'recharts';
 
+import { formatNumber } from '@/lib/kit/format/number';
 import { cn } from '@/lib/utils';
 
 // Format: { THEME_NAME: CSS_SELECTOR }
@@ -74,8 +75,12 @@ function ChartContainer({
           // recharts v3 renders tick text as `.recharts-cartesian-axis-tick-value`;
           // upstream shadcn still targets `.recharts-cartesian-axis-tick text`, a
           // v2 node that no longer wraps any text, so its ticks kept recharts'
-          // `#666` default fill.
-          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick-value]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden [&_g[tabindex='-1']]:outline-hidden",
+          // `#666` default fill. Ticks also take tabular figures, which the
+          // body no longer sets.
+          //
+          // The bar cursor is accent at half strength: `--muted` matches the
+          // dark panel, so a muted cursor was invisible there.
+          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick-value]:fill-muted-foreground [&_.recharts-cartesian-axis-tick-value]:tabular-nums [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-accent/50 [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden [&_g[tabindex='-1']]:outline-hidden",
           className
         )}
         {...props}
@@ -125,6 +130,17 @@ ${colorConfig
 };
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
+
+/**
+ * A tooltip value with en-US separators, never the visitor's locale, so the
+ * server and the browser agree (issue #1017). Up to three decimals, as
+ * `toLocaleString` showed before.
+ */
+function formatTooltipValue(value: number | string): string {
+  return typeof value === 'number'
+    ? formatNumber(value, { maxDecimals: 3 })
+    : value;
+}
 
 function ChartTooltipContent(
   props: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
@@ -277,9 +293,9 @@ function ChartTooltipContent(
                         {itemConfig?.label || item.name}
                       </span>
                     </div>
-                    {item.value && (
-                      <span className="font-medium text-foreground">
-                        {item.value.toLocaleString()}
+                    {item.value != null && item.value !== '' && (
+                      <span className="font-medium text-foreground tabular-nums">
+                        {formatTooltipValue(item.value)}
                       </span>
                     )}
                   </div>

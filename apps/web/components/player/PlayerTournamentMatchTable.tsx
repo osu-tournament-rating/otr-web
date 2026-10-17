@@ -1,126 +1,133 @@
-'use client';
-
-import { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
+import { DateText } from '@/components/kit/format/DateText';
+import { RatingDelta } from '@/components/kit/format/RatingDelta';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { format } from 'date-fns';
-import Link from 'next/link';
-import RatingDelta from '@/components/rating/RatingDelta';
-import TapTooltip from '@/components/tap-tooltip';
-import { HelpCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { stickyTableHeaderFromLg } from '@/lib/utils/table';
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from '@/components/kit/tables/DataTable';
+import { EntityLink } from '@/components/kit/tables/EntityLink';
+import { PhoneRow, PhoneRowList } from '@/components/kit/tables/PhoneRow';
+import { formatDate } from '@/lib/kit/format/date';
+import { formatRating } from '@/lib/kit/format/number';
+import type { PlayerRatingAdjustment } from '@/lib/orpc/schema/playerStats';
 
-const RATING_PRECISION = {
-  DISPLAY: 0,
-} as const;
+const GAMES_INFO =
+  'Win-loss record for games this player participated in, not the entire team';
 
-interface PlayerTournamentMatchTableProps {
-  adjustments: PlayerRatingAdjustment[];
+/** `2–1`, or null when the record is unknown. */
+function formatGames(adjustment: PlayerRatingAdjustment): string | null {
+  return adjustment.gamesWon != null && adjustment.gamesLost != null
+    ? `${adjustment.gamesWon}–${adjustment.gamesLost}`
+    : null;
 }
 
+function MatchName({ adjustment }: { adjustment: PlayerRatingAdjustment }) {
+  return adjustment.match ? (
+    <EntityLink
+      href={`/matches/${adjustment.match.id}`}
+      title={adjustment.match.name}
+    >
+      {adjustment.match.name}
+    </EntityLink>
+  ) : (
+    <span className="text-muted-foreground">Match not found</span>
+  );
+}
+
+/**
+ * One tournament's matches for this player, newest first: the games record
+ * and the rating before, after and the change. On phones each match becomes
+ * a row that keeps the new rating and the change in view.
+ */
 export default function PlayerTournamentMatchTable({
   adjustments,
-}: PlayerTournamentMatchTableProps) {
-  const sortedAdjustments = [...adjustments].sort(
+  tournamentName,
+}: {
+  adjustments: PlayerRatingAdjustment[];
+  tournamentName: string;
+}) {
+  const sorted = [...adjustments].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
+  const label = `Matches in ${tournamentName}`;
 
   return (
-    <div className="overflow-clip">
-      <div className={cn('overflow-x-auto', stickyTableHeaderFromLg)}>
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted">
-              <TableHead>Date</TableHead>
-              <TableHead>Match</TableHead>
-              <TableHead className="text-center">
-                <div className="flex items-center justify-center gap-1">
-                  Games (W-L)
-                  <TapTooltip
-                    side="top"
-                    triggerAriaLabel="About games won and lost"
-                    triggerClassName="flex w-auto shrink-0 items-center rounded-full p-0.5 text-muted-foreground transition-colors hover:text-foreground"
-                    content={
-                      <span className="block max-w-56">
-                        Win-loss record for games this player participated in,
-                        not the entire team
-                      </span>
-                    }
-                  >
-                    <HelpCircle className="h-4 w-4" aria-hidden />
-                  </TapTooltip>
-                </div>
-              </TableHead>
-              <TableHead className="text-center">Before</TableHead>
-              <TableHead className="text-center">After</TableHead>
-              <TableHead className="text-center">Change</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedAdjustments.length > 0 ? (
-              sortedAdjustments.map((adjustment, index) => (
-                <TableRow
-                  key={`${adjustment.match?.id}-${index}`}
-                  className="transition-colors duration-200 hover:bg-muted/30"
-                >
-                  <TableCell>
-                    {format(new Date(adjustment.timestamp), 'yyyy-MM-dd')}
-                  </TableCell>
-                  <TableCell className="max-w-[300px] truncate">
-                    {adjustment.match ? (
-                      <Link
-                        href={`/matches/${adjustment.match.id}`}
-                        className=""
-                      >
-                        {adjustment.match.name}
-                      </Link>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        Match not found
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="py-2 text-center text-xs sm:text-sm">
-                    {adjustment.gamesWon != null &&
-                    adjustment.gamesLost != null ? (
-                      <span>
-                        {adjustment.gamesWon}-{adjustment.gamesLost}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="py-2 text-center text-xs text-muted-foreground sm:text-sm">
-                    {adjustment.ratingBefore.toFixed(RATING_PRECISION.DISPLAY)}
-                  </TableCell>
-                  <TableCell className="py-2 text-center text-xs font-medium sm:text-sm">
-                    {adjustment.ratingAfter.toFixed(RATING_PRECISION.DISPLAY)}
-                  </TableCell>
-                  <TableCell className="py-2 text-center">
-                    <RatingDelta delta={adjustment.ratingDelta} />
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="h-24 text-center text-muted-foreground"
-                >
-                  No matches found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+    <DataTable
+      fixed
+      aria-label={label}
+      phoneRows={
+        <PhoneRowList aria-label={label}>
+          {sorted.map((adjustment, index) => {
+            const games = formatGames(adjustment);
+
+            return (
+              <PhoneRow
+                key={`${adjustment.match?.id}-${index}`}
+                title={<MatchName adjustment={adjustment} />}
+                description={[
+                  formatDate(adjustment.timestamp),
+                  games ? `Games ${games}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+                value={formatRating(adjustment.ratingAfter)}
+                valueDescription={
+                  <RatingDelta value={adjustment.ratingDelta} />
+                }
+              />
+            );
+          })}
+        </PhoneRowList>
+      }
+    >
+      <DataTableHeader>
+        <DataTableRow>
+          <DataTableHead className="w-32">Date</DataTableHead>
+          <DataTableHead>Match</DataTableHead>
+          <DataTableHead
+            numeric
+            className="w-32"
+            info={GAMES_INFO}
+            infoLabel="About games won and lost"
+          >
+            Games (W–L)
+          </DataTableHead>
+          <DataTableHead numeric className="w-20">
+            Before
+          </DataTableHead>
+          <DataTableHead numeric className="w-20">
+            After
+          </DataTableHead>
+          <DataTableHead numeric className="w-24">
+            Change
+          </DataTableHead>
+        </DataTableRow>
+      </DataTableHeader>
+      <DataTableBody>
+        {sorted.map((adjustment, index) => (
+          <DataTableRow key={`${adjustment.match?.id}-${index}`}>
+            <DataTableCell muted>
+              <DateText date={adjustment.timestamp} />
+            </DataTableCell>
+            <DataTableCell>
+              <MatchName adjustment={adjustment} />
+            </DataTableCell>
+            <DataTableCell numeric>{formatGames(adjustment)}</DataTableCell>
+            <DataTableCell numeric className="text-muted-foreground">
+              {formatRating(adjustment.ratingBefore)}
+            </DataTableCell>
+            <DataTableCell numeric className="font-medium">
+              {formatRating(adjustment.ratingAfter)}
+            </DataTableCell>
+            <DataTableCell numeric>
+              <RatingDelta value={adjustment.ratingDelta} />
+            </DataTableCell>
+          </DataTableRow>
+        ))}
+      </DataTableBody>
+    </DataTable>
   );
 }

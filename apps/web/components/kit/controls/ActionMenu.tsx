@@ -35,7 +35,10 @@ export type MenuAction = {
   /** Red, and moved into the last group. For actions that delete or overwrite data. */
   destructive?: boolean;
   disabled?: boolean;
-  /** A muted second line, such as why the item is disabled. */
+  /**
+   * A muted second line, such as why the item is disabled. It wraps at
+   * 240px, so the menu stays inside a 390px screen.
+   */
   description?: React.ReactNode;
   /** Right-aligned extra, such as a count Badge or a NotificationDot. */
   trailing?: React.ReactNode;
@@ -53,8 +56,17 @@ export type ActionMenuProps = {
   trigger: React.ReactElement;
   /** Falsy entries are skipped, so `isAdmin && { … }` works. */
   actions: readonly (MenuAction | false | null | undefined)[];
-  /** A muted line at the top naming what the actions apply to. */
+  /**
+   * A muted line at the top naming what the actions apply to. It truncates
+   * at the width the items give the menu.
+   */
   title?: React.ReactNode;
+  /**
+   * A richer top section than `title`, such as an avatar beside a name and
+   * role. It sits above `title` and the items, over a separator, and is not
+   * focusable: links and buttons belong in `actions`.
+   */
+  header?: React.ReactNode;
   align?: 'start' | 'center' | 'end';
   side?: 'top' | 'right' | 'bottom' | 'left';
   contentClassName?: string;
@@ -70,6 +82,7 @@ export function ActionMenu({
   trigger,
   actions,
   title,
+  header,
   align = 'end',
   side = 'bottom',
   contentClassName,
@@ -102,14 +115,22 @@ export function ActionMenu({
           }
         }}
       >
-        {title ? (
-          <>
-            <DropdownMenuLabel className="max-w-72 truncate text-xs font-medium text-muted-foreground">
-              {title}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-          </>
+        {header ? (
+          <div
+            data-slot="action-menu-header"
+            className="max-w-72 min-w-0 px-2 py-1.5 text-sm"
+          >
+            {header}
+          </div>
         ) : null}
+        {title ? (
+          // As wide as the items make the menu and never wider: a long name
+          // truncates rather than stretching a menu of short items.
+          <DropdownMenuLabel className="w-0 min-w-full truncate text-xs font-medium text-muted-foreground">
+            {title}
+          </DropdownMenuLabel>
+        ) : null}
+        {header || title ? <DropdownMenuSeparator /> : null}
         {groups.map((group, index) => (
           <React.Fragment key={index}>
             {index > 0 ? <DropdownMenuSeparator /> : null}
@@ -163,10 +184,16 @@ function ActionMenuItem({
         />
       ) : null}
       <span className="flex min-w-0 flex-1 flex-col">
-        {/* Proportional figures keep Inter's hyphen narrow ("Pre-verified"). */}
-        <span className={cn('proportional-nums', dim)}>{label}</span>
+        <span className={dim || undefined}>{label}</span>
         {description ? (
-          <span className="text-xs text-muted-foreground">{description}</span>
+          // Capped so a long reason wraps instead of widening the menu
+          // past a phone's screen.
+          <span
+            data-slot="action-menu-description"
+            className="max-w-60 text-xs text-muted-foreground"
+          >
+            {description}
+          </span>
         ) : null}
       </span>
       {external ? (

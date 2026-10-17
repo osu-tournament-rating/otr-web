@@ -15,15 +15,18 @@ import {
   YAxis,
 } from 'recharts';
 
+import { NotEnoughData } from '@/components/beatmap/BeatmapSection';
+import { GAME_CLOSENESS_INFO } from '@/components/beatmap/section-info';
 import {
-  EmptyState,
-  SectionCard,
-  SectionHeader,
-} from '@/components/beatmap/BeatmapSection';
+  ChartTooltipCard,
+  ChartTooltipContent,
+  type ChartTooltipPayloadItem,
+} from '@/components/kit/charts/ChartTooltip';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
 import {
@@ -31,11 +34,27 @@ import {
   type ClosenessStrip,
   type ClosenessStripDot,
 } from '@/lib/beatmaps/closeness-strip';
-import { RulesetEnumHelper } from '@/lib/enum-helpers';
 import { useIsNarrowChart } from '@/lib/hooks/useMediaQuery';
+import { seriesColor } from '@/lib/kit/color/categorical';
+import {
+  CHART_BAR_RADIUS,
+  CHART_CURSOR,
+  CHART_MARGIN,
+  chartAxisProps,
+  chartGridProps,
+  chartValueAxisProps,
+  niceAxisProps,
+} from '@/lib/kit/charts/axis';
+import { formatPercentTick } from '@/lib/kit/charts/format';
+import { getNiceTicks } from '@/lib/kit/charts/ticks';
+import {
+  formatCount,
+  formatCountOf,
+  formatPercent,
+  formatPercentile,
+} from '@/lib/kit/format/number';
+import { getRulesetLabel } from '@/lib/kit/format/ruleset';
 import type { BeatmapClosenessSummary } from '@/lib/orpc/schema/beatmapStats';
-import { cn } from '@/lib/utils';
-import { CHART_CONSTANTS, formatChartNumber } from '@/lib/utils/chart';
 
 interface BeatmapMarginCardProps {
   closeness: BeatmapClosenessSummary;
@@ -62,10 +81,13 @@ const STRIP_CHROME = 38;
 // Recharts' own default symbol area.
 const DOT_AREA = 64;
 
+/** The one series on both charts: the categorical palette's first slot. */
+const SERIES_COLOR = seriesColor(0);
+
 const chartConfig: ChartConfig = {
   share: {
     label: 'Share',
-    color: 'var(--chart-1)',
+    color: SERIES_COLOR,
   },
 };
 
@@ -89,36 +111,26 @@ function formatMargin(value: number) {
   return `${formatMarginValue(value)}%`;
 }
 
-function ordinal(value: number) {
-  const teens = value % 100;
-  if (teens >= 11 && teens <= 13) return `${value}th`;
-  switch (value % 10) {
-    case 1:
-      return `${value}st`;
-    case 2:
-      return `${value}nd`;
-    case 3:
-      return `${value}rd`;
-    default:
-      return `${value}th`;
-  }
+/** The whole number the header's ordinal shows: rounded down, 1–99. */
+function wholePercentile(value: number) {
+  return Math.min(99, Math.max(1, Math.floor(value)));
 }
 
 function gamesLabel(count: number) {
-  return `${formatChartNumber(count)} ${count === 1 ? 'game' : 'games'}`;
+  return formatCountOf(count, 'game');
 }
 
 /** A single (ruleset, team size) cohort: `osu! 3v3`. */
 function cohortName(ruleset: ClosenessRuleset, teamSize: number) {
   const teams = teamSize >= 5 ? '5v5+' : `${teamSize}v${teamSize}`;
-  return `${RulesetEnumHelper.getMetadata(ruleset).text} ${teams}`;
+  return `${getRulesetLabel(ruleset)} ${teams}`;
 }
 
 /** Names the population the baseline was fitted over, not the cohort played. */
 function cohortLabel(cohort: ClosenessCohort) {
   if (cohort.baselineScope === 'global') return 'tournament';
   if (cohort.baselineScope === 'ruleset')
-    return RulesetEnumHelper.getMetadata(cohort.ruleset).text;
+    return getRulesetLabel(cohort.ruleset);
   return cohortName(cohort.ruleset, cohort.teamSize);
 }
 
@@ -134,12 +146,8 @@ function ClosenessBars({
   narrow: boolean;
 }) {
   const maxShare = Math.max(...bins.map((bin) => bin.share));
-  const yMax = Math.max(30, Math.ceil((maxShare + 5) / 10) * 10);
-  const step = yMax > 50 ? 20 : 10;
-  const yTicks = Array.from(
-    { length: Math.floor(yMax / step) + 1 },
-    (_, index) => index * step
-  );
+  // Room above the tallest bar, and never so low the typical line sits on top.
+  const yTicks = getNiceTicks(0, Math.max(30, maxShare + 5));
 
   return (
     <div className="space-y-1">
@@ -148,43 +156,37 @@ function ClosenessBars({
           className="w-4 border-t border-dashed border-muted-foreground"
           aria-hidden="true"
         />
-        typical share
+        Typical share
       </div>
       <ChartContainer
         config={chartConfig}
         className="aspect-auto h-[200px] w-full"
       >
-        <BarChart data={bins} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <BarChart data={bins} margin={CHART_MARGIN}>
+          <CartesianGrid {...chartGridProps} />
           <XAxis
+            {...chartAxisProps}
             dataKey="label"
-            tickLine={false}
-            axisLine={false}
             // Alternate on phones; five of these labels overlap at 286px.
             interval={narrow ? 1 : 0}
           />
           <YAxis
-            width={40}
-            domain={[0, yMax]}
-            ticks={yTicks}
-            tickLine={false}
-            axisLine={false}
-            tickFormatter={(value: number) => `${value}%`}
+            {...chartValueAxisProps}
+            {...niceAxisProps(yTicks)}
+            tickFormatter={formatPercentTick}
           />
           <ChartTooltip
+            cursor={CHART_CURSOR.bar}
             content={
               <ChartTooltipContent
-                hideIndicator
                 labelFormatter={(label) => `${label} score gap`}
-                formatter={(_value, _name, item) => {
-                  const bin = (item as { payload?: QuintileBin } | undefined)
-                    ?.payload;
-                  if (!bin) return null;
-                  return (
-                    <span className="font-medium text-foreground">
-                      {gamesLabel(bin.count)} · {Math.round(bin.share)}%
-                    </span>
-                  );
+                nameFormatter={() => 'Share of games'}
+                valueFormatter={(value) =>
+                  formatPercent(value / 100, { decimals: 0 })
+                }
+                footer={(payload) => {
+                  const bin = payload[0]?.payload as QuintileBin | undefined;
+                  return bin ? gamesLabel(bin.count) : null;
                 }}
               />
             }
@@ -196,13 +198,38 @@ function ClosenessBars({
           />
           <Bar
             dataKey="share"
-            fill="var(--chart-1)"
-            radius={CHART_CONSTANTS.BORDER_RADIUS}
+            name="Share of games"
+            fill={SERIES_COLOR}
+            radius={CHART_BAR_RADIUS}
             isAnimationActive={false}
           />
         </BarChart>
       </ChartContainer>
     </div>
+  );
+}
+
+/** One game's winning score gap, with the notes the strip draws as shapes. */
+function DotTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: readonly ChartTooltipPayloadItem[];
+}) {
+  const dot = payload?.[0]?.payload as ClosenessStripDot | undefined;
+  if (!active || !dot) return null;
+
+  const notes = [dot.cohortNote, dot.clamped ? 'Beyond the axis' : null].filter(
+    Boolean
+  );
+
+  return (
+    <ChartTooltipCard
+      title={`${formatMargin(dot.gap)} score gap`}
+      rows={[]}
+      footer={notes.length > 0 ? notes.join(' · ') : undefined}
+    />
   );
 }
 
@@ -221,17 +248,21 @@ function ClosenessDots({
       <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <span
-            className="h-2.5 w-4 rounded-xs border border-chart-1 bg-chart-1/10"
+            className="h-2.5 w-4 rounded-xs border"
+            style={{
+              borderColor: SERIES_COLOR,
+              backgroundColor: `color-mix(in oklab, ${SERIES_COLOR} 10%, transparent)`,
+            }}
             aria-hidden="true"
           />
-          middle 80% of {bandLabel} games
+          Middle 80% of {bandLabel} games
         </span>
         <span className="flex items-center gap-1.5">
           <span
             className="w-4 border-t border-dashed border-muted-foreground"
             aria-hidden="true"
           />
-          typical
+          Typical
         </span>
       </div>
       <ChartContainer
@@ -247,8 +278,7 @@ function ClosenessDots({
             ticks={[strip.band.lo, strip.band.mid, strip.band.hi]}
             // Every tick or none; gap-dropping unlabels the typical line.
             interval={0}
-            tickLine={false}
-            axisLine={false}
+            {...chartAxisProps}
             tickFormatter={(value: number) => formatMargin(gapPercent(value))}
           />
           {/* y carries the stacking row so coincident games stay hoverable */}
@@ -261,9 +291,9 @@ function ClosenessDots({
           <ReferenceArea
             x1={strip.band.lo}
             x2={strip.band.hi}
-            fill="var(--chart-1)"
+            fill={SERIES_COLOR}
             fillOpacity={0.1}
-            stroke="var(--chart-1)"
+            stroke={SERIES_COLOR}
             strokeWidth={1}
           />
           <ReferenceLine
@@ -275,39 +305,11 @@ function ClosenessDots({
             cursor={false}
             // Scatter emits an x and a y row; collapse them into one.
             payloadUniqBy={() => 'game'}
-            content={
-              <ChartTooltipContent
-                hideIndicator
-                hideLabel
-                formatter={(_value, _name, item) => {
-                  const dot = (
-                    item as { payload?: ClosenessStripDot } | undefined
-                  )?.payload;
-                  if (!dot) return null;
-                  return (
-                    <div className="grid gap-0.5">
-                      <span className="font-medium text-foreground">
-                        {formatMargin(dot.gap)} score gap
-                      </span>
-                      {dot.cohortNote ? (
-                        <span className="text-muted-foreground">
-                          {dot.cohortNote}
-                        </span>
-                      ) : null}
-                      {dot.clamped ? (
-                        <span className="text-muted-foreground">
-                          Beyond the axis
-                        </span>
-                      ) : null}
-                    </div>
-                  );
-                }}
-              />
-            }
+            content={<DotTooltip />}
           />
           <Scatter
             data={strip.dots}
-            fill="var(--chart-1)"
+            fill={SERIES_COLOR}
             fillOpacity={0.85}
             isAnimationActive={false}
             shape={(props) => {
@@ -391,7 +393,7 @@ export default function BeatmapMarginCard({
       const clamped = strip.clampedCount;
       caption.push(
         <>
-          <Field>{formatChartNumber(clamped)}</Field>{' '}
+          <Field>{formatCount(clamped)}</Field>{' '}
           {clamped === 1 ? 'game sits' : 'games sit'} beyond the axis, pinned to
           its edge.
         </>
@@ -402,7 +404,7 @@ export default function BeatmapMarginCard({
       caption.push(
         <>
           Winning scores here finish further ahead than on{' '}
-          <Field>{Math.round(percentile)}%</Field> of all other{' '}
+          <Field>{wholePercentile(percentile)}%</Field> of all other{' '}
           <Field>{cohortLabel(cohort)}</Field> maps.
         </>
       );
@@ -417,21 +419,21 @@ export default function BeatmapMarginCard({
   }
 
   return (
-    <SectionCard data-testid="beatmap-margin" className={cn(className)}>
+    <Panel data-testid="beatmap-margin" className={className}>
       <SectionHeader
         icon={Swords}
         title="Game closeness"
-        infoText="How far the winning score finishes ahead of the losing one, ranked against every other map played in the same ruleset and team size."
+        infoText={GAME_CLOSENESS_INFO}
         meta={
           gameCount === 0
             ? undefined
             : percentile != null
-              ? `${ordinal(Math.round(percentile))} percentile spread · ${gamesLabel(gameCount)}`
+              ? `${formatPercentile(percentile)} spread · ${gamesLabel(gameCount)}`
               : gamesLabel(gameCount)
         }
       />
       {gameCount === 0 || !cohort || !deciles ? (
-        <EmptyState />
+        <NotEnoughData />
       ) : (
         <div className="space-y-3 px-4 py-4">
           {quintiles ? (
@@ -449,6 +451,6 @@ export default function BeatmapMarginCard({
           </p>
         </div>
       )}
-    </SectionCard>
+    </Panel>
   );
 }

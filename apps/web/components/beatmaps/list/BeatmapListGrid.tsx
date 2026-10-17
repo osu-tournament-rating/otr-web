@@ -1,13 +1,12 @@
 'use client';
 
-import Link from 'next/link';
+import { Music } from 'lucide-react';
 
-import BeatmapEmptyState from '@/components/beatmaps/BeatmapEmptyState';
 import BeatmapListCards from '@/components/beatmaps/list/BeatmapListCards';
 import BeatmapListRows from '@/components/beatmaps/list/BeatmapListRows';
 import BeatmapListTable from '@/components/beatmaps/list/BeatmapListTable';
 import type { BeatmapLayout } from '@/components/beatmaps/list/layout';
-import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import type {
   BeatmapListSortChange,
   BeatmapListSortKey,
@@ -17,7 +16,10 @@ import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
 
 interface BeatmapListGridProps {
   beatmaps: BeatmapListItem[];
+  /** A search, ruleset or filter narrowed the list. */
   isFiltered?: boolean;
+  /** The list without its filters; set only when filters are active. */
+  clearFiltersHref?: string;
   layout: BeatmapLayout;
   sort: BeatmapListSortKey;
   descending: boolean;
@@ -28,6 +30,7 @@ interface BeatmapListGridProps {
 export default function BeatmapListGrid({
   beatmaps,
   isFiltered = false,
+  clearFiltersHref,
   layout,
   sort,
   descending,
@@ -35,19 +38,16 @@ export default function BeatmapListGrid({
 }: BeatmapListGridProps) {
   if (beatmaps.length === 0) {
     return (
-      <BeatmapEmptyState
-        testId="beatmap-empty-state"
+      <EmptyState
+        data-testid="beatmap-empty-state"
+        icon={isFiltered ? undefined : Music}
         title={isFiltered ? 'No beatmaps match' : 'No beatmaps yet'}
-        body={
-          isFiltered ? 'Try fewer filters.' : 'No tournament maps are listed.'
+        description={
+          isFiltered
+            ? 'Try a different search, ruleset or fewer filters.'
+            : 'No tournament maps are listed.'
         }
-        action={
-          isFiltered ? (
-            <Button asChild variant="outline">
-              <Link href="/beatmaps">Clear filters</Link>
-            </Button>
-          ) : undefined
-        }
+        clearFilters={clearFiltersHref ? { href: clearFiltersHref } : undefined}
       />
     );
   }
@@ -65,25 +65,27 @@ export default function BeatmapListGrid({
     case 'compact':
       return (
         <BeatmapListRows
-          beatmaps={beatmaps}
+          beatmaps={toBeatmapTableRows(beatmaps)}
           data-testid="beatmap-list"
           data-layout={layout}
         />
       );
 
-    case 'table':
+    case 'table': {
+      const rows = toBeatmapTableRows(beatmaps);
+
       return (
         <div data-testid="beatmap-list" data-layout={layout}>
           <BeatmapListTable
-            beatmaps={toBeatmapTableRows(beatmaps)}
+            beatmaps={rows}
             sort={sort}
             descending={descending}
             onSortChange={onSortChange}
             stickyHeader
-            className="hidden sm:block"
+            phoneRows={<BeatmapListRows beatmaps={rows} />}
           />
-          <BeatmapListRows beatmaps={beatmaps} className="sm:hidden" />
         </div>
       );
+    }
   }
 }

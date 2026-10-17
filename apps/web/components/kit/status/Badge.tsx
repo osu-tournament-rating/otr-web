@@ -1,5 +1,6 @@
 import type * as React from 'react';
 
+import { isCountContent } from '@/lib/kit/status/count';
 import { cn } from '@/lib/utils';
 
 export type BadgeTone =
@@ -107,6 +108,8 @@ function colorClasses(variant: BadgeProps['variant'], tone: BadgeTone): string {
  * roles, tags and counts. Pick a tone for meaning, a size for the line it
  * sits in, and `customColor` or `swatch` for a domain palette. It is not a
  * control: it may sit inside a button (a filter count) but never acts alone.
+ * A count (a number, or text such as `99+`, even with a screen-reader label
+ * after it) takes tabular figures.
  */
 export function Badge({
   variant = 'soft',
@@ -127,6 +130,8 @@ export function Badge({
         'inline-flex w-fit max-w-full shrink-0 items-center justify-center overflow-hidden border font-medium whitespace-nowrap [&>svg]:pointer-events-none [&>svg]:shrink-0',
         SIZE_CLASSES[size],
         SHAPE_CLASSES[shape],
+        // Counts line up digit for digit; words keep Inter's narrow hyphen.
+        isCountContent(children) && 'tabular-nums',
         customColor ? 'border-current/20' : colorClasses(variant, tone),
         className
       )}

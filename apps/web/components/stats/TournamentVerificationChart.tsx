@@ -1,209 +1,51 @@
 'use client';
 
-import { useMemo } from 'react';
-import { BarChart, XAxis, YAxis, Bar, Cell } from 'recharts';
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
-import { VerificationStatus } from '@otr/core/osu';
-import { VerificationStatusKey } from '@/lib/orpc/schema/stats';
-import {
-  CHART_CONSTANTS,
-  formatChartNumber,
-  formatPercentage,
-} from '@/lib/utils/chart';
+import { CountBarChart } from '@/components/kit/charts/CountBarChart';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { Panel, PanelBody } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
+import { formatCount, formatPercent } from '@/lib/kit/format/number';
+import type { VerificationStatusKey } from '@/lib/orpc/schema/stats';
 
-interface TournamentVerificationChartProps {
-  verificationCounts: Partial<Record<VerificationStatusKey, number>>;
-  className?: string;
-}
+import { STATS_PANELS } from './chart-panels';
+import { getVerificationBars, sumCounts } from './stats-data';
 
-interface ChartDataEntry {
-  status: string;
-  count: number;
-  fill: string;
-  percentage: number;
-}
-
-const STATUS_CONFIG = {
-  Verified: {
-    label: 'Verified',
-    color: 'var(--color-status-verified)',
-    icon: CheckCircle,
-  },
-  'Awaiting Review': {
-    label: 'Awaiting Review',
-    color: 'var(--color-status-awaiting)',
-    icon: AlertTriangle,
-  },
-  Rejected: {
-    label: 'Rejected',
-    color: 'var(--color-status-rejected)',
-    icon: XCircle,
-  },
-  Pending: {
-    label: 'Pending',
-    color: 'var(--color-status-pending)',
-    icon: Clock,
-  },
-} as const;
-
+/**
+ * Every tournament by verification status. Pending, Pre-verified and
+ * Pre-rejected share one "Not in ratings yet" bar, as everywhere else.
+ */
 export default function TournamentVerificationChart({
   verificationCounts,
-  className,
-}: TournamentVerificationChartProps) {
-  const chartConfig: ChartConfig = {
-    count: { label: 'Tournaments' },
-    ...Object.entries(STATUS_CONFIG).reduce(
-      (acc, [key, value]) => ({
-        ...acc,
-        [key]: { label: key, color: value.color },
-      }),
-      {}
-    ),
-  };
-
-  const chartData = useMemo(() => {
-    if (!verificationCounts) return [];
-
-    const getCountForStatus = (status: VerificationStatus): number =>
-      verificationCounts[String(status) as VerificationStatusKey] ?? 0;
-
-    const total = Object.values(verificationCounts).reduce(
-      (sum, count) => sum + count,
-      0
-    );
-
-    if (total === 0) return [];
-
-    const dataEntries = [
-      {
-        key: 'Verified',
-        value: getCountForStatus(VerificationStatus.Verified),
-      },
-      {
-        key: 'Awaiting Review',
-        value:
-          getCountForStatus(VerificationStatus.PreRejected) +
-          getCountForStatus(VerificationStatus.PreVerified),
-      },
-      {
-        key: 'Rejected',
-        value: getCountForStatus(VerificationStatus.Rejected),
-      },
-      {
-        key: 'Pending',
-        value: getCountForStatus(VerificationStatus.None),
-      },
-    ];
-
-    return dataEntries
-      .filter(({ value }) => value > 0)
-      .map(({ key, value }) => ({
-        status: key,
-        count: value,
-        fill: STATUS_CONFIG[key as keyof typeof STATUS_CONFIG].color,
-        percentage: (value / total) * 100,
-      }))
-      .sort((a, b) => b.count - a.count);
-  }, [verificationCounts]);
-
-  if (chartData.length === 0) {
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle>Tournaments by Verification Status</CardTitle>
-          <CardDescription>No verification data available</CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-
-  const total = chartData.reduce((sum, entry) => sum + entry.count, 0);
+}: {
+  verificationCounts: Partial<Record<VerificationStatusKey, number>>;
+}) {
+  const bars = getVerificationBars(verificationCounts);
+  const total = sumCounts(bars);
 
   return (
-    <Card data-testid="chart-tournament-verification" className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CheckCircle className="h-6 w-6 text-primary" />
-          Tournament Verification Status
-        </CardTitle>
-        <CardDescription>
-          Distribution of {formatChartNumber(total)} tournaments by verification
-          status
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pb-0 font-sans">
-        {/* `!` beats ChartContainer's equal-specificity tick color */}
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto max-h-[300px] w-full [&_.recharts-cartesian-axis-tick-value]:fill-foreground!"
-        >
-          <BarChart
-            accessibilityLayer
-            data={chartData}
-            margin={CHART_CONSTANTS.VERTICAL_MARGIN}
-            layout="vertical"
-          >
-            <YAxis
-              dataKey="status"
-              type="category"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tick={{ fontSize: 14, fill: 'var(--foreground)' }}
-              interval={0}
-            />
-            <XAxis type="number" hide />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  className="font-sans"
-                  labelFormatter={(value) => value}
-                  formatter={(value, name, entry) => (
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="h-3 w-3 rounded-full"
-                          style={{ backgroundColor: entry.payload.fill }}
-                        />
-                        <span className="font-medium">
-                          {formatChartNumber(value as number)}
-                        </span>
-                      </div>
-                      <span className="text-muted-foreground">
-                        (
-                        {formatPercentage(
-                          (entry.payload as ChartDataEntry).percentage,
-                          1
-                        )}
-                        )
-                      </span>
-                    </div>
-                  )}
-                />
-              }
-            />
-            <Bar dataKey="count" radius={5} maxBarSize={60}>
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
+    <Panel data-testid="chart-tournament-verification">
+      <SectionHeader
+        {...STATS_PANELS.verification}
+        meta={total > 0 ? `${formatCount(total)} tournaments` : undefined}
+      />
+      {total === 0 ? (
+        <EmptyState
+          size="compact"
+          icon={STATS_PANELS.verification.icon}
+          title="No verification data"
+        />
+      ) : (
+        <PanelBody>
+          <CountBarChart
+            data={bars}
+            layout="rows"
+            valueName="Tournaments"
+            footer={(bar) =>
+              `${formatPercent(bar.count / total)} of all tournaments`
+            }
+          />
+        </PanelBody>
+      )}
+    </Panel>
   );
 }

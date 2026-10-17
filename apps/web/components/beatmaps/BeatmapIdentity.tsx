@@ -81,6 +81,9 @@ export default function BeatmapIdentity({
 }) {
   const clip = CLIP_CLASS[size];
   const isTable = size === 'table';
+  // A table cell is not a section: its title is plain text, so a pool's
+  // rows don't sit at the level of the panel's own heading.
+  const Title = isTable ? 'p' : 'h2';
   const mapperName =
     typeof creator === 'string'
       ? creator
@@ -116,23 +119,27 @@ export default function BeatmapIdentity({
       <div className={TEXT_CLASS[size]}>
         <div className="min-w-0">
           <div data-testid="beatmap-heading" className={HEADING_CLASS[size]}>
-            <h2
+            <Title
               data-testid="beatmap-title"
+              data-row-title=""
               title={title}
               className={cn(
-                'min-w-0 leading-snug font-semibold transition-colors group-hover:text-primary',
+                'min-w-0 leading-snug font-semibold transition-colors group-hover:text-link',
                 isTable ? 'text-sm' : 'text-base sm:text-lg',
                 clip
               )}
             >
               {title}
-            </h2>
+            </Title>
             <p
               data-testid="beatmap-difficulty-name"
               title={diffName}
               className={cn(
-                'min-w-0 font-medium text-foreground/85',
-                isTable ? 'text-xs' : 'text-sm',
+                'font-medium text-foreground/85',
+                // In a narrow cell the difficulty gives way before the
+                // title, but keeps at least 48px ("[Hyp…"), so a long title
+                // never hides it.
+                isTable ? 'min-w-12 shrink-[4] text-xs' : 'min-w-0 text-sm',
                 clip
               )}
             >

@@ -28,9 +28,9 @@ Import each component from its own file under `@/components/kit/controls/`; the 
 
 - One primary (blue, `default`) button per view: the action the view exists for. Everything else is `outline` or `ghost`.
 - Red means the action deletes or overwrites data. A button or menu item that starts such an action is red text (`destructive`); only the button that carries it out, in the final confirm, is solid red (`destructive-confirm`, which ConfirmDialog renders for you). A destructive action is never blue.
-- Every icon-only control is an IconButton: it has an accessible name, a tooltip that repeats it, and a hover fill.
+- Every icon-only control is an IconButton: it has an accessible name, a tooltip that repeats it (except an X that closes or clears), and a hover fill.
 - A detail page has one admin control, AdminMenu, in the hero's `adminActions`. A row or card has at most one RowActionsMenu. No clusters of unlabelled admin icons.
-- A dialog is a DialogTemplate or a ConfirmDialog: 12px corners, 24px side padding, a header strip with a sentence-case title, a body, a footer strip with the actions on the right, and one backdrop (black at 50%).
+- A dialog is a DialogTemplate or a ConfirmDialog: 12px corners, 24px side padding, a header strip with a sentence-case title, a body, a footer strip with the actions on the right, and one backdrop (black at 50%, the same as every alert dialog and sheet).
 - A page form is a PageHeader, then FormPanel with FormSections and FormActions. Notices are Callouts (`@/components/kit/feedback/Callout`).
 - Sentence case for every label, title and menu item: "Edit tournament", not "Edit Tournament".
 - Button and IconButton have no `'use client'`, so a server page can render them, for example drawn on a `Link` with `asChild`. AdminMenu, RowActionsMenu, ActionMenu, DialogTemplate and ConfirmDialog are client components, and menu actions hold functions and icon components, so build a menu and its dialogs inside a client component (the entity's admin view), never in a server page such as `app/tournaments/[id]/page.tsx`.
@@ -39,7 +39,7 @@ Gallery anchor: `/admin/design#controls`
 
 ## Button
 
-The site's text button. It wraps the shadcn Button with the three sizes, adds the hover fill that shadcn's ghost lacks, a quiet red for destructive actions, a dark pill for cover art, and a `pending` state.
+The site's text button. It wraps the shadcn Button with the three sizes, a quiet red for destructive actions, a dark pill for cover art, a fill that stays while a menu or popover it opens is open, and a `pending` state. The hover fills (ghost included) and the solid red behind white text come from the shadcn variants.
 
 ```tsx
 import { Button } from '@/components/kit/controls/Button';
@@ -65,6 +65,7 @@ Props:
 - `pending`: swaps the icon for a spinner, disables the button and sets `aria-busy`. Change the label too ("Saving…").
 - `type`: defaults to `"button"`, so Cancel never submits a form by accident. Pass `type="submit"` on the submit button.
 - `asChild`: draws the button on its child, such as a `Link` or `a`.
+- `wrap`: lets a label that can be longer than a phone is wide wrap onto more lines instead of running out of its container, such as a cascade level's counts in the audit log ("46 matches: 45 verified, 1 rejected"). The size's height becomes a minimum, so a one-line label looks the same, and the label aligns left. Don't hand-write `h-auto whitespace-normal` on a Button. Gallery anchor: `/admin/design#controls-button-wrap`.
 
 Variants:
 
@@ -72,10 +73,12 @@ Variants:
 | --------------------- | ------------------------------- | --------------------------------------------------------------------- |
 | `default`             | Solid blue                      | The one primary action of a form, dialog or page                      |
 | `outline`             | Bordered                        | Secondary actions: Cancel, Back, Clear, a page's second action        |
-| `ghost`               | Text, fills on hover            | Quiet actions inside a panel: Clear all, Show more                    |
+| `ghost`               | Text, fills on hover            | Quiet actions inside a panel: Clear all, a Load more in an opened row |
 | `destructive`         | Red text and border, no fill    | Starts an action that deletes or overwrites data; it opens a confirm  |
 | `destructive-confirm` | Solid red (`destructive-solid`) | Only the final confirm in a dialog (ConfirmDialog already renders it) |
 | `overlay`             | Dark pill, white in both themes | Only on cover art, like the beatmap hero's preview button             |
+
+A list's own footer, "Load more" or "Show more", is [LoadMore](tables.md#loadmore), which draws an outline `sm` Button; don't build that footer from a ghost button.
 
 Do:
 
@@ -84,24 +87,24 @@ Do:
 
 Don't:
 
-- Don't import `Button` from `@/components/ui/button` in new UI. Its `ghost` has `hover:bg-none`, so pages bolt on their own fills (`hover:bg-black/15 … dark:hover:bg-white/20` in `components/audit/AuditButton.tsx`, `components/tournaments/TournamentAdminView.tsx`, `app/tournaments/[id]/page.tsx`).
-- Don't use the large lifted buttons (`py-5 sm:py-6 text-base sm:text-lg shadow-lg hover:-translate-y-0.5`) in `components/tournaments/TournamentSubmissionForm.tsx` and `components/filtering/FilteringForm.tsx`; a form's buttons are `default` size in FormActions.
-- Don't use `variant="secondary"` (the grey Clear in `TournamentAdminView.tsx`, Reset in `FilteringForm.tsx`); use `outline`.
-- Don't make a trigger solid red (`components/shared/DeleteButton.tsx`, `app/settings/AccountDeletionClient.tsx`) or blue (`components/tournaments/ResetAutomatedChecksButton.tsx`). Use `destructive`, or an AdminMenu item.
-- Don't recolour `AlertDialogAction` with `bg-destructive text-white` (`TournamentSubmissionForm.tsx`, `AccountDeletionClient.tsx`); use ConfirmDialog.
-- Don't put white text on `bg-destructive`. Dark mode's `--destructive` (red-500) gives white 14px text only about 3.8:1, so `destructive-confirm` fills with `bg-destructive-solid` (`hover:bg-destructive-solid/90`): red-600 in dark mode and the usual destructive red in light. Any other solid red fill behind white text, such as shadcn's own `variant="destructive"` in `components/ui/button.tsx`, needs the same token.
+- Don't import `Button` from `@/components/ui/button` in a page. It is the primitive the kit builds on: it has a fourth size (`icon`), a grey `secondary`, a solid red `destructive` that belongs only in the final confirm, and no `pending` or open-state fill. Its `ghost` fills on hover (`hover:bg-accent`), so a ghost button needs no hover fill of its own.
+- Don't use large lifted buttons (`py-5 sm:py-6 text-base sm:text-lg shadow-lg hover:-translate-y-0.5`); a form's buttons are `default` size in FormActions.
+- Don't use a grey `secondary` button for Clear or Reset; use `outline`.
+- Don't make the button that opens a destructive action solid red, or blue. Use `destructive`, or an AdminMenu item.
+- Don't recolour `AlertDialogAction` with `bg-destructive text-white`; use ConfirmDialog.
+- Don't put white text on `bg-destructive`. Dark mode's `--destructive` (red-500) gives white 14px text only about 3.8:1, so `destructive-confirm` fills with `bg-destructive-solid` (`hover:bg-destructive-solid/90`): red-600 in dark mode and the usual destructive red in light. The shadcn `destructive` variants of `components/ui/button.tsx` and `components/ui/badge.tsx` use it too; any other solid red fill behind white text needs the same token.
 - Don't hand-roll a spinner (`<Loader2 className="mr-2 h-4 w-4 animate-spin" />Deleting...`); use `pending`.
 
 Gallery anchors: `/admin/design#controls-button-sizes`, `/admin/design#controls-button-variants`
 
 ## IconButton
 
-The one icon-only button: a square (round on art) with a hover fill, an `aria-label`, and a tooltip that repeats it. It supersedes `iconButtonStyle` in `components/buttons/IconButton.tsx`, which only styled the glyph and left the hit area, hover and name to each caller.
+The one icon-only button: a square (round on art) with a hover fill, an `aria-label`, and a tooltip that repeats it.
 
 ```tsx
 import { IconButton } from '@/components/kit/controls/IconButton';
 
-<IconButton label="Add matches" icon={Plus} onClick={openAddMatches} />;
+<IconButton label="Copy link" icon={Link2} onClick={copyLink} />;
 
 <IconButton asChild label="View audit history" icon={History}>
   <Link href={`/audit/tournaments/${id}`} />
@@ -116,20 +119,33 @@ Props:
 
 - `label`: required. The accessible name and the tooltip, in sentence case.
 - `icon`: the lucide glyph. With `asChild` it is placed inside the child element.
-- `tooltip`: tooltip text when it should differ from `label` (RowActionsMenu uses it to keep the tooltip short while the name says which row).
+- `tooltip`: tooltip text when it should differ from `label` (RowActionsMenu uses it to keep the tooltip short while the name says which row; the support heart uses it to leave "opens in a new tab" to the accessible name). `false` drops the tooltip, only for an X that closes a dialog or panel or clears a field: everyone knows it, and a tooltip on it is noise. `tooltipSide`: where it opens, `top` by default.
 - `size`: `sm` (32px, the default), `default` (36px), `lg` (40px), matching the button heights.
 - `variant`: `ghost` (default) muted icon that fills on hover; `outline` bordered, beside inputs and outline buttons; `overlay` the round dark pill on cover art.
 - `destructive`: red icon and red fill on hover, for a single destructive action outside a menu, such as deleting one admin note. Ignored on `overlay`.
+- `expanded`: makes it a disclosure toggle for content that expands in place, such as an audit row's details. It sets `aria-expanded` and drops the open-state fill: that fill stays on a ghost or outline button while the menu, popover or dialog it opens is open, and an expanded row is not an open menu (Radix Collapsible sets the same `data-state="open"`). Hover and focus still fill it. Keep the `label` the same in both states ("Details for Game 3"); `aria-expanded` says whether it is open. For a chevron that turns, add `className="[&>svg]:transition-transform aria-expanded:[&>svg]:rotate-180"`. The audit rows' `AuditRowToggle` (`components/audit/AuditRow.tsx`) is a live one: a constant "Details" label inside `CollapsibleTrigger asChild`.
+
+```tsx
+<IconButton
+  label={`Details for ${game.name}`}
+  icon={ChevronDown}
+  expanded={open}
+  onClick={() => setOpen((value) => !value)}
+  className="[&>svg]:transition-transform aria-expanded:[&>svg]:rotate-180"
+/>
+```
 
 Do:
 
-- Put it inside `DialogTrigger`, `PopoverTrigger` or `DropdownMenuTrigger` with `asChild`. The tooltip lives inside IconButton, so this is the "tooltip wraps the trigger" rule already done.
+- Put it inside `DialogTrigger`, `PopoverTrigger` or `DropdownMenuTrigger` with `asChild`. The tooltip lives inside IconButton, so this is the "tooltip wraps the trigger" rule already done. Its tooltip opens on hover and on keyboard focus (Tab, or arrows inside a group), but not when the menu, popover or dialog it opened hands focus back as it closes, by a click, Escape or a chosen item: the visitor is done with it. `components/ui/tooltip.tsx` does this for every tooltip by opening on focus only right after a navigation key, so don't pass `tooltip={false}` to silence it.
 - Use `ghost` in section header strips, rows and dialog headers, and `outline` next to inputs.
+- Give a section's main action, such as "Add matches" or "Add beatmaps", a labelled `<Button variant="outline" size="sm" icon={Plus}>`. Only on phones, where the strip is tight, does it shrink to an IconButton in the style of its neighbours: outline beside a sort control (`components/tournaments/TournamentMatchesAdminView.tsx`), ghost among ghost icons (`components/tournaments/TournamentBeatmapsAdminView.tsx`).
 
 Don't:
 
-- Don't wrap `<Button variant="ghost" size="icon" className="h-6 w-6 …">` in `SimpleTooltip` by hand (`components/audit/AuditButton.tsx`, `components/games/GameCardHeader.tsx`, `components/admin-notes/AdminNoteView.tsx`, `components/reports/ReportButton.tsx`). Those are 24px targets with home-made hover fills.
-- Don't put `iconButtonStyle()` on a bare glyph (`components/buttons/DocsButton.tsx`, `SpecButton.tsx`, `SupportButton.tsx`), and don't turn the icon blue on hover (`hover:text-primary` in `DocsButton.tsx`).
+- Don't wrap `<Button variant="ghost" size="icon" className="h-6 w-6 …">` in `SimpleTooltip` by hand: a 24px target with a home-made hover fill.
+- Don't make a bare glyph clickable, and don't turn the icon blue on hover. Links that need more than an icon to explain them, such as the header's docs and API reference, are labelled items in a menu. The header's support heart is the one icon link that stays at the top right: it turns `text-support` pink and pulses on hover (`motion-safe:hover:animate-pulse`), as it always has (`components/header/SupportButton.tsx`). Beside it, the account avatar fills its 36px IconButton and, in place of the hover fill, grows a little on hover and presses in on click (`motion-safe:hover:scale-103 motion-safe:active:scale-97`), as it always has (`components/profile/AccountMenu.tsx`).
+- Don't give an X that closes or clears a tooltip ("Close", "Clear search"); pass `tooltip={false}`. Every other icon-only button keeps its tooltip.
 - Don't rely on the tooltip of a disabled IconButton: a disabled button gets no pointer events. Say why it is disabled somewhere visible, such as an AdminMenu item's `description`.
 
 Gallery anchor: `/admin/design#controls-icon-button`
@@ -150,7 +166,6 @@ const [deleting, setDeleting] = useState(false);
   adminActions={
     isAdmin && (
       <AdminMenu
-        title={tournament.name}
         notification={notes.length > 0 ? 'Has admin notes' : undefined}
         actions={[
           { label: 'Edit tournament', icon: PencilLine, onSelect: () => setEditing(true) },
@@ -175,9 +190,11 @@ const [deleting, setDeleting] = useState(false);
 Props:
 
 - `actions`: MenuActions (see [ActionMenu and MenuAction](#actionmenu-and-menuaction)). Falsy entries are skipped, so `isLazer && { … }` works. With no visible actions the menu renders nothing.
-- `title`: a muted line at the top of the menu, usually the entity's name.
+- `title`: a muted line at the top of the menu. Leave it out in a hero: the title beside the button already names the entity, and the tournament and match heroes pass none.
+- `header`: a richer top section, passed to ActionMenu (see below).
 - `notification`: shows the one notification dot on the button; the string is its screen-reader text ("Has admin notes").
 - `onArt`: the dark pill, for a hero with cover art.
+- `label`: the button's text, "Admin". Keep it unless a page has two admin menus.
 - `data-testid`: on the button; the menu content gets `{testid}-content`.
 
 How dialogs open: render each dialog next to the menu, controlled by state, and open it from the item's `onSelect`. The menu runs `onSelect` after it has closed and focus is back on the Admin button, and DialogTemplate and ConfirmDialog return focus there when they close. Never nest a `Dialog` inside a menu item.
@@ -190,10 +207,10 @@ Do:
 
 Don't:
 
-- Don't build a row of admin icons in different colours (`app/tournaments/[id]/page.tsx`: AuditButton, AdminNoteView, TournamentAdminView; `components/matches/MatchCard.tsx`; the pill cluster in `components/beatmap/BeatmapAdminView.tsx`).
-- Don't hide operations inside an edit dialog's button bar (the Accept, Reset, Refetch and Delete icons in `TournamentAdminView.tsx`); each becomes a menu item with its own ConfirmDialog.
+- Don't build a row of admin icons in different colours, or a cluster of admin pills on art.
+- Don't hide operations inside an edit dialog's button bar (Accept, Reset, Refetch and Delete icons beside Save); each is a menu item with its own ConfirmDialog.
 - Don't colour admin items or their icons; icons are muted, only destructive items are red.
-- Don't put audit history in the admin menu or behind an admin check. Audit pages are public; the link belongs in the hero's `actions` for everyone. Only tournaments, matches, games and scores link to one.
+- Don't put audit history in the admin menu or behind an admin check. Audit pages are public; the link belongs in the hero's `actions` for everyone, on tournaments, matches and beatmaps, and in each game's and score's RowActionsMenu.
 
 Gallery anchors: `/admin/design#controls-admin-menu`, `/admin/design#controls-on-art`
 
@@ -223,6 +240,7 @@ import { RowActionsMenu } from '@/components/kit/controls/RowActionsMenu';
         isAdmin && {
           label: 'Edit game',
           icon: PencilLine,
+          group: 'admin',
           onSelect: () => setEditing(true),
         },
         isAdmin && {
@@ -240,15 +258,17 @@ import { RowActionsMenu } from '@/components/kit/controls/RowActionsMenu';
 Props:
 
 - `actions`: as AdminMenu.
-- `itemName`: what the row is. It names the button for screen readers ("Actions for Hidden Chamber [Insane]") and heads the menu. Always set it in a list, or every button is just "Actions".
+- `itemName`: what the row is. It names the button for screen readers ("Actions for Hidden Chamber [Insane]") and heads the menu, truncated at the width the items set. Always set it in a list, or every button is just "Actions", and keep it unique per row: two games on the same beatmap need what tells them apart, or a screen reader's list of buttons shows two identical names. A game card's menu is "Game 3", its place in the match, since the beatmap's name is on the card beside it.
 - `label`: the tooltip, "Actions" by default.
+- `notification`: as AdminMenu's. It puts the one notification dot on the "…" button's corner and adds its text to the button's accessible name ("Actions for Game 3, Has admin notes"). Pair it with a count `Badge` as the matching item's `trailing`, so the menu says what is new.
 - Public items (report, audit history) are for everyone; gate only the admin items with `isAdmin &&`. With every admin item hidden, the menu still holds the public ones.
+- Order: the public items first, in the heroes' order ("Report an issue", "View audit history", "View … on osu! website"), then the admin items in their own `group: 'admin'` (edit, admin notes), then data operations, then the destructive group. The game and score menus (`components/games/GameActionsMenu.tsx`, `ScoreActionsMenu.tsx`) follow it.
 - `onArt`: the round dark pill, for a card header on cover art (`components/games/GameCardHeader.tsx`).
 - `size`: `sm` (default) or `default`.
 
 Don't:
 
-- Don't repeat a cluster of external-link, report, audit, notes and edit icons on every card (`components/games/GameCardHeader.tsx`, `components/games/ScoreCard.tsx`).
+- Don't repeat a cluster of external-link, report, audit, notes and edit icons on every card.
 - Don't put it inside a whole-row link; a linked row holds no other button.
 
 Gallery anchors: `/admin/design#controls-row-actions-menu`, `/admin/design#controls-on-art`
@@ -271,7 +291,28 @@ import {
   }
   actions={actions}
 />;
+
+// A rich header above the items, such as an account's avatar, name and role:
+<ActionMenu
+  header={
+    <span className="flex items-center gap-3">
+      <OsuAvatar … />
+      <span className="flex min-w-0 flex-col items-start gap-1">
+        <span className="truncate font-semibold">{player.username}</span>
+        <ProfileRoleBadge scopes={scopes} />
+      </span>
+    </span>
+  }
+  trigger={…}
+  actions={accountActions}
+/>;
 ```
+
+ActionMenu props besides `trigger` and `actions`:
+
+- `title`: the muted line at the top (AdminMenu's `title`, RowActionsMenu's `itemName`). It takes the width the items give the menu and truncates past it (`w-0 min-w-full truncate`), so a long name never widens a menu of short items.
+- `header`: richer content above `title` and the items, over a separator, in 14px text up to 288px wide. It is not focusable, so links and buttons belong in `actions`. AdminMenu passes it through.
+- `align`, `side`, `contentClassName`, `data-testid` (on the menu content).
 
 MenuAction fields:
 
@@ -279,12 +320,14 @@ MenuAction fields:
 - `onSelect`: runs after the menu has closed and focus has returned to the trigger.
 - `href`: makes the item a link (`next/link`, not prefetched). `external` opens it in a new tab with an external-link glyph and "(opens in a new tab)" for screen readers.
 - `destructive`: red, and moved into the last group.
-- `disabled` with `description`: a muted second line that says why, such as "Only beatmaps the osu! API no longer serves can be edited by hand". The label and icon dim; the description keeps full contrast so it stays readable.
+- `disabled` with `description`: a muted second line that says why the action is off. The label and icon dim; the description keeps full contrast so it stays readable. A description wraps at 240px (`max-w-60`), so a long reason never widens the menu past a 390px screen.
 - `trailing`: a count `Badge` or a `NotificationDot` on the right.
 - `group`: items with the same group sit together between separators, in order of first appearance.
 - `hidden`: leaves the item out. `id`: the React key when two items share a label. `testId`.
 
 `groupMenuActions(actions)` in `@/lib/kit/controls/menu` does the grouping (unit-tested): groups by first appearance, destructive last, hidden and falsy entries dropped.
+
+Gallery anchor: `/admin/design#controls-action-menu`
 
 ## DialogTemplate
 
@@ -329,8 +372,9 @@ Props:
 - `size`: `sm` 448px, `md` 512px (default), `lg` 672px for long forms.
 - `onSubmit`: makes the body and footer one `<form>`, so a `type="submit"` button in `footer` submits it and Enter in a field works.
 - `closable`: `false` hides the close button and ignores clicks outside. Escape still closes, so guard unsaved changes in `onOpenChange`.
+- `bodyClassName`: classes for the body, such as a tighter gap.
 
-Anatomy, shared with ConfirmDialog through `DIALOG_CLASSES`: header `border-b px-6 py-4`, body `p-6`, footer `border-t bg-muted/30 px-6 py-4`, surface `rounded-xl border bg-background shadow-lg`, backdrop `bg-black/50`. The close button is last in the DOM, so keyboard focus starts on the first field, and is drawn in the header's corner.
+Anatomy, shared with ConfirmDialog through `DIALOG_CLASSES` (and `DIALOG_SIZE_CLASSES` for the widths): header `border-b px-6 py-4`, body `p-6`, footer `border-t bg-muted/30 px-6 py-4`, surface `rounded-xl border bg-background shadow-lg`, backdrop `bg-black/50`. The close button is last in the DOM, so keyboard focus starts on the first field, and is drawn in the header's corner. `DialogFooterStrip` is the footer on its own (notice, start and actions), and `useReturnFocus()` gives the content's `onOpenAutoFocus` and `onCloseAutoFocus` handlers that return focus to whatever had it when the dialog opened, such as a menu's trigger (Radix would return it only to the dialog's own trigger).
 
 Do:
 
@@ -339,9 +383,9 @@ Do:
 
 Don't:
 
-- Don't pad `DialogContent` yourself (`className="p-4"` in `TournamentAdminView.tsx`, `AdminNoteView.tsx`, `MatchAdminView.tsx`) or build your own strips (`px-5` in `BeatmapAdminView.tsx`).
-- Don't use Title Case ("Report Details" in `app/reports/MyReportsClient.tsx`) or prefix titles with "Confirm" ("Confirm delete tournament" in `DeleteButton.tsx`, "Confirm match data refetch" in `RefetchMatchDataButton.tsx`).
-- Don't use the shadcn `DialogContent` directly in new UI; its backdrop is 80% black while AlertDialog's is 50%.
+- Don't pad `DialogContent` yourself (`className="p-4"`) or build your own header and footer strips.
+- Don't use Title Case ("Report Details") or prefix titles with "Confirm" ("Confirm delete tournament").
+- Don't use the shadcn `DialogContent` directly: it has no header and footer strips and pads itself. Its backdrop is the same black at 50% as every dialog, alert dialog and sheet, so never override a backdrop.
 
 Gallery anchor: `/admin/design#controls-dialog-template`
 
@@ -350,27 +394,22 @@ Gallery anchor: `/admin/design#controls-dialog-template`
 Confirms one consequential action before it runs: delete, reset, refetch, merge, discard. Built on AlertDialog, so it cannot be dismissed by clicking outside, and Cancel takes the initial focus. Its confirm button is the only solid red button on the site.
 
 ```tsx
+import { DELETE_CASCADE_DESCRIPTION } from '@/components/admin-forms/adminFormFields';
 import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
 
 <ConfirmDialog
   open={deleting}
   onOpenChange={setDeleting}
   title="Delete this tournament?"
-  description={
-    <>
-      <p>
-        This action will cascade to all children. All associated data will be
-        permanently removed.
-      </p>
-      <p>This action cannot be undone.</p>
-    </>
-  }
+  // "This action will cascade to all children. …" and "This action cannot be undone."
+  description={DELETE_CASCADE_DESCRIPTION}
   confirmLabel="Delete tournament"
   pendingLabel="Deleting…"
+  errorText="Failed to delete tournament"
   onConfirm={async () => {
     await orpc.tournaments.admin.delete({ id: tournament.id });
     toast.success('Tournament deleted successfully');
-    router.push('/tournaments');
+    router.replace('/tournaments');
   }}
 />;
 ```
@@ -388,9 +427,9 @@ Props:
 
 Don't:
 
-- Don't write "Are you sure you want to …?" with bullet lists of side effects (`components/shared/DeleteButton.tsx`, `components/tournaments/ResetAutomatedChecksButton.tsx`); say what happens in plain sentences.
+- Don't write "Are you sure you want to …?" with bullet lists of side effects; say what happens in plain sentences.
 - Don't label the confirm "Confirm", "OK" or "Continue".
-- Don't use a plain `Dialog` for a confirmation (`DeleteButton.tsx`, `RefetchMatchDataButton.tsx`, `DeleteTournamentBeatmapsButton.tsx`, the merge confirms in `MergeGameButton.tsx` and `MergeMatchButton.tsx`).
+- Don't use a plain `Dialog` for a confirmation, merges included.
 
 Gallery anchor: `/admin/design#controls-confirm-dialog`
 
@@ -411,7 +450,7 @@ import { Form } from '@/components/ui/form';
 
 <PageFrame>
   <PageHeader
-    icon={Trophy}
+    icon={Upload}
     title="Tournament submission"
     description="Use this form to submit a new tournament for verification and tracking."
   />
@@ -440,7 +479,7 @@ Parts:
 
 - FormPanel: a Panel holding the `<form>`. Props other than `panelClassName` go to the form (`onSubmit`, `noValidate`, `data-testid`). It renders no `Form` provider; wrap it in shadcn's `Form` for react-hook-form.
 - FormSection: a group (`role="group"`, named by its title) with a SectionHeader strip and the fields 16px apart in 16px padding. Takes `icon` (muted), `title`, `level`, `description` (one muted line above the fields), `infoText` and `actions` (passed to the strip), `bodyClassName`. Sections after the first get a divider.
-- FormGrid: fields side by side, one column on phones. `columns` 2 (default), 3 or 4; 4 is for short fields such as CS, HP, OD and AR in the beatmap edit dialog and keeps two columns on phones. Fields align to the top, so an error under one does not shift its neighbour.
+- FormGrid: fields side by side, one column on phones. `columns` 2 (default), 3 (two from `sm`, three from `lg`) or 4; 4 is for short fields such as CS, HP, OD and AR in the beatmap edit dialog and keeps two columns on phones. `1` stacks the fields at every width with the grid's 16px gap. Fields align to the top, so an error under one does not shift its neighbour.
 - FormActions: the bottom strip. `default`-size buttons on the right with the primary last; `start` holds a muted note on the left. On phones the buttons stack full width with the primary on top.
 
 Notices: a page-level notice is a Callout between the PageHeader and the panel; a notice about one section is a Callout at the top of that FormSection; a field's help is its FormFieldLabel `info` or a `FormDescription`; errors are `FormMessage`.
@@ -449,21 +488,23 @@ Do:
 
 - Use the shadcn `Input`, `Textarea`, `Select` and `Checkbox` as they are.
 - Give each field the rules its schema has: required or optional, the options it allows, its minimum and maximum, and its format (`lib/orpc/schema/tournamentSubmission.ts`, `lib/validation-schema.ts`, `components/filtering/FilteringForm.tsx`). The forum post URL is required and accepts only links that start with `https://osu.ppy.sh/community/forums/topics/` or `https://osu.ppy.sh/wiki/en/Tournaments/`; lobby sizes are 1v1 to 8v8; a rank restriction is a whole number of at least 1.
-- Write validation messages as statements about the field, as the site's schemas do: "Tournament name is required", "Rank restriction must be at least 1", "Lobby size cannot exceed 8". Where a schema's message is imperative or zod's default, write the same shape: "Rank restriction must be a whole number", not "Enter a rank as a whole number"; "Ruleset is required". Name the field as its label does: "Forum post URL is required", not "Forum URL is required".
-- Keep a form's existing labels, help text and placeholders when it moves onto these parts. Add a notice or help line only when the page already says it.
+- Write validation messages as statements about the field, as the site's schemas do: "Tournament name is required", "Rank restriction must be a whole number", "Lobby size cannot exceed 8", "Matches cannot exceed 1,000". Name the field as its label does: "Forum post URL is required", not "Forum URL is required". The tournament fields' messages are shared constants in `@/lib/orpc/schema/tournamentMessages` (`RANK_RESTRICTION_WHOLE_NUMBER_MESSAGE`, `maxMatchIdsMessage(n)` and the rest), safe on the client; import them rather than retyping them.
+- Keep a form's existing labels and placeholders, and the help that adds something, when it moves onto these parts. Add a notice or help line only when the page already says it, and drop help and captions that only restate the label, placeholder or hint: "Choose the option that best describes the issue." under a Reason select, or "Include anything that may help an admin review the report." under a textarea whose placeholder says what to add.
 
 Don't:
 
-- Don't centre a blue title above the form (`app/tournaments/submit/page.tsx`) or stack a padded Card inside the page (`TournamentSubmissionForm.tsx`, `FilteringForm.tsx` with `px-4 py-4 sm:px-6 sm:py-6 lg:px-8`).
-- Don't hand-build section headings with `size-6 text-primary` icons and `text-lg sm:text-xl` titles (the local `FormSection` in both forms); FormSection uses the standard strip.
-- Don't restyle inputs (`border-2 shadow-sm bg-card focus-visible:ring-primary` from `getFieldClassName` in `TournamentSubmissionForm.tsx`, the same classes in `FilteringForm.tsx`).
-- Don't build notices from palette classes (`border-orange-500/50 bg-orange-500/15` in `app/tools/filter/FilteringPageClient.tsx`, the warning-yellow `Alert` above it); use Callout.
+- Don't centre a blue title above the form or stack a padded card inside the page (`px-4 py-4 sm:px-6 sm:py-6 lg:px-8`).
+- Don't hand-build section headings with `size-6 text-primary` icons and `text-lg sm:text-xl` titles; FormSection uses the standard strip.
+- Don't restyle inputs (`border-2 shadow-sm bg-card focus-visible:ring-primary`).
+- Don't build notices from palette classes (`border-orange-500/50 bg-orange-500/15`); use Callout.
+
+Admin edit dialogs share their parts in `components/admin-forms/adminFormFields.tsx`: `VerifyChildrenChoices` (with `VERIFY_CHILDREN_TITLE` and `VERIFY_CHILDREN_DESCRIPTION`), `LabelSelectContent` and `VerificationStatusSelectContent` for enum selects (`ALL_RULESET_LABELS` is every ruleset, `mania (other)` included, for admin pickers; the status picker shows each state's glyph and is the one the tournament, match, game and score dialogs use), `flagOptions` and `combineFlags` for bitflag fields, `changedFieldClass` for a field the admin changed, and `DELETE_CASCADE_DESCRIPTION`, the delete confirmations' shared wording. Import them from there rather than copying them into a dialog. The tournament submission form and edit dialog share their own pickers in `components/tournaments/TournamentFieldOptions.tsx`: `RulesetSelectContent` (`includeManiaOther` for admins), `LobbySizeSelectContent` and `RejectionReasonChips`.
 
 Gallery anchor: `/admin/design#controls-form-layout`
 
 ## FormFieldLabel
 
-A field label inside a shadcn `FormItem`, with the one info button for help and an optional muted hint on the right, such as a unit ("mm:ss" in the beatmap edit dialog) or "One per line".
+A field label with the one info button for help and an optional muted hint on the right, such as a unit ("mm:ss" in the beatmap edit dialog), a range ("100 – 5,000" in registrant filtering) or a format ("IDs or URLs, one per line" in tournament submission). Inside a shadcn `FormItem` it is that field's `FormLabel`; outside react-hook-form (a filter, a settings toggle, a field held in plain state) pass `htmlFor` with the control's id.
 
 ```tsx
 import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
@@ -482,14 +523,40 @@ import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
 Props:
 
 - `children`: the label text, sentence case. It turns red with the field's error, from `FormLabel`.
-- `info`: the explanation behind an InfoButton (its `md` size, the one beside 14px text), which opens on tap, hover and focus. `infoLabel` names it; it defaults to "About {label}".
-- `hint`: muted text on the right.
+- `info`: the explanation behind an InfoButton (its `md` size, the one beside 14px text), which opens on tap, hover and focus. `infoLabel` names it; it defaults to "About {label}", lower-cased mid-sentence ("About lobby size").
+- `hint`: muted text on the right. `hintId` gives it an id, so the control can point `aria-describedby` at it, such as a "Required" hint: `hint="Required" hintId={hintId}`, not a hand-made `<span id>` inside `hint`.
+- `htmlFor`: the id of the control it labels, for a field outside a `FormItem`. It then renders the plain `Label` (`FormLabel` only works inside a form field). `invalid` turns it red, as a field error does inside a form.
+- `groupId`: labels a group of controls, such as a `RadioGroup`, that a `<label>` can't point at. The label is plain text with this id, in the same 20px row and text style, and the group takes `aria-labelledby={groupId}`; each option keeps its own `Label`. `invalid` works here too.
+
+```tsx
+const id = useId();
+
+<FormFieldLabel htmlFor={id} info="Number of players per team in each match">
+  Lobby size
+</FormFieldLabel>
+<Select value={lobbySize} onValueChange={setLobbySize}>
+  <SelectTrigger id={id}>…</SelectTrigger>
+  …
+</Select>
+```
+
+```tsx
+// The admin home's Priority (app/admin/AdminDashboardClient.tsx).
+const labelId = useId();
+
+<FormFieldLabel groupId={labelId}>Priority</FormFieldLabel>
+<RadioGroup aria-labelledby={labelId} value={priority} onValueChange={…}>
+  …
+</RadioGroup>
+```
 
 The label row is 20px tall with or without the info button or hint, so fields side by side in a FormGrid keep their inputs level.
 
 Don't:
 
-- Don't use `LabelWithTooltip` (`components/ui/LabelWithTooltip.tsx`, a circled "?") or the local `FieldLabel` with `hint` and the hover-only info tooltips in `components/beatmap/BeatmapAdminView.tsx`.
+- Don't use a circled "?" label or a hover-only info tooltip beside a label; use `info`.
+- Don't give a field an `info` that restates its label, placeholder or hint, such as "The ruleset the tournament is played in" beside Ruleset or "Players below this rating will be filtered out" beside Minimum rating. Help is for a fact the field does not show, such as Abbreviation's lobby prefix or Rank restriction's "Use 1 for open rank"; most fields need none. A short fact that fits beside the label is a `hint` instead.
+- Don't label a radio group with a bare `<Label id>`; it is 14px tall where every other field label is 20px. Use `groupId`.
 - Don't mix FormFieldLabel and a bare `FormLabel` in one FormGrid row; the bare label is shorter and its input sits 6px higher.
 
 Gallery anchors: `/admin/design#controls-form-field-label`, `/admin/design#controls-form-layout`

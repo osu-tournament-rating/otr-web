@@ -1,114 +1,68 @@
 'use client';
 
 import { Trash2, UserX } from 'lucide-react';
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { orpc } from '@/lib/orpc/orpc';
+import { SETTINGS_COPY } from '@/app/settings/settings-copy';
+import { Button } from '@/components/kit/controls/Button';
+import { ConfirmDialog } from '@/components/kit/controls/ConfirmDialog';
+import { Callout } from '@/components/kit/feedback/Callout';
+import { Panel, PanelBody } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import { authClient } from '@/lib/auth/auth-client';
+import { orpc } from '@/lib/orpc/orpc';
 
+/**
+ * The danger zone: a danger callout whose red outline button opens the one
+ * solid red confirm.
+ */
 export default function AccountDeletionClient() {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
-  const handleDeleteAccount = async () => {
-    setIsDeleting(true);
+  const deleteAccount = async () => {
+    await orpc.users.deleteMe();
+    toast.success('Account deleted successfully');
 
-    try {
-      await orpc.users.deleteMe();
-
-      toast.success('Account deleted successfully');
-
-      await authClient.signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            router.push('/');
-          },
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push('/');
         },
-      });
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Failed to delete account. Please try again.';
-      toast.error(message);
-      setIsDeleting(false);
-      setIsOpen(false);
-    }
+      },
+    });
   };
 
   return (
-    <Card
-      className="border-destructive/50"
-      data-testid="settings-account-deletion-section"
-    >
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <UserX className="size-6 text-destructive" />
-          <CardTitle className="text-destructive">Delete Account</CardTitle>
-        </div>
-        <CardDescription>
-          Permanently delete your account and remove your data from o!TR. Your
-          player profile will remain public.
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="destructive"
-              className="w-full sm:w-auto"
-              disabled={isDeleting}
-              data-testid="settings-delete-account-button"
-            >
-              <Trash2 className="mr-2 size-4" />
-              Delete My Account
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete your account?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteAccount}
-                className="bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/40"
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete Account'}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </CardContent>
-    </Card>
+    <Panel data-testid="settings-account-deletion-section">
+      <SectionHeader icon={UserX} title="Delete account" />
+      <PanelBody>
+        <Callout
+          tone="danger"
+          action={
+            <ConfirmDialog
+              trigger={
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  icon={Trash2}
+                  data-testid="settings-delete-account-button"
+                >
+                  Delete my account
+                </Button>
+              }
+              title="Delete your account?"
+              description="This action cannot be undone."
+              confirmLabel="Delete account"
+              pendingLabel="Deleting…"
+              errorText="Failed to delete account. Try again."
+              onConfirm={deleteAccount}
+            />
+          }
+        >
+          {SETTINGS_COPY.deleteAccount}
+        </Callout>
+      </PanelBody>
+    </Panel>
   );
 }

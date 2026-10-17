@@ -1,4 +1,4 @@
-import MaintenanceBanner from '@/components/banner/MaintenanceBanner';
+import SiteBanner from '@/components/banner/SiteBanner';
 import Header from '@/components/header/Header';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
@@ -13,6 +13,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth/auth';
 import { mapAppSessionToUser } from '@/lib/auth/session-utils';
+import { resolveMaintenanceWindowActive } from '@/lib/maintenance-window';
 
 export const metadata: Metadata = {
   title: {
@@ -51,9 +52,27 @@ export default async function RootLayout({
           <TooltipProvider>
             <SessionProvider user={session}>
               <AudioPlayerProvider>
+                {/* The first stop for keyboard users: past the header's
+                    controls to the page. Hidden until focused. */}
+                <a
+                  href="#main"
+                  className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[60] focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:shadow-md focus:ring-[3px] focus:ring-ring/50 focus:outline-none"
+                >
+                  Skip to content
+                </a>
                 <Header />
-                <MaintenanceBanner headers={new Headers(headersList)} />
-                <main className="mx-auto w-full max-w-[1050px] flex-1 pb-5 sm:px-5 sm:py-10">
+                {/* One strip: the maintenance window and the signed-out
+                    note share it rather than stacking. */}
+                <SiteBanner
+                  maintenance={resolveMaintenanceWindowActive(headersList)}
+                />
+                {/* The page frame's margins: 16px at the sides on phones,
+                    40px below the header from sm. Pages add no container. */}
+                <main
+                  id="main"
+                  tabIndex={-1}
+                  className="mx-auto w-full max-w-[1050px] flex-1 px-4 pt-6 pb-10 outline-none sm:px-5 sm:pt-10"
+                >
                   {children}
                 </main>
                 <Footer />

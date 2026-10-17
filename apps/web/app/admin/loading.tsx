@@ -1,20 +1,80 @@
-import { ShieldCheck } from 'lucide-react';
+import { ListRestart, ShieldCheck, UserSearch } from 'lucide-react';
 
-import { Skeleton } from '@/components/ui/skeleton';
+import {
+  PanelSkeleton,
+  SectionHeaderSkeleton,
+  SkeletonText,
+} from '@/components/kit/feedback/Skeletons';
+import { PageFrame } from '@/components/kit/layout/PageFrame';
+import { PageHeader } from '@/components/kit/layout/PageHeader';
 
+/**
+ * A field under its FormFieldLabel, whose row is 20px tall. The ID fields'
+ * eight-row textareas use 16px text below `md` and 14px from it.
+ */
+function FieldSkeleton({ inputClassName }: { inputClassName: string }) {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col gap-2">
+      <span className="flex min-h-5 items-center">
+        <SkeletonText className="block h-3.5 w-20" />
+      </span>
+      <SkeletonText className={`block w-full ${inputClassName}`} />
+    </div>
+  );
+}
+
+const TEXTAREA_HEIGHT = 'h-[13.125rem] md:h-[11.125rem]';
+
+/**
+ * The admin home while it loads. The section descriptions are the page's
+ * own static text, so each panel wraps to the loaded height at every width.
+ */
 export default function AdminLoading() {
   return (
-    <div className="flex flex-col gap-10">
-      <header className="space-y-3">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="size-8 text-primary" aria-hidden="true" />
-          <h1 className="text-3xl font-semibold">Admin</h1>
+    <PageFrame>
+      <PageHeader icon={ShieldCheck} title="Admin" />
+      <PanelSkeleton label="Loading admin tools">
+        <SectionHeaderSkeleton
+          icon={UserSearch}
+          title="User lookup"
+          meta={false}
+        />
+        <div className="flex flex-col gap-4 p-4">
+          <p className="text-sm text-muted-foreground">
+            Search for users by username to review ban status and API access.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <FieldSkeleton inputClassName="h-9" />
+            <SkeletonText className="block h-9 w-full sm:w-24" />
+          </div>
         </div>
-      </header>
-      <div role="status" aria-label="Loading admin tools" className="space-y-6">
-        <Skeleton className="h-44 w-full rounded-xl" />
-        <Skeleton className="h-[25.5rem] w-full rounded-xl" />
-      </div>
-    </div>
+      </PanelSkeleton>
+      <PanelSkeleton>
+        <SectionHeaderSkeleton
+          icon={ListRestart}
+          title="Mass enqueue"
+          meta={false}
+        />
+        <div className="flex flex-col gap-4 p-4">
+          <p className="text-sm text-muted-foreground">
+            Mass enqueue beatmaps and matches for refetch. Enter IDs separated
+            by commas, spaces, or newlines. Only IDs that exist in the database
+            will be enqueued.
+          </p>
+          <div className="grid items-start gap-4 sm:grid-cols-2">
+            <FieldSkeleton inputClassName={TEXTAREA_HEIGHT} />
+            <FieldSkeleton inputClassName={TEXTAREA_HEIGHT} />
+          </div>
+          {/* Priority: its 14px label, then the 16px row of radio buttons. */}
+          <div className="flex flex-col gap-2">
+            <SkeletonText className="block h-3.5 w-14" />
+            <SkeletonText className="block h-4 w-56" />
+          </div>
+        </div>
+        <div className="flex justify-end border-t bg-muted/30 px-4 py-3">
+          <SkeletonText className="block h-9 w-full sm:w-36" />
+        </div>
+      </PanelSkeleton>
+    </PageFrame>
   );
 }

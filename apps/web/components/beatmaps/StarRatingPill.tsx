@@ -45,7 +45,7 @@ export default function StarRatingPill({
       <Star className="fill-current" aria-hidden="true" />
       <span
         data-testid={testId ? `${testId}-value` : undefined}
-        className={cn('font-medium', valueClassName)}
+        className={cn('font-medium tabular-nums', valueClassName)}
       >
         {formattedRating}
       </span>

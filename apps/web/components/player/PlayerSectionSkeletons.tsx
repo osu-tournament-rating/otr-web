@@ -1,44 +1,34 @@
 import { Music, Trophy } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import {
+  LoadMoreSkeleton,
+  PanelSkeleton,
+  RowListSkeleton,
+  SectionHeaderSkeleton,
+} from '@/components/kit/feedback/Skeletons';
 
-// Headings match the loaded cards so they don't shift when content arrives.
+// The real section titles, so nothing shifts when the content arrives. Each
+// list shows its first rows and a "Show more" footer, as the loaded panels
+// do for a player with more than fit at first.
 
-export function PlayerTournamentsSkeleton() {
+/** Five tournament rows: name and facts, then two small stats and the Matches toggle. */
+export function PlayerTournamentsSkeleton({ label }: { label?: string }) {
   return (
-    <Card role="status" aria-label="Loading tournament history">
-      <CardHeader>
-        <div className="flex flex-row items-center gap-2">
-          <Trophy className="h-6 w-6 text-primary" aria-hidden="true" />
-          <CardTitle className="text-xl font-bold">
-            Tournament History
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col space-y-4">
-        {Array.from({ length: 5 }, (_, index) => (
-          <Skeleton key={index} className="h-[7.25rem] w-full rounded-xl" />
-        ))}
-      </CardContent>
-    </Card>
+    <PanelSkeleton label={label}>
+      <SectionHeaderSkeleton icon={Trophy} title="Tournament history" />
+      <RowListSkeleton leading="none" stats={2} statsAction />
+      <LoadMoreSkeleton />
+    </PanelSkeleton>
   );
 }
 
-export function PlayerBeatmapsSkeleton() {
+/** Three beatmap rows: cover, title, artist, then the star rating and metrics. */
+export function PlayerBeatmapsSkeleton({ label }: { label?: string }) {
   return (
-    <Card role="status" aria-label="Loading pooled beatmaps">
-      <CardHeader>
-        <div className="flex flex-row items-center gap-2">
-          <Music className="h-6 w-6 text-primary" aria-hidden="true" />
-          <CardTitle className="text-xl font-bold">Pooled beatmaps</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="flex flex-col space-y-2">
-        {Array.from({ length: 3 }, (_, index) => (
-          <Skeleton key={index} className="h-[6.25rem] w-full rounded-xl" />
-        ))}
-      </CardContent>
-    </Card>
+    <PanelSkeleton label={label}>
+      <SectionHeaderSkeleton icon={Music} title="Pooled beatmaps" />
+      <RowListSkeleton rows={3} leading="cover" trailing={false} meta="badge" />
+      <LoadMoreSkeleton />
+    </PanelSkeleton>
   );
 }

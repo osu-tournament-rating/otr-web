@@ -12,10 +12,13 @@ import {
   dayRangeParam,
   defineListParams,
   enumParam,
+  flagsParam,
+  flagsToMask,
   getDefaultListState,
   isIsoDay,
   listStateHref,
   listStatesEqual,
+  maskToFlags,
   normalizeDayRange,
   normalizeRange,
   numberParam,
@@ -471,6 +474,56 @@ describe('param builders', () => {
       direction: 'desc',
     });
     expect(parseListState(spec, '?sort=3').sort.key).toBe(0);
+  });
+});
+
+describe('flagsParam', () => {
+  // Mods as bitflags: NF 1, EZ 2, HD 8, HR 16, DT 64, NC 512 (with DT, 576).
+  const MODS = [1, 2, 8, 16, 64, 576] as const;
+  const spec = defineListParams({ mods: flagsParam(MODS) });
+
+  it('reads a bitmask from the address as a list of flags', () => {
+    expect(parseListState(spec, '?mods=24').mods).toEqual([8, 16]);
+    expect(parseListState(spec, '?mods=1').mods).toEqual([1]);
+    // NC carries DT's bit, so both read as set.
+    expect(parseListState(spec, '?mods=576').mods).toEqual([64, 576]);
+  });
+
+  it('drops unknown bits, zero and anything that is not a whole number', () => {
+    expect(parseListState(spec, '?mods=28').mods).toEqual([8, 16]);
+    expect(parseListState(spec, '?mods=0').mods).toEqual([]);
+    expect(parseListState(spec, '?mods=-8').mods).toEqual([]);
+    expect(parseListState(spec, '?mods=8.5').mods).toEqual([]);
+    expect(parseListState(spec, '?mods=hd').mods).toEqual([]);
+    expect(parseListState(spec, '').mods).toEqual([]);
+  });
+
+  it('writes one bitmask, and nothing when empty', () => {
+    expect(serializeListState(spec, { mods: [16, 8] }).toString()).toBe(
+      'mods=24'
+    );
+    expect(serializeListState(spec, { mods: [] }).toString()).toBe('');
+    expect(listStateHref('/beatmaps', spec, { mods: [64] })).toBe(
+      '/beatmaps?mods=64'
+    );
+  });
+
+  it('compares by the flags set, not their order', () => {
+    expect(spec.mods.equals([8, 16], [16, 8])).toBe(true);
+    expect(spec.mods.equals([8], [16])).toBe(false);
+  });
+
+  it('is a filter: counted, and reset by Clear all', () => {
+    const state = parseListState(spec, '?mods=24');
+    expect(countActiveFilters(spec, state)).toBe(1);
+    expect(clearListFilters(spec, state).mods).toEqual([]);
+  });
+
+  it('converts between masks and flags', () => {
+    expect(flagsToMask([8, 16])).toBe(24);
+    expect(flagsToMask([])).toBe(0);
+    expect(maskToFlags(24, MODS)).toEqual([8, 16]);
+    expect(maskToFlags(0, [0, 1])).toEqual([]);
   });
 });
 

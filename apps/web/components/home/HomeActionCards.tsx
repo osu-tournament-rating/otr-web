@@ -1,9 +1,11 @@
 'use client';
 
-import LinkCard from '@/components/home/LinkCard';
-import { Card } from '@/components/ui/card';
-import LoginButton from '@/components/buttons/LoginButton';
-import { User } from 'lucide-react';
+import LinkCard, {
+  HOME_CARD_CLASSES,
+  HomeCardContent,
+} from '@/components/home/LinkCard';
+import { Panel } from '@/components/kit/layout/Panel';
+import LoginButton from '@/components/profile/LoginButton';
 
 interface HomeActionCardsProps {
   isLoggedIn: boolean;
@@ -17,41 +19,41 @@ export default function HomeActionCards({
   return (
     <div
       data-testid="home-action-cards"
-      className="mb-4 grid grid-cols-1 gap-6 md:grid-cols-3"
+      className="grid grid-cols-1 gap-4 md:grid-cols-3"
     >
       {isLoggedIn && playerId ? (
         <LinkCard
-          title="My Profile"
+          title="My profile"
           description="View your tournament stats and rating history"
           icon="user"
           href={`/players/${playerId}`}
         />
       ) : (
-        <Card
+        <Panel
+          as="div"
           data-testid="home-login-button"
-          className="flex size-full flex-row items-center gap-4 border border-none p-6"
+          className={HOME_CARD_CLASSES}
         >
-          <div className="mt-1 text-primary">
-            <User size={24} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <h3 className="text-xl font-semibold">My Profile</h3>
-            <p className="text-muted-foreground">Log in to view your profile</p>
-            <LoginButton />
-          </div>
-        </Card>
+          <HomeCardContent
+            title="My profile"
+            description="Log in to view your profile"
+            icon="user"
+          >
+            <LoginButton className="mt-2 self-start" />
+          </HomeCardContent>
+        </Panel>
       )}
 
       <LinkCard
-        title="Browse Tournaments"
+        title="Browse tournaments"
         description="View the latest and greatest or go back in time"
         icon="trophy"
         href="/tournaments"
       />
 
       <LinkCard
-        title="View Rankings"
-        description="Find out where you stack up against your friends... and foes"
+        title="View rankings"
+        description="Find out where you stack up against your friends… and foes"
         icon="medal"
         href="/leaderboard"
       />

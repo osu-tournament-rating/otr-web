@@ -1,20 +1,21 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Settings, LoaderCircle, Users } from 'lucide-react';
+import { useState } from 'react';
+import { SlidersHorizontal, Users } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Control, FieldPath, Resolver } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { orpc } from '@/lib/orpc/orpc';
 import { Ruleset } from '@otr/core/osu';
+
+import { Button } from '@/components/kit/controls/Button';
 import {
-  FilteringResult,
-  PlayerFilteringResult,
-} from '@/lib/orpc/schema/filtering';
-import LabelWithTooltip from '@/components/ui/LabelWithTooltip';
-import RulesetSelectContent from '@/components/select/RulesetSelectContent';
-import { Select, SelectTrigger, SelectValue } from '@/components/ui/select';
+  FormActions,
+  FormGrid,
+  FormPanel,
+  FormSection,
+} from '@/components/kit/controls/FormPanel';
+import { FormFieldLabel } from '@/components/kit/controls/FormFieldLabel';
 import {
   Form,
   FormControl,
@@ -22,409 +23,356 @@ import {
   FormItem,
   FormMessage,
 } from '@/components/ui/form';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { getFailureReasons } from './FailureReasonsBadges';
-import FilteringResultsTable from './FilteringResultsTable';
-import { downloadCSV } from '@/lib/utils/csv';
+import { formatCount, formatCountOf } from '@/lib/kit/format/number';
+import { RATED_RULESETS, RULESET_NAMES } from '@/lib/kit/format/ruleset';
+import { RANGE_SEPARATOR } from '@/lib/kit/format/date';
+import { orpc } from '@/lib/orpc/orpc';
+import type { FilteringResult } from '@/lib/orpc/schema/filtering';
 import FilterComplianceNotice from './FilterComplianceNotice';
+import FilterReportSummary from './FilterReportSummary';
+import FilteringResultsTable from './FilteringResultsTable';
+import { csvDay, downloadFilterCsv } from './filterCsv';
 
-const optionalNumberSchema = (
-  options: {
-    min?: number;
-    max?: number;
-    integer?: boolean;
-    minMsg?: string;
-    maxMsg?: string;
-    intMsg?: string;
-  } = {}
-) =>
+/** The bounds the filter accepts for a rating. */
+const MIN_RATING = 100;
+const MAX_RATING = 5000;
+/** The most players one filter can check (`FilteringRequestSchema`). */
+const MAX_PLAYER_IDS = 5000;
+
+const RATING_HINT = `${formatCount(MIN_RATING)}${RANGE_SEPARATOR}${formatCount(MAX_RATING)}`;
+
+/** An optional whole-number rating between the bounds, named in its messages. */
+const ratingSchema = (label: string) =>
   z.preprocess(
-    (val) => (val === '' || val === null ? undefined : val),
+    (value) =>
+      typeof value === 'string' && value.trim() === ''
+        ? undefined
+        : typeof value === 'string'
+          ? value.trim()
+          : value,
     z.coerce
-      .number({ error: 'Please enter a valid number' })
-      .min(options.min ?? -Infinity, options.minMsg)
-      .max(options.max ?? Infinity, options.maxMsg)
-      .int(options.integer ? { message: options.intMsg } : undefined)
+      .number({ error: `${label} must be a number` })
+      .int(`${label} must be a whole number`)
+      .min(MIN_RATING, `${label} must be at least ${formatCount(MIN_RATING)}`)
+      .max(MAX_RATING, `${label} cannot exceed ${formatCount(MAX_RATING)}`)
       .optional()
   );
 
+function parsePlayerIds(value: string): string[] {
+  return value.split(/[\s,]+/).filter((id) => id.trim() !== '');
+}
+
 const filteringFormSchema = z
   .object({
-    ruleset: z.coerce.number({
-      error: 'Please select a ruleset',
-    }),
-    minRating: optionalNumberSchema({
-      min: 100,
-      max: 5000,
-      minMsg: 'Minimum rating must be at least 100',
-      maxMsg: 'Maximum rating cannot exceed 5000',
-    }),
-    maxRating: optionalNumberSchema({
-      min: 100,
-      max: 5000,
-      minMsg: 'Minimum rating must be at least 100',
-      maxMsg: 'Maximum rating cannot exceed 5000',
-    }),
+    ruleset: z.string().min(1, 'Ruleset is required'),
+    minRating: ratingSchema('Minimum rating'),
+    maxRating: ratingSchema('Maximum rating'),
     osuPlayerIds: z
       .string()
-      .min(1, 'Please enter at least one osu! player ID')
       .refine(
-        (val) => {
-          const ids = val.split(/[\s,\n]+/).filter((id) => id.trim() !== '');
-          if (ids.length === 0) return false;
-
-          return ids.every((id) => {
-            const trimmed = id.trim();
-            return /^\d+$/.test(trimmed) && parseInt(trimmed, 10) > 0;
-          });
-        },
-        {
-          message:
-            'Please enter valid, positive osu! player IDs separated by spaces, commas, or new lines',
-        }
+        (value) => parsePlayerIds(value).length > 0,
+        'At least one osu! player ID is required'
       )
       .refine(
-        (val) => {
-          const ids = val
-            .split(/[\s,\n]+/)
-            .filter((id) => id.trim() !== '')
-            .map((id) => id.trim());
-          const uniqueIds = new Set(ids);
-          return ids.length === uniqueIds.size;
-        },
-        {
-          message: 'Duplicate osu! player IDs are not allowed',
-        }
+        (value) =>
+          parsePlayerIds(value).every(
+            (id) => /^\d+$/.test(id) && parseInt(id, 10) > 0
+          ),
+        'osu! player IDs must be positive whole numbers separated by spaces, commas, or new lines'
+      )
+      .refine((value) => {
+        const ids = parsePlayerIds(value);
+        return ids.length === new Set(ids).size;
+      }, 'Duplicate osu! player IDs are not allowed')
+      .refine(
+        (value) => parsePlayerIds(value).length <= MAX_PLAYER_IDS,
+        `osu! player IDs cannot exceed ${formatCount(MAX_PLAYER_IDS)}`
       ),
   })
+  // A filter on the ruleset alone would pass every rated player.
   .refine(
-    (data) => {
-      if (data.minRating && data.maxRating) {
-        return data.maxRating >= data.minRating;
-      }
-      return true;
-    },
+    (data) => data.minRating !== undefined || data.maxRating !== undefined,
     {
-      message: 'Maximum rating must be greater than or equal to minimum rating',
+      message: 'A minimum or maximum rating is required',
+      path: ['minRating'],
+    }
+  )
+  .refine(
+    (data) =>
+      data.minRating === undefined ||
+      data.maxRating === undefined ||
+      data.maxRating >= data.minRating,
+    {
+      message: 'Maximum rating must be at least the minimum rating',
       path: ['maxRating'],
     }
   );
 
-type FilteringFormValues = z.infer<typeof filteringFormSchema>;
+type FilteringFormInput = z.input<typeof filteringFormSchema>;
+type FilteringFormValues = z.output<typeof filteringFormSchema>;
 
-type FormSectionProps = {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
+const EMPTY_VALUES: FilteringFormInput = {
+  ruleset: '',
+  minRating: '',
+  maxRating: '',
+  osuPlayerIds: '',
 };
 
-const FormSection = ({ icon, title, children }: FormSectionProps) => (
-  <div className="space-y-3 sm:space-y-4">
-    <div className="flex items-center gap-2 rounded-md border-b border-border pb-2 sm:gap-3 sm:pb-3">
-      {icon}
-      <h3 className="text-lg font-semibold text-foreground sm:text-xl">
-        {title}
-      </h3>
-    </div>
-    {children}
-  </div>
-);
-
-interface NumberInputProps {
-  control: Control<FilteringFormValues>;
-  name: FieldPath<FilteringFormValues>;
-  label: string;
-  tooltip: string;
-  placeholder?: string;
-  isInteger?: boolean;
-  className?: string;
-}
-
-function NumberInput({
-  control,
-  name,
-  label,
-  tooltip,
-  placeholder,
-  isInteger = false,
-  className,
-}: NumberInputProps) {
+/** The required-field mark the section's note refers to. */
+function RequiredMark() {
   return (
-    <FormField
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <FormItem className={className}>
-          <LabelWithTooltip label={label} tooltip={tooltip} />
-          <FormControl>
-            <Input
-              data-testid={`filter-${name}`}
-              type="text"
-              inputMode={isInteger ? 'numeric' : 'decimal'}
-              placeholder={placeholder}
-              {...field}
-              value={field.value ?? ''}
-              className="border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
-            />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <>
+      <span aria-hidden="true" className="text-destructive-foreground">
+        *
+      </span>
+      <span className="sr-only"> (required)</span>
+    </>
   );
 }
+
+type SubmittedFilter = {
+  results: FilteringResult;
+  ruleset: Ruleset;
+  minRating: number | null;
+  maxRating: number | null;
+};
 
 interface FilteringFormProps {
   onFilteringComplete: (results: FilteringResult) => void;
   filteringResults: FilteringResult | null;
 }
 
+/**
+ * The registrant filter: ruleset and rating bounds, then the players to
+ * check, on one form panel. After a run it shows the forum post text, the
+ * report's summary and the results table.
+ */
 export default function FilteringForm({
   onFilteringComplete,
   filteringResults,
 }: FilteringFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const initialValuesRef = useRef<FilteringFormValues | null>(null);
+  const [submitted, setSubmitted] = useState<SubmittedFilter | null>(null);
 
-  const form = useForm<FilteringFormValues>({
-    resolver: zodResolver(filteringFormSchema) as Resolver<FilteringFormValues>,
-    defaultValues: {
-      ruleset: undefined,
-      minRating: undefined,
-      maxRating: undefined,
-      osuPlayerIds: '',
-    },
+  const form = useForm<FilteringFormInput, unknown, FilteringFormValues>({
+    resolver: zodResolver(filteringFormSchema),
+    defaultValues: EMPTY_VALUES,
     mode: 'onChange',
   });
-
-  useEffect(() => {
-    if (!initialValuesRef.current) {
-      initialValuesRef.current = form.getValues();
-    }
-  }, [form]);
-
-  const hasOnlyRulesetChanged = (values: FilteringFormValues): boolean => {
-    if (!initialValuesRef.current) return false;
-
-    const initial = initialValuesRef.current;
-    const fieldsToCheck: (keyof FilteringFormValues)[] = [
-      'minRating',
-      'maxRating',
-    ];
-
-    const hasOtherChanges = fieldsToCheck.some(
-      (field) => values[field] !== initial[field]
-    );
-
-    return values.ruleset !== initial.ruleset && !hasOtherChanges;
-  };
+  const isLoading = form.formState.isSubmitting;
 
   async function onSubmit(values: FilteringFormValues) {
-    if (hasOnlyRulesetChanged(values)) {
-      toast.error(
-        'Please modify at least one filter criteria in addition to the ruleset'
-      );
-      return;
-    }
+    const osuPlayerIds = parsePlayerIds(values.osuPlayerIds).map((id) =>
+      parseInt(id, 10)
+    );
+    const ruleset = Number(values.ruleset) as Ruleset;
 
-    setIsLoading(true);
     try {
-      const osuPlayerIds = values.osuPlayerIds
-        .split(/[\s,\n]+/)
-        .filter((id) => id.trim() !== '')
-        .map((id) => parseInt(id.trim()));
-
       const result = await orpc.filtering.filter({
-        ruleset: values.ruleset as Ruleset,
+        ruleset,
         minRating: values.minRating,
         maxRating: values.maxRating,
         osuPlayerIds,
       });
 
+      setSubmitted({
+        results: result,
+        ruleset,
+        minRating: values.minRating ?? null,
+        maxRating: values.maxRating ?? null,
+      });
       onFilteringComplete(result);
-      toast.success(`Filtered ${osuPlayerIds.length} players successfully`);
+      toast.success(`Filtered ${formatCountOf(osuPlayerIds.length, 'player')}`);
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : 'An error occurred while filtering players'
+        error instanceof Error ? error.message : 'Players could not be filtered'
       );
-    } finally {
-      setIsLoading(false);
     }
   }
 
-  function handleDownloadCSV() {
-    if (!filteringResults) return;
-
-    const headers = [
-      'osu! ID',
-      'Username',
-      'Player ID',
-      'Status',
-      'Rating',
-      'Failure Reasons',
-    ];
-    const rows = filteringResults.filteringResults.map(
-      (result: PlayerFilteringResult) => {
-        const failureReasons = getFailureReasons(
-          result.failureReason ?? undefined
-        );
-        return [
-          result.osuId?.toString() || '',
-          result.username || 'Unknown',
-          result.playerId?.toString() || 'N/A',
-          result.isSuccess ? 'Passed' : 'Failed',
-          result.currentRating != null
-            ? result.currentRating.toString()
-            : 'N/A',
-          failureReasons.join(', '),
-        ];
-      }
-    );
-
-    const timestamp = new Date().toISOString().split('T')[0];
-    downloadCSV(rows, headers, `otr-filtering-results-${timestamp}.csv`);
-  }
+  const results = filteringResults ?? submitted?.results ?? null;
 
   return (
     <>
-      <Card className="w-full overflow-hidden">
-        <Form {...form}>
-          <form
-            data-testid="filter-form"
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-4 px-4 py-4 sm:px-6 sm:py-6 lg:space-y-6 lg:px-8"
+      <Form {...form}>
+        <FormPanel
+          data-testid="filter-form"
+          noValidate
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <FormSection
+            icon={SlidersHorizontal}
+            title="Filter criteria"
+            description="Fields marked with * are required."
           >
-            <FormSection
-              icon={<Settings className="size-6 text-primary" />}
-              title="Filter Criteria"
-            >
-              <p className="mb-4 text-sm text-muted-foreground">
-                Fields marked with * are required
-              </p>
+            <FormField
+              control={form.control}
+              name="ruleset"
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldLabel>
+                    Ruleset
+                    <RequiredMark />
+                  </FormFieldLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger
+                        data-testid="filter-ruleset"
+                        aria-required="true"
+                        className="w-full sm:w-56"
+                      >
+                        <SelectValue placeholder="Select a ruleset" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {RATED_RULESETS.map((ruleset) => (
+                        <SelectItem key={ruleset} value={String(ruleset)}>
+                          {RULESET_NAMES[ruleset].label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormGrid>
               <FormField
                 control={form.control}
-                name="ruleset"
+                name="minRating"
                 render={({ field }) => (
                   <FormItem>
-                    <LabelWithTooltip
-                      label="Ruleset *"
-                      tooltip="The game mode to filter players for (required)"
-                    />
-                    <Select
-                      onValueChange={(value) => field.onChange(value)}
-                      value={field.value?.toString()}
-                    >
-                      <FormControl>
-                        <SelectTrigger
-                          data-testid="filter-ruleset"
-                          className="border-2 border-input bg-card shadow-sm focus:border-primary focus:ring-1 focus:ring-primary"
-                        >
-                          <SelectValue placeholder="Select a ruleset" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <RulesetSelectContent maniaOther={false} />
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <NumberInput
-                  control={form.control}
-                  name="minRating"
-                  label="Minimum Rating"
-                  tooltip="Players below this rating will be filtered out"
-                  placeholder="500"
-                />
-                <NumberInput
-                  control={form.control}
-                  name="maxRating"
-                  label="Maximum Rating"
-                  tooltip="Players above this rating will be filtered out"
-                  placeholder="2000"
-                />
-              </div>
-            </FormSection>
-
-            <FormSection
-              icon={<Users className="size-6 text-primary" />}
-              title="Player IDs"
-            >
-              <FormField
-                control={form.control}
-                name="osuPlayerIds"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <LabelWithTooltip
-                      label="osu! Player IDs *"
-                      tooltip="Enter osu! player IDs separated by commas, spaces, or new lines (required)"
-                    />
+                    <FormFieldLabel hint={RATING_HINT}>
+                      Minimum rating
+                    </FormFieldLabel>
                     <FormControl>
-                      <Textarea
-                        data-testid="filter-player-ids"
-                        placeholder="Enter osu! player IDs (e.g. 1234567, 2345678, 3456789)"
-                        className="min-h-[120px] border-2 border-input bg-card shadow-sm focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary sm:min-h-[150px]"
+                      <Input
+                        data-testid="filter-minRating"
+                        inputMode="numeric"
+                        placeholder="500"
                         {...field}
+                        value={String(field.value ?? '')}
+                        onChange={(event) => {
+                          field.onChange(event);
+                          // The pair is checked together; recheck the maximum.
+                          if (form.formState.touchedFields.maxRating) {
+                            void form.trigger('maxRating');
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </FormSection>
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-              <Button
-                type="submit"
-                data-testid="filter-submit-button"
-                disabled={isLoading}
-                className="flex-1 rounded-md bg-primary-solid text-base font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary-solid/90 hover:shadow-xl sm:py-6 sm:text-lg"
-              >
-                {isLoading ? (
-                  <LoaderCircle className="animate-spin" />
-                ) : (
-                  'Filter Players'
+              <FormField
+                control={form.control}
+                name="maxRating"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormFieldLabel hint={RATING_HINT}>
+                      Maximum rating
+                    </FormFieldLabel>
+                    <FormControl>
+                      <Input
+                        data-testid="filter-maxRating"
+                        inputMode="numeric"
+                        placeholder="2000"
+                        {...field}
+                        value={String(field.value ?? '')}
+                        onChange={(event) => {
+                          field.onChange(event);
+                          if (form.formState.touchedFields.minRating) {
+                            void form.trigger('minRating');
+                          }
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  form.reset({
-                    ruleset: undefined,
-                    minRating: undefined,
-                    maxRating: undefined,
-                    osuPlayerIds: '',
-                  });
-                  initialValuesRef.current = form.getValues();
-                }}
-                disabled={isLoading}
-                className="rounded-md px-6 py-5 text-base font-semibold shadow-lg transition-all hover:-translate-y-0.5 hover:bg-secondary/80 hover:shadow-xl sm:px-8 sm:py-6 sm:text-lg"
-              >
-                Reset
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </Card>
-      {filteringResults && (
-        <div data-testid="filter-results">
+              />
+            </FormGrid>
+          </FormSection>
+
+          <FormSection icon={Users} title="Player IDs">
+            <FormField
+              control={form.control}
+              name="osuPlayerIds"
+              render={({ field }) => (
+                <FormItem>
+                  <FormFieldLabel hint={`Up to ${formatCount(MAX_PLAYER_IDS)}`}>
+                    osu! player IDs
+                    <RequiredMark />
+                  </FormFieldLabel>
+                  <FormControl>
+                    <Textarea
+                      data-testid="filter-player-ids"
+                      aria-required="true"
+                      placeholder="Enter osu! player IDs (e.g. 1234567, 2345678, 3456789)"
+                      className="min-h-32 sm:min-h-40"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
+
+          <FormActions>
+            <Button
+              variant="outline"
+              disabled={isLoading}
+              onClick={() => form.reset(EMPTY_VALUES)}
+            >
+              Reset
+            </Button>
+            <Button
+              type="submit"
+              data-testid="filter-submit-button"
+              pending={isLoading}
+            >
+              {isLoading ? 'Filtering…' : 'Filter players'}
+            </Button>
+          </FormActions>
+        </FormPanel>
+      </Form>
+
+      {results ? (
+        <div data-testid="filter-results" className="flex flex-col gap-4">
           <FilterComplianceNotice
-            filterReportId={filteringResults.filterReportId}
-            created={filteringResults.created}
+            filterReportId={results.filterReportId}
+            created={results.created}
+          />
+          <FilterReportSummary
+            reportId={results.filterReportId}
+            created={results.created}
+            results={results}
+            request={
+              submitted && submitted.results === results ? submitted : undefined
+            }
           />
           <FilteringResultsTable
-            results={filteringResults}
-            onDownloadCSV={handleDownloadCSV}
+            results={results}
+            onDownloadCSV={() =>
+              downloadFilterCsv(
+                results,
+                `otr-filtering-results-${csvDay()}.csv`
+              )
+            }
           />
         </div>
-      )}
+      ) : null}
     </>
   );
 }

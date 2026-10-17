@@ -1,14 +1,25 @@
 import type { z } from 'zod';
 
+import { RATED_RULESETS } from '@/lib/kit/format/ruleset';
 import {
-  beatmapListFilterSchema,
-  defaultBeatmapListFilter,
-} from '@/lib/validation-schema';
+  arrayParam,
+  clearListFilters,
+  defineListParams,
+  listStateHref,
+  pageParam,
+  rangeParam,
+  searchParam,
+  sortParam,
+  type ListState,
+} from '@/lib/kit/lists/params';
+import { toDescending } from '@/lib/kit/lists/sort';
+import {
+  BeatmapListSortSchema,
+  type BeatmapListRequest,
+} from '@/lib/orpc/schema/beatmapList';
 
-export type BeatmapListFilterData = z.infer<typeof beatmapListFilterSchema>;
-
-/** The sort keys the URL accepts. */
-export type BeatmapListSortKey = BeatmapListFilterData['sort'];
+/** Every sort key the list procedure takes, and so the address accepts. */
+export type BeatmapListSortKey = z.infer<typeof BeatmapListSortSchema>;
 
 /** Applied by the sort select and the column headers; both write the URL. */
 export type BeatmapListSortChange = (
@@ -16,77 +27,98 @@ export type BeatmapListSortChange = (
   descending: boolean
 ) => void;
 
-/** Every numeric range key the beatmap list filter serializes to the URL. */
-export const beatmapListNumericKeys = [
-  'minSr',
-  'maxSr',
-  'minBpm',
-  'maxBpm',
-  'minCs',
-  'maxCs',
-  'minAr',
-  'maxAr',
-  'minOd',
-  'maxOd',
-  'minHp',
-  'maxHp',
-  'minLength',
-  'maxLength',
-  'minGameCount',
-  'maxGameCount',
-  'minTournamentCount',
-  'maxTournamentCount',
-] as const;
+/** Rows per page of the beatmap list. */
+export const BEATMAP_LIST_PAGE_SIZE = 30;
 
-export type BeatmapListNumericKey = (typeof beatmapListNumericKeys)[number];
+/**
+ * The beatmap list's state in the page address. Keys match the links the
+ * list wrote before (`q`, `ruleset`, `minSr`…), and `descending=false` from
+ * old links still reads as an ascending sort. Range domains follow the real
+ * distribution, as the filter panel's sliders do.
+ */
+export const BEATMAP_LIST_PARAMS = defineListParams({
+  q: searchParam(),
+  page: pageParam(),
+  sort: sortParam(
+    BeatmapListSortSchema.options,
+    { key: 'gameCount', direction: 'desc' },
+    { legacyDescendingKey: 'descending' }
+  ),
+  ruleset: arrayParam(RATED_RULESETS, { role: 'scope' }),
+  sr: rangeParam({ min: 0, max: 15 }),
+  bpm: rangeParam({ min: 0, max: 600 }),
+  length: rangeParam({ min: 0, max: 1800, integer: true }),
+  games: rangeParam({
+    min: 0,
+    max: 600,
+    integer: true,
+    keys: ['minGameCount', 'maxGameCount'],
+  }),
+  tournaments: rangeParam({
+    min: 0,
+    max: 80,
+    integer: true,
+    keys: ['minTournamentCount', 'maxTournamentCount'],
+  }),
+  cs: rangeParam({ min: 0, max: 10 }),
+  ar: rangeParam({ min: 0, max: 10 }),
+  od: rangeParam({ min: 0, max: 10 }),
+  hp: rangeParam({ min: 0, max: 10 }),
+});
 
-/** A single character matches too much to be worth querying. */
-export const minBeatmapSearchLength = 2;
+export type BeatmapListState = ListState<typeof BEATMAP_LIST_PARAMS>;
 
-/** The term a filter actually queries with, or `undefined` when it is too short. */
-export function normalizeBeatmapSearchQuery(
-  q: string | undefined
-): string | undefined {
-  const trimmed = q?.trim() ?? '';
-  return trimmed.length >= minBeatmapSearchLength ? trimmed : undefined;
+/** The range filters in the order the filter panel and its chips show them. */
+export type BeatmapListRangeKey =
+  'sr' | 'bpm' | 'length' | 'games' | 'tournaments' | 'cs' | 'ar' | 'od' | 'hp';
+
+/** The list procedure's input for a list state. */
+export function toBeatmapListRequest(
+  state: BeatmapListState
+): BeatmapListRequest {
+  return {
+    page: state.page,
+    pageSize: BEATMAP_LIST_PAGE_SIZE,
+    searchQuery: state.q || undefined,
+    rulesets: state.ruleset.length > 0 ? state.ruleset : undefined,
+    minSr: state.sr.min,
+    maxSr: state.sr.max,
+    minBpm: state.bpm.min,
+    maxBpm: state.bpm.max,
+    minLength: state.length.min,
+    maxLength: state.length.max,
+    minGameCount: state.games.min,
+    maxGameCount: state.games.max,
+    minTournamentCount: state.tournaments.min,
+    maxTournamentCount: state.tournaments.max,
+    minCs: state.cs.min,
+    maxCs: state.cs.max,
+    minAr: state.ar.min,
+    maxAr: state.ar.max,
+    minOd: state.od.min,
+    maxOd: state.od.max,
+    minHp: state.hp.min,
+    maxHp: state.hp.max,
+    ...toDescending(state.sort),
+  };
 }
 
-/** The only filter → query-string serialization; defaults are omitted. */
-export function buildBeatmapSearchParams(
-  filter: BeatmapListFilterData
-): URLSearchParams {
-  const params = new URLSearchParams();
-
-  if (filter.page && filter.page > 1) params.set('page', String(filter.page));
-  const q = normalizeBeatmapSearchQuery(filter.q);
-  if (q) params.set('q', q);
-  if (filter.ruleset !== undefined)
-    params.set('ruleset', String(filter.ruleset));
-
-  for (const key of beatmapListNumericKeys) {
-    const value = filter[key];
-    if (value !== undefined && Number.isFinite(value)) {
-      params.set(key, String(value));
-    }
-  }
-
-  if (filter.sort !== defaultBeatmapListFilter.sort) {
-    params.set('sort', filter.sort);
-  }
-  if (filter.descending !== defaultBeatmapListFilter.descending) {
-    params.set('descending', String(filter.descending));
-  }
-
-  return params;
-}
-
-/** Canonical `/beatmaps` URL for a filter, with an optional page override. */
-export function buildBeatmapListPath(
-  filter: BeatmapListFilterData,
-  page?: number
+/** The address of the list in `state`, on `page`. */
+export function beatmapListHref(
+  state: BeatmapListState,
+  page = state.page
 ): string {
-  const params = buildBeatmapSearchParams(
-    page === undefined ? filter : { ...filter, page }
+  return listStateHref('/beatmaps', BEATMAP_LIST_PARAMS, { ...state, page });
+}
+
+/**
+ * The address of the same list with its filters cleared, for an empty
+ * state's "Clear filters": search, sort and rulesets stay.
+ */
+export function clearedBeatmapListHref(state: BeatmapListState): string {
+  return listStateHref(
+    '/beatmaps',
+    BEATMAP_LIST_PARAMS,
+    clearListFilters(BEATMAP_LIST_PARAMS, state)
   );
-  return `/beatmaps${params.size ? `?${params}` : ''}`;
 }

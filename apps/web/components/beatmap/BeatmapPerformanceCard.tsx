@@ -4,23 +4,33 @@ import { Target } from 'lucide-react';
 import * as React from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
-import {
-  EmptyState,
-  SectionCard,
-  SectionHeader,
-} from '@/components/beatmap/BeatmapSection';
+import { NotEnoughData } from '@/components/beatmap/BeatmapSection';
+import { ChartTooltipContent } from '@/components/kit/charts/ChartTooltip';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import {
   type ChartConfig,
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
 } from '@/components/ui/chart';
+import { seriesColor } from '@/lib/kit/color/categorical';
+import {
+  CHART_BAR_RADIUS,
+  CHART_CURSOR,
+  CHART_MARGIN,
+  chartAxisProps,
+  chartGridProps,
+  chartValueAxisProps,
+  niceAxisProps,
+} from '@/lib/kit/charts/axis';
+import { formatCountTick } from '@/lib/kit/charts/format';
+import { getNiceTicks } from '@/lib/kit/charts/ticks';
+import { formatCount, formatCountOf } from '@/lib/kit/format/number';
 import type {
   BeatmapMissBucket,
   BeatmapPerformanceSummary,
 } from '@/lib/orpc/schema/beatmapStats';
 import { cn } from '@/lib/utils';
-import { CHART_CONSTANTS, formatChartNumber } from '@/lib/utils/chart';
 
 interface BeatmapPerformanceCardProps {
   performance: BeatmapPerformanceSummary;
@@ -32,7 +42,7 @@ const MISS_BUCKET_LABELS = ['0', '1', '2', '3', '4', '5+'] as const;
 const missChartConfig = {
   scoreCount: {
     label: 'Scores',
-    color: 'var(--chart-1)',
+    color: seriesColor(0),
   },
 } satisfies ChartConfig;
 
@@ -63,9 +73,18 @@ export default function BeatmapPerformanceCard({
   );
 
   const excludedMissCount = scoreCount - missDataScoreCount;
+  const countTicks = React.useMemo(
+    () =>
+      getNiceTicks(
+        0,
+        Math.max(...missChartData.map((bucket) => bucket.scoreCount)),
+        { integer: true }
+      ),
+    [missChartData]
+  );
 
   return (
-    <SectionCard
+    <Panel
       data-testid="beatmap-performance"
       className={cn('flex flex-col', className)}
     >
@@ -74,66 +93,50 @@ export default function BeatmapPerformanceCard({
         title="Misses"
         meta={
           excludedMissCount > 0
-            ? `${formatChartNumber(missDataScoreCount)} of ${formatChartNumber(scoreCount)} scores`
-            : `${formatChartNumber(scoreCount)} scores`
+            ? `${formatCount(missDataScoreCount)} of ${formatCountOf(scoreCount, 'score')}`
+            : formatCountOf(scoreCount, 'score')
         }
       />
 
-      {scoreCount === 0 ? (
-        <EmptyState />
+      {scoreCount === 0 || missDataScoreCount === 0 ? (
+        <NotEnoughData />
       ) : (
         <div className="flex flex-1 flex-col gap-3 px-4 py-4">
-          {missDataScoreCount === 0 ? (
-            <p className="text-sm text-muted-foreground">Not enough data</p>
-          ) : (
-            <ChartContainer
-              config={missChartConfig}
-              className="aspect-auto min-h-[140px] w-full flex-1"
-            >
-              <BarChart
-                data={missChartData}
-                margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tickLine={false}
-                  axisLine={false}
-                  interval={0}
-                />
-                <YAxis
-                  // 40 to match the sibling count axes; "1,800" clips at 32.
-                  width={40}
-                  allowDecimals={false}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={formatChartNumber}
-                />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      labelFormatter={(label) =>
-                        `${label} ${label === '1' ? 'miss' : 'misses'}`
-                      }
-                      formatter={(value) => (
-                        <span className="font-medium text-foreground">
-                          {formatChartNumber(Number(value))} scores
-                        </span>
-                      )}
-                    />
-                  }
-                />
-                <Bar
-                  dataKey="scoreCount"
-                  fill="var(--chart-1)"
-                  radius={CHART_CONSTANTS.BORDER_RADIUS}
-                  isAnimationActive={false}
-                />
-              </BarChart>
-            </ChartContainer>
-          )}
+          <ChartContainer
+            config={missChartConfig}
+            className="aspect-auto min-h-[140px] w-full flex-1"
+          >
+            <BarChart data={missChartData} margin={CHART_MARGIN}>
+              <CartesianGrid {...chartGridProps} />
+              <XAxis {...chartAxisProps} dataKey="label" interval={0} />
+              <YAxis
+                {...chartValueAxisProps}
+                {...niceAxisProps(countTicks)}
+                tickFormatter={formatCountTick}
+              />
+              <ChartTooltip
+                cursor={CHART_CURSOR.bar}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(label) =>
+                      `${label} ${label === '1' ? 'miss' : 'misses'}`
+                    }
+                    nameFormatter={() => 'Scores'}
+                    valueFormatter={formatCountTick}
+                  />
+                }
+              />
+              <Bar
+                dataKey="scoreCount"
+                name="Scores"
+                fill={seriesColor(0)}
+                radius={CHART_BAR_RADIUS}
+                isAnimationActive={false}
+              />
+            </BarChart>
+          </ChartContainer>
         </div>
       )}
-    </SectionCard>
+    </Panel>
   );
 }

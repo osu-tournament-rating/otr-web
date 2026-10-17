@@ -23,8 +23,9 @@ import {
   isManiaRuleset,
 } from '@/lib/beatmaps/presentation';
 import type { BeatmapListItem } from '@/lib/orpc/schema/beatmapList';
+import { formatCount } from '@/lib/kit/format/number';
 import { cn } from '@/lib/utils';
-import { formatDuration } from '@/lib/utils/date';
+import { formatDuration } from '@/lib/kit/format/date';
 
 interface BeatmapListCardsProps extends ComponentProps<'div'> {
   beatmaps: BeatmapListItem[];
@@ -57,7 +58,7 @@ export default function BeatmapListCards({
         const showMods = !isManiaRuleset(ruleset);
 
         return (
-          <article
+          <div
             key={beatmap.id}
             role="listitem"
             data-testid={`beatmap-list-row-${beatmap.osuId}`}
@@ -111,7 +112,7 @@ export default function BeatmapListCards({
                   <h2
                     data-testid="beatmap-title"
                     title={beatmap.title}
-                    className="min-w-0 truncate text-base leading-snug font-semibold transition-colors group-hover:text-primary sm:text-lg"
+                    className="min-w-0 truncate text-base leading-snug font-semibold transition-colors group-hover:text-link sm:text-lg"
                   >
                     {beatmap.title}
                   </h2>
@@ -200,24 +201,22 @@ export default function BeatmapListCards({
                         aria-hidden="true"
                       />
                     }
-                    value={beatmap.verifiedGameCount.toLocaleString('en-US')}
-                    ariaLabel={`${beatmap.verifiedGameCount.toLocaleString('en-US')} verified games`}
+                    value={formatCount(beatmap.verifiedGameCount)}
+                    ariaLabel={`${formatCount(beatmap.verifiedGameCount)} verified games`}
                   />
                   <BeatmapMetric
                     testId="beatmap-tournaments-count"
                     icon={
                       <Trophy className="size-4 shrink-0" aria-hidden="true" />
                     }
-                    value={beatmap.verifiedTournamentCount.toLocaleString(
-                      'en-US'
-                    )}
-                    ariaLabel={`${beatmap.verifiedTournamentCount.toLocaleString('en-US')} verified tournaments`}
+                    value={formatCount(beatmap.verifiedTournamentCount)}
+                    ariaLabel={`${formatCount(beatmap.verifiedTournamentCount)} verified tournaments`}
                   />
                   {showMods ? <BeatmapTopMods mods={topMods} /> : null}
                 </div>
               </div>
             </div>
-          </article>
+          </div>
         );
       })}
     </div>

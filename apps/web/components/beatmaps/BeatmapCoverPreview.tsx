@@ -46,10 +46,9 @@ export default function BeatmapCoverPreview({
         title={title}
         difficulty={difficulty}
         size={size}
-        variant="ghost"
-        showTooltip={false}
+        variant="overlay"
         className={cn(
-          'pointer-events-auto rounded-full bg-black/55 text-white opacity-0 shadow-lg backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 hover:bg-black/70 hover:text-white focus-visible:opacity-100 pointer-coarse:opacity-100',
+          'pointer-events-auto opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100',
           isActive && 'opacity-100'
         )}
       />

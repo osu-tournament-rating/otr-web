@@ -1,18 +1,29 @@
+import { Ruleset } from '@otr/core/osu';
+import { ChartNoAxesColumnIncreasing } from 'lucide-react';
+import { Metadata } from 'next';
+import { notFound, redirect } from 'next/navigation';
+import { Suspense } from 'react';
+import { z } from 'zod';
+
 import SectionErrorBoundary from '@/components/error/SectionErrorBoundary';
+import { EmptyState } from '@/components/kit/feedback/EmptyState';
+import { PageFrame } from '@/components/kit/layout/PageFrame';
+import { Panel } from '@/components/kit/layout/Panel';
+import { SectionHeader } from '@/components/kit/layout/SectionHeader';
 import PlayerBeatmapsList from '@/components/player/PlayerBeatmapsList';
-import PlayerCard from '@/components/player/PlayerCard';
+import PlayerHero from '@/components/player/PlayerHero';
 import PlayerModCountChart from '@/components/player/PlayerModCountChart';
 import PlayerModStatsChart from '@/components/player/PlayerModStatsChart';
 import PlayerOpponentsChart from '@/components/player/PlayerOpponentsChart';
 import PlayerRatingChart from '@/components/player/PlayerRatingChart';
-import PlayerRatingStatsCard from '@/components/player/PlayerRatingStatsCard';
+import PlayerRatingStats from '@/components/player/PlayerRatingStats';
 import {
   PlayerBeatmapsSkeleton,
   PlayerTournamentsSkeleton,
 } from '@/components/player/PlayerSectionSkeletons';
 import PlayerTeammatesChart from '@/components/player/PlayerTeammatesChart';
 import PlayerTournamentsList from '@/components/player/PlayerTournamentsList';
-import { Card } from '@/components/ui/card';
+import { resolvePlayerIdFromKey } from '@/lib/db/player-resolve';
 import { getPlayerBeatmapsCached } from '@/lib/orpc/queries/playerBeatmaps';
 import { getPlayerStatsCached } from '@/lib/orpc/queries/playerStats';
 import { getPlayerTournamentsCached } from '@/lib/orpc/queries/playerTournaments';
@@ -20,12 +31,6 @@ import type {
   PlayerRatingAdjustment,
   PlayerStats,
 } from '@/lib/orpc/schema/playerStats';
-import { Ruleset } from '@otr/core/osu';
-import { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
-import { Suspense } from 'react';
-import { resolvePlayerIdFromKey } from '@/lib/db/player-resolve';
-import { z } from 'zod';
 import {
   fetchOrpcOptional,
   parseParamsOrNotFound,
@@ -198,67 +203,47 @@ export default async function PlayerPage(props: PageProps) {
     : (playerData.matchStats?.highestRating ?? undefined);
 
   return (
-    <div className="container mx-auto flex flex-col gap-4 md:gap-2">
-      {!playerData.rating && (
-        <Card className="p-6 font-sans">
-          <PlayerCard
-            player={playerData.playerInfo}
-            ruleset={playerData.ruleset}
-          />
-          <Card className="gap-2 rounded-lg p-6 text-center">
-            <h2 className="text-xl font-semibold">No Rating Data Available</h2>
-            <p className="text-muted-foreground">
-              This player has no rating data for the selected ruleset.
-            </p>
-          </Card>
-        </Card>
-      )}
+    <PageFrame>
+      <PlayerHero player={playerData.playerInfo} ruleset={currentRuleset} />
 
-      {playerData.rating && playerData.rating.adjustments && (
+      {playerData.rating ? (
         <>
-          <PlayerRatingStatsCard
-            rating={playerData.rating}
-            currentRuleset={currentRuleset}
-          />
+          <PlayerRatingStats rating={playerData.rating} />
           <PlayerRatingChart
             adjustments={playerData.rating.adjustments}
             highestRating={chartHighestRating ?? undefined}
           />
-          {(playerData.modStats ||
-            playerData.frequentTeammates ||
-            playerData.frequentOpponents) && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-2">
-              {playerData.modStats && (
-                <>
-                  <PlayerModStatsChart
-                    className="w-full"
-                    modStats={playerData.modStats}
-                  />
-                  <PlayerModCountChart
-                    className="w-full"
-                    modStats={playerData.modStats}
-                  />
-                </>
-              )}
-              {playerData.frequentTeammates && (
-                <PlayerTeammatesChart
-                  className="w-full"
-                  teammates={playerData.frequentTeammates}
-                />
-              )}
-              {playerData.frequentOpponents && (
-                <PlayerOpponentsChart
-                  className="w-full"
-                  opponents={playerData.frequentOpponents}
-                />
-              )}
-            </div>
-          )}
+          <div className="grid gap-4 md:grid-cols-2">
+            <PlayerModStatsChart modStats={playerData.modStats} />
+            <PlayerModCountChart modStats={playerData.modStats} />
+            <PlayerTeammatesChart
+              teammates={playerData.frequentTeammates}
+              ruleset={currentRuleset}
+            />
+            <PlayerOpponentsChart
+              opponents={playerData.frequentOpponents}
+              ruleset={currentRuleset}
+            />
+          </div>
         </>
+      ) : (
+        <Panel>
+          <SectionHeader icon={ChartNoAxesColumnIncreasing} title="Rating" />
+          <EmptyState
+            icon={ChartNoAxesColumnIncreasing}
+            title="No rating data"
+            titleAs="h3"
+            description="This player has no rating data for the selected ruleset."
+          />
+        </Panel>
       )}
 
       <SectionErrorBoundary title="Tournament history could not load">
-        <Suspense fallback={<PlayerTournamentsSkeleton />}>
+        <Suspense
+          fallback={
+            <PlayerTournamentsSkeleton label="Loading tournament history" />
+          }
+        >
           <PlayerTournaments
             playerId={canonicalPlayerId}
             filter={{ ...filter, ruleset: currentRuleset }}
@@ -268,13 +253,15 @@ export default async function PlayerPage(props: PageProps) {
       </SectionErrorBoundary>
 
       <SectionErrorBoundary title="Pooled beatmaps could not load">
-        <Suspense fallback={<PlayerBeatmapsSkeleton />}>
+        <Suspense
+          fallback={<PlayerBeatmapsSkeleton label="Loading pooled beatmaps" />}
+        >
           <PlayerBeatmaps
             playerId={canonicalPlayerId}
             ruleset={currentRuleset}
           />
         </Suspense>
       </SectionErrorBoundary>
-    </div>
+    </PageFrame>
   );
 }

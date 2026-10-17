@@ -4,7 +4,8 @@ import { Team, VerificationStatus } from '@otr/core/osu';
 import type { Game, MatchDetail } from '@/lib/orpc/schema/match';
 import {
   calculateHighlightStats,
-  formatScore,
+  formatAverage,
+  formatMatchCost,
   processMatchStatistics,
 } from '../MatchStatsUtils';
 import { buildTeamScoreChartData } from '../MatchTeamScoresChart';
@@ -129,12 +130,13 @@ describe('match statistics processing', () => {
     expect(summary).toHaveLength(6);
     expect(summary[0]).toMatchObject({
       id: 'match-result',
-      value: '6 – 7',
+      value: '6–7',
       sublabel: 'Blue wins',
     });
     expect(summary.find((stat) => stat.id === 'rated-games')?.value).toBe('1');
     expect(summary.find((stat) => stat.id === 'average-rating')).toMatchObject({
-      value: '1455',
+      label: 'Average rating',
+      value: '1,455',
       icon: 'TrendingUp',
     });
     expect(summary.find((stat) => stat.id === 'match-cost')).toMatchObject({
@@ -242,12 +244,28 @@ describe('team score chart data', () => {
   });
 });
 
-describe('formatScore', () => {
-  it('uses compact score labels at common boundaries', () => {
-    expect(formatScore(999)).toBe('999');
-    expect(formatScore(1_500)).toBe('1.5K');
-    expect(formatScore(15_500)).toBe('16K');
-    expect(formatScore(451_900)).toBe('451K');
-    expect(formatScore(1_250_000)).toBe('1.3M');
+describe('stat formatting', () => {
+  it('writes match costs with two decimals and averages with one', () => {
+    expect(formatMatchCost(1.3)).toBe('1.30');
+    expect(formatMatchCost(1.305)).toBe('1.31');
+    expect(formatAverage(8.24)).toBe('8.2');
+    expect(formatAverage(1_234.56)).toBe('1,234.6');
+  });
+
+  it('labels the summary in sentence case', () => {
+    const match = createMatch();
+    const players = processMatchStatistics(match, match.players);
+    const labels = calculateHighlightStats(players, match).map(
+      (stat) => stat.label
+    );
+
+    expect(labels).toEqual([
+      'Match result',
+      'Players',
+      'Rated games',
+      'Average rating',
+      'Top match cost',
+      'Top accuracy',
+    ]);
   });
 });

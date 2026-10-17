@@ -3,7 +3,6 @@ import { describe, expect, test } from 'bun:test';
 import {
   getStarRatingColor,
   getStarRatingForegroundColor,
-  getStarRatingIconColor,
 } from '../star-rating-color';
 
 describe('star rating color', () => {
@@ -40,14 +39,6 @@ describe('star rating color', () => {
     expect(getStarRatingColor(9)).toBe('#000000');
     expect(getStarRatingColor(10)).toBe('#000000');
     expect(getStarRatingColor(Number.POSITIVE_INFINITY)).toBe('#000000');
-  });
-
-  test('clamps icon tint so extreme ratings never fade to black', () => {
-    expect(getStarRatingIconColor(3)).toBe(getStarRatingColor(3));
-    expect(getStarRatingIconColor(6.7)).toBe(getStarRatingColor(6.7));
-    expect(getStarRatingIconColor(7.7)).toBe(getStarRatingColor(6.7));
-    expect(getStarRatingIconColor(10)).toBe(getStarRatingColor(6.7));
-    expect(getStarRatingIconColor(Number.NaN)).toBe('#AAAAAA');
   });
 
   test('chooses a neutral foreground with stronger contrast', () => {

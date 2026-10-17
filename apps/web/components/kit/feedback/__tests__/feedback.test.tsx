@@ -15,10 +15,16 @@ import { Callout } from '@/components/kit/feedback/Callout';
 import { CalloutChip } from '@/components/kit/feedback/CalloutChip';
 import { EmptyState } from '@/components/kit/feedback/EmptyState';
 import {
+  ChartPlotSkeleton,
+  HeroTabsSkeleton,
+  ListToolbarSkeleton,
+  LoadMoreSkeleton,
   PanelSkeleton,
   PhoneRowListSkeleton,
   RowListSkeleton,
+  RulesetSwitchSkeleton,
   SectionHeaderSkeleton,
+  SkeletonBlock,
   SkeletonText,
   StatTileGridSkeleton,
   TableSkeleton,
@@ -343,15 +349,12 @@ describe('CalloutChip', () => {
     expect(html).toContain('lucide-triangle-alert');
   });
 
-  it('opens its detail from a button', () => {
-    const html = render(
-      <CalloutChip tone="info" detail="Fetched 2 hours ago">
-        Cached
-      </CalloutChip>
-    );
+  it('is plain text, never a button', () => {
+    const html = render(<CalloutChip tone="info">Cached</CalloutChip>);
 
-    expect(html).toStartWith('<button');
+    expect(html).toStartWith('<span data-slot="callout-chip"');
     expect(html).toContain('bg-callout-info');
+    expect(html).not.toContain('<button');
   });
 });
 
@@ -458,12 +461,173 @@ describe('Skeletons', () => {
     expect(count(full, 'data-slot="skeleton"')).toBe(6);
   });
 
+  it('matches phone rows with a button, a badge or a leading avatar', () => {
+    const reports = render(
+      <PhoneRowListSkeleton
+        rows={1}
+        description="badge"
+        value="button"
+        align="start"
+      />
+    );
+    // A 20px badge before the description text, a 32px button on the right.
+    expect(reports).toMatch(
+      /<span class="flex min-w-0 items-center gap-1.5"><span data-slot="skeleton" aria-hidden="true" class="[^"]*\bh-5\b[^"]*\bw-16\b/
+    );
+    expect(reports).toMatch(/class="[^"]*\bh-8\b[^"]*\bw-14\b/);
+    expect(reports).toContain('items-start');
+
+    const badge = render(<PhoneRowListSkeleton rows={1} value="badge" />);
+    expect(badge).toMatch(
+      /<div class="flex items-center justify-end[^"]*"><span data-slot="skeleton" aria-hidden="true" class="[^"]*\bh-5\b/
+    );
+
+    const leading = render(<PhoneRowListSkeleton rows={1} leading={32} />);
+    expect(leading).toContain('data-slot="phone-row-leading"');
+    expect(leading).toContain('rounded-full size-8');
+
+    // `true` still means a text line.
+    const text = render(<PhoneRowListSkeleton rows={1} description value />);
+    expect(text).not.toContain('h-5');
+  });
+
+  it('draws the real info button and a meta bar of the loaded width', () => {
+    const html = render(
+      <SectionHeaderSkeleton
+        title="Tier breakdown"
+        infoText="Charts NM, HD, HR and DT scores only."
+        meta="w-36"
+      />
+    );
+
+    expect(html).toContain('aria-label="About tier breakdown"');
+    expect(html).toMatch(/data-slot="skeleton"[^>]*class="[^"]*\bh-3 w-36\b/);
+    expect(html).not.toContain('w-20');
+
+    const untitled = render(<SectionHeaderSkeleton infoText="Help" />);
+    expect(untitled).toContain('lucide-info');
+    expect(untitled).not.toContain('<button');
+  });
+
+  it('draws a toolbar with blocks where its controls go', () => {
+    const html = render(
+      <ListToolbarSkeleton search sort filters rulesets={6} count />
+    );
+
+    expect(html).toContain('role="search"');
+    expect(html).toContain('data-slot="list-toolbar-skeleton"');
+    expect(html).toContain('aria-hidden="true"');
+    expect(count(html, 'h-8 rounded-full')).toBe(6);
+    // As wide as the loaded chips, All to mania 7K, so they wrap alike.
+    expect(
+      [...html.matchAll(/h-8 rounded-full (w-\d+)/g)].map((match) => match[1])
+    ).toEqual(['w-15', 'w-18', 'w-19', 'w-20', 'w-27', 'w-27']);
+    expect(html).toContain('h-10 w-full');
+    expect(html).toContain('size-10');
+    expect(html).toContain('h-10 w-28');
+    expect(html).toContain('list-toolbar-scope-row');
+
+    const noSearch = render(<ListToolbarSkeleton sort scope="w-64" count />);
+    expect(noSearch.match(/list-toolbar-scope-row/g)).toHaveLength(1);
+    expect(noSearch).toContain('h-8 w-64');
+  });
+
+  it('drops the All chip for a RulesetSwitch toolbar', () => {
+    const html = render(
+      <ListToolbarSkeleton search rulesets={5} rulesetsAll={false} count />
+    );
+
+    // osu! to mania 7K, each at its own chip's width.
+    expect(
+      [...html.matchAll(/h-8 rounded-full (w-\d+)/g)].map((match) => match[1])
+    ).toEqual(['w-18', 'w-19', 'w-20', 'w-27', 'w-27']);
+  });
+
+  it('draws a RulesetSwitch strip and a chart plot', () => {
+    const strip = render(<RulesetSwitchSkeleton className="border-b p-4" />);
+    expect(strip).toStartWith('<span aria-hidden="true"');
+    expect(classOf(strip, 'span')).toContain('flex-wrap');
+    expect(classOf(strip, 'span')).toContain('border-b p-4');
+    expect(
+      [...strip.matchAll(/h-8 rounded-full (w-\d+)/g)].map((match) => match[1])
+    ).toEqual(['w-18', 'w-19', 'w-20', 'w-27', 'w-27']);
+    expect(
+      count(render(<RulesetSwitchSkeleton count={3} />), 'rounded-full')
+    ).toBe(3);
+
+    const plot = render(<ChartPlotSkeleton className="h-60" />);
+    expect(plot).toContain('data-slot="skeleton"');
+    expect(plot).toContain('aria-hidden="true"');
+    expect(classOf(plot, 'span')).toContain('w-full');
+    expect(classOf(plot, 'span')).toContain('rounded-lg');
+    expect(classOf(plot, 'span')).toContain('h-60');
+    expect(classOf(plot, 'span')).not.toContain('rounded-md');
+
+    const block = render(<SkeletonBlock className="h-10 w-40" />);
+    expect(classOf(block, 'span')).toContain('h-10 w-40');
+  });
+
   it('draws list rows in the RowList', () => {
     const html = render(<RowListSkeleton rows={2} leading="none" />);
 
     expect(html).toStartWith('<ul data-slot="row-list-skeleton"');
     expect(count(html, '<li')).toBe(2);
     expect(html).not.toContain('rounded-full');
+  });
+
+  it('adds a second detail line under the description', () => {
+    const plain = render(<RowListSkeleton rows={1} />);
+    expect(plain).not.toContain('mt-1.5');
+
+    const html = render(
+      <RowListSkeleton rows={1} leading="cover" meta="badge" />
+    );
+    expect(html).toContain('mt-1.5 flex h-5');
+    // The badge block, then the bar.
+    expect(html).toContain('h-5 w-14 shrink-0');
+  });
+
+  it('stacks stats under the text on phones and beside it from sm', () => {
+    const html = render(
+      <RowListSkeleton rows={2} leading="none" stats={2} statsAction />
+    );
+
+    expect(count(html, '<li')).toBe(2);
+    expect(html).toContain('flex flex-col gap-3 sm:flex-row sm:items-center');
+    // Two stats per row, each a 16px label line over a 20px value line.
+    expect(count(html, 'min-w-14')).toBe(4);
+    expect(count(html, 'flex h-4 items-center')).toBe(4);
+    expect(count(html, 'flex h-5 items-center')).toBe(4);
+    // The toggle, and no trailing number.
+    expect(count(html, 'h-8 w-24')).toBe(2);
+    expect(html).not.toContain('text-right text-sm');
+  });
+
+  it('draws a hero tab strip with real labels or bars', () => {
+    const labelled = render(
+      <HeroTabsSkeleton
+        labels={['Tournament', 'Matches']}
+        className="border-b"
+      />
+    );
+    expect(labelled).toStartWith('<div data-slot="hero-tabs-skeleton"');
+    expect(labelled).toContain('aria-hidden="true"');
+    expect(labelled).toContain('border-b');
+    expect(count(labelled, 'h-11')).toBe(2);
+    expect(labelled).toContain('>Tournament</span>');
+    expect(labelled).not.toContain('data-slot="skeleton"');
+
+    const bars = render(<HeroTabsSkeleton tabs={3} />);
+    expect(count(bars, 'h-11')).toBe(3);
+    expect(count(bars, 'data-slot="skeleton"')).toBe(3);
+  });
+
+  it('draws the LoadMore footer strip', () => {
+    const html = render(<LoadMoreSkeleton />);
+    expect(html).toStartWith('<div data-slot="load-more-skeleton"');
+    expect(html).toContain('aria-hidden="true"');
+    expect(html).toContain('border-t bg-muted/20 px-4 py-3');
+    expect(html).toContain('h-8 w-24');
   });
 
   it('stands in for text inline', () => {

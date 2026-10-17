@@ -35,6 +35,37 @@ describe('Button', () => {
     expect(classOf(render(<Button size="lg">Save</Button>))).toContain('h-10');
   });
 
+  it('lets a long label wrap, keeping its size as the minimum height', () => {
+    const sm = classOf(
+      render(
+        <Button size="sm" variant="outline" wrap>
+          46 matches: 45 verified, 1 rejected
+        </Button>
+      )
+    );
+    expect(sm).toContain('h-auto');
+    expect(sm).toContain('min-h-8');
+    expect(sm).toContain('whitespace-normal');
+    expect(sm).toContain('text-left');
+    expect(sm).not.toMatch(/(^| )h-8( |$)/);
+    expect(sm).not.toContain('whitespace-nowrap');
+
+    expect(classOf(render(<Button wrap>Save</Button>))).toContain('min-h-9');
+    expect(
+      classOf(
+        render(
+          <Button size="lg" wrap>
+            Save
+          </Button>
+        )
+      )
+    ).toContain('min-h-10');
+    // Off by default, and never passed on to the element.
+    const plain = render(<Button>Save</Button>);
+    expect(classOf(plain)).toContain('whitespace-nowrap');
+    expect(plain).not.toContain('wrap=');
+  });
+
   it('is type="button" unless told otherwise', () => {
     expect(render(<Button>Cancel</Button>)).toContain('type="button"');
     expect(render(<Button type="submit">Save</Button>)).toContain(
@@ -46,6 +77,14 @@ describe('Button', () => {
     expect(
       classOf(render(<Button variant="ghost">Clear all</Button>))
     ).toContain('hover:bg-accent');
+  });
+
+  it('keeps a ghost button filled while its menu is open', () => {
+    const classes = classOf(render(<Button variant="ghost">More</Button>));
+
+    expect(classes).toContain('data-[state=open]:bg-accent');
+    // The hover fill comes from the shadcn variant, once.
+    expect(classes.match(/hover:bg-accent/g)).toHaveLength(1);
   });
 
   it('never fills a destructive trigger, only the final confirm', () => {
@@ -152,6 +191,30 @@ describe('IconButton', () => {
     expect(html).toContain('aria-label="Audit history"');
     expect(html).toContain('lucide-history');
   });
+
+  it('keeps the open fill for menu triggers', () => {
+    const classes = classOf(render(<IconButton label="Actions" />));
+    expect(classes).toContain('data-[state=open]:bg-accent');
+    expect(render(<IconButton label="Actions" />)).not.toContain(
+      'aria-expanded'
+    );
+  });
+
+  it('is a disclosure toggle without the open fill when given expanded', () => {
+    const collapsed = render(
+      <IconButton label="Details for game 3" expanded={false} />
+    );
+    expect(collapsed).toContain('aria-expanded="false"');
+    expect(classOf(collapsed)).not.toContain('data-[state=open]');
+
+    const open = render(
+      <IconButton label="Details for game 3" variant="outline" expanded />
+    );
+    expect(open).toContain('aria-expanded="true"');
+    expect(classOf(open)).not.toContain('data-[state=open]');
+    // Hover still fills it.
+    expect(classOf(open)).toContain('hover:bg-accent');
+  });
 });
 
 describe('AdminMenu', () => {
@@ -208,6 +271,91 @@ describe('RowActionsMenu', () => {
     expect(html).toContain('aria-label="Actions for Hidden Chamber [Insane]"');
     expect(html).toContain('aria-haspopup="menu"');
     expect(html).toContain('lucide-ellipsis');
+    expect(html).not.toContain('notification-dot');
+  });
+
+  it('shows a notification dot and says so in the button name', () => {
+    const html = render(
+      <RowActionsMenu
+        itemName="Game 3"
+        notification="Has admin notes"
+        actions={[{ label: 'Admin notes', onSelect: () => {} }]}
+      />
+    );
+
+    expect(html).toContain('aria-label="Actions for Game 3, Has admin notes"');
+    expect(html).toMatch(
+      /<span data-slot="notification-dot" class="[^"]*absolute[^"]*" aria-hidden="true">/
+    );
+    expect(classOf(html)).toContain('relative');
+  });
+});
+
+describe('FormFieldLabel', () => {
+  it('labels a control by id outside a react-hook-form field', () => {
+    const html = render(
+      <FormFieldLabel htmlFor="lobby-size" info="Players per team" hint="1–8">
+        Lobby size
+      </FormFieldLabel>
+    );
+
+    expect(html).toContain('<label data-slot="label"');
+    expect(html).toContain('for="lobby-size"');
+    expect(html).toContain('data-error="false"');
+    expect(html).toContain('aria-label="About lobby size"');
+    expect(html).toContain('1–8');
+  });
+
+  it('turns the label red when invalid', () => {
+    const html = render(
+      <FormFieldLabel htmlFor="rank" invalid>
+        Rank restriction
+      </FormFieldLabel>
+    );
+    expect(html).toContain('data-error="true"');
+    expect(html).toContain('data-[error=true]:text-destructive-foreground');
+  });
+
+  it('labels a group of controls by id, in the same row', () => {
+    const html = render(
+      <FormFieldLabel groupId="priority-label" info="How soon the jobs run">
+        Priority
+      </FormFieldLabel>
+    );
+
+    // Plain text that aria-labelledby can name a RadioGroup with: no
+    // <label> (it would point at nothing) and no FormLabel (it needs a
+    // FormItem).
+    expect(html).toContain('<span id="priority-label" data-slot="label"');
+    expect(html).not.toContain('<label');
+    expect(html).toContain('text-sm leading-none font-medium');
+    expect(html).toContain('min-h-5');
+    expect(html).toContain('aria-label="About priority"');
+    expect(html).toContain('>Priority</span>');
+
+    const invalid = render(
+      <FormFieldLabel groupId="reason-label" invalid>
+        Ban reason
+      </FormFieldLabel>
+    );
+    expect(invalid).toContain('data-error="true"');
+  });
+
+  it('gives the hint an id for aria-describedby', () => {
+    const html = render(
+      <FormFieldLabel htmlFor="comment" hint="Required" hintId="comment-hint">
+        Comment
+      </FormFieldLabel>
+    );
+    expect(html).toContain('<span id="comment-hint" class="ml-auto');
+    expect(html).toContain('>Required</span>');
+
+    const withoutId = render(
+      <FormFieldLabel htmlFor="comment" hint="Required">
+        Comment
+      </FormFieldLabel>
+    );
+    expect(withoutId).toContain('<span class="ml-auto');
   });
 });
 
@@ -286,7 +434,7 @@ describe('form layout', () => {
   });
 
   it('labels fields with the info button and a hint', () => {
-    expect(html).toContain('aria-label="About Name"');
+    expect(html).toContain('aria-label="About name"');
     expect(html).toContain('Required');
   });
 
