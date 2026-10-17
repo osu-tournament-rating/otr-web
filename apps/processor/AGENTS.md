@@ -30,7 +30,11 @@ assigned dynamic ports.
   `RABBITMQ_AMQP_URL`, then `RABBITMQ_URL`.
 - `cargo test` runs unit tests. Database tests use Testcontainers and Docker,
   and build each database from otr's drizzle migrations.
-  Real-broker tests are ignored unless an approved disposable broker is assigned.
+  The real-broker tests are ignored by default. Run them with
+  `OTR_TEST_RABBITMQ_URL=<url> cargo test -- --ignored`, where `<url>` is the
+  stack's `RABBITMQ_AMQP_URL` after `apps/scripts/otr up rabbitmq --no-web`.
+  They fail when the variable is unset and never fall back to a default broker.
+  Never point it at the developer's broker on port 5672.
   A test that spawns the binary sets `DATABASE_URL` and any broker URL itself;
   otherwise the root `.env` supplies them.
 - Before handoff: `cargo +nightly fmt -- --check`, `cargo clippy`, `cargo test`,
