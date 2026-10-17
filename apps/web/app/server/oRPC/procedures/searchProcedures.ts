@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { and, asc, desc, eq, sql, type AnyColumn, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 
 import * as schema from '@otr/core/db/schema';
@@ -15,15 +15,14 @@ import {
   buildBeatmapSearchExpressions,
   buildMatchSearchExpressions,
   buildPlayerSearchExpressions,
-  buildSimilarity,
-  buildTrigramMatch,
-  buildTrigramPrecision,
+  buildTournamentSearchExpressions,
   parseSearchTerm,
 } from '@/lib/orpc/queries/search';
 import { buildTierProgress } from '@/lib/utils/tierProgress';
 import { Ruleset, VerificationStatus } from '@otr/core/osu';
 
 import { publicProcedure } from './base';
+import { buildTournamentRelevanceOrder } from './shared/tournamentListOrder';
 
 const DEFAULT_RESULT_LIMIT = 5;
 
@@ -55,13 +54,6 @@ export const searchEntities = publicProcedure
       return emptyResponse;
     }
 
-    const { tsQuery, prefixTsQuery } = parsed;
-
-    const similarity = (column: AnyColumn | SQL) =>
-      buildSimilarity(column, parsed);
-    const trigramMatch = (column: AnyColumn) =>
-      buildTrigramMatch(column, parsed);
-
     try {
       const {
         condition: playerCondition,
@@ -70,22 +62,8 @@ export const searchEntities = publicProcedure
         matchedPreviousUsername,
       } = buildPlayerSearchExpressions(parsed);
 
-      const tournamentVector = schema.tournaments.searchVector;
-      const tournamentNameSimilarity = similarity(schema.tournaments.name);
-      const tournamentAbbreviationSimilarity = similarity(
-        schema.tournaments.abbreviation
-      );
-      const tournamentSimilarity = sql`greatest(${tournamentNameSimilarity}, ${tournamentAbbreviationSimilarity})`;
-      const tournamentTrigram = sql`((${trigramMatch(schema.tournaments.name)} OR ${trigramMatch(schema.tournaments.abbreviation)}) AND ${buildTrigramPrecision(
-        [schema.tournaments.name, schema.tournaments.abbreviation],
-        parsed
-      )})`;
-      const tournamentCondition = prefixTsQuery
-        ? sql`(${tournamentVector} @@ ${tsQuery} OR ${tournamentVector} @@ ${prefixTsQuery} OR ${tournamentTrigram})`
-        : sql`(${tournamentVector} @@ ${tsQuery} OR ${tournamentTrigram})`;
-      const tournamentRank = prefixTsQuery
-        ? sql`greatest(ts_rank_cd(${tournamentVector}, ${tsQuery}), ts_rank_cd(${tournamentVector}, ${prefixTsQuery}), ${tournamentSimilarity})`
-        : sql`greatest(ts_rank_cd(${tournamentVector}, ${tsQuery}), ${tournamentSimilarity})`;
+      const { condition: tournamentCondition, rank: tournamentRank } =
+        buildTournamentSearchExpressions(parsed);
 
       const { condition: matchCondition, rank: matchRank } =
         buildMatchSearchExpressions(parsed);
@@ -151,6 +129,7 @@ export const searchEntities = publicProcedure
             .from(schema.tournaments)
             .where(tournamentCondition)
             .orderBy(
+              ...buildTournamentRelevanceOrder(input.searchKey),
               desc(tournamentRank),
               sql`${schema.tournaments.endTime} desc nulls last`,
               asc(schema.tournaments.name)
