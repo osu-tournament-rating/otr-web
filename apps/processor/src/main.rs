@@ -103,7 +103,7 @@ async fn main() {
             Vec::new()
         };
 
-        // 8. Remove lingering stats for tournaments/matches rejected since the last run
+        // 8. Remove lingering stats and rosters for tournaments/matches/games rejected since the last run
         client.delete_rejected_player_stats().await?;
 
         // 9. Emit messages for tournaments needing stats refresh
