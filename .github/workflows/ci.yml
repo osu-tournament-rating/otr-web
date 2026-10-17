@@ -351,9 +351,8 @@ jobs:
       # Checks the image builds and starts without pushing it. Pull requests
       # read the caches master saves but write none of their own: the
       # repository's 10 GB cache budget was at ~3.7 GB after one pull request.
-      # The deploy saves only the final image's layers, because the Dockerfile
-      # copies the whole crate before `cargo build --release`, so any source
-      # change rebuilds everything and the cache mostly saves the runtime layer.
+      # The deploy saves every stage, so a pull request that changes only the
+      # processor's source reuses the cached dependency layer.
       - name: Build processor image
         uses: docker/build-push-action@v6
         with:
@@ -364,8 +363,10 @@ jobs:
           tags: otr-processor:ci
           cache-from: type=gha,scope=processor
 
+      # The dependency layer builds a placeholder binary that prints nothing,
+      # so an image that shipped it would fail this check.
       - name: Smoke test processor image
-        run: docker run --rm otr-processor:ci --help
+        run: docker run --rm otr-processor:ci --help | grep -F -- '--log-level'
 
   # The pinned markdownlint-cli2 is the version otr-docs' markdownlint action
   # ran. Run from apps/docs, its .markdownlint-cli2.yaml adds every file under

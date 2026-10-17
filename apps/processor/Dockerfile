@@ -3,9 +3,19 @@ FROM rust:1.97.1-trixie AS builder
 
 WORKDIR /usr/src/otr-processor
 
-# Copy source and build the application
-COPY . .
-RUN cargo build --release
+# Build the dependencies against placeholder sources, so this layer stays
+# cached until the manifest, lockfile, or toolchain changes
+COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
+RUN mkdir src \
+    && echo 'fn main() {}' > src/main.rs \
+    && touch src/lib.rs \
+    && cargo build --release --locked \
+    && rm -rf src
+
+# Build the application. The placeholder build is newer than the copied
+# sources, so without the touch cargo would keep the placeholder binary.
+COPY src ./src
+RUN touch src/main.rs src/lib.rs && cargo build --release --locked
 
 # Runtime stage
 FROM debian:trixie-slim
