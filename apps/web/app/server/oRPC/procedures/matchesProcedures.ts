@@ -23,7 +23,7 @@ import {
 
 import { publicProcedure } from './base';
 import { KeyTypeSchema, resolveMatchId } from './shared/keyType';
-import { deriveWinRecord } from './shared/winRecord';
+import { deriveVerifiedWinRecord } from './shared/winRecord';
 
 type AdminNote = ReturnType<(typeof AdminNoteSchema)['parse']>;
 
@@ -730,14 +730,23 @@ export const getMatch = publicProcedure
       })
     );
 
-    const rosters = rosterRows.map((roster) => ({
-      id: roster.id,
-      roster: roster.roster ?? [],
-      team: roster.team as Team,
-      score: roster.score,
-    }));
+    // Rosters carry each side's points, so they leak the result as much as
+    // winRecord does.
+    const rosters =
+      matchRow.verificationStatus === VerificationStatus.Verified
+        ? rosterRows.map((roster) => ({
+            id: roster.id,
+            roster: roster.roster ?? [],
+            team: roster.team as Team,
+            score: roster.score,
+          }))
+        : [];
 
-    const winRecord = deriveWinRecord(matchId, rosters);
+    const winRecord = deriveVerifiedWinRecord(
+      matchId,
+      matchRow.verificationStatus,
+      rosters
+    );
 
     const tournament =
       matchRow.tournamentId != null

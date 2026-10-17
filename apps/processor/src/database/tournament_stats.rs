@@ -140,8 +140,10 @@ impl DbClient {
         Ok(tournaments)
     }
 
-    /// Removes lingering player stats for tournaments and matches
-    /// which have been rejected since the last run.
+    /// Removes lingering player stats and rosters for tournaments, matches,
+    /// and games which have been rejected since the last run. The stats worker
+    /// only rewrites rosters for verified matches and games, so nothing else
+    /// clears the rest.
     pub async fn delete_rejected_player_stats(&self) -> DbResult<()> {
         let tournament_stats_deleted = self
             .client
@@ -181,6 +183,52 @@ impl DbClient {
         info!(
             "Deleted {} lingering player_match_stats rows from rejected matches/tournaments",
             match_stats_deleted
+        );
+
+        let match_rosters_deleted = self
+            .client
+            .execute(
+                "
+                DELETE FROM match_rosters
+                WHERE match_id IN (
+                    SELECT m.id FROM matches m
+                    WHERE m.verification_status != 4
+                    OR m.tournament_id IN (
+                        SELECT t.id FROM tournaments t WHERE t.verification_status != 4
+                    )
+                )
+                ",
+                &[]
+            )
+            .await?;
+
+        info!(
+            deleted = match_rosters_deleted,
+            "Deleted lingering match_rosters rows from rejected matches/tournaments"
+        );
+
+        let game_rosters_deleted = self
+            .client
+            .execute(
+                "
+                DELETE FROM game_rosters
+                WHERE game_id IN (
+                    SELECT g.id FROM games g
+                    JOIN matches m ON m.id = g.match_id
+                    WHERE g.verification_status != 4
+                    OR m.verification_status != 4
+                    OR m.tournament_id IN (
+                        SELECT t.id FROM tournaments t WHERE t.verification_status != 4
+                    )
+                )
+                ",
+                &[]
+            )
+            .await?;
+
+        info!(
+            deleted = game_rosters_deleted,
+            "Deleted lingering game_rosters rows from rejected games/matches/tournaments"
         );
 
         Ok(())
