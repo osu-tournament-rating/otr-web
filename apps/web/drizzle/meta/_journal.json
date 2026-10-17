@@ -225,6 +225,13 @@
       "when": 1791752692620,
       "tag": "0031_drop_logs",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792234609888,
+      "tag": "0032_lazer_mods",
+      "breakpoints": true
     }
   ]
 }
