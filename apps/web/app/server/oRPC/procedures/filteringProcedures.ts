@@ -46,7 +46,7 @@ export const filterRegistrants = protectedProcedure
       });
     }
 
-    await assertOutsideMaintenanceWindow(context.headers, context.db);
+    await assertOutsideMaintenanceWindow(context.headers, { db: context.db });
 
     const uniqueOsuIds = Array.from(new Set(input.osuPlayerIds));
 
@@ -279,7 +279,7 @@ export const filterRegistrants = protectedProcedure
 
     const insertedReport = await context.db.transaction(async (tx) => {
       // Re-asserted on the transaction clock to match the report's `created`
-      await assertOutsideMaintenanceWindow(context.headers, tx);
+      await assertOutsideMaintenanceWindow(context.headers, { db: tx });
 
       const [report] = await tx
         .insert(schema.filterReports)

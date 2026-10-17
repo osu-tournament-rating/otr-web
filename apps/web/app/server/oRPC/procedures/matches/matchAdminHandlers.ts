@@ -10,17 +10,13 @@ import type { MatchAdminUpdateInput } from '@/lib/orpc/schema/match';
 import type { DatabaseClient } from '@/lib/db';
 import { MatchWarningFlags, VerificationStatus } from '@otr/core/osu';
 
-import {
-  ensureAdminDataMutationAllowed,
-  ensureAdminSession,
-  type AdminDataMutationClockContext,
-} from '../shared/adminGuard';
+import { ensureAdminSession } from '../shared/adminGuard';
 
 // No `../base` import here, so handler unit tests skip the auth/db module graph
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 
-interface UpdateMatchAdminContext extends AdminDataMutationClockContext {
+interface UpdateMatchAdminContext {
   db: DatabaseClient;
   session: {
     dbUser?: {
@@ -40,7 +36,6 @@ export async function updateMatchAdminHandler({
   context,
 }: UpdateMatchAdminArgs) {
   const { adminUserId } = ensureAdminSession(context.session);
-  ensureAdminDataMutationAllowed(context);
 
   const existing = await context.db.query.matches.findFirst({
     columns: {

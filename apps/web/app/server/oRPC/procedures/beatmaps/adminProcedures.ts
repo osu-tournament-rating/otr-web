@@ -13,15 +13,11 @@ import type { DatabaseClient } from '@/lib/db';
 import { publishFetchPlayerMessage } from '@/lib/queue/publishers';
 
 import { adminMutationProcedure } from '../base';
-import {
-  ensureAdminDataMutationAllowed,
-  ensureAdminSession,
-  type AdminDataMutationClockContext,
-} from '../shared/adminGuard';
+import { ensureAdminSession } from '../shared/adminGuard';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 
-interface UpdateBeatmapAdminContext extends AdminDataMutationClockContext {
+interface UpdateBeatmapAdminContext {
   db: DatabaseClient;
   session: {
     dbUser?: {
@@ -41,7 +37,6 @@ export async function updateBeatmapAdminHandler({
   context,
 }: UpdateBeatmapAdminArgs) {
   const { adminUserId } = ensureAdminSession(context.session);
-  ensureAdminDataMutationAllowed(context);
 
   const existing = await context.db.query.beatmaps.findFirst({
     columns: {

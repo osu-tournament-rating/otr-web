@@ -12,7 +12,7 @@ import {
 } from '@/lib/orpc/schema/user';
 import { ApiKeyMetadataSchema } from '@/lib/orpc/schema/apiKey';
 
-import { protectedProcedure } from '../base';
+import { adminMutationProcedure, protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
 import { toApiKeyMetadata } from '../apiKeyProcedures';
 
@@ -156,7 +156,7 @@ export const listUserApiKeysAdmin = protectedProcedure
     return records.map((record) => toApiKeyMetadata(record));
   });
 
-export const banUserAdmin = protectedProcedure
+export const banUserAdmin = adminMutationProcedure
   .input(AdminBanUserInputSchema)
   .output(AdminBanUserResponseSchema)
   .route({

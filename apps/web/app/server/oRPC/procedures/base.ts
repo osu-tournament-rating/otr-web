@@ -768,9 +768,11 @@ export const protectedProcedure = base
   .use(withErrorBoundary);
 
 // Keeps the public archives consistent with what the processor runs against (#763)
-const withMaintenanceWindowGuard = base.middleware(
+export const withMaintenanceWindowGuard = base.middleware(
   async ({ context, next }) => {
-    await assertOutsideMaintenanceWindow(context.headers);
+    await assertOutsideMaintenanceWindow(context.headers, {
+      subject: 'Admin changes',
+    });
     return next();
   }
 );

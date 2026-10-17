@@ -4,10 +4,17 @@ import { MAINTENANCE_WINDOW_LABEL } from '@otr/core/maintenance';
 import { readRatingTimestamps, type DbReader } from '@/lib/db/rating-utils';
 import { resolveMaintenanceWindowActive } from '@/lib/maintenance-window';
 
-/** Throws 503 during the maintenance window; a DbReader also checks rating timestamps. */
+type MaintenanceWindowOptions = {
+  /** Also checks rating timestamps, so the window tracks the recalculation. */
+  db?: DbReader;
+  /** What the window pauses, named at the start of the 503 message. */
+  subject?: string;
+};
+
+/** Throws 503 during the maintenance window. */
 export const assertOutsideMaintenanceWindow = async (
   headers: Headers,
-  db?: DbReader
+  { db, subject = 'Tournament data changes' }: MaintenanceWindowOptions = {}
 ): Promise<void> => {
   const ratingTimestamps = db ? await readRatingTimestamps(db) : undefined;
 
@@ -17,7 +24,7 @@ export const assertOutsideMaintenanceWindow = async (
 
   throw new ORPCError('SERVICE_UNAVAILABLE', {
     status: 503,
-    message: `Tournament data changes are temporarily disabled during the maintenance window (${MAINTENANCE_WINDOW_LABEL}). Please try again shortly.`,
+    message: `${subject} are temporarily disabled during the maintenance window (${MAINTENANCE_WINDOW_LABEL}). Please try again shortly.`,
     data: { code: 'MAINTENANCE_WINDOW' },
   });
 };

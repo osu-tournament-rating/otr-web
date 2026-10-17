@@ -10,10 +10,7 @@ import {
 } from '@/lib/orpc/schema/match';
 
 import { adminMutationProcedure } from '../base';
-import {
-  ensureAdminDataMutationAllowed,
-  ensureAdminSession,
-} from '../shared/adminGuard';
+import { ensureAdminSession } from '../shared/adminGuard';
 
 const NOW = sql`CURRENT_TIMESTAMP`;
 
@@ -28,7 +25,6 @@ export const updateScoreAdmin = adminMutationProcedure
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
-    ensureAdminDataMutationAllowed(context);
 
     await context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, async () => {
@@ -82,7 +78,6 @@ export const deleteScoreAdmin = adminMutationProcedure
   })
   .handler(async ({ input, context }) => {
     const { adminUserId } = ensureAdminSession(context.session);
-    ensureAdminDataMutationAllowed(context);
 
     const deleted = await context.db.transaction((tx) =>
       withAuditUserId(tx, adminUserId, () =>

@@ -7,7 +7,6 @@ import {
 import * as schema from '@otr/core/db/schema';
 import { MatchWarningFlags, VerificationStatus } from '@otr/core/osu';
 import type { DatabaseClient } from '@/lib/db';
-import { isolateMaintenanceWindowEnv } from '@/lib/maintenance-window.test-utils';
 
 type RequireKeys<T, K extends keyof T> = Pick<T, K> & Partial<Omit<T, K>>;
 
@@ -133,8 +132,6 @@ class UpdateMatchTestTransaction {
 }
 
 describe('updateMatchAdminHandler', () => {
-  isolateMaintenanceWindowEnv();
-
   const baseInput: UpdateMatchAdminArgs['input'] = {
     id: 1,
     name: 'Test Match',
@@ -153,24 +150,6 @@ describe('updateMatchAdminHandler', () => {
       },
     };
 
-  const safeAdminDataMutationDate = new Date('2026-06-05T12:00:00.000Z');
-
-  it('rejects updates during the admin data mutation freeze window', async () => {
-    await expect(
-      updateMatchAdminHandler({
-        input: baseInput,
-        context: {
-          db: null as unknown as DatabaseClient,
-          session: adminSession,
-          adminDataMutationDate: new Date('2026-06-02T12:00:00.000Z'),
-        },
-      })
-    ).rejects.toMatchObject({
-      code: 'SERVICE_UNAVAILABLE',
-      status: 503,
-    });
-  });
-
   it('does not include submittedByUserId in match update', async () => {
     const db = new UpdateMatchTestDb({
       id: 1,
@@ -184,7 +163,6 @@ describe('updateMatchAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -207,7 +185,6 @@ describe('updateMatchAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -229,7 +206,6 @@ describe('updateMatchAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -251,7 +227,6 @@ describe('updateMatchAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -274,7 +249,6 @@ describe('updateMatchAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -296,7 +270,6 @@ describe('updateMatchAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -315,7 +288,6 @@ describe('updateMatchAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
