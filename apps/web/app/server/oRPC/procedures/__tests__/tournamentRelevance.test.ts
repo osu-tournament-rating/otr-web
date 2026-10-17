@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { and, asc, desc, inArray, sql } from 'drizzle-orm';
+import { and, inArray } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
@@ -14,7 +14,7 @@ import {
   parseSearchTerm,
 } from '@/lib/orpc/queries/search';
 
-import { buildTournamentRelevanceOrder } from '../shared/tournamentListOrder';
+import { buildHeaderSearchTournamentOrder } from '../searchProcedures';
 import { buildTournamentListQuery } from '../tournamentsProcedures';
 
 // Seeds and deletes rows; point it at a disposable database
@@ -97,7 +97,6 @@ describe.skipIf(!url)('tournament relevance order', () => {
     expect(labelRows(rows)).toEqual(seeds.map(([label]) => label));
   });
 
-  // Mirrors the tournament query in the header search
   it('orders the header search the same way', async () => {
     const term = 'zzrc';
     const { condition, rank } = buildTournamentSearchExpressions(
@@ -107,12 +106,7 @@ describe.skipIf(!url)('tournament relevance order', () => {
       .select({ id: schema.tournaments.id })
       .from(schema.tournaments)
       .where(and(condition, inArray(schema.tournaments.id, [...labels.keys()])))
-      .orderBy(
-        ...buildTournamentRelevanceOrder(term),
-        desc(rank),
-        sql`${schema.tournaments.endTime} desc nulls last`,
-        asc(schema.tournaments.name)
-      );
+      .orderBy(...buildHeaderSearchTournamentOrder(term, rank));
 
     // Its full-text match doesn't look inside a word, so it skips 'XZZRCX'
     expect(labelRows(rows)).toEqual(

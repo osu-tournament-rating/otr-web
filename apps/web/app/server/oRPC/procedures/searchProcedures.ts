@@ -1,5 +1,5 @@
 import { ORPCError } from '@orpc/server';
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, sql, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 
 import * as schema from '@otr/core/db/schema';
@@ -25,6 +25,20 @@ import { publicProcedure } from './base';
 import { buildTournamentRelevanceOrder } from './shared/tournamentListOrder';
 
 const DEFAULT_RESULT_LIMIT = 5;
+
+/**
+ * The header search's tournament order: the list's relevance tiers, then the
+ * full-text rank, then the most recent end.
+ */
+export const buildHeaderSearchTournamentOrder = (
+  searchKey: string,
+  rank: SQL<number>
+): SQL[] => [
+  ...buildTournamentRelevanceOrder(searchKey),
+  desc(rank),
+  sql`${schema.tournaments.endTime} desc nulls last`,
+  asc(schema.tournaments.name),
+];
 
 /**
  * The header search. Open to signed-out visitors, since every result is
@@ -129,10 +143,10 @@ export const searchEntities = publicProcedure
             .from(schema.tournaments)
             .where(tournamentCondition)
             .orderBy(
-              ...buildTournamentRelevanceOrder(input.searchKey),
-              desc(tournamentRank),
-              sql`${schema.tournaments.endTime} desc nulls last`,
-              asc(schema.tournaments.name)
+              ...buildHeaderSearchTournamentOrder(
+                input.searchKey,
+                tournamentRank
+              )
             )
             .limit(DEFAULT_RESULT_LIMIT),
           context.db
