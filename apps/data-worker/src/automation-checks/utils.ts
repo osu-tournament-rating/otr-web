@@ -18,45 +18,23 @@ const INVALID_MODS = new Set<Mods>([
 ]);
 
 /**
- * The lazer mods a tournament plays with. Any other mod is invalid, including
- * mods lazer adds later. Settings are not checked, so custom speeds and
- * Difficulty Adjust values pass.
- *
- * This is a policy list, not the fetcher's acronym-to-flag map: that map also
- * holds stable mods this check rejects (SD, PF, RX, AT, AP) and mods it does
- * not allow (RD, CO, CN, TP), and it has no entry for lazer-only mods that
- * lack a stable flag (CL, DA, 10K).
+ * The lazer mods that make a score invalid: the stable set above, by its
+ * lazer acronyms, plus Cinema. Every other lazer mod passes, fun mods
+ * included, since lazer tournaments pool them. Settings are not checked.
  */
-const VALID_LAZER_MODS = new Set([
-  'NF',
-  'EZ',
-  'TD',
-  'HD',
-  'HR',
-  'DT',
-  'NC',
-  'HT',
-  // Daycore (lazer only)
-  'DC',
-  'FL',
-  'SO',
-  'FI',
-  'MR',
-  // Classic (lazer only)
-  'CL',
-  // Difficulty Adjust (lazer only)
-  'DA',
-  '1K',
-  '2K',
-  '3K',
-  '4K',
-  '5K',
-  '6K',
-  '7K',
-  '8K',
-  '9K',
-  // Ten Keys (lazer only)
-  '10K',
+const INVALID_LAZER_MODS = new Set([
+  // Autoplay
+  'AT',
+  // Cinema (lazer's acronym; stable uses CM)
+  'CN',
+  // Relax
+  'RX',
+  // Autopilot
+  'AP',
+  // Sudden Death
+  'SD',
+  // Perfect
+  'PF',
 ]);
 
 const PLACEHOLDER_THRESHOLD = new Date('1970-01-01T00:00:00.000Z').getTime();
@@ -80,7 +58,7 @@ export const isPreVerifiedOrVerified = (status: VerificationStatus) =>
 
 export const hasInvalidMods = (mods: Mods, lazerMods: LazerMod[] | null) =>
   Array.from(INVALID_MODS).some((flag) => (mods & flag) === flag) ||
-  (lazerMods?.some((mod) => !VALID_LAZER_MODS.has(mod.acronym)) ?? false);
+  (lazerMods?.some((mod) => INVALID_LAZER_MODS.has(mod.acronym)) ?? false);
 
 export const combineRejection = <T extends number>(current: T, next: T): T =>
   (current | next) as T;
