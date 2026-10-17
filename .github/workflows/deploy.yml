@@ -264,8 +264,7 @@ jobs:
           cache-from: type=gha,scope=docs
           cache-to: type=gha,scope=docs,mode=max,ignore-error=true
 
-      # Only when the resolve job chose to build one. The cache keeps only the
-      # final image's layers, as ci.yml explains.
+      # Only when the resolve job chose to build one.
       - name: Build and push processor image
         id: processor
         if: needs.resolve.outputs.processor-build == 'true'
@@ -277,7 +276,7 @@ jobs:
           provenance: mode=max
           tags: stagecodes/otr-processor:sha-${{ needs.resolve.outputs.ref }}
           cache-from: type=gha,scope=processor
-          cache-to: type=gha,scope=processor,mode=min,ignore-error=true
+          cache-to: type=gha,scope=processor,mode=max,ignore-error=true
 
   release:
     name: Publish release

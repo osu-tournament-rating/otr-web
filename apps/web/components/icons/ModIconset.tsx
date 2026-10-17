@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
 /** The acronyms with artwork in `public/icons/mods`. */
-const MOD_ICONS = new Set([
+export const MOD_ICONS: ReadonlySet<string> = new Set([
   '1K',
   '2K',
   '3K',
@@ -21,6 +21,7 @@ const MOD_ICONS = new Set([
   'AT',
   'DT',
   'EZ',
+  'FI',
   'FL',
   'FM',
   'HD',
@@ -57,10 +58,10 @@ function resolveEntries(
       .map((mod) => ({ acronym: mod.acronym, speed: getLazerModSpeed(mod) }));
   }
 
-  // Clear NF
+  // Clear NF. Mods without an acronym have no icon.
   return ModsEnumHelper.getMetadata(mods & ~Mods.NoFail)
     .map(({ text }) => text)
-    .filter(Boolean)
+    .filter((text) => text !== '')
     .map((acronym) => ({ acronym, speed: null }));
 }
 

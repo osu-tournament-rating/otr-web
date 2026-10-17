@@ -1,7 +1,7 @@
 import { asc, desc, sql, type AnyColumn, type SQL } from 'drizzle-orm';
 
 import * as schema from '@otr/core/db/schema';
-import { TournamentQuerySortType } from '@otr/core/osu';
+import { TournamentQuerySortType, VerificationStatus } from '@otr/core/osu';
 
 import { containsPattern, escapeLikePattern } from './likePattern';
 
@@ -44,32 +44,13 @@ export function buildTournamentListOrder({
         direction(schema.tournaments.created),
         direction(schema.tournaments.id),
       ];
-    case TournamentQuerySortType.SearchQueryRelevance: {
+    case TournamentQuerySortType.SearchQueryRelevance:
       // Best match first whatever the direction, then the newest submission
-      const order: SQL[] = [];
-
-      if (searchTerm) {
-        const searchPattern = containsPattern(searchTerm);
-        const searchPrefixPattern = `${escapeLikePattern(searchTerm)}%`;
-
-        order.push(
-          desc(
-            sql<number>`CASE
-              WHEN ${schema.tournaments.name} ILIKE ${searchPrefixPattern} THEN 3
-              WHEN ${schema.tournaments.abbreviation} ILIKE ${searchPrefixPattern} THEN 2
-              WHEN ${schema.tournaments.name} ILIKE ${searchPattern} THEN 1
-              ELSE 0
-            END`
-          )
-        );
-      }
-
       return [
-        ...order,
+        ...(searchTerm ? buildTournamentRelevanceOrder(searchTerm) : []),
         desc(schema.tournaments.created),
         desc(schema.tournaments.id),
       ];
-    }
     case TournamentQuerySortType.EndTime:
     default:
       return [
@@ -77,4 +58,33 @@ export function buildTournamentListOrder({
         direction(schema.tournaments.id),
       ];
   }
+}
+
+/**
+ * Verified tournaments first, then by how closely the abbreviation or name
+ * matches `term`: exact abbreviation, exact name, abbreviation prefix, name
+ * prefix, then anywhere in either. Shared by the tournament list and the
+ * header search, which each add their own tie-breaks.
+ */
+export function buildTournamentRelevanceOrder(term: string): SQL[] {
+  const exact = escapeLikePattern(term);
+  const prefix = `${exact}%`;
+  const contains = containsPattern(term);
+
+  return [
+    desc(
+      sql`${schema.tournaments.verificationStatus} = ${VerificationStatus.Verified}`
+    ),
+    desc(
+      sql<number>`CASE
+        WHEN ${schema.tournaments.abbreviation} ILIKE ${exact} THEN 5
+        WHEN ${schema.tournaments.name} ILIKE ${exact} THEN 4
+        WHEN ${schema.tournaments.abbreviation} ILIKE ${prefix} THEN 3
+        WHEN ${schema.tournaments.name} ILIKE ${prefix} THEN 2
+        WHEN ${schema.tournaments.name} ILIKE ${contains}
+          OR ${schema.tournaments.abbreviation} ILIKE ${contains} THEN 1
+        ELSE 0
+      END`
+    ),
+  ];
 }

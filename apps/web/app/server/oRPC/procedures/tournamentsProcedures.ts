@@ -72,7 +72,7 @@ function resolveTournamentListPaging(input: TournamentListRequest) {
 }
 
 /** The filters and order the plain and the paged tournament lists share. */
-function buildTournamentListQuery(input: TournamentListRequest) {
+export function buildTournamentListQuery(input: TournamentListRequest) {
   const filters: SQL<unknown>[] = [];
   let searchTerm: string | undefined;
 

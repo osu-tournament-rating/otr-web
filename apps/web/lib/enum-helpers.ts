@@ -208,12 +208,12 @@ export const ModsEnumHelper: IBitwiseEnumHelper<Mods> = {
       description: 'Mania 6 key',
     },
     [Mods.Key7]: {
-      text: '',
-      description: '',
+      text: '7K',
+      description: 'Mania 7 key',
     },
     [Mods.Key8]: {
-      text: '',
-      description: '',
+      text: '8K',
+      description: 'Mania 8 key',
     },
     [Mods.FadeIn]: {
       text: 'FI',
@@ -236,24 +236,24 @@ export const ModsEnumHelper: IBitwiseEnumHelper<Mods> = {
       description: '',
     },
     [Mods.Key9]: {
-      text: '',
-      description: '',
+      text: '9K',
+      description: 'Mania 9 key',
     },
     [Mods.KeyCoop]: {
       text: '',
       description: '',
     },
     [Mods.Key1]: {
-      text: '',
-      description: '',
+      text: '1K',
+      description: 'Mania 1 key',
     },
     [Mods.Key3]: {
-      text: '',
-      description: '',
+      text: '3K',
+      description: 'Mania 3 key',
     },
     [Mods.Key2]: {
-      text: '',
-      description: '',
+      text: '2K',
+      description: 'Mania 2 key',
     },
     [Mods.KeyMod]: {
       text: '',
@@ -265,11 +265,11 @@ export const ModsEnumHelper: IBitwiseEnumHelper<Mods> = {
     },
     [Mods.ScoreV2]: {
       text: 'V2',
-      description: '',
+      description: 'ScoreV2',
     },
     [Mods.Mirror]: {
       text: 'MR',
-      description: '',
+      description: 'Mirror',
     },
   },
 };

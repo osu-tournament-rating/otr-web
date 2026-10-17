@@ -2,7 +2,11 @@ import { describe, expect, it } from 'bun:test';
 
 import { Team, VerificationStatus } from '@otr/core/osu';
 
-import { deriveTournamentWinRecord, deriveWinRecord } from '../winRecord';
+import {
+  deriveTournamentWinRecord,
+  deriveVerifiedWinRecord,
+  deriveWinRecord,
+} from '../winRecord';
 
 const roster = (id: number, team: Team, score: number, players: number[]) => ({
   id,
@@ -72,6 +76,36 @@ describe('deriveWinRecord', () => {
 
   it('returns null for zero rosters', () => {
     expect(deriveWinRecord(9, [])).toBeNull();
+  });
+});
+
+describe('deriveVerifiedWinRecord', () => {
+  const rosters = [
+    roster(1, Team.Red, 3, [10, 11]),
+    roster(2, Team.Blue, 5, [20, 21]),
+  ];
+
+  it('derives the full record for a verified match', () => {
+    expect(
+      deriveVerifiedWinRecord(7, VerificationStatus.Verified, rosters)
+    ).toEqual({
+      matchId: 7,
+      isTied: false,
+      loserRoster: [10, 11],
+      winnerRoster: [20, 21],
+      loserPoints: 3,
+      winnerPoints: 5,
+      loserTeam: Team.Red,
+      winnerTeam: Team.Blue,
+    });
+  });
+
+  it.each([
+    ['Rejected', VerificationStatus.Rejected],
+    ['PreRejected', VerificationStatus.PreRejected],
+    ['PreVerified', VerificationStatus.PreVerified],
+  ])('returns null for a %s match that still has rosters', (_, status) => {
+    expect(deriveVerifiedWinRecord(7, status, rosters)).toBeNull();
   });
 });
 

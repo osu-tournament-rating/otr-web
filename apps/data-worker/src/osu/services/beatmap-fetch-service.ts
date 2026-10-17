@@ -34,6 +34,30 @@ interface BeatmapFetchServiceOptions {
   publishPlayerFetch: (osuPlayerId: number) => Promise<void>;
 }
 
+/**
+ * The osu! ids of everyone who mapped a difficulty. A guest difficulty can
+ * have several owners, so `user_id` alone misses them; it is only the fallback
+ * when osu! sends no owners.
+ */
+export const beatmapOwnerIds = (beatmap: {
+  user_id?: number | null;
+  owners?: ReadonlyArray<{ id: number }> | null;
+}): number[] => {
+  const ids = new Set<number>();
+
+  for (const owner of beatmap.owners ?? []) {
+    if (owner.id > 0) {
+      ids.add(owner.id);
+    }
+  }
+
+  if (ids.size === 0 && beatmap.user_id && beatmap.user_id > 0) {
+    ids.add(beatmap.user_id);
+  }
+
+  return Array.from(ids);
+};
+
 export class BeatmapFetchService {
   private readonly db: DatabaseClient;
   private readonly api: API;
@@ -183,8 +207,8 @@ export class BeatmapFetchService {
 
       const userIds = new Set<number>();
       for (const beatmap of beatmapRows) {
-        if (beatmap.user_id) {
-          userIds.add(beatmap.user_id);
+        for (const ownerId of beatmapOwnerIds(beatmap)) {
+          userIds.add(ownerId);
         }
       }
 
@@ -270,11 +294,8 @@ export class BeatmapFetchService {
 
         affectedBeatmapIds.push(row.id);
 
-        if (beatmap.user_id) {
-          const beatmapCreatorId = await getOrCreatePlayerId(
-            tx,
-            beatmap.user_id
-          );
+        for (const ownerId of beatmapOwnerIds(beatmap)) {
+          const beatmapCreatorId = await getOrCreatePlayerId(tx, ownerId);
 
           await tx
             .insert(schema.joinBeatmapCreators)

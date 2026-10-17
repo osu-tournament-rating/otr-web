@@ -241,8 +241,6 @@ const createAdminSession = (): NonNullable<TestContext['session']> => ({
   },
 });
 
-const safeAdminDataMutationDate = new Date('2026-06-05T12:00:00.000Z');
-
 const noopPublishers: QueuePublisherRegistry = {
   fetchBeatmap: async ({ beatmapId }) => ({
     type: 'beatmap' as const,
@@ -261,12 +259,6 @@ const noopPublishers: QueuePublisherRegistry = {
   }),
   fetchPlayer: async ({ osuPlayerId }) => ({
     type: 'player' as const,
-    osuPlayerId,
-    requestedAt: new Date().toISOString(),
-    correlationId: 'noop',
-    priority: MessagePriority.Normal,
-  }),
-  fetchPlayerOsuTrack: async ({ osuPlayerId }) => ({
     osuPlayerId,
     requestedAt: new Date().toISOString(),
     correlationId: 'noop',
@@ -337,7 +329,6 @@ describe('refetchTournamentMatchDataHandler', () => {
         return noopPublishers.fetchMatch({ osuMatchId, isLazer });
       },
       fetchPlayer: noopPublishers.fetchPlayer,
-      fetchPlayerOsuTrack: noopPublishers.fetchPlayerOsuTrack,
       processAutomationCheck: noopPublishers.processAutomationCheck,
     });
 
@@ -346,7 +337,6 @@ describe('refetchTournamentMatchDataHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: createAdminSession(),
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -382,7 +372,6 @@ describe('refetchTournamentMatchDataHandler', () => {
         throw new Error('match queue offline');
       },
       fetchPlayer: noopPublishers.fetchPlayer,
-      fetchPlayerOsuTrack: noopPublishers.fetchPlayerOsuTrack,
       processAutomationCheck: noopPublishers.processAutomationCheck,
     });
 
@@ -391,7 +380,6 @@ describe('refetchTournamentMatchDataHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: createAdminSession(),
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 

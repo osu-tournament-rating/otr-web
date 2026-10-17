@@ -304,6 +304,131 @@ async fn test_get_tournaments_needing_stats_refresh() {
 
 #[tokio::test]
 #[serial]
+async fn test_delete_rejected_player_stats_removes_unverified_rosters() {
+    init_test_env();
+    let test_db = TestDatabase::new().await.expect("Failed to create test database");
+    test_db.seed_test_data().await.expect("Failed to seed test data");
+
+    let admin_client = test_db.get_client().await.expect("Failed to get client");
+
+    // Each non-verified level, with verified data below it where the
+    // verification inheritance triggers allow it. A tournament set back to
+    // pre-verified keeps its verified match and game.
+    let tournament_id: i32 = admin_client
+        .query_one(
+            "INSERT INTO tournaments (name, abbreviation, forum_url, rank_range_lower_bound, ruleset, lobby_size, verification_status)
+             VALUES ('Pre-verified Tournament', 'PT', 'https://example.com/pt', 0, 0, 8, 2)
+             RETURNING id",
+            &[]
+        )
+        .await
+        .expect("Failed to insert tournament")
+        .get(0);
+    let match_id: i32 = admin_client
+        .query_one(
+            "INSERT INTO matches (osu_id, name, start_time, end_time, verification_status, tournament_id)
+             VALUES (12347, 'Test Match 3', '2024-01-03 12:00:00+00', '2024-01-03 13:00:00+00', 4, $1)
+             RETURNING id",
+            &[&tournament_id]
+        )
+        .await
+        .expect("Failed to insert match")
+        .get(0);
+    admin_client
+        .execute(
+            "INSERT INTO games (osu_id, match_id, start_time, end_time, beatmap_id, ruleset, scoring_type, team_type, mods, verification_status)
+             VALUES (4, $1, '2024-01-03 12:00:00+00', '2024-01-03 12:10:00+00', NULL, 0, 0, 0, 0, 4)",
+            &[&match_id]
+        )
+        .await
+        .expect("Failed to insert game");
+
+    let match_ids: Vec<i32> = admin_client
+        .query("SELECT id FROM matches ORDER BY osu_id", &[])
+        .await
+        .expect("Failed to fetch matches")
+        .iter()
+        .map(|row| row.get(0))
+        .collect();
+    let game_ids: Vec<i32> = admin_client
+        .query("SELECT id FROM games ORDER BY osu_id", &[])
+        .await
+        .expect("Failed to fetch games")
+        .iter()
+        .map(|row| row.get(0))
+        .collect();
+
+    // The seed puts games 1 and 2 in match 1 and game 3 in match 2. Match 2
+    // turns pre-rejected over its verified game 3, and game 2 is rejected
+    // inside the still-verified match 1. Its scores go first, as the
+    // rejection cascade would.
+    admin_client
+        .execute(
+            "UPDATE matches SET verification_status = 1 WHERE id = $1",
+            &[&match_ids[1]]
+        )
+        .await
+        .expect("Failed to pre-reject match");
+    admin_client
+        .execute(
+            "UPDATE game_scores SET verification_status = 3 WHERE game_id = $1",
+            &[&game_ids[1]]
+        )
+        .await
+        .expect("Failed to reject scores");
+    admin_client
+        .execute(
+            "UPDATE games SET verification_status = 3 WHERE id = $1",
+            &[&game_ids[1]]
+        )
+        .await
+        .expect("Failed to reject game");
+
+    // Rosters left over from when everything was verified.
+    admin_client
+        .execute(
+            "INSERT INTO match_rosters (roster, team, score, match_id) SELECT '{1}', 1, 1, id FROM matches",
+            &[]
+        )
+        .await
+        .expect("Failed to seed match rosters");
+    admin_client
+        .execute(
+            "INSERT INTO game_rosters (roster, team, score, game_id) SELECT '{1}', 1, 1, id FROM games",
+            &[]
+        )
+        .await
+        .expect("Failed to seed game rosters");
+
+    let db_client = DbClient::connect(&test_db.connection_string)
+        .await
+        .expect("Failed to connect");
+    db_client
+        .delete_rejected_player_stats()
+        .await
+        .expect("Failed to delete rejected stats");
+
+    let remaining_match_rosters: Vec<i32> = admin_client
+        .query("SELECT match_id FROM match_rosters ORDER BY match_id", &[])
+        .await
+        .expect("Failed to fetch match rosters")
+        .iter()
+        .map(|row| row.get(0))
+        .collect();
+    assert_eq!(remaining_match_rosters, vec![match_ids[0]]);
+
+    let remaining_game_rosters: Vec<i32> = admin_client
+        .query("SELECT game_id FROM game_rosters ORDER BY game_id", &[])
+        .await
+        .expect("Failed to fetch game rosters")
+        .iter()
+        .map(|row| row.get(0))
+        .collect();
+    assert_eq!(remaining_game_rosters, vec![game_ids[0]]);
+}
+
+#[tokio::test]
+#[serial]
 async fn test_save_results() {
     init_test_env();
     let test_db = TestDatabase::new().await.expect("Failed to create test database");
