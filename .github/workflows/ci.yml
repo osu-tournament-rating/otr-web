@@ -90,29 +90,9 @@ jobs:
       # Dummy value needed so build-time imports that require DATABASE_URL do not throw.
       DATABASE_URL: postgresql://dummy:dummy@127.0.0.1:5432/dummy
       SEARCH_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/otr_test
-    services:
-      postgres:
-        image: postgres:17
-        # Anonymous pulls count against Docker Hub's per-address limit, which
-        # GitHub's runners share, and have failed CI. A service is pulled
-        # before any step runs, so it signs in here rather than with
-        # docker/login-action. Pull requests from forks get no secrets: when
-        # either value is empty, the runner skips the sign-in and pulls
-        # anonymously.
-        credentials:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: otr_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d otr_test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
+      # Secrets cannot appear in `if:`, so the Docker Hub sign-in checks this.
+      # Pull requests from forks get no secrets, so they pull anonymously.
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -154,6 +134,33 @@ jobs:
           restore-keys: |
             eslint-${{ runner.os }}-${{ hashFiles('bun.lock') }}-
             eslint-${{ runner.os }}-
+
+      # Anonymous pulls count against Docker Hub's per-address limit, which
+      # GitHub's runners share, and have failed CI. PostgreSQL starts in a step
+      # rather than as a service, because a service is pulled before any step
+      # can sign in, and a service's credentials cannot be left empty.
+      - name: Log in to Docker Hub
+        if: matrix.task == 'test' && env.DOCKERHUB_USERNAME != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Start PostgreSQL
+        if: matrix.task == 'test'
+        run: |
+          docker run -d --name postgres -p 5432:5432 \
+            -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=otr_test \
+            --health-cmd "pg_isready -h 127.0.0.1 -U postgres -d otr_test" \
+            --health-interval 2s --health-timeout 5s --health-retries 30 \
+            postgres:17
+          until [ "$(docker inspect -f '{{.State.Health.Status}}' postgres)" = healthy ]; do
+            if [ "$(docker inspect -f '{{.State.Health.Status}}' postgres)" = unhealthy ]; then
+              docker logs postgres
+              exit 1
+            fi
+            sleep 1
+          done
 
       - name: Migrate test database
         if: matrix.task == 'test'
