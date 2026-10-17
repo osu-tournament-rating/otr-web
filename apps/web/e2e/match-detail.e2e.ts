@@ -1,4 +1,6 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
+import { STORAGE_STATE } from './fixtures/auth';
+import { createOrpcClientForRole } from './fixtures/orpc';
 import {
   TEST_MATCH_ID,
   TEST_PUBLIC_TOURNAMENT_ID,
@@ -34,6 +36,21 @@ test.describe('Match Detail Page', () => {
       );
       await expect(tournamentLink).toBeVisible({ timeout: 10000 });
       await expect(tournamentLink).not.toBeEmpty();
+    });
+
+    test('the verification badge fits a 375px screen', async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 667 });
+      await page.goto(ROUTES.match(TEST_MATCH_ID));
+      await page.waitForLoadState('networkidle');
+
+      const badge = page.locator('[data-slot="verification-status-badge"]');
+      await expect(badge).toBeVisible({ timeout: 10000 });
+      expect(
+        await badge.evaluate((el) => el.scrollWidth <= el.clientWidth)
+      ).toBe(true);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth)
+      ).toBeLessThanOrEqual(375);
     });
 
     test('page title contains match name', async ({ page }) => {
@@ -331,6 +348,92 @@ test.describe('Match Detail Page', () => {
       await beatmapLink.click();
       await page.waitForURL('**/beatmaps/**', { timeout: 20000 });
       expect(page.url()).toContain('/beatmaps/');
+    });
+  });
+
+  test.describe('Admin forms', () => {
+    test.use({ storageState: STORAGE_STATE.admin });
+
+    /**
+     * Opens a menu and chooses an item, clicking the trigger again until the
+     * item shows, since the dev server can still be hydrating the page when
+     * the first click lands.
+     */
+    async function chooseMenuItem(
+      page: Page,
+      trigger: Locator,
+      name: string | RegExp
+    ): Promise<void> {
+      const item = page.getByRole('menuitem', { name });
+      await expect(async () => {
+        if (!(await item.isVisible())) await trigger.click();
+        await expect(item).toBeVisible({ timeout: 3000 });
+      }).toPass({ timeout: 30000 });
+      await item.click();
+    }
+
+    test('the note step of a sensitive score edit labels its field', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.match(TEST_MATCH_ID));
+      await page.waitForLoadState('networkidle');
+
+      await chooseMenuItem(
+        page,
+        page.locator('[data-testid="score-actions"]:visible').first(),
+        'Edit score'
+      );
+
+      // A changed combo asks for a note; Back leaves the score unsaved.
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toHaveAccessibleName('Edit score');
+      const maxCombo = dialog.getByLabel('Max combo');
+      await maxCombo.fill(String(Number(await maxCombo.inputValue()) + 1));
+      await dialog.getByRole('button', { name: 'Save changes' }).click();
+
+      await expect(dialog).toHaveAccessibleName('Admin note required');
+      await expect(
+        dialog.getByRole('textbox', { name: 'Admin note' })
+      ).toBeVisible();
+      await dialog.getByRole('button', { name: 'Back' }).click();
+      await expect(dialog).toHaveAccessibleName('Edit score');
+    });
+
+    test('a cancelled note edit opens again with the saved text', async ({
+      page,
+    }) => {
+      const admin = createOrpcClientForRole('admin');
+      const saved = `E2E note ${Date.now()}`;
+      const note = await admin.matches.adminNotes.create({
+        matchId: TEST_MATCH_ID,
+        note: saved,
+      });
+
+      try {
+        await page.goto(ROUTES.match(TEST_MATCH_ID));
+        await page.waitForLoadState('networkidle');
+
+        await chooseMenuItem(
+          page,
+          page.getByTestId('match-admin-menu'),
+          /^Admin notes/
+        );
+
+        const dialog = page.getByTestId('admin-notes-dialog');
+        const item = dialog.getByRole('listitem').filter({ hasText: saved });
+        await item.getByRole('button', { name: 'Edit note' }).click();
+
+        const editor = dialog.getByRole('textbox', { name: 'Edit note' });
+        await expect(editor).toHaveValue(saved);
+        await editor.fill('A draft that was never saved');
+        await dialog.getByRole('button', { name: 'Cancel' }).click();
+        await expect(editor).toBeHidden();
+
+        await item.getByRole('button', { name: 'Edit note' }).click();
+        await expect(editor).toHaveValue(saved);
+      } finally {
+        await admin.matches.adminNotes.delete({ noteId: note.id });
+      }
     });
   });
 });

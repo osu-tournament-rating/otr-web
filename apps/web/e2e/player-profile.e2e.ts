@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+import { MOD_PERFORMANCE_INFO } from '../components/player/section-info';
 import { TEST_PLAYER_ID, ROUTES, Ruleset } from './fixtures/test-config';
 
 test.describe('Player Profile Page', () => {
@@ -188,6 +189,68 @@ test.describe('Player Profile Page', () => {
       const frequencyCharts = page.locator('.recharts-bar-rectangles');
       const chartCount = await frequencyCharts.count();
       expect(chartCount).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  test.describe('Section help', () => {
+    /**
+     * Repeats `open` until the info popover shows, since the dev server can
+     * still be hydrating the page when the first key or tap lands.
+     */
+    async function openModPerformanceInfo(
+      page: Page,
+      open: () => Promise<void>
+    ): Promise<void> {
+      // The popover is a dialog; the focus tooltip carries the same text.
+      const popover = page
+        .getByRole('dialog')
+        .filter({ hasText: MOD_PERFORMANCE_INFO });
+
+      await expect(async () => {
+        if (await popover.isVisible()) return;
+        await open();
+        await expect(popover).toBeVisible({ timeout: 3000 });
+      }).toPass({ timeout: 30000 });
+    }
+
+    test('the mod performance info opens from the keyboard', async ({
+      page,
+    }) => {
+      await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
+      await page.waitForLoadState('networkidle');
+
+      const info = page.getByRole('button', { name: 'About mod performance' });
+      await expect(info).toBeVisible({ timeout: 10000 });
+
+      // Tab through the page until the button takes focus.
+      let focused = false;
+      for (let presses = 0; presses < 200 && !focused; presses++) {
+        await page.keyboard.press('Tab');
+        focused = await info.evaluate((el) => el === document.activeElement);
+      }
+      expect(focused).toBe(true);
+
+      await openModPerformanceInfo(page, () => page.keyboard.press('Enter'));
+    });
+
+    test.describe('on a phone', () => {
+      test.use({
+        viewport: { width: 375, height: 667 },
+        hasTouch: true,
+        isMobile: true,
+      });
+
+      test('the mod performance info opens on a tap', async ({ page }) => {
+        await page.goto(ROUTES.playerProfile(TEST_PLAYER_ID));
+        await page.waitForLoadState('networkidle');
+
+        const info = page.getByRole('button', {
+          name: 'About mod performance',
+        });
+        await expect(info).toBeVisible({ timeout: 10000 });
+
+        await openModPerformanceInfo(page, () => info.tap());
+      });
     });
   });
 
