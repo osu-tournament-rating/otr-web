@@ -18,7 +18,8 @@ class ApiError extends Error {
 
 mock.module('../../client', () => ({ APIError: ApiError }));
 
-const { BeatmapFetchService } = await import('../beatmap-fetch-service');
+const { BeatmapFetchService, beatmapOwnerIds } =
+  await import('../beatmap-fetch-service');
 const { TournamentDataCompletionService } =
   await import('../tournament-data-completion-service');
 
@@ -295,6 +296,7 @@ const createService = (
   api: { getBeatmap: unknown; getBeatmapset: unknown }
 ) => {
   const logs: Array<{ message: string; context?: unknown }> = [];
+  const published: number[] = [];
 
   const logger = {
     debug: () => {},
@@ -319,10 +321,12 @@ const createService = (
       db: client,
       logger,
     }),
-    publishPlayerFetch: async () => {},
+    publishPlayerFetch: async (osuPlayerId) => {
+      published.push(osuPlayerId);
+    },
   });
 
-  return { service, logs };
+  return { service, logs, published };
 };
 
 const workingApi = {
@@ -331,6 +335,33 @@ const workingApi = {
     beatmapset_id: apiBeatmapset.id,
   }),
   getBeatmapset: async () => apiBeatmapset,
+};
+
+type Owners = Array<{ id: number; username: string }> | undefined;
+
+const apiWithOwners = (owners: Record<number, Owners>) => {
+  const beatmapset = {
+    ...apiBeatmapset,
+    beatmaps: apiBeatmapset.beatmaps.map((beatmap) => ({
+      ...beatmap,
+      owners: owners[beatmap.id],
+    })),
+  };
+
+  return {
+    getBeatmap: workingApi.getBeatmap,
+    getBeatmapset: async () => beatmapset,
+  };
+};
+
+const creatorsOf = (db: BeatmapFetchTestDb, osuBeatmapId: number) => {
+  const beatmap = Array.from(db.beatmaps.values()).find(
+    (row) => row.osuId === osuBeatmapId
+  );
+
+  return db.creatorJoins
+    .filter((join) => join.createdBeatmapsId === beatmap?.id)
+    .map((join) => db.players.get(join.creatorsId)?.osuId);
 };
 
 const failingApi = (status: number) => ({
@@ -386,5 +417,81 @@ describe('BeatmapFetchService manual override', () => {
 
     expect(db.beatmaps.get(1)).toEqual(before);
     expect(db.beatmaps.get(2)?.dataFetchStatus).toBe(DataFetchStatus.Error);
+  });
+});
+
+describe('beatmapOwnerIds', () => {
+  it('returns each positive owner id once', () => {
+    expect(
+      beatmapOwnerIds({
+        user_id: 55,
+        owners: [{ id: 66 }, { id: 55 }, { id: 66 }, { id: 0 }, { id: -1 }],
+      })
+    ).toEqual([66, 55]);
+  });
+
+  it('falls back to user_id when owners is missing or empty', () => {
+    expect(beatmapOwnerIds({ user_id: 55 })).toEqual([55]);
+    expect(beatmapOwnerIds({ user_id: 55, owners: null })).toEqual([55]);
+    expect(beatmapOwnerIds({ user_id: 55, owners: [] })).toEqual([55]);
+  });
+
+  it('returns no ids without owners or a user_id', () => {
+    expect(beatmapOwnerIds({ user_id: 0, owners: [] })).toEqual([]);
+  });
+});
+
+describe('BeatmapFetchService creators', () => {
+  it('saves every owner of a difficulty as a creator', async () => {
+    const db = new BeatmapFetchTestDb([siblingBeatmap]);
+    const { service, published } = createService(
+      db,
+      apiWithOwners({
+        111: [
+          { id: 55, username: 'Mapper' },
+          { id: 66, username: 'Guest' },
+        ],
+        222: [{ id: 77, username: 'Other guest' }],
+      })
+    );
+
+    expect(await service.fetchAndPersist(111)).toBe(true);
+
+    expect(creatorsOf(db, 111)).toEqual([55, 66]);
+    expect(creatorsOf(db, 222)).toEqual([77]);
+    expect(published).toEqual([55, 66, 77]);
+  });
+
+  it('falls back to user_id when osu! sends no owners', async () => {
+    const db = new BeatmapFetchTestDb([siblingBeatmap]);
+    const { service, published } = createService(
+      db,
+      apiWithOwners({ 111: [], 222: undefined })
+    );
+
+    expect(await service.fetchAndPersist(111)).toBe(true);
+
+    expect(creatorsOf(db, 111)).toEqual([55]);
+    expect(creatorsOf(db, 222)).toEqual([55]);
+    expect(published).toEqual([55]);
+  });
+
+  it('adds no creators to an overridden beatmap', async () => {
+    const db = new BeatmapFetchTestDb([overriddenBeatmap, siblingBeatmap]);
+    const { service } = createService(
+      db,
+      apiWithOwners({
+        111: [
+          { id: 55, username: 'Mapper' },
+          { id: 66, username: 'Guest' },
+        ],
+        222: [{ id: 77, username: 'Other guest' }],
+      })
+    );
+
+    expect(await service.fetchAndPersist(111)).toBe(true);
+
+    expect(creatorsOf(db, 111)).toEqual([]);
+    expect(creatorsOf(db, 222)).toEqual([77]);
   });
 });
