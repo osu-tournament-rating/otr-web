@@ -264,12 +264,6 @@ const noopPublishers: QueuePublisherRegistry = {
     correlationId: 'noop',
     priority: MessagePriority.Normal,
   }),
-  fetchPlayerOsuTrack: async ({ osuPlayerId }) => ({
-    osuPlayerId,
-    requestedAt: new Date().toISOString(),
-    correlationId: 'noop',
-    priority: MessagePriority.Normal,
-  }),
   processAutomationCheck: async ({ tournamentId, overrideVerifiedState }) => ({
     tournamentId,
     overrideVerifiedState,
@@ -335,7 +329,6 @@ describe('refetchTournamentMatchDataHandler', () => {
         return noopPublishers.fetchMatch({ osuMatchId, isLazer });
       },
       fetchPlayer: noopPublishers.fetchPlayer,
-      fetchPlayerOsuTrack: noopPublishers.fetchPlayerOsuTrack,
       processAutomationCheck: noopPublishers.processAutomationCheck,
     });
 
@@ -379,7 +372,6 @@ describe('refetchTournamentMatchDataHandler', () => {
         throw new Error('match queue offline');
       },
       fetchPlayer: noopPublishers.fetchPlayer,
-      fetchPlayerOsuTrack: noopPublishers.fetchPlayerOsuTrack,
       processAutomationCheck: noopPublishers.processAutomationCheck,
     });
 
