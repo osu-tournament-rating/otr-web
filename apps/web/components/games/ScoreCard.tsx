@@ -160,6 +160,7 @@ export default function ScoreCard({
             <ModIconset
               className="flex h-5 shrink-0 items-center justify-end"
               mods={score.mods}
+              lazerMods={score.lazerMods}
             />
             {grade(24)}
             <span className="tabular-nums" style={scoreStyle}>
@@ -205,6 +206,7 @@ export default function ScoreCard({
               className="flex h-full max-w-20 items-center justify-end"
               iconClassName="max-h-6"
               mods={score.mods}
+              lazerMods={score.lazerMods}
             />
             {grade(32)}
             <span className="tabular-nums" style={scoreStyle}>

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Mods } from '@otr/core/osu';
 
-import ModIconset from '@/components/icons/ModIconset';
+import ModIconset, { MOD_ICONS } from '@/components/icons/ModIconset';
 import { ModsEnumHelper } from '@/lib/enum-helpers';
 
 const iconDir = join(import.meta.dir, '../../../public/icons/mods');
@@ -31,6 +31,30 @@ describe('ModIconset', () => {
       .filter((text) => !text || !existsSync(join(iconDir, `Mod${text}.svg`)));
 
     expect(missing).toEqual([]);
+  });
+
+  it('knows every icon in the icon folder', () => {
+    const files = readdirSync(iconDir)
+      .filter((file) => /^Mod.+\.svg$/.test(file))
+      .map((file) => file.slice('Mod'.length, -'.svg'.length));
+
+    expect([...MOD_ICONS].sort()).toEqual(files.sort());
+  });
+
+  it('writes lazer mods without an icon as text, with the speed after its icon', () => {
+    const html = renderToStaticMarkup(
+      <ModIconset
+        mods={Mods.DoubleTime}
+        lazerMods={[
+          { acronym: 'DT', settings: { speed_change: 1.2 } },
+          { acronym: 'DA' },
+        ]}
+      />
+    );
+
+    expect(html).toContain('ModDT.svg');
+    expect(html.indexOf('1.2x')).toBeLessThan(html.indexOf('>DA<'));
+    expect(html).not.toContain('ModDA.svg');
   });
 
   it('renders the FI and key mod icons', () => {

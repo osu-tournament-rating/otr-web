@@ -169,6 +169,7 @@ export default function GameCardHeader({
           </div>
           <ModIconset
             mods={headerMods.mods}
+            lazerMods={headerMods.lazerMods}
             freemod={headerMods.freemod}
             className="flex min-w-1/8 flex-row items-end justify-end"
             iconClassName="max-h-8 sm:max-h-12"

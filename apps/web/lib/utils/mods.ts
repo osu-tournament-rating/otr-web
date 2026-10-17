@@ -1,4 +1,5 @@
 import { Mods } from '@otr/core/osu';
+import type { LazerMod } from '@otr/core/osu/lazer-mods';
 
 import { getModAcronyms, NO_MOD_LABEL } from '@/lib/kit/format/mods';
 import { ModsEnumHelper } from '../enum-helpers';
@@ -230,14 +231,19 @@ export function normalizedScore(mods: Mods, score: number): number {
 
 /**
  * The mods to display for a game: its own outside freemod, otherwise the single
- * combination every score shares, or FM when they vary.
+ * combination every score shares, or FM when they vary. Lazer games also
+ * return their lazer mods, or null when the scores' lazer mods differ.
  */
 export function resolveGameDisplayMods(
-  game: { isFreeMod: boolean; mods: Mods },
-  scores: { mods: number }[]
-): { mods: Mods; freemod: boolean } {
+  game: { isFreeMod: boolean; mods: Mods; lazerMods?: LazerMod[] | null },
+  scores: { mods: number; lazerMods?: LazerMod[] | null }[]
+): { mods: Mods; lazerMods: LazerMod[] | null; freemod: boolean } {
   if (!game.isFreeMod) {
-    return { mods: game.mods, freemod: false };
+    return {
+      mods: game.mods,
+      lazerMods: game.lazerMods ?? null,
+      freemod: false,
+    };
   }
 
   // NoFail is never shown and shouldn't split otherwise-identical combinations.
@@ -246,10 +252,30 @@ export function resolveGameDisplayMods(
 
   if (uniqueCombos.size === 1) {
     const [common] = uniqueCombos;
-    return { mods: common as Mods, freemod: false };
+    return {
+      mods: common as Mods,
+      lazerMods: getSharedLazerMods(scores),
+      freemod: false,
+    };
   }
 
-  return { mods: Mods.None, freemod: true };
+  return { mods: Mods.None, lazerMods: null, freemod: true };
+}
+
+/** The lazer mods every score played, NF aside, or null when they differ. */
+function getSharedLazerMods(
+  scores: { lazerMods?: LazerMod[] | null }[]
+): LazerMod[] | null {
+  const lists = scores.map((score) =>
+    score.lazerMods?.filter((mod) => mod.acronym !== 'NF')
+  );
+  const [first] = lists;
+  if (!first) return null;
+
+  const key = JSON.stringify(first);
+  return lists.every((list) => list && JSON.stringify(list) === key)
+    ? first
+    : null;
 }
 
 /** Whether per-score mods diverge from a game that records no mods of its own. */
