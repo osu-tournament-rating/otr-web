@@ -2,13 +2,11 @@ import { router } from '@/app/server/oRPC/router';
 import { createORPCClient } from '@orpc/client';
 import { RPCLink } from '@orpc/client/fetch';
 import { RouterClient } from '@orpc/server';
+import { serverRpcBaseUrl } from './base-url';
 
 const link = new RPCLink({
   url: `${
-    typeof window !== 'undefined'
-      ? window.location.origin
-      : (process.env.INTERNAL_APP_BASE_URL ??
-        process.env.NEXT_PUBLIC_APP_BASE_URL)
+    typeof window !== 'undefined' ? window.location.origin : serverRpcBaseUrl()
   }/rpc`,
   headers: async () => {
     if (typeof window !== 'undefined') {
