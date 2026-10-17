@@ -213,8 +213,8 @@ async fn initialize_rabbitmq() -> Result<RabbitMqPublisher, Box<dyn std::error::
     let routing_key =
         std::env::var("RABBITMQ_ROUTING_KEY").unwrap_or_else(|_| "processing.stats.tournaments".to_string());
 
-    let mut publisher = RabbitMqPublisher::new(routing_key.clone(), routing_key);
-    publisher.connect(&rabbitmq_url).await?;
+    let mut publisher = RabbitMqPublisher::new(&rabbitmq_url, routing_key.clone(), routing_key);
+    publisher.connect().await?;
 
     Ok(publisher)
 }

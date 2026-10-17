@@ -7,6 +7,11 @@ Processor releases up to `2026.08.16` were published from the [otr-processor](ht
 
 ## Unreleased
 
+### Fixed
+
+- Fixed the processor logging the default RabbitMQ address, `localhost:5672`, instead of the broker it connected to. It now logs that broker's host, port, and vhost.
+- Fixed the processor reconnecting to the default RabbitMQ address instead of the configured broker when it lost its connection during a run.
+
 ### Other
 
 - Changed the processor to be developed and released from [otr-web](https://github.com/osu-tournament-rating/otr/tree/master/apps/processor) under `apps/processor`. Releases up to `2026.08.16` remain in the [otr-processor](https://github.com/osu-tournament-rating/otr-processor/releases) repository.
