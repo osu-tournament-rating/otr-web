@@ -179,8 +179,6 @@ describe('updateTournamentAdminHandler', () => {
     },
   };
 
-  const safeAdminDataMutationDate = new Date('2026-06-05T12:00:00.000Z');
-
   const createContext = (
     existingRuleset: Ruleset,
     nextRuleset: Ruleset
@@ -203,7 +201,6 @@ describe('updateTournamentAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     };
   };
@@ -269,7 +266,6 @@ describe('updateTournamentAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     };
 
@@ -328,7 +324,6 @@ describe('updateTournamentAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     };
 
@@ -373,7 +368,6 @@ describe('updateTournamentAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -408,7 +402,6 @@ describe('updateTournamentAdminHandler', () => {
       context: {
         db: db as unknown as DatabaseClient,
         session: adminSession,
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -441,7 +434,6 @@ describe('updateTournamentAdminHandler', () => {
         context: {
           db: db as unknown as DatabaseClient,
           session: adminSession,
-          adminDataMutationDate: safeAdminDataMutationDate,
         },
       });
 
@@ -465,7 +457,6 @@ describe('updateTournamentAdminHandler', () => {
         context: {
           db: db as unknown as DatabaseClient,
           session: adminSession,
-          adminDataMutationDate: safeAdminDataMutationDate,
         },
       });
 
@@ -488,7 +479,6 @@ describe('updateTournamentAdminHandler', () => {
         context: {
           db: db as unknown as DatabaseClient,
           session: adminSession,
-          adminDataMutationDate: safeAdminDataMutationDate,
         },
       });
 
@@ -511,7 +501,6 @@ describe('updateTournamentAdminHandler', () => {
         context: {
           db: db as unknown as DatabaseClient,
           session: adminSession,
-          adminDataMutationDate: safeAdminDataMutationDate,
         },
       });
 
@@ -534,7 +523,6 @@ describe('updateTournamentAdminHandler', () => {
         context: {
           db: db as unknown as DatabaseClient,
           session: adminSession,
-          adminDataMutationDate: safeAdminDataMutationDate,
         },
       });
 
@@ -554,7 +542,6 @@ describe('updateTournamentAdminHandler', () => {
         context: {
           db: db as unknown as DatabaseClient,
           session: adminSession,
-          adminDataMutationDate: safeAdminDataMutationDate,
         },
       });
 
@@ -600,7 +587,6 @@ describe('updateTournamentAdminHandler', () => {
         context: {
           db: db as unknown as DatabaseClient,
           session: adminSession,
-          adminDataMutationDate: safeAdminDataMutationDate,
         },
       });
 
@@ -632,7 +618,6 @@ describe('updateTournamentAdminHandler', () => {
         context: {
           db: db as unknown as DatabaseClient,
           session: adminSession,
-          adminDataMutationDate: safeAdminDataMutationDate,
         },
       });
 

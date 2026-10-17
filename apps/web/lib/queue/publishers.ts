@@ -9,7 +9,6 @@ import {
   type FetchMatchPayload,
   type FetchOsuMessage,
   type FetchPlayerPayload,
-  type FetchPlayerOsuTrackMessage,
   type ProcessTournamentAutomationCheckMessage,
 } from '@otr/core';
 
@@ -31,7 +30,6 @@ export interface QueuePublisherRegistry {
     payload: FetchPlayerInput,
     options?: QueuePublishOptions
   ) => Promise<FetchOsuMessage>;
-  fetchPlayerOsuTrack: QueuePublisher<FetchPlayerOsuTrackMessage>['publish'];
   processAutomationCheck: QueuePublisher<ProcessTournamentAutomationCheckMessage>['publish'];
 }
 
@@ -50,11 +48,6 @@ const createDefaultPublishers = (): QueuePublisherRegistry => {
     queue: QueueConstants.osu,
   });
 
-  const osuTrackPublisher = new RabbitMqPublisher<FetchPlayerOsuTrackMessage>({
-    url: amqpUrl,
-    queue: QueueConstants.osuTrack,
-  });
-
   const automationPublisher =
     new RabbitMqPublisher<ProcessTournamentAutomationCheckMessage>({
       url: amqpUrl,
@@ -68,8 +61,6 @@ const createDefaultPublishers = (): QueuePublisherRegistry => {
       osuPublisher.publish({ type: 'match', ...payload }, options),
     fetchPlayer: (payload, options) =>
       osuPublisher.publish({ type: 'player', ...payload }, options),
-    fetchPlayerOsuTrack: (payload, options) =>
-      osuTrackPublisher.publish(payload, options),
     processAutomationCheck: (payload, options) =>
       automationPublisher.publish(payload, options),
   };

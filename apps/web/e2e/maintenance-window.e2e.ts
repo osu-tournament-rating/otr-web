@@ -7,9 +7,10 @@ import { RPCLink } from '@orpc/client/fetch';
 import { STORAGE_STATE } from './fixtures/auth';
 
 /**
- * The daily maintenance window blocks admin mutations (issue #763). The window
- * is forced per-request with the test-only `x-e2e-maintenance-window` header,
- * and every id is non-existent so nothing real is ever mutated.
+ * The weekly maintenance window (Tuesdays 11:45-12:15 UTC) blocks admin
+ * mutations (issue #763). The window is forced per-request with the test-only
+ * `x-e2e-maintenance-window` header, and every id is non-existent so nothing
+ * real is ever mutated.
  */
 
 type MaintenanceOverride = 'active' | 'inactive';

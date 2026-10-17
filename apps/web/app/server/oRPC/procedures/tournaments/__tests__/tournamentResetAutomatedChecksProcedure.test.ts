@@ -21,8 +21,6 @@ const createAdminSession = (): NonNullable<
   },
 });
 
-const safeAdminDataMutationDate = new Date('2026-06-05T12:00:00.000Z');
-
 afterEach(() => {
   resetQueuePublishersForTesting();
 });
@@ -57,12 +55,6 @@ describe('resetTournamentAutomatedChecksHandler', () => {
         correlationId: 'noop',
         priority: MessagePriority.Normal,
       }),
-      fetchPlayerOsuTrack: async ({ osuPlayerId }) => ({
-        osuPlayerId,
-        requestedAt: new Date().toISOString(),
-        correlationId: 'noop',
-        priority: MessagePriority.Normal,
-      }),
       processAutomationCheck: async ({
         tournamentId,
         overrideVerifiedState,
@@ -83,7 +75,6 @@ describe('resetTournamentAutomatedChecksHandler', () => {
       context: {
         db: null as unknown as DatabaseClient,
         session: createAdminSession(),
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 
@@ -118,12 +109,6 @@ describe('resetTournamentAutomatedChecksHandler', () => {
         correlationId: 'noop',
         priority: MessagePriority.Normal,
       }),
-      fetchPlayerOsuTrack: async ({ osuPlayerId }) => ({
-        osuPlayerId,
-        requestedAt: new Date().toISOString(),
-        correlationId: 'noop',
-        priority: MessagePriority.Normal,
-      }),
       processAutomationCheck: async () => {
         throw new Error('automation queue offline');
       },
@@ -134,7 +119,6 @@ describe('resetTournamentAutomatedChecksHandler', () => {
       context: {
         db: null as unknown as DatabaseClient,
         session: createAdminSession(),
-        adminDataMutationDate: safeAdminDataMutationDate,
       },
     });
 

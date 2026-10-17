@@ -23,7 +23,7 @@ import {
   type ReportCreateInput,
 } from '@/lib/orpc/schema/report';
 
-import { protectedProcedure } from '../base';
+import { adminMutationProcedure, protectedProcedure } from '../base';
 import { ensureAdminSession } from '../shared/adminGuard';
 import {
   normalizeReportCreateContent,
@@ -451,7 +451,7 @@ export const getReport = protectedProcedure
     };
   });
 
-export const resolveReport = protectedProcedure
+export const resolveReport = adminMutationProcedure
   .input(ReportResolveInputSchema)
   .output(ReportMutationResponseSchema)
   .route({
@@ -492,7 +492,7 @@ export const resolveReport = protectedProcedure
     return { success: true, reportId: input.reportId };
   });
 
-export const reopenReport = protectedProcedure
+export const reopenReport = adminMutationProcedure
   .input(ReportReopenInputSchema)
   .output(ReportMutationResponseSchema)
   .route({

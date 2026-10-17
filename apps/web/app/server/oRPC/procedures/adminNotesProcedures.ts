@@ -27,7 +27,7 @@ import {
   MatchAdminNoteUpdateInputSchema,
 } from '@/lib/orpc/schema/match';
 
-import { protectedProcedure } from './base';
+import { adminMutationProcedure } from './base';
 import { ensureAdminSession } from './shared/adminGuard';
 import { Ruleset } from '@otr/core/osu';
 
@@ -285,7 +285,7 @@ async function getAdminNoteRecord(
   return note ?? null;
 }
 
-export const createTournamentAdminNote = protectedProcedure
+export const createTournamentAdminNote = adminMutationProcedure
   .input(TournamentAdminNoteCreateInputSchema)
   .output(AdminNoteSchema)
   .route({
@@ -323,7 +323,7 @@ export const createTournamentAdminNote = protectedProcedure
     return note;
   });
 
-export const updateTournamentAdminNote = protectedProcedure
+export const updateTournamentAdminNote = adminMutationProcedure
   .input(TournamentAdminNoteUpdateInputSchema)
   .output(AdminNoteSchema)
   .route({
@@ -376,7 +376,7 @@ export const updateTournamentAdminNote = protectedProcedure
     return updated;
   });
 
-export const deleteTournamentAdminNote = protectedProcedure
+export const deleteTournamentAdminNote = adminMutationProcedure
   .input(TournamentAdminNoteDeleteInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
@@ -413,7 +413,7 @@ export const deleteTournamentAdminNote = protectedProcedure
     return { success: true } as const;
   });
 
-export const createMatchAdminNote = protectedProcedure
+export const createMatchAdminNote = adminMutationProcedure
   .input(MatchAdminNoteCreateInputSchema)
   .output(AdminNoteSchema)
   .route({
@@ -451,7 +451,7 @@ export const createMatchAdminNote = protectedProcedure
     return note;
   });
 
-export const updateMatchAdminNote = protectedProcedure
+export const updateMatchAdminNote = adminMutationProcedure
   .input(MatchAdminNoteUpdateInputSchema)
   .output(AdminNoteSchema)
   .route({
@@ -504,7 +504,7 @@ export const updateMatchAdminNote = protectedProcedure
     return updated;
   });
 
-export const deleteMatchAdminNote = protectedProcedure
+export const deleteMatchAdminNote = adminMutationProcedure
   .input(MatchAdminNoteDeleteInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
@@ -541,7 +541,7 @@ export const deleteMatchAdminNote = protectedProcedure
     return { success: true } as const;
   });
 
-export const createGameAdminNote = protectedProcedure
+export const createGameAdminNote = adminMutationProcedure
   .input(GameAdminNoteCreateInputSchema)
   .output(AdminNoteSchema)
   .route({
@@ -579,7 +579,7 @@ export const createGameAdminNote = protectedProcedure
     return note;
   });
 
-export const updateGameAdminNote = protectedProcedure
+export const updateGameAdminNote = adminMutationProcedure
   .input(GameAdminNoteUpdateInputSchema)
   .output(AdminNoteSchema)
   .route({
@@ -632,7 +632,7 @@ export const updateGameAdminNote = protectedProcedure
     return updated;
   });
 
-export const deleteGameAdminNote = protectedProcedure
+export const deleteGameAdminNote = adminMutationProcedure
   .input(GameAdminNoteDeleteInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
@@ -669,7 +669,7 @@ export const deleteGameAdminNote = protectedProcedure
     return { success: true } as const;
   });
 
-export const createScoreAdminNote = protectedProcedure
+export const createScoreAdminNote = adminMutationProcedure
   .input(GameScoreAdminNoteCreateInputSchema)
   .output(AdminNoteSchema)
   .route({
@@ -707,7 +707,7 @@ export const createScoreAdminNote = protectedProcedure
     return note;
   });
 
-export const updateScoreAdminNote = protectedProcedure
+export const updateScoreAdminNote = adminMutationProcedure
   .input(GameScoreAdminNoteUpdateInputSchema)
   .output(AdminNoteSchema)
   .route({
@@ -760,7 +760,7 @@ export const updateScoreAdminNote = protectedProcedure
     return updated;
   });
 
-export const deleteScoreAdminNote = protectedProcedure
+export const deleteScoreAdminNote = adminMutationProcedure
   .input(GameScoreAdminNoteDeleteInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
@@ -797,7 +797,7 @@ export const deleteScoreAdminNote = protectedProcedure
     return { success: true } as const;
   });
 
-export const createBeatmapAdminNote = protectedProcedure
+export const createBeatmapAdminNote = adminMutationProcedure
   .input(BeatmapAdminNoteCreateInputSchema)
   .output(AdminNoteSchema)
   .route({
@@ -835,7 +835,7 @@ export const createBeatmapAdminNote = protectedProcedure
     return note;
   });
 
-export const updateBeatmapAdminNote = protectedProcedure
+export const updateBeatmapAdminNote = adminMutationProcedure
   .input(BeatmapAdminNoteUpdateInputSchema)
   .output(AdminNoteSchema)
   .route({
@@ -888,7 +888,7 @@ export const updateBeatmapAdminNote = protectedProcedure
     return updated;
   });
 
-export const deleteBeatmapAdminNote = protectedProcedure
+export const deleteBeatmapAdminNote = adminMutationProcedure
   .input(BeatmapAdminNoteDeleteInputSchema)
   .output(TournamentAdminMutationResponseSchema)
   .route({
