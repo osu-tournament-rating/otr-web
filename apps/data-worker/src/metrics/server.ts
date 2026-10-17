@@ -1,6 +1,10 @@
+import { optionalEnv } from '@otr/core';
 import { metricsRegistry } from './registry';
 
-const METRICS_PORT = Number(process.env.METRICS_PORT ?? 9091);
+export const resolveMetricsPort = (value: string | undefined): number =>
+  Number(optionalEnv(value) ?? 9091);
+
+const METRICS_PORT = resolveMetricsPort(process.env.METRICS_PORT);
 
 export const startMetricsServer = () => {
   const server = Bun.serve({
