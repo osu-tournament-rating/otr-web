@@ -37,30 +37,35 @@ const MOD_ICONS = new Set([
   'TD',
 ]);
 
+interface ModEntry {
+  acronym: string;
+  /** A custom rate, such as 1.2 for DT at 1.2x. */
+  speed: number | null;
+}
+
 /**
- * The acronyms to draw, and the custom speed of a rate mod. A lazer list,
- * when there is one, is drawn instead of the bitflags, since it holds the
- * lazer-only mods and settings the flags cannot.
+ * The mods to draw. A lazer list, when there is one, is drawn instead of the
+ * bitflags, since it holds the lazer-only mods and settings the flags cannot.
  */
-function resolveIcons(
+function resolveEntries(
   mods: Mods,
   lazerMods: readonly LazerMod[] | null | undefined
-): { acronyms: string[]; speed: number | null } {
+): ModEntry[] {
   if (lazerMods) {
-    const shown = lazerMods.filter((mod) => mod.acronym !== 'NF');
-    const speed =
-      shown.map(getLazerModSpeed).find((value) => value !== null) ?? null;
-    return { acronyms: shown.map((mod) => mod.acronym), speed };
+    return lazerMods
+      .filter((mod) => mod.acronym !== 'NF')
+      .map((mod) => ({ acronym: mod.acronym, speed: getLazerModSpeed(mod) }));
   }
 
   // Clear NF
-  return {
-    acronyms: ModsEnumHelper.getMetadata(mods & ~Mods.NoFail)
-      .map(({ text }) => text)
-      .filter(Boolean),
-    speed: null,
-  };
+  return ModsEnumHelper.getMetadata(mods & ~Mods.NoFail)
+    .map(({ text }) => text)
+    .filter(Boolean)
+    .map((acronym) => ({ acronym, speed: null }));
 }
+
+const formatSpeed = (speed: number) =>
+  `${formatNumber(speed, { maxDecimals: 2 })}x`;
 
 export default function ModIconset({
   mods,
@@ -77,23 +82,24 @@ export default function ModIconset({
   freemod?: boolean;
   alwaysExpanded?: boolean;
 }) {
-  let { acronyms, speed } = resolveIcons(mods, lazerMods);
-  if (acronyms.length === 0 && !freemod) {
-    acronyms = ['NM'];
+  let entries = resolveEntries(mods, lazerMods);
+  if (entries.length === 0 && !freemod) {
+    entries = [{ acronym: 'NM', speed: null }];
   }
   if (freemod) {
-    acronyms = ['FM', ...acronyms];
-    speed = null;
+    entries = [{ acronym: 'FM', speed: null }, ...entries];
   }
-  const icons = acronyms.filter((mod) => MOD_ICONS.has(mod));
+  const icons = entries.filter((mod) => MOD_ICONS.has(mod.acronym));
+  // Only one rate mod plays at a time, so its speed follows the icon stack.
+  const iconSpeed = icons.find((mod) => mod.speed !== null)?.speed ?? null;
   // Lazer-only mods have no artwork yet, so they read as text.
-  const labels = acronyms.filter((mod) => !MOD_ICONS.has(mod));
+  const labels = entries.filter((mod) => !MOD_ICONS.has(mod.acronym));
 
   return (
     <div className={className}>
-      {icons.map((mod, idx) => (
+      {icons.map(({ acronym }, idx) => (
         <div
-          key={mod}
+          key={acronym}
           className={cn(
             'peer relative aspect-[60/45] h-full max-h-12 transition-[margin] duration-200 ease-in-out',
             alwaysExpanded
@@ -103,22 +109,26 @@ export default function ModIconset({
           )}
           style={{ zIndex: icons.length - idx }}
         >
-          <Image src={`/icons/mods/Mod${mod}.svg`} alt={`mod-${mod}`} fill />
+          <Image
+            src={`/icons/mods/Mod${acronym}.svg`}
+            alt={`mod-${acronym}`}
+            fill
+          />
         </div>
       ))}
-      {labels.map((mod) => (
-        <span
-          key={mod}
-          className="ml-1 shrink-0 rounded-md border border-border bg-muted px-1 text-xs font-semibold text-foreground"
-        >
-          {mod}
-        </span>
-      ))}
-      {speed !== null && (
+      {iconSpeed !== null && (
         <span className="ml-1 shrink-0 text-xs font-semibold tabular-nums">
-          {formatNumber(speed, { maxDecimals: 2 })}x
+          {formatSpeed(iconSpeed)}
         </span>
       )}
+      {labels.map(({ acronym, speed }) => (
+        <span
+          key={acronym}
+          className="ml-1 shrink-0 rounded-md border border-border bg-muted px-1 text-xs font-semibold text-foreground"
+        >
+          {speed === null ? acronym : `${acronym} ${formatSpeed(speed)}`}
+        </span>
+      ))}
     </div>
   );
 }
