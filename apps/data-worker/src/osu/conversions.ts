@@ -14,6 +14,13 @@ type ModLike =
   | null
   | undefined;
 
+/**
+ * Acronyms to stable mod flags, for both stable and lazer scores. Two lazer
+ * acronyms map onto stable flags: Daycore (DC) and lazer's Cinema (CN). Every
+ * other lazer-only mod, such as Difficulty Adjust (DA), Classic (CL), Barrel
+ * Roll (BR) or Ten Keys (10K), has no flag and is dropped here; it is kept in
+ * the score's lazer mods instead (`normalizeLazerMods`).
+ */
 const MOD_MAP: Record<string, Mods> = {
   NF: Mods.NoFail,
   EZ: Mods.Easy,
@@ -24,7 +31,7 @@ const MOD_MAP: Record<string, Mods> = {
   DT: Mods.DoubleTime,
   RX: Mods.Relax,
   HT: Mods.HalfTime,
-  // Daycore is lazer's pitched-down Half Time.
+  // Daycore (lazer only): Half Time with lowered pitch.
   DC: Mods.HalfTime,
   NC: Mods.Nightcore,
   FL: Mods.Flashlight,
@@ -40,6 +47,7 @@ const MOD_MAP: Record<string, Mods> = {
   FI: Mods.FadeIn,
   RD: Mods.Random,
   CM: Mods.Cinema,
+  // Cinema (lazer's acronym; stable uses CM).
   CN: Mods.Cinema,
   TP: Mods.Target,
   '9K': Mods.Key9,

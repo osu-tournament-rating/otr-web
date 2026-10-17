@@ -21,6 +21,11 @@ const INVALID_MODS = new Set<Mods>([
  * The lazer mods a tournament plays with. Any other mod is invalid, including
  * mods lazer adds later. Settings are not checked, so custom speeds and
  * Difficulty Adjust values pass.
+ *
+ * This is a policy list, not the fetcher's acronym-to-flag map: that map also
+ * holds stable mods this check rejects (SD, PF, RX, AT, AP) and mods it does
+ * not allow (RD, CO, CN, TP), and it has no entry for lazer-only mods that
+ * lack a stable flag (CL, DA, 10K).
  */
 const VALID_LAZER_MODS = new Set([
   'NF',
@@ -31,12 +36,15 @@ const VALID_LAZER_MODS = new Set([
   'DT',
   'NC',
   'HT',
+  // Daycore (lazer only)
   'DC',
   'FL',
   'SO',
   'FI',
   'MR',
+  // Classic (lazer only)
   'CL',
+  // Difficulty Adjust (lazer only)
   'DA',
   '1K',
   '2K',
@@ -47,6 +55,7 @@ const VALID_LAZER_MODS = new Set([
   '7K',
   '8K',
   '9K',
+  // Ten Keys (lazer only)
   '10K',
 ]);
 
