@@ -61,11 +61,13 @@ const createService = (existingScore?: {
   return { inserted, updated, processRoomScores };
 };
 
-const createScore = (mods: string[]) => ({
+const createScore = (
+  mods: (string | { acronym: string; settings: Record<string, unknown> })[]
+) => ({
   user_id: 100,
   total_score: 100_001,
   legacy_total_score: 40_000,
-  mods: mods.map((acronym) => ({ acronym })),
+  mods: mods.map((mod) => (typeof mod === 'string' ? { acronym: mod } : mod)),
   statistics: {},
   accuracy: 0.98,
   pp: null,
@@ -94,6 +96,25 @@ describe('processRoomScores', () => {
     expect(inserted[0]?.rawScore).toBe(100_001);
     expect(inserted[0]?.adjustedScore).toBeNull();
     expect(inserted[0]?.legacyTotalScore).toBe(40_000);
+  });
+
+  it('stores every lazer mod with its settings', async () => {
+    const { inserted, processRoomScores } = createService();
+
+    await processRoomScores(
+      createScore([
+        { acronym: 'DT', settings: { speed_change: 1.2 } },
+        'DA',
+        'BR',
+      ])
+    );
+
+    expect(inserted[0]?.mods).toBe(Mods.DoubleTime);
+    expect(inserted[0]?.lazerMods).toEqual([
+      { acronym: 'DT', settings: { speed_change: 1.2 } },
+      { acronym: 'DA' },
+      { acronym: 'BR' },
+    ]);
   });
 
   it('applies the multiplier when updating an existing score', async () => {

@@ -6,8 +6,13 @@ import {
   Team,
   TeamType,
 } from '@otr/core/osu/enums';
+import type { LazerMod } from '@otr/core/osu/lazer-mods';
 
-type ModLike = string | { acronym?: string | null } | null | undefined;
+type ModLike =
+  | string
+  | { acronym?: string | null; settings?: Record<string, unknown> | null }
+  | null
+  | undefined;
 
 const MOD_MAP: Record<string, Mods> = {
   NF: Mods.NoFail,
@@ -19,10 +24,12 @@ const MOD_MAP: Record<string, Mods> = {
   DT: Mods.DoubleTime,
   RX: Mods.Relax,
   HT: Mods.HalfTime,
+  // Daycore is lazer's pitched-down Half Time.
+  DC: Mods.HalfTime,
   NC: Mods.Nightcore,
   FL: Mods.Flashlight,
   AT: Mods.Autoplay,
-  AP: Mods.Autoplay,
+  AP: Mods.Relax2,
   SO: Mods.SpunOut,
   PF: Mods.Perfect,
   '4K': Mods.Key4,
@@ -33,6 +40,7 @@ const MOD_MAP: Record<string, Mods> = {
   FI: Mods.FadeIn,
   RD: Mods.Random,
   CM: Mods.Cinema,
+  CN: Mods.Cinema,
   TP: Mods.Target,
   '9K': Mods.Key9,
   CO: Mods.KeyCoop,
@@ -111,6 +119,36 @@ export const convertModsToFlags = (
     }
     return acc;
   }, Mods.None);
+};
+
+/**
+ * A lazer mod list as stored: uppercase acronyms in API order, with settings
+ * kept only when the player changed any. Lazer-only mods are kept too, since
+ * `convertModsToFlags` has no bit for them.
+ */
+export const normalizeLazerMods = (
+  mods: ModLike[] | undefined | null
+): LazerMod[] => {
+  const normalized: LazerMod[] = [];
+
+  for (const mod of mods ?? []) {
+    if (typeof mod === 'string') {
+      if (mod) normalized.push({ acronym: mod.toUpperCase() });
+      continue;
+    }
+    if (!mod || typeof mod.acronym !== 'string' || !mod.acronym) {
+      continue;
+    }
+
+    const settings = mod.settings;
+    normalized.push(
+      settings && Object.keys(settings).length > 0
+        ? { acronym: mod.acronym.toUpperCase(), settings }
+        : { acronym: mod.acronym.toUpperCase() }
+    );
+  }
+
+  return normalized;
 };
 
 export const convertScoringType = (value: string | undefined): ScoringType => {
