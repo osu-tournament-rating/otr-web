@@ -42,7 +42,7 @@ export function deriveWinRecord(matchId: number, rosters: WinRecordRoster[]) {
 }
 
 // Rosters outlive the verified state they were computed for.
-export function deriveTournamentWinRecord(
+export function deriveVerifiedWinRecord(
   matchId: number,
   verificationStatus: number,
   rosters: WinRecordRoster[]
@@ -51,7 +51,15 @@ export function deriveTournamentWinRecord(
     return null;
   }
 
-  const record = deriveWinRecord(matchId, rosters);
+  return deriveWinRecord(matchId, rosters);
+}
+
+export function deriveTournamentWinRecord(
+  matchId: number,
+  verificationStatus: number,
+  rosters: WinRecordRoster[]
+) {
+  const record = deriveVerifiedWinRecord(matchId, verificationStatus, rosters);
 
   if (!record) {
     return null;
