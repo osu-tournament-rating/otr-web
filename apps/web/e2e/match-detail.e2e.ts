@@ -38,6 +38,21 @@ test.describe('Match Detail Page', () => {
       await expect(tournamentLink).not.toBeEmpty();
     });
 
+    test('the verification badge fits a 375px screen', async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 667 });
+      await page.goto(ROUTES.match(TEST_MATCH_ID));
+      await page.waitForLoadState('networkidle');
+
+      const badge = page.locator('[data-slot="verification-status-badge"]');
+      await expect(badge).toBeVisible({ timeout: 10000 });
+      expect(
+        await badge.evaluate((el) => el.scrollWidth <= el.clientWidth)
+      ).toBe(true);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth)
+      ).toBeLessThanOrEqual(375);
+    });
+
     test('page title contains match name', async ({ page }) => {
       await page.goto(ROUTES.match(TEST_MATCH_ID));
       await page.waitForLoadState('networkidle');
