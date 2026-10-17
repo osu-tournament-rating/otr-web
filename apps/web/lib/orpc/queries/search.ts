@@ -420,6 +420,28 @@ function buildMatchCandidateIds(parsed: ParsedSearchTerm): SQL {
   return buildCandidateFilter(schema.matches.id, branches);
 }
 
+/** The header search's tournament criteria and full-text rank. */
+export function buildTournamentSearchExpressions(
+  parsed: ParsedSearchTerm
+): SearchExpressions {
+  const { tsQuery, prefixTsQuery } = parsed;
+  const vector = schema.tournaments.searchVector;
+  const similarity = sql`greatest(${buildSimilarity(schema.tournaments.name, parsed)}, ${buildSimilarity(schema.tournaments.abbreviation, parsed)})`;
+  const trigram = sql`((${buildTrigramMatch(schema.tournaments.name, parsed)} OR ${buildTrigramMatch(schema.tournaments.abbreviation, parsed)}) AND ${buildTrigramPrecision(
+    [schema.tournaments.name, schema.tournaments.abbreviation],
+    parsed
+  )})`;
+
+  const condition = prefixTsQuery
+    ? sql`(${vector} @@ ${tsQuery} OR ${vector} @@ ${prefixTsQuery} OR ${trigram})`
+    : sql`(${vector} @@ ${tsQuery} OR ${trigram})`;
+  const rank = prefixTsQuery
+    ? sql<number>`greatest(ts_rank_cd(${vector}, ${tsQuery}), ts_rank_cd(${vector}, ${prefixTsQuery}), ${similarity})`
+    : sql<number>`greatest(ts_rank_cd(${vector}, ${tsQuery}), ${similarity})`;
+
+  return { condition, rank };
+}
+
 export function buildMatchSearchExpressions(
   parsed: ParsedSearchTerm
 ): SearchExpressions {
